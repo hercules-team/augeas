@@ -156,17 +156,38 @@ int aug_set(const char *path, const char *value) {
     return 0;
 }
 
-int aug_insert(const char *path, const char *sibling, int before) {
-    struct aug_entry *s;
+int aug_insert(const char *path, const char *sibling) {
+    struct aug_entry *s, *p;
+    char *pdir, *sdir;
+
+    if (STREQ(path, sibling))
+        return -1;
+
+    pdir = strrchr(path, SEP);
+    sdir = strrchr(sibling, SEP);
+    if (pdir == NULL || sdir == NULL)
+        return -1;
+    if (pdir - path != sdir - sibling)
+        return -1;
+    if (STRNEQLEN(path, sibling, pdir - path))
+        return -1;
 
     s = aug_entry_find(sibling);
     if (s == NULL)
         return -1;
     
-    if (!before)
-        s = s->next;
-
-    return aug_entry_make(path, s) == NULL ? -1 : 0;
+    p = aug_entry_find(path);
+    if (p == NULL) {
+        return aug_entry_make(path, s) == NULL ? -1 : 0;
+    } else {
+        p->prev->next = p->next;
+        p->next->prev = p->prev;
+        s->prev->next = p;
+        p->prev = s->prev;
+        p->next = s;
+        s->prev = p;
+        return 0;
+    }
 }
 
 int aug_rm(const char *path) {

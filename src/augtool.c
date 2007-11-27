@@ -34,7 +34,7 @@ struct command {
 
 static struct command commands[];
 
-static void ls(char *args[]) {
+static void cmd_ls(char *args[]) {
     int cnt;
     const char *path = args[0];
     const char **paths;
@@ -51,7 +51,7 @@ static void ls(char *args[]) {
     }
 }
 
-static void rm(char *args[]) {
+static void cmd_rm(char *args[]) {
     int cnt;
     const char *path = args[0];
     printf("rm : %s", path);
@@ -59,7 +59,7 @@ static void rm(char *args[]) {
     printf(" %d\n", cnt);
 }
 
-static void set(char *args[]) {
+static void cmd_set(char *args[]) {
     const char *path = args[0];
     const char *val = args[1];
     int r;
@@ -69,7 +69,7 @@ static void set(char *args[]) {
         printf ("Failed\n");
 }
 
-static void get(char *args[]) {
+static void cmd_get(char *args[]) {
     const char *path = args[0];
     const char *val;
 
@@ -80,9 +80,20 @@ static void get(char *args[]) {
     printf(" = %s\n", val);
 }
 
-static void dump(ATTRIBUTE_UNUSED char *args[]) {
+static void cmd_dump(ATTRIBUTE_UNUSED char *args[]) {
     aug_dump(stdout);
 }
+
+static void cmd_ins(char *args[]) {
+    const char *path = args[0];
+    const char *sibling = args[1];
+    int r;
+
+    r = aug_insert(path, sibling);
+    if (r == -1)
+        printf ("Failed\n");
+}
+
 
 static int chk_args(const char *cmd, int n, char *args[]) {
     for (int i=0; i<n; i++) {
@@ -123,11 +134,12 @@ static char *parseline(char *line, char *args[], int argc) {
 }
 
 static struct command commands[] = {
-    { "ls",  1, ls },
-    { "rm",  1, rm },
-    { "set", 2, set },
-    { "get", 1, get },
-    { "dump", 0, dump },
+    { "ls",  1, cmd_ls },
+    { "rm",  1, cmd_rm },
+    { "set", 2, cmd_set },
+    { "get", 1, cmd_get },
+    { "dump", 0, cmd_dump },
+    { "ins", 2, cmd_ins },
     { NULL, -1, NULL }
 };
 
@@ -157,8 +169,8 @@ int main(void) {
             r = chk_args(cmd, c->nargs, args);
             if (r == 0) {
                 (*c->handler)(args);
-                add_history(line);
             }
+            add_history(line);
         } else {
             fprintf(stderr, "Unknown command '%s'\n", cmd);
         }

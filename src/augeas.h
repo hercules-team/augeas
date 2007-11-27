@@ -36,9 +36,8 @@ const char *aug_lookup(const char *path);
    exist. Return -1 on error, 0 on success */
 int aug_set(const char *path, const char *value);
 
-/* Make SIBLING a sibling of PATH. If BEFORE is non-zero, SIBLING will be
-   inserted right before PATH, otherwise right after it */
-int aug_insert(const char *path, const char *sibling, int before);
+/* Make PATH a SIBLING of PATH by inserting it directly before SIBLING. */
+int aug_insert(const char *path, const char *sibling);
 
 /* Remove path and all its children. Returns the number of entries removed */
 int aug_rm(const char *path);
