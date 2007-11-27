@@ -1,0 +1,15 @@
+.*~$
+^build/
+^aclocal\.m4$
+^autom4te\.cache/
+Makefile(\.in)?$
+^config\.(sub|log|guess|status)$
+^configure$
+^depcomp$
+^install-sh$
+^ltmain.sh$
+^missing$
+^src/\.(deps|libs)/
+\.l?[oa]$
+TAGS$
+^libtool
