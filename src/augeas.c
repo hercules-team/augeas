@@ -43,10 +43,20 @@ struct aug_entry {
 
 static struct aug_entry *head = NULL;
 
+/* Length of PATH without any trailing '/' */
+static int pathlen(const char *path) {
+    int len = strlen(path);
+
+    if (len > 0 && path[len-1] == SEP)
+        len--;
+    
+    return len;
+}
+
 static struct aug_entry *aug_entry_find(const char *path) {
     struct aug_entry *p = head;
     do {
-        if (STREQ(path, p->path)) {
+        if (STREQLEN(path, p->path, pathlen(path))) {
             return p;
         }
         p = p->next;
@@ -82,6 +92,8 @@ static struct aug_entry *aug_entry_make(const char *p,
                                         struct aug_entry *next) {
     char *path;
     path = strdupa(p);
+    path[pathlen(path)] = '\0';
+
     for (char *pos = path+1; *pos != '\0'; pos++) {
         if (*pos == SEP) {
             *pos = '\0';
@@ -93,15 +105,6 @@ static struct aug_entry *aug_entry_make(const char *p,
         }
     }
     return aug_entry_insert(path, next);
-}
-
-static int pathlen(const char *path) {
-    int len = strlen(path);
-
-    if (len > 0 && path[len-1] == SEP)
-        len--;
-    
-    return len;
 }
 
 static void aug_entry_free(struct aug_entry *e) {
