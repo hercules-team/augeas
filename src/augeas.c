@@ -25,6 +25,13 @@
 
 #define SEP '/'
 
+/* Two special entries: they are always on the main list
+   so that we don't need to worry about some corner cases in dealing
+   with empty lists */
+
+#define P_SYSTEM "/system"
+#define P_SYSTEM_CONFIG "/system/config"
+
 /* Doubly-linked list of path/value pairs. The list contains
    siblings in the order in which they were created, but is
    unordered otherwise */
@@ -115,12 +122,12 @@ int aug_init(void) {
         e = calloc(1, sizeof(struct aug_entry));
         if (head == NULL || e == NULL)
             return -1;
-        head->path = "/system";
+        head->path = P_SYSTEM;
         head->value = NULL;
         head->next = e;
         head->prev = e;
 
-        e->path = "/system/config";
+        e->path = P_SYSTEM_CONFIG;
         e->value = NULL;
         e->next = head;
         e->prev = head;
@@ -194,8 +201,10 @@ int aug_rm(const char *path) {
     struct aug_entry *p;
     int cnt = 0;
 
-    for (p = head->next; p != head; p = p->next) {
-        if (STREQLEN(p->prev->path, path, pathlen(path))) {
+    for (p = head->next->next; p != head->next; p = p->next) {
+        if (STREQLEN(p->prev->path, path, pathlen(path)) &&
+            ! STREQ(P_SYSTEM, p->prev->path) &&
+            ! STREQ(P_SYSTEM_CONFIG, p->prev->path)) {
             aug_entry_free(p->prev);
             cnt += 1;
         }
