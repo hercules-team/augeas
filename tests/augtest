@@ -1,0 +1,51 @@
+#! /usr/bin/ruby
+
+require 'find'
+
+ROOT="/tmp/aug"
+
+TOP_DIR=File::join(File::dirname(__FILE__), "..")
+TEST_DIR=File::join(TOP_DIR, "tests")
+
+ARGV.each do |test|
+    Find.find(ROOT) do |path|
+        if File::file?(path) && File::fnmatch?("*.augnew", path)
+            File::delete(path)
+        end
+    end
+    commands = nil
+    diff = {}
+    echo=false
+    refresh=false
+
+    eval(IO::read(test))
+    redir = echo ? "" : "> /dev/null"
+    IO.popen("#{TOP_DIR}/src/augtool #{redir}", "w") do |io|
+        io.print(commands)
+        io.puts("\nquit")
+    end
+    diff.each do |file, exp|
+        file = File::join(ROOT, file)
+        if ! File::exist?("#{file}.augnew")
+            puts "Expected file #{file}.augnew"
+        else
+            act=`diff -u #{file} #{file}.augnew`
+            act.gsub!(/^(--- #{file}).*$/, '\1')
+            act.gsub!(/^(\+\+\+ #{file}\.augnew).*$/, '\1')
+            if ! exp.nil? && act != exp
+                if ! refresh
+                    puts "#{test}: Diff mismatch"
+                    puts act
+                else
+                    puts act.gsub(/\t/, '\\t')
+                end
+            end
+        end
+    end
+    files = diff.keys.collect { |f| File::join(ROOT, "#{f}.augnew") }
+    Find.find(ROOT) do |path|
+        if File::file?(path) && File::fnmatch?("*.augnew", path)
+            print "Unexpected file #{path}" unless files.include?(path)
+        end
+    end
+end
