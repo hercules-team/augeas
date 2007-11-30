@@ -23,6 +23,9 @@
 #include "augeas.h"
 #include "internal.h"
 
+/* Statically include providers for now */
+#include "prov_pam.h"
+
 #define SEP '/'
 
 /* Two special entries: they are always on the main list
@@ -56,7 +59,8 @@ static int pathlen(const char *path) {
 static struct aug_entry *aug_entry_find(const char *path) {
     struct aug_entry *p = head;
     do {
-        if (STREQLEN(path, p->path, pathlen(path))) {
+        if (STREQLEN(path, p->path, pathlen(path))
+            && p->path[pathlen(path)] == '\0') {
             return p;
         }
         p = p->next;
@@ -119,6 +123,7 @@ static void aug_entry_free(struct aug_entry *e) {
 
 int aug_init(void) {
     struct aug_entry *e;
+    int r;
 
     if (head == NULL) {
         head = calloc(1, sizeof(struct aug_entry));
@@ -135,17 +140,22 @@ int aug_init(void) {
         e->next = head;
         e->prev = head;
     }
-    return 0;
+    /* Load providers, hardcoded for now */
+    r = augp_pam.init();
+    if (r == -1)
+        return -1;
+    r = augp_pam.load();
+    return r;
 }
 
-const char *aug_lookup(const char *path) {
+const char *aug_get(const char *path) {
     struct aug_entry *p;
 
     p = aug_entry_find(path);
-    if (p != 0)
+    if (p != NULL)
         return p->value;
 
-    return 0;
+    return NULL;
 }
 
 int aug_set(const char *path, const char *value) {
@@ -164,6 +174,10 @@ int aug_set(const char *path, const char *value) {
     if (p->value == NULL)
         return -1;
     return 0;
+}
+
+int aug_exists(const char *path) {
+    return (aug_entry_find(path) != NULL);
 }
 
 int aug_insert(const char *path, const char *sibling) {
@@ -205,7 +219,9 @@ int aug_rm(const char *path) {
     int cnt = 0;
 
     for (p = head->next->next; p != head->next; p = p->next) {
+        int plen = pathlen(path);
         if (STREQLEN(p->prev->path, path, pathlen(path)) &&
+            (p->prev->path[plen] == '\0' || p->prev->path[plen] == '/') &&
             ! STREQ(P_SYSTEM, p->prev->path) &&
             ! STREQ(P_SYSTEM_CONFIG, p->prev->path)) {
             aug_entry_free(p->prev);
@@ -215,35 +231,60 @@ int aug_rm(const char *path) {
     return cnt;
 }
 
-int aug_ls(const char *path, const char **children, int size) {
+int aug_ls(const char *path, const char ***children) {
     int cnt = 0;
     int len = pathlen(path);
     struct aug_entry *p;
 
-    p = head;
-    do {
-        if (STREQLEN(p->path, path, len)
-            && strlen(p->path) > len + 1 
-            && strchr(p->path + len + 1, SEP) == NULL) {
-            if (cnt < size)
-                children[cnt] = p->path;
-            cnt += 1;
+    for (int copy=0; copy <=1; copy++) {
+        // Do two passes: the first one to count, the second one
+        // to actually copy the children
+        if (copy) {
+            if (children == NULL)
+                return cnt;
+
+            *children = calloc(cnt, sizeof(char *));
+            if (*children == NULL)
+                return -1;
         }
-        p = p->next;
-    } while (p != head);
+
+        p = head;
+        cnt = 0;
+        do {
+            if (STREQLEN(p->path, path, len)
+                && strlen(p->path) > len + 1 
+                && strchr(p->path + len + 1, SEP) == NULL) {
+                if (copy)
+                    (*children)[cnt] = p->path;
+                cnt += 1;
+            }
+            p = p->next;
+        } while (p != head);
+    }
     return cnt;
 }
 
-int aug_commit(void) {
-    return 0;
+int aug_save(void) {
+    return augp_pam.save();
 }
 
-void aug_dump(FILE *out) {
+void aug_print(FILE *out, const char *path) {
     struct aug_entry *p;
 
     p = head;
     do {
-        fprintf(out, "%s = %s\n", p->path, p->value == NULL ? "" : p->value);
+        if (p != p->prev->next)
+            FIXME("Wrong prev->next for %s", p->path);
+        if (p != p->next->prev)
+            FIXME("Wrong next-> for %s", p->path);
+            
+        if (path == NULL || STREQLEN(path, p->path, pathlen(path))) {
+            fprintf(out, p->path);
+            if (p->value != NULL) {
+                fprintf(out, " = %s", p->value);
+            }
+            fputc('\n', out);
+        }
         p = p->next;
     } while (p != head);
 }

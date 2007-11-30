@@ -39,16 +39,14 @@ static void cmd_ls(char *args[]) {
     const char *path = args[0];
     const char **paths;
 
-    cnt = aug_ls(path, NULL, 0);
-    paths = alloca(cnt * sizeof(char *));
-
-    aug_ls(path, paths, cnt);
+    cnt = aug_ls(path, &paths);
     for (int i=0; i < cnt; i++) {
-        const char *val = aug_lookup(paths[i]);
+        const char *val = aug_get(paths[i]);
         if (val == NULL)
             val = "(none)";
         printf("%s = %s\n", paths[i] + strlen(path), val);
     }
+    free(paths);
 }
 
 static void cmd_rm(char *args[]) {
@@ -74,14 +72,26 @@ static void cmd_get(char *args[]) {
     const char *val;
 
     printf("%s", path);
-    val = aug_lookup(path);
+    if (! aug_exists(path)) {
+        printf(" (o)\n");
+        return;
+    }
+    val = aug_get(path);
     if (val == NULL)
         val = "(none)";
     printf(" = %s\n", val);
 }
 
-static void cmd_dump(ATTRIBUTE_UNUSED char *args[]) {
-    aug_dump(stdout);
+static void cmd_print(ATTRIBUTE_UNUSED char *args[]) {
+    aug_print(stdout, args[0]);
+}
+
+static void cmd_save(ATTRIBUTE_UNUSED char *args[]) {
+    int r;
+    r = aug_save();
+    if (r == -1) {
+        printf("Saving failed\n");
+    }
 }
 
 static void cmd_ins(char *args[]) {
@@ -138,41 +148,57 @@ static struct command commands[] = {
     { "rm",  1, cmd_rm },
     { "set", 2, cmd_set },
     { "get", 1, cmd_get },
-    { "dump", 0, cmd_dump },
+    { "print", 0, cmd_print },
     { "ins", 2, cmd_ins },
+    { "save", 0, cmd_save },
     { NULL, -1, NULL }
 };
 
-int main(void) {
+static int run_command(char *cmd, char **args) {
+    int r = 0;
+    struct command *c;
+
+    if (STREQ("exit", cmd) || STREQ("quit", cmd)) {
+        exit(0);
+    }
+    for (c = commands; c->name; c++) {
+        if (STREQ(cmd, c->name))
+            break;
+    }
+    if (c->name) {
+        r = chk_args(cmd, c->nargs, args);
+        if (r == 0) {
+            (*c->handler)(args);
+        }
+    } else {
+        fprintf(stderr, "Unknown command '%s'\n", cmd);
+        r = -1;
+    }
+
+    return r;
+}
+
+int main(int argc, char **argv) {
     char *line;
     char *cmd, *args[3];
-    struct command *c;
     int r;
 
     aug_init();
+    if (argc > 1) {
+        // Accept one command from the command line
+        r = run_command(argv[1], argv+2);
+        return r;
+    }
 
     while (1) {
         line = readline("augtool> ");
         if (line == NULL)
             return 0;
-        r = 0;
+
         cmd = parseline(line, args, 3);
-        
-        if (STREQ("exit", cmd) || STREQ("quit", cmd)) {
-            return 0;
-        }
-        for (c = commands; c->name; c++) {
-            if (STREQ(cmd, c->name))
-                break;
-        }
-        if (c->name) {
-            r = chk_args(cmd, c->nargs, args);
-            if (r == 0) {
-                (*c->handler)(args);
-            }
+        if (strlen(cmd) > 0) {
+            run_command(cmd, args);
             add_history(line);
-        } else {
-            fprintf(stderr, "Unknown command '%s'\n", cmd);
         }
     }
 }

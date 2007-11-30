@@ -29,12 +29,15 @@
 int aug_init(void);
 
 /* Lookup the value associated with PATH */
-const char *aug_lookup(const char *path);
+const char *aug_get(const char *path);
 
 /* Set the value associated with PATH to VALUE. VALUE is copied into the
    internal data structure. Intermediate entries are created if they don't
    exist. Return -1 on error, 0 on success */
 int aug_set(const char *path, const char *value);
+
+/* Return 1 if there is an entry for this path, 0 otherwise */
+int aug_exists(const char *path);
 
 /* Make PATH a SIBLING of PATH by inserting it directly before SIBLING. */
 int aug_insert(const char *path, const char *sibling);
@@ -42,17 +45,17 @@ int aug_insert(const char *path, const char *sibling);
 /* Remove path and all its children. Returns the number of entries removed */
 int aug_rm(const char *path);
 
-/* Return a list of the direct children of PATH in CHILDREN, which must 
-   be big enough to hold SIZE entries. Returns -1 on error, or the total 
-   number of children of PATH. If SIZE is smaller than the total number of
-   children, only the first SIZE are put into CHILDREN
+/* Return a list of the direct children of PATH in CHILDREN, which is
+   allocated and must be freed by the caller. If CHILDREN is NULL, nothing
+   is allocated and only the number of children is returned. Returns -1 on
+   error, or the total number of children of PATH.
 */
-int aug_ls(const char *path, const char **children, int size);
+int aug_ls(const char *path, const char ***children);
 
 /* Write all pending changes to disk */
-int aug_commit(void);
+int aug_save(void);
 
-void aug_dump(FILE *out);
+void aug_print(FILE *out, const char *path);
 
 #endif
 
