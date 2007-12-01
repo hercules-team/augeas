@@ -30,6 +30,8 @@ struct command {
     const char *name;
     int nargs;
     void(*handler) (char *args[]);
+    const char *synopsis;
+    const char *help;
 };
 
 static struct command commands[];
@@ -132,6 +134,22 @@ static void cmd_ins(char *args[]) {
         printf ("Failed\n");
 }
 
+static void cmd_help(ATTRIBUTE_UNUSED char *args[]) {
+    struct command *c;
+
+    printf ("  augtool [COMMAND OPTIONS]\n\n");
+    printf ("      Inspect the configuration tree. Without arguments, "
+            "run interactively.\n"
+            "      With arguments, execute that command, print its output and exit.\n\n");
+
+    printf("Subcommands:\n\n");
+    printf("    exit, quit\n        Exit the program\n\n");
+    for (c=commands; c->name != NULL; c++) {
+        printf("    %s\n        %s\n\n", c->synopsis, c->help);
+    }
+    printf("\n    Note that all config files are loaded"
+           " from underneath " ROOT_DIR " not '/'\n\n");
+}
 
 static int chk_args(const char *cmd, int n, char *args[]) {
     for (int i=0; i<n; i++) {
@@ -172,15 +190,40 @@ static char *parseline(char *line, char *args[], int argc) {
 }
 
 static struct command commands[] = {
-    { "ls",  1, cmd_ls },
-    { "match",  1, cmd_match },
-    { "rm",  1, cmd_rm },
-    { "set", 2, cmd_set },
-    { "get", 1, cmd_get },
-    { "print", 0, cmd_print },
-    { "ins", 2, cmd_ins },
-    { "save", 0, cmd_save },
-    { NULL, -1, NULL }
+    { "ls",  1, cmd_ls, "ls <PATH>",
+      "List the direct children of PATH"
+    },
+    { "match",  1, cmd_match, "match <PATTERN> [<VALUE>]",
+      "Find all paths that match PATTERN (according to fnmatch(3)). If\n"
+      "        VALUE is given, only the matching paths whose value equals VALUE\n" 
+      "        are printed\n"
+    },
+    { "rm",  1, cmd_rm, "rm <PATH>",
+      "Delete PATH and all its children from the tree"
+    },
+    { "set", 2, cmd_set, "set <PATH> <VALUE>",
+      "Associate VALUE with PATH. If PATH is not in the tree yet,\n"
+      "        it and all its ancestors will be created. These new tree entries\n"
+      "        will appear last amongst their siblings"
+    },
+    { "get", 1, cmd_get, "get <PATH>",
+      "Print the value associated with PATH"
+    },
+    { "print", 0, cmd_print, "print [<PATH>]",
+      "Print entries in the tree. If PATH is given, printing starts there,\n"
+      "        otherwise the whole tree is printed"
+    },
+    { "ins", 2, cmd_ins, "ins <PATH> <SIBLING>",
+      "Insert PATH right before SIBLING into the tree."
+    },
+    { "save", 0, cmd_save, "save",
+      "Save all pending changes to disk. For now, files are not overwritten.\n"
+      "        Instead, new files with extension .augnew are created"
+    },
+    { "help", 0, cmd_help, "help",
+      "Print this help text"
+    },
+    { NULL, -1, NULL, NULL, NULL }
 };
 
 static int run_command(char *cmd, char **args) {
