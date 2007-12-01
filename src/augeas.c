@@ -47,14 +47,17 @@ static struct aug_entry *head = NULL;
  * from a metadata description, not in code
  */
 
-/* Pam provider (pam_prov.c) */
+/* Pam provider (prov_pam.c) */
 extern const struct aug_provider augp_pam;
-/* /etc/hosts provider (pam_hosts.c) */
+/* /etc/hosts provider (prov_hosts.c) */
 extern const struct aug_provider augp_hosts;
+/* /etc/inittab provider (prov_inittab.c) */
+extern const struct aug_provider augp_inittab;
 
 static const struct aug_provider *providers[] = {
     &augp_pam,
     &augp_hosts,
+    &augp_inittab,
     NULL
 };
 
