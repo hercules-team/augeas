@@ -23,6 +23,8 @@
 #include "augeas.h"
 #include "internal.h"
 
+#include <fnmatch.h>
+
 #define SEP '/'
 
 /* Two special entries: they are always on the main list
@@ -283,6 +285,22 @@ int aug_ls(const char *path, const char ***children) {
     }
     return cnt;
 }
+
+int aug_match(const char *pattern, const char **matches, int size) {
+    int cnt = 0;
+    struct aug_entry *p = head;
+    
+    do {
+        if (fnmatch(pattern, p->path, FNM_NOESCAPE) == 0) {
+            if (cnt < size)
+                matches[cnt] = p->path;
+            cnt += 1;
+        }
+        p = p->next;
+    } while (p != head);
+    return cnt;
+}
+
 
 int aug_save(void) {
     int r;

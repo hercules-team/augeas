@@ -52,6 +52,15 @@ int aug_rm(const char *path);
 */
 int aug_ls(const char *path, const char ***children);
 
+/* Return the first SIZE paths that match PATTERN in MATCHES, which must be
+ * preallocated to hold at least SIZE entries. The return value is the total
+ * number of matches
+ *
+ * The PATTERN is passed to fnmatch(3) verbatim, and FNM_FILE_NAME is not set,
+ * so that '*' does not match a '/'
+ */
+int aug_match(const char *pattern, const char **matches, int size);
+
 /* Write all pending changes to disk */
 int aug_save(void);
 

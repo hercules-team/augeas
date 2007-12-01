@@ -49,6 +49,34 @@ static void cmd_ls(char *args[]) {
     free(paths);
 }
 
+static void cmd_match(char *args[]) {
+    int cnt;
+    const char *pattern = args[0];
+    const char **matches;
+    int filter = (strlen(args[1]) > 0);
+
+    cnt = aug_match(pattern, NULL, 0);
+    if (cnt == 0) {
+        printf("  (no matches)\n");
+        return;
+    }
+        
+    matches = calloc(cnt, sizeof(char *));
+    cnt = aug_match(pattern, matches, cnt);
+    for (int i=0; i < cnt; i++) {
+        const char *val = aug_get(matches[i]);
+        if (val == NULL)
+            val = "(none)";
+        if (filter) {
+            if (STREQ(args[1], val))
+                printf("%s\n", matches[i]);
+        } else {
+            printf("%s = %s\n", matches[i], val);
+        }
+    }
+    free(matches);
+}
+
 static void cmd_rm(char *args[]) {
     int cnt;
     const char *path = args[0];
@@ -145,6 +173,7 @@ static char *parseline(char *line, char *args[], int argc) {
 
 static struct command commands[] = {
     { "ls",  1, cmd_ls },
+    { "match",  1, cmd_match },
     { "rm",  1, cmd_rm },
     { "set", 2, cmd_set },
     { "get", 1, cmd_get },
