@@ -16,6 +16,7 @@ ROOT="/tmp/aug"
 
 TOP_DIR=File::join(File::dirname(__FILE__), "..")
 TEST_DIR=File::join(TOP_DIR, "tests")
+AUGTOOL="#{TOP_DIR}/src/augtool"
 
 ARGV.each do |test|
     Find.find(ROOT) do |path|
@@ -30,7 +31,7 @@ ARGV.each do |test|
 
     eval(IO::read(test))
     redir = echo ? "" : "> /dev/null"
-    IO.popen("#{TOP_DIR}/src/augtool #{redir}", "w") do |io|
+    IO.popen("#{AUGTOOL} #{redir}", "w") do |io|
         io.print(commands)
         io.puts("\nquit")
     end
