@@ -105,6 +105,9 @@ static inline void safe_free(void *p) {
  * Internal data structures
  */
 
+/*
+ * File tokenizing
+ */
 enum aug_token_type {
     AUG_TOKEN_NONE,
     AUG_TOKEN_INERT,
@@ -128,6 +131,7 @@ struct aug_file {
     struct aug_file  *next;
 };
 
+// internal.c
 void aug_token_free(struct aug_token *t);
 void aug_file_free(struct aug_file *af);
 
@@ -145,6 +149,35 @@ struct aug_token *aug_file_append_token(struct aug_file *af,
                                         enum aug_token_type type,
                                         const char *text,
                                         const char *node);
+
+// Defined in record.c
+typedef struct aug_rec *aug_rec_t;
+
+/*
+ * A scanner describes how files are to be processed and keeps track of
+ * where in the tree those files were put.  
+ *
+ * FIXME: Use of NODE is inconsistent (its a dir with files for the pam
+ * provider), the direct file for the host provider
+ */
+struct aug_scanner {
+    aug_rec_t  rec;
+    const char *node;         // Node where the scanner is mounted
+    struct aug_file  *files;
+};
+
+/*
+ * Provider. Should eventually be the main interface between the tree
+ * and the handling of individual config files
+ */
+
+struct aug_provider {
+    const char *name;
+    int (*init)(void);
+    int (*load)(void);
+    int (*save)(void);
+};
+
 #endif
 
 

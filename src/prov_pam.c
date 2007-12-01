@@ -21,7 +21,6 @@
  */
 
 #include "augeas.h"
-#include "prov_pam.h"
 #include "internal.h"
 #include "record.h"
 
@@ -44,75 +43,8 @@ const struct aug_provider augp_pam = {
     .save = augp_pam_save
 };
 
-struct aug_scanner {
-    aug_rec_t  rec;
-    const char *node;         // Node where the scanner is mounted
-    struct aug_file  *files;
-};
-
 /* Global variable for now */
 struct aug_scanner *augp_pam_scanner;
- 
-ATTRIBUTE_UNUSED
-static int aug_file_write(struct aug_file *af) {
-    char *tmpname = NULL;
-    int r, fd = -1;
-
-    tmpname = calloc(strlen(af->name) + 6 + 1, sizeof(char));
-    if (tmpname == NULL)
-        goto error;
-
-    r = sprintf(tmpname, "%sXXXXXX", af->name);
-    if (r < 0)
-        goto error;
-
-    fd = mkstemp(tmpname);
-    if (fd == -1)
-        goto error;
-
-    for (struct aug_token *tok = af->tokens;
-         tok != NULL;
-         tok = tok->next) {
-        switch(tok->type) {
-        case AUG_TOKEN_NONE:
-            FIXME("Internal error: got AUG_TOKEN_NONE");
-            break;
-        case AUG_TOKEN_EOF:
-            /* Handled implicitly */
-            break;
-        case AUG_TOKEN_EOR:
-            r = write(fd, "\n", 1);
-            if (r != 1)
-                goto error;
-            break;
-        case AUG_TOKEN_INERT:
-        case AUG_TOKEN_VALUE:
-            r = write(fd, tok->text, strlen(tok->text));
-            if (r != strlen(tok->text))
-                goto error;
-            break;
-        default:
-            FIXME("Internal error: got unknown token type");
-            break;
-        }
-    }
-    close(fd);
-    FIXME("Preserve file permissions");
-    r = rename(tmpname, af->name);
-    if (r == -1)
-        goto error;
-
-    free(tmpname);
-    return 0;
- error:
-    if (fd != -1) {
-        close(fd);
-        unlink(tmpname);
-    }
-    if (tmpname)
-        free(tmpname);
-    return -1;
-}
 
 int augp_pam_load(void) {
     DIR *dir = NULL;

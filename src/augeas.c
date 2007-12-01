@@ -23,9 +23,6 @@
 #include "augeas.h"
 #include "internal.h"
 
-/* Statically include providers for now */
-#include "prov_pam.h"
-
 #define SEP '/'
 
 /* Two special entries: they are always on the main list
@@ -45,6 +42,21 @@ struct aug_entry {
 };
 
 static struct aug_entry *head = NULL;
+
+/* Hardcoded list of existing providers. Ultimately, they should be created
+ * from a metadata description, not in code
+ */
+
+/* Pam provider (pam_prov.c) */
+extern const struct aug_provider augp_pam;
+/* /etc/hosts provider (pam_hosts.c) */
+extern const struct aug_provider augp_hosts;
+
+static const struct aug_provider *providers[] = {
+    &augp_pam,
+    &augp_hosts,
+    NULL
+};
 
 /* Length of PATH without any trailing '/' */
 static int pathlen(const char *path) {
@@ -123,7 +135,6 @@ static void aug_entry_free(struct aug_entry *e) {
 
 int aug_init(void) {
     struct aug_entry *e;
-    int r;
 
     if (head == NULL) {
         head = calloc(1, sizeof(struct aug_entry));
@@ -140,12 +151,18 @@ int aug_init(void) {
         e->next = head;
         e->prev = head;
     }
-    /* Load providers, hardcoded for now */
-    r = augp_pam.init();
-    if (r == -1)
-        return -1;
-    r = augp_pam.load();
-    return r;
+
+    for (int i=0; providers[i] != NULL; i++) {
+        const struct aug_provider *prov = providers[i];
+        int r;
+        r = prov->init();
+        if (r == -1)
+            return -1;
+        r = prov->load();
+        if (r == -1)
+            return -1;
+    }
+    return 0;
 }
 
 const char *aug_get(const char *path) {
@@ -265,7 +282,14 @@ int aug_ls(const char *path, const char ***children) {
 }
 
 int aug_save(void) {
-    return augp_pam.save();
+    int r;
+    
+    for (int i=0; providers[i] != NULL; i++) {
+        r = providers[i]->save();
+        if (r == -1)
+            return -1;
+    }
+    return 0;
 }
 
 void aug_print(FILE *out, const char *path) {

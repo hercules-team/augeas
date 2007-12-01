@@ -37,8 +37,6 @@
 
 #include "internal.h"
 
-typedef struct aug_rec *aug_rec_t;
-
 /* Initialize a new record scanner */
 aug_rec_t aug_rec_init(const char *fsep, const char *rsep);
 

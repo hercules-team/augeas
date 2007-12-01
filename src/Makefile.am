@@ -7,9 +7,9 @@ bin_PROGRAMS = augtool
 
 libaugeas_la_SOURCES = augeas.h augeas.c \
 	internal.h internal.c \
-	provider.h \
-	prov_pam.h prov_pam.c \
-	record.h record.c
+	record.h record.c \
+	prov_pam.c prov_hosts.c
+
 
 libaugeas_la_LIBADD = @LIBPCRE_LIBS@
 
