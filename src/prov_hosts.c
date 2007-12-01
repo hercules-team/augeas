@@ -44,7 +44,7 @@ struct aug_scanner *augp_hosts_scanner;
 int augp_hosts_load(void) {
     struct aug_file *af = NULL;
 
-    af = aug_rec_parse(augp_hosts_scanner->rec, "/tmp/aug/etc/hosts", 
+    af = aug_rec_parse(augp_hosts_scanner->rec, ROOT_DIR "/etc/hosts", 
                        augp_hosts_scanner->node);
     if (af == NULL)
         return -1;

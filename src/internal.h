@@ -178,6 +178,11 @@ struct aug_provider {
     int (*save)(void);
 };
 
+/* Currently, all files have to be in this directory; this code is
+ * definitely not suitable for dealing with live files
+ */
+#define ROOT_DIR "/tmp/aug"
+
 #endif
 
 

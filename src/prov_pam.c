@@ -49,7 +49,7 @@ struct aug_scanner *augp_pam_scanner;
 int augp_pam_load(void) {
     DIR *dir = NULL;
     struct dirent *e = NULL;
-    static const char *dirname = "/tmp/aug/etc/pam.d";
+    static const char *dirname = ROOT_DIR "/etc/pam.d";
     char *name = NULL;
     char *prefix = NULL;
     struct aug_file *af = NULL;
