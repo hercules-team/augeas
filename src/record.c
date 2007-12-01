@@ -289,6 +289,9 @@ int aug_rec_save(const aug_rec_t rec, struct aug_file *af) {
     FILE *fp = NULL;
     int dirty = 0;
 
+    if (af == NULL || rec == NULL)
+        return -1;
+
     dirty = aug_rec_handle_inserts(af);
     if (dirty == -1)
         return -1;
