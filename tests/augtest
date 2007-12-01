@@ -1,5 +1,15 @@
 #! /usr/bin/ruby
 
+# Read a file with a test description, run augtool against it and
+# look at the diff between the original file and the .augnew file
+# The test description can contain the following:
+# commands - a string that is fed to augtool
+# diff     - a hash mapping file names to the diff between that
+#            file and the .augnew file
+# echo     - boolean, when true show the whole ouput of augtool
+# refresh  - boolean, when true print bad diffs in a form
+#            that can be easily cut&pasted back into the test description
+
 require 'find'
 
 ROOT="/tmp/aug"
@@ -45,7 +55,7 @@ ARGV.each do |test|
     files = diff.keys.collect { |f| File::join(ROOT, "#{f}.augnew") }
     Find.find(ROOT) do |path|
         if File::file?(path) && File::fnmatch?("*.augnew", path)
-            print "Unexpected file #{path}" unless files.include?(path)
+            puts "Unexpected file #{path}" unless files.include?(path)
         end
     end
 end
