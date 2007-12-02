@@ -141,6 +141,7 @@ importance:
   - understand and process includes
   - file format for describing scanners in metadata so that, e.g. another
     instance of the record scanner can be defined without any code
+  - bindings for popular scripting languages (python and ruby at a minimum)
   - lots of code improvements: error reporting, more efficient data
     structures
   - plugin infrastructure so that what providers are loaded can be
