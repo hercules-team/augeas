@@ -1,0 +1,6 @@
+0.0.1 - 2007-12-01:
+  - First release. 
+  - Public API and basic tree data structure. 
+  - Record scanning works. 
+  - Providers for pam.d, inittab and /etc/hosts
+  - Simple tests and test driver
