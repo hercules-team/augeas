@@ -32,8 +32,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "util.h"
-
 #ifdef __GNUC__
 #ifdef HAVE_ANSIDECL_H
 #include <ansidecl.h>
