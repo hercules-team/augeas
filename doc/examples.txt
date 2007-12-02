@@ -1,0 +1,66 @@
+These examples show what hopefully will be possible with augeas one day.
+For now, they are more a guide in writing the public API and augtool.
+
+1) Change default runlevel
+
+  p = match("/system/config/inittab/*/action", "initdefault")
+  set( join(dirname(p), "runlevels"), "3")
+
+  [works]
+
+2) yum
+
+  - enable a repo
+    set("/system/config/yum/myrepo/enabled", "1")
+
+  - turn off mirrorlist and set baseurl
+    rm("/system/config/yum/myrepo/mirrorlist")
+    set("/system/config/yum/myrepo/baseurl", "http://yum.example.com/repo")
+
+  [not implemented, needs ini scanner]
+
+3) add entry to hosts
+   set("/system/config/hosts/i0/ipaddr", "192.168.1.1")
+   set("/system/config/hosts/i0/canonical", "pigiron.example.com")
+   set("/system/config/hosts/i0/aliases", "pigiron pigiron.example")
+
+   [works]
+
+4) add to fstab [tree structure will probably look different]
+   p = "/system/config/fstab"
+   rm (p + "/dev.vg00.local/local")
+   set (p + "/dev.vg00.local/local/device", "/dev/vg00/local")
+   set (p + "/dev.vg00.local/local/mountpoint", "/local")
+   set (p + "/dev.vg00.local/local/fs", "ext3")
+   set (p + "/dev.vg00.local/local/options", "defaults")
+   set (p + "/dev.vg00.local/local/freq", "1")
+   set (p + "/dev.vg00.local/local/pass", "2")
+
+   [requires fstab provider, easy, based on record scanner]
+
+5) Mount /dev/sda1 on /exports/foo rather than /foo
+   p = "/system/config/fstab"
+   move entries from p + "/dev.sda1/foo" to p + "/dev.sda1/exports.foo"
+   set(p + "/dev.sda1/exports.foo/mountpoint", "/foo")
+
+   [same as above] 
+
+6) Change gateway on all static interfaces
+   for p in find("/system/config/sysconfig/interfaces/**/gateway", "192.168.0.1")
+     set(p, "192.168.0.254")
+
+   [requires key/value scanner]
+
+7) Setup a static interface from scratch
+   p = "/system/config/sysconfig/interfaces/lo"
+   rm (p)
+   set (p + "/device", "lo")
+   set (p + "/ipaddr", "127.0.0.1")
+   ...
+
+   [requires key/value scanner]
+
+8) Turn on SELinux
+   set ("/system/config/sysconfig/selinux", "enforcing")
+
+   [requires key/value scanner]
