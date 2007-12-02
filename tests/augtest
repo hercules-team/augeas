@@ -31,32 +31,44 @@ ARGV.each do |test|
 
     eval(IO::read(test))
     redir = echo ? "" : "> /dev/null"
+    print "Test #{File::basename(test, ".rb")} ... "
     IO.popen("#{AUGTOOL} #{redir}", "w") do |io|
         io.print(commands)
         io.puts("\nquit")
     end
+    success=true
+    msgs = []
     diff.each do |file, exp|
         file = File::join(ROOT, file)
         if ! File::exist?("#{file}.augnew")
-            puts "Expected file #{file}.augnew"
+            msgs << "Expected file #{file}.augnew"
+            success=false
         else
             act=`diff -u #{file} #{file}.augnew`
             act.gsub!(/^(--- #{file}).*$/, '\1')
             act.gsub!(/^(\+\+\+ #{file}\.augnew).*$/, '\1')
             if ! exp.nil? && act != exp
+                success=false
                 if ! refresh
-                    puts "#{test}: Diff mismatch"
-                    puts act
+                    msgs << act
                 else
-                    puts act.gsub(/\t/, '\\t')
+                    msgs << act.gsub(/\t/, '\\t')
                 end
             end
         end
     end
     files = diff.keys.collect { |f| File::join(ROOT, "#{f}.augnew") }
     Find.find(ROOT) do |path|
-        if File::file?(path) && File::fnmatch?("*.augnew", path)
-            puts "Unexpected file #{path}" unless files.include?(path)
+        if File::file?(path) && File::fnmatch?("*.augnew", path) &&
+                ! files.include?(path)
+            success=false
+            msgs << "Unexpected file #{path}"
         end
+    end
+    if success
+        puts "OK"
+    else
+        puts "FAIL"
+        msgs.each { |m| puts m }
     end
 end
