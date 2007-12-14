@@ -26,9 +26,6 @@
 
 #include <pcre.h>
 
-/* Size of the line buffer during parsing */
-#define MAX_LINE 256
-
 struct aug_rec_spec {
     pcre                 *re;
     int                  nfields;
@@ -162,12 +159,8 @@ struct aug_file *aug_rec_parse(const aug_rec_t rec, const char *path,
     if (fp == NULL)
         return NULL;
 
-    result = calloc(1, sizeof(struct aug_file));
+    result = aug_make_file(path, prefix);
     if (result == NULL)
-        goto error;
-    result->name = strdup(path);
-    result->node = strdup(prefix);
-    if (result->name == NULL || result->node == NULL)
         goto error;
 
     while (fgets(line, MAX_LINE, fp) != NULL) {

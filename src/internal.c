@@ -42,6 +42,23 @@ void aug_file_free(struct aug_file *af) {
     }
 }
 
+struct aug_file *aug_make_file(const char *name, const char *node) {
+    struct aug_file *result;
+
+    result = calloc(1, sizeof(struct aug_file));
+    if (result == NULL)
+        return NULL;
+
+    result->name = strdup(name);
+    result->node = strdup(node);
+    if (result->name == NULL || result->node == NULL) {
+        free(result);
+        return NULL;
+    }
+
+    return result;
+}
+
 struct aug_token *aug_make_token(enum aug_token_type type,
                                  const char *text,
                                  const char *node) {

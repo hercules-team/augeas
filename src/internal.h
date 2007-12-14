@@ -53,6 +53,9 @@
 #define STREQLEN(a,b,n) (strncmp((a),(b),(n)) == 0)
 #define STRNEQLEN(a,b,n) (strncmp((a),(b),(n)) != 0)
 
+/* Call calloc to allocate an array of N instances of *VAR */
+#define CALLOC(Var,N) do { (Var) = calloc ((N), sizeof (*(Var))); } while (0)
+
 /**
  * ATTRIBUTE_UNUSED:
  *
@@ -103,6 +106,9 @@ static inline void safe_free(void *p) {
  * Internal data structures
  */
 
+/* Size of the line buffer during parsing */
+#define MAX_LINE 256
+
 /*
  * File tokenizing
  */
@@ -132,6 +138,9 @@ struct aug_file {
 // internal.c
 void aug_token_free(struct aug_token *t);
 void aug_file_free(struct aug_file *af);
+
+/* Allocate a new file. NAME and NODE are dup'd */
+struct aug_file *aug_make_file(const char *name, const char *node);
 
 /* Allocate a new token. TEXT and NODE are not dup'd */
 struct aug_token *aug_make_token(enum aug_token_type type,
