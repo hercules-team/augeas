@@ -472,11 +472,23 @@ static struct literal_set *make_literal_set(struct literal *literal) {
     return new;
 }
 
-static struct literal_set *find_literal(struct literal_set *head, 
-                                        struct literal *literal) {
-    struct literal_set *f;
-    for (f=head; f != NULL && f->literal != literal; f = f->next);
-    return f;
+/* The set HEAD contains LITERAL iff head has an entry using
+   LITERAL as its literal or if it has an entry where the
+   pattern is identical to LITERAL's pattern.
+   
+   Literals with a NULL pattern will be filled at some later point,
+   so we optimistically assume that they will be different
+*/
+static int literal_set_contains(struct literal_set *head, 
+                                struct literal *literal) {
+    list_for_each(f, head) {
+        if (literal == f->literal)
+            return 1;
+        if (literal->pattern != NULL && f->literal->pattern != NULL
+            && STREQ(literal->pattern, f->literal->pattern))
+            return 1;
+    }
+    return 0;
 }
 
 static int merge_literal_set(struct literal_set **first, 
@@ -486,7 +498,7 @@ static int merge_literal_set(struct literal_set **first,
     if (merge == NULL)
         return 0;
     list_for_each(m, merge) {
-        if (find_literal(*first, m->literal) == NULL) {
+        if (! literal_set_contains(*first, m->literal)) {
             struct literal_set *new;
             new = make_literal_set(m->literal);
             list_append(*first, new);
@@ -528,7 +540,7 @@ static int make_match_firsts(struct match *matches) {
             /* fall through, missing break intentional */
         case ANY:
             /* cur->literal */
-            if (find_literal(cur->first, cur->literal) == NULL) {
+            if (! literal_set_contains(cur->first, cur->literal)) {
                 struct literal_set *ls = make_literal_set(cur->literal);
                 list_append(cur->first, ls);
                 changed = 1;
@@ -540,7 +552,7 @@ static int make_match_firsts(struct match *matches) {
                 cur->epsilon = cur->abbrev->literal->epsilon;
             }
             /* cur->abbrev->literal */
-            if (find_literal(cur->first, cur->abbrev->literal) == NULL) {
+            if (! literal_set_contains(cur->first, cur->abbrev->literal)) {
                 struct literal_set *ls = make_literal_set(cur->abbrev->literal);
                 list_append(cur->first, ls);
                 changed = 1;
@@ -721,19 +733,22 @@ static int resolve_any(struct match *match) {
     return result;
 }
 
+static int literal_sets_intersect(struct literal_set *set1, 
+                                  struct literal_set *set2) {
+    list_for_each(s1, set1) {
+        if (literal_set_contains(set2, s1->literal))
+            return 1;
+    }
+    return 0;
+}
 static int check_match_ambiguity(struct rule *rule, struct match *matches) {
     list_for_each(m, matches) {
         if (m->type == ALTERNATIVE) {
             list_for_each(a1, m->matches) {
                 list_for_each(a2, a1->next) {
-                    list_for_each(f1, a1->first) {
-                        list_for_each(f2, a2->first) {
-                            if (STREQ(f1->literal->pattern,
-                                      f2->literal->pattern)) {
-                                grammar_error(_FR(rule), _L(rule), "rule %s is ambiguous", rule->name);
-                                return 0;
-                            }
-                        }
+                    if (literal_sets_intersect(a1->first, a2->first)) {
+                        grammar_error(_FR(rule), _L(rule), "rule %s is ambiguous", rule->name);
+                        return 0;
                     }
                 }
             }
