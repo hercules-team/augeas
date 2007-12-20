@@ -778,10 +778,12 @@ static int bind_match_names(struct grammar *grammar, struct match *matches) {
     return result;
 }
 
-static void bind_match_rule(struct rule *r, struct match *m) {
-    m->owner = r;
-    if (m->type == ALTERNATIVE || m->type == SEQUENCE)
-        bind_match_rule(r, m->matches);
+static void bind_match_rule(struct rule *rule, struct match *matches) {
+    list_for_each(m, matches) {
+        m->owner = rule;
+        if (m->type == ALTERNATIVE || m->type == SEQUENCE)
+            bind_match_rule(rule, m->matches);
+    }
 }
 
 /*
