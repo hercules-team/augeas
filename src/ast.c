@@ -28,6 +28,42 @@
 /*
  * Debug printing
  */
+
+int print_chars(FILE *out, const char *text, int cnt) {
+    int total = 0;
+    int print = (out != NULL);
+    
+    for (int i=0; i<cnt; i++) {
+        switch(text[i]) {
+        case '\n':
+            if (print)
+                fprintf(out, "~n");
+            total += 2;
+            break;
+        case '\t':
+            if (print)
+                fprintf(out, "~t");
+            total += 2;
+            break;
+        case '\0':
+            if (print)
+                fprintf(out, "~0");
+            return total + 2;
+        case '~':
+            if (print)
+                fprintf(out, "~~");
+            total += 2;
+            break;
+        default:
+            if (print)
+                fputc(text[i], out);
+            total += 1;
+            break;
+        }
+    }
+    return total;
+}
+
 void print_literal(FILE *out, struct literal *l) {
     if (l == NULL) {
         fprintf(out, "<NULL>");
@@ -37,7 +73,9 @@ void print_literal(FILE *out, struct literal *l) {
     if (l->type == QUOTED) {
         fprintf(out, "'%s'", l->text);
     } else if (l->type == REGEX) {
-        fprintf(out, "/%s/", l->pattern);
+        fputc('/', out);
+        print_chars(out, l->pattern, strlen(l->pattern));
+        fputc('/', out);
     } else {
         fprintf(out, "<U:lit:%d>", l->type);
     }
@@ -102,7 +140,7 @@ static void print_matches(FILE *out, struct match *m, const char *sep,
             print_literal(out, p->literal);
             break;
         case NAME:
-            fprintf(out, "%s", p->name);
+            fprintf(out, p->name);
             print_quant(out, p);
             break;
         case ANY:
@@ -124,10 +162,10 @@ static void print_matches(FILE *out, struct match *m, const char *sep,
             fprintf(out, ")");
             break;
         case ABBREV_REF:
-            fprintf(out, "%s", p->abbrev->name);
+            fprintf(out, p->abbrev->name);
             break;
         case RULE_REF:
-            fprintf(out, "%s", p->rule->name);
+            fprintf(out, p->rule->name);
             print_quant(out, p);
             break;
         default:
@@ -146,7 +184,17 @@ static void print_follow(FILE *out, struct match *m, int flags) {
     if (m->follow != NULL) {
         fprintf (out, " {");
         list_for_each(f, m->follow) {
-            print_literal(out, f->literal);
+            struct abbrev *abbrev = NULL;
+            list_for_each(a, m->owner->grammar->abbrevs) {
+                if (a->literal == f->literal) {
+                    abbrev = a;
+                    break;
+                }
+            }
+            if (abbrev != NULL)
+                fprintf(out, abbrev->name);
+            else
+                print_literal(out, f->literal);
             if (f->next != NULL) {
                 fputc(' ', out);
             }
@@ -202,12 +250,12 @@ static void dump_matches(FILE *out, struct match *m, int indent, int flags) {
             dump_matches(out, p->matches, indent + 2, flags);
             break;
         case ABBREV_REF:
-            fprintf(out, "^%s", p->abbrev->name);
+            fprintf(out, "%s", p->abbrev->name);
             print_follow(out, p, flags);
             fputc('\n', out);
             break;
         case RULE_REF:
-            fprintf(out, "^%s", p->rule->name);
+            fprintf(out, "%s", p->rule->name);
             print_follow(out, p, flags);
             fputc('\n', out);
             break;
@@ -226,7 +274,7 @@ static void dump_node(FILE *out, struct node *n) {
     switch(n->type) {
     case N_GLOBAL:
     case N_QUOTED:
-        fprintf(out, "%s", n->label);
+        fprintf(out, n->label);
         break;
     case N_FIELD:
         fprintf(out, "$%d", n->field);
@@ -277,7 +325,17 @@ static void dump_rules(FILE *out, struct rule *r, int flags) {
         if ((flags & GF_FIRST) && p->matches->first != NULL) {
             fprintf(out, "    [");
             list_for_each(f, p->matches->first) {
-                print_literal(out, f->literal);
+                struct abbrev *abbrev = NULL;
+                list_for_each(a, p->matches->owner->grammar->abbrevs) {
+                    if (a->literal == f->literal) {
+                        abbrev = a;
+                        break;
+                    }
+                }
+                if (abbrev)
+                    fprintf(out, abbrev->name);
+                else
+                    print_literal(out, f->literal);
                 if (f->next != NULL)
                     fputc(' ', out);
             }

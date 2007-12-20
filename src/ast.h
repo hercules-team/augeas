@@ -230,6 +230,9 @@ struct node {
  */
 void print_literal(FILE *out, struct literal *l);
 
+/* Print CNT characters from TEXT. Escape newlines/tabs */
+int print_chars(FILE *out, const char *text, int cnt);
+
 #endif
 
 

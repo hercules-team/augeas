@@ -39,36 +39,6 @@ struct state {
     FILE       *log;
 };
 
-static int print_chars(FILE *out, const char *text, int cnt) {
-    int total = 0;
-    int print = (out != NULL);
-    
-    for (int i=0; i<cnt; i++) {
-        switch(text[i]) {
-        case '\n':
-            if (print)
-                fprintf(out, "\\n");
-            total += 2;
-            break;
-        case '\t':
-            if (print)
-                fprintf(out, "\\t");
-            total += 2;
-            break;
-        case '\0':
-            if (print)
-                fprintf(out, "\\0");
-            return total + 2;
-        default:
-            if (print)
-                fputc(text[i], out);
-            total += 1;
-            break;
-        }
-    }
-    return total;
-}
-
 static void advance(struct state *state, int cnt) {
     if (cnt == 0)
         return;
