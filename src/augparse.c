@@ -65,25 +65,23 @@ static void usage(void) {
     fprintf(stderr, "Load GRAMMAR and parses FILE according to it.\n");
     fprintf(stderr, "If FILE is omitted, the GRAMMAR is read and printed\n");
     fprintf(stderr, "\nOptions:\n\n");
-    fprintf(stderr, "  -p            Pretty-print the grammar\n");
     fprintf(stderr, "  -S WHAT       Show details of how FILE is parsed. Possible values for WHAT\n"
                     "                are 'advance', 'match', 'token', and 'rule'\n");
+    fprintf(stderr, "  -G WHAT       Show details about GRAMMAR. Possible values for WHAT are\n"
+                    "                'any', 'follow', 'first', 'nodes', 'pretty' and 'all'\n");
     exit(EXIT_FAILURE);
 }
 
 int main(int argc, char **argv) {
-    int dump = 1;
     int opt;
     int parse_flags = PF_NONE;
+    int grammar_flags = GF_NONE;
     struct grammar *grammar;
 
     progname = argv[0];
 
-    while ((opt = getopt(argc, argv, "pS:")) != -1) {
+    while ((opt = getopt(argc, argv, "S:G:")) != -1) {
         switch(opt) {
-        case 'p':
-            dump = 2;
-            break;
         case 'S':
             if (STREQ(optarg, "advance"))
                 parse_flags |= PF_ADVANCE;
@@ -93,6 +91,24 @@ int main(int argc, char **argv) {
                 parse_flags |= PF_TOKEN;
             else if (STREQ(optarg, "rule"))
                 parse_flags |= PF_RULE;
+            else {
+                fprintf(stderr, "Illegal argument '%s' for -S\n", optarg);
+                usage();
+            }
+            break;
+        case 'G':
+            if (STREQ(optarg, "any"))
+                grammar_flags |= GF_ANY_RE;
+            else if (STREQ(optarg, "follow"))
+                grammar_flags |= GF_FOLLOW;
+            else if (STREQ(optarg, "first"))
+                grammar_flags |= GF_FIRST;
+            else if (STREQ(optarg, "nodes"))
+                grammar_flags |= GF_NODES;
+            else if (STREQ(optarg, "pretty"))
+                grammar_flags |= GF_PRETTY;
+            else if (STREQ(optarg, "all"))
+                grammar_flags = ~ GF_NONE;
             else {
                 fprintf(stderr, "Illegal argument '%s' for -S\n", optarg);
                 usage();
@@ -110,13 +126,15 @@ int main(int argc, char **argv) {
     }
     
     if (optind + 1 == argc) {
-        grammar = load_grammar(argv[optind], dump);
+        if (grammar_flags == GF_NONE)
+            grammar_flags |= GF_PRETTY;
+        grammar = load_grammar(argv[optind], stdout, grammar_flags);
     } else {
         const char *text = load_file(argv[optind+1]);
         if (text == NULL)
             return 1;
 
-        grammar = load_grammar(argv[optind], 0);
+        grammar = load_grammar(argv[optind], stdout, grammar_flags);
         if (grammar == NULL)
             return 1;
 

@@ -43,251 +43,261 @@ void print_literal(FILE *out, struct literal *l) {
     }
 }
 
-static void dump_abbrevs(struct abbrev *a) {
+static void dump_abbrevs(FILE *out, struct abbrev *a) {
     struct abbrev *p;
 
     for (p=a; p != NULL; p = p->next) {
-        printf("  %s: ", p->name);
-        print_literal(stdout, p->literal);
+        fprintf(out, "  %s: ", p->name);
+        print_literal(out, p->literal);
         if (p->literal->type == REGEX)
-            printf(" = '%s'", p->literal->text);
+            fprintf(out, " = '%s'", p->literal->text);
         if (p->literal->epsilon)
-            printf(" <>");
-        printf("\n");
+            fprintf(out, " <>");
+        fprintf(out, "\n");
     }
 }
 
-static void print_quant(struct match *m) {
+static void print_quant(FILE *out, struct match *m) {
     static const char *quants = ".?*+";
     enum quant quant = m->quant;
 
     if (quant == Q_ONCE)
         return;
     if (quant <= Q_PLUS) {
-        printf(" %c", quants[quant]);
+        fprintf(out, " %c", quants[quant]);
     } else {
-        printf(" <U:q:%d>", quant);
+        fprintf(out, " <U:q:%d>", quant);
     }
     if (m->epsilon)
-        printf(" <>");
+        fprintf(out, " <>");
 }
 
-static void print_indent(int indent) {
+static void print_indent(FILE *out, int indent) {
     for (int i=0; i < indent; i++)
-        putchar(' ');
+        fputc(' ', out);
 }
 
-static void print_matches(struct match *m, const char *sep) {
+static void print_any(FILE *out, struct match *any, int flags) {
+    if (flags & GF_ANY_RE && 
+        any->literal != NULL && any->literal->pattern != NULL) {
+        print_literal(out, any->literal);
+    } else if (any->epsilon) {
+        fprintf(out, "..?");
+    } else {
+        fprintf(out, "...");
+    }
+}
+
+static void print_matches(FILE *out, struct match *m, const char *sep, 
+                          int flags) {
 
     if (m == NULL) {
-        printf("<NULL>\n");
+        fprintf(out, "<NULL>\n");
         return;
     }
 
     list_for_each(p, m) {
         switch (p->type) {
         case LITERAL:
-            print_literal(stdout, p->literal);
+            print_literal(out, p->literal);
             break;
         case NAME:
-            printf("%s", p->name);
-            print_quant(p);
+            fprintf(out, "%s", p->name);
+            print_quant(out, p);
             break;
         case ANY:
-            if (p->literal != NULL && p->literal->pattern != NULL)
-                print_literal(stdout, p->literal);
-            else
-                printf("...");
+            print_any(out, p, flags);
             break;
         case FIELD:
-            printf("$%d", p->field);
+            fprintf(out, "$%d", p->field);
             break;
         case ALTERNATIVE:
-            printf("(");
-            print_matches(p->matches, " | ");
-            printf(")");
-            print_quant(p);
+            fprintf(out, "(");
+            print_matches(out, p->matches, " | ", flags);
+            fprintf(out, ")");
+            print_quant(out, p);
             break;
         case SEQUENCE:
-            printf("(");
-            print_quant(p);
-            print_matches(p->matches, " ");
-            printf(")");
+            fprintf(out, "(");
+            print_quant(out, p);
+            print_matches(out, p->matches, " ", flags);
+            fprintf(out, ")");
             break;
         case ABBREV_REF:
-            printf("^%s", p->abbrev->name);
+            fprintf(out, "%s", p->abbrev->name);
             break;
         case RULE_REF:
-            printf("^%s", p->rule->name);
+            fprintf(out, "%s", p->rule->name);
+            print_quant(out, p);
             break;
         default:
-            printf("<U:match:%d>", p->type);
+            fprintf(out, "<U:match:%d>", p->type);
             break;
         }
         if (p->next != NULL)
-            printf(sep);
+            fprintf(out, sep);
     }
 }
 
-static void dump_follow(struct match *m) {
+static void print_follow(FILE *out, struct match *m, int flags) {
+    if (! (flags & GF_FOLLOW))
+        return;
+
     if (m->follow != NULL) {
-        printf (" {");
+        fprintf (out, " {");
         list_for_each(f, m->follow) {
-            print_literal(stdout, f->literal);
+            print_literal(out, f->literal);
             if (f->next != NULL) {
-                putchar(' ');
+                fputc(' ', out);
             }
         }
-        putchar('}');
+        fputc('}', out);
     }
 }
 
-static void dump_matches(struct match *m, int indent) {
+static void dump_matches(FILE *out, struct match *m, int indent, int flags) {
 
     if (m == NULL) {
-        printf("<NULL>\n");
+        fprintf(out, "<NULL>\n");
         return;
     }
 
     list_for_each(p, m) {
-        print_indent(indent);
+        print_indent(out, indent);
 
         switch (p->type) {
         case LITERAL:
-            print_literal(stdout, p->literal);
-            dump_follow(p);
-            printf("\n");
+            print_literal(out, p->literal);
+            if (flags & GF_FOLLOW)
+                print_follow(out, p, flags);
+            fprintf(out, "\n");
             break;
         case NAME:
-            printf(":%s", p->name);
-            print_quant(p);
-            dump_follow(p);
+            fprintf(out, ":%s", p->name);
+            print_quant(out, p);
+            print_follow(out, p, flags);
             putchar('\n');
             break;
         case ANY:
-            if (p->literal != NULL && p->literal->pattern != NULL) {
-                print_literal(stdout, p->literal);
-            } else {
-                printf("...");
-            }
-            dump_follow(p);
-            putchar('\n');
+            print_any(out, p, flags);
+            print_follow(out, p, flags);
+            fputc('\n', out);
             break;
         case FIELD:
-            printf("$%d\n", p->field);
-            dump_follow(p);
+            fprintf(out, "$%d\n", p->field);
+            print_follow(out, p, flags);
             break;
         case ALTERNATIVE:
-            printf("|");
-            print_quant(p);
-            dump_follow(p);
+            fprintf(out, "|");
+            print_quant(out, p);
+            print_follow(out, p, flags);
             putchar('\n');
-            dump_matches(p->matches, indent + 2);
+            dump_matches(out, p->matches, indent + 2, flags);
             break;
         case SEQUENCE:
-            printf("@");
-            print_quant(p);
-            dump_follow(p);
+            fprintf(out, "@");
+            print_quant(out, p);
+            print_follow(out, p, flags);
             putchar('\n');
-            dump_matches(p->matches, indent + 2);
+            dump_matches(out, p->matches, indent + 2, flags);
             break;
         case ABBREV_REF:
-            printf("^%s", p->abbrev->name);
-            dump_follow(p);
-            putchar('\n');
+            fprintf(out, "^%s", p->abbrev->name);
+            print_follow(out, p, flags);
+            fputc('\n', out);
             break;
         case RULE_REF:
-            printf("^%s", p->rule->name);
-            dump_follow(p);
-            putchar('\n');
+            fprintf(out, "^%s", p->rule->name);
+            print_follow(out, p, flags);
+            fputc('\n', out);
             break;
         default:
-            printf("<U>\n");
+            fprintf(out, "<U>\n");
             break;
         }
     }
 }
 
-static void dump_node(struct node *n) {
+static void dump_node(FILE *out, struct node *n) {
     if (n == NULL) {
-        printf("<NULL>");
+        fprintf(out, "<NULL>");
         return;
     }
     switch(n->type) {
     case N_GLOBAL:
     case N_QUOTED:
-        printf("%s", n->label);
+        fprintf(out, "%s", n->label);
         break;
     case N_FIELD:
-        printf("$%d", n->field);
+        fprintf(out, "$%d", n->field);
         break;
     default:
-        printf("<U>");
+        fprintf(out, "<U>");
         break;
     }
     switch(n->val_type) {
     case N_NONE:
         break;
     case N_QUOTED:
-        printf(" = %s", n->val_label);
+        fprintf(out, " = %s", n->val_label);
         break;
     case N_FIELD:
-        printf(" = $%d", n->val_field);
+        fprintf(out, " = $%d", n->val_field);
         break;
     default:
-        printf(" = <U>");
+        fprintf(out, " = <U>");
         break;
     }
     putchar('\n');
 }
 
-static void dump_nodes(struct node *n, int indent) {
+static void dump_nodes(FILE *out, struct node *n, int indent) {
     if (n == NULL) {
-        printf("<NULL>");
+        fprintf(out, "<NULL>");
         return;
     }
     list_for_each(p, n) {
-        print_indent(indent);
-        dump_node(p);
+        print_indent(out, indent);
+        dump_node(out, p);
         if (p->children != NULL)
-            dump_nodes(p->children, indent + 2);
+            dump_nodes(out, p->children, indent + 2);
     }
 }
 
-static void dump_rules(struct rule *r, int pretty) {
+static void dump_rules(FILE *out, struct rule *r, int flags) {
     list_for_each(p, r) {
-        if (pretty) {
-            printf("  %s: ", p->name);
-            print_matches(p->matches, " @ ");
-            printf("\n");
+        if (flags & GF_PRETTY) {
+            fprintf(out, "  %s: ", p->name);
+            print_matches(out, p->matches, " @ ", flags);
+            fprintf(out, "\n");
         } else {
-            printf("  %s\n", p->name);
-            dump_matches(p->matches, 4);
+            fprintf(out, "  %s\n", p->name);
+            dump_matches(out, p->matches, 4, flags);
         }
-        if (p->matches->first != NULL) {
-            printf("    [");
+        if ((flags & GF_FIRST) && p->matches->first != NULL) {
+            fprintf(out, "    [");
             list_for_each(f, p->matches->first) {
-                print_literal(stdout, f->literal);
+                print_literal(out, f->literal);
                 if (f->next != NULL)
-                    putchar(' ');
+                    fputc(' ', out);
             }
-            printf("]\n");
+            fprintf(out, "]\n");
         }
-        if (p->nodes != NULL) {
-            printf("  {\n");
-            dump_nodes(p->nodes, 4);
-            printf("  }\n");
+        if ((flags & GF_NODES) && p->nodes != NULL) {
+            fprintf(out, "  {\n");
+            dump_nodes(out, p->nodes, 4);
+            fprintf(out, "  }\n");
         } else {
-            putchar('\n');
+            fputc('\n', out);
         }
     }
 }
 
-static void dump_grammar(struct grammar *grammar, int pretty) {
-    printf("abbrevs:\n");
-    dump_abbrevs(grammar->abbrevs);
-    printf("rules:\n");
-    dump_rules(grammar->rules, pretty);
+static void dump_grammar(struct grammar *grammar, FILE *out, int flags) {
+    fprintf(out, "abbrevs:\n");
+    dump_abbrevs(out, grammar->abbrevs);
+    fprintf(out, "rules:\n");
+    dump_rules(out, grammar->rules, flags);
 }
 
 /*
@@ -888,7 +898,7 @@ struct literal *make_literal(const char *text, enum literal_type type,
 /* defined in spec-parse.y */
 struct grammar *spec_parse_file(const char *name);
 
-struct grammar *load_grammar(const char *filename, int dump) {
+struct grammar *load_grammar(const char *filename, FILE *log, int flags) {
     struct grammar *result;
     int ok = 1;
     const char *errmsg;
@@ -912,10 +922,8 @@ struct grammar *load_grammar(const char *filename, int dump) {
         fprintf(stderr, errmsg);
     }
 
-    if (dump == 1)
-        dump_grammar(result, 0);
-    else if (dump == 2)
-        dump_grammar(result, 1);
+    if (flags != GF_NONE)
+        dump_grammar(result, (log == NULL) ? stdout : log, flags);
 
     return ok ? result : NULL;
 }

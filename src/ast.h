@@ -57,7 +57,8 @@ struct grammar {
     struct rule   *rules;
 };
 
-enum parse_flags {
+/* Flags to control debug printing during parsing */
+enum parse_debug_flags {
     PF_NONE    = 0,
     PF_ADVANCE = (1 << 0),
     PF_MATCH   = (1 << 1),
@@ -65,13 +66,29 @@ enum parse_flags {
     PF_RULE    = (1 << 3)
 };
 
+
+/* Parse text TEXT according to GRAMMAR. FILENAME indicates what file TEXT
+ * was read from.
+ * LOG is used to print logging messages. FLAGS controls what is printed
+ * and should be a set of flags from enum parse_flags
+ */
 void parse(struct grammar *grammar, const char *filename, const char *text,
            FILE *log, int flags);
 
+enum grammar_debug_flags {
+    GF_NONE = 0,
+    GF_ANY_RE = (1 << 0),   /* Print any expressions as full regexps */
+    GF_FOLLOW = (1 << 1),   /* Print follow sets */
+    GF_FIRST  = (1 << 2),   /* Print first sets/epsilon indicator */
+    GF_NODES  = (1 << 3),
+    GF_PRETTY = (1 << 4)
+};
 /*
  * Load grammar from FILENAME. Return NULL on error
+ * LOG is used to print logging messages. FLAGS controls what is printed
+ * and should be a set of flags from enum grammar_debug_flags
  */
-struct grammar *load_grammar(const char *filename, int dump);
+struct grammar *load_grammar(const char *filename, FILE *log, int flags);
 
 enum literal_type {
     QUOTED, 
