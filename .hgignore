@@ -12,4 +12,6 @@ Makefile(\.in)?$
 ^src/\.(deps|libs)/
 \.l?[oa]$
 TAGS$
-^libtool
+^libtool$
+^ylwrap$
+^src/spec-(parse|lex)\.[ch]$
