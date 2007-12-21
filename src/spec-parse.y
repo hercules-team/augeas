@@ -46,7 +46,6 @@ typedef void *yyscan_t;
 %token          T_NODE
 %token          T_GRAMMAR
 %token          T_TOKEN
-%token          T_DEFAULT
 
 %union {
   struct grammar  *grammar;

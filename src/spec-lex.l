@@ -76,7 +76,6 @@ ID    [A-Za-z][A-Za-z0-9_-]*
   node         return T_NODE;
   grammar      return T_GRAMMAR;
   token        return T_TOKEN;
-  default      return T_DEFAULT;
 
   {ID}         {
                yylval->string = strndup(yytext, yyleng);
