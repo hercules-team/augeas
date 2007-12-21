@@ -424,15 +424,17 @@ static int check_abbrevs(struct abbrev *abbrevs) {
 static int check_matches(struct match *matches) {
     int r = 1;
 
-    list_for_each(p, matches) {
-        switch(p->type) {
-        case ALTERNATIVE:
-        case SEQUENCE:
-            check_matches(p->matches);
-            break;
-        default:
-            /* ok, we don't check any others */
-            break;
+    list_for_each(m, matches) {
+        if (m->type == FIELD) {
+            if (find_field(m->owner->matches, m->field) == NULL) {
+                grammar_error(_FM(m), _L(m),
+                              "Field $%d in rule %s does not exist\n",
+                              m->field, m->owner->name);
+                r = 0;
+            }
+        }
+        if (m->type == ALTERNATIVE || m->type == SEQUENCE) {
+            check_matches(m->matches);
         }
     }
     return r;
@@ -524,8 +526,14 @@ static struct match *find_field_rec(struct match *m, int *field) {
     return m;
 }
 
-struct match *find_field(struct rule *r, int field) {
-    return find_field_rec(r->matches, &field);
+struct match *find_field(struct match *matches, int id) {
+    list_for_each(m, matches) {
+        if (m->id == id)
+            return m;
+        if (m->type == ALTERNATIVE || m->type == SEQUENCE)
+            find_field(m->matches, id);
+    }
+    return NULL;
 }
 
 static int make_match_firsts(struct match *matches) {
@@ -571,7 +579,8 @@ static int make_match_firsts(struct match *matches) {
         case FIELD:
             /* first(cur->field) */
             {
-                struct match *field = find_field(cur->owner, cur->field);
+                struct match *field = find_field(cur->owner->matches, 
+                                                 cur->field);
                 if (field == NULL) {
                     internal_error(_FM(cur), _L(cur->owner), 
                                    "rule %s: unresolved field %d", 
@@ -862,11 +871,13 @@ static int bind_match_names(struct grammar *grammar, struct match *matches) {
     return result;
 }
 
-static void bind_match_rule(struct rule *rule, struct match *matches) {
+static void bind_match_rule(struct rule *rule, struct match *matches,
+                            int id) {
     list_for_each(m, matches) {
         m->owner = rule;
+        m->id = id++;
         if (m->type == ALTERNATIVE || m->type == SEQUENCE)
-            bind_match_rule(rule, m->matches);
+            bind_match_rule(rule, m->matches, id);
     }
 }
 
@@ -881,7 +892,7 @@ static void bind_match_rule(struct rule *rule, struct match *matches) {
 static int resolve(struct grammar *grammar) {
     list_for_each(r, grammar->rules) {
         r->grammar = grammar;
-        bind_match_rule(r, r->matches);
+        bind_match_rule(r, r->matches, 1);
         if (! bind_match_names(grammar, r->matches))
             return 0;
     }

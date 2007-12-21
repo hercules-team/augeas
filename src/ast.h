@@ -143,7 +143,7 @@ struct rule {
     struct node       *nodes;
 };
 
-struct match *find_field(struct rule *r, int field);
+struct match *find_field(struct match *matches, int field);
 
 enum match_type {
     LITERAL,      /* literal string or regex */
@@ -200,6 +200,7 @@ struct match {
         struct abbrev  *abbrev;      /* ABBREV_REF */
     };
     struct rule        *owner;       /* the rule this match belongs to */
+    int                 id;          /* the number of this match in owner */
     struct literal_set *first;       /* the first set */
     struct literal_set *follow;
     int                 epsilon;     /* produces the empty string */

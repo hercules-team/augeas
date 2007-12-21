@@ -176,7 +176,7 @@ static void parse_sequence(struct match *match, struct state *state) {
 }
 
 static void parse_field(struct match *match, struct state *state) {
-    struct match *field = find_field(match->owner, match->field);
+    struct match *field = find_field(match->owner->matches, match->field);
     parse_match(field, state);
 }
 
