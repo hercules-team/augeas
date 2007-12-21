@@ -857,14 +857,22 @@ static int bind_match_names(struct grammar *grammar, struct match *matches) {
     return result;
 }
 
-static void bind_match_rule(struct rule *rule, struct match *matches,
+static int bind_match_rule(struct rule *rule, struct match *matches,
                             int id) {
     list_for_each(m, matches) {
         m->owner = rule;
-        m->id = id++;
+        if (m->type == ANY ||
+            m->type == LITERAL ||
+            m->type == FIELD ||
+            m->type == NAME) {
+            m->id = id++;
+        } else {
+            m->id = -1;
+        }
         if (SUBMATCH_P(m))
-            bind_match_rule(rule, m->matches, id);
+            id = bind_match_rule(rule, m->matches, id);
     }
+    return id;
 }
 
 /*
