@@ -433,7 +433,7 @@ static int check_matches(struct match *matches) {
                 r = 0;
             }
         }
-        if (m->type == ALTERNATIVE || m->type == SEQUENCE) {
+        if (SUBMATCH_P(m)) {
             check_matches(m->matches);
         }
     }
@@ -513,7 +513,7 @@ static int merge_literal_set(struct literal_set **first,
 
 static struct match *find_field_rec(struct match *m, int *field) {
     while (m != NULL && *field != 1) {
-        if (m->type == ALTERNATIVE || m->type == SEQUENCE) {
+        if (SUBMATCH_P(m)) {
             struct match *c = find_field_rec(m->matches, field);
             if (*field == 1)
                 return c;
@@ -530,7 +530,7 @@ struct match *find_field(struct match *matches, int id) {
     list_for_each(m, matches) {
         if (m->id == id)
             return m;
-        if (m->type == ALTERNATIVE || m->type == SEQUENCE)
+        if (SUBMATCH_P(m))
             find_field(m->matches, id);
     }
     return NULL;
@@ -664,18 +664,12 @@ static int make_match_follows(struct match *matches, struct match *parent) {
             if (merge_literal_set(&(cur->follow), cur->first))
                 changed = 1;
         }
-        switch(cur->type) {
-        case RULE_REF:
+        if (cur->type == RULE_REF) {
             if (merge_literal_set(&(cur->rule->matches->follow), cur->follow))
                 changed = 1;
-            break;
-        case ALTERNATIVE:
-        case SEQUENCE:
+        } else if (SUBMATCH_P(cur)) {
             if (make_match_follows(cur->matches, cur))
                 changed = 1;
-            break;
-        default:
-            break;
         }
     }
     return changed;
@@ -725,19 +719,13 @@ static int resolve_any(struct match *match) {
     int result = 1;
     
     list_for_each(m, match) {
-        switch(m->type) {
-        case ANY:
+        if (m->type == ANY) {
             if (! make_any_literal(m))
                 result = 0;
-            break;
-        case SEQUENCE:
-        case ALTERNATIVE:
+        } 
+        if (SUBMATCH_P(m)) {
             if (! resolve_any(m->matches))
                 result = 0;
-            break;
-        default:
-            /* nothing */
-            break;
         }
     }
     return result;
@@ -763,9 +751,10 @@ static int check_match_ambiguity(struct rule *rule, struct match *matches) {
                 }
             }
         }
-        if (m->type == ALTERNATIVE || m->type == SEQUENCE)
+        if (SUBMATCH_P(m)) {
             if (! check_match_ambiguity(rule, m->matches))
                 return 0;
+        }
     }
     return 1;
 }
@@ -838,8 +827,7 @@ static int bind_match_names(struct grammar *grammar, struct match *matches) {
     int result = 1;
 
     list_for_each(cur, matches) {
-        switch(cur->type) {
-        case NAME:
+        if (cur->type == NAME) {
             if ((a = find_abbrev(grammar, cur->name)) != NULL) {
                 free((void *) cur->name);
                 cur->type = ABBREV_REF;
@@ -857,15 +845,9 @@ static int bind_match_names(struct grammar *grammar, struct match *matches) {
                 grammar_error(_FM(cur), _L(cur), "Unresolved symbol %s", cur->name);
                 result = 0;
             }
-            break;
-        case SEQUENCE:
-        case ALTERNATIVE:
+        } else if (SUBMATCH_P(cur)) {
             if (! bind_match_names(grammar, cur->matches))
                 result = 0;
-            break;
-        default:
-            /* nothing else needs resolving */
-            break;
         }
     }
     return result;
@@ -876,7 +858,7 @@ static void bind_match_rule(struct rule *rule, struct match *matches,
     list_for_each(m, matches) {
         m->owner = rule;
         m->id = id++;
-        if (m->type == ALTERNATIVE || m->type == SEQUENCE)
+        if (SUBMATCH_P(m))
             bind_match_rule(rule, m->matches, id);
     }
 }

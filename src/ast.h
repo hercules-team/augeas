@@ -156,6 +156,10 @@ enum match_type {
     ABBREV_REF    /* reference to an abbrev */
 };
 
+/* Does the match M have submatches in M->matches that might
+   be treated recursively ? */
+#define SUBMATCH_P(m) ((m)->type == ALTERNATIVE || (m)->type == SEQUENCE)
+
 /* A set of literals, for the first/follow sets */
 struct literal_set {
     struct literal_set   *next;
