@@ -256,6 +256,7 @@ static void dump_matches(FILE *out, struct match *m, int indent, int flags) {
             break;
         case RULE_REF:
             fprintf(out, "%s", p->rule->name);
+            print_quant(out, p);
             print_follow(out, p, flags);
             fputc('\n', out);
             break;
