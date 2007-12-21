@@ -129,14 +129,16 @@ int main(int argc, char **argv) {
         if (grammar_flags == GF_NONE)
             grammar_flags |= GF_PRETTY;
         grammar = load_grammar(argv[optind], stdout, grammar_flags);
+        if (grammar == NULL)
+            return EXIT_FAILURE;
     } else {
         const char *text = load_file(argv[optind+1]);
         if (text == NULL)
-            return 1;
+            return EXIT_FAILURE;
 
         grammar = load_grammar(argv[optind], stdout, grammar_flags);
         if (grammar == NULL)
-            return 1;
+            return EXIT_FAILURE;
 
         parse(grammar, argv[optind+1], text, stdout, parse_flags);
     }

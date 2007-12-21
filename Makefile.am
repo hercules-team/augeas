@@ -1,5 +1,5 @@
-SUBDIRS=src
+SUBDIRS=src tests
 
-EXTRA_DIST=doc/examples.txt tests/augtest tests/*.rb tests/root
+EXTRA_DIST=doc/examples.txt
 
 
