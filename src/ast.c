@@ -989,7 +989,7 @@ struct grammar *load_grammar(const char *filename, FILE *log, int flags) {
         fprintf(stderr, errmsg);
     }
 
-    if (flags != GF_NONE)
+    if (result != NULL && flags != GF_NONE)
         dump_grammar(result, (log == NULL) ? stdout : log, flags);
 
     return ok ? result : NULL;
