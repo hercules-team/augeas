@@ -23,6 +23,7 @@
 #include <pcre.h>
 #include "ast.h"
 #include "list.h"
+#include "internal.h"
 
 #define NMATCHES 100
 
@@ -88,33 +89,55 @@ static int lex(struct literal *literal, struct state *state) {
     return -1;
 }
 
-static void emit_token(const char *msg, struct state *state, int len) {
-    char *t = strndupa(state->pos, len);
-
-    if (state->flags & PF_TOKEN) {
-        fprintf(state->log, "T %s:", msg);
-        print_chars(state->log, t, strlen(t));
-        fprintf(state->log, ":\n");
-    }
-}
-
 typedef void (*parse_match_func)(struct match *, struct state *);
 
 static void parse_match(struct match *match, struct state *state);
 
-static void parse_literal(struct literal *literal, struct state *state) {
-    int len = lex(literal, state);
+static struct aug_token *parse_literal(struct match *match, 
+                                       struct state *state) {
+    struct aug_token *result = NULL;
+
+    struct literal *literal;
+    int len;
+
+    if (match->type == ABBREV_REF)
+        literal = match->abbrev->literal;
+    else if (match->type == LITERAL || match->type == ANY)
+        literal = match->literal;
+    else {
+        internal_error(state->filename, state->lineno,
+                       "Illegal match type %d for literal", match->type);
+        state->applied = 0;
+        return NULL;
+    }
+
+    len = lex(literal, state);
     if (len < 0) {
         state->applied = 0;
     } else {
-        emit_token("literal", state, len);
+        char *text = strndup(state->pos, len);
+        result = aug_make_token(AUG_TOKEN_INERT, text, "/");
+
+        if (state->flags & PF_TOKEN) {
+            struct abbrev *a;
+            fprintf(state->log, "T ");
+            for (a=match->owner->grammar->abbrevs; a != NULL; a = a->next) {
+                if (a->literal == literal) {
+                    fprintf(state->log, a->name);
+                    break;
+                }
+            }
+            if (a == NULL) {
+                print_literal(state->log, literal);
+            }
+            fprintf(state->log, " = <");
+            print_chars(state->log, result->text, strlen(result->text));
+            fprintf(state->log, ">\n");
+        }
         advance(state, len);
         state->applied = 1;
     }
-}
-
-static void parse_any(struct match *match, struct state *state) {
-    parse_literal(match->literal, state);
+    return result;
 }
 
 static int applies(struct match *match, struct state *state) {
@@ -201,10 +224,10 @@ static void parse_quant_match(parse_match_func func,
 static void parse_match(struct match *match, struct state *state) {
     switch(match->type) {
     case LITERAL:
-        parse_literal(match->literal, state);
+        parse_literal(match, state);
         break;
     case ANY:
-        parse_any(match, state);
+        parse_literal(match, state);
         break;
     case FIELD:
         parse_field(match, state);
@@ -219,7 +242,7 @@ static void parse_match(struct match *match, struct state *state) {
         parse_quant_match(parse_rule_ref, match, state);
         break;
     case ABBREV_REF:
-        parse_literal(match->abbrev->literal, state);
+        parse_literal(match, state);
         break;
     default:
         internal_error(state->filename, state->lineno,

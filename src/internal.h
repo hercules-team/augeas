@@ -122,8 +122,8 @@ enum aug_token_type {
 };
 
 struct aug_token {
-    enum aug_token_type type;
     struct aug_token *next;
+    enum aug_token_type type;
     const char *text;
     const char *node;  // The node associated with this token
 };

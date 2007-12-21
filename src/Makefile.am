@@ -26,4 +26,4 @@ libparse_la_SOURCES = spec-parse.y ast.h ast.c parser.c list.h
 libparse_la_LIBADD = liblexer.la @LIBPCRE_LIBS@
 
 augparse_SOURCES = augparse.c
-augparse_LDADD = libparse.la
+augparse_LDADD = libparse.la libaugeas.la
