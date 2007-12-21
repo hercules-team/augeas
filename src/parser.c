@@ -38,6 +38,7 @@ struct state {
     int         applied;
     int         flags;    /* set of parse_flags */
     FILE       *log;
+    struct aug_token *tokens;
 };
 
 static void advance(struct state *state, int cnt) {
@@ -93,10 +94,7 @@ typedef void (*parse_match_func)(struct match *, struct state *);
 
 static void parse_match(struct match *match, struct state *state);
 
-static struct aug_token *parse_literal(struct match *match, 
-                                       struct state *state) {
-    struct aug_token *result = NULL;
-
+static void parse_literal(struct match *match, struct state *state) {
     struct literal *literal;
     int len;
 
@@ -108,15 +106,21 @@ static struct aug_token *parse_literal(struct match *match,
         internal_error(state->filename, state->lineno,
                        "Illegal match type %d for literal", match->type);
         state->applied = 0;
-        return NULL;
+        return;
     }
 
     len = lex(literal, state);
     if (len < 0) {
         state->applied = 0;
     } else {
+        struct aug_token *token = NULL;
         char *text = strndup(state->pos, len);
-        result = aug_make_token(AUG_TOKEN_INERT, text, "/");
+
+        token = aug_make_token(AUG_TOKEN_INERT, text, "/");
+
+        list_append(state->tokens, token);
+        advance(state, len);
+        state->applied = 1;
 
         if (state->flags & PF_TOKEN) {
             struct abbrev *a;
@@ -128,16 +132,17 @@ static struct aug_token *parse_literal(struct match *match,
                 }
             }
             if (a == NULL) {
-                print_literal(state->log, literal);
+                if (match->type == ANY) {
+                    fprintf(state->log, "..%c", match->epsilon ? '?' : '.');
+                } else {
+                    print_literal(state->log, literal);
+                }
             }
             fprintf(state->log, " = <");
-            print_chars(state->log, result->text, strlen(result->text));
+            print_chars(state->log, token->text, strlen(token->text));
             fprintf(state->log, ">\n");
         }
-        advance(state, len);
-        state->applied = 1;
     }
-    return result;
 }
 
 static int applies(struct match *match, struct state *state) {
@@ -260,6 +265,7 @@ void parse(struct grammar *grammar, const char *filename, const char *text,
     state.text = text;
     state.pos = text;
     state.applied = 0;
+    state.tokens = NULL;
     if (flags != PF_NONE && log != NULL) {
         state.flags = flags;
         state.log = log;
