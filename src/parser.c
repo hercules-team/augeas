@@ -267,7 +267,6 @@ void parse(struct grammar *grammar, const char *filename, const char *text,
         state.flags = PF_NONE;
         state.log = stdout;
     }
-    printf("flags: %x\n", state.flags);
     parse_rule(grammar->rules, &state);
     if (! state.applied || *state.pos != '\0')
         fprintf(stderr, "Parse failed\n");
