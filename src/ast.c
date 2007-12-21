@@ -434,7 +434,8 @@ static int check_matches(struct match *matches) {
             }
         }
         if (SUBMATCH_P(m)) {
-            check_matches(m->matches);
+            if (! check_matches(m->matches))
+                r = 0;
         }
     }
     return r;
@@ -452,16 +453,19 @@ static int check_rules(struct rule *rules) {
                 r = 0;
             }
         }
-        r = check_matches(p->matches) && r;
+        if (! check_matches(p->matches))
+            r = 0;
     }
     return r;
 }
 
 static int semantic_check(struct grammar *grammar) {
-    int r;
+    int r = 1;
 
-    r = check_abbrevs(grammar->abbrevs);
-    r = check_rules(grammar->rules) && r;
+    if (! check_abbrevs(grammar->abbrevs))
+        r = 0;
+    if (! check_rules(grammar->rules))
+        r = 0;
     return r;
 }
 

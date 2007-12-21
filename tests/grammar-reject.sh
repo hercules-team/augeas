@@ -21,7 +21,7 @@ for g in $GRAMMARS; do
         echo "Grammar file $g is not readable"
         exit 19
     fi
-    printf "%-20s ... " $(basename $g)
+    printf "%-30s ... " $(basename $g)
     ${AUGPARSE} $g > /dev/null 2>&1
     ret=$?
     if [[ $ret -eq 0 ]]; then
