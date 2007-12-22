@@ -1,8 +1,8 @@
 EXTRA_DIST=augtest *.rb root/ \
-	   grammar-reject.sh grammars/
+	   test-grammars.sh grammars/
 
-noinst_SCRIPTS = grammar-reject.sh
+noinst_SCRIPTS = test-grammars.sh
 
 TESTS_ENVIRONMENT = top_builddir=$(top_builddir)
 
-TESTS = grammar-reject.sh
+TESTS = test-grammars.sh
