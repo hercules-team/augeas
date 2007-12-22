@@ -14,7 +14,7 @@ static struct abbrev *make_abbrev(const char *name, struct literal *literal,
                                   const char *deflt, int lineno);
 
 static struct rule *make_rule(const char *name, struct match *matches, 
-                             struct node *nodes, int lineno);
+                              struct action *actions, int lineno);
 
 static struct match* make_match_list(struct match *head, struct match *tail,
                                      enum match_type type, int lineno);
@@ -22,10 +22,12 @@ static struct match *make_literal_match(struct literal *literal, int lineno);
 static struct match *make_name_match(const char *name, enum quant quant, 
                                      int lineno);
 static struct match *make_match(enum match_type type, int lineno);
- static struct match *make_any_match(int epsilon, int lineno);
+static struct match *make_any_match(int epsilon, int lineno);
 static struct match *make_field_match(int field, int lineno);
-
-static struct node *make_node(enum node_type, int lineno);
+ static struct action *make_action(enum action_scope scope, int id,
+                                   struct entry *path, 
+                                  struct entry *value, int lineno);
+static struct entry *make_entry(enum entry_type type, int lineno);
 
 typedef void *yyscan_t;
 %}
@@ -42,8 +44,9 @@ typedef void *yyscan_t;
 %token <string> T_NAME_COLON
 %token <string> T_GLOBAL   /* '$seq' or '$file_name' */
 %token <intval> T_ANY      /* '...' or '..?' */
+%token <intval> T_NUMBER
+
  /* Keywords */
-%token          T_NODE
 %token          T_GRAMMAR
 %token          T_TOKEN
 
@@ -54,7 +57,7 @@ typedef void *yyscan_t;
   struct literal *literal;
   struct match   *match;
   struct action  *action;
-  struct node    *node;
+  struct entry   *entry;
   enum quant     quant;
   char           *string;
   int            intval;
@@ -65,8 +68,9 @@ typedef void *yyscan_t;
 %type <literal> literal
 %type <string>  token_opts
 %type <match>   match match_seq match_prim
-%type <node>    node nodes node_value
 %type <quant>   match_quant
+%type <action>  actions action
+%type <entry>   entry_prim value path
 
 %{
 /* Lexer */
@@ -109,7 +113,7 @@ rules: rule
 
 rule: T_NAME_COLON match
       { $$ = make_rule($1, $2, NULL, @1.first_line); }
-    | T_NAME_COLON match '{' nodes '}'
+    | T_NAME_COLON match '{' actions '}'
       { $$ = make_rule($1, $2, $4, @1.first_line); }
 
 /* Matches describe the structure of the file */
@@ -132,7 +136,10 @@ match_prim:  literal
           | T_FIELD
             { $$ = make_field_match($1, @1.first_line); }
           | '(' match ')' match_quant
-            { $$ = $2; $$->quant = $4;
+            { 
+              $$ = $2; 
+              $$->gid = 1;   /* $2 was enclosed in parens, count as group */
+              $$->quant = $4; 
               $$->epsilon = ($$->quant == Q_MAYBE || $$->quant == Q_STAR);
             }
 
@@ -152,32 +159,32 @@ literal: T_QUOTED
          { $$ = make_literal($1, REGEX, @1.first_line); }
 
 /* Actions describe the transformation from matches into the tree */
-nodes: node_value
+actions: action
        { $$ = $1; }
-     | nodes '{' nodes '}'
-       {
-         if ($1->children == NULL)
-           $1->children = $3;
-         else
-           list_append($1, $3);
-         $$ = $1;
-       }
-     | nodes nodes
+     | actions action
        { $$ = $1; list_append($1, $2); }
 
-node_value: node
-{ $$ = $1; }
-| node '=' T_QUOTED
-{ $$ = $1; $$->val_type = N_QUOTED; $$->val_label = $3; }
-| node '=' T_FIELD
-{ $$ = $1; $$->val_type = N_FIELD; $$->val_field = $3; }
+action: '@' T_NUMBER '{' path value '}'
+        { $$ = make_action(A_GROUP, $2, $4, $5, @1.first_line); }
+      | '@' T_FIELD  '{' path value '}'
+        { $$ = make_action(A_FIELD, $2, $4, $5, @1.first_line); }
 
-node: T_NODE T_GLOBAL
-      { $$ = make_node(N_GLOBAL, @1.first_line); $$->label = $2; }
-    | T_NODE T_QUOTED
-      { $$ = make_node(N_QUOTED, @1.first_line); $$->label = $2; }
-    | T_NODE T_FIELD
-      { $$ = make_node(N_FIELD, @1.first_line); $$->field = $2; }
+path:  entry_prim
+       { $$ = $1; }
+    |  entry_prim path
+       { $$ = $1; list_append($1, $2); }
+
+value: /* empty */
+       { $$ = NULL; }
+     | '=' entry_prim
+       { $$ = $2; }
+
+entry_prim: T_GLOBAL
+            { $$ = make_entry(E_GLOBAL, @1.first_line); $$->text = $1; }
+          | T_QUOTED
+            { $$ = make_entry(E_CONST, @1.first_line); $$->text = $1; }
+          | T_FIELD
+            { $$ = make_entry(E_FIELD, @1.first_line); $$->field = $1; }
 
 %%
 
@@ -231,14 +238,14 @@ struct abbrev *make_abbrev(const char *name, struct literal *literal,
 }
 
 struct rule *make_rule(const char *name, struct match *matches, 
-                       struct node *nodes, int lineno) {
+                       struct action *actions, int lineno) {
   struct rule *result;
 
   CALLOC(result, 1);
   result->lineno = lineno;
   result->name = name;
   result->matches = matches;
-  result->nodes = nodes;
+  result->actions = actions;
   return result;
 }
 
@@ -306,12 +313,26 @@ struct match *make_field_match(int field, int lineno) {
   return result;
 }
 
-struct node *make_node(enum node_type type, int lineno) {
-  struct node *result;
+static struct action *make_action(enum action_scope scope, int id,
+                                  struct entry *path, 
+                                  struct entry *value, int lineno) {
+  struct action *result;
 
   CALLOC(result, 1);
-  result->type = type;
   result->lineno = lineno;
+  result->scope = scope;
+  result->id = id;
+  result->path = path;
+  result->value = value;
+  return result;
+}
+
+static struct entry *make_entry(enum entry_type type, int lineno) {
+  struct entry *result;
+
+  CALLOC(result, 1);
+  result->lineno = lineno;
+  result->type = type;
   return result;
 }
 

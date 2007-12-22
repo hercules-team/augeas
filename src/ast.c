@@ -178,28 +178,41 @@ static void print_matches(FILE *out, struct match *m, const char *sep,
 }
 
 static void print_follow(FILE *out, struct match *m, int flags) {
-    if (! (flags & GF_FOLLOW))
-        return;
+    if (flags & GF_ACTIONS && m->action != NULL) {
+        switch(m->action->scope) {
+        case A_FIELD:
+            fprintf(out, " @$%d ", m->action->id);
+            break;
+        case A_GROUP:
+            fprintf(out, " @%d ", m->action->id);
+            break;
+        default:
+            fprintf(out, " <@U> ");
+            break;
+        }
+    }
 
-    if (m->follow != NULL) {
-        fprintf (out, " {");
-        list_for_each(f, m->follow) {
-            struct abbrev *abbrev = NULL;
-            list_for_each(a, m->owner->grammar->abbrevs) {
-                if (a->literal == f->literal) {
-                    abbrev = a;
-                    break;
+    if (flags & GF_FOLLOW) {
+        if (m->follow != NULL) {
+            fprintf (out, " {");
+            list_for_each(f, m->follow) {
+                struct abbrev *abbrev = NULL;
+                list_for_each(a, m->owner->grammar->abbrevs) {
+                    if (a->literal == f->literal) {
+                        abbrev = a;
+                        break;
+                    }
+                }
+                if (abbrev != NULL)
+                    fprintf(out, abbrev->name);
+                else
+                    print_literal(out, f->literal);
+                if (f->next != NULL) {
+                    fputc(' ', out);
                 }
             }
-            if (abbrev != NULL)
-                fprintf(out, abbrev->name);
-            else
-                print_literal(out, f->literal);
-            if (f->next != NULL) {
-                fputc(' ', out);
-            }
+            fputc('}', out);
         }
-        fputc('}', out);
     }
 }
 
@@ -216,8 +229,7 @@ static void dump_matches(FILE *out, struct match *m, int indent, int flags) {
         switch (p->type) {
         case LITERAL:
             print_literal(out, p->literal);
-            if (flags & GF_FOLLOW)
-                print_follow(out, p, flags);
+            print_follow(out, p, flags);
             fprintf(out, "\n");
             break;
         case NAME:
@@ -243,7 +255,7 @@ static void dump_matches(FILE *out, struct match *m, int indent, int flags) {
             dump_matches(out, p->matches, indent + 2, flags);
             break;
         case SEQUENCE:
-            fprintf(out, "@");
+            fprintf(out, ".");
             print_quant(out, p);
             print_follow(out, p, flags);
             putchar('\n');
@@ -267,49 +279,50 @@ static void dump_matches(FILE *out, struct match *m, int indent, int flags) {
     }
 }
 
-static void dump_node(FILE *out, struct node *n) {
-    if (n == NULL) {
-        fprintf(out, "<NULL>");
-        return;
-    }
-    switch(n->type) {
-    case N_GLOBAL:
-    case N_QUOTED:
-        fprintf(out, n->label);
+static void print_entry(FILE *out, struct entry *entry) {
+    switch(entry->type) {
+    case E_CONST:
+        fprintf(out, "'%s'", entry->text);
         break;
-    case N_FIELD:
-        fprintf(out, "$%d", n->field);
+    case E_GLOBAL:
+        fprintf(out, "$%s", entry->text);
+        break;
+    case E_FIELD:
+        fprintf(out, "$%d", entry->field);
         break;
     default:
-        fprintf(out, "<U>");
+        fprintf(out, "<U:%d>", entry->type);
         break;
     }
-    switch(n->val_type) {
-    case N_NONE:
-        break;
-    case N_QUOTED:
-        fprintf(out, " = %s", n->val_label);
-        break;
-    case N_FIELD:
-        fprintf(out, " = $%d", n->val_field);
-        break;
-    default:
-        fprintf(out, " = <U>");
-        break;
-    }
-    putchar('\n');
 }
 
-static void dump_nodes(FILE *out, struct node *n, int indent) {
-    if (n == NULL) {
-        fprintf(out, "<NULL>");
+static void dump_actions(FILE *out, struct action *actions, int indent) {
+    if (actions == NULL) {
         return;
     }
-    list_for_each(p, n) {
+    list_for_each(action, actions) {
         print_indent(out, indent);
-        dump_node(out, p);
-        if (p->children != NULL)
-            dump_nodes(out, p->children, indent + 2);
+        fputc('@', out);
+        switch(action->scope) {
+        case A_FIELD:
+            fprintf(out, "$%d ", action->id);
+            break;
+        case A_GROUP:
+            fprintf(out, "%d", action->id);
+            break;
+        default:
+            fprintf(out, "<U>");
+            break;
+        }
+        list_for_each(p, action->path) {
+            fputc(' ', out);
+            print_entry(out, p);
+        }
+        if (action->value != NULL) {
+            fprintf(out, " = ");
+            print_entry(out, action->value);
+        }
+        fputc('\n', out);
     }
 }
 
@@ -342,9 +355,9 @@ static void dump_rules(FILE *out, struct rule *r, int flags) {
             }
             fprintf(out, "]\n");
         }
-        if ((flags & GF_NODES) && p->nodes != NULL) {
+        if ((flags & GF_ACTIONS) && p->actions != NULL) {
             fprintf(out, "  {\n");
-            dump_nodes(out, p->nodes, 4);
+            dump_actions(out, p->actions, 4);
             fprintf(out, "  }\n");
         } else {
             fputc('\n', out);
@@ -515,27 +528,28 @@ static int merge_literal_set(struct literal_set **first,
     return changed;
 }
 
-static struct match *find_field_rec(struct match *m, int *field) {
-    while (m != NULL && *field != 1) {
-        if (SUBMATCH_P(m)) {
-            struct match *c = find_field_rec(m->matches, field);
-            if (*field == 1)
-                return c;
-            m = m->next;
-        } else {
-            m = m->next;
-            field -= 1;
-        }
+struct match *find_field(struct match *matches, int fid) {
+    struct match *result = NULL;
+
+    list_for_each(m, matches) {
+        if (m->fid == fid)
+            return m;
+        if (SUBMATCH_P(m) &&
+            (result = find_field(m->matches, fid)) != NULL)
+            return result;
     }
-    return m;
+    return NULL;
 }
 
-struct match *find_field(struct match *matches, int id) {
+static struct match *find_group(struct match *matches, int gid) {
+    struct match *result = NULL;
+
     list_for_each(m, matches) {
-        if (m->id == id)
+        if (m->gid == gid)
             return m;
-        if (SUBMATCH_P(m))
-            find_field(m->matches, id);
+        if (SUBMATCH_P(m) &&
+            (result = find_group(m->matches, gid)) != NULL)
+            return result;
     }
     return NULL;
 }
@@ -857,22 +871,84 @@ static int bind_match_names(struct grammar *grammar, struct match *matches) {
     return result;
 }
 
-static int bind_match_rule(struct rule *rule, struct match *matches,
-                            int id) {
+static void calc_match_id(struct rule *rule, struct match *matches,
+                            int *fid, int *gid) {
     list_for_each(m, matches) {
         m->owner = rule;
+        m->fid = -1;
+        m->gid = (m->gid) ? (*gid)++ : -1;
         if (m->type == ANY ||
             m->type == LITERAL ||
             m->type == FIELD ||
             m->type == NAME) {
-            m->id = id++;
-        } else {
-            m->id = -1;
+            m->fid = (*fid)++;
+        } else if (SUBMATCH_P(m)) {
+            calc_match_id(rule, m->matches, fid, gid);
         }
-        if (SUBMATCH_P(m))
-            id = bind_match_rule(rule, m->matches, id);
     }
-    return id;
+}
+
+static int bind_actions(struct rule *rule) {
+    int r = 1;
+
+    list_for_each(a, rule->actions) {
+        const char *n = (a->scope == A_FIELD) ? "field" : "group";
+        struct match *m;
+        if (a->id == 0)       /* Group 0 refers to the whole rule */
+            continue;
+
+        if (a->scope == A_FIELD) {
+            m = find_field(rule->matches, a->id);
+        } else if (a->scope == A_GROUP) {
+            m = find_group(rule->matches, a->id);
+        } else {
+            internal_error(_FR(rule), _L(a),
+                           "Illegal action scope %d", a->scope);
+            r = 0;
+        }
+        if (m == NULL) {
+            grammar_error(_FR(rule), _L(a),
+                          "Action references nonexistent %s %d", n, a->id);
+            r = 0;
+        } else {
+            if (m->action != NULL) {
+                grammar_error(_FR(rule), _L(a), "Duplicate actions for %s %d", n, a->id);
+                r = 0;
+            }
+            m->action = a;
+        }
+    }
+    /* Add action with id 0 to the very first match in the rule
+       There may already be one (for rules like 'r: ( a | b )' with an action
+       for @1. In that case we enclose the whole action in a sequence and
+       attach the id 0 action
+     */
+    list_for_each(a, rule->actions) {
+        if (a->scope == A_GROUP && a->id == 0) {
+            if (rule->matches->action != NULL) {
+                if (rule->matches->action->id == 0) {
+                    grammar_error(_FR(rule), _L(a), "Duplicate actions for group %d", a->id);
+                    r = 0;
+                } else {
+                    struct match *shim;
+                    CALLOC(shim, 1);
+                    shim->type = SEQUENCE;
+                    shim->lineno = rule->lineno;
+                    shim->quant  = Q_ONCE;
+                    shim->owner  = rule;
+                    shim->fid    = -1;
+                    shim->gid    = 0;
+                    shim->action = a;
+
+                    shim->matches = rule->matches;
+                    rule->matches = shim;
+                }
+            } else {
+                rule->matches->action = a;
+            }
+        }
+    }
+    return r;
 }
 
 /*
@@ -885,9 +961,12 @@ static int bind_match_rule(struct rule *rule, struct match *matches,
  */
 static int resolve(struct grammar *grammar) {
     list_for_each(r, grammar->rules) {
+        int gid = 1, fid = 1;
         r->grammar = grammar;
-        bind_match_rule(r, r->matches, 1);
+        calc_match_id(r, r->matches, &fid, &gid);
         if (! bind_match_names(grammar, r->matches))
+            return 0;
+        if (! bind_actions(r))
             return 0;
     }
     return 1;

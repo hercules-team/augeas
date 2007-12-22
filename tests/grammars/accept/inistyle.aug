@@ -13,12 +13,12 @@ grammar {
 
   comment: OPT_WS ( /#.*$/ | 'REM' | 'rem' )
 
-  section: '[' ... ']' kv {
-    node $2
+  section: '[' ... ']' ( kv ) * {
+    @1 { $2 }
   }
 
   kv: ... EQ value {
-    node $1 = $3
+    @$3 { $1 = $3 }
   }
 
   value: ... EOL ( INDENT ... EOL )+

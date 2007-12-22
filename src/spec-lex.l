@@ -20,13 +20,23 @@
 int spec_get_column  (yyscan_t yyscanner);
 void spec_set_column (int  column_no , yyscan_t yyscanner);
 int spec_init_lexer(const char *name, yyscan_t *scanner);
+
+static int to_int(const char *str) {
+  int v;
+  if (sscanf(str, "%d", &v) != 1) {
+    fprintf(stderr, "Weird: failed to convert int\n");
+    v = -1;
+  }
+  return v;
+}
+
 %}
 
 DIGIT [0-9]
 DOTS  \.\.\.
 DOTSQ \.\.\?
 ID    [A-Za-z][A-Za-z0-9_-]*
-
+AT    @
 %x SC_AFTER_ID
 %%
 
@@ -39,18 +49,18 @@ ID    [A-Za-z][A-Za-z0-9_-]*
 <INITIAL>
 {
   \${DIGIT}+ {
-             int v;
-             if (sscanf(yytext+1, "%d", &v) != 1) {
-               fprintf(stderr, "Weird: failed to convert int\n");
-               v = -1;
-             }
-             yylval->intval = v;
+             yylval->intval = to_int(yytext+1);
              return T_FIELD;
   }
 
   \${ID}    {
-               yylval->string = strndup(yytext, yyleng);
+               yylval->string = strndup(yytext+1, yyleng);
                return T_GLOBAL;
+  }
+
+  {DIGIT}+   {
+             yylval->intval = to_int(yytext);
+             return T_NUMBER;
   }
 
   '[^\']*'   {
@@ -63,7 +73,7 @@ ID    [A-Za-z][A-Za-z0-9_-]*
                return T_REGEX;
   }
 
-  [{}|*?+()=]       return yytext[0];
+  [{}|*?+()=@]       return yytext[0];
 
   {DOTS}    {
                yylval->intval = 0;
@@ -73,7 +83,6 @@ ID    [A-Za-z][A-Za-z0-9_-]*
                yylval->intval = 1;
                return T_ANY;
             }
-  node         return T_NODE;
   grammar      return T_GRAMMAR;
   token        return T_TOKEN;
 

@@ -5,7 +5,7 @@ grammar {
 
   file: ( kv | section | comment ) *
 
-  section: '<' ... WS ... '>' config '</' $2 '>' {
-    node $2 = $4
+  section: '<' ... WS ... '>' ( config ) '</' $2 '>' {
+    @1 { $2 = $4 }
   }
 }

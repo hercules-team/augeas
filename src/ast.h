@@ -80,7 +80,7 @@ enum grammar_debug_flags {
     GF_ANY_RE = (1 << 0),   /* Print any expressions as full regexps */
     GF_FOLLOW = (1 << 1),   /* Print follow sets */
     GF_FIRST  = (1 << 2),   /* Print first sets/epsilon indicator */
-    GF_NODES  = (1 << 3),
+    GF_ACTIONS  = (1 << 3),
     GF_PRETTY = (1 << 4)
 };
 /*
@@ -140,7 +140,7 @@ struct rule {
     int               lineno;
     const char        *name;
     struct match      *matches;
-    struct node       *nodes;
+    struct action     *actions;
 };
 
 struct match *find_field(struct match *matches, int field);
@@ -204,29 +204,41 @@ struct match {
         struct abbrev  *abbrev;      /* ABBREV_REF */
     };
     struct rule        *owner;       /* the rule this match belongs to */
-    int                 id;          /* the number of this match in owner */
+    int                 fid;         /* the number of the field        */
+    int                 gid;         /* the number of the group        */
     struct literal_set *first;       /* the first set */
     struct literal_set *follow;
     int                 epsilon;     /* produces the empty string */
+    struct action      *action;
 };
 
-enum node_type {
-    N_NONE, N_GLOBAL, N_QUOTED, N_FIELD
+enum action_scope {
+    A_FIELD,
+    A_GROUP
 };
 
-struct node {
-    struct node *next;
-    int          lineno;
-    struct node *children;   /* List of nested node statements, through next */
-    enum node_type type;
+struct action {
+    struct action         *next;
+    int                    lineno;
+    enum action_scope      scope;
+    int                    id;
+    struct entry          *path;
+    struct entry          *value;
+};
+
+enum entry_type {
+    E_CONST,
+    E_GLOBAL,
+    E_FIELD
+};
+
+struct entry {
+    struct entry   *next;
+    int             lineno;
+    enum entry_type type;
     union {
-        const char  *label;   /* N_GLOBAL, N_QUOTED */
-        int         field;    /* N_FIELD */
-    };
-    enum node_type val_type;  /* never N_GLOBAL */
-    union {
-        const char *val_label; /* N_QUOTED */
-        int         val_field; /* N_FIELD */
+        const char *text;      /* E_CONST, E_GLOBAL */
+        int         field;     /* E_FIELD */
     };
 };
 

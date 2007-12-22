@@ -11,17 +11,16 @@ grammar {
   token POUND_TO_EOL /#.*\n/ = '# '
 
   file: ( comment | record ) * {
-    node $file_name
+    @0 { $file_name }
   }
 
   comment: ( /#.*?\n/ | /[ \t]*\n/ )
 
   record: ..? SEP ..? SEP ..? SEP ..? EOL {
-    node $seq {
-      node 'id' = $1
-      node 'runlevels' = $3
-      node 'action' = $5
-      node 'process' = $7
-    }
+    @0  { $seq }
+    @$1 { 'id' = $1 }
+    @$3 { 'runlevels' = $3 }
+    @$5 { 'action' = $5 }
+    @$7 { 'process' = $7 }
   }
 }
