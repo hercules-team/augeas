@@ -37,9 +37,110 @@ struct state {
     const char *pos;
     int         applied;
     int         flags;    /* set of parse_flags */
+    int         count;    /* number of iteration during '*'/'+' */
+    char       *seq;      /* scratch for count as a string */
+    char       *path;     /* current path */
     FILE       *log;
     struct aug_token *tokens;
+    struct aug_token **stack;  /* stack of left most token for a rule */
+    int        top;            /* top of stack */
 };
+
+/* Return value must be duped before putting into other structs */
+static const char *lookup_value(struct entry *entry, struct state*state) {
+    if (entry->type == E_CONST) {
+        return entry->text;
+    } else if (entry->type == E_GLOBAL) {
+        if (STREQ("seq", entry->text)) {
+            int len = snprintf(NULL, 0, "%d", state->count);
+            state->seq = realloc(state->seq, len+1);
+            snprintf(state->seq, len + 1, "%d", state->count);
+            return state->seq;
+        } else if (STREQ("basename", entry->text)) {
+            const char *basnam = strrchr(state->filename, '/');
+            if (basnam == NULL)
+                basnam = state->filename;
+            else
+                basnam += 1;
+            return basnam;
+        } else {
+            // Unknown global, shouldn't have made it to here
+            return "global";
+        }
+    } else if (entry->type == E_FIELD) {
+        if (state->top < 0) {
+            internal_error(state->filename, state->lineno,
+                           "empty rule stack");
+        }
+        struct aug_token *token = NULL;
+        //printf("lookup: %s $%d\n", entry->action->rule->name, entry->field);
+        list_for_each(t, state->tokens) {
+            //printf("  .%s.%d: %s\n", t->match->owner->name, t->match->fid,
+            //       t->text);
+            if (t->match->fid == entry->field
+                && t->match->owner == entry->action->rule)
+                token = t;
+        }
+        if (token == NULL) {
+            parse_error(state,
+                        "field %d referenced but not found during parsing",
+                        entry->field);
+            return "failure";
+        } else {
+            return token->text;
+        }
+    } else {
+        internal_error(state->filename, state->lineno,
+                       "illegal entry type %d", entry->type);
+        return "illegal";
+    }
+}
+
+static void push(struct entry *entry, struct state *state) {
+    const char *path = lookup_value(entry, state);
+    int size = strlen(state->path) + 1 + strlen(path) + 1;
+
+    state->path = realloc(state->path, size);
+    strcat(state->path, "/");
+    strcat(state->path, path);
+}
+
+static void pop(struct state *state) {
+    char *pos = strrchr(state->path, '/');
+    if (pos == NULL) {
+        internal_error(state->filename, state->lineno,
+                       "pop from emtpy path");
+    }
+    *pos = '\0';
+}
+
+static void action_enter(struct match *match, struct state *state) {
+    if (match->action == NULL)
+        return;
+    list_for_each(e, match->action->path) {
+        push(e, state);
+        if (state->flags & PF_ACTION)
+            printf("enter %s\n", state->path);
+    }
+}
+
+static void action_exit(struct match *match, ATTRIBUTE_UNUSED struct state *state) {
+    if (match->action == NULL)
+        return;
+
+    struct entry *value = match->action->value;
+    if (value != NULL) {
+        if (state->flags & PF_ACTION)
+            fprintf(state->log, "assign %s = %s\n", 
+                    state->path, lookup_value(value, state));
+    }
+    
+    list_for_each(e, match->action->path) {
+        if (state->flags & PF_ACTION)
+            fprintf(state->log, "exit %s\n", state->path);
+        pop(state);
+    }
+}
 
 static void advance(struct state *state, int cnt) {
     if (cnt == 0)
@@ -98,6 +199,8 @@ static void parse_literal(struct match *match, struct state *state) {
     struct literal *literal;
     int len;
 
+    action_enter(match, state);
+
     if (match->type == ABBREV_REF)
         literal = match->abbrev->literal;
     else if (match->type == LITERAL || match->type == ANY)
@@ -117,11 +220,15 @@ static void parse_literal(struct match *match, struct state *state) {
         char *text = strndup(state->pos, len);
 
         token = aug_make_token(AUG_TOKEN_INERT, text, "/");
+        token->match = match;
 
         list_append(state->tokens, token);
         advance(state, len);
         state->applied = 1;
 
+        if (state->stack[state->top] == NULL)
+            state->stack[state->top] = token;
+        
         if (state->flags & PF_TOKEN) {
             struct abbrev *a;
             fprintf(state->log, "T ");
@@ -143,6 +250,8 @@ static void parse_literal(struct match *match, struct state *state) {
             fprintf(state->log, ">\n");
         }
     }
+
+    action_exit(match, state);
 }
 
 static int applies(struct match *match, struct state *state) {
@@ -156,43 +265,76 @@ static int applies(struct match *match, struct state *state) {
 
 static void parse_alternative(struct match *match, struct state *state) {
     state->applied = 0;
+
+    action_enter(match, state);
     list_for_each(p, match->matches) {
         if (applies(p, state)) {
             parse_match(p, state);
-            /* FIXME: Error if ! state->applied */
             state->applied = 1;
-            return;
+            break;
         }
     }
+    if (! state->applied) {
+        parse_error(state, "alternative failed\n");
+    }
+    action_exit(match, state);
 }
 
 static void parse_sequence(struct match *match, struct state *state) {
     state->applied = 1;
+
+    action_enter(match, state);
     list_for_each(p, match->matches) {
         parse_match(p, state);
-        if (! state->applied)
-            return;   /* error */
+        if (! state->applied) {
+            parse_error(state, "sequence failed\n");
+            break;
+        }
     }
+    action_exit(match, state);
 }
 
 static void parse_field(struct match *match, struct state *state) {
     struct match *field = find_field(match->owner->matches, match->field);
+    
+    action_enter(match, state);
     parse_match(field, state);
+    action_exit(match, state);
 }
 
 static void parse_rule(struct rule *rule, struct state *state) {
+    state->top += 1;
+    state->stack = realloc(state->stack, 
+                           (state->top + 1) * sizeof(*(state->stack)));
+    state->stack[state->top] = NULL;
+
+    parse_match(rule->matches, state);
     if (state->flags & PF_RULE) {
         fprintf(state->log, "R %s:\n", rule->name);
+        fprintf(state->log, "  ");
+        list_for_each(t, state->stack[state->top]) {
+            fprintf(state->log, "<%s[%d]=", t->match->owner->name,
+                    t->match->fid);
+            print_chars(state->log, t->text, strlen(t->text));
+            fputc('>', state->log);
+            if (t->next)
+                fputc(' ', state->log);
+        }
+        fputc('\n', state->log);
     }
-    parse_match(rule->matches, state);
+    state->top -= 1;
 }
 
 static void parse_rule_ref(struct match *match, struct state *state) {
+    action_enter(match, state);
     parse_rule(match->rule, state);
+    action_exit(match, state);
 }
 
 static void parse_quant_match(parse_match_func func,
                               struct match *match, struct state *state) {
+    int oldcount = state->count;
+
     switch (match->quant) {
     case Q_ONCE:
         (*func)(match, state);
@@ -204,19 +346,26 @@ static void parse_quant_match(parse_match_func func,
         state->applied = 1;
         break;
     case Q_PLUS:
-        (*func)(match, state);
-        if (! state->applied) {
+        if (! applies(match, state)) {
             grammar_error(state->filename, state->lineno, 
                           "match did not apply");
+        } else {
+            state->count = 0;
+            while (applies(match, state)) {
+                (*func)(match, state);
+                state->count++;
+            }
+            state->count = oldcount;
         }
-        while (state->applied)
-            (*func)(match, state);
         state->applied = 1;
         break;
     case Q_STAR:
+        state->count = 0;
         while (applies(match, state)) {
             (*func)(match, state);
+            state->count++;
         }
+        state->count = oldcount;
         state->applied = 1;
         break;
     default:
@@ -266,6 +415,12 @@ void parse(struct grammar *grammar, const char *filename, const char *text,
     state.pos = text;
     state.applied = 0;
     state.tokens = NULL;
+    state.count  = 0;
+    CALLOC(state.path, 100);
+    strcpy(state.path, "/system/config");
+    CALLOC(state.seq, 10);
+    CALLOC(state.stack, 10);
+    state.top = -1;
     if (flags != PF_NONE && log != NULL) {
         state.flags = flags;
         state.log = log;

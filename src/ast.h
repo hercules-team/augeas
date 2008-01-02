@@ -63,7 +63,8 @@ enum parse_debug_flags {
     PF_ADVANCE = (1 << 0),
     PF_MATCH   = (1 << 1),
     PF_TOKEN   = (1 << 2),
-    PF_RULE    = (1 << 3)
+    PF_RULE    = (1 << 3),
+    PF_ACTION  = (1 << 4)
 };
 
 
@@ -220,6 +221,7 @@ enum action_scope {
 struct action {
     struct action         *next;
     int                    lineno;
+    struct rule           *rule;
     enum action_scope      scope;
     int                    id;
     struct entry          *path;
@@ -235,6 +237,7 @@ enum entry_type {
 struct entry {
     struct entry   *next;
     int             lineno;
+    struct action  *action;
     enum entry_type type;
     union {
         const char *text;      /* E_CONST, E_GLOBAL */

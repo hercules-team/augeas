@@ -888,12 +888,41 @@ static void calc_match_id(struct rule *rule, struct match *matches,
     }
 }
 
+static int check_entry(struct rule *rule, struct entry *entry,
+                       const char *role) {
+    struct match *m;
+
+    if (entry != NULL && entry->type == E_FIELD) {
+        m = find_field(rule->matches, entry->field);
+        if (m == NULL) {
+            grammar_error(_FR(rule), _L(entry),
+                          "Reference to nonexistant field %d in %s",
+                          entry->field, role);
+            return 0;
+        } else if (m->type == RULE_REF) {
+            grammar_error(_FR(rule), _L(entry),
+                          "Field %d, used as the %s, is a rule. That is not implemented.",
+                          entry->field, role);
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static int bind_actions(struct rule *rule) {
     int r = 1;
 
     list_for_each(a, rule->actions) {
+        if (! check_entry(rule, a->path, "path"))
+            r = 0;
+        if (! check_entry(rule, a->value, "value"))
+            r = 0;
+    }
+
+    list_for_each(a, rule->actions) {
         const char *n = (a->scope == A_FIELD) ? "field" : "group";
         struct match *m;
+
         if (a->id == 0)       /* Group 0 refers to the whole rule */
             continue;
 

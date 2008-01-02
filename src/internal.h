@@ -122,10 +122,11 @@ enum aug_token_type {
 };
 
 struct aug_token {
-    struct aug_token *next;
+    struct aug_token   *next;
     enum aug_token_type type;
-    const char *text;
-    const char *node;  // The node associated with this token
+    struct match       *match;
+    const char         *text;
+    const char         *node;  // The node associated with this token
 };
 
 struct aug_file {

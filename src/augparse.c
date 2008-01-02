@@ -60,13 +60,14 @@ static const char* load_file(const char *path) {
 
 }
 
+__attribute__((noreturn))
 static void usage(void) {
     fprintf(stderr, "Usage: %s [OPTIONS] GRAMMAR [FILE]\n", progname);
-    fprintf(stderr, "Load GRAMMAR and parses FILE according to it.\n");
+    fprintf(stderr, "Load GRAMMAR and parse FILE according to it.\n");
     fprintf(stderr, "If FILE is omitted, the GRAMMAR is read and printed\n");
     fprintf(stderr, "\nOptions:\n\n");
-    fprintf(stderr, "  -S WHAT       Show details of how FILE is parsed. Possible values for WHAT\n"
-                    "                are 'advance', 'match', 'token', and 'rule'\n");
+    fprintf(stderr, "  -P WHAT       Show details of how FILE is parsed. Possible values for WHAT\n"
+                    "                are 'advance', 'match', 'tokens', 'actions', and 'rules'\n");
     fprintf(stderr, "  -G WHAT       Show details about GRAMMAR. Possible values for WHAT are\n"
                     "                'any', 'follow', 'first', 'actions', 'pretty' and 'all'\n");
     exit(EXIT_FAILURE);
@@ -80,19 +81,21 @@ int main(int argc, char **argv) {
 
     progname = argv[0];
 
-    while ((opt = getopt(argc, argv, "S:G:")) != -1) {
+    while ((opt = getopt(argc, argv, "hP:G:")) != -1) {
         switch(opt) {
-        case 'S':
+        case 'P':
             if (STREQ(optarg, "advance"))
                 parse_flags |= PF_ADVANCE;
             else if (STREQ(optarg, "match"))
                 parse_flags |= PF_MATCH;
-            else if (STREQ(optarg, "token"))
+            else if (STREQ(optarg, "tokens"))
                 parse_flags |= PF_TOKEN;
-            else if (STREQ(optarg, "rule"))
+            else if (STREQ(optarg, "rules"))
                 parse_flags |= PF_RULE;
+            else if (STREQ(optarg, "actions"))
+                parse_flags |= PF_ACTION;
             else {
-                fprintf(stderr, "Illegal argument '%s' for -S\n", optarg);
+                fprintf(stderr, "Illegal argument '%s' for -%c\n", optarg, opt);
                 usage();
             }
             break;
@@ -110,9 +113,12 @@ int main(int argc, char **argv) {
             else if (STREQ(optarg, "all"))
                 grammar_flags = ~ GF_NONE;
             else {
-                fprintf(stderr, "Illegal argument '%s' for -S\n", optarg);
+                fprintf(stderr, "Illegal argument '%s' for -%c\n", optarg, opt);
                 usage();
             }
+            break;
+        case 'h':
+            usage();
             break;
         default:
             usage();

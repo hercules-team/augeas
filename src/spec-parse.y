@@ -246,6 +246,9 @@ struct rule *make_rule(const char *name, struct match *matches,
   result->name = name;
   result->matches = matches;
   result->actions = actions;
+  list_for_each(a, actions) {
+    a->rule = result;
+  }
   return result;
 }
 
@@ -322,8 +325,15 @@ static struct action *make_action(enum action_scope scope, int id,
   result->lineno = lineno;
   result->scope = scope;
   result->id = id;
+  
   result->path = path;
+  if (path != NULL)
+    path->action = result;
+  
   result->value = value;
+  if (value != NULL)
+    value->action = result;
+
   return result;
 }
 
