@@ -1,8 +1,17 @@
 #! /bin/bash
 
+# Run all grammars in tests/grammars/{reject,accept} through augparse
+# and report whether they are accepted/rejected as expected
+# If run with option '-v', error output from each augparse run is printed
+
 DATADIR=$(dirname $0)
 GRAMMARS=${DATADIR}/grammars
 AUGPARSE=${top_builddir-${DATADIR}/..}/src/augparse
+
+VERBOSE=n
+if [[ "x$1" == "x-v" ]]; then
+    VERBOSE=y
+fi
 
 function run_grammars {
     ret_succ=$1
@@ -17,7 +26,7 @@ function run_grammars {
             exit 19
         fi
         printf "$action %-30s ... " $(basename $g)
-        ${AUGPARSE} $g > /dev/null 2>&1
+        errs=$(${AUGPARSE} $g 2>&1 > /dev/null)
         ret=$?
         if [[ $ret -eq $ret_fail ]]; then
             echo FAIL
@@ -27,6 +36,9 @@ function run_grammars {
         else
             echo ERROR
             result=19
+        fi
+        if [[ "$VERBOSE" == "y" ]] ; then
+            echo $errs
         fi
     done
 }
