@@ -1,4 +1,4 @@
-grammar {
+grammar mutual-recursion {
   token EOL '\n'
   
   start: 'a' v EOL

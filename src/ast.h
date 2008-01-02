@@ -51,8 +51,9 @@ void internal_error_at(const char *srcfile, int srclineno,
  */
 
 struct grammar {
-    const char   *filename;
-    int           lineno;
+    const char    *filename;
+    int            lineno;
+    const char    *name;
     struct abbrev *abbrevs;
     struct rule   *rules;
 };

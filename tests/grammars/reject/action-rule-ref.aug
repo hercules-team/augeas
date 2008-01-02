@@ -1,6 +1,6 @@
 # Reference a rule from an action. Not implemented yet
 # and leads to failure
-grammar {
+grammar action-rule-ref {
 
   token EOL '\n'
 

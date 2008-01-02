@@ -2,7 +2,7 @@
 #
 #
 
-grammar {
+grammar records {
 
   token SEP /[ \t]+/ = '\t'
 

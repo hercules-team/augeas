@@ -3,7 +3,7 @@
 #
 # This does not address the Match feature yet
 
-grammar {
+grammar sshd-config {
   token EOL /[ \t]*\n/ = '\n'
   token SEP /[ \t]+(?!\n)/ = ' '
 

@@ -1,6 +1,6 @@
 # Parsing /etc/inittab
 
-grammar {
+grammar inittab {
 
   token SEP ':'
 

@@ -1,4 +1,4 @@
-grammar {
+grammar duplicate-action-field {
   token EOL '\n'
 
   start: 'a' ('b' | 'c' ) EOL {

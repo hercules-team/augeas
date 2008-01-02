@@ -1,4 +1,4 @@
-grammar {
+grammar expr {
   token PLUS '+'
   token TIMES '*'
 

@@ -86,11 +86,12 @@ void spec_error(YYLTYPE *locp, struct grammar **grammar,
 
 %%
 
-start: T_GRAMMAR '{' tokens rules '}'
+start: T_GRAMMAR T_NAME '{' tokens rules '}'
        { 
-         (*grammar)->abbrevs = $3;
-         (*grammar)->rules = $4;
-         (*grammar)->lineno = @1.first_line; 
+         (*grammar)->abbrevs = $4;
+         (*grammar)->rules = $5;
+         (*grammar)->lineno = @1.first_line;
+         (*grammar)->name = $2;
        }
 
 tokens: token

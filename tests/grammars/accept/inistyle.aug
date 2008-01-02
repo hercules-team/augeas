@@ -1,6 +1,6 @@
 # Parsing inistyle files
 
-grammar {
+grammar inistyle {
   token EOL /\n/ = '\n'
 
   token INDENT /[ \t]+/ = '\t'
