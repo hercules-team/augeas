@@ -47,15 +47,40 @@ void internal_error_at(const char *srcfile, int srclineno,
     internal_error_at(__FILE__, __LINE__, fname, lineno, format, ## args)
 
 /*
- * Representation of rules for parsing files
+ * Mappings of files into the tree. Each mapping specifies a grammar to use
+ * to do the actual parsing/mapping and a list of filters describing
+ * which files to map.
+ */
+struct map {
+    struct map     *next;
+    const char     *filename;
+    int             lineno;
+    struct grammar *grammar;
+    const  char    *grammar_name;
+    struct filter  *filters;
+};
+
+/* 
+ * A filter is a list of glob patterns describing which files to
+ * include.
+ */
+struct filter {
+    struct filter  *next;
+    int             lineno;
+    const char     *glob;
+};
+
+/*
+ * Representation of grammars for parsing/mapping files into the tree
  */
 
 struct grammar {
-    const char    *filename;
-    int            lineno;
-    const char    *name;
-    struct abbrev *abbrevs;
-    struct rule   *rules;
+    struct grammar *next;
+    const char     *filename;
+    int             lineno;
+    const char     *name;
+    struct abbrev  *abbrevs;
+    struct rule    *rules;
 };
 
 /* Flags to control debug printing during parsing */
@@ -85,12 +110,16 @@ enum grammar_debug_flags {
     GF_ACTIONS  = (1 << 3),
     GF_PRETTY = (1 << 4)
 };
+
 /*
- * Load grammar from FILENAME. Return NULL on error
- * LOG is used to print logging messages. FLAGS controls what is printed
- * and should be a set of flags from enum grammar_debug_flags
+ * Load a spec file FILENAME. Return -1 on error, 0 on success.  The list
+ * of grammars read from the file is assigned to GRAMMARS, and the list of
+ * maps to MAPS. LOG is used to print logging messages. FLAGS controls
+ * what is printed and should be a set of flags from enum
+ * grammar_debug_flags
  */
-struct grammar *load_grammar(const char *filename, FILE *log, int flags);
+int load_spec(const char *filename, FILE *log, int flags,
+              struct grammar **grammars, struct map **map);
 
 enum literal_type {
     QUOTED, 

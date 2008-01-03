@@ -25,6 +25,7 @@
 
 
 #include "ast.h"
+#include "list.h"
 
 const char *progname;
 
@@ -58,6 +59,35 @@ static const char* load_file(const char *path) {
     fclose(fp);
     return result;
 
+}
+
+static struct grammar *load_grammar(const char *name, FILE *log, int flags) {
+    struct grammar *grammars = NULL;
+    struct map     *maps = NULL;
+    int r;
+    
+    r = load_spec(name, log, flags, &grammars, &maps);
+    if (r == -1)
+        exit(EXIT_FAILURE);
+    
+    /* FIXME: free maps (if any) */
+    list_for_each(m, maps) {
+        printf("map grammar %s\n  ", m->grammar_name);
+        list_for_each(f, m->filters) {
+            printf("%s ", f->glob);
+        }
+        putchar('\n');
+    }
+
+    if (grammars == NULL) {
+        fprintf(stderr, "No grammars found\n");
+        exit(EXIT_FAILURE);
+    }
+    if (grammars->next != NULL) {
+        fprintf(stderr, "Warning: multiple grammars found, only using %s\n",
+                grammars->name);
+    }
+    return grammars;
 }
 
 __attribute__((noreturn))

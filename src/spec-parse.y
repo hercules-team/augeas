@@ -7,7 +7,8 @@
 
 #define YYDEBUG 1
 
-struct grammar *spec_parse_file(const char *name);
+int spec_parse_file(const char *name, struct grammar **grammars,
+                    struct map **maps);
 
 /* AST cosntruction */
 static struct abbrev *make_abbrev(const char *name, struct literal *literal,
@@ -29,11 +30,22 @@ static struct match *make_field_match(int field, int lineno);
                                   struct entry *value, int lineno);
 static struct entry *make_entry(enum entry_type type, int lineno);
 
+static struct map *make_map(const char *filename,
+                            const char *grammar_name, struct filter *filters,
+                            int lineno);
+
+static struct filter *make_filter(const char *glob, int lineno);
+
+static struct grammar *make_grammar(const char *filename,
+                                    const char *name, struct abbrev *abbrevs,
+                                    struct rule *rules, int lineno);
+
 typedef void *yyscan_t;
 %}
 %locations
 %pure-parser
-%parse-param    {struct grammar **grammar}
+%parse-param    {struct grammar **grammars}
+%parse-param    {struct map     **maps}
 %parse-param    {yyscan_t scanner}
 %lex-param      {yyscan_t scanner}
 
@@ -49,8 +61,12 @@ typedef void *yyscan_t;
  /* Keywords */
 %token          T_GRAMMAR
 %token          T_TOKEN
+%token          T_MAP
+%token          T_INCLUDE
 
 %union {
+  struct map     *map;
+  struct filter  *filter;
   struct grammar  *grammar;
   struct abbrev  *abbrev;
   struct rule    *rule;
@@ -66,11 +82,14 @@ typedef void *yyscan_t;
 %type <abbrev>  tokens token
 %type <rule>    rules rule
 %type <literal> literal
-%type <string>  token_opts
+%type <string>  token_opts grammar_ref
 %type <match>   match match_seq match_prim
 %type <quant>   match_quant
 %type <action>  actions action
 %type <entry>   entry_prim value path
+%type <map>     map
+%type <grammar> grammar
+%type <filter>  filters
 
 %{
 /* Lexer */
@@ -80,24 +99,45 @@ int spec_get_lineno (yyscan_t yyscanner );
 const char *spec_get_extra (yyscan_t yyscanner );
 char *spec_get_text (yyscan_t yyscanner );
 
-void spec_error(YYLTYPE *locp, struct grammar **grammar, 
+void spec_error(YYLTYPE *locp, struct grammar **grammar, struct map **map,
                 yyscan_t scanner, const char *s);
 %}
 
 %%
 
-start: T_GRAMMAR T_NAME '{' tokens rules '}'
-       { 
-         (*grammar)->abbrevs = $4;
-         (*grammar)->rules = $5;
-         (*grammar)->lineno = @1.first_line;
-         (*grammar)->name = $2;
-       }
+start: grammar
+       { (*grammars) = $1; }
+     | map
+       { (*maps) = $1; }
+     | start grammar
+       { list_append(*grammars, $2); }
+     | start map
+       { list_append(*maps, $2); }
 
-tokens: token
-        { $$ = $1; } 
+map: T_MAP '{' grammar_ref filters '}'
+{ $$ = make_map(spec_get_extra(scanner), $3, $4, @1.first_line); }
+
+grammar_ref: T_GRAMMAR T_NAME
+             { $$ = $2; }
+
+filters: T_INCLUDE T_QUOTED
+         { $$ = make_filter($2, @1.first_line); }
+       | filters T_INCLUDE T_QUOTED
+         { $$=$1; list_append($1, make_filter($3, @1.first_line)); }
+
+/*
+ * Grammars from here on out
+ */
+grammar: T_GRAMMAR T_NAME '{' tokens rules '}'
+         { 
+           $$ = make_grammar(spec_get_extra(scanner), $2, $4, $5, 
+                             @1.first_line); 
+         }
+
+tokens: /* empty */
+        { $$ = NULL; } 
       | tokens token
-        { $$ = $1; list_append($1, $2); }
+        { list_append($1, $2); $$ = $1; }
 
 token: T_TOKEN T_NAME literal token_opts
         { $$ = make_abbrev($2, $3, $4, @1.first_line); }
@@ -107,10 +147,10 @@ token_opts: /* empty */
           | '=' T_QUOTED
             { $$ = $2; }
 
-rules: rule
-       { $$ = $1; }
+rules: /* empty */
+       { $$ = NULL; }
      | rules rule
-       { $$ = $1; list_append($1, $2); }
+       { list_append($1, $2); $$ = $1; }
 
 rule: T_NAME_COLON match
       { $$ = make_rule($1, $2, NULL, @1.first_line); }
@@ -189,34 +229,31 @@ entry_prim: T_GLOBAL
 
 %%
 
-struct grammar *spec_parse_file(const char *name) {
-  struct grammar *result;
+int spec_parse_file(const char *name, 
+                    struct grammar **grammars,
+                    struct map **maps) {
   yyscan_t      scanner;
   int r;
 
-  CALLOC(result, 1);
-  result->lineno = 0;
-  result->filename = strdup(name);
-
   if (spec_init_lexer(name, &scanner) == -1) {
-    spec_error(NULL, &result, NULL, "Could not open input");
-    return NULL;
+    spec_error(NULL, grammars, maps, NULL, "Could not open input");
+    return -1;
   }
 
   yydebug = getenv("YYDEBUG") != NULL;
-  r = spec_parse(&result, scanner);
+  r = spec_parse(grammars, maps, scanner);
   if (r == 1) {
-    spec_error(NULL, &result, NULL, "Parsing failed - syntax error");
+    spec_error(NULL, grammars, maps, NULL, "Parsing failed - syntax error");
     goto error;
   } else if (r == 2) {
-    spec_error(NULL, &result, NULL, "Ran out of memory");
+    spec_error(NULL, grammars, maps, NULL, "Ran out of memory");
     goto error;
   }
-  return result;
+  return 0;
 
  error:
-  // free result
-  return NULL;
+  // free grammars and maps
+  return -1;
 }
 
 // FIXME: Nothing here checks for alloc errors.
@@ -347,8 +384,45 @@ static struct entry *make_entry(enum entry_type type, int lineno) {
   return result;
 }
 
+static struct map *make_map(const char *filename,
+                            const char *grammar_name, struct filter *filters,
+                            int lineno) {
+  struct map *result;
+
+  CALLOC(result, 1);
+  result->filename = strdup(filename);
+  result->lineno = lineno;
+  result->grammar_name = grammar_name;
+  result->filters = filters;
+  return result;
+}
+
+static struct filter *make_filter(const char *glob, int lineno) {
+  struct filter *result;
+  
+  CALLOC(result, 1);
+  result->lineno = lineno;
+  result->glob = glob;
+  return result;
+}
+
+static struct grammar *make_grammar(const char *filename,
+                                    const char *name, struct abbrev *abbrevs,
+                                    struct rule *rules, int lineno) {
+  struct grammar *result;
+
+  CALLOC(result, 1);
+  result->filename = strdup(filename);
+  result->lineno = lineno;
+  result->name = name;
+  result->abbrevs = abbrevs;
+  result->rules = rules;
+  return result;
+}
+
 void spec_error(YYLTYPE *locp, 
                 struct grammar **grammar, 
+                struct map     **map,
                 yyscan_t scanner,
                 const char *s) {
   if (scanner != NULL) {
@@ -357,9 +431,17 @@ void spec_error(YYLTYPE *locp,
     grammar_error(spec_get_extra(scanner), line, "%s reading %s", s,
                   spec_get_text(scanner));
   } else {
-    int line = (*grammar)->lineno;
+    int line = 0;
+    const char *filename = "unknown";
+    if (*grammar != NULL) {
+      line = (*grammar)->lineno;
+      filename = (*grammar)->filename;
+    } else if (*map != NULL) {
+      line = (*map)->lineno;
+      filename = (*map)->filename;
+    }
     if (locp != NULL)
       line = locp->first_line;
-    grammar_error((*grammar)->filename, line, "error: %s\n", s);
+    grammar_error(filename, line, "error: %s\n", s);
   }
 }

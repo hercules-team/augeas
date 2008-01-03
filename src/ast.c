@@ -1083,36 +1083,39 @@ struct literal *make_literal(const char *text, enum literal_type type,
 }
 
 /* defined in spec-parse.y */
-struct grammar *spec_parse_file(const char *name);
+int spec_parse_file(const char *name, struct grammar **grammars,
+                    struct map **maps);
 
-struct grammar *load_grammar(const char *filename, FILE *log, int flags) {
-    struct grammar *result;
-    int ok = 1;
+int load_spec(const char *filename, FILE *log, int flags,
+              struct grammar **grammars, struct map **maps) {
+    int ok = 1, r;
     const char *errmsg;
 
-    result = spec_parse_file(filename);
-    ok = (result != NULL);
+    r = spec_parse_file(filename, grammars, maps);
+    ok = (r != -1);
 
-    if (ok) {
-        ok = resolve(result);
-        errmsg = "Resolve failed\n";
-    } 
-    if (ok) {
-        ok = semantic_check(result);
-        errmsg = "Semantic checks failed\n";
-    }
-    if (ok) {
-        ok = prepare(result);
-        errmsg = "First computation failed\n";
-    }
-    if (!ok) {
-        fprintf(stderr, errmsg);
+    list_for_each(g, *grammars) {
+        if (ok) {
+            ok = resolve(g);
+            errmsg = "Resolve failed";
+        } 
+        if (ok) {
+            ok = semantic_check(g);
+            errmsg = "Semantic checks failed";
+        }
+        if (ok) {
+            ok = prepare(g);
+            errmsg = "First computation failed";
+        }
+        if (!ok) {
+            fprintf(stderr, "%s: %s\n", g->filename, errmsg);
+        }
+    
+        if (g != NULL && flags != GF_NONE)
+            dump_grammar(g, (log == NULL) ? stdout : log, flags);
     }
 
-    if (result != NULL && flags != GF_NONE)
-        dump_grammar(result, (log == NULL) ? stdout : log, flags);
-
-    return ok ? result : NULL;
+    return ok ? 0 : -1;
 }
 
 /*

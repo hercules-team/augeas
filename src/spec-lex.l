@@ -85,6 +85,8 @@ AT    @
             }
   grammar      return T_GRAMMAR;
   token        return T_TOKEN;
+  map          return T_MAP;
+  include      return T_INCLUDE;
 
   {ID}         {
                yylval->string = strndup(yytext, yyleng);
