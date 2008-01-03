@@ -410,22 +410,22 @@ void internal_error_at(const char *srcfile, int srclineno,
  *   rules + abbrevs must have unique names across both
  */
 
-static int check_abbrevs(struct abbrev *abbrevs) {
+static int check_abbrevs(struct grammar *grammar) {
     int r = 1;
     /* abbrev->name must be unique */
-    list_for_each(p, abbrevs) {
+    list_for_each(p, grammar->abbrevs) {
         list_for_each(q, p->next) {
             if (STREQ(p->name, q->name)) {
-                grammar_error(NULL, _L(p), "token %s defined twice", 
+                grammar_error(_FG(grammar), _L(p), "token %s defined twice", 
                               p->name);
                 r = 0;
             }
         }
     }
     /* regex abbrevs must have a default value */
-    list_for_each(p, abbrevs) {
+    list_for_each(p, grammar->abbrevs) {
         if (p->literal->type == REGEX && p->literal->text == NULL) {
-            grammar_error(NULL, _L(p), 
+            grammar_error(_FG(grammar), _L(p), 
                           "regex token %s is missing a default value",
                           p->name);
             r = 0;
@@ -475,7 +475,7 @@ static int check_rules(struct rule *rules) {
 static int semantic_check(struct grammar *grammar) {
     int r = 1;
 
-    if (! check_abbrevs(grammar->abbrevs))
+    if (! check_abbrevs(grammar))
         r = 0;
     if (! check_rules(grammar->rules))
         r = 0;
