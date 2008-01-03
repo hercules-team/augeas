@@ -1,3 +1,3 @@
 grammar missing-token-default {
-  token /#.*\n/
+  token FOO /#.*\n/
 }
