@@ -1051,7 +1051,8 @@ static int set_literal_text(struct literal *literal, const char *text) {
         return -1;
     }
   
-    literal->re = pcre_compile(literal->pattern, 0, &errptr, &erroffset, NULL);
+    literal->re = pcre_compile(literal->pattern, PCRE_MULTILINE, 
+                               &errptr, &erroffset, NULL);
     if (literal->re == NULL) {
         grammar_error(NULL, _L(literal), "ill-formed regular expression /%s/",
                       literal->pattern);
