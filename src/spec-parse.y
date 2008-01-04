@@ -235,6 +235,9 @@ int spec_parse_file(const char *name,
   yyscan_t      scanner;
   int r;
 
+  *grammars = NULL;
+  *maps = NULL;
+
   if (spec_init_lexer(name, &scanner) == -1) {
     spec_error(NULL, grammars, maps, NULL, "Could not open input");
     return -1;
