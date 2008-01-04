@@ -19,47 +19,11 @@
  *
  * Author: David Lutterkort <dlutter@redhat.com>
  */
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
 
 #include "ast.h"
 #include "list.h"
 
 const char *progname;
-
-static const char* load_file(const char *path) {
-    FILE *fp = fopen(path, "r");
-    struct stat st;
-    char *result;
-
-    if (!fp)
-        return NULL;
-
-    if (fstat(fileno(fp), &st) < 0) {
-        fclose(fp);
-        return NULL;
-    }
-    
-    CALLOC(result, st.st_size + 1);
-    if (result == NULL) {
-        fclose(fp);
-        return NULL;
-    }
-
-    if (st.st_size) {
-        if (fread(result, st.st_size, 1, fp) != 1) {
-            fclose(fp);
-            free(result);
-            return NULL;
-        }
-    }
-
-    fclose(fp);
-    return result;
-
-}
 
 static struct grammar *load_grammar(const char *name, FILE *log, int flags) {
     struct grammar *grammars = NULL;
@@ -168,7 +132,9 @@ int main(int argc, char **argv) {
         if (grammar == NULL)
             return EXIT_FAILURE;
     } else {
-        const char *text = load_file(argv[optind+1]);
+        const char *text = aug_read_file(argv[optind+1]);
+        struct aug_file *file = aug_make_file(argv[optind+1], "");
+
         if (text == NULL)
             return EXIT_FAILURE;
 
@@ -176,7 +142,7 @@ int main(int argc, char **argv) {
         if (grammar == NULL)
             return EXIT_FAILURE;
 
-        parse(grammar, argv[optind+1], text, stdout, parse_flags);
+        parse(grammar, file, text, stdout, parse_flags);
     }
 }
 

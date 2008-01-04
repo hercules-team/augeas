@@ -37,6 +37,18 @@
 #define list_for_each(iter, list)                                       \
     for (typeof(list) (iter) = list; (iter) != NULL; (iter) = (iter)->next)
 
+#define list_remove(elt, list)                                          \
+    do {                                                                \
+        if ((elt) == (list)) {                                          \
+            (list) = (elt)->next;                                       \
+        } else {                                                        \
+            typeof(elt) _p;                                             \
+            for (_p = (list); _p != NULL && _p->next != (elt); _p = _p->next); \
+            if (_p != NULL)                                             \
+                _p->next = elt->next;                                   \
+        }                                                               \
+    } while(0)
+
 #endif
 
 

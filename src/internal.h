@@ -158,6 +158,11 @@ struct aug_token *aug_file_append_token(struct aug_file *af,
                                         const char *text,
                                         const char *node);
 
+/* Read the contents of file PATH and return them as one long string. The
+ * caller must free the result. Return NULL if any error occurs.
+ */
+const char* aug_read_file(const char *path);
+
 // Defined in record.c
 typedef struct aug_rec *aug_rec_t;
 

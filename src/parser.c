@@ -46,6 +46,18 @@ struct state {
     int        top;            /* top of stack */
 };
 
+/* Find the last token we've seen for field FID in rule RULE */
+static struct aug_token *lookup_token(struct rule *rule, int fid, 
+                                      struct state *state) {
+    struct aug_token *token = NULL;
+
+    list_for_each(t, state->stack[state->top]) {
+        if (t->match->fid == fid && t->match->owner == rule)
+            token = t;
+    }
+    return token;
+}
+
 /* Return value must be duped before putting into other structs */
 static const char *lookup_value(struct entry *entry, struct state*state) {
     if (entry->type == E_CONST) {
@@ -72,15 +84,8 @@ static const char *lookup_value(struct entry *entry, struct state*state) {
             internal_error(state->filename, state->lineno,
                            "empty rule stack");
         }
-        struct aug_token *token = NULL;
-        //printf("lookup: %s $%d\n", entry->action->rule->name, entry->field);
-        list_for_each(t, state->tokens) {
-            //printf("  .%s.%d: %s\n", t->match->owner->name, t->match->fid,
-            //       t->text);
-            if (t->match->fid == entry->field
-                && t->match->owner == entry->action->rule)
-                token = t;
-        }
+        struct aug_token *token = 
+            lookup_token(entry->action->rule, entry->field, state);
         if (token == NULL) {
             parse_error(state,
                         "field %d referenced but not found during parsing",
@@ -114,30 +119,48 @@ static void pop(struct state *state) {
     *pos = '\0';
 }
 
+static void assign(struct entry *value, struct state *state) {
+    struct aug_token *token;
+
+    if (value == NULL)
+        return;
+
+    token = lookup_token(value->action->rule, value->field, state);
+    if (token == NULL) {
+        internal_error(state->filename, state->lineno,
+                       "tried to assign to nonexistant field %d in rule %s\n",
+                       value->field, value->action->rule->name);
+        return;
+    }
+    if (token->node != NULL) {
+        parse_error(state, "Token was already assigned to a node");
+    }
+    
+    token->node = strdup(state->path);
+
+    if (state->flags & PF_ACTION)
+        fprintf(state->log, "assign %s = %s\n", token->node, token->text);
+}
+
 static void action_enter(struct match *match, struct state *state) {
     if (match->action == NULL)
         return;
     list_for_each(e, match->action->path) {
         push(e, state);
         if (state->flags & PF_ACTION)
-            printf("enter %s\n", state->path);
+            printf("enter  %s\n", state->path);
     }
 }
 
-static void action_exit(struct match *match, ATTRIBUTE_UNUSED struct state *state) {
+static void action_exit(struct match *match, struct state *state) {
     if (match->action == NULL)
         return;
 
-    struct entry *value = match->action->value;
-    if (value != NULL) {
-        if (state->flags & PF_ACTION)
-            fprintf(state->log, "assign %s = %s\n", 
-                    state->path, lookup_value(value, state));
-    }
-    
+    assign(match->action->value, state);
+
     list_for_each(e, match->action->path) {
         if (state->flags & PF_ACTION)
-            fprintf(state->log, "exit %s\n", state->path);
+            fprintf(state->log, "exit   %s\n", state->path);
         pop(state);
     }
 }
@@ -219,7 +242,7 @@ static void parse_literal(struct match *match, struct state *state) {
         struct aug_token *token = NULL;
         char *text = strndup(state->pos, len);
 
-        token = aug_make_token(AUG_TOKEN_INERT, text, "/");
+        token = aug_make_token(AUG_TOKEN_INERT, text, NULL);
         token->match = match;
 
         list_append(state->tokens, token);
@@ -405,19 +428,19 @@ static void parse_match(struct match *match, struct state *state) {
     }
 }
 
-void parse(struct grammar *grammar, const char *filename, const char *text,
+int parse(struct grammar *grammar, struct aug_file *file, const char *text,
            FILE *log, int flags) {
     struct state state;
 
-    state.filename = filename;
+    state.filename = file->name;
     state.lineno = 1;
     state.text = text;
     state.pos = text;
     state.applied = 0;
     state.tokens = NULL;
     state.count  = 0;
-    CALLOC(state.path, 100);
-    strcpy(state.path, "/system/config");
+    CALLOC(state.path, strlen(file->node) + 100);
+    strcpy(state.path, file->node);
     CALLOC(state.seq, 10);
     CALLOC(state.stack, 10);
     state.top = -1;
@@ -429,8 +452,12 @@ void parse(struct grammar *grammar, const char *filename, const char *text,
         state.log = stdout;
     }
     parse_rule(grammar->rules, &state);
-    if (! state.applied || *state.pos != '\0')
-        fprintf(stderr, "Parse failed\n");
+    file->tokens = state.tokens;
+    if (! state.applied || *state.pos != '\0') {
+        fprintf(log, "Parse failed\n");
+        return -1;
+    }
+    return 0;
 }
 
 /*

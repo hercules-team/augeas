@@ -892,18 +892,20 @@ static int check_entry(struct rule *rule, struct entry *entry,
                        const char *role) {
     struct match *m;
 
-    if (entry != NULL && entry->type == E_FIELD) {
-        m = find_field(rule->matches, entry->field);
-        if (m == NULL) {
-            grammar_error(_FR(rule), _L(entry),
-                          "Reference to nonexistant field %d in %s",
-                          entry->field, role);
-            return 0;
-        } else if (m->type == RULE_REF) {
-            grammar_error(_FR(rule), _L(entry),
-                          "Field %d, used as the %s, is a rule. That is not implemented.",
-                          entry->field, role);
-            return 0;
+    list_for_each(e, entry) {
+        if (e->type == E_FIELD) {
+            m = find_field(rule->matches, e->field);
+            if (m == NULL) {
+                grammar_error(_FR(rule), _L(e),
+                              "Reference to nonexistant field %d in %s",
+                              e->field, role);
+                return 0;
+            } else if (m->type == RULE_REF) {
+                grammar_error(_FR(rule), _L(e),
+                              "Field %d, used as the %s, is a rule. That is not implemented.",
+                              e->field, role);
+                return 0;
+            }
         }
     }
     return 1;
@@ -917,6 +919,10 @@ static int bind_actions(struct rule *rule) {
             r = 0;
         if (! check_entry(rule, a->value, "value"))
             r = 0;
+        if (a->value != NULL && a->value->type != E_FIELD) {
+            grammar_error(_FR(rule), _L(a->value),
+                          "Only fields can be used as values in assignments");
+        }
     }
 
     list_for_each(a, rule->actions) {
@@ -1117,6 +1123,24 @@ int load_spec(const char *filename, FILE *log, int flags,
     }
 
     return ok ? 0 : -1;
+}
+
+/*
+ * Freeing some data structures
+ */
+
+void augs_map_free(struct map *map) {
+    if (map != NULL) {
+        safe_free((void *) map->filename);
+        safe_free((void *) map->grammar_name);
+        while (map->filters != NULL) {
+            struct filter *f = map->filters;
+            safe_free((void *) f->glob);
+            map->filters = f->next;
+            free(f);
+        }
+        free(map);
+    }
 }
 
 /*

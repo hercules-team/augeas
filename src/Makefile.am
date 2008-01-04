@@ -4,17 +4,21 @@ AM_CFLAGS = @AUGEAS_CFLAGS@ @WARN_CFLAGS@ @LIBPCRE_CFLAGS@
 AM_YFLAGS=-d -p spec_
 
 lib_LTLIBRARIES = libaugeas.la
-noinst_LTLIBRARIES = liblexer.la libparse.la
+noinst_LTLIBRARIES = liblexer.la
 
 bin_PROGRAMS = augtool augparse
 
 libaugeas_la_SOURCES = augeas.h augeas.c \
 	internal.h internal.c \
-	record.h record.c \
-	prov_pam.c prov_hosts.c prov_inittab.c
+	prov_spec.c spec-parse.y ast.h ast.c parser.c list.h
+
+# FIXME: These files are obsolete and need to be killed
+#        once saving files is fully working
+#	record.h record.c \
+#	prov_pam.c prov_hosts.c prov_inittab.c
 
 
-libaugeas_la_LIBADD = @LIBPCRE_LIBS@
+libaugeas_la_LIBADD = liblexer.la @LIBPCRE_LIBS@
 
 augtool_SOURCES = augtool.c
 augtool_LDADD = libaugeas.la $(AUGTOOL_LIBS)
@@ -22,8 +26,5 @@ augtool_LDADD = libaugeas.la $(AUGTOOL_LIBS)
 liblexer_la_SOURCES = spec-lex.l
 liblexer_la_CFLAGS = $(AM_CFLAGS) -Wno-unused-parameter -Wno-unused-function
 
-libparse_la_SOURCES = spec-parse.y ast.h ast.c parser.c list.h
-libparse_la_LIBADD = liblexer.la @LIBPCRE_LIBS@
-
 augparse_SOURCES = augparse.c
-augparse_LDADD = libparse.la libaugeas.la
+augparse_LDADD = libaugeas.la

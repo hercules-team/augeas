@@ -60,6 +60,8 @@ struct map {
     struct filter  *filters;
 };
 
+void augs_map_free(struct map *map);
+
 /* 
  * A filter is a list of glob patterns describing which files to
  * include.
@@ -99,7 +101,7 @@ enum parse_debug_flags {
  * LOG is used to print logging messages. FLAGS controls what is printed
  * and should be a set of flags from enum parse_flags
  */
-void parse(struct grammar *grammar, const char *filename, const char *text,
+int parse(struct grammar *grammar, struct aug_file *file, const char *text,
            FILE *log, int flags);
 
 enum grammar_debug_flags {

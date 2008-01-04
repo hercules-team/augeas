@@ -20,6 +20,10 @@
  * Author: David Lutterkort <dlutter@redhat.com>
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include "internal.h"
 
 void aug_token_free(struct aug_token *t) {
@@ -103,6 +107,38 @@ struct aug_token *aug_file_append_token(struct aug_file *af,
         for (t = af->tokens; t->next != NULL; t = t->next);
         t->next = result;
     }
+    return result;
+}
+
+const char* aug_read_file(const char *path) {
+    FILE *fp = fopen(path, "r");
+    struct stat st;
+    char *result;
+
+    if (!fp)
+        return NULL;
+
+    if (fstat(fileno(fp), &st) < 0) {
+        fclose(fp);
+        return NULL;
+    }
+    
+    CALLOC(result, st.st_size + 1);
+    if (result == NULL) {
+        fclose(fp);
+        return NULL;
+    }
+
+    if (st.st_size) {
+        if (fread(result, st.st_size, 1, fp) != 1) {
+            fclose(fp);
+            free(result);
+            return NULL;
+        }
+    }
+    result[st.st_size] = '\0';
+
+    fclose(fp);
     return result;
 }
 
