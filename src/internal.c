@@ -41,7 +41,7 @@ void aug_file_free(struct aug_file *af) {
         while (af->tokens != NULL) {
             struct aug_token *t = af->tokens;
             af->tokens = t->next;
-            free(t);
+            aug_token_free(t);
         }
     }
 }
