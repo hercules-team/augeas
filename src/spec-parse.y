@@ -368,9 +368,11 @@ static struct action *make_action(enum action_scope scope, int id,
   result->id = id;
   
   result->path = path;
-  if (path != NULL)
-    path->action = result;
-  
+  if (path != NULL) {
+    list_for_each(p, path)
+      p->action = result;
+  }
+
   result->value = value;
   if (value != NULL)
     value->action = result;
