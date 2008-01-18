@@ -176,9 +176,9 @@ static void print_matches(FILE *out, struct match *m, const char *sep,
     }
 }
 
-static void print_literal_set(FILE *out, struct literal_set *set,
-                              struct grammar *grammar,
-                              char begin, char end) {
+void print_literal_set(FILE *out, struct literal_set *set,
+                       struct grammar *grammar,
+                       char begin, char end) {
     if (set != NULL) {
         fprintf (out, " %c", begin);
         list_for_each(f, set) {
@@ -222,6 +222,10 @@ static void print_follow(FILE *out, struct match *m, int flags) {
 
     if (flags & GF_FOLLOW) {
         print_literal_set(out, m->follow, m->owner->grammar, '{', '}');
+    }
+
+    if (flags & GF_HANDLES) {
+        print_literal_set(out, m->handle, m->owner->grammar, '<', '>');
     }
 }
 
@@ -541,6 +545,7 @@ static int merge_literal_set(struct literal_set **first,
     return changed;
 }
 
+__attribute__((pure))
 struct match *find_field(struct match *matches, int fid) {
     struct match *result = NULL;
 
@@ -554,6 +559,7 @@ struct match *find_field(struct match *matches, int fid) {
     return NULL;
 }
 
+__attribute__((pure))
 static struct match *find_group(struct match *matches, int gid) {
     struct match *result = NULL;
 
@@ -806,13 +812,155 @@ static int check_match_ambiguity(struct rule *rule, struct match *matches) {
     return 1;
 }
 
-/* Prepare the grammar by computing first/follow sets for all rules and by
- * filling ANY matches with appropriate regexps. Only a grammar that has
- * been successfully prepared can be used for parsing 
+/* Find the regexp pattern that matches path components
+   generated from ENTRY */
+__attribute__((pure))
+static const char *entry_pattern(const struct entry *entry) {
+    static const char *DIGITS = "[0-9]+";
+    static const char *PATH_COMPONENT = "[^/]+";
+
+    const struct rule *rule = entry->action->rule;
+
+    if (entry->type == E_CONST) {
+        return entry->text;
+    } else if (entry->type == E_GLOBAL) {
+        if (STREQ(entry->text, "seq")) {
+            return DIGITS;
+        } else if (STREQ(entry->text, "basename")) {
+            return PATH_COMPONENT;
+        } else {
+            grammar_error(_FR(rule), _L(entry), 
+                          "Reference to unknown global %s", 
+                          entry->text);
+            return NULL;
+        }
+    } else if (entry->type == E_FIELD) {
+        struct match *field = find_field(rule->matches, entry->field);
+        if (field == NULL) {
+            grammar_error(_FR(rule), _L(entry), 
+                          "Reference to nonexistant field %d", 
+                          entry->field);
+            return NULL;
+        } else {
+            if (field->type == LITERAL) {
+                return field->literal->pattern;
+            } else if (field->type == ANY) {
+                return PATH_COMPONENT;
+            } else if (field->type == ABBREV_REF) {
+                return field->abbrev->literal->pattern;
+            } else {
+                grammar_error(_FR(rule), _L(entry),
+                              "Field reference $%d is not a literal",
+                              field->fid);
+                return NULL;
+            }
+        }
+    } else {
+        internal_error(_FR(rule), _L(entry),
+                       "Illegal entry type %d\n", entry->type);
+        return NULL;
+    }
+}
+
+/* Compute handles for each action; return 1 on success, 0 on failure */
+static int make_action_handles(struct match *matches) {
+    list_for_each(m, matches) {
+        if (SUBMATCH_P(m)) {
+            make_action_handles(m->matches);
+        }
+        if (m->action != NULL) {
+            /* Initial size for pattern is arbitrary; we just need pattern to be
+               a valid empty string */
+            char *pattern = calloc(10, sizeof(char));
+            list_for_each(e, m->action->path) {
+                const char *pat = entry_pattern(e);
+                if (pat == NULL) {
+                    free(pattern);
+                    return 0;
+                }
+
+                int len = strlen(pattern) + strlen(pat) + 1;
+                if (e->next != NULL)
+                    len += 1;
+                pattern = realloc(pattern, len);
+                strcat(pattern, pat);
+                if (e->next != NULL)
+                    strcat(pattern, "/");
+            }
+            m->action->handle = make_literal(pattern, REGEX, 
+                                             m->action->lineno);
+        }
+    }
+    return 1;
+}
+
+/* Compute the handles in each match. Return 0 if no changes were made, 
+   1 otherwise */
+static int make_match_handles(struct match *matches) {
+    int changed = 0;
+
+    list_for_each(cur, matches) {
+        if (SUBMATCH_P(cur)) {
+            if (make_match_handles(cur->matches))
+                changed = 1;
+        }
+        
+        if (cur->action != NULL && cur->action->handle != NULL) {
+            if (cur->handle == NULL) {
+                cur->handle = make_literal_set(cur->action->handle);
+                changed = 1;
+            }
+        } else {
+            switch(cur->type) {
+            case ALTERNATIVE:
+                list_for_each(m, cur->matches) {
+                    if (merge_literal_set(&(cur->handle), m->handle))
+                        changed = 1;
+                }
+                break;
+            case SEQUENCE:
+                list_for_each(m, cur->matches) {
+                    if (m->handle != NULL) {
+                        if (merge_literal_set(&(cur->handle), m->handle))
+                            changed = 1;
+                        break;
+                    }
+                }
+                break;
+            case RULE_REF:
+                if (merge_literal_set(&(cur->handle), 
+                                      cur->rule->matches->handle))
+                    changed = 1;
+                break;
+            case QUANT_STAR:
+            case QUANT_PLUS:
+            case QUANT_MAYBE:
+                if (merge_literal_set(&(cur->handle), cur->matches->handle))
+                    changed = 1;
+                break;
+            default:
+                // all others keep a NULL handle
+                break;
+            }
+        }
+    }
+
+    return changed;
+}
+
+/* Prepare the grammar by 
+ *
+ * (1) computing first/follow sets for all rules and propagating epsilon
+ * (2) determining regular expressions for all ANY symbols (... and ..?)
+ * (3) computing handles for the actions and for alll rules/matches
+ *
+ * Only a grammar that has been successfully prepared can be used for
+ * parsing
  */
 static int prepare(struct grammar *grammar) {
     int changed;
 
+    /* First/epsilon */
     do {
         changed = 0;
         list_for_each(r, grammar->rules) {
@@ -828,17 +976,34 @@ static int prepare(struct grammar *grammar) {
         }
     }
 
+    /* Follow */
     do {
         changed = 0;
         list_for_each(r, grammar->rules) {
             if (make_match_follows(r->matches, r->matches))
                 changed = 1;
         }
-    } while (changed);    
+    } while (changed);
+
+    /* Resolve any */
     list_for_each(r, grammar->rules) {
         if (! resolve_any(r->matches))
             return 0;
     }
+
+    /* Handles */
+    list_for_each(r, grammar->rules) {
+        if (!make_action_handles(r->matches))
+            return 0;
+    }
+
+    do {
+        changed = 0;
+        list_for_each(r, grammar->rules) {
+            if (make_match_handles(r->matches))
+                changed = 1;
+        }
+    } while (changed);
 
     int result = 1;
     list_for_each(r, grammar->rules) {

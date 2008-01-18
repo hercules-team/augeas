@@ -46,8 +46,7 @@ struct state {
     struct ast **symtab;
 };
 
-static struct ast *make_ast(struct match *match, 
-                            ATTRIBUTE_UNUSED struct state *state) {
+struct ast *make_ast(struct match *match) {
     struct ast *result;
     
     CALLOC(result, 1);
@@ -129,7 +128,7 @@ static void parse_literal(struct match *match, struct state *state) {
     if (len < 0) {
         state->applied = 0;
     } else {
-        state->ast = make_ast(match, state);
+        state->ast = make_ast(match);
         state->ast->token = strndup(state->pos, len);
 
         advance(state, len);
@@ -168,7 +167,7 @@ static int applies(struct match *match, struct state *state) {
 }
 
 static void parse_alternative(struct match *match, struct state *state) {
-    struct ast *ast = make_ast(match, state);
+    struct ast *ast = make_ast(match);
 
     state->applied = 0;
 
@@ -187,7 +186,7 @@ static void parse_alternative(struct match *match, struct state *state) {
 }
 
 static void parse_sequence(struct match *match, struct state *state) {
-    struct ast *ast = make_ast(match, state);
+    struct ast *ast = make_ast(match);
 
     state->applied = 1;
     list_for_each(p, match->matches) {
@@ -211,7 +210,7 @@ static void parse_field(struct match *match, struct state *state) {
 }
 
 static void parse_rule_ref(struct match *match, struct state *state) {
-    struct ast *ast = make_ast(match, state);
+    struct ast *ast = make_ast(match);
 
     parse_match(match->rule->matches, state);
     ast->children = state->ast;
@@ -225,7 +224,7 @@ static void parse_quant_star(struct match *match, struct state *state) {
         parse_match(match->matches, state);
         if (state->ast != NULL) {
             if (ast == NULL)
-                ast = make_ast(match, state);
+                ast = make_ast(match);
             list_append(ast->children, state->ast);
         }
     }
@@ -238,7 +237,7 @@ static void parse_quant_plus(struct match *match, struct state *state) {
         grammar_error(state->filename, state->lineno, 
                       "match did not apply");
     } else {
-        struct ast *ast = make_ast(match, state);
+        struct ast *ast = make_ast(match);
         while (applies(match, state)) {
             parse_match(match->matches, state);
             list_append(ast->children, state->ast);
@@ -253,7 +252,7 @@ static void parse_quant_maybe(struct match *match, struct state *state) {
         state->ast = NULL;
         parse_match(match->matches, state);
         if (state->ast != NULL) {
-            struct ast *ast = make_ast(match, state);
+            struct ast *ast = make_ast(match);
             list_append(ast->children, state->ast);
             state->ast = ast;
         }
@@ -570,6 +569,9 @@ static int ast_node(FILE *out, struct ast *ast, int parent, int next) {
     fprintf(out, " | ");
     if (ast->path != NULL)
         fprintf(out, ast->path);
+    fprintf(out, " | ");
+    print_literal_set(out, ast->match->handle, ast->match->owner->grammar,
+                      ' ', ' ');
     fprintf(out, "\"\n  shape = \"record\"\n");
     fprintf(out, "];\n");
     fprintf(out, "n%d -> n%d;\n", parent, self);

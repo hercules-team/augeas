@@ -30,9 +30,11 @@
  * Error reporting
  */
 #define _L(obj)  (obj)->lineno
+/* Various ways of getting at a filename */
 #define _FG(obj) (obj)->filename
 #define _FR(obj) (obj)->grammar->filename
 #define _FM(obj) (obj)->owner->grammar->filename
+#define _FA(obj) _FM((obj)->match)
 
 void grammar_error(const char *fname, int lineno,
                    const char *format, ...)
@@ -109,8 +111,9 @@ enum grammar_debug_flags {
     GF_ANY_RE = (1 << 0),   /* Print any expressions as full regexps */
     GF_FOLLOW = (1 << 1),   /* Print follow sets */
     GF_FIRST  = (1 << 2),   /* Print first sets/epsilon indicator */
-    GF_ACTIONS  = (1 << 3),
-    GF_PRETTY = (1 << 4)
+    GF_HANDLES = (1 << 3),
+    GF_ACTIONS  = (1 << 4),
+    GF_PRETTY = (1 << 5)
 };
 
 /*
@@ -221,8 +224,14 @@ struct literal_set {
  * 
  * The FIRST and FOLLOW sets are intially null, and filled by calling
  * prepare() on the grammar. Grammars where a rule has an empty first set
- * are rejected (they contain unused rules). TODO: reject grammars where
- * first sets contain the same entry multiple times.
+ * are rejected (they contain unused rules).
+ *
+ * A HANDLE is similar to a first set, though it is used when translating
+ * back from the config tree to the underlying file. The handle guides the
+ * traversal of the AST for the file when new nodes have been inserted into
+ * the config tree. Primitives are handles for actions (computed based on
+ * how they change the current path) and are then propagated throughout the
+ * grammar.
  *
  */
 struct match {
@@ -244,6 +253,7 @@ struct match {
     struct literal_set *follow;
     int                 epsilon;     /* produces the empty string */
     struct action      *action;
+    struct literal_set *handle;
 };
 
 enum action_scope {
@@ -259,6 +269,7 @@ struct action {
     int                    id;
     struct entry          *path;
     struct entry          *value;
+    struct literal        *handle;
 };
 
 enum entry_type {
@@ -296,10 +307,16 @@ struct ast {
     };
 };
 
+/* in parser.c */
+struct ast *make_ast(struct match *match);
+
 /*
  * Helpers to print (ast.c)
  */
 void print_literal(FILE *out, struct literal *l);
+void print_literal_set(FILE *out, struct literal_set *set,
+                       struct grammar *grammar,
+                       char begin, char end);
 
 /* Print CNT characters from TEXT. Escape newlines/tabs */
 int print_chars(FILE *out, const char *text, int cnt);
