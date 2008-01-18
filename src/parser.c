@@ -623,7 +623,8 @@ void ast_dot(FILE *out, struct ast *ast, int flags) {
         return;
     fprintf(out, "strict digraph ast {\n");
     fprintf(out, "  graph [ rankdir = \"LR\" ];\n");
-    ast_node(out, ast, 0, 1);
+    if (ast != NULL)
+        ast_node(out, ast, 0, 1);
     fprintf(out, "}\n");
 }
 
