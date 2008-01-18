@@ -15,7 +15,7 @@ grammar inistyle {
 
   comment: OPT_WS ( /#.*/ | 'REM' | 'rem' )? EOL
 
-  section: '[' ... ']' EOL ( kv | comment ) * {
+  section: '[' ... ']' EOL ( comment | kv ) * {
     @1 { $2 }
   }
 
