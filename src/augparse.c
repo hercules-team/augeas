@@ -35,14 +35,6 @@ static struct grammar *load_grammar(const char *name, FILE *log, int flags) {
         exit(EXIT_FAILURE);
     
     /* FIXME: free maps (if any) */
-    list_for_each(m, maps) {
-        printf("map grammar %s\n  ", m->grammar_name);
-        list_for_each(f, m->filters) {
-            printf("%s ", f->glob);
-        }
-        putchar('\n');
-    }
-
     if (grammars == NULL) {
         fprintf(stderr, "No grammars found\n");
         exit(EXIT_FAILURE);
