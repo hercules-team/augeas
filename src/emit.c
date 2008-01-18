@@ -322,6 +322,12 @@ static void ast_insert(struct ast *ast, const char *path) {
     case QUANT_STAR:
     case QUANT_PLUS:
         sub = ast_expand(match->matches, path, rest);
+        if (sub == NULL) {
+            internal_error(NULL, -1,
+                           "Path %s with rest %s can not be generated", 
+                           path, rest);
+            break;
+        }
         list_append(ast->children, sub);
         break;
     default:
