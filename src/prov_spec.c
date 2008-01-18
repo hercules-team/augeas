@@ -1,0 +1,274 @@
+/*
+ * prov_spec.c: parsed file provider
+ *
+ * Copyright (C) 2007 Red Hat Inc.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+ *
+ * Author: David Lutterkort <dlutter@redhat.com>
+ */
+
+#include "augeas.h"
+#include "internal.h"
+#include "ast.h"
+#include "list.h"
+#include "config.h"
+
+#include <ftw.h>
+#include <glob.h>
+
+/* Arbitrary limit on the number of fd's to use with ftw */
+#define MAX_DESCRIPTORS 10
+
+int augp_spec_init(void);
+int augp_spec_load(void);
+int augp_spec_save(void);
+
+struct augp_spec_data {
+    struct grammar  *grammars;
+    struct map      *maps;
+    struct aug_file *files;
+};
+
+struct augp_spec_data augp_spec_data = {
+    .grammars = NULL,
+    .maps = NULL
+};
+
+const struct aug_provider augp_spec = {
+    .name = "spec",
+    .init = augp_spec_init,
+    .load = augp_spec_load,
+    .save = augp_spec_save
+};
+
+static int ftw_load_cb(const char *fpath, 
+                       ATTRIBUTE_UNUSED const struct stat *st,
+                       int type) {
+    int r;
+    struct grammar *grammars;
+    struct map *maps;
+
+    if (type != FTW_F)
+        return 0;
+
+    if (!STREQ(fpath + strlen(fpath) - 4, ".aug"))
+        return 0;
+
+    /* FIXME: fpath may be a socket, fifo etc. but ignore that for now */
+
+    printf("Load %s\n", fpath);
+    r = load_spec(fpath, stderr, 0, &grammars, &maps);
+    if (r == -1) {
+        /* FIXME: Record the error somewhere, but keep going */
+        return 0;
+    }
+    list_append(augp_spec_data.grammars, grammars);
+    list_append(augp_spec_data.maps, maps);
+
+    return 0;
+}
+
+/* Read spec files and parse maps/grammars into augp_spec_data. Spec files
+ * are read from AUGEAS_SPEC_DIR (usually /usr/share/augeas/spec) and from
+ * any directory mentioned on the env var AUGEAS_SPECLIB
+ */
+int augp_spec_init(void) {
+    int r;
+    char *env, *path, *p;
+    
+    r = ftw(AUGEAS_SPEC_DIR, ftw_load_cb, MAX_DESCRIPTORS);
+    if (r == -1) {
+        if (errno != EACCES && errno != ENOENT) {
+            fprintf(stderr, "Ignoring failure of walk of %s.\n"
+                    "  Reason was: %s\n",
+                    AUGEAS_SPEC_DIR, strerror(errno));
+        }
+    }
+
+    env = getenv(AUGEAS_SPEC_ENV);
+    if (env != NULL) {
+        env = strndup(env, MAX_ENV_SIZE);
+        path = env;
+        do {
+            for (p = path; *p != '\0' && *p != PATH_SEP_CHAR; p++);
+
+            if (*p == PATH_SEP_CHAR)
+                *p++ = '\0';
+
+            r = ftw(path, ftw_load_cb, MAX_DESCRIPTORS);
+            if (r == -1) {
+                if (errno != EACCES && errno != ENOENT) {
+                    fprintf(stderr, "Ignoring failure of walk of %s.\n"
+                            "  Reason was: %s\n",
+                            path, strerror(errno));
+                }
+            }
+            path = p;
+        } while (*path != '\0');
+    }
+    
+    // CHECK: Multiple grammars with the same name
+    list_for_each(map, augp_spec_data.maps) {
+        list_for_each(g, augp_spec_data.grammars) {
+            if (STREQ(map->grammar_name, g->name))
+                map->grammar = g;
+        }
+    }
+
+    /* Maps that reference no grammar are removed */
+    int changed;
+    do {
+        changed = 0;
+        list_for_each(map, augp_spec_data.maps) {
+            if (map->grammar == NULL) {
+                grammar_error(map->filename, map->lineno,
+                              "grammar %s not loaded. Ignoring map.", 
+                              map->grammar_name);
+                list_remove(map, augp_spec_data.maps);
+                augs_map_free(map);
+                changed = 1;
+                break;
+            }
+        }
+    } while (changed);
+    return 0;
+}
+
+static void ast_set(struct ast *ast) {
+    if (LEAF_P(ast) && ast->path != NULL) {
+        aug_set(ast->path, ast->token);
+    }
+    if (! LEAF_P(ast)) {
+        list_for_each(c, ast->children) {
+            ast_set(c);
+        }
+    }
+}
+
+static int parse_file(const char *filename, struct grammar *grammar) {
+    const char *text = aug_read_file(filename);
+    struct aug_file *file;
+    int r;
+
+    printf("Parse %s with %s\n", filename, grammar->name);
+
+    if (text == NULL) {
+        fprintf(stderr, "Failed to read %s\n", filename);
+        return -1;
+    }
+            
+    file = aug_make_file(filename, "/system/config");
+    if (file == NULL)
+        goto error;
+            
+    r = parse(grammar, file, text, stdout, 0);
+    if (r != 0) {
+        fprintf(stderr, "Parsing of %s failed\n", filename);
+        goto error;
+    }
+    
+    list_append(augp_spec_data.files, file);
+    ast_set(file->ast);
+    safe_free((void *) text);
+
+    return 0;
+ error:
+    safe_free(file);
+    safe_free((void *) text);
+    return -1;
+}
+
+static int strendswith(const char *s, const char *end) {
+    const char *p = s + strlen(s) - strlen(end);
+    return STREQ(p, end);
+}
+
+/* Parse all the files mentioned in maps and load them into the tree */
+int augp_spec_load(void) {
+    glob_t globbuf;
+    int ret = 0;
+    int flags = GLOB_NOSORT;
+    const char *root = getenv(AUGEAS_ROOT_ENV);
+
+    list_for_each(map, augp_spec_data.maps) {
+        flags = GLOB_NOSORT;
+        
+        list_for_each(filter, map->filters) {
+            char *globpat;
+            if (root == NULL) {
+                globpat = (char *) filter->glob;
+            } else {
+                ret = asprintf(&globpat, "%s%s", root, filter->glob);
+                if (ret == -1)
+                    goto exit;
+            }
+            ret = glob(globpat, flags, NULL, &globbuf);
+            flags |= GLOB_APPEND;
+            if (root != NULL)
+                free(globpat);
+            if (ret != 0 && ret != GLOB_NOMATCH) {
+                ret = -1;
+                goto exit;
+            }
+        }
+    
+        for (int i=0; i < globbuf.gl_pathc; i++) {
+            const char *s = globbuf.gl_pathv[i];
+            if (strendswith(s, ".augnew") || strendswith(s, ".augnew.dot"))
+                continue;
+            parse_file(globbuf.gl_pathv[i], map->grammar);
+        }
+    }
+
+ exit:
+    /* If we called glob at least once, free globbuf */
+    if (flags & GLOB_APPEND)
+        globfree(&globbuf);
+    return -1;
+}
+
+int augp_spec_save(void) {
+    list_for_each(file, augp_spec_data.files) {
+        FILE *fp;
+        // For now, we save into af->name + ".augnew"
+        char *name = alloca(strlen(file->name) + 1 + strlen(".augnew.dot") + 1);
+        sprintf(name, "%s.augnew", file->name);
+
+        fp = fopen(name, "w");
+        if (fp == NULL)
+            return -1;
+
+        emit(fp, file->ast->path, file->ast);
+
+        fclose(fp);
+        // Also save a dot file with the AST for debugging
+        strcat(name, ".dot");
+        if ((fp = fopen(name, "w")) != NULL) {
+            ast_dot(fp, file->ast, PF_AST);
+            fclose(fp);
+        }
+    }
+    return 0;
+}
+
+/*
+ * Local variables:
+ *  indent-tabs-mode: nil
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  tab-width: 4
+ * End:
+ */
