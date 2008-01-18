@@ -20,13 +20,13 @@ static struct rule *make_rule(const char *name, struct match *matches,
 static struct match* make_match_list(struct match *head, struct match *tail,
                                      enum match_type type, int lineno);
 static struct match *make_literal_match(struct literal *literal, int lineno);
-static struct match *make_name_match(const char *name, enum quant quant, 
-                                     int lineno);
+static struct match *make_name_match(const char *name, int quant, int lineno);
 static struct match *make_match(enum match_type type, int lineno);
 static struct match *make_any_match(int epsilon, int lineno);
 static struct match *make_field_match(int field, int lineno);
- static struct action *make_action(enum action_scope scope, int id,
-                                   struct entry *path, 
+struct match *make_quant_match(struct match *child, int quant, int lineno);
+static struct action *make_action(enum action_scope scope, int id,
+                                  struct entry *path, 
                                   struct entry *value, int lineno);
 static struct entry *make_entry(enum entry_type type, int lineno);
 
@@ -74,7 +74,6 @@ typedef void *yyscan_t;
   struct match   *match;
   struct action  *action;
   struct entry   *entry;
-  enum quant     quant;
   char           *string;
   int            intval;
 }
@@ -84,7 +83,7 @@ typedef void *yyscan_t;
 %type <literal> literal
 %type <string>  token_opts grammar_ref
 %type <match>   match match_seq match_prim
-%type <quant>   match_quant
+%type <intval>  match_quant
 %type <action>  actions action
 %type <entry>   entry_prim value path
 %type <map>     map
@@ -178,21 +177,19 @@ match_prim:  literal
             { $$ = make_field_match($1, @1.first_line); }
           | '(' match ')' match_quant
             { 
-              $$ = $2; 
-              $$->gid = 1;   /* $2 was enclosed in parens, count as group */
-              $$->quant = $4; 
-              $$->epsilon = ($$->quant == Q_MAYBE || $$->quant == Q_STAR);
+              $2->gid = 1;   /* $2 was enclosed in parens, count as group */
+              $$ = make_quant_match($2, $4, @1.first_line);
             }
 
 
 match_quant: /* empty */
-             { $$ = Q_ONCE; }
+             { $$ = '1'; }
            | '*'
-             { $$ = Q_STAR; }
+             { $$ = '*'; }
            | '+'
-             { $$ = Q_PLUS; }
+             { $$ = '+'; }
            | '?'
-             { $$ = Q_MAYBE; }
+             { $$ = '?'; }
 
 literal: T_QUOTED
          { $$ = make_literal($1, QUOTED, @1.first_line); }
@@ -318,7 +315,7 @@ struct match *make_literal_match(struct literal *literal, int lineno) {
   return result;
 }
 
-struct match *make_name_match(const char *name, enum quant quant, int lineno) {
+struct match *make_name_match(const char *name, int quant, int lineno) {
   struct match *result;
 
   if (name == NULL)
@@ -326,8 +323,7 @@ struct match *make_name_match(const char *name, enum quant quant, int lineno) {
 
   result = make_match(NAME, lineno);
   result->name = name;
-  result->quant = quant;
-  result->epsilon = (quant == Q_MAYBE || quant == Q_STAR);
+  result = make_quant_match(result, quant, lineno);
   return result;
 }
 
@@ -355,6 +351,30 @@ struct match *make_field_match(int field, int lineno) {
   result = make_match(FIELD, lineno);
   result->field = field;
   return result;
+}
+
+struct match *make_quant_match(struct match *child, int quant, int lineno) {
+  struct match *match;
+
+  if (quant == '1') {
+    return child;
+  }
+
+  CALLOC(match, 1);
+  match->lineno = lineno;
+  if (quant == '*')
+    match->type = QUANT_STAR;
+  else if (quant == '+')
+    match->type = QUANT_PLUS;
+  else if (quant == '?')
+    match->type = QUANT_MAYBE;
+  else {
+    internal_error(NULL, lineno, "illegal quant %c\n", (char) quant);
+  }
+  
+  match->matches = child;
+  match->epsilon = (quant == '*' || quant == '?');
+  return match;
 }
 
 static struct action *make_action(enum action_scope scope, int id,

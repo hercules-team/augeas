@@ -354,48 +354,40 @@ static void parse_rule_ref(struct match *match, struct state *state) {
     action_exit(match, state);
 }
 
-static void parse_quant_match(parse_match_func func,
-                              struct match *match, struct state *state) {
+static void parse_quant_star(struct match *match, struct state *state) {
     int oldcount = state->count;
 
-    switch (match->quant) {
-    case Q_ONCE:
-        (*func)(match, state);
-        break;
-    case Q_MAYBE:
-        if (applies(match, state)) {
-            (*func)(match, state);
-        }
-        state->applied = 1;
-        break;
-    case Q_PLUS:
-        if (! applies(match, state)) {
-            grammar_error(state->filename, state->lineno, 
-                          "match did not apply");
-        } else {
-            state->count = 0;
-            while (applies(match, state)) {
-                (*func)(match, state);
-                state->count++;
-            }
-            state->count = oldcount;
-        }
-        state->applied = 1;
-        break;
-    case Q_STAR:
+    state->count = 0;
+    while (applies(match, state)) {
+        parse_match(match, state);
+        state->count++;
+    }
+    state->count = oldcount;
+    state->applied = 1;
+}
+
+static void parse_quant_plus(struct match *match, struct state *state) {
+    int oldcount = state->count;
+
+    if (! applies(match, state)) {
+        grammar_error(state->filename, state->lineno, 
+                      "match did not apply");
+    } else {
         state->count = 0;
         while (applies(match, state)) {
-            (*func)(match, state);
+            parse_match(match, state);
             state->count++;
         }
         state->count = oldcount;
-        state->applied = 1;
-        break;
-    default:
-        internal_error(_FM(match), _L(match), 
-                       "illegal quant type %d", match->quant);
-        break;
     }
+    state->applied = 1;
+}
+
+static void parse_quant_maybe(struct match *match, struct state *state) {
+    if (applies(match, state)) {
+        parse_match(match, state);
+    }
+    state->applied = 1;
 }
 
 static void parse_match(struct match *match, struct state *state) {
@@ -410,16 +402,25 @@ static void parse_match(struct match *match, struct state *state) {
         parse_field(match, state);
         break;
     case ALTERNATIVE:
-        parse_quant_match(parse_alternative, match, state);
+        parse_alternative(match, state);
         break;
     case SEQUENCE:
-        parse_quant_match(parse_sequence, match, state);
+        parse_sequence(match, state);
         break;
     case RULE_REF:
-        parse_quant_match(parse_rule_ref, match, state);
+        parse_rule_ref(match, state);
         break;
     case ABBREV_REF:
         parse_literal(match, state);
+        break;
+    case QUANT_PLUS:
+        parse_quant_plus(match, state);
+        break;
+    case QUANT_STAR:
+        parse_quant_star(match, state);
+        break;
+    case QUANT_MAYBE:
+        parse_quant_maybe(match, state);
         break;
     default:
         internal_error(state->filename, state->lineno,

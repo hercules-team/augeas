@@ -160,13 +160,6 @@ struct abbrev {
     struct literal *literal;    
 };
 
-enum quant {
-    Q_ONCE,  /* no quantifier, match exactly once */
-    Q_MAYBE, /* '?' */
-    Q_STAR,  /* '*' */
-    Q_PLUS   /* '+' */
-};
-
 struct rule {
     struct rule       *next;
     struct grammar    *grammar;  /* the grammar this rule belongs to */
@@ -186,12 +179,21 @@ enum match_type {
     ALTERNATIVE,  /* match one of a number of other matches */
     SEQUENCE,     /* match a list of matches */
     RULE_REF,     /* reference to a rule */
-    ABBREV_REF    /* reference to an abbrev */
+    ABBREV_REF,   /* reference to an abbrev */
+    QUANT_PLUS,
+    QUANT_STAR,
+    QUANT_MAYBE
 };
+
+#define QUANT_P(m) ((m)->type == QUANT_PLUS                             \
+                    || (m)->type == QUANT_STAR                          \
+                    || (m)->type == QUANT_MAYBE)
 
 /* Does the match M have submatches in M->matches that might
    be treated recursively ? */
-#define SUBMATCH_P(m) ((m)->type == ALTERNATIVE || (m)->type == SEQUENCE)
+#define SUBMATCH_P(m) ((m)->type == ALTERNATIVE                         \
+                       || (m)->type == SEQUENCE                         \
+                       || QUANT_P(m))
 
 /* A set of literals, for the first/follow sets */
 struct literal_set {
@@ -227,12 +229,11 @@ struct match {
     struct match    *next;
     int             lineno;
     enum match_type  type;
-    enum quant       quant;          /* only for NAME, ALTERNATIVE, SEQUENCE */
     union {
         struct literal *literal;     /* LITERAL, ANY */
         const char     *name;        /* NAME */
         int             field;       /* FIELD */
-        struct match   *matches;     /* ALTERNATIVE, SEQUENCE */
+        struct match   *matches;     /* ALTERNATIVE, SEQUENCE, QUANT_* */
         struct rule    *rule;        /* RULE_REF */
         struct abbrev  *abbrev;      /* ABBREV_REF */
     };

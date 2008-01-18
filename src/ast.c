@@ -95,19 +95,16 @@ static void dump_abbrevs(FILE *out, struct abbrev *a) {
     }
 }
 
-static void print_quant(FILE *out, struct match *m) {
-    static const char *quants = ".?*+";
-    enum quant quant = m->quant;
-
-    if (quant == Q_ONCE)
-        return;
-    if (quant <= Q_PLUS) {
-        fprintf(out, " %c", quants[quant]);
-    } else {
-        fprintf(out, " <U:q:%d>", quant);
+static void print_quantc(FILE *out, struct match *m) {
+    if (m->type == QUANT_PLUS)
+        fputc('+', out);
+    else if (m->type == QUANT_STAR)
+        fputc('*', out);
+    else if (m->type == QUANT_MAYBE)
+        fputc('?', out);
+    else {
+        fprintf(out, " <U:q:%d>", m->type);
     }
-    if (m->epsilon)
-        fprintf(out, " <>");
 }
 
 static void print_indent(FILE *out, int indent) {
@@ -141,7 +138,6 @@ static void print_matches(FILE *out, struct match *m, const char *sep,
             break;
         case NAME:
             fprintf(out, p->name);
-            print_quant(out, p);
             break;
         case ANY:
             print_any(out, p, flags);
@@ -153,12 +149,10 @@ static void print_matches(FILE *out, struct match *m, const char *sep,
             fprintf(out, "(");
             print_matches(out, p->matches, " | ", flags);
             fprintf(out, ")");
-            print_quant(out, p);
             break;
         case SEQUENCE:
             fprintf(out, "(");
-            print_quant(out, p);
-            print_matches(out, p->matches, " ", flags);
+            print_matches(out, p->matches, " . ", flags);
             fprintf(out, ")");
             break;
         case ABBREV_REF:
@@ -166,7 +160,12 @@ static void print_matches(FILE *out, struct match *m, const char *sep,
             break;
         case RULE_REF:
             fprintf(out, p->rule->name);
-            print_quant(out, p);
+            break;
+        case QUANT_PLUS:
+        case QUANT_STAR:
+        case QUANT_MAYBE:
+            print_matches(out, p->matches, sep, flags);
+            print_quantc(out, p);
             break;
         default:
             fprintf(out, "<U:match:%d>", p->type);
@@ -244,7 +243,6 @@ static void dump_matches(FILE *out, struct match *m, int indent, int flags) {
             break;
         case NAME:
             fprintf(out, ":%s", p->name);
-            print_quant(out, p);
             print_follow(out, p, flags);
             putchar('\n');
             break;
@@ -259,14 +257,12 @@ static void dump_matches(FILE *out, struct match *m, int indent, int flags) {
             break;
         case ALTERNATIVE:
             fprintf(out, "|");
-            print_quant(out, p);
             print_follow(out, p, flags);
             putchar('\n');
             dump_matches(out, p->matches, indent + 2, flags);
             break;
         case SEQUENCE:
             fprintf(out, ".");
-            print_quant(out, p);
             print_follow(out, p, flags);
             putchar('\n');
             dump_matches(out, p->matches, indent + 2, flags);
@@ -278,9 +274,16 @@ static void dump_matches(FILE *out, struct match *m, int indent, int flags) {
             break;
         case RULE_REF:
             fprintf(out, "%s", p->rule->name);
-            print_quant(out, p);
             print_follow(out, p, flags);
             fputc('\n', out);
+            break;
+        case QUANT_PLUS:
+        case QUANT_STAR:
+        case QUANT_MAYBE:
+            print_quantc(out, p);
+            print_follow(out, p, flags);
+            putchar('\n');
+            dump_matches(out, p->matches, indent + 2, flags);
             break;
         default:
             fprintf(out, "<U>\n");
@@ -665,6 +668,22 @@ static int make_match_firsts(struct match *matches) {
                     break;
             }
             break;
+        case QUANT_PLUS:
+        case QUANT_STAR:
+        case QUANT_MAYBE:
+            if (make_match_firsts(cur->matches))
+                changed = 1;
+            if (merge_literal_set(&(cur->first), cur->matches->first))
+                changed = 1;
+            if (! cur->epsilon) {
+                if (cur->type == QUANT_STAR || cur->type == QUANT_MAYBE
+                    || (cur->type == QUANT_PLUS 
+                        && cur->matches->epsilon)) {
+                    cur->epsilon = 1;
+                    changed = 1;
+                }
+            }
+            break;
         default:
             internal_error(_FM(cur), _L(cur), "unexpected type %d", cur->type);
             break;
@@ -688,7 +707,7 @@ static int make_match_follows(struct match *matches, struct match *parent) {
                 merge_literal_set(&(cur->follow), next->follow))
                 changed = 1;
         }
-        if (cur->quant == Q_PLUS || cur->quant == Q_STAR) {
+        if (cur->type == QUANT_PLUS || cur->type == QUANT_STAR) {
             if (merge_literal_set(&(cur->follow), cur->first))
                 changed = 1;
         }
@@ -860,11 +879,6 @@ static int bind_match_names(struct grammar *grammar, struct match *matches) {
                 free((void *) cur->name);
                 cur->type = ABBREV_REF;
                 cur->abbrev = a;
-                if (cur->quant != Q_ONCE) {
-                    grammar_error(_FM(cur), _L(cur),
-                 "quantifiers '*', '+', or '?' can not be applied to a token");
-                    result = 0;
-                }
             } else if ((r = find_rule(grammar, cur->name)) != NULL) {
                 free((void *) cur->name);
                 cur->type = RULE_REF;
@@ -872,6 +886,16 @@ static int bind_match_names(struct grammar *grammar, struct match *matches) {
             } else {
                 grammar_error(_FM(cur), _L(cur), "Unresolved symbol %s", cur->name);
                 result = 0;
+            }
+        } else if (QUANT_P(cur)) {
+            if (! bind_match_names(grammar, cur->matches))
+                result = 0;
+            else {
+                if (cur->matches->type == ABBREV_REF) {
+                    grammar_error(_FM(cur), _L(cur),
+                 "quantifiers '*', '+', or '?' can not be applied to a token");
+                    result = 0;
+                }
             }
         } else if (SUBMATCH_P(cur)) {
             if (! bind_match_names(grammar, cur->matches))
@@ -979,7 +1003,6 @@ static int bind_actions(struct rule *rule) {
                     CALLOC(shim, 1);
                     shim->type = SEQUENCE;
                     shim->lineno = rule->lineno;
-                    shim->quant  = Q_ONCE;
                     shim->owner  = rule;
                     shim->fid    = -1;
                     shim->gid    = 0;
