@@ -11,7 +11,7 @@ grammar inittab {
   token POUND_TO_EOL /#.*\n/ = '# '
 
   file: ( comment | record ) * {
-    @0 { $file_name }
+    @0 { $basename }
   }
 
   comment: ( /#.*?\n/ | /[ \t]*\n/ )

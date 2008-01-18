@@ -13,7 +13,7 @@ grammar records {
   token POUND_TO_EOL /#.*\n/ = '# '
 
   file: ( comment | record ) * {
-    @0 { $filename }
+    @0 { $basename }
   }
 
   comment: POUND_TO_EOL
