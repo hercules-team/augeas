@@ -11,16 +11,30 @@
 #            that can be easily cut&pasted back into the test description
 
 require 'find'
+require 'fileutils'
 
-ROOT="/tmp/aug"
+def augnew?(path)
+    File::file?(path) && File::fnmatch?("*.augnew", File::basename(path))
+end
 
 TOP_DIR=File::join(File::dirname(__FILE__), "..")
 TEST_DIR=File::join(TOP_DIR, "tests")
 AUGTOOL="#{TOP_DIR}/src/augtool"
 
+AUGEAS_ROOT=File::join(TOP_DIR, "build", "augtest")
+AUGEAS_SPECLIB=File::join(TOP_DIR, "spec")
+
+ENV["AUGEAS_ROOT"] = AUGEAS_ROOT
+ENV["AUGEAS_SPECLIB"] = AUGEAS_SPECLIB
+
 ARGV.each do |test|
-    Find.find(ROOT) do |path|
-        if File::file?(path) && File::fnmatch?("*.augnew", path)
+    if File::directory?(AUGEAS_ROOT)
+        FileUtils::rm_rf(AUGEAS_ROOT)
+    end
+    FileUtils::mkdir_p(AUGEAS_ROOT)
+    FileUtils::cp_r(File::join(TEST_DIR, "root", "."), AUGEAS_ROOT)
+    Find.find(AUGEAS_ROOT) do |path|
+        if augnew?(path)
             File::delete(path)
         end
     end
@@ -39,7 +53,7 @@ ARGV.each do |test|
     success=true
     msgs = []
     diff.each do |file, exp|
-        file = File::join(ROOT, file)
+        file = File::join(AUGEAS_ROOT, file)
         if ! File::exist?("#{file}.augnew")
             msgs << "Expected file #{file}.augnew"
             success=false
@@ -57,10 +71,9 @@ ARGV.each do |test|
             end
         end
     end
-    files = diff.keys.collect { |f| File::join(ROOT, "#{f}.augnew") }
-    Find.find(ROOT) do |path|
-        if File::file?(path) && File::fnmatch?("*.augnew", path) &&
-                ! files.include?(path)
+    files = diff.keys.collect { |f| File::join(AUGEAS_ROOT, "#{f}.augnew") }
+    Find.find(AUGEAS_ROOT) do |path|
+        if augnew?(path) && ! files.include?(path)
             success=false
             msgs << "Unexpected file #{path}"
         end
