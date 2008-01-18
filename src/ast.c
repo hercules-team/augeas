@@ -177,6 +177,31 @@ static void print_matches(FILE *out, struct match *m, const char *sep,
     }
 }
 
+static void print_literal_set(FILE *out, struct literal_set *set,
+                              struct grammar *grammar,
+                              char begin, char end) {
+    if (set != NULL) {
+        fprintf (out, " %c", begin);
+        list_for_each(f, set) {
+            struct abbrev *abbrev = NULL;
+            list_for_each(a, grammar->abbrevs) {
+                if (a->literal == f->literal) {
+                    abbrev = a;
+                    break;
+                }
+            }
+            if (abbrev != NULL)
+                fprintf(out, abbrev->name);
+            else
+                print_literal(out, f->literal);
+            if (f->next != NULL) {
+                fputc(' ', out);
+            }
+        }
+        fputc(end, out);
+    }
+}
+
 static void print_follow(FILE *out, struct match *m, int flags) {
     if (flags & GF_ACTIONS && m->action != NULL) {
         switch(m->action->scope) {
@@ -192,27 +217,12 @@ static void print_follow(FILE *out, struct match *m, int flags) {
         }
     }
 
+    if (flags & GF_FIRST) {
+        print_literal_set(out, m->first, m->owner->grammar, '[', ']');
+    }
+
     if (flags & GF_FOLLOW) {
-        if (m->follow != NULL) {
-            fprintf (out, " {");
-            list_for_each(f, m->follow) {
-                struct abbrev *abbrev = NULL;
-                list_for_each(a, m->owner->grammar->abbrevs) {
-                    if (a->literal == f->literal) {
-                        abbrev = a;
-                        break;
-                    }
-                }
-                if (abbrev != NULL)
-                    fprintf(out, abbrev->name);
-                else
-                    print_literal(out, f->literal);
-                if (f->next != NULL) {
-                    fputc(' ', out);
-                }
-            }
-            fputc('}', out);
-        }
+        print_literal_set(out, m->follow, m->owner->grammar, '{', '}');
     }
 }
 
