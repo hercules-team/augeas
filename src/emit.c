@@ -43,31 +43,54 @@
 // FIXME: Should be in a global header
 #define NMATCHES 100
 
-static void ast_delete(ATTRIBUTE_UNUSED struct ast *ast) {
-    // FIXME: Need to free memory for subtree AST
+/* Free an entire AST */
+static void ast_delete(struct ast *ast) {
+    if (ast == NULL)
+        return;
+
+    if (! LEAF_P(ast)) {
+        while (ast->children != NULL) {
+            struct ast *del = ast->children;
+            ast->children = del->next;
+            ast_delete(del);
+        }
+    } else {
+        safe_free((void *) ast->token);
+    }
+    safe_free((void *) ast->path);
+    safe_free(ast);
 }
 
 /* Delete AST and its subtree if ast->path does not exist in the
    config tree.
  */
-static int do_deletion(struct ast* ast) {
-    struct ast *children = ast->children;
+static int do_deletion(struct ast **astp) {
+    int changed = 0;
+    struct ast *ast = *astp;
 
     if (ast->path != NULL && ! aug_exists(ast->path)) {
-        children = NULL;
+        ast_delete(ast);
+        *astp = NULL;
+        return 1;
     }
 
-    if (!LEAF_P(ast) && children != NULL) {
-        struct ast *next = children->next;
-        while (children && do_deletion(children)) {
-            children = next;
-            next = children->next;
+    if (!LEAF_P(ast)) {
+        struct ast *next = ast->children->next;
+        while (ast->children && do_deletion(&(ast->children))) {
+            changed = 1;
+            if (ast->children == NULL) {
+                ast->children = next;
+                next = ast->children->next;
+            }
         }
-        if (children != NULL) {
-            for (struct ast *c = children; c->next != NULL;) {
+        if (ast->children != NULL) {
+            struct ast *c = ast->children;
+            while (c->next != NULL) {
                 next = c->next->next;
-                if (do_deletion(c->next)) {
-                    c->next = next;
+                if (do_deletion(&(c->next))) {
+                    changed = 1;
+                    if (c->next == NULL)
+                        c->next = next;
                 } else {
                     c = c->next;
                 }
@@ -75,10 +98,13 @@ static int do_deletion(struct ast* ast) {
         }
     }
     
-    if (children == NULL)
+    if (ast->children == NULL) {
         ast_delete(ast);
+        *astp = NULL;
+        changed = 1;
+    }
 
-    return children == NULL;
+    return changed;
 }
 
 /* Find the node in AST that has an instruction to enter PATH. */
@@ -95,7 +121,9 @@ static struct ast *ast_find(struct ast *ast, const char *path) {
     return NULL;
 }
 
-static void store_value(struct ast *ast, const char *path) {
+static int store_value(struct ast *ast, const char *path) {
+    int changed = 0;
+
     // FIXME: The connection between the ast node receiving the value and 
     // the node to wich the action->value is attached is not right. When
     // we see an action->value, we need to find the AST node corresponding
@@ -112,11 +140,13 @@ static void store_value(struct ast *ast, const char *path) {
                 if (ast->token != NULL) {
                     safe_free((void *) ast->token);
                     ast->token = NULL;
+                    changed = 1;
                 }
             } else {
                 if (ast->token == NULL || STRNEQ(ast->token, value)) {
                     safe_free((void *) ast->token);
                     ast->token = strdup(value);
+                    changed = 1;
                 }
             }
         }
@@ -124,9 +154,12 @@ static void store_value(struct ast *ast, const char *path) {
         // FIXME: This could be shortcircuited; once the value has been
         // stored, there's no need to go over the rest of the tree
         list_for_each(c, ast->children) {
-            store_value(c, path);
+            if (store_value(c, path))
+                changed = 1;
         }
     }
+
+    return changed;
 }
 
 // Find the most appropriate match amongst MATCHES that leads to
@@ -352,7 +385,8 @@ static void ast_insert(struct ast *ast, const char *path) {
     We either need to change the language for grammars to enforce that 
     or check for that when constructing the grammar (preferrable) or the
     AST */
-static void do_insertion(struct ast *ast, const char *path) {
+static int do_insertion(struct ast *ast, const char *path) {
+    int changed = 0;
     const char **children;
     struct ast *sub = ast;
     int nchildren;
@@ -360,6 +394,7 @@ static void do_insertion(struct ast *ast, const char *path) {
     if (aug_get(path) != NULL) {
         sub = ast_find(ast, path);
         if (sub == NULL) {
+            changed = 1;
             ast_insert(ast, path);
             sub = ast;
         }
@@ -367,10 +402,14 @@ static void do_insertion(struct ast *ast, const char *path) {
 
     nchildren = aug_ls(path, &children);
     for (int i=0; i < nchildren; i++) {
-        do_insertion(sub, children[i]);
+        if (do_insertion(sub, children[i]))
+            changed = 1;
     }
     
-    store_value(ast, path);
+    if (store_value(ast, path))
+        changed = 1;
+
+    return changed;
 }
 
 static void emit_escaped_chars(FILE *out, const char *text) {
@@ -415,7 +454,19 @@ static void emit_escaped_chars(FILE *out, const char *text) {
     }
 }
 
-static void emit_ast(FILE *out, struct ast *ast) {
+int ast_sync(struct ast **ast) {
+    const char *root = (*ast)->path;
+    int changed = 0;
+
+    if (do_deletion(ast))
+        changed = 1;
+    if (*ast != NULL && do_insertion(*ast, root))
+        changed = 1;
+
+    return changed;
+}
+
+void ast_emit(FILE *out, struct ast *ast) {
     if (LEAF_P(ast)) {
         if (ast->token != NULL) {
             fprintf(out, ast->token);
@@ -438,17 +489,9 @@ static void emit_ast(FILE *out, struct ast *ast) {
         }
     } else {
         list_for_each(c, ast->children) {
-            emit_ast(out, c);
+            ast_emit(out, c);
         }
     }
-}
-
-void emit(FILE *out, const char *root, struct ast *ast) {
-
-    do_deletion(ast);
-    do_insertion(ast, root);
-
-    emit_ast(out, ast);
 }
 
 /*

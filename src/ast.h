@@ -327,7 +327,8 @@ void print_literal_set(FILE *out, struct literal_set *set,
 int print_chars(FILE *out, const char *text, int cnt);
 
 /* in emit.c */
-void emit(FILE *out, const char *root, struct ast *ast);
+int ast_sync(struct ast **ast);
+void ast_emit(FILE *out, struct ast *ast);
 #endif
 
 

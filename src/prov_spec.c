@@ -241,26 +241,39 @@ int augp_spec_load(void) {
 }
 
 int augp_spec_save(void) {
+    char *name = calloc(1, 80); /* Completely arbitrary initial size */
     list_for_each(file, augp_spec_data.files) {
         FILE *fp;
         // For now, we save into af->name + ".augnew"
-        char *name = alloca(strlen(file->name) + 1 + strlen(".augnew.dot") + 1);
+        name = realloc(name, strlen(file->name) + 1 
+                       + strlen(".augnew.dot") + 1);
+        
         sprintf(name, "%s.augnew", file->name);
+        if (ast_sync(&(file->ast))) {
+            fp = fopen(name, "w");
+            if (fp == NULL) {
+                free(name);
+                return -1;
+            }
 
-        fp = fopen(name, "w");
-        if (fp == NULL)
-            return -1;
+            // FIXME: If the whole AST went away, we should probably delete
+            // the file; but we don't have a mechanism to create a file, so
+            // we just leave an empty file there
+            if (file->ast != NULL)
+                ast_emit(fp, file->ast);
 
-        emit(fp, file->ast->path, file->ast);
-
-        fclose(fp);
+            fclose(fp);
+        }
+        
         // Also save a dot file with the AST for debugging
+            
         strcat(name, ".dot");
         if ((fp = fopen(name, "w")) != NULL) {
             ast_dot(fp, file->ast, PF_AST);
             fclose(fp);
         }
     }
+    free(name);
     return 0;
 }
 
