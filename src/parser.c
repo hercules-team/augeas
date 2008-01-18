@@ -36,10 +36,12 @@ struct state {
     const char *text;
     const char *pos;
     int         applied;
-    int         flags;    /* set of parse_flags */
-    int         count;    /* number of iteration during '*'/'+' */
-    char       *seq;      /* scratch for count as a string */
-    char       *path;     /* current path */
+    int         flags;     /* set of parse_flags */
+    int         count;     /* number of iteration during '*'/'+' */
+    int         count_inc; /* boolean indicating if the count needs to */ 
+                           /* be incremented becasue it has been used */
+    char       *seq;       /* scratch for count as a string */
+    char       *path;      /* current path */
     FILE       *log;
     struct ast *ast;
     int         symlen;
@@ -346,6 +348,7 @@ static const char *lookup_value(struct entry *entry, struct state* state) {
             int len = snprintf(NULL, 0, "%d", state->count);
             state->seq = realloc(state->seq, len+1);
             snprintf(state->seq, len + 1, "%d", state->count);
+            state->count_inc = 1;
             return state->seq;
         } else if (STREQ("basename", entry->text)) {
             const char *basnam = strrchr(state->filename, '/');
@@ -489,10 +492,13 @@ static void eval(struct ast *ast, struct state *state) {
                gets a new value in subtrees
             */
             int oldcount;
+            int oldcount_inc;
 
             if (QUANT_P(ast->match)) {
                 oldcount = state->count;
+                oldcount_inc = state->count_inc;
                 state->count = 0;
+                state->count_inc = 0;
                 state->symlen += 1;
                 state->symtab = realloc(state->symtab, 
                                         state->symlen*sizeof(ast));
@@ -502,13 +508,15 @@ static void eval(struct ast *ast, struct state *state) {
                     state->symtab[state->symlen-1] = c;
                 }
                 eval(c, state);
-                if (QUANT_P(ast->match)) {
+                if (QUANT_P(ast->match) && state->count_inc) {
                     state->count += 1;
+                    state->count_inc = 0;
                 }
             }
             if (QUANT_P(ast->match)) {
                 state->symlen -= 1;
                 state->count = oldcount;
+                state->count_inc = oldcount_inc;
             }
         }
         if (ast->path == NULL) {
