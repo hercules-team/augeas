@@ -108,8 +108,17 @@ static void store_value(struct ast *ast, const char *path) {
             ast->match->action->value != NULL
             && ast->path != NULL && STREQ(ast->path, path)) {
             const char *value = aug_get(path);
-            safe_free((void *) ast->token);
-            ast->token = strdup(value);
+            if (value == NULL) {
+                if (ast->token != NULL) {
+                    safe_free((void *) ast->token);
+                    ast->token = NULL;
+                }
+            } else {
+                if (ast->token == NULL || STRNEQ(ast->token, value)) {
+                    safe_free((void *) ast->token);
+                    ast->token = strdup(value);
+                }
+            }
         }
     } else {
         // FIXME: This could be shortcircuited; once the value has been
