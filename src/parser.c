@@ -41,130 +41,24 @@ struct state {
     char       *seq;      /* scratch for count as a string */
     char       *path;     /* current path */
     FILE       *log;
-    struct aug_token *tokens;
-    struct aug_token **stack;  /* stack of left most token for a rule */
-    int        top;            /* top of stack */
+    struct ast *ast;
+    int         symlen;
+    struct ast **symtab;
 };
 
-/* Find the last token we've seen for field FID in rule RULE */
-static struct aug_token *lookup_token(struct rule *rule, int fid, 
-                                      struct state *state) {
-    struct aug_token *token = NULL;
-
-    list_for_each(t, state->stack[state->top]) {
-        if (t->match->fid == fid && t->match->owner == rule)
-            token = t;
-    }
-    return token;
-}
-
-/* Return value must be duped before putting into other structs */
-static const char *lookup_value(struct entry *entry, struct state*state) {
-    if (entry->type == E_CONST) {
-        return entry->text;
-    } else if (entry->type == E_GLOBAL) {
-        if (STREQ("seq", entry->text)) {
-            int len = snprintf(NULL, 0, "%d", state->count);
-            state->seq = realloc(state->seq, len+1);
-            snprintf(state->seq, len + 1, "%d", state->count);
-            return state->seq;
-        } else if (STREQ("basename", entry->text)) {
-            const char *basnam = strrchr(state->filename, '/');
-            if (basnam == NULL)
-                basnam = state->filename;
-            else
-                basnam += 1;
-            return basnam;
-        } else {
-            // Unknown global, shouldn't have made it to here
-            return "global";
-        }
-    } else if (entry->type == E_FIELD) {
-        if (state->top < 0) {
-            internal_error(state->filename, state->lineno,
-                           "empty rule stack");
-        }
-        struct aug_token *token = 
-            lookup_token(entry->action->rule, entry->field, state);
-        if (token == NULL) {
-            parse_error(state,
-                        "field %d referenced but not found during parsing",
-                        entry->field);
-            return "failure";
-        } else {
-            return token->text;
-        }
-    } else {
-        internal_error(state->filename, state->lineno,
-                       "illegal entry type %d", entry->type);
-        return "illegal";
-    }
-}
-
-static void push(struct entry *entry, struct state *state) {
-    const char *path = lookup_value(entry, state);
-    int size = strlen(state->path) + 1 + strlen(path) + 1;
-
-    state->path = realloc(state->path, size);
-    strcat(state->path, "/");
-    strcat(state->path, path);
-}
-
-static void pop(struct state *state) {
-    char *pos = strrchr(state->path, '/');
-    if (pos == NULL) {
-        internal_error(state->filename, state->lineno,
-                       "pop from emtpy path");
-    }
-    *pos = '\0';
-}
-
-static void assign(struct entry *value, struct state *state) {
-    struct aug_token *token;
-
-    if (value == NULL)
-        return;
-
-    token = lookup_token(value->action->rule, value->field, state);
-    if (token == NULL) {
-        internal_error(state->filename, state->lineno,
-                       "tried to assign to nonexistant field %d in rule %s\n",
-                       value->field, value->action->rule->name);
-        return;
-    }
-    if (token->node != NULL) {
-        parse_error(state, "Token was already assigned to a node");
-    }
+static struct ast *make_ast(struct match *match, 
+                            ATTRIBUTE_UNUSED struct state *state) {
+    struct ast *result;
     
-    token->node = strdup(state->path);
+    CALLOC(result, 1);
+    result->match = match;
 
-    if (state->flags & PF_ACTION)
-        fprintf(state->log, "assign %s = %s\n", token->node, token->text);
+    return result;
 }
 
-static void action_enter(struct match *match, struct state *state) {
-    if (match->action == NULL)
-        return;
-    list_for_each(e, match->action->path) {
-        push(e, state);
-        if (state->flags & PF_ACTION)
-            printf("enter  %s\n", state->path);
-    }
-}
-
-static void action_exit(struct match *match, struct state *state) {
-    if (match->action == NULL)
-        return;
-
-    assign(match->action->value, state);
-
-    list_for_each(e, match->action->path) {
-        if (state->flags & PF_ACTION)
-            fprintf(state->log, "exit   %s\n", state->path);
-        pop(state);
-    }
-}
-
+/* 
+ * Parsing/construction of the AST 
+ */
 static void advance(struct state *state, int cnt) {
     if (cnt == 0)
         return;
@@ -214,15 +108,11 @@ static int lex(struct literal *literal, struct state *state) {
     return -1;
 }
 
-typedef void (*parse_match_func)(struct match *, struct state *);
-
 static void parse_match(struct match *match, struct state *state);
 
 static void parse_literal(struct match *match, struct state *state) {
     struct literal *literal;
     int len;
-
-    action_enter(match, state);
 
     if (match->type == ABBREV_REF)
         literal = match->abbrev->literal;
@@ -239,19 +129,12 @@ static void parse_literal(struct match *match, struct state *state) {
     if (len < 0) {
         state->applied = 0;
     } else {
-        struct aug_token *token = NULL;
-        char *text = strndup(state->pos, len);
+        state->ast = make_ast(match, state);
+        state->ast->token = strndup(state->pos, len);
 
-        token = aug_make_token(AUG_TOKEN_INERT, text, NULL);
-        token->match = match;
-
-        list_append(state->tokens, token);
         advance(state, len);
         state->applied = 1;
 
-        if (state->stack[state->top] == NULL)
-            state->stack[state->top] = token;
-        
         if (state->flags & PF_TOKEN) {
             struct abbrev *a;
             fprintf(state->log, "T ");
@@ -269,12 +152,11 @@ static void parse_literal(struct match *match, struct state *state) {
                 }
             }
             fprintf(state->log, " = <");
-            print_chars(state->log, token->text, strlen(token->text));
+            print_chars(state->log, state->ast->token, 
+                        strlen(state->ast->token));
             fprintf(state->log, ">\n");
         }
     }
-
-    action_exit(match, state);
 }
 
 static int applies(struct match *match, struct state *state) {
@@ -282,110 +164,99 @@ static int applies(struct match *match, struct state *state) {
         if (lex(f->literal, state) > 0)
             return 1;
     }
-    // FIXME: Something about follow sets
     return 0;
 }
 
 static void parse_alternative(struct match *match, struct state *state) {
+    struct ast *ast = make_ast(match, state);
+
     state->applied = 0;
 
-    action_enter(match, state);
     list_for_each(p, match->matches) {
         if (applies(p, state)) {
             parse_match(p, state);
+            list_append(ast->children, state->ast);
             state->applied = 1;
             break;
         }
     }
+    state->ast = ast;
     if (! state->applied) {
         parse_error(state, "alternative failed\n");
     }
-    action_exit(match, state);
 }
 
 static void parse_sequence(struct match *match, struct state *state) {
-    state->applied = 1;
+    struct ast *ast = make_ast(match, state);
 
-    action_enter(match, state);
+    state->applied = 1;
     list_for_each(p, match->matches) {
+        state->ast = NULL;
         parse_match(p, state);
         if (! state->applied) {
             parse_error(state, "sequence failed\n");
             break;
         }
+        if (state->ast != NULL)
+            list_append(ast->children, state->ast);
     }
-    action_exit(match, state);
+    state->ast = ast;
 }
 
 static void parse_field(struct match *match, struct state *state) {
     struct match *field = find_field(match->owner->matches, match->field);
     
-    action_enter(match, state);
+    FIXME("Construct AST or remove fields as match");
     parse_match(field, state);
-    action_exit(match, state);
-}
-
-static void parse_rule(struct rule *rule, struct state *state) {
-    state->top += 1;
-    state->stack = realloc(state->stack, 
-                           (state->top + 1) * sizeof(*(state->stack)));
-    state->stack[state->top] = NULL;
-
-    parse_match(rule->matches, state);
-    if (state->flags & PF_RULE) {
-        fprintf(state->log, "R %s:\n", rule->name);
-        fprintf(state->log, "  ");
-        list_for_each(t, state->stack[state->top]) {
-            fprintf(state->log, "<%s[%d]=", t->match->owner->name,
-                    t->match->fid);
-            print_chars(state->log, t->text, strlen(t->text));
-            fputc('>', state->log);
-            if (t->next)
-                fputc(' ', state->log);
-        }
-        fputc('\n', state->log);
-    }
-    state->top -= 1;
 }
 
 static void parse_rule_ref(struct match *match, struct state *state) {
-    action_enter(match, state);
-    parse_rule(match->rule, state);
-    action_exit(match, state);
+    struct ast *ast = make_ast(match, state);
+
+    parse_match(match->rule->matches, state);
+    ast->children = state->ast;
+    state->ast = ast;
 }
 
 static void parse_quant_star(struct match *match, struct state *state) {
-    int oldcount = state->count;
-
-    state->count = 0;
+    struct ast *ast = NULL;
     while (applies(match, state)) {
-        parse_match(match, state);
-        state->count++;
+        state->ast = NULL;
+        parse_match(match->matches, state);
+        if (state->ast != NULL) {
+            if (ast == NULL)
+                ast = make_ast(match, state);
+            list_append(ast->children, state->ast);
+        }
     }
-    state->count = oldcount;
     state->applied = 1;
+    state->ast = ast;
 }
 
 static void parse_quant_plus(struct match *match, struct state *state) {
-    int oldcount = state->count;
-
     if (! applies(match, state)) {
         grammar_error(state->filename, state->lineno, 
                       "match did not apply");
     } else {
-        state->count = 0;
+        struct ast *ast = make_ast(match, state);
         while (applies(match, state)) {
-            parse_match(match, state);
-            state->count++;
+            parse_match(match->matches, state);
+            list_append(ast->children, state->ast);
         }
-        state->count = oldcount;
+        state->ast = ast;
     }
     state->applied = 1;
 }
 
 static void parse_quant_maybe(struct match *match, struct state *state) {
     if (applies(match, state)) {
-        parse_match(match, state);
+        state->ast = NULL;
+        parse_match(match->matches, state);
+        if (state->ast != NULL) {
+            struct ast *ast = make_ast(match, state);
+            list_append(ast->children, state->ast);
+            state->ast = ast;
+        }
     }
     state->applied = 1;
 }
@@ -429,6 +300,297 @@ static void parse_match(struct match *match, struct state *state) {
     }
 }
 
+/*
+ * Evaluation of actions
+ */
+
+/* Find the last token we've seen for field FID in rule RULE */
+static struct ast *lookup_token(struct ast *ast, struct rule *rule, int fid,
+                                struct state *state) {
+    if (ast->match->type == RULE_REF)
+        return NULL;
+
+    if (LEAF_P(ast)) {
+        if (ast->match->fid == fid && ast->match->owner == rule)
+            return ast;
+        else
+            return NULL;
+    }
+
+    if (QUANT_P(ast->match)) {
+        list_for_each(c, ast->children) {
+            for (int i=0; i < state->symlen; i++) {
+                if (c == state->symtab[i]) {
+                    struct ast *result = lookup_token(c, rule, fid, state);
+                    if (result != NULL)
+                        return result;
+                }
+            }
+        }
+    } else {
+        list_for_each(c, ast->children) {
+            struct ast *result = lookup_token(c, rule, fid, state);
+            if (result != NULL)
+                return result;
+        }
+    }
+
+    return NULL;
+}
+
+/* Return value must be duped before putting into other structs */
+static const char *lookup_value(struct entry *entry, struct state* state) {
+    if (entry->type == E_CONST) {
+        return entry->text;
+    } else if (entry->type == E_GLOBAL) {
+        if (STREQ("seq", entry->text)) {
+            int len = snprintf(NULL, 0, "%d", state->count);
+            state->seq = realloc(state->seq, len+1);
+            snprintf(state->seq, len + 1, "%d", state->count);
+            return state->seq;
+        } else if (STREQ("basename", entry->text)) {
+            const char *basnam = strrchr(state->filename, '/');
+            if (basnam == NULL)
+                basnam = state->filename;
+            else
+                basnam += 1;
+            return basnam;
+        } else {
+            // Unknown global, shouldn't have made it to here
+            return "global";
+        }
+    } else if (entry->type == E_FIELD) {
+        struct ast *ast = 
+            lookup_token(state->ast, entry->action->rule, entry->field, state);
+        if (ast == NULL) {
+            parse_error(state,
+                        "field %d referenced but not found during parsing",
+                        entry->field);
+            return "failure";
+        } else {
+            return ast->token;
+        }
+    } else {
+        internal_error(state->filename, state->lineno,
+                       "illegal entry type %d", entry->type);
+        return "illegal";
+    }
+}
+
+static void push(struct entry *entry, struct state *state) {
+    const char *path = lookup_value(entry, state);
+    int size = strlen(state->path) + 1 + strlen(path) + 1;
+
+    state->path = realloc(state->path, size);
+    strcat(state->path, "/");
+    strcat(state->path, path);
+}
+
+static void pop(struct state *state) {
+    char *pos = strrchr(state->path, '/');
+    if (pos == NULL) {
+        internal_error(state->filename, state->lineno,
+                       "pop from emtpy path");
+    }
+    *pos = '\0';
+}
+
+static void assign(struct entry *value, struct state *state) {
+    struct ast *ast;
+
+    if (value == NULL)
+        return;
+
+    ast = lookup_token(state->ast, value->action->rule, value->field, state);
+    if (ast == NULL) {
+        internal_error(state->filename, state->lineno,
+                       "tried to assign to nonexistant field %d in rule %s\n",
+                       value->field, value->action->rule->name);
+        return;
+    }
+    if (ast->path != NULL) {
+        if (! STREQ(ast->path, state->path))
+            parse_error(state, "Token was already assigned to a node");
+    } else {
+        ast->path = strdup(state->path);
+    }
+
+    if (state->flags & PF_ACTION)
+        fprintf(state->log, "assign %s = %s\n", ast->path, ast->token);
+}
+
+static void eval_enter(struct ast *self, struct state *state) {
+    if (self->match->action == NULL)
+        return;
+
+    list_for_each(e, self->match->action->path) {
+        push(e, state);
+        if (state->flags & PF_ACTION)
+            printf("enter  %s\n", state->path);
+    }
+    self->path = strdup(state->path);
+}
+
+static void eval_exit(struct ast *self, struct state *state) {
+    if (self->match->action == NULL)
+        return;
+
+    assign(self->match->action->value, state);
+
+    list_for_each(e, self->match->action->path) {
+        if (state->flags & PF_ACTION)
+            fprintf(state->log, "exit   %s\n", state->path);
+        pop(state);
+    }
+}
+
+static void eval(struct ast *ast, struct state *state) {
+    eval_enter(ast, state);
+    if (! LEAF_P(ast)) {
+        if (ast->match->type == RULE_REF) {
+            struct ast *oldscope = state->ast;
+            state->ast = ast->children;
+            eval(ast->children, state);
+            state->ast = oldscope;
+        } else {
+            /* Evaluate all the child nodes. If this node is a quantifier,
+               we mark which child we are going into in state->symtab so
+               that lookup_value can bind field references to teh right
+               branch in the tree.
+               For quantifiers, we also count each iteration so that $seq
+               gets a new value in subtrees
+            */
+            int oldcount;
+
+            if (QUANT_P(ast->match)) {
+                oldcount = state->count;
+                state->count = 0;
+                state->symlen += 1;
+                state->symtab = realloc(state->symtab, 
+                                        state->symlen*sizeof(ast));
+            }
+            list_for_each(c, ast->children) {
+                if (QUANT_P(ast->match)) {
+                    state->symtab[state->symlen-1] = c;
+                }
+                eval(c, state);
+                if (QUANT_P(ast->match)) {
+                    state->count += 1;
+                }
+            }
+            if (QUANT_P(ast->match)) {
+                state->symlen -= 1;
+                state->count = oldcount;
+            }
+        }
+    }
+    eval_exit(ast, state);
+}
+
+/*
+ * Printing of AST
+ */
+static void ast_print_entry(FILE *out, struct entry *e) {
+    if (e->type == E_CONST || e->type == E_GLOBAL) {
+        fprintf(out, "%s", e->text);
+    } else if (e->type == E_FIELD) {
+        fprintf(out, "$%d", e->field);
+    } else {
+        fprintf(out, "???");
+    }
+}
+
+static void ast_print_action(FILE *out, struct match *match) {
+    if (match->action == NULL)
+        return;
+
+    list_for_each(e, match->action->path) {
+        ast_print_entry(out, e);
+        if (e->next != NULL)
+            fputc('/', out);
+    }
+    if (match->action->value != NULL) {
+        fprintf(out, " = ");
+        ast_print_entry(out, match->action->value);
+    }
+}
+
+static int ast_node(FILE *out, struct ast *ast, int parent, int next) {
+    int self = next++;
+    const char *name = "???";
+    const char *value = LEAF_P(ast) ? "???" : "";
+
+    switch(ast->match->type) {
+    case LITERAL:
+        name = "literal";
+        value = ast->token;
+        break;
+    case NAME:
+        name = "name";
+        value = ast->match->name;
+        break;
+    case ANY:
+        name = ast->match->epsilon ? "..?" : "...";
+        value = ast->token;
+        break;
+    case FIELD:
+        name = "$i";
+        break;
+    case ALTERNATIVE:
+        name = "\\|";
+        break;
+    case SEQUENCE:
+        name = ".";
+        break;
+    case RULE_REF:
+        name = ast->match->rule->name;
+        break;
+    case ABBREV_REF:
+        name = ast->match->abbrev->name;
+        value = ast->token;
+        break;
+    case QUANT_PLUS:
+        name = "+";
+        break;
+    case QUANT_STAR:
+        name = "*";
+        break;
+    case QUANT_MAYBE:
+        name = "?";
+        break;
+    default:
+        name = "???";
+        break;
+    }
+    fprintf(out, "n%d [\n", self);
+    fprintf(out, "  label = \" %s | ", name);
+    print_chars(out, value, strlen(value));
+    fprintf(out, " | ");
+    ast_print_action(out, ast->match);
+    fprintf(out, " | ");
+    if (ast->path != NULL)
+        fprintf(out, ast->path);
+    fprintf(out, "\"\n  shape = \"record\"\n");
+    fprintf(out, "];\n");
+    fprintf(out, "n%d -> n%d;\n", parent, self);
+
+    if (! LEAF_P(ast)) {
+        list_for_each(c, ast->children) {
+            next = ast_node(out, c, self, next);
+        }
+    }
+    return next;
+}
+
+static void ast_dot(FILE *out, struct ast *ast, int flags) {
+    if (!(flags & PF_AST))
+        return;
+    fprintf(out, "strict digraph ast {\n");
+    fprintf(out, "  graph [ rankdir = \"LR\" ];\n");
+    ast_node(out, ast, 0, 1);
+    fprintf(out, "}\n");
+}
+
 int parse(struct grammar *grammar, struct aug_file *file, const char *text,
            FILE *log, int flags) {
     struct state state;
@@ -438,13 +600,10 @@ int parse(struct grammar *grammar, struct aug_file *file, const char *text,
     state.text = text;
     state.pos = text;
     state.applied = 0;
-    state.tokens = NULL;
     state.count  = 0;
     CALLOC(state.path, strlen(file->node) + 100);
     strcpy(state.path, file->node);
     CALLOC(state.seq, 10);
-    CALLOC(state.stack, 10);
-    state.top = -1;
     if (flags != PF_NONE && log != NULL) {
         state.flags = flags;
         state.log = log;
@@ -452,12 +611,18 @@ int parse(struct grammar *grammar, struct aug_file *file, const char *text,
         state.flags = PF_NONE;
         state.log = stdout;
     }
-    parse_rule(grammar->rules, &state);
-    file->tokens = state.tokens;
+    parse_match(grammar->rules->matches, &state);
+    file->ast = state.ast;
     if (! state.applied || *state.pos != '\0') {
         fprintf(log, "Parse failed\n");
         return -1;
+    } else {
+        state.symtab = NULL;
+        state.symlen = 0;
+        strcpy(state.path, file->node);
+        eval(file->ast, &state);
     }
+    ast_dot(log, file->ast, flags);
     return 0;
 }
 

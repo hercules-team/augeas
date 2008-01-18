@@ -53,7 +53,7 @@ static void usage(void) {
     fprintf(stderr, "If FILE is omitted, the GRAMMAR is read and printed\n");
     fprintf(stderr, "\nOptions:\n\n");
     fprintf(stderr, "  -P WHAT       Show details of how FILE is parsed. Possible values for WHAT\n"
-                    "                are 'advance', 'match', 'tokens', 'actions', and 'rules'\n");
+                    "                are 'advance', 'match', 'tokens', 'actions', and 'ast'\n");
     fprintf(stderr, "  -G WHAT       Show details about GRAMMAR. Possible values for WHAT are\n"
                     "                'any', 'follow', 'first', 'actions', 'pretty' and 'all'\n");
     exit(EXIT_FAILURE);
@@ -76,10 +76,10 @@ int main(int argc, char **argv) {
                 parse_flags |= PF_MATCH;
             else if (STREQ(optarg, "tokens"))
                 parse_flags |= PF_TOKEN;
-            else if (STREQ(optarg, "rules"))
-                parse_flags |= PF_RULE;
             else if (STREQ(optarg, "actions"))
                 parse_flags |= PF_ACTION;
+            else if (STREQ(optarg, "ast"))
+                parse_flags |= PF_AST;
             else {
                 fprintf(stderr, "Illegal argument '%s' for -%c\n", optarg, opt);
                 usage();

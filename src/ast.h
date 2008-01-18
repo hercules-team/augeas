@@ -88,11 +88,11 @@ struct grammar {
 /* Flags to control debug printing during parsing */
 enum parse_debug_flags {
     PF_NONE    = 0,
-    PF_ADVANCE = (1 << 0),
-    PF_MATCH   = (1 << 1),
-    PF_TOKEN   = (1 << 2),
-    PF_RULE    = (1 << 3),
-    PF_ACTION  = (1 << 4)
+    PF_ADVANCE = (1 << 0),  /* Show how the lexer advances through the input */
+    PF_MATCH   = (1 << 1),  /* Show regex matches */
+    PF_TOKEN   = (1 << 2),  /* Show tokenization */
+    PF_ACTION  = (1 << 3),  /* Show actions (enter/assign/exit) */
+    PF_AST     = (1 << 4)   /* Print AST as dot file after parsing */
 };
 
 
@@ -275,6 +275,24 @@ struct entry {
     union {
         const char *text;      /* E_CONST, E_GLOBAL */
         int         field;     /* E_FIELD */
+    };
+};
+
+/*
+ * An abstract syntax tree created by parsing a file according to a grammar
+ * The tree is built by parse in parser.c
+ */
+#define LEAF_P(ast) ((ast)->match->type == ABBREV_REF                   \
+                     || (ast)->match->type == LITERAL                   \
+                     || (ast)->match->type == ANY)
+
+struct ast {
+    struct ast       *next;
+    struct match     *match;
+    const char       *path;
+    union {
+        struct ast       *children;  /* ! LEAF_P */
+        const char       *token;     /*   LEAF_P */
     };
 };
 

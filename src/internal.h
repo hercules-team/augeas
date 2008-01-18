@@ -112,51 +112,18 @@ static inline void safe_free(void *p) {
 /*
  * File tokenizing
  */
-enum aug_token_type {
-    AUG_TOKEN_NONE,
-    AUG_TOKEN_INERT,
-    AUG_TOKEN_SEP,
-    AUG_TOKEN_VALUE,
-    AUG_TOKEN_EOR,
-    AUG_TOKEN_EOF
-};
-
-struct aug_token {
-    struct aug_token   *next;
-    enum aug_token_type type;
-    struct match       *match;
-    const char         *text;
-    const char         *node;  // The node associated with this token
-};
-
 struct aug_file {
     const char *name;  // The absolute file name
     const char *node;  // The node in the tree for this file
-    struct aug_token *tokens;
+    struct ast *ast;
     struct aug_file  *next;
 };
 
 // internal.c
-void aug_token_free(struct aug_token *t);
 void aug_file_free(struct aug_file *af);
 
 /* Allocate a new file. NAME and NODE are dup'd */
 struct aug_file *aug_make_file(const char *name, const char *node);
-
-/* Allocate a new token. TEXT and NODE are not dup'd */
-struct aug_token *aug_make_token(enum aug_token_type type,
-                                 const char *text, const char *node);
-
-struct aug_token *aug_insert_token(struct aug_token *t,
-                                   enum aug_token_type type,
-                                   const char *text,
-                                   const char *node);
-
-/* Append a new token to AF. The TEXT is added to the token without copying */
-struct aug_token *aug_file_append_token(struct aug_file *af,
-                                        enum aug_token_type type,
-                                        const char *text,
-                                        const char *node);
 
 /* Read the contents of file PATH and return them as one long string. The
  * caller must free the result. Return NULL if any error occurs.
