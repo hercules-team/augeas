@@ -309,6 +309,11 @@ struct ast {
 
 /* in parser.c */
 struct ast *make_ast(struct match *match);
+// Write the AST as a dot file if flags & PF_AST
+void ast_dot(FILE *out, struct ast *ast, int flags);
+/* Compute the longest prefix of the paths of all the entries in AST. 
+   AST is only viewed as a linked list through next, not as a tree */
+const char *longest_prefix(struct ast *ast);
 
 /*
  * Helpers to print (ast.c)
@@ -321,6 +326,8 @@ void print_literal_set(FILE *out, struct literal_set *set,
 /* Print CNT characters from TEXT. Escape newlines/tabs */
 int print_chars(FILE *out, const char *text, int cnt);
 
+/* in emit.c */
+void emit(FILE *out, const char *root, struct ast *ast);
 #endif
 
 

@@ -443,6 +443,35 @@ static void eval_exit(struct ast *self, struct state *state) {
     }
 }
 
+const char *longest_prefix(struct ast *ast) {
+    const char *result = NULL;
+
+    list_for_each(c, ast) {
+        // The path of a node is the longest prefix of the paths
+        // of its children
+        if (c->path != NULL) {
+            if (result == NULL) {
+                result = strdup(c->path);
+            } else {
+                while (! pathprefix(result, c->path)) {
+                    char *parent = strrchr(result, SEP);
+                    if (parent == NULL) {
+                        internal_error(NULL, -1,
+                           "Failed to find common prefix for %s and %s",
+                                       ast->path, c->path);
+                        break;
+                    } else {
+                        *parent = '\0';
+                    }
+                }
+            }
+        }
+    }
+    if (result != NULL)
+        result = realloc((void *) result, strlen(result) + 1);
+    return result;
+}
+
 static void eval(struct ast *ast, struct state *state) {
     eval_enter(ast, state);
     if (! LEAF_P(ast)) {
@@ -481,6 +510,9 @@ static void eval(struct ast *ast, struct state *state) {
                 state->symlen -= 1;
                 state->count = oldcount;
             }
+        }
+        if (ast->path == NULL) {
+            ast->path = longest_prefix(ast->children);
         }
     }
     eval_exit(ast, state);
@@ -563,6 +595,8 @@ static int ast_node(FILE *out, struct ast *ast, int parent, int next) {
     }
     fprintf(out, "n%d [\n", self);
     fprintf(out, "  label = \" %s | ", name);
+    if (value == NULL)
+        value = "\\<\\>";
     print_chars(out, value, strlen(value));
     fprintf(out, " | ");
     ast_print_action(out, ast->match);
@@ -584,7 +618,7 @@ static int ast_node(FILE *out, struct ast *ast, int parent, int next) {
     return next;
 }
 
-static void ast_dot(FILE *out, struct ast *ast, int flags) {
+void ast_dot(FILE *out, struct ast *ast, int flags) {
     if (!(flags & PF_AST))
         return;
     fprintf(out, "strict digraph ast {\n");

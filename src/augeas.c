@@ -25,8 +25,6 @@
 
 #include <fnmatch.h>
 
-#define SEP '/'
-
 /* Two special entries: they are always on the main list
    so that we don't need to worry about some corner cases in dealing
    with empty lists */
@@ -57,23 +55,11 @@ static const struct aug_provider *providers[] = {
     NULL
 };
 
-/* Length of PATH without any trailing '/' */
-static int pathlen(const char *path) {
-    int len = strlen(path);
-
-    if (len > 0 && path[len-1] == SEP)
-        len--;
-    
-    return len;
-}
-
 static struct aug_entry *aug_entry_find(const char *path) {
     struct aug_entry *p = head;
     do {
-        if (STREQLEN(path, p->path, pathlen(path))
-            && p->path[pathlen(path)] == '\0') {
+        if (pathprefix(path, p->path) && pathprefix(p->path, path))
             return p;
-        }
         p = p->next;
     } while (p != head);
     

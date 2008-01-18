@@ -53,6 +53,29 @@
 #define STREQLEN(a,b,n) (strncmp((a),(b),(n)) == 0)
 #define STRNEQLEN(a,b,n) (strncmp((a),(b),(n)) != 0)
 
+/* Path length and comparison */
+
+#define SEP '/'
+
+/* Length of PATH without any trailing '/' */
+__attribute__((pure))
+static inline int pathlen(const char *path) {
+    int len = strlen(path);
+
+    if (len > 0 && path[len-1] == SEP)
+        len--;
+    
+    return len;
+}
+
+/* Return 1 if P1 is a prefix of P2. P1 as a string must have length <= P2 */
+__attribute__((pure))
+static inline int pathprefix(const char *p1, const char *p2) {
+    int l1 = pathlen(p1);
+    
+    return STREQLEN(p1, p2, l1) && (p2[l1] == '\0' || p2[l1] == SEP);
+}
+
 /* Call calloc to allocate an array of N instances of *VAR */
 #define CALLOC(Var,N) do { (Var) = calloc ((N), sizeof (*(Var))); } while (0)
 
