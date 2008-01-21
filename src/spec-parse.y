@@ -177,8 +177,8 @@ match_prim:  literal
             { $$ = make_field_match($1, @1.first_line); }
           | '(' match ')' match_quant
             { 
-              $2->gid = 1;   /* $2 was enclosed in parens, count as group */
               $$ = make_quant_match($2, $4, @1.first_line);
+              $$->gid = 1;   /* Count the quantifier as the group */
             }
 
 
