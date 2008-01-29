@@ -397,27 +397,36 @@ static void pop(struct state *state) {
     *pos = '\0';
 }
 
+static int is_seq_iter(struct ast *ast) {
+    if (ast->match->type != QUANT_STAR && ast->match->type != QUANT_PLUS)
+        return 0;
+
+    struct action *a = ast->match->action;
+    return a != NULL && a->path != NULL
+        && a->path->type == E_GLOBAL
+        && STREQ(a->path->text, "seq");
+}
+
 static void eval_enter(struct ast *self, struct state *state) {
-    if (self->match->action == NULL)
+    if (self->match->action == NULL || self->match->action->path == NULL)
         return;
 
-    list_for_each(e, self->match->action->path) {
-        push(e, state);
-        if (state->flags & PF_ACTION)
-            printf("enter  %s\n", state->path);
-    }
-    self->path = strdup(state->path);
+    if (is_seq_iter(self))
+        self->path = strdup(state->path);
+    push(self->match->action->path, state);
+    if (! is_seq_iter(self))
+        self->path = strdup(state->path);
+    if (state->flags & PF_ACTION)
+        printf("enter  %s\n", state->path);
 }
 
 static void eval_exit(struct ast *self, struct state *state) {
-    if (self->match->action == NULL)
+    if (self->match->action == NULL || self->match->action->path == NULL)
         return;
 
-    list_for_each(e, self->match->action->path) {
-        if (state->flags & PF_ACTION)
-            fprintf(state->log, "exit   %s\n", state->path);
-        pop(state);
-    }
+    if (state->flags & PF_ACTION)
+        fprintf(state->log, "exit   %s\n", state->path);
+    pop(state);
 }
 
 const char *longest_prefix(struct ast *ast) {
@@ -453,6 +462,22 @@ static int is_store(struct ast *ast) {
     return ast->match->action != NULL && ast->match->action->value != NULL;
 }
 
+static int single_seq_entry_p(struct ast *ast) {
+    if (ast->match->action != NULL) {
+        struct entry *e = ast->match->action->path;
+        if (e != NULL && e->type == E_GLOBAL && STREQ(e->text, "seq"))
+            return 1;
+    }
+    if (! LEAF_P(ast)) {
+        int cnt = 0;
+        list_for_each(c, ast->children) {
+            cnt += single_seq_entry_p(c);
+        }
+        return (cnt == 1);
+    }
+    return 0;
+}
+
 static void eval(struct ast *ast, struct state *state) {
     eval_enter(ast, state);
     if (! LEAF_P(ast)) {
@@ -484,6 +509,12 @@ static void eval(struct ast *ast, struct state *state) {
             list_for_each(c, ast->children) {
                 if (QUANT_P(ast->match)) {
                     state->symtab[state->symlen-1] = c;
+                    /* Special treatment for $seq so that each child sees
+                       the right path. Big kludge. FIXME */
+                    if (is_seq_iter(ast)) {
+                        eval_exit(ast, state);
+                        eval_enter(ast,state);
+                    }
                 }
                 eval(c, state);
                 if (QUANT_P(ast->match) && state->count_inc) {

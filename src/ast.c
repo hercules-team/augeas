@@ -1088,9 +1088,6 @@ static int check_entry(struct rule *rule, struct entry *entry,
 static int push_stores(struct match *matches) {
     int r = 1;
 
-    /* Attach actions that store into the tree to the field that is being 
-       stored. This can only work if the field being assigned is part of 
-       the subtree to which the action */
     list_for_each(m, matches) {
         if (m->action != NULL && m->action->value != NULL) {
             struct match *val = find_field(m, m->action->value->field);
@@ -1141,6 +1138,145 @@ static int push_stores(struct match *matches) {
     }
 
     return r;
+}
+
+/* 
+ * Change actions so that there is at most one enter for each match. For
+ * matches with more than one enter, introduce additional SEQUENCE matches
+ * and distribute the enters amongst them.
+ */
+
+static struct match *make_seq_enter(struct match *match) {
+    struct action *a = match->action;
+    struct match *seq = NULL;
+    
+    CALLOC(seq, 1);
+    seq->next    = match->next;
+    match->next  = NULL;
+    seq->lineno  = match->lineno;
+    seq->type    = SEQUENCE;
+    seq->matches = match;
+    seq->owner   = match->owner;
+    seq->fid     = -1;
+    seq->gid     = -1;
+   
+    CALLOC(seq->action, 1);
+    seq->action->lineno = a->lineno;
+    seq->action->rule   = a->rule;
+    seq->action->scope  = a->scope;
+    seq->action->id     = -1;
+    seq->action->path   = a->path;
+    seq->action->path->action = seq->action;
+    a->path = a->path->next;
+    seq->action->path->next = NULL;
+    
+    if (a->path == NULL && a->value == NULL) {
+        list_remove(a, a->rule->actions);
+        free(a);
+        match->action = NULL;
+    }
+    return seq;
+}
+
+static struct match *expand_enter(struct match *match) {
+    struct action *a = match->action;
+
+    if (a == NULL || a->path == NULL 
+        || (a->path->next == NULL && a->value == NULL))
+        return match;
+    
+    match = make_seq_enter(match);
+    match->matches = expand_enter(match->matches);
+    
+    return match;
+}
+
+static void single_enter(struct match *match) {
+    if (match == NULL)
+        return;
+    if (match->next != NULL) {
+        match->next = expand_enter(match->next);
+        single_enter(match->next);
+    }
+    if (SUBMATCH_P(match)) {
+        match->matches = expand_enter(match->matches);
+        single_enter(match->matches);
+    }
+}
+
+static int seq_entry_p(struct entry *entry) {
+    return entry->type == E_GLOBAL && STREQ("seq", entry->text);
+}
+
+static int const_enter_quant(struct match **matchp) {
+    struct match *match = *matchp;
+
+    if (match->type != QUANT_STAR && match->type != QUANT_PLUS)
+        return 0;
+
+    if (match->action == NULL || match->action->path == NULL)
+        return 0;
+
+    if (! seq_entry_p(match->action->path)) {
+        *matchp = make_seq_enter(*matchp);
+        return 1;
+    }
+
+    return 0;
+}
+
+static int lift_actions(struct match *matches) {
+    int changed = 0;
+
+    if (matches->next != NULL && const_enter_quant(&(matches->next)))
+        changed = 1;
+
+    list_for_each(m, matches) {
+        if (SUBMATCH_P(m)) {
+            if (lift_actions(m->matches))
+                changed = 1;
+            else if (m->action == NULL) {
+                struct match *a = NULL;
+                int acnt = 0;
+                list_for_each(s, m->matches) {
+                    if (s->action != NULL && s->action->value == NULL) {
+                        acnt += 1;
+                        a = s;
+                    }
+                }
+                if (acnt == 1) {
+                    m->action = a->action;
+                    a->action = NULL;
+                    changed = 1;
+                }
+            }
+        }
+        if (m->next != NULL && const_enter_quant(&(m->next)))
+            changed = 1;
+    }
+
+    return changed;
+}
+
+static void remove_useless_seqs(struct match **matchp) {
+    struct match *match = *matchp;
+
+    if (match == NULL)
+        return;
+
+    if (SUBMATCH_P(match))
+        remove_useless_seqs(&(match->matches));
+    if (match->next != NULL)
+        remove_useless_seqs(&(match->next));
+        
+    while (match != NULL && match->type == SEQUENCE
+           && match->action == NULL
+           && match->matches && match->matches->next == NULL) {
+        match->matches->next = match->next;
+        *matchp = match->matches;
+        // FIXME: Need to free match
+        match = *matchp;
+    }
 }
 
 static int bind_actions(struct rule *rule) {
@@ -1218,6 +1354,13 @@ static int bind_actions(struct rule *rule) {
     if (!push_stores(rule->matches))
         r = 0;
 
+    if (r) {
+        rule->matches = expand_enter(rule->matches);
+        single_enter(rule->matches);
+    }
+
+    while (lift_actions(rule->matches));
+    remove_useless_seqs(&(rule->matches));
     return r;
 }
 
