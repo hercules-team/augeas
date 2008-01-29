@@ -50,7 +50,7 @@ ARGV.each do |test|
         io.print(commands)
         io.puts("\nquit")
     end
-    success=true
+    success=$?.success?
     msgs = []
     diff.each do |file, exp|
         file = File::join(AUGEAS_ROOT, file)
@@ -61,6 +61,7 @@ ARGV.each do |test|
             act=`diff -u #{file} #{file}.augnew`
             act.gsub!(/^(--- #{file}).*$/, '\1')
             act.gsub!(/^(\+\+\+ #{file}\.augnew).*$/, '\1')
+            act.gsub!(/^(---|\+\+\+) (#{AUGEAS_ROOT})/, '\1 ');
             if ! exp.nil? && act != exp
                 success=false
                 if ! refresh

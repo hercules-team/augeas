@@ -5,8 +5,8 @@ save
 "
     
 diff["/etc/pam.d/newrole"] = <<TXT
---- /tmp/aug/etc/pam.d/newrole
-+++ /tmp/aug/etc/pam.d/newrole.augnew
+--- /etc/pam.d/newrole
++++ /etc/pam.d/newrole.augnew
 @@ -1,5 +1,5 @@
  #%PAM-1.0
  auth       include\tsystem-auth

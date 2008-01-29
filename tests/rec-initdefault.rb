@@ -6,17 +6,20 @@
 # that. Would be easy with a shell script
 
 # Query for the record that holds the initdefault
-record=`#{AUGTOOL} match '/system/config/inittab/*/action' initdefault`.chomp
-record = File::dirname(record)
-
+record=""
+`#{AUGTOOL} match '/system/config/inittab/*/action' initdefault`.each do |l|
+    if l =~ %r{^(/system/config/inittab/[0-9]+)}
+        record = $1
+    end
+end
 commands="
 set #{record}/runlevels 3
 save
 "
 
 diff["/etc/inittab"] = <<TXT
---- /tmp/aug/etc/inittab
-+++ /tmp/aug/etc/inittab.augnew
+--- /etc/inittab
++++ /etc/inittab.augnew
 @@ -15,7 +15,7 @@
  #   5 - X11
  #   6 - reboot (Do NOT set initdefault to this)
