@@ -397,30 +397,6 @@ static void pop(struct state *state) {
     *pos = '\0';
 }
 
-static void assign(struct entry *value, struct state *state) {
-    struct ast *ast;
-
-    if (value == NULL)
-        return;
-
-    ast = lookup_token(state->ast, value->action->rule, value->field, state);
-    if (ast == NULL) {
-        internal_error(state->filename, state->lineno,
-                       "tried to assign to nonexistant field %d in rule %s\n",
-                       value->field, value->action->rule->name);
-        return;
-    }
-    if (ast->path != NULL) {
-        if (! STREQ(ast->path, state->path))
-            parse_error(state, "Token was already assigned to a node");
-    } else {
-        ast->path = strdup(state->path);
-    }
-
-    if (state->flags & PF_ACTION)
-        fprintf(state->log, "assign %s = %s\n", ast->path, ast->token);
-}
-
 static void eval_enter(struct ast *self, struct state *state) {
     if (self->match->action == NULL)
         return;
@@ -436,8 +412,6 @@ static void eval_enter(struct ast *self, struct state *state) {
 static void eval_exit(struct ast *self, struct state *state) {
     if (self->match->action == NULL)
         return;
-
-    assign(self->match->action->value, state);
 
     list_for_each(e, self->match->action->path) {
         if (state->flags & PF_ACTION)
@@ -473,6 +447,10 @@ const char *longest_prefix(struct ast *ast) {
     if (result != NULL)
         result = realloc((void *) result, strlen(result) + 1);
     return result;
+}
+
+static int is_store(struct ast *ast) {
+    return ast->match->action != NULL && ast->match->action->value != NULL;
 }
 
 static void eval(struct ast *ast, struct state *state) {
@@ -521,6 +499,19 @@ static void eval(struct ast *ast, struct state *state) {
         }
         if (ast->path == NULL) {
             ast->path = longest_prefix(ast->children);
+        }
+    } else {
+        /* It's a leaf, see if we should store */
+        if (is_store(ast)) {
+            if (ast->path == NULL) {
+                /* ast->path != NULL happens if the action is also an
+                   enter. In that case, the store is implicit from the fact
+                   that ast->path is set. We don't allow enters into leaves
+                   without a store */
+                ast->path = strdup(state->path);
+            }
+            if (state->flags & PF_ACTION)
+                fprintf(state->log, "assign %s = %s\n", ast->path, ast->token);
         }
     }
     eval_exit(ast, state);

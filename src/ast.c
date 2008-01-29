@@ -203,19 +203,43 @@ void print_literal_set(FILE *out, struct literal_set *set,
     }
 }
 
+static void print_entry(FILE *out, struct entry *entry) {
+    switch(entry->type) {
+    case E_CONST:
+        fprintf(out, "'%s'", entry->text);
+        break;
+    case E_GLOBAL:
+        fprintf(out, "$%s", entry->text);
+        break;
+    case E_FIELD:
+        fprintf(out, "$%d", entry->field);
+        break;
+    default:
+        fprintf(out, "<U:%d>", entry->type);
+        break;
+    }
+}
+
+static void print_action(FILE *out, struct action *action) {
+    if (action == NULL) {
+        return;
+    }
+    list_for_each(p, action->path) {
+        fprintf(out, " enter(");
+        print_entry(out, p);
+        fprintf(out, ")");
+    }
+    if (action->value != NULL) {
+        fprintf(out, " store(");
+        print_entry(out, action->value);
+        fputc(')', out);
+    }
+}
+
+
 static void print_follow(FILE *out, struct match *m, int flags) {
     if (flags & GF_ACTIONS && m->action != NULL) {
-        switch(m->action->scope) {
-        case A_FIELD:
-            fprintf(out, " @$%d ", m->action->id);
-            break;
-        case A_GROUP:
-            fprintf(out, " @%d ", m->action->id);
-            break;
-        default:
-            fprintf(out, " <@U> ");
-            break;
-        }
+        print_action(out, m->action);
     }
 
     if (flags & GF_FIRST) {
@@ -298,53 +322,6 @@ static void dump_matches(FILE *out, struct match *m, int indent, int flags) {
     }
 }
 
-static void print_entry(FILE *out, struct entry *entry) {
-    switch(entry->type) {
-    case E_CONST:
-        fprintf(out, "'%s'", entry->text);
-        break;
-    case E_GLOBAL:
-        fprintf(out, "$%s", entry->text);
-        break;
-    case E_FIELD:
-        fprintf(out, "$%d", entry->field);
-        break;
-    default:
-        fprintf(out, "<U:%d>", entry->type);
-        break;
-    }
-}
-
-static void dump_actions(FILE *out, struct action *actions, int indent) {
-    if (actions == NULL) {
-        return;
-    }
-    list_for_each(action, actions) {
-        print_indent(out, indent);
-        fputc('@', out);
-        switch(action->scope) {
-        case A_FIELD:
-            fprintf(out, "$%d ", action->id);
-            break;
-        case A_GROUP:
-            fprintf(out, "%d", action->id);
-            break;
-        default:
-            fprintf(out, "<U>");
-            break;
-        }
-        list_for_each(p, action->path) {
-            fputc(' ', out);
-            print_entry(out, p);
-        }
-        if (action->value != NULL) {
-            fprintf(out, " = ");
-            print_entry(out, action->value);
-        }
-        fputc('\n', out);
-    }
-}
-
 static void dump_rules(FILE *out, struct rule *r, int flags) {
     list_for_each(p, r) {
         if (flags & GF_PRETTY) {
@@ -374,13 +351,7 @@ static void dump_rules(FILE *out, struct rule *r, int flags) {
             }
             fprintf(out, "]\n");
         }
-        if ((flags & GF_ACTIONS) && p->actions != NULL) {
-            fprintf(out, "  {\n");
-            dump_actions(out, p->actions, 4);
-            fprintf(out, "  }\n");
-        } else {
-            fputc('\n', out);
-        }
+        fputc('\n', out);
     }
 }
 
@@ -1114,6 +1085,64 @@ static int check_entry(struct rule *rule, struct entry *entry,
     return 1;
 }
 
+static int push_stores(struct match *matches) {
+    int r = 1;
+
+    /* Attach actions that store into the tree to the field that is being 
+       stored. This can only work if the field being assigned is part of 
+       the subtree to which the action */
+    list_for_each(m, matches) {
+        if (m->action != NULL && m->action->value != NULL) {
+            struct match *val = find_field(m, m->action->value->field);
+            if (val == NULL) {
+                grammar_error(_FM(m), _L(m->action),
+                              "Assignment of $%d outside the current tree in %s",
+                              m->action->value->field, m->owner->name);
+                r = 0;
+            } else if (val->action != NULL && val->action->value != NULL) {
+                if (val != m) {
+                    grammar_error(_FM(m), _L(m->action),
+                                  "Field $%d in %s stored in more than one tree node",
+                                  m->action->value->field, m->owner->name);
+                    r = 0;
+                }
+            } else if (val->action != NULL) {
+                /* A completely pointless enter attached to field
+                 * VAL. It's pointless since enters don't have any
+                 * persistent effect until something is assigned
+                 */
+                grammar_error(_FM(val), _L(val),
+                              "Useless path enter for field $%d in %s",
+                              m->action->value->field, m->owner->name);
+                r = 0;
+            } else {
+                if (m->action->path == NULL) {
+                    /* This can currently not be expressed in the language,
+                       but better safe than sorry. It corresponds to an
+                       action that stores without entering a subtree */
+                    val->action = m->action;
+                    m->action = NULL;
+                } else {
+                    struct action *a;
+                    CALLOC(a, 1);
+                    a->lineno = m->action->lineno;
+                    a->rule = m->action->rule;
+                    a->scope = m->action->scope;
+                    a->id    = m->action->id;
+                    a->value = m->action->value;
+                    val->action = a;
+                    m->action->value = NULL;
+                }
+            }
+        }
+        if (SUBMATCH_P(m))
+            if (! push_stores(m->matches))
+                r = 0;
+    }
+
+    return r;
+}
+
 static int bind_actions(struct rule *rule) {
     int r = 1;
 
@@ -1185,6 +1214,10 @@ static int bind_actions(struct rule *rule) {
             }
         }
     }
+
+    if (!push_stores(rule->matches))
+        r = 0;
+
     return r;
 }
 
