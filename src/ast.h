@@ -315,6 +315,12 @@ void ast_dot(FILE *out, struct ast *ast, int flags);
 /* Compute the longest prefix of the paths of all the entries in AST. 
    AST is only viewed as a linked list through next, not as a tree */
 const char *longest_prefix(struct ast *ast);
+/* Is MATCH an iterator ('*' or '+') that has a $seq action
+   attached to it ? Those require special treatment: the effects of
+   the $seq only affect children, not the iterator itself. All otehr actions
+   affect the node directly.
+*/
+int is_seq_iter(struct match *match);
 
 /*
  * Helpers to print (ast.c)

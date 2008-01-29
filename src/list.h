@@ -49,6 +49,26 @@
         }                                                               \
     } while(0)
 
+/* Insert NEW in list LIST before element AC. NEW->next must be null,
+   and ELT must really be on LIST, otherwise chaos will ensue
+*/
+#define list_insert_before(new, elt, list)                              \
+    do {                                                                \
+        if ((list) == NULL) {                                           \
+            (list) = (new);                                             \
+        } else if ((elt) == (list)) {                                   \
+            (new)->next = (elt);                                        \
+            (list) = (new);                                             \
+        } else {                                                        \
+            typeof(elt) _p;                                             \
+            for (_p = (list); _p != NULL && _p->next != (elt); _p = _p->next); \
+            if (_p != NULL) {                                           \
+                (new)->next = (elt);                                    \
+                _p->next = (new);                                       \
+            }                                                           \
+        }                                                               \
+    } while(0)
+
 #endif
 
 

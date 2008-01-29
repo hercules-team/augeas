@@ -397,11 +397,11 @@ static void pop(struct state *state) {
     *pos = '\0';
 }
 
-static int is_seq_iter(struct ast *ast) {
-    if (ast->match->type != QUANT_STAR && ast->match->type != QUANT_PLUS)
+int is_seq_iter(struct match *match) {
+    if (match->type != QUANT_STAR && match->type != QUANT_PLUS)
         return 0;
 
-    struct action *a = ast->match->action;
+    struct action *a = match->action;
     return a != NULL && a->path != NULL
         && a->path->type == E_GLOBAL
         && STREQ(a->path->text, "seq");
@@ -411,10 +411,10 @@ static void eval_enter(struct ast *self, struct state *state) {
     if (self->match->action == NULL || self->match->action->path == NULL)
         return;
 
-    if (is_seq_iter(self))
+    if (is_seq_iter(self->match))
         self->path = strdup(state->path);
     push(self->match->action->path, state);
-    if (! is_seq_iter(self))
+    if (! is_seq_iter(self->match))
         self->path = strdup(state->path);
     if (state->flags & PF_ACTION)
         printf("enter  %s\n", state->path);
@@ -511,7 +511,7 @@ static void eval(struct ast *ast, struct state *state) {
                     state->symtab[state->symlen-1] = c;
                     /* Special treatment for $seq so that each child sees
                        the right path. Big kludge. FIXME */
-                    if (is_seq_iter(ast)) {
+                    if (is_seq_iter(ast->match)) {
                         eval_exit(ast, state);
                         eval_enter(ast,state);
                     }
