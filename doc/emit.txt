@@ -1,178 +1,101 @@
 Emitting the tree as a config file
 ----------------------------------
 
-Each grammar has a dual grammar. The dual grammar consists of the same
-rules as the primary grammar, but the rules are modified to account for
-actions and to remove terminals that are not reflected in the tree.
-
-To compute the dual of a rule:
-  (1) start with the original rule. 
-  (2) For each action of the form 'LOC { PATH = VALUE }' insert 
-      '[ PATH = VALUE : ' at the beginning of the scope of the action and
-      ']' at the end.
-  (3) Remove every terminal from the rule
-  (4) Remove nonterminals that produce nothing
-
-What remains are rules made up of the nonterminals of the original grammar,
-actions inserted into the rules, and metasyhntactic constructs like ( ... )
-* etc.
-
-For example, for the grammar (inistyle/yum)
-
-  file: ( comment | section ) * {
-    @0 { 'yum' }
-  }
-
-  comment: OPT_WS ( /#.*/ | 'REM' | 'rem' )? EOL
-
-  section: '[' ... ']' EOL ( comment | kv ) * {
-    @1 { $2 }
-  }
-
-  kv: ... EQ ... EOL {
-    @$3 { $1 = $3 }
-  }
-
-the dual is
-
-  file: ( [ 'yum' : section ] ) *
-  section: ( [ $2 : kv ] ) *
-  kv: [ $1 = $3: ]
-
-lens/functional style is:
-
-  file = enter['yum'] (comment | section ) * exit
-  section = '[' enter[...] ']' EOL (comment | kv )* exit
-  kv = enter[...] EQ assign[...] EOL exit
-
-and for /etc/hosts
-  file: ( comment | record ) *
-  record: ... SEP ... ( SEP ... ) * EOR
-
-the dual is
-
-  file: [ 'hosts' ( record ) * ]
-  record: [ $seq [ 'ipaddr' = $1 ] 
-                 [ 'canonical' = $3: ] 
-                 [ 'aliases' ( $seq = $5 ) * ] ]
-
-lens/functional style is:
-  file   = enter['hosts'] ( record ) * exit
-  record = enter[$index] enter['ipaddr'] assign[...] exit SEP
-             enter['canonical'] assign[...] exit
-             enter['aliases'] ( SEP enter[$seq] assign[...] exit ) * exit EOR
-
-To 'parse' the tree against the dual grammar and to output the config file,
-do the following:
-
-- mark all nodes in the tree as unprocessed
-- treat the (dual) grammar constructs thusly:
-  - embed quantifiers +, *, ? in the corresponding loop with the lookahead
-    condition being 'have_unprocessed_nodes && made_progress'
-  - for sequences, process each item
-  - for alternatives, try each item until one succeeds
-  - for [ PATH = VALUE: A ]
-      - bind values in current rule
-        each variable path component must correspond to an unprocessed node
-        and mark each used tree node as processed
-        o value is processed if it has been processed once
-        o path segment is processed if it has been processed once
-        o node has been processed if all values and path segements in its
-          subtree have been processed
-
-
-hosts/                                   P
-  2/                                     PN
-    ipaddr = 127.0.0.1                   PVN
-    canonical = localhost.localdomain    PVN
-    aliases/                             PN
-      0 = localhost                      PVN
-      1 = galia.watzmann.net             PVN
-      2 = galia                          PVN
-  5/
-    ipaddr = 172.31.122.14
-    canonical = orange.watzmann.net
-    aliases/
-      0 = orange
-
-yum/                                                 P
-  fedora/                                            PN
-    name = 'Fedora $releasever - $basearch'          PVN
-    enabled = '1'                                    PVN
-    gpgcheck = '1'                                   PVN
-  fedora-debuginfo/                                  P
-    name = 'Fedora $releasever - $basearch - Debug'  PVN
-    mirrorlist = 'http://mirrors.fedoraproject.org/' 
-    enabled = '0'
-  fedora-source/
-    name = 'Fedora $releasever - Source'
-    enabled = '0'
-    gpgcheck = '1'
-
-
 Lenses
 ------
+
+Lens notation for hosts (with appropriate regexps):
+
+  def file = [ label 'hosts' . ( comment | record ) * ]
+  def comment = POUND_TO_EOL
+  def record  = [ seq .
+                  [ label 'ipaddr' . store ... ]
+                  [ label 'canonical' . SEP . store ... ]
+                  [ label 'aliases' . ( SEP2 . assign $seq ... ) * ] 
+                  EOR
+                ]
+
+Lens notation for yum:
+
+  def file = [ label 'yum' . ( comment | section ) * ]
+  def comment = OPT_WS ( /#.*/ | 'REM' | 'rem' )? EOL
+  def section = [ '[' . key ... . ']' . EOL . (comment | kv) * ]
+  def kv = [ key ... . EQ . store ... . EOL ]
+
+Lens notation for pam:
+
+  def COMMENT = /(#.*?|[ \t]*)\n/
+  def file = [ label 'pam' . [ basename . ( comment | record ) * ] ]
+  def comment = match COMMENT
+  def CONTROL = /(\[[^\]]*\]|[^ \t]+)/
+  def record = [ seq . [ label 'type' . store ... . SEP ]
+                       [ label 'control' . store CONTROL . SEP ]
+                       [ label 'module' . store ... ]
+                       ( SEP [ label 'opts' . store ... ] )? EOL
 
 Lenses all go from text files to trees. The text files are specified by a
 grammar whose language is C. So lenses are C <=> T
 
 Well-behaved
   lens l
-    (l.put (l.get [c p]) [c p]) = [c p]
-    (l.get (l.put [a q] [c p])) = [a q]
+    (l.put (l.get c) c) = c
+    (l.get (l.put a c)) = a
 
 Tree concatenation:
   t = t1.t2  tree whose root has first-level children from t1 and t2 as
              children
 
-  expand to [tree path]: [t1 p1].[t2 p2] = [t1.t2 p1] iff p1 = p2
-                         undef otherwise
-
 Primitive lenses:
-  drop       -- drop something and don't put it into t
-  enter      -- append to the current path
-  exit       -- remove last component from current path
-  assign     -- assign to the current path
+  drop RE       -- drop something and don't put it into t
+  store RE      -- create leaf
+  seq
+  label
+  basename
+
+All lenses have functions
+  l.get      C -> T
+  l.put      
+  l.create   T -> C
+  l.path     C -> K
+  l.parse    
 
 Combinators:
   l1 . l2        -- sequence
   l1 | l2        -- alternative
   l1*, l1+, l1?  -- Kleene star, l1 . l1*, e | l1
+  [ l ]          -- subtree
 
 Details:
 
   drop E  [[E]] <=> {}
-    get [c p]         = [{} p]
-    put [t q] [c p]   = [c q]
-    create a    = e
+    get c         = {}
+    put {} c      = c
   
     (same as const E e e)
 
     well-behaved:
-      (put (get [c p]) [c p]) = (put [{} p] [c p]) = c p
-      (get (put [t q] [c p])) = (get [c q]) = [{} q] iff t = {}
+      (put (get c) c) = (put {} c) = c
+      (get (put t c)) = (get c) = {} iff t = {}
 
-  enter E [[E]] <=> T
-    get [c p]       = [{p/c = {}} p/c]
-    put [t q] [c p] = 
-    create a     =
-
-    well-beaved:
-      (put (get [c p]) [c p]) = (put [{ p/c = {} } p/c] [c p]) = [c p]
-      (get (put [t q] [c p])) = (get ) = [t q]
-
-  exit
-    get [c p]         = [{} p']   with p = p'/x
-    put [t q] [c p]   = 
-    create =
+  [ l ] (l well-behaved)
+    get c    = { c1 = l.get(c2) } where c = c1 . c2 ua sep
+    put t c  = t1 . l.put(t2 c2)  where t = { c1 = t2 }
 
     well-behaved:
-      (put (get [c p'/x]) [c p'/x]) = (put [{} p'] [c p'/x]) = 
-      (get (put [t q] [c p]) [c p])
+      (put (get c) c) = (put { c1 = l.get(c2) } c) 
+        = c1 . (l.put (l.get c2) c2) = c1 . c2 = c
+      (get (put t c)) = (get c1 . (l.put t2 c2))
+                      = { c1 = (l.get (l.put t2 c2)) }
+                      = { c1 = t2 } = t
 
-  assign E
-    get [c p]       = [{ p:c = {} } p]
-    put [t q] [c p] =  
+  store E d
+    get c           = {c}
+    put t c         = f  iff t == {f}
+                      d  iff t == {} (is this an empty tree or a leaf with NULL?)
+                     undef otherwise
+    well-behaved:  
+    put (get c) c = put {c} c = c
+    get (put a c) = get f = {f} = a
 
   la . lb
     let c = c1 . c2, t = t1 . t2
