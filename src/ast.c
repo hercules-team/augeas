@@ -25,6 +25,8 @@
 #include "ast.h"
 #include "list.h"
 
+static void dot_grammar(FILE *out, struct grammar *grammar, int flags);
+
 /*
  * Debug printing
  */
@@ -383,10 +385,12 @@ static void dump_rules(FILE *out, struct rule *r, int flags) {
 }
 
 static void dump_grammar(struct grammar *grammar, FILE *out, int flags) {
-    fprintf(out, "abbrevs:\n");
-    dump_abbrevs(out, grammar->abbrevs);
-    fprintf(out, "rules:\n");
-    dump_rules(out, grammar->rules, flags);
+    if (flags & ~ GF_DOT) {
+        fprintf(out, "abbrevs:\n");
+        dump_abbrevs(out, grammar->abbrevs);
+        fprintf(out, "rules:\n");
+        dump_rules(out, grammar->rules, flags);
+    }
 }
 
 /*
@@ -1316,8 +1320,13 @@ int load_spec(const char *filename, FILE *log, int flags,
             fprintf(stderr, "%s: %s\n", g->filename, errmsg);
         }
     
-        if (g != NULL && flags != GF_NONE)
-            dump_grammar(g, (log == NULL) ? stdout : log, flags);
+        if (log == NULL)
+            log = stdout;
+
+        if (g != NULL) {
+            dump_grammar(g, log, flags);
+            dot_grammar(log, g, flags);
+        }
     }
 
     return ok ? 0 : -1;
@@ -1340,6 +1349,110 @@ void augs_map_free(struct map *map) {
         free(map);
     }
 }
+
+/*
+ * Produce a dot graph for the grammar
+ */
+
+static void dot_action(FILE *out, struct match *match) {
+    if (match->action != NULL) {
+        list_for_each(p, match->action->path) {
+            print_entry(out, p);
+            if (p->next != NULL)
+                fprintf(out, " / ");
+        }
+        if (match->action->value != NULL) {
+            fprintf(out, " = ");
+            print_entry(out, match->action->value);
+        }
+    }
+}
+
+static int dot_match(FILE *out, struct match *matches, int parent, int next) {
+    list_for_each(m, matches) {
+        int self = next++;
+        const char *name = "???";
+
+        switch(m->type) {
+        case LITERAL:
+            name = "literal";
+            break;
+        case NAME:
+            name = "name";
+            break;
+        case ANY:
+            name = m->epsilon ? "..?" : "...";
+            break;
+        case FIELD:
+            name = "$i";
+            break;
+        case ALTERNATIVE:
+            name = "\\|";
+            break;
+        case SEQUENCE:
+            name = ".";
+            break;
+        case RULE_REF:
+            name = m->rule->name;
+            break;
+        case ABBREV_REF:
+            name = m->abbrev->name;
+            break;
+        case QUANT_PLUS:
+            name = "+";
+            break;
+        case QUANT_STAR:
+            name = "*";
+            break;
+        case QUANT_MAYBE:
+            name = "?";
+            break;
+        default:
+            name = "???";
+            break;
+        }
+        fprintf(out, "n%d [\n", self);
+        fprintf(out, "  label = \" %s | ", name);
+        dot_action(out, m);
+        //fprintf(out, " | ");
+        //print_literal_set(out, m->handle, m->owner->grammar,
+        //                  ' ', ' ');
+        fprintf(out, "\"\n  shape = \"record\"\n");
+        fprintf(out, "];\n");
+        fprintf(out, "n%d -> n%d;\n", parent, self);
+
+        if (SUBMATCH_P(m)) {
+            next = dot_match(out, m->matches, self, next);
+        }
+    }
+    return next;
+}
+
+static int dot_rule(FILE *out, struct rule *rule, int parent, int next) {
+    int self = next++;
+
+    fprintf(out, "n%d [\n", self);
+    fprintf(out, "  label = \"%s\"\n  shape = \"record\"\n", rule->name);
+    fprintf(out, "];\n");
+    fprintf(out, "n%d -> n%d;\n", parent, self);
+    next = dot_match(out, rule->matches, self, next);
+    return next;
+}
+
+static void dot_grammar(FILE *out, struct grammar *grammar, int flags) {
+    int next = 0;
+
+    if (!(flags & GF_DOT))
+        return;
+    fprintf(out, "strict digraph ast {\n");
+    fprintf(out, "  graph [ rankdir = \"LR\" ];\n");
+    list_for_each(r, grammar->rules) {
+        int self = next++;
+        next = dot_rule(out, r, self, next);
+    }
+    fprintf(out, "}\n");
+}
+
 
 /*
  * Local variables:

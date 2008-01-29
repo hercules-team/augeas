@@ -55,7 +55,7 @@ static void usage(void) {
     fprintf(stderr, "  -P WHAT       Show details of how FILE is parsed. Possible values for WHAT\n"
                     "                are 'advance', 'match', 'tokens', 'actions', and 'ast'\n");
     fprintf(stderr, "  -G WHAT       Show details about GRAMMAR. Possible values for WHAT are\n"
-                    "                'any', 'follow', 'first', 'handles', 'actions', 'pretty' and 'all'\n");
+                    "                'any', 'follow', 'first', 'handles', 'actions', 'pretty', 'dot' and 'all'\n");
     exit(EXIT_FAILURE);
 }
 
@@ -98,8 +98,10 @@ int main(int argc, char **argv) {
                 grammar_flags |= GF_ACTIONS;
             else if (STREQ(optarg, "pretty"))
                 grammar_flags |= GF_PRETTY;
+            else if (STREQ(optarg, "dot"))
+                grammar_flags |= GF_DOT;
             else if (STREQ(optarg, "all"))
-                grammar_flags = ~ GF_NONE;
+                grammar_flags = ~ GF_DOT;
             else {
                 fprintf(stderr, "Illegal argument '%s' for -%c\n", optarg, opt);
                 usage();

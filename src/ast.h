@@ -113,7 +113,8 @@ enum grammar_debug_flags {
     GF_FIRST  = (1 << 2),   /* Print first sets/epsilon indicator */
     GF_HANDLES = (1 << 3),
     GF_ACTIONS  = (1 << 4),
-    GF_PRETTY = (1 << 5)
+    GF_PRETTY = (1 << 5),
+    GF_DOT    = (1 << 6)    /* Produce a dot graph for the grammar */
 };
 
 /*
