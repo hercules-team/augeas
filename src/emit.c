@@ -347,15 +347,33 @@ static void ast_insert(struct ast *ast, const char *path) {
         if (child != NULL) {
             sub = ast_expand(child, path, rest);
             if (sub != NULL) {
+                /* Insert sub in ast->children so that the list formed by
+                   c->match for c in ast->children is a subsequence of
+                   match->matches. It is important that the ast->children
+                   already form a valid subsequence of match->matches. */
                 if (sub->next != NULL) {
                     internal_error(NULL, -1, 
                                    "Subtree has too many children");
+                } else if (ast->children == NULL) {
+                    ast->children = sub;
                 } else {
-                    list_for_each(c, ast->children) {
-                        if (c->match->next == sub->match) {
-                            sub->next = c->next;
-                            c->next = sub;
+                    struct match *m = match->matches;
+                    while (m != sub->match && m != ast->children->match)
+                        m = m->next;
+                    if (m == sub->match) {
+                        sub->next = ast->children;
+                        ast->children = sub;
+                    } else {
+                        struct ast *c = ast->children;
+                        while (m != sub->match && c->next != NULL) {
+                            for (m = c->match->next; 
+                                 m != c->next->match && m != sub->match;
+                                 m = m->next);
+                            if (m != sub->match)
+                                c = c->next;
                         }
+                        sub->next = c->next;
+                        c->next = sub;
                     }
                 }
             }
