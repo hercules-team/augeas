@@ -34,7 +34,8 @@ static struct map *make_map(const char *filename,
                             const char *grammar_name, struct filter *filters,
                             int lineno);
 
-static struct filter *make_filter(const char *glob, int lineno);
+static struct filter *make_filter(const char *glob, struct entry *path, 
+                                  int lineno);
 
 static struct grammar *make_grammar(const char *filename,
                                     const char *name, struct abbrev *abbrevs,
@@ -119,10 +120,10 @@ map: T_MAP '{' grammar_ref filters '}'
 grammar_ref: T_GRAMMAR T_NAME
              { $$ = $2; }
 
-filters: T_INCLUDE T_QUOTED
-         { $$ = make_filter($2, @1.first_line); }
-       | filters T_INCLUDE T_QUOTED
-         { $$=$1; list_append($1, make_filter($3, @1.first_line)); }
+filters: T_INCLUDE T_QUOTED path
+         { $$ = make_filter($2, $3, @1.first_line); }
+       | filters T_INCLUDE T_QUOTED path
+         { $$=$1; list_append($1, make_filter($3, $4, @1.first_line)); }
 
 /*
  * Grammars from here on out
@@ -422,12 +423,14 @@ static struct map *make_map(const char *filename,
   return result;
 }
 
-static struct filter *make_filter(const char *glob, int lineno) {
+static struct filter *make_filter(const char *glob, struct entry *path, 
+                                  int lineno) {
   struct filter *result;
   
   CALLOC(result, 1);
   result->lineno = lineno;
   result->glob = glob;
+  result->path = path;
   return result;
 }
 

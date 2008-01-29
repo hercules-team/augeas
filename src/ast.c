@@ -1505,6 +1505,31 @@ int load_spec(const char *filename, FILE *log, int flags,
         }
     }
 
+    list_for_each(m, *maps) {
+        list_for_each(f, m->filters) {
+            if (f->path == NULL) {
+                grammar_error(m->filename, _L(f), 
+                              "Include filter for '%s' is missing a root path",
+                              f->glob);
+                ok = 0;
+            }
+            list_for_each(e, f->path) {
+                if (e->type == E_FIELD) {
+                    grammar_error(m->filename, _L(e),
+                        "Include filter '%s' can not contain field reference",
+                                  f->glob);
+                    ok = 0;
+                }
+                if (e->type == E_GLOBAL && ! STREQ("basename", e->text)) {
+                    grammar_error(m->filename, _L(e),
+                          "Include filter '%s' uses unknown global $%s",
+                                  f->glob, e->text);
+                    ok = 0;
+                }
+            }
+        }
+    }
+
     return ok ? 0 : -1;
 }
 

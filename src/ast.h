@@ -72,6 +72,7 @@ struct filter {
     struct filter  *next;
     int             lineno;
     const char     *glob;
+    struct entry   *path;
 };
 
 /*

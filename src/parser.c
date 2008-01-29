@@ -680,6 +680,8 @@ int parse(struct grammar *grammar, struct aug_file *file, const char *text,
     }
     parse_match(grammar->rules->matches, &state);
     file->ast = state.ast;
+    free((void *) file->ast->path);
+    file->ast->path = strdup(file->node);
     if (! state.applied || *state.pos != '\0') {
         fprintf(log, "Parse failed\n");
         return -1;

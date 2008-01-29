@@ -15,7 +15,7 @@
 # can be several include statements and they can contain glob patterns
 map {
   grammar hosts
-  include '/etc/hosts'
+  include '/etc/hosts' '/system/config/hosts'
 }
 
 # A grammar describes how a config file is to be parsed and how it
@@ -54,9 +54,7 @@ grammar hosts {
   # consists of any number of comments and records. The action for this
   # rule says 'during parsing of 'file', the current node is whatever the
   # parser was started with ('/system/config' right now) + 'hosts'
-  file: ( comment | record ) * {
-    @0 { 'hosts' }
-  }
+  file: ( comment | record ) *
 
   # A comment has no action, and doesn't map into the tree at all. Whatever
   # was parsed for it is kept though and written back out when the subtree

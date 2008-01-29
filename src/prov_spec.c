@@ -158,22 +158,69 @@ static void ast_set(struct ast *ast) {
     }
 }
 
-static int parse_file(const char *filename, struct grammar *grammar) {
+static char *pathjoin(char *path, const char *seg) {
+    int len = strlen(seg) + 1;
+    char *result;
+
+    if (path != NULL) {
+        len += strlen(path);
+    }
+
+    result = realloc(path, len+1);
+    if (path != NULL) {
+        if (strlen(path) > 0 && path[strlen(path)-1] != SEP)
+            strcat(result, "/");
+        strcat(result, seg);
+    } else {
+        strcpy(result, seg);
+    }
+    return result;
+}
+
+static const char *file_root(const char *filename, struct filter *filter) {
+    char *result = NULL;
+
+    list_for_each(e, filter->path) {
+        const char *seg = NULL;
+        if (e->type == E_CONST) {
+            seg = e->text;
+        } else if (e->type == E_GLOBAL && STREQ(e->text, "basename")) {
+            seg = strrchr(filename, SEP);
+            if (seg == NULL)
+                seg = filename;
+            else
+                seg += 1;
+        } else {
+            internal_error(NULL, filter->lineno,
+                      "Illegal path entry for filter %s", filter->glob);
+        }
+        if (seg != NULL) {
+            result = pathjoin(result, seg);
+        }
+    }
+    return result;
+}
+
+static int parse_file(const char *filename, struct filter *filter, 
+                      struct grammar *grammar) {
     const char *text = aug_read_file(filename);
+    const char *root = file_root(filename, filter);
     struct aug_file *file;
     int r;
 
-    printf("Parse %s with %s\n", filename, grammar->name);
+    printf("Parse %s to %s with %s\n", filename, root, grammar->name);
 
     if (text == NULL) {
         fprintf(stderr, "Failed to read %s\n", filename);
         return -1;
     }
             
-    file = aug_make_file(filename, "/system/config");
+    file = aug_make_file(filename, root);
     if (file == NULL)
         goto error;
-            
+    free((void *) root);
+    root = NULL;
+
     r = parse(grammar, file, text, stdout, 0);
     if (r != 0) {
         fprintf(stderr, "Parsing of %s failed\n", filename);
@@ -204,8 +251,6 @@ int augp_spec_load(void) {
     const char *root = getenv(AUGEAS_ROOT_ENV);
 
     list_for_each(map, augp_spec_data.maps) {
-        flags = GLOB_NOSORT;
-        
         list_for_each(filter, map->filters) {
             char *globpat;
             if (root == NULL) {
@@ -216,20 +261,19 @@ int augp_spec_load(void) {
                     goto exit;
             }
             ret = glob(globpat, flags, NULL, &globbuf);
-            flags |= GLOB_APPEND;
             if (root != NULL)
                 free(globpat);
             if (ret != 0 && ret != GLOB_NOMATCH) {
                 ret = -1;
                 goto exit;
             }
-        }
     
-        for (int i=0; i < globbuf.gl_pathc; i++) {
-            const char *s = globbuf.gl_pathv[i];
-            if (strendswith(s, ".augnew") || strendswith(s, ".augnew.dot"))
-                continue;
-            parse_file(globbuf.gl_pathv[i], map->grammar);
+            for (int i=0; i < globbuf.gl_pathc; i++) {
+                const char *s = globbuf.gl_pathv[i];
+                if (strendswith(s, ".augnew") || strendswith(s, ".augnew.dot"))
+                    continue;
+                parse_file(globbuf.gl_pathv[i], filter, map->grammar);
+            }
         }
     }
 

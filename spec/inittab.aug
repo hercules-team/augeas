@@ -2,7 +2,7 @@
 
 map {
   grammar inittab
-  include '/etc/inittab'
+  include '/etc/inittab' '/system/config/inittab'
 }
 
 grammar inittab {
@@ -10,9 +10,7 @@ grammar inittab {
   token SEP ':'
   token EOL '\n'
 
-  file: ( comment | record ) * {
-    @0 { 'inittab' }
-  }
+  file: ( comment | record ) *
 
   comment: ( /#.*?\n/ | /[ \t]*\n/ )
 
