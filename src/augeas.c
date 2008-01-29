@@ -253,7 +253,7 @@ int aug_ls(const char *path, const char ***children) {
         p = head;
         cnt = 0;
         do {
-            if (STREQLEN(p->path, path, len)
+            if (pathprefix(path, p->path)
                 && strlen(p->path) > len + 1 
                 && strchr(p->path + len + 1, SEP) == NULL) {
                 if (copy)
