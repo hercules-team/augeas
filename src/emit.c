@@ -147,6 +147,45 @@ static void synthesize_path(struct ast *ast) {
     }
 }
 
+static int set_field_value(struct ast *ast, struct action *action,
+                            const char *value) {
+    if (LEAF_P(ast)) {
+        if (ast->match->owner == action->rule 
+            && ast->match->fid == action->path->field) {
+            free((void*) ast->token);
+            ast->token = strdup(value);
+            return 1;
+        }
+    } else {
+        list_for_each(c, ast->children) {
+            if (set_field_value(c, action, value))
+                return 1;
+        }
+    }
+    return 0;
+}
+
+static void store_field_value(struct ast *ast) {
+    struct action *action = ast->match->action;
+
+    if (action == NULL || action->path == NULL 
+        || action->path->type != E_FIELD)
+        return;
+
+    const char *value = strrchr(ast->path, SEP);
+    if (value == NULL) {
+        internal_error(NULL, -1, "Failed to get value from path %s", 
+                       ast->path);
+        return;
+    }
+
+    value += 1;
+    if (! set_field_value(ast, action, value)) {
+        internal_error(NULL, -1, "Could not find field $%s:%d to store %s",
+                       action->rule->name, action->path->field, ast->path);
+    }
+}
+
 static struct ast *ast_expand(struct match *match, const char *path, 
                               const char *rest);
 
@@ -261,6 +300,7 @@ static struct ast *ast_expand(struct match *match, const char *path,
             if (! LEAF_P(result))
                 synthesize_path(result);
         }
+        store_field_value(result);
     }
     return result;
 }
@@ -586,14 +626,11 @@ void ast_emit(FILE *out, struct ast *ast) {
             } else if (ast->match->type == LITERAL) {
                 literal = ast->match->literal;
             } else {
-                internal_error(NULL, -1,
-                               "illegal match type %d", ast->match->type);
+                internal_error(_FM(ast->match), _L(ast->match),
+                               "illegal match type '%s'", _t(ast->match));
             }
             if (literal != NULL) {
                 emit_escaped_chars(out, literal->text);
-            } else {
-                internal_error(_FM(ast->match), _L(ast->match),
-                               "literal is missing a default");
             }
         }
     } else {
