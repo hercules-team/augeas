@@ -1,3 +1,8 @@
+0.0.2 - 2008-01-29:
+  - completely reworked
+  - processing of files is now based on a textual description of the
+    structure of the files (basically a LL(1) grammar)
+
 0.0.1 - 2007-12-01:
   - First release. 
   - Public API and basic tree data structure. 
