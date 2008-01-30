@@ -144,9 +144,6 @@ static void print_matches(FILE *out, struct match *m, const char *sep,
         case ANY:
             print_any(out, p, flags);
             break;
-        case FIELD:
-            fprintf(out, "$%d", p->field);
-            break;
         case ALTERNATIVE:
             fprintf(out, "(");
             print_matches(out, p->matches, " | ", flags);
@@ -280,10 +277,6 @@ static void dump_matches(FILE *out, struct match *m, int indent, int flags) {
             print_any(out, p, flags);
             print_follow(out, p, flags);
             fputc('\n', out);
-            break;
-        case FIELD:
-            fprintf(out, "$%d\n", p->field);
-            print_follow(out, p, flags);
             break;
         case ALTERNATIVE:
             fprintf(out, "|");
@@ -426,26 +419,6 @@ static int check_abbrevs(struct grammar *grammar) {
     return r;
 }
 
-static int check_matches(struct match *matches) {
-    int r = 1;
-
-    list_for_each(m, matches) {
-        if (m->type == FIELD) {
-            if (find_field(m->owner->matches, m->field) == NULL) {
-                grammar_error(_FM(m), _L(m),
-                              "Field $%d in rule %s does not exist\n",
-                              m->field, m->owner->name);
-                r = 0;
-            }
-        }
-        if (SUBMATCH_P(m)) {
-            if (! check_matches(m->matches))
-                r = 0;
-        }
-    }
-    return r;
-}
-
 static int check_rules(struct rule *rules) {
     int r = 1;
     
@@ -458,8 +431,6 @@ static int check_rules(struct rule *rules) {
                 r = 0;
             }
         }
-        if (! check_matches(p->matches))
-            r = 0;
     }
     return r;
 }
@@ -587,25 +558,6 @@ static int make_match_firsts(struct match *matches) {
             /* first(rule) */
             if (merge_literal_set(&(cur->first), cur->rule->matches->first))
                 changed = 1;
-            break;
-        case FIELD:
-            /* first(cur->field) */
-            {
-                struct match *field = find_field(cur->owner->matches, 
-                                                 cur->field);
-                if (field == NULL) {
-                    internal_error(_FM(cur), _L(cur->owner), 
-                                   "rule %s: unresolved field %d", 
-                                   cur->owner->name, cur->field);
-                } else {
-                    if (cur->epsilon != field->epsilon) {
-                        cur->epsilon = field->epsilon;
-                        changed = 1;
-                    }
-                    if (merge_literal_set(&(cur->first), field->first))
-                        changed = 1;
-                }
-            }
             break;
         case ALTERNATIVE:
             if (make_match_firsts(cur->matches))
@@ -1053,7 +1005,6 @@ static void calc_match_id(struct rule *rule, struct match *matches,
         m->gid = (m->gid) ? (*gid)++ : -1;
         if (m->type == ANY ||
             m->type == LITERAL ||
-            m->type == FIELD ||
             m->type == NAME) {
             m->fid = (*fid)++;
         } else if (SUBMATCH_P(m)) {
@@ -1583,9 +1534,6 @@ static int dot_match(FILE *out, struct match *matches, int parent, int next) {
             break;
         case ANY:
             name = m->epsilon ? "..?" : "...";
-            break;
-        case FIELD:
-            name = "$i";
             break;
         case ALTERNATIVE:
             name = "\\|";

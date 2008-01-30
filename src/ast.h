@@ -180,7 +180,6 @@ enum match_type {
     LITERAL,      /* literal string or regex */
     NAME,         /* use a rule or abbrev */
     ANY,          /* match '...' */
-    FIELD,        /* match previous field */
     ALTERNATIVE,  /* match one of a number of other matches */
     SEQUENCE,     /* match a list of matches */
     RULE_REF,     /* reference to a rule */
@@ -243,7 +242,6 @@ struct match {
     union {
         struct literal *literal;     /* LITERAL, ANY */
         const char     *name;        /* NAME */
-        int             field;       /* FIELD */
         struct match   *matches;     /* ALTERNATIVE, SEQUENCE, QUANT_* */
         struct rule    *rule;        /* RULE_REF */
         struct abbrev  *abbrev;      /* ABBREV_REF */

@@ -23,7 +23,6 @@ static struct match *make_literal_match(struct literal *literal, int lineno);
 static struct match *make_name_match(const char *name, int quant, int lineno);
 static struct match *make_match(enum match_type type, int lineno);
 static struct match *make_any_match(int epsilon, int lineno);
-static struct match *make_field_match(int field, int lineno);
 struct match *make_quant_match(struct match *child, int quant, int lineno);
 static struct action *make_action(enum action_scope scope, int id,
                                   struct entry *path, 
@@ -174,8 +173,6 @@ match_prim:  literal
             { $$ = make_name_match($1, $2, @1.first_line); }
           | T_ANY
             { $$ = make_any_match($1, @1.first_line); }
-          | T_FIELD
-            { $$ = make_field_match($1, @1.first_line); }
           | '(' match ')' match_quant
             { 
               $$ = make_quant_match($2, $4, @1.first_line);
@@ -343,14 +340,6 @@ struct match *make_any_match(int epsilon, int lineno) {
   result = make_match(ANY, lineno);
   result->literal = make_literal(NULL, REGEX, lineno);
   result->epsilon = epsilon;
-  return result;
-}
-
-struct match *make_field_match(int field, int lineno) {
-  struct match *result;
-
-  result = make_match(FIELD, lineno);
-  result->field = field;
   return result;
 }
 

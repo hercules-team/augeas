@@ -223,7 +223,6 @@ static struct ast *ast_expand(struct match *match, const char *path,
         break;
     case LITERAL:
     case ANY:
-    case FIELD:
     case ABBREV_REF:
         result = make_ast(match);
         if (match->action != NULL && match->action->value != NULL) {

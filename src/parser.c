@@ -69,9 +69,6 @@ static void parse_expected_error(struct state *state, struct match *exp) {
         case ANY:
             name = "...";
             break;
-        case FIELD:
-            name = "field";
-            break;
         case RULE_REF:
             name = exp->rule->name;
             break;
@@ -249,13 +246,6 @@ static void parse_sequence(struct match *match, struct state *state) {
     state->ast = ast;
 }
 
-static void parse_field(struct match *match, struct state *state) {
-    struct match *field = find_field(match->owner->matches, match->field);
-    
-    FIXME("Construct AST or remove fields as match");
-    parse_match(field, state);
-}
-
 static void parse_rule_ref(struct match *match, struct state *state) {
     struct ast *ast = make_ast(match);
 
@@ -314,9 +304,6 @@ static void parse_match(struct match *match, struct state *state) {
         break;
     case ANY:
         parse_literal(match, state);
-        break;
-    case FIELD:
-        parse_field(match, state);
         break;
     case ALTERNATIVE:
         parse_alternative(match, state);
@@ -638,9 +625,6 @@ static int ast_node(FILE *out, struct ast *ast, int parent, int next) {
     case ANY:
         name = ast->match->epsilon ? "..?" : "...";
         value = ast->token;
-        break;
-    case FIELD:
-        name = "$i";
         break;
     case ALTERNATIVE:
         name = "\\|";
