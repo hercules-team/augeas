@@ -36,22 +36,27 @@ static const char *_t(struct match *match) {
     return types[match->type];
 }
 
-/* Free an entire AST */
-static void ast_delete(struct ast *ast) {
+/* Free an entire AST; return TRUE if a leaf was deleted */
+static int ast_delete(struct ast *ast) {
+    int leaf_del = 0;
+
     if (ast == NULL)
-        return;
+        return 0;
 
     if (! LEAF_P(ast)) {
         while (ast->children != NULL) {
             struct ast *del = ast->children;
             ast->children = del->next;
-            ast_delete(del);
+            if (ast_delete(del))
+                leaf_del = 1;
         }
     } else {
         free((void *) ast->token);
+        leaf_del = 1;
     }
     free((void *) ast->path);
     free(ast);
+    return leaf_del;
 }
 
 // Find the most appropriate match amongst MATCHES that leads to
@@ -513,8 +518,8 @@ static int traverse(struct ast *ast, const char *path) {
                      next != NULL && next->path == NULL;
                      next = next->next);
                 list_remove(del, ast->children);
-                ast_delete(del);
-                changed = 1;
+                if (ast_delete(del))
+                    changed = 1;
             }
         } else {
             list_for_each(ac, ast->children) {
