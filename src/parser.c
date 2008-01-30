@@ -48,6 +48,51 @@ struct state {
     struct ast **symtab;
 };
 
+static void parse_expected_error(struct state *state, struct match *exp) {
+    char *word, *p;
+    const char *name = NULL;
+    
+    word = alloca(11);
+    strncpy(word, state->pos, 10);
+    word[10] = '\0';
+    for (p = word; *p != '\0' && *p != '\n'; p++);
+    *p = '\0';
+
+    while (name == NULL) {
+        switch (exp->type) {
+        case LITERAL:
+            if (exp->literal->type == QUOTED)
+                name = exp->literal->text;
+            else
+                name = exp->literal->pattern;
+            break;
+        case ANY:
+            name = "...";
+            break;
+        case FIELD:
+            name = "field";
+            break;
+        case RULE_REF:
+            name = exp->rule->name;
+            break;
+        case ABBREV_REF:
+            name = exp->abbrev->name;
+            break;
+        case ALTERNATIVE:
+        case SEQUENCE:
+        case QUANT_PLUS:
+        case QUANT_STAR:
+        case QUANT_MAYBE:
+            exp = exp->matches;
+            break;
+        default:
+            name = "unknown";
+            break;
+        }
+    }
+    parse_error(state, "expected %s at '%s'", name, word);
+}
+
 struct ast *make_ast(struct match *match) {
     struct ast *result;
     
@@ -183,7 +228,7 @@ static void parse_alternative(struct match *match, struct state *state) {
     }
     state->ast = ast;
     if (! state->applied) {
-        parse_error(state, "alternative failed\n");
+        parse_expected_error(state, match);
     }
 }
 
@@ -195,7 +240,7 @@ static void parse_sequence(struct match *match, struct state *state) {
         state->ast = NULL;
         parse_match(p, state);
         if (! state->applied) {
-            parse_error(state, "sequence failed\n");
+            parse_expected_error(state, p);
             break;
         }
         if (state->ast != NULL)
