@@ -5,4 +5,4 @@ noinst_SCRIPTS = test-grammars.sh
 
 TESTS_ENVIRONMENT = top_builddir=$(top_builddir)
 
-TESTS = test-grammars.sh
+TESTS = test-grammars.sh augtest

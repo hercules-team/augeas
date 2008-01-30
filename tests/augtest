@@ -27,7 +27,12 @@ AUGEAS_SPECLIB=File::join(TOP_DIR, "spec")
 ENV["AUGEAS_ROOT"] = AUGEAS_ROOT
 ENV["AUGEAS_SPECLIB"] = AUGEAS_SPECLIB
 
-ARGV.each do |test|
+args=ARGV
+if args.size == 0
+    args = Dir::glob("#{TEST_DIR}/*.rb")
+end
+ 
+args.each do |test|
     if File::directory?(AUGEAS_ROOT)
         FileUtils::rm_rf(AUGEAS_ROOT)
     end
