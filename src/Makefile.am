@@ -12,12 +12,6 @@ libaugeas_la_SOURCES = augeas.h augeas.c \
 	internal.h internal.c \
 	prov_spec.c spec-parse.y ast.h ast.c parser.c emit.c list.h
 
-# FIXME: These files are obsolete and need to be killed
-#        once saving files is fully working
-#	record.h record.c \
-#	prov_pam.c prov_hosts.c prov_inittab.c
-
-
 libaugeas_la_LIBADD = liblexer.la @LIBPCRE_LIBS@
 
 augtool_SOURCES = augtool.c
