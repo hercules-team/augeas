@@ -28,7 +28,7 @@
 #define NMATCHES 100
 
 #define parse_error(state, format, args ...) \
-    grammar_error(state->filename, state->lineno, format, ## args)
+    grammar_error((state)->filename, (state)->lineno, format, ## args)
 
 struct state {
     const char *filename;
@@ -679,18 +679,17 @@ int parse(struct grammar *grammar, struct aug_file *file, const char *text,
         state.log = stdout;
     }
     parse_match(grammar->rules->matches, &state);
+    if (! state.applied || *state.pos != '\0') {
+        parse_error(&state, "parse did not read entire file");
+        return -1;
+    }
     file->ast = state.ast;
     free((void *) file->ast->path);
     file->ast->path = strdup(file->node);
-    if (! state.applied || *state.pos != '\0') {
-        fprintf(log, "Parse failed\n");
-        return -1;
-    } else {
-        state.symtab = NULL;
-        state.symlen = 0;
-        strcpy(state.path, file->node);
-        eval(file->ast, &state);
-    }
+    state.symtab = NULL;
+    state.symlen = 0;
+    strcpy(state.path, file->node);
+    eval(file->ast, &state);
     ast_dot(log, file->ast, flags);
     return 0;
 }
