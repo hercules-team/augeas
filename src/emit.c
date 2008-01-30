@@ -21,21 +21,6 @@
  */
 
 
-/*
- * Turning (a part of) the tree back into a config file needs to make sure
- * that we only produce config files that are syntactically correct. That
- * means that the grammar has to be used as a guide to how output should be
- * produced.
- *
- * When the time comes to store tree changes, the AST is first changed to
- * reflect those tree changes. First, deletions in the config tree are
- * spotted by making a complete pass over the AST and deleting anything
- * from the AST that is not in the config tree anymore. Second, a pass is
- * made over the config tree to find any entries that have been added or
- * changed. For each added entry, the AST is expanded until we have a leaf
- * corresponding to that entry in the config tree.
- */
-
 #include "ast.h"
 #include "augeas.h"
 #include "list.h"
@@ -67,47 +52,6 @@ static void ast_delete(struct ast *ast) {
     }
     safe_free((void *) ast->path);
     safe_free(ast);
-}
-
-static int store_value(struct ast *ast, const char *path) {
-    int changed = 0;
-
-    // FIXME: The connection between the ast node receiving the value and 
-    // the node to wich the action->value is attached is not right. When
-    // we see an action->value, we need to find the AST node corresponding
-    // to that field and assign to that
-    // Alternatively, we could transform the grammar so that action->value
-    // is always attached to the targetted match; that would be closer
-    // to a store(RE) in the language
-    if (LEAF_P(ast)) {
-        if (ast->match->action != NULL && 
-            ast->match->action->value != NULL
-            && ast->path != NULL && STREQ(ast->path, path)) {
-            const char *value = aug_get(path);
-            if (value == NULL) {
-                if (ast->token != NULL) {
-                    safe_free((void *) ast->token);
-                    ast->token = NULL;
-                    changed = 1;
-                }
-            } else {
-                if (ast->token == NULL || STRNEQ(ast->token, value)) {
-                    safe_free((void *) ast->token);
-                    ast->token = strdup(value);
-                    changed = 1;
-                }
-            }
-        }
-    } else {
-        // FIXME: This could be shortcircuited; once the value has been
-        // stored, there's no need to go over the rest of the tree
-        list_for_each(c, ast->children) {
-            if (store_value(c, path))
-                changed = 1;
-        }
-    }
-
-    return changed;
 }
 
 // Find the most appropriate match amongst MATCHES that leads to
