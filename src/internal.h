@@ -116,9 +116,6 @@ static inline int pathprefix(const char *p1, const char *p2) {
  * Internal data structures
  */
 
-/* Size of the line buffer during parsing */
-#define MAX_LINE 256
-
 /*
  * File tokenizing
  */
@@ -139,22 +136,6 @@ struct aug_file *aug_make_file(const char *name, const char *node);
  * caller must free the result. Return NULL if any error occurs.
  */
 const char* aug_read_file(const char *path);
-
-// Defined in record.c
-typedef struct aug_rec *aug_rec_t;
-
-/*
- * A scanner describes how files are to be processed and keeps track of
- * where in the tree those files were put.  
- *
- * FIXME: Use of NODE is inconsistent (its a dir with files for the pam
- * provider), the direct file for the host provider
- */
-struct aug_scanner {
-    aug_rec_t  rec;
-    const char *node;         // Node where the scanner is mounted
-    struct aug_file  *files;
-};
 
 /*
  * Provider. Should eventually be the main interface between the tree
