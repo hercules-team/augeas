@@ -229,12 +229,12 @@ static int parse_file(const char *filename, struct filter *filter,
     
     list_append(augp_spec_data.files, file);
     ast_set(file->ast);
-    safe_free((void *) text);
+    free((void *) text);
 
     return 0;
  error:
-    safe_free(file);
-    safe_free((void *) text);
+    free(file);
+    free((void *) text);
     return -1;
 }
 

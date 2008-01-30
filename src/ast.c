@@ -1539,11 +1539,11 @@ int load_spec(const char *filename, FILE *log, int flags,
 
 void augs_map_free(struct map *map) {
     if (map != NULL) {
-        safe_free((void *) map->filename);
-        safe_free((void *) map->grammar_name);
+        free((void *) map->filename);
+        free((void *) map->grammar_name);
         while (map->filters != NULL) {
             struct filter *f = map->filters;
-            safe_free((void *) f->glob);
+            free((void *) f->glob);
             map->filters = f->next;
             free(f);
         }

@@ -48,10 +48,10 @@ static void ast_delete(struct ast *ast) {
             ast_delete(del);
         }
     } else {
-        safe_free((void *) ast->token);
+        free((void *) ast->token);
     }
-    safe_free((void *) ast->path);
-    safe_free(ast);
+    free((void *) ast->path);
+    free(ast);
 }
 
 // Find the most appropriate match amongst MATCHES that leads to

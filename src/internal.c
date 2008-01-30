@@ -28,8 +28,8 @@
 
 void aug_file_free(struct aug_file *af) {
     if (af != NULL) {
-        safe_free((void *) af->name);
-        safe_free((void *) af->node);
+        free((void *) af->name);
+        free((void *) af->node);
         /* FIXME: free af->ast */
     }
 }

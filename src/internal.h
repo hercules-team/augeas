@@ -37,14 +37,6 @@
 #include <ansidecl.h>
 #endif
 
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
 /* String equality tests, suggested by Jim Meyering. */
 #define STREQ(a,b) (strcmp((a),(b)) == 0)
 #define STRCASEEQ(a,b) (strcasecmp((a),(b)) == 0)
@@ -119,11 +111,6 @@ static inline int pathprefix(const char *p1, const char *p2) {
       fprintf(stderr, msg, ## args);                    \
       fputc('\n', stderr);                              \
     } while(0)
-
-static inline void safe_free(void *p) {
-    if(p)
-        free(p);
-}
 
 /*
  * Internal data structures
