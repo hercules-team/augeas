@@ -1,0 +1,103 @@
+\documentclass{amsart}
+
+\usepackage{amsmath}
+\usepackage{xspace}
+\usepackage{amssymb}
+\usepackage{bcprules}
+
+\newcommand{\ensmath}[1]{\ensuremath{#1}\xspace}
+
+\newcommand{\opnam}[1]{\ensmath{\operatorname{\mathit{#1}}}}
+\newcommand{\nget}{\opnam{get}}
+\newcommand{\nput}{\opnam{put}}
+\newcommand{\ncreate}{\opnam{create}}
+\newcommand{\nkey}{\opnam{key}}
+\newcommand{\lget}[1]{\opnam{get}{#1}}
+\newcommand{\lput}[3]{\opnam{put}{#1}\,{#2}\,{#3}}
+\newcommand{\lcreate}[2]{\opnam{create}{#1}\,{#2}}
+\newcommand{\lkey}[1]{\nkey{#1}}
+
+\newcommand{\suff}{\ensmath{\operatorname{suff}}}
+\newcommand{\pref}{\ensmath{\operatorname{pref}}}
+\newcommand{\lenstype}[3][K]{\ensmath{{#2}\stackrel{#1}{\Longleftrightarrow}{#3}}}
+\newcommand{\tree}[1]{\ensmath{[#1]}}
+\newcommand{\niltree}{\ensmath{[]}}
+\newcommand{\Regexp}{\ensmath{\mathcal R}}
+\newcommand{\reglang}[1]{\ensmath{[\![{#1}]\!]}}
+\newcommand{\lens}[1]{\opnam{#1}}
+\newcommand{\eps}{\ensmath{\epsilon}}
+\newcommand{\conc}[2]{\ensmath{#1\cdot #2}}
+\newcommand{\uaconc}[2]{\ensmath{#1\cdot^{!} #2}}
+\newcommand{\xconc}[2]{\ensmath{#1\odot #2}}
+\newcommand{\alt}[2]{\ensmath{#1\,|\,#2}}
+\newcommand{\cstar}[1]{\ensmath{#1^*}}
+\newcommand{\uastar}[1]{\ensmath{#1^{!*}}}
+\newcommand{\Trees}{\ensmath{\mathcal T}}
+\newcommand{\Words}{\ensmath{\Sigma^*}}
+\newcommand{\Wordsrhd}{\ensmath{\Words\cup\rhd}}
+\newcommand{\tmap}[2]{\ensmath{#1\mapsto #2}}
+\newcommand{\tmaptt}[2]{\ensmath{{\mathtt #1}\mapsto {\mathtt #2}}}
+\newcommand{\dom}[1]{\ensmath{\mathrm{dom}(#1)}}
+\newcommand{\List}{\ensmath{\mathtt{List}}}
+\newcommand{\redigits}{\ensmath{\mathtt{D}}}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+{\theoremstyle{definition} 
+  \newtheorem{defn}{Definition}
+  \newtheorem*{remark}{Remark}
+  \newtheorem*{example}{Example}}
+
+\begin{document}
+
+\section*{Unambiguously concatenable}
+
+\begin{defn}
+  For a language $L$ over $\Sigma$, define
+  \begin{equation*}
+    \begin{split}
+      \suff(L) = \{ p \in \Sigma^+ | u \in L \wedge up \in L \}\\
+      \pref(L) = \{ p \in \Sigma^+ | v \in L \wedge pv \in L \}
+    \end{split}
+  \end{equation*}
+\end{defn}
+Note that $\suff(L)$ and $\pref(L)$ do not contain $\eps$. Note also that
+we only take prefixes and suffixes that can be expanded to a word in $L$
+with another word in $L$, not any word in $\Sigma^*$.
+
+The set $\suff(L)$ is identical to the left quotient $L^{-1}L$ of $L$ by
+itself. Similarly, $\pref(L) = LL^{-1}$. That makes me happy, since
+libAmore provides right quotient and intersection.
+
+\begin{defn}
+Two languages $L_1$ and $L_2$ are \emph{unambiguosuly concatenable} iff for
+every $u_1, v_1 \in L_1$ and $u_2, v_2 \in L_2$, if $u_1u_2=v_1v_2$ then
+$u_1=v_1$ and $u_2=v_2$.
+\end{defn}
+
+\begin{lemma}
+  The languages $L_1$ and $L_2$ are unambiguously concatenable if and only
+  if $\suff(L_1) \cap \pref(L_2) = \emptyset$.
+\end{lemma}
+\begin{proof}
+Let $L_1$ and $L_2$ not unambiguously concatenable, i.e. there exist $u_1$,
+$v_1$ in $L_1$ and $u_2$, $v_2$ in $L_2$ such that $u_1u_2=v_1v_2$ and
+$u_1\neq v_1$ and therefore $u_2 \neq v_2$. Assume $u_1$ is strictly
+shorter than $v_1$, therefore $v_1 = u_1 p, p \neq \eps$. With that $v_1v_2
+= u_1pv_2$ and $u_2 = pv_2$ and $p \in \suff(L_1) \cap \pref(L_2)$
+
+Let $p \in \suff(L_1) \cap \pref(L_2)$. That implies that
+there are $u\in L_1$ and $v\in L_2$ such that $up\in L_1$ and $pv\in
+L_2$. The word $upv$ can be split as $\conc{up}{v}$ and as $\conc{u}{pv}$
+and therefore $L_1$ and $L_2$ are not unambiguously concatenable.
+\end{proof}
+
+\end{document}
+
+%% TeX-parse-self: t
+%% TeX-auto-save: t
+
+%% Local Variables:
+%% TeX-master: "unambig.tex"
+%% compile-command: "pdflatex -file-line-error -halt-on-error unambig.tex"
+%% End:

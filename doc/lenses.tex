@@ -1,0 +1,291 @@
+\documentclass{amsart}
+
+\usepackage{amsmath}
+\usepackage{xspace}
+\usepackage{amssymb}
+\usepackage{bcprules}
+
+\newcommand{\ensmath}[1]{\ensuremath{#1}\xspace}
+
+\newcommand{\opnam}[1]{\ensmath{\operatorname{\mathit{#1}}}}
+\newcommand{\nget}{\opnam{get}}
+\newcommand{\nput}{\opnam{put}}
+\newcommand{\nparse}{\opnam{parse}}
+\newcommand{\ncreate}{\opnam{create}}
+\newcommand{\nkey}{\opnam{key}}
+\newcommand{\lget}[1]{\opnam{get}{#1}}
+\newcommand{\lput}[3]{\opnam{put}{#1}\,{#2}\,{#3}}
+\newcommand{\lcreate}[2]{\opnam{create}{#1}\,{#2}}
+\newcommand{\lkey}[1]{\nkey{#1}}
+
+\newcommand{\suff}{\ensmath{\operatorname{suff}}}
+\newcommand{\pref}{\ensmath{\operatorname{pref}}}
+\newcommand{\lenstype}[3][K]{\ensmath{{#2}\stackrel{#1}{\Longleftrightarrow}{#3}}}
+\newcommand{\tree}[1]{\ensmath{[#1]}}
+\newcommand{\niltree}{\ensmath{[]}}
+\newcommand{\Regexp}{\ensmath{\mathcal R}}
+\newcommand{\reglang}[1]{\ensmath{[\![{#1}]\!]}}
+\newcommand{\lens}[1]{\opnam{#1}}
+\newcommand{\eps}{\ensmath{\epsilon}}
+\newcommand{\conc}[2]{\ensmath{#1\cdot #2}}
+\newcommand{\uaconc}[2]{\ensmath{#1\cdot^{!} #2}}
+\newcommand{\xconc}[2]{\ensmath{#1\odot #2}}
+\newcommand{\alt}[2]{\ensmath{#1\,|\,#2}}
+\newcommand{\cstar}[1]{\ensmath{#1^*}}
+\newcommand{\uastar}[1]{\ensmath{#1^{!*}}}
+\newcommand{\Trees}{\ensmath{\mathcal T}}
+\newcommand{\Words}{\ensmath{\Sigma^*}}
+\newcommand{\tmap}[2]{\ensmath{#1\mapsto #2}}
+\newcommand{\tmaptt}[2]{\ensmath{{\mathtt #1}\mapsto {\mathtt #2}}}
+\newcommand{\dom}[1]{\ensmath{\mathrm{dom}(#1)}}
+\newcommand{\List}{\ensmath{\mathtt{List}}}
+\newcommand{\redigits}{\ensmath{\mathtt{D}}}
+
+\newcommand{\lto}{\ensmath{\longrightarrow}}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+{\theoremstyle{definition} 
+  \newtheorem{defn}{Definition}
+  \newtheorem*{remark}{Remark}
+  \newtheorem*{example}{Example}}
+
+\begin{document}
+
+\section{Trees}
+The set of \emph{ordered trees} \Trees over $\Words$ is recursively 
+defined as
+\begin{itemize}
+\item For any word $v\in\Words$, $\tree{v}$ is in \Trees
+\item For any word $k\in\Words$ and any tree $t\in\Trees$,
+  $\tree{\tmap{k}{t}}$ is in \Trees
+\item For any $n$ and trees $\tree{\tmap{k_i}{t_i}} \in Trees$ with, the
+  list $[\tmap{k_1}{t_1};\tmap{k_2}{t_2};\ldots;\tmap{k_n}{t_n}]$ is in
+  \Trees
+\end{itemize}
+
+Note that this allows the same key to be used multiple times in a tree; for
+example, $[\tmaptt{a}{x}; \tmaptt{a}{x}]$ is a valid tree and
+different from $[\tmaptt{a}{x}]$.
+
+The domain of a tree $\dom{t}$ is the list of all its labels; for a tree $t
+= \tree{\tmap{k_1}{t_1};\ldots;\tmap{k_n}{t_n}}$, $\dom{t} =
+[k_1;\ldots;k_n].$
+
+A tree $t$ can also be viewed as a total map from \Words to $\List(\Trees\cup\Words)$,
+defined as
+\begin{equation*}
+  t(k) = 
+  \begin{cases}
+    [] & \text{for } t = []\\
+    [t_1] :: t_2(k) & \text{for } t = t' :: t_2 
+                      \text{ and } t' = \tree{\tmap{k}{t_1}}\\
+    t_2(k) & \text{for } t = t' :: t_2 
+             \text{ and } t' = \tree{\tmap{k'}{t_1}} \text{with } k\neq k'
+  \end{cases}
+\end{equation*}
+
+Note that this definition implies that for a tree $t = \tree{\tmap{k}{v}}$
+with $k,v\in\Words$, $t(k)=[v].$ For the tree $t_{\mathtt{aa}} = [\tmaptt{a}{x};
+  \tmaptt{a}{x}]$, $t_{\mathtt{aa}}(\mathtt a) = [\mathtt x; \mathtt x]$.
+
+The concatenation of trees $\conc{t_1}{t_2}$ is simply list concatenation.
+
+For sets $K\subset\Words$ and $T\subset\Trees$, $\tree{\tmap{K}{T}}$
+denotes the set of all trees $t = \tree{\tmap{k}{t'}}$ with $k\in K$, $t'
+\in T$.
+
+\section{Lenses}
+
+Lenses map between strings in the regular language $C$ and trees
+$T\subseteq\Trees$. They can also produce keys from a regular language $K$;
+these keys are used by the $\lens{subtree}$ lens to construct new trees.
+
+A lens $l$ consists of the functions $\nget : C \mapsto T$, $\nput : T
+\times C \mapsto C$, $\ncreate : T \mapsto C$, and $\nkey : C \mapsto K$.
+
+Lenses here are written as $l:\lenstype[K]{C}{T}$ where $K$ and $C$ are
+regular languages and $T\subseteq\Trees$. Intuitively, the notation says
+that $l$ is a lens that takes strings from $C$ and transforms them to trees
+in $T$. Generally,
+
+\infrule{C\subseteq\Words \andalso K\subseteq\Words \andalso T\subseteq\Trees}
+        {\lens{l} \in \lenstype[K]{C}{T}}
+
+\begin{align*}
+  \nget &\in C \lto T\\
+  \nparse &\in C \lto S \times D(L) \times K\\
+  \nput &\in T \times C \times K \lto C\\
+  \ncreate &\in T \times K \lto C
+\end{align*}
+
+\subsection{del}
+
+The del \lenstype{E\:d}{\niltree} lens is simple:
+
+\infrule{E\in\Regexp}{\lens{del} \in \lenstype[\eps]{\reglang{E}}{\niltree}}
+
+\begin{align*}
+  \lget{c} &= \niltree\\
+  \lput{\niltree}{c}{k} &= c\\
+  \lcreate{\niltree}{k} &= d\\
+  \lkey{c} &= \eps
+\end{align*}
+
+\subsection{store}
+
+Copies a word into the value of a leaf.
+
+\infrule{E\in\Regexp}
+        {\lens{store}\in\lenstype[\eps]{\reglang{E}}{\tree{\reglang{E}}}}
+
+\begin{align*}
+  \lget{c} &= \tree{c}\\
+  \lput{\tree{v}}{c}{k} &= v\\
+  \lcreate{\tree{v}}{k} &= v\\
+  \lkey{c} &= \eps
+\end{align*}
+
+\subsection{seq}
+
+Gets the next value from a sequence as the key
+
+\infrule{w\in\Sigma^*}
+        {\lens{seq}\in\lenstype[\reglang{\redigits}]{\eps}{\niltree}}
+
+\begin{align*}
+  \lget{\eps} &= \niltree\\
+  \lput{\niltree}{\eps}{k} &= \eps\\
+  \lcreate{\niltree}{k} &= \eps\\
+  \lkey{\eps} &= n
+\end{align*}
+
+\subsection{label}
+
+Uses a fixed tree label
+
+\infrule{w\in\Sigma^*}
+        {\lens{label}\in\lenstype[w]{\eps}{\niltree}}
+
+\begin{align*}
+  \lget{\eps} &= \niltree\\
+  \lput{\niltree}{\eps}{k} &= \eps\\
+  \lcreate{\niltree}{k} &= \eps\\
+  \lkey{\eps} &= w
+\end{align*}
+
+\subsection{key}
+
+Uses a parsed tree label
+
+\infrule{E\in\Regexp}
+        {\lens{key}\in\lenstype[\reglang{E}]{\reglang{E}}{\niltree}}
+
+\begin{align*}
+  \lget{c} &= \niltree\\
+  \lput{\niltree}{c}{k} &= k\\
+  \lcreate{\niltree}{k} &= k\\
+  \lkey{c} &= c
+\end{align*}
+
+\subsection{subtree}
+
+The subtree combinator $[l]$ constructs a subtree from $l$
+
+\infrule{l\in\lenstype[K]{C}{T}}
+        {[l]\in\lenstype[\eps]{C}{\tree{\tmap{K}{T}}}}
+
+\begin{align*}
+  \lget{c} &= \tree{\tmap{l.\lkey{c}}{l.\lget{c}}}\\
+  \lput{\tree{\tmap{k}{t}}}{c}{k'} &= l.\lput{t}{c}{k}\\
+  \lcreate{\tree{\tmap{k}{t}}}{k'} &= l.\lcreate{t}{k}\\
+  \lkey{c} &= \eps
+\end{align*}
+
+
+\subsection{concat}
+
+The concat combinator $\conc{l_1}{l_2}$ joins two trees.
+
+\infrule{l_1\in\lenstype[K_1]{C_1}{T_1} 
+         \andalso l_2\in\lenstype[K_2]{C_2}{T_2}
+         \andalso \uaconc{C_1}{C_2}}
+        {\conc{l_1}{l_2}\in\lenstype[\conc{K_1}{K_2}]{\conc{C_1}{C_2}}{\conc{T_1}{T_2}}}
+
+\begin{align*}
+  \lget{(\conc{c_1}{c_2})} &= \conc{(l_1.\lget{c_1})}{(l_2.\lget{c_2})}\\
+  \lput{(\conc{t_1}{t_2})}{(\conc{c_1}{c_2})}{k} &= 
+         \conc{(l_1.\lput{t_1}{c_1}{k})}{(l_2.\lput{t_2}{c_2}{k})}\\
+  \lcreate{(\conc{t_1}{t_2})}{k} &= 
+         \conc{(l_1.\lcreate{t_1}{k})}{(l_2.\lcreate{t_2}{k})}\\
+  \lkey{\conc{c_1}{c_2}} &= \xconc{l_1.\lkey{c_1}}{l_2.\lkey{c_2}}
+\end{align*}
+
+\subsection{union}
+
+The union combinator $\alt{l_1}{l_2}$ chooses.
+
+\infrule{l_1\in\lenstype[K_1]{C_1}{T_1} \andalso l_2\in\lenstype[K_2]{C_2}{T_2}}
+        {\alt{l_1}{l_2}\in\lenstype[K_1\cup K_2]{C_1 \cup C_2}{T_1 \cup T_2}}
+
+\begin{align*}
+  \lget{c} &= 
+     \begin{cases}
+       l_1.\lget{c_1} & \text{if } c_1 \in C_1\\
+       l_2.\lget{c_2} & \text{if } c_2 \in C_2\\
+     \end{cases}
+  \\
+  \lput{t}{c}{k} &= 
+     \begin{cases}
+       l_1.\lput{t}{c}{k} & \text{if } t\in T_1 \wedge c \in C_1 \\
+       l_2.\lput{t}{c}{k} & \text{if } t\in T_2 \wedge c \in C_2 \setminus C_1\\
+       \text{???}  & \text{if } t\in T_2 \wedge c \in C_1\setminus C_2\\
+       \text{???}  & \text{if } t\in T_1 \wedge c \in C_2\setminus C_1
+     \end{cases}\\
+  \lcreate{t}{k} &= 
+     \begin{cases}
+       l_1.\lcreate{t}{k} & \text{if } t\in T_1\\
+       l_2.\lcreate{t}{k} & \text{if } t\in T_2\setminus T_1
+     \end{cases}\\
+  \lkey{c} &= 
+     \begin{cases}
+       l_1.\lkey{c} & \text{if } c \in C_1\\
+       l_2.\lkey{c} & \text{if } c \in C_2\setminus C_1
+     \end{cases}\\
+\end{align*}
+
+\subsection{star}
+
+The star combinator $\cstar{l}$ iterates.
+
+\infrule{l\in\lenstype{C}{T} \andalso \uastar{C} \andalso \text{ua T(??)}}
+        {\cstar{l}\in\lenstype[\cstar{K}]{\cstar{C}}{\cstar{T}}}
+
+\begin{align*}
+  \lget{c_1\cdots c_n} &= (l.\lget{c_1}) \cdots (l.\lget{c_n})\\
+  \lput{t_1\cdots t_m}{c_1 \cdots c_n}{k} &= c'_1 \cdots c'_n\\
+  \text{where } &c'_i =
+    \begin{cases}
+      l.\lput{t_i}{c_i}{k} & \text{for } 1 \leq i \leq \min(m,n)\\
+      l.\lcreate{t_i}{k} & \text{otherwise } i \leq \max(m,n)
+    \end{cases}\\
+  \lcreate{t_1 \cdots t_m}{k} &= 
+         l.\lcreate{t_1}{k}\cdots\lcreate{t_m}{k}\\
+  \lkey{c_1\cdots c_n} &= l.\lkey{c_1} \odot \ldots \odot l.\lkey{c_n}
+\end{align*}
+
+Want reordering and insertion in the middle to be reflected. If
+$\lget{\conc{c_1}{c_2}} = \conc{t_1}{t_2}$, want
+$\lput{(\conc{t_2}{t_1})}{(\conc{c_1}{c_2})} = \conc{l.\lput{t_2}{c_2}}{l.\lput{t_1}{c_1}}$
+
+Need to split a tree $t\in T$ into subtrees according to ??
+
+\end{document}
+
+%% TeX-parse-self: t
+%% TeX-auto-save: t
+
+%% Local Variables:
+%% TeX-master: "lenses.tex"
+%% compile-command: "pdflatex -file-line-error -halt-on-error lenses.tex"
+%% End:
