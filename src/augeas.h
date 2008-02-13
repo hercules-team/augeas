@@ -46,15 +46,17 @@ int aug_insert(const char *path, const char *sibling);
 int aug_rm(const char *path);
 
 /* Return a list of the direct children of PATH in CHILDREN, which is
-   allocated and must be freed by the caller. If CHILDREN is NULL, nothing
-   is allocated and only the number of children is returned. Returns -1 on
-   error, or the total number of children of PATH.
+   allocated and must be freed by the caller, including the strings it
+   contains. If CHILDREN is NULL, nothing is allocated and only the number
+   of children is returned. Returns -1 on error, or the total number of
+   children of PATH.
 */
 int aug_ls(const char *path, const char ***children);
 
 /* Return the first SIZE paths that match PATTERN in MATCHES, which must be
  * preallocated to hold at least SIZE entries. The return value is the total
- * number of matches
+ * number of matches. Any strings returned in MATCHES must be freed by the
+ * caller.
  *
  * The PATTERN is passed to fnmatch(3) verbatim, and FNM_FILE_NAME is not set,
  * so that '*' does not match a '/'

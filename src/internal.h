@@ -25,6 +25,8 @@
 
 #define DEBUG
 
+#include "list.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
@@ -56,7 +58,7 @@ static inline int pathlen(const char *path) {
 
     if (len > 0 && path[len-1] == SEP)
         len--;
-    
+
     return len;
 }
 
@@ -64,8 +66,23 @@ static inline int pathlen(const char *path) {
 __attribute__((pure))
 static inline int pathprefix(const char *p1, const char *p2) {
     int l1 = pathlen(p1);
-    
+
     return STREQLEN(p1, p2, l1) && (p2[l1] == '\0' || p2[l1] == SEP);
+}
+
+/* Strip the first component from P and return the part of P after the
+   first SEP. If P contains no SEP, or the next occurence of SEP in P is at
+   the end of P, return NULL
+*/
+__attribute__((pure))
+static inline const char *pathstrip(const char *p) {
+    const char *c = strchr(p, SEP);
+    if (c != NULL) {
+        c += 1;
+        return (*c == '\0') ? NULL : c;
+    } else {
+        return NULL;
+    }
 }
 
 /* Call calloc to allocate an array of N instances of *VAR */

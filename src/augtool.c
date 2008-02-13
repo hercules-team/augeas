@@ -48,6 +48,7 @@ static void cmd_ls(char *args[]) {
         if (val == NULL)
             val = "(none)";
         printf("%s = %s\n", paths[i] + strlen(path), val);
+        free((void *) paths[i]);
     }
     free(paths);
 }
@@ -63,7 +64,7 @@ static void cmd_match(char *args[]) {
         printf("  (no matches)\n");
         return;
     }
-        
+
     matches = calloc(cnt, sizeof(char *));
     cnt = aug_match(pattern, matches, cnt);
     for (int i=0; i < cnt; i++) {
@@ -76,6 +77,7 @@ static void cmd_match(char *args[]) {
         } else {
             printf("%s = %s\n", matches[i], val);
         }
+        free((void *) matches[i]);
     }
     free(matches);
 }
