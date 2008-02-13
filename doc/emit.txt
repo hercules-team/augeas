@@ -38,26 +38,35 @@ grammar whose language is C. So lenses are C <=> T
 
 Well-behaved
   lens l
-    (l.put (l.get c) c) = c
-    (l.get (l.put a c)) = a
+    (l.put (l.get c) c)  = c
+    (l.get (l.put a c))  = a
+    (l.get (l.create a)) = a
 
 Tree concatenation:
   t = t1.t2  tree whose root has first-level children from t1 and t2 as
              children
 
-Primitive lenses:
-  drop RE       -- drop something and don't put it into t
-  store RE      -- create leaf
-  seq
-  label
-  basename
-
 All lenses have functions
   l.get      C -> T
-  l.put      
-  l.create   T -> C
-  l.path     C -> K
-  l.parse    
+  l.parse    C -> S
+  l.put      S x T x K -> C
+  l.create   T -> S x C
+  l.label    C -> K = { [^/]+ }
+
+there's also a global print : S -> C with 
+      print (l.parse c) = c
+i.e.  S is really the parse tree of C and an eval: S -> T so that 
+      eval l.parse c = l.get c
+
+Write 'lens C <= S => T'
+
+Primitive lenses:
+  drop RE d     -- drop something and don't put it into t
+  store RE      -- create leaf
+  seq STR       -- return next entry in a sequence as label
+  label STR     -- return fixed string as label
+  counter STR   -- reset a counter
+  key RE        -- parse and use as label
 
 Combinators:
   l1 . l2        -- sequence
@@ -67,70 +76,73 @@ Combinators:
 
 Details:
 
-  drop E  [[E]] <=> {}
-    get c         = {}
-    put {} c      = c
-  
-    (same as const E e e)
+  drop E d <E> <=  { <E> } => {}
+    get c           = nil
+    parse c         = { c }
+    put { c } {} e  = c
+    create {}       = { d }
+    label c         = <>
 
-    well-behaved:
-      (put (get c) c) = (put {} c) = c
-      (get (put t c)) = (get c) = {} iff t = {}
+  store E   <E> <= { <E> } => { <E> }
+    get c             = { c }
+    parse c           = { c }
+    put { c } { c } e = c
+    create {}         = { d }
+    label c           = <>
 
-  [ l ] (l well-behaved)
-    get c    = { c1 = l.get(c2) } where c = c1 . c2 ua sep
-    put t c  = t1 . l.put(t2 c2)  where t = { c1 = t2 }
+  seq STR   <> <= nil => nil
+    get e          = nil
+    parse e        = nil
+    put s t k      = e
+    create t       = nil
+    label e        = v   where v is the next value from the sequence
 
-    well-behaved:
-      (put (get c) c) = (put { c1 = l.get(c2) } c) 
-        = c1 . (l.put (l.get c2) c2) = c1 . c2 = c
-      (get (put t c)) = (get c1 . (l.put t2 c2))
-                      = { c1 = (l.get (l.put t2 c2)) }
-                      = { c1 = t2 } = t
+  label STR  <> <= nil => nil
+    same as seq, except
+    label e        = l   where l is the string argument
 
-  store E d
-    get c           = {c}
-    put t c         = f  iff t == {f}
-                      d  iff t == {} (is this an empty tree or a leaf with NULL?)
-                     undef otherwise
-    well-behaved:  
-    put (get c) c = put {c} c = c
-    get (put a c) = get f = {f} = a
+  counter STR : initialize counter, all functions empty
+
+  key E  <E> <= { c } => nil
+    get c           = nil
+    parse c         = { c }
+    put { c } nil k = k
+    create {}       = ????
+    label c         = c
+    
+
+  [ l ] 
+    get c         = { l.label c = l.get c }
+    parse c       = l.parse c
+    put s {k' = t'} k     = l.put s[k'] t' k'  if s[k']
+                            l.create t' k'    otherwise
+    create t k    = l.create t k
+    label c       = <>
 
   la . lb
-    let c = c1 . c2, t = t1 . t2
-    get [c p]       = (la.get [c1 p]) . (lb.get [c2 p]) with c = c1 . c2
-    put [t q] [c p] = (la.put [t1 q] [c1 p]) . (lb.put [t2 q] [c2 p]) 
+    get c1 . c2          = la.get c1 . lb.get c2
+    parse c1 . c2        = (la.parse c1, lb.parse c2)
+    put (s1, s2) t1.t2 k = la s1 t1 k . lb s2 t2 k
+    create t1 . t2 k     = la.create t1 k . lb.create t2 k
+    label c1.c2          = la.label c1 ^ lb.label c2
 
-    well-behaved
-      ((la.lb).put ((la.lb).get [c1.c2 p]) [c1.c2 p])
-        = ((la.lb).put (la.get [c1 p]) . (lb.get [c2 p]) [c1.c2 p])
-        = (la.put (la.get [c1 p]) [c1 p]) . (lb.put (lb.get [c2 p]) [c2 p])
-        = [c1 p] . [c2 p]
-        = [c1.c2 p]
+  l*
+    get c1 . c2 . .. . cn   = l.get c1 . l.get c2 . ... . l.get cn
+    parse c1 . c2 . .. . cn = [ l.parse c1; l.parse c2; ... l.parse cn ]
+    put [s1; ... ;sm] t1 . ... . tn k               = c
+    create t      = ????
+    label c1 . ... . cn     = l.label c1 ^ ... ^ l.label cn
 
-      ((la.lb).get ((la.lb).put [t q] [c p]))
-        = ((la.lb).get (la.put [t1 q] [c1 p]) . (lb.put [t2 q] [c2 p]))
-        = (la.get (la.put [t1 q] [c1 p])) . (lb.get (lb.put [t2 q] [c2 p]))
-        =  [t1 q] . [t2 q] = [t q]
-
-Scratch
--------
-
-  l1.l2 from boomerang:
-
-    (get c1.c2) = (l1.get c1).(l2.get c2)
-    (put a1.a2 c1.c2) = (l1.put a1 c1) (l2.put a2 c2)
-
-    well-behaved
-      (put (get c1.c2) c1.c2) = (put (l1.get c1).(l2.get c2) c1c2)
-        = (l1.put (l1.get c1) c1).(l2.put (l2.get c2) c2) = c1.c2
-
-  (enter e1).(assign e2).get [c p]
-    = ((enter e1).get [c1 p]) . ((assign e2).get [c2 p])
-    = [ {p/e1 = {}} p/e1 ] . [ {p:c2 = {}} p] <- not defined
-    we want the path from the first lens to propagate to the second
-
+  la | lb
+    get c         = la.get c   if la applies to c
+                    lb.get c   if lb applies to c
+    parse c       = (la|lb).parse c
+    put s t k     = la.put s t k  if handle(la, t) and s.lens == la
+                    lb.put s t k  if handle(lb, t) and s.lens == lb
+                    la.create t k if handle(la, t)
+                    lb.create t k if handle(lb, t)
+    create t      = ????
+    label c       = <>
 
 Lenses for simpler languages
 ============================
