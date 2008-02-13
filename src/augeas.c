@@ -32,18 +32,7 @@
 #define P_ROOT   "system"
 #define P_SYSTEM_CONFIG "system/config"
 
-/* An entry in the global config tree. The data structure allows associating
- * values with interior nodes, but the API currently marks that as an error.
- */
-struct tree {
-    struct tree *next;
-    const char  *label;      /* Last component of PATH */
-    struct tree *children;   /* List of children through NEXT */
-    const char  *value;
-    int          dirty;
-};
-
-static struct tree *aug_tree = NULL;
+struct tree *aug_tree = NULL;
 
 /* Hardcoded list of existing providers. Ultimately, they should be created
  * from a metadata description, not in code
@@ -57,7 +46,7 @@ static const struct aug_provider *providers[] = {
     NULL
 };
 
-static struct tree *aug_tree_find(struct tree *tree, const char *path) {
+struct tree *aug_tree_find(struct tree *tree, const char *path) {
     if (path == NULL)
         return NULL;
     if (*path == SEP)

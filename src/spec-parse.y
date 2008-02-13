@@ -14,19 +14,20 @@ int spec_parse_file(const char *name, struct grammar **grammars,
 static struct abbrev *make_abbrev(const char *name, struct literal *literal,
                                   const char *deflt, int lineno);
 
-static struct rule *make_rule(const char *name, struct match *matches, 
-                              struct action *actions, int lineno);
+static struct rule *make_rule(const char *name, struct match *matches,
+                              int lineno);
 
 static struct match* make_match_list(struct match *head, struct match *tail,
                                      enum match_type type, int lineno);
 static struct match *make_literal_match(struct literal *literal, int lineno);
-static struct match *make_name_match(const char *name, int quant, int lineno);
+static struct match *make_name_match(const char *name, int lineno);
 static struct match *make_match(enum match_type type, int lineno);
 static struct match *make_any_match(int epsilon, int lineno);
-struct match *make_quant_match(struct match *child, int quant, int lineno);
-static struct action *make_action(enum action_scope scope, int id,
-                                  struct entry *path, 
-                                  struct entry *value, int lineno);
+static struct match *make_quant_match(struct match *child, int quant,
+                                      int lineno);
+static struct match *make_action_match(const char *name, 
+                                       struct match *match, int lineno);
+static struct match *make_subtree_match(struct match *match, int lineno);
 static struct entry *make_entry(enum entry_type type, int lineno);
 
 static struct map *make_map(const char *filename,
@@ -63,6 +64,7 @@ typedef void *yyscan_t;
 %token          T_TOKEN
 %token          T_MAP
 %token          T_INCLUDE
+%token          T_END
 
 %union {
   struct map     *map;
@@ -82,10 +84,9 @@ typedef void *yyscan_t;
 %type <rule>    rules rule
 %type <literal> literal
 %type <string>  token_opts grammar_ref
-%type <match>   match match_seq match_prim
+%type <match>   match match_seq match_prim match_arg
 %type <intval>  match_quant
-%type <action>  actions action
-%type <entry>   entry_prim value path
+%type <entry>   entry_prim path
 %type <map>     map
 %type <grammar> grammar
 %type <filter>  filters
@@ -113,8 +114,8 @@ start: grammar
      | start map
        { list_append(*maps, $2); }
 
-map: T_MAP '{' grammar_ref filters '}'
-{ $$ = make_map(spec_get_extra(scanner), $3, $4, @1.first_line); }
+map: T_MAP grammar_ref filters T_END
+{ $$ = make_map(spec_get_extra(scanner), $2, $3, @1.first_line); }
 
 grammar_ref: T_GRAMMAR T_NAME
              { $$ = $2; }
@@ -127,9 +128,9 @@ filters: T_INCLUDE T_QUOTED path
 /*
  * Grammars from here on out
  */
-grammar: T_GRAMMAR T_NAME '{' tokens rules '}'
+grammar: T_GRAMMAR T_NAME tokens rules T_END
          { 
-           $$ = make_grammar(spec_get_extra(scanner), $2, $4, $5, 
+           $$ = make_grammar(spec_get_extra(scanner), $2, $3, $4, 
                              @1.first_line); 
          }
 
@@ -152,9 +153,7 @@ rules: /* empty */
        { list_append($1, $2); $$ = $1; }
 
 rule: T_NAME_COLON match
-      { $$ = make_rule($1, $2, NULL, @1.first_line); }
-    | T_NAME_COLON match '{' actions '}'
-      { $$ = make_rule($1, $2, $4, @1.first_line); }
+      { $$ = make_rule($1, $2, @1.first_line); }
 
 /* Matches describe the structure of the file */
 match: match_seq
@@ -164,21 +163,24 @@ match: match_seq
 
 match_seq: match_prim
            { $$ = $1; }
-         | match_seq match_prim
-           { $$ = make_match_list($1, $2, SEQUENCE, @1.first_line); }
+         | match_seq '.' match_prim
+           { $$ = make_match_list($1, $3, SEQUENCE, @1.first_line); }
 
-match_prim:  literal
-            { $$ = make_literal_match($1, @1.first_line); }
-          | T_NAME match_quant
-            { $$ = make_name_match($1, $2, @1.first_line); }
-          | T_ANY
-            { $$ = make_any_match($1, @1.first_line); }
+match_prim: match_arg
+            { $$ = $1; }
           | '(' match ')' match_quant
-            { 
-              $$ = make_quant_match($2, $4, @1.first_line);
-              $$->gid = 1;   /* Count the quantifier as the group */
-            }
+            { $$ = make_quant_match($2, $4, @1.first_line); }
+          | '[' match ']'
+            { $$ = make_subtree_match($2, @1.first_line); }
+          | T_NAME match_arg
+            { $$ = make_action_match($1, $2, @1.first_line); }
 
+match_arg: literal
+           { $$ = make_literal_match($1, @1.first_line); }
+         | T_ANY
+           { $$ = make_any_match($1, @1.first_line); }
+         | T_NAME
+           { $$ = make_name_match($1, @1.first_line); }
 
 match_quant: /* empty */
              { $$ = '1'; }
@@ -194,33 +196,15 @@ literal: T_QUOTED
        | T_REGEX
          { $$ = make_literal($1, REGEX, @1.first_line); }
 
-/* Actions describe the transformation from matches into the tree */
-actions: action
-       { $$ = $1; }
-     | actions action
-       { $$ = $1; list_append($1, $2); }
-
-action: '@' T_NUMBER '{' path value '}'
-        { $$ = make_action(A_GROUP, $2, $4, $5, @1.first_line); }
-      | '@' T_FIELD  '{' path value '}'
-        { $$ = make_action(A_FIELD, $2, $4, $5, @1.first_line); }
-
 path:  entry_prim
        { $$ = $1; }
     |  entry_prim path
        { $$ = $1; list_append($1, $2); }
 
-value: /* empty */
-       { $$ = NULL; }
-     | '=' entry_prim
-       { $$ = $2; }
-
 entry_prim: T_GLOBAL
             { $$ = make_entry(E_GLOBAL, @1.first_line); $$->text = $1; }
           | T_QUOTED
             { $$ = make_entry(E_CONST, @1.first_line); $$->text = $1; }
-          | T_FIELD
-            { $$ = make_entry(E_FIELD, @1.first_line); $$->field = $1; }
 
 %%
 
@@ -273,18 +257,13 @@ struct abbrev *make_abbrev(const char *name, struct literal *literal,
   return result;
 }
 
-struct rule *make_rule(const char *name, struct match *matches, 
-                       struct action *actions, int lineno) {
+struct rule *make_rule(const char *name, struct match *matches, int lineno) {
   struct rule *result;
 
   CALLOC(result, 1);
   result->lineno = lineno;
   result->name = name;
   result->matches = matches;
-  result->actions = actions;
-  list_for_each(a, actions) {
-    a->rule = result;
-  }
   return result;
 }
 
@@ -302,6 +281,15 @@ struct match *make_match_list(struct match *head, struct match *tail,
   return result;
 }
 
+struct match *make_subtree_match(struct match *match, int lineno) {
+  struct match *result;
+
+  result = make_match(SUBTREE, lineno);
+  result->matches = match;
+
+  return result;
+}
+
 struct match *make_literal_match(struct literal *literal, int lineno) {
   struct match *result;
 
@@ -313,7 +301,7 @@ struct match *make_literal_match(struct literal *literal, int lineno) {
   return result;
 }
 
-struct match *make_name_match(const char *name, int quant, int lineno) {
+struct match *make_name_match(const char *name, int lineno) {
   struct match *result;
 
   if (name == NULL)
@@ -321,7 +309,6 @@ struct match *make_name_match(const char *name, int quant, int lineno) {
 
   result = make_match(NAME, lineno);
   result->name = name;
-  result = make_quant_match(result, quant, lineno);
   return result;
 }
 
@@ -367,25 +354,16 @@ struct match *make_quant_match(struct match *child, int quant, int lineno) {
   return match;
 }
 
-static struct action *make_action(enum action_scope scope, int id,
-                                  struct entry *path, 
-                                  struct entry *value, int lineno) {
-  struct action *result;
+static struct match *make_action_match(const char *name, 
+                                       struct match *match, int lineno) {
+  struct match *result;
 
-  CALLOC(result, 1);
-  result->lineno = lineno;
-  result->scope = scope;
-  result->id = id;
-  
-  result->path = path;
-  if (path != NULL) {
-    list_for_each(p, path)
-      p->action = result;
-  }
-
-  result->value = value;
-  if (value != NULL)
-    value->action = result;
+  result = make_match(ACTION, lineno);
+  CALLOC(result->xaction, 1);
+  result->xaction->lineno = lineno;
+  result->xaction->type = UNDEF;
+  result->xaction->name = name;
+  result->xaction->arg = match;
 
   return result;
 }

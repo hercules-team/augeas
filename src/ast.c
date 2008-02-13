@@ -27,6 +27,10 @@
 
 static void dot_grammar(FILE *out, struct grammar *grammar, int flags);
 
+static const char * const action_type_names[] = {
+    "undef", "counter", "seq", "label", "store", "key", NULL
+};
+
 /*
  * Debug printing
  */
@@ -35,6 +39,13 @@ int print_chars(FILE *out, const char *text, int cnt) {
     int total = 0;
     int print = (out != NULL);
     
+    if (text == NULL) {
+        fprintf(out, "nil");
+        return 3;
+    }
+    if (cnt < 0)
+        cnt = strlen(text);
+
     for (int i=0; i<cnt; i++) {
         switch(text[i]) {
         case '\n':
@@ -76,7 +87,10 @@ void print_literal(FILE *out, struct literal *l) {
         fprintf(out, "'%s'", l->text);
     } else if (l->type == REGEX) {
         fputc('/', out);
-        print_chars(out, l->pattern, strlen(l->pattern));
+        if (l->pattern == NULL)
+            fprintf(out, "%p", l);
+        else
+            print_chars(out, l->pattern, -1);
         fputc('/', out);
     } else {
         fprintf(out, "<U:lit:%d>", l->type);
@@ -166,6 +180,17 @@ static void print_matches(FILE *out, struct match *m, const char *sep,
             print_matches(out, p->matches, sep, flags);
             print_quantc(out, p);
             break;
+        case ACTION:
+            if (p->xaction->type == UNDEF)
+                fputc('_', out);
+            fprintf(out, "%s ", p->xaction->name);
+            print_matches(out, p->xaction->arg, " ", flags);
+            break;
+        case SUBTREE:
+            fprintf(out, "[");
+            print_matches(out, p->matches, " ", flags);
+            fprintf(out, "]");
+            break;
         default:
             fprintf(out, "<U:match:%d>", p->type);
             break;
@@ -200,6 +225,7 @@ void print_literal_set(FILE *out, struct literal_set *set,
     }
 }
 
+ATTRIBUTE_UNUSED
 static void print_entry(FILE *out, struct entry *entry) {
     switch(entry->type) {
     case E_CONST:
@@ -208,37 +234,13 @@ static void print_entry(FILE *out, struct entry *entry) {
     case E_GLOBAL:
         fprintf(out, "$%s", entry->text);
         break;
-    case E_FIELD:
-        fprintf(out, "$%d", entry->field);
-        break;
     default:
         fprintf(out, "<U:%d>", entry->type);
         break;
     }
 }
 
-static void print_action(FILE *out, struct action *action) {
-    if (action == NULL) {
-        return;
-    }
-    list_for_each(p, action->path) {
-        fprintf(out, " enter(");
-        print_entry(out, p);
-        fprintf(out, ")");
-    }
-    if (action->value != NULL) {
-        fprintf(out, " store(");
-        print_entry(out, action->value);
-        fputc(')', out);
-    }
-}
-
-
 static void print_follow(FILE *out, struct match *m, int flags) {
-    if (flags & GF_ACTIONS && m->action != NULL) {
-        print_action(out, m->action);
-    }
-
     if (flags & GF_FIRST) {
         print_literal_set(out, m->first, m->owner->grammar, '[', ']');
     }
@@ -263,6 +265,22 @@ static void dump_matches(FILE *out, struct match *m, int indent, int flags) {
         print_indent(out, indent);
 
         switch (p->type) {
+        case ACTION:
+            if (p->xaction->type == UNDEF)
+                fputc('_', out);
+            fprintf(out, "%s ", p->xaction->name);
+            print_follow(out, p, flags);
+            fprintf(out, " : ");
+            print_matches(out, p->xaction->arg, " ", flags);
+            print_follow(out, p->xaction->arg, flags);
+            putchar('\n');
+            break;
+        case SUBTREE:
+            fprintf(out, "[]");
+            print_follow(out, p, flags);
+            putchar('\n');
+            dump_matches(out, p->matches, indent + 2, flags);
+            break;
         case LITERAL:
             print_literal(out, p->literal);
             print_follow(out, p, flags);
@@ -491,34 +509,6 @@ static int merge_literal_set(struct literal_set **first,
     return changed;
 }
 
-__attribute__((pure))
-struct match *find_field(struct match *matches, int fid) {
-    struct match *result = NULL;
-
-    list_for_each(m, matches) {
-        if (m->fid == fid)
-            return m;
-        if (SUBMATCH_P(m) &&
-            (result = find_field(m->matches, fid)) != NULL)
-            return result;
-    }
-    return NULL;
-}
-
-__attribute__((pure))
-static struct match *find_group(struct match *matches, int gid) {
-    struct match *result = NULL;
-
-    list_for_each(m, matches) {
-        if (m->gid == gid)
-            return m;
-        if (SUBMATCH_P(m) &&
-            (result = find_group(m->matches, gid)) != NULL)
-            return result;
-    }
-    return NULL;
-}
-
 static int make_match_firsts(struct match *matches) {
     int changed = 0;
 
@@ -601,6 +591,7 @@ static int make_match_firsts(struct match *matches) {
                     break;
             }
             break;
+        case SUBTREE:
         case QUANT_PLUS:
         case QUANT_STAR:
         case QUANT_MAYBE:
@@ -610,8 +601,24 @@ static int make_match_firsts(struct match *matches) {
                 changed = 1;
             if (! cur->epsilon) {
                 if (cur->type == QUANT_STAR || cur->type == QUANT_MAYBE
-                    || (cur->type == QUANT_PLUS 
-                        && cur->matches->epsilon)) {
+                    || cur->matches->epsilon) {
+                    cur->epsilon = 1;
+                    changed = 1;
+                }
+            }
+            break;
+        case ACTION:
+            if (ACTION_P(cur, STORE) || ACTION_P(cur, KEY)) {
+                if (make_match_firsts(cur->xaction->arg))
+                    changed = 1;
+                if (cur->epsilon != cur->xaction->arg->epsilon) {
+                    cur->epsilon = cur->xaction->arg->epsilon;
+                    changed = 1;
+                }
+                if (merge_literal_set(&(cur->first), cur->xaction->arg->first))
+                    changed = 1;
+            } else {
+                if (! cur->epsilon) {
                     cur->epsilon = 1;
                     changed = 1;
                 }
@@ -650,6 +657,9 @@ static int make_match_follows(struct match *matches, struct match *parent) {
         } else if (SUBMATCH_P(cur)) {
             if (make_match_follows(cur->matches, cur))
                 changed = 1;
+        } else if (ACTION_P(cur, KEY) || ACTION_P(cur, STORE)) {
+            if (merge_literal_set(&(cur->xaction->arg->follow), cur->follow))
+                changed = 1;
         }
     }
     return changed;
@@ -672,6 +682,11 @@ static int make_any_literal(struct match *any) {
     int size = 8;
     char *pattern;
     list_for_each(f, any->follow) {
+        if (f->literal->pattern == NULL) {
+            grammar_error(_FM(any), _L(any), 
+                          "any pattern ... followed by another any pattern");
+            return 0;
+        }
         size += strlen(f->literal->pattern) + 1;
     }
     CALLOC(pattern, size+1);
@@ -707,6 +722,10 @@ static int resolve_any(struct match *match) {
             if (! resolve_any(m->matches))
                 result = 0;
         }
+        if (m->type == ACTION) {
+            if (! resolve_any(m->xaction->arg))
+                result = 0;
+        }
     }
     return result;
 }
@@ -740,86 +759,75 @@ static int check_match_ambiguity(struct rule *rule, struct match *matches) {
 }
 
 /* Find the regexp pattern that matches path components
-   generated from ENTRY */
-__attribute__((pure))
-static const char *entry_pattern(const struct entry *entry) {
+   generated from MATCH->ACTION. MATCH must be of type ACTION */
+static struct literal_set *make_action_handle(const struct action *action) {
     static const char *DIGITS = "[0-9]+";
     static const char *PATH_COMPONENT = "[^/]+";
 
-    const struct rule *rule = entry->action->rule;
+    const struct match *arg = action->arg;
+    const char *pattern = NULL;
+    enum literal_type type;
 
-    if (entry->type == E_CONST) {
-        return entry->text;
-    } else if (entry->type == E_GLOBAL) {
-        if (STREQ(entry->text, "seq")) {
-            return DIGITS;
-        } else if (STREQ(entry->text, "basename")) {
-            return PATH_COMPONENT;
+    switch(action->type) {
+    case SEQ:
+        assert(arg->type == LITERAL && arg->literal->type == QUOTED);
+        pattern = DIGITS;
+        type = REGEX;
+        break;
+    case LABEL:
+        assert(arg->type == LITERAL && arg->literal->type == QUOTED);
+        pattern = arg->literal->text;
+        type = QUOTED;
+        break;
+    case KEY:
+        if (arg->type == LITERAL) {
+            const struct literal *l = arg->literal;
+            type = l->type;
+            pattern = (type == REGEX) ? l->pattern : l->text;
+        } else if (arg->type == ABBREV_REF) {
+            const struct literal *l = arg->abbrev->literal;
+            type = l->type;
+            pattern = (type == REGEX) ? l->pattern : l->text;
+        } else if (arg->type == ANY) {
+            pattern = PATH_COMPONENT;
+            type = REGEX;
         } else {
-            grammar_error(_FR(rule), _L(entry), 
-                          "Reference to unknown global %s", 
-                          entry->text);
-            return NULL;
+            assert(0);
         }
-    } else if (entry->type == E_FIELD) {
-        struct match *field = find_field(rule->matches, entry->field);
-        if (field == NULL) {
-            grammar_error(_FR(rule), _L(entry), 
-                          "Reference to nonexistant field %d", 
-                          entry->field);
-            return NULL;
-        } else {
-            if (field->type == LITERAL) {
-                return field->literal->pattern;
-            } else if (field->type == ANY) {
-                return PATH_COMPONENT;
-            } else if (field->type == ABBREV_REF) {
-                return field->abbrev->literal->pattern;
-            } else {
-                grammar_error(_FR(rule), _L(entry),
-                              "Field reference $%d is not a literal",
-                              field->fid);
-                return NULL;
-            }
-        }
-    } else {
-        internal_error(_FR(rule), _L(entry),
-                       "Illegal entry type %d\n", entry->type);
-        return NULL;
+        break;
+    default:
+        assert(0);
+        break;
     }
+    struct literal *literal = make_literal(strdup(pattern), type,
+                                           action->lineno);
+    return make_literal_set(literal);
 }
 
-/* Compute handles for each action; return 1 on success, 0 on failure */
-static int make_action_handles(struct match *matches) {
+static int make_subtree_handle(struct match *subtree, struct match *matches) {
+    int changed = 0;
+
     list_for_each(m, matches) {
-        if (SUBMATCH_P(m)) {
-            make_action_handles(m->matches);
-        }
-        if (m->action != NULL) {
-            /* Initial size for pattern is arbitrary; we just need pattern to be
-               a valid empty string */
-            char *pattern = calloc(10, sizeof(char));
-            list_for_each(e, m->action->path) {
-                const char *pat = entry_pattern(e);
-                if (pat == NULL) {
-                    free(pattern);
-                    return 0;
-                }
-
-                int len = strlen(pattern) + strlen(pat) + 1;
-                if (e->next != NULL)
-                    len += 1;
-                pattern = realloc(pattern, len);
-                strcat(pattern, pat);
-                if (e->next != NULL)
-                    strcat(pattern, "/");
+        if (ACTION_P(m, SEQ) || ACTION_P(m, LABEL) || ACTION_P(m, KEY)) {
+            if (subtree->handle != NULL) {
+                grammar_error(_FM(m), _L(m),
+                   "Handle for subtree starting at line %d already defined",
+                              subtree->lineno);
+                merge_literal_set(&(subtree->handle), 
+                                  make_action_handle(m->xaction));
+            } else {
+                subtree->handle = make_action_handle(m->xaction);
+                changed = 1;
             }
-            m->action->handle = make_literal(pattern, REGEX, 
-                                             m->action->lineno);
+        }
+        if (SUBMATCH_P(m) && m->type != SUBTREE) {
+            if (make_subtree_handle(subtree, m->matches))
+                changed = 1;
         }
     }
-    return 1;
+    return changed;
 }
+
 
 /* Compute the handles in each match. Return 0 if no changes were made, 
    1 otherwise */
@@ -827,48 +835,46 @@ static int make_match_handles(struct match *matches) {
     int changed = 0;
 
     list_for_each(cur, matches) {
-        if (SUBMATCH_P(cur)) {
+        if (SUBMATCH_P(cur))
             if (make_match_handles(cur->matches))
                 changed = 1;
-        }
         
-        if (cur->action != NULL && cur->action->handle != NULL) {
-            if (cur->handle == NULL) {
-                cur->handle = make_literal_set(cur->action->handle);
+        switch(cur->type) {
+        case ALTERNATIVE:
+            list_for_each(m, cur->matches) {
+                if (merge_literal_set(&(cur->handle), m->handle))
+                    changed = 1;
+            }
+            break;
+        case SEQUENCE:
+            list_for_each(m, cur->matches) {
+                if (merge_literal_set(&(cur->handle), m->handle)) {
+                    changed = 1;
+                    break;
+                }
+            }
+            break;
+        case RULE_REF:
+            if (merge_literal_set(&(cur->handle), 
+                                  cur->rule->matches->handle))
                 changed = 1;
-            }
-        } else {
-            switch(cur->type) {
-            case ALTERNATIVE:
-                list_for_each(m, cur->matches) {
-                    if (merge_literal_set(&(cur->handle), m->handle))
-                        changed = 1;
-                }
-                break;
-            case SEQUENCE:
-                list_for_each(m, cur->matches) {
-                    if (m->handle != NULL) {
-                        if (merge_literal_set(&(cur->handle), m->handle))
-                            changed = 1;
-                        break;
-                    }
-                }
-                break;
-            case RULE_REF:
-                if (merge_literal_set(&(cur->handle), 
-                                      cur->rule->matches->handle))
-                    changed = 1;
-                break;
-            case QUANT_STAR:
-            case QUANT_PLUS:
-            case QUANT_MAYBE:
-                if (merge_literal_set(&(cur->handle), cur->matches->handle))
-                    changed = 1;
-                break;
-            default:
-                // all others keep a NULL handle
-                break;
-            }
+            break;
+        case QUANT_STAR:
+        case QUANT_PLUS:
+        case QUANT_MAYBE:
+            if (merge_literal_set(&(cur->handle), cur->matches->handle))
+                changed = 1;
+            break;
+        case ACTION:
+            /* Actions have no handles */
+            break;
+        case SUBTREE:
+            if (cur->handle == NULL && make_subtree_handle(cur, cur->matches))
+                changed = 1;
+            break;
+        default:
+            // all others keep a NULL handle
+            break;
         }
     }
 
@@ -919,11 +925,6 @@ static int prepare(struct grammar *grammar) {
     }
 
     /* Handles */
-    list_for_each(r, grammar->rules) {
-        if (!make_action_handles(r->matches))
-            return 0;
-    }
-
     do {
         changed = 0;
         list_for_each(r, grammar->rules) {
@@ -979,6 +980,9 @@ static int bind_match_names(struct grammar *grammar, struct match *matches) {
                 grammar_error(_FM(cur), _L(cur), "Unresolved symbol %s", cur->name);
                 result = 0;
             }
+        } else if (cur->type == ACTION) {
+            if (! bind_match_names(grammar, cur->xaction->arg))
+                result = 0;
         } else if (QUANT_P(cur)) {
             if (! bind_match_names(grammar, cur->matches))
                 result = 0;
@@ -997,322 +1001,21 @@ static int bind_match_names(struct grammar *grammar, struct match *matches) {
     return result;
 }
 
-static void calc_match_id(struct rule *rule, struct match *matches,
-                            int *fid, int *gid) {
+static void bind_owner(struct rule *owner, struct match *matches) {
     list_for_each(m, matches) {
-        m->owner = rule;
-        m->fid = -1;
-        m->gid = (m->gid) ? (*gid)++ : -1;
-        if (m->type == ANY ||
-            m->type == LITERAL ||
-            m->type == NAME) {
-            m->fid = (*fid)++;
-        } else if (SUBMATCH_P(m)) {
-            calc_match_id(rule, m->matches, fid, gid);
-        }
-    }
-}
-
-static int check_entry(struct rule *rule, struct entry *entry,
-                       const char *role) {
-    struct match *m;
-
-    list_for_each(e, entry) {
-        if (e->type == E_FIELD) {
-            m = find_field(rule->matches, e->field);
-            if (m == NULL) {
-                grammar_error(_FR(rule), _L(e),
-                              "Reference to nonexistant field %d in %s",
-                              e->field, role);
-                return 0;
-            } else if (m->type == RULE_REF) {
-                grammar_error(_FR(rule), _L(e),
-                              "Field %d, used as the %s, is a rule. That is not implemented.",
-                              e->field, role);
-                return 0;
-            }
-        }
-    }
-    return 1;
-}
-
-static int push_stores(struct match *matches) {
-    int r = 1;
-
-    list_for_each(m, matches) {
-        if (m->action != NULL && m->action->value != NULL) {
-            struct match *val = find_field(m, m->action->value->field);
-            if (val == NULL) {
-                grammar_error(_FM(m), _L(m->action),
-                              "Assignment of $%d outside the current tree in %s",
-                              m->action->value->field, m->owner->name);
-                r = 0;
-            } else if (val->action != NULL && val->action->value != NULL) {
-                if (val != m) {
-                    grammar_error(_FM(m), _L(m->action),
-                                  "Field $%d in %s stored in more than one tree node",
-                                  m->action->value->field, m->owner->name);
-                    r = 0;
-                }
-            } else if (val->action != NULL) {
-                /* A completely pointless enter attached to field
-                 * VAL. It's pointless since enters don't have any
-                 * persistent effect until something is assigned
-                 */
-                grammar_error(_FM(val), _L(val),
-                              "Useless path enter for field $%d in %s",
-                              m->action->value->field, m->owner->name);
-                r = 0;
-            } else {
-                if (m->action->path == NULL) {
-                    /* This can currently not be expressed in the language,
-                       but better safe than sorry. It corresponds to an
-                       action that stores without entering a subtree */
-                    val->action = m->action;
-                    m->action = NULL;
-                } else {
-                    struct action *a;
-                    CALLOC(a, 1);
-                    a->lineno = m->action->lineno;
-                    a->rule = m->action->rule;
-                    a->scope = m->action->scope;
-                    a->id    = m->action->id;
-                    a->value = m->action->value;
-                    val->action = a;
-                    m->action->value = NULL;
-                }
-            }
-        }
+        m->owner = owner;
         if (SUBMATCH_P(m))
-            if (! push_stores(m->matches))
-                r = 0;
-    }
-
-    return r;
-}
-
-/* 
- * Change actions so that there is at most one enter for each match. For
- * matches with more than one enter, introduce additional SEQUENCE matches
- * and distribute the enters amongst them.
- */
-
-static struct match *make_seq_enter(struct match *match) {
-    struct action *a = match->action;
-    struct match *seq = NULL;
-    
-    CALLOC(seq, 1);
-    seq->next    = match->next;
-    match->next  = NULL;
-    seq->lineno  = match->lineno;
-    seq->type    = SEQUENCE;
-    seq->matches = match;
-    seq->owner   = match->owner;
-    seq->fid     = -1;
-    seq->gid     = -1;
-   
-    CALLOC(seq->action, 1);
-    seq->action->lineno = a->lineno;
-    seq->action->rule   = a->rule;
-    seq->action->scope  = a->scope;
-    seq->action->id     = -1;
-    seq->action->path   = a->path;
-    seq->action->path->action = seq->action;
-    a->path = a->path->next;
-    seq->action->path->next = NULL;
-    
-    if (a->path == NULL && a->value == NULL) {
-        list_remove(a, a->rule->actions);
-        free(a);
-        match->action = NULL;
-    }
-    return seq;
-}
-
-static struct match *expand_enter(struct match *match) {
-    struct action *a = match->action;
-
-    if (a == NULL || a->path == NULL 
-        || (a->path->next == NULL && a->value == NULL))
-        return match;
-    
-    match = make_seq_enter(match);
-    match->matches = expand_enter(match->matches);
-    
-    return match;
-}
-
-static void single_enter(struct match *match) {
-    if (match == NULL)
-        return;
-    if (match->next != NULL) {
-        match->next = expand_enter(match->next);
-        single_enter(match->next);
-    }
-    if (SUBMATCH_P(match)) {
-        match->matches = expand_enter(match->matches);
-        single_enter(match->matches);
-    }
-}
-
-static int seq_entry_p(struct entry *entry) {
-    return entry->type == E_GLOBAL && STREQ("seq", entry->text);
-}
-
-static int const_enter_quant(struct match **matchp) {
-    struct match *match = *matchp;
-
-    if (match->type != QUANT_STAR && match->type != QUANT_PLUS)
-        return 0;
-
-    if (match->action == NULL || match->action->path == NULL)
-        return 0;
-
-    if (! seq_entry_p(match->action->path)) {
-        *matchp = make_seq_enter(*matchp);
-        return 1;
-    }
-
-    return 0;
-}
-
-static int lift_actions(struct match *matches) {
-    int changed = 0;
-
-    if (matches->next != NULL && const_enter_quant(&(matches->next)))
-        changed = 1;
-
-    list_for_each(m, matches) {
-        if (SUBMATCH_P(m)) {
-            if (lift_actions(m->matches))
-                changed = 1;
-            else if (m->action == NULL) {
-                struct match *a = NULL;
-                int acnt = 0;
-                list_for_each(s, m->matches) {
-                    if (s->action != NULL && s->action->value == NULL) {
-                        acnt += 1;
-                        a = s;
-                    }
-                }
-                if (acnt == 1) {
-                    m->action = a->action;
-                    a->action = NULL;
-                    changed = 1;
+            bind_owner(owner, m->matches);
+        if (m->type == ACTION) {
+            bind_owner(owner, m->xaction->arg);
+            for (int type = 0; action_type_names[type] != NULL; type++) {
+                if (STREQ(m->xaction->name, action_type_names[type])) {
+                    m->xaction->type = type;
+                    break;
                 }
             }
         }
-        if (m->next != NULL && const_enter_quant(&(m->next)))
-            changed = 1;
     }
-
-    return changed;
-}
-
-static void remove_useless_seqs(struct match **matchp) {
-    struct match *match = *matchp;
-
-    if (match == NULL)
-        return;
-
-    if (SUBMATCH_P(match))
-        remove_useless_seqs(&(match->matches));
-    if (match->next != NULL)
-        remove_useless_seqs(&(match->next));
-        
-    while (match != NULL && match->type == SEQUENCE
-           && match->action == NULL
-           && match->matches && match->matches->next == NULL) {
-        match->matches->next = match->next;
-        *matchp = match->matches;
-        // FIXME: Need to free match
-        match = *matchp;
-    }
-}
-
-static int bind_actions(struct rule *rule) {
-    int r = 1;
-
-    list_for_each(a, rule->actions) {
-        if (! check_entry(rule, a->path, "path"))
-            r = 0;
-        if (! check_entry(rule, a->value, "value"))
-            r = 0;
-        if (a->value != NULL && a->value->type != E_FIELD) {
-            grammar_error(_FR(rule), _L(a->value),
-                          "Only fields can be used as values in assignments");
-        }
-    }
-
-    list_for_each(a, rule->actions) {
-        const char *n = (a->scope == A_FIELD) ? "field" : "group";
-        struct match *m;
-
-        if (a->id == 0)       /* Group 0 refers to the whole rule */
-            continue;
-
-        if (a->scope == A_FIELD) {
-            m = find_field(rule->matches, a->id);
-        } else if (a->scope == A_GROUP) {
-            m = find_group(rule->matches, a->id);
-        } else {
-            internal_error(_FR(rule), _L(a),
-                           "Illegal action scope %d", a->scope);
-            r = 0;
-        }
-        if (m == NULL) {
-            grammar_error(_FR(rule), _L(a),
-                          "Action references nonexistent %s %d", n, a->id);
-            r = 0;
-        } else {
-            if (m->action != NULL) {
-                grammar_error(_FR(rule), _L(a), "Duplicate actions for %s %d", n, a->id);
-                r = 0;
-            }
-            m->action = a;
-        }
-    }
-    /* Add action with id 0 to the very first match in the rule
-       There may already be one (for rules like 'r: ( a | b )' with an action
-       for @1. In that case we enclose the whole action in a sequence and
-       attach the id 0 action
-     */
-    list_for_each(a, rule->actions) {
-        if (a->scope == A_GROUP && a->id == 0) {
-            if (rule->matches->action != NULL) {
-                if (rule->matches->action->id == 0) {
-                    grammar_error(_FR(rule), _L(a), "Duplicate actions for group %d", a->id);
-                    r = 0;
-                } else {
-                    struct match *shim;
-                    CALLOC(shim, 1);
-                    shim->type = SEQUENCE;
-                    shim->lineno = rule->lineno;
-                    shim->owner  = rule;
-                    shim->fid    = -1;
-                    shim->gid    = 0;
-                    shim->action = a;
-
-                    shim->matches = rule->matches;
-                    rule->matches = shim;
-                }
-            } else {
-                rule->matches->action = a;
-            }
-        }
-    }
-
-    if (!push_stores(rule->matches))
-        r = 0;
-
-    if (r) {
-        rule->matches = expand_enter(rule->matches);
-        single_enter(rule->matches);
-    }
-
-    while (lift_actions(rule->matches));
-    remove_useless_seqs(&(rule->matches));
-    return r;
 }
 
 /*
@@ -1325,12 +1028,9 @@ static int bind_actions(struct rule *rule) {
  */
 static int resolve(struct grammar *grammar) {
     list_for_each(r, grammar->rules) {
-        int gid = 1, fid = 1;
         r->grammar = grammar;
-        calc_match_id(r, r->matches, &fid, &gid);
+        bind_owner(r, r->matches);
         if (! bind_match_names(grammar, r->matches))
-            return 0;
-        if (! bind_actions(r))
             return 0;
     }
     return 1;
@@ -1465,12 +1165,6 @@ int load_spec(const char *filename, FILE *log, int flags,
                 ok = 0;
             }
             list_for_each(e, f->path) {
-                if (e->type == E_FIELD) {
-                    grammar_error(m->filename, _L(e),
-                        "Include filter '%s' can not contain field reference",
-                                  f->glob);
-                    ok = 0;
-                }
                 if (e->type == E_GLOBAL && ! STREQ("basename", e->text)) {
                     grammar_error(m->filename, _L(e),
                           "Include filter '%s' uses unknown global $%s",
@@ -1505,20 +1199,6 @@ void augs_map_free(struct map *map) {
 /*
  * Produce a dot graph for the grammar
  */
-
-static void dot_action(FILE *out, struct match *match) {
-    if (match->action != NULL) {
-        list_for_each(p, match->action->path) {
-            print_entry(out, p);
-            if (p->next != NULL)
-                fprintf(out, " / ");
-        }
-        if (match->action->value != NULL) {
-            fprintf(out, " = ");
-            print_entry(out, match->action->value);
-        }
-    }
-}
 
 static int dot_match(FILE *out, struct match *matches, int parent, int next) {
     list_for_each(m, matches) {
@@ -1556,22 +1236,29 @@ static int dot_match(FILE *out, struct match *matches, int parent, int next) {
         case QUANT_MAYBE:
             name = "?";
             break;
+        case ACTION:
+            name = m->xaction->name;
+            break;
+        case SUBTREE:
+            name = "[]";
+            break;
         default:
             name = "???";
             break;
         }
         fprintf(out, "n%d [\n", self);
         fprintf(out, "  label = \" %s | ", name);
-        dot_action(out, m);
-        //fprintf(out, " | ");
-        //print_literal_set(out, m->handle, m->owner->grammar,
-        //                  ' ', ' ');
+        fprintf(out, " | ");
+        print_literal_set(out, m->handle, m->owner->grammar,
+                          ' ', ' ');
         fprintf(out, "\"\n  shape = \"record\"\n");
         fprintf(out, "];\n");
         fprintf(out, "n%d -> n%d;\n", parent, self);
 
         if (SUBMATCH_P(m)) {
             next = dot_match(out, m->matches, self, next);
+        } else if (m->type == ACTION) {
+            next = dot_match(out, m->xaction->arg, self, next);
         }
     }
     return next;

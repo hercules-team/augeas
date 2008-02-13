@@ -113,7 +113,6 @@ enum grammar_debug_flags {
     GF_FOLLOW = (1 << 1),   /* Print follow sets */
     GF_FIRST  = (1 << 2),   /* Print first sets/epsilon indicator */
     GF_HANDLES = (1 << 3),
-    GF_ACTIONS  = (1 << 4),
     GF_PRETTY = (1 << 5),
     GF_DOT    = (1 << 6)    /* Produce a dot graph for the grammar */
 };
@@ -171,12 +170,13 @@ struct rule {
     int               lineno;
     const char        *name;
     struct match      *matches;
-    struct action     *actions;
 };
 
 struct match *find_field(struct match *matches, int field);
 
 enum match_type {
+    ACTION,       /* call of one of the builtin functions */
+    SUBTREE,      /* enter a subtree */
     LITERAL,      /* literal string or regex */
     NAME,         /* use a rule or abbrev */
     ANY,          /* match '...' */
@@ -197,6 +197,7 @@ enum match_type {
    be treated recursively ? */
 #define SUBMATCH_P(m) ((m)->type == ALTERNATIVE                         \
                        || (m)->type == SEQUENCE                         \
+                       || (m)->type == SUBTREE                          \
                        || QUANT_P(m))
 
 /* A set of literals, for the first/follow sets */
@@ -242,40 +243,42 @@ struct match {
     union {
         struct literal *literal;     /* LITERAL, ANY */
         const char     *name;        /* NAME */
-        struct match   *matches;     /* ALTERNATIVE, SEQUENCE, QUANT_* */
+        struct match   *matches;   /* SUBTREE, ALTERNATIVE, SEQUENCE, QUANT_* */
         struct rule    *rule;        /* RULE_REF */
         struct abbrev  *abbrev;      /* ABBREV_REF */
+        struct action  *xaction;      /* ACTION */
     };
     struct rule        *owner;       /* the rule this match belongs to */
-    int                 fid;         /* the number of the field        */
-    int                 gid;         /* the number of the group        */
     struct literal_set *first;       /* the first set */
     struct literal_set *follow;
     int                 epsilon;     /* produces the empty string */
-    struct action      *action;
     struct literal_set *handle;
 };
 
-enum action_scope {
-    A_FIELD,
-    A_GROUP
+/* A hardwired list of actions, which are all functions with
+   one argument ARG */
+#define ACTION_P(match, atype) ((match)->type == ACTION &&              \
+                                (match)->xaction->type == atype)
+
+enum action_type {
+    UNDEF,          /* NAME is garbage */
+    COUNTER,        /* Initialize counter named ARG */
+    SEQ,            /* Next value from counter ARG */
+    LABEL,          /* Use ARG as path component in tree */
+    STORE,          /* Parse ARG and store result in tree */
+    KEY             /* Parse ARG and use as path component in tree */
 };
 
 struct action {
-    struct action         *next;
     int                    lineno;
-    struct rule           *rule;
-    enum action_scope      scope;
-    int                    id;
-    struct entry          *path;
-    struct entry          *value;
-    struct literal        *handle;
+    enum action_type       type;
+    const char            *name;
+    struct match          *arg;    /* Only LITERAL, NAME, ANY, ABBREV_REF */
 };
 
 enum entry_type {
     E_CONST,
-    E_GLOBAL,
-    E_FIELD
+    E_GLOBAL
 };
 
 struct entry {
@@ -283,10 +286,7 @@ struct entry {
     int             lineno;
     struct action  *action;
     enum entry_type type;
-    union {
-        const char *text;      /* E_CONST, E_GLOBAL */
-        int         field;     /* E_FIELD */
-    };
+    const char     *text;
 };
 
 /*
@@ -295,6 +295,9 @@ struct entry {
  */
 #define LEAF_P(ast) ((ast)->match->type == ABBREV_REF                   \
                      || (ast)->match->type == LITERAL                   \
+                     || ((ast)->match->type == ACTION                   \
+                         && (ast)->match->xaction->type != KEY          \
+                         && (ast)->match->xaction->type != STORE)       \
                      || (ast)->match->type == ANY)
 
 struct ast {
@@ -335,6 +338,10 @@ int print_chars(FILE *out, const char *text, int cnt);
 /* in emit.c */
 int ast_sync(struct ast **ast);
 void ast_emit(FILE *out, struct ast *ast);
+
+/* in put.c */
+void put(FILE *out, struct tree *tree, struct ast *ast);
+
 #endif
 
 

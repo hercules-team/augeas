@@ -1,11 +1,11 @@
 # Parsing inistyle files
 
-map {
-  grammar yum
-  include '/etc/yum.conf' '/system/config/yum'
-}
+#map
+#  grammar yum
+#  include '/etc/yum.conf' '/system/config/yum'
+#end
 
-grammar yum {
+grammar yum
   token EOL /\n/ = '\n'
 
   token INDENT /[ \t]+/ = '\t'
@@ -16,14 +16,13 @@ grammar yum {
 
   file: ( comment | section ) *
 
-  comment: OPT_WS ( /#.*/ | 'REM' | 'rem' )? EOL
+  comment: OPT_WS . ( /#.*/ | 'REM' | 'rem' )? . EOL
 
-  section: '[' ... ']' EOL ( comment | kv ) * {
-    @1 { $2 }
-  }
+  section: [ 
+             '[' . key ... . ']' . EOL .
+             ( comment | kv ) *
+           ]
 
-  kv: ... EQ ... EOL {
-    @$3 { $1 = $3 }
-  }
+  kv: [ key ... . EQ . store ... . EOL ]
 
-}
+end

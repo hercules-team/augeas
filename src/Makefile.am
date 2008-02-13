@@ -10,7 +10,7 @@ bin_PROGRAMS = augtool augparse
 
 libaugeas_la_SOURCES = augeas.h augeas.c \
 	internal.h internal.c \
-	prov_spec.c spec-parse.y ast.h ast.c parser.c emit.c list.h
+	prov_spec.c spec-parse.y ast.h ast.c parser.c put.c list.h
 
 libaugeas_la_LIBADD = liblexer.la @LIBPCRE_LIBS@
 

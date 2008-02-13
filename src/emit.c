@@ -20,6 +20,7 @@
  * Author: David Lutterkort <dlutter@redhat.com>
  */
 
+#define OLD 0
 
 #include "ast.h"
 #include "augeas.h"
@@ -83,6 +84,7 @@ static struct match *find_handle_match(struct match *matches,
 static void synthesize_path(struct ast *ast) {
     free((void *) ast->path);
     ast->path = longest_prefix(ast->children);
+#if OLD
     if (is_seq_iter(ast->match)) {
         int cnt = 0;
         list_for_each(c, ast->children) {
@@ -94,8 +96,10 @@ static void synthesize_path(struct ast *ast) {
             *sep = '\0';
         }
     }
+#endif
 }
 
+#if OLD
 static int set_field_value(struct ast *ast, struct action *action,
                             const char *value) {
     if (LEAF_P(ast)) {
@@ -134,6 +138,7 @@ static void store_field_value(struct ast *ast) {
                        action->rule->name, action->path->field, ast->path);
     }
 }
+#endif
 
 static struct ast *ast_expand(struct match *match, const char *path, 
                               const char *rest);
@@ -175,7 +180,7 @@ static struct ast *ast_expand(struct match *match, const char *path,
      * FIXME: Kludge for special semantics of $seq
      */
     const char *crest = rest; 
-
+#if OLD
     if (crest != NULL && match->action != NULL 
         && match->action->path != NULL) {
             crest = strchr(crest, SEP);
@@ -184,7 +189,7 @@ static struct ast *ast_expand(struct match *match, const char *path,
             if (!is_seq_iter(match))
                 rest = crest;
     }
-
+#endif
     switch(match->type) {
     case ALTERNATIVE:
         result = ast_expand_maybe(match, path, rest, crest);
@@ -225,11 +230,13 @@ static struct ast *ast_expand(struct match *match, const char *path,
     case ANY:
     case ABBREV_REF:
         result = make_ast(match);
+#if OLD
         if (match->action != NULL && match->action->value != NULL) {
             const char *value = aug_get(path);
             if (value != NULL)
                 result->token = strdup(value);
         }
+#endif
         break;
     default:
         internal_error(_FM(match), _L(match),
@@ -237,6 +244,7 @@ static struct ast *ast_expand(struct match *match, const char *path,
         break;
     }
 
+#if OLD
     if (result != NULL) {
         if (match->action != NULL && 
             (match->action->path != NULL || match->action->value != NULL)) {
@@ -250,6 +258,7 @@ static struct ast *ast_expand(struct match *match, const char *path,
         }
         store_field_value(result);
     }
+#endif
     return result;
 }
 
@@ -289,11 +298,13 @@ static struct ast *ast_insert(struct ast *ast, const char *path,
     const char *rest = path + strlen(ast->path);
     if (*rest == SEP)
         rest += 1;
+#if OLD
     if (is_seq_iter(match)) {
         rest = strchr(rest, SEP);
         if (rest != NULL)
             rest += 1;
     }
+#endif
     if (rest != NULL && *rest == '\0') {
         // FIXME: This really means that PATH can't be generated
         // from the grammar. And since we only try to insert
@@ -430,8 +441,10 @@ static void emit_escaped_chars(FILE *out, const char *text) {
 static int is_store(struct ast *ast, const char *path) {
     if (ast->path == NULL)
         return 0;
+#if OLD
     if (ast->match->action == NULL || ast->match->action->value == NULL)
         return 0;
+#endif
     return STREQ(ast->path, path);
 }
 

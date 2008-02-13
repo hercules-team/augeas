@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <assert.h>
 
 #ifdef __GNUC__
 #ifdef HAVE_ANSIDECL_H
@@ -165,6 +166,20 @@ struct aug_provider {
     int (*load)(void);
     int (*save)(void);
 };
+
+/* An entry in the global config tree. The data structure allows associating
+ * values with interior nodes, but the API currently marks that as an error.
+ */
+struct tree {
+    struct tree *next;
+    const char  *label;      /* Last component of PATH */
+    struct tree *children;   /* List of children through NEXT */
+    const char  *value;
+    int          dirty;
+};
+
+struct tree *aug_tree_find(struct tree *tree, const char *path);
+extern struct tree *aug_tree;
 
 #endif
 

@@ -54,6 +54,19 @@ const struct aug_provider augp_spec = {
     .save = augp_spec_save
 };
 
+/* Return true if TREE or any of its children is marked as dirty. The
+   dirty flag is reset throughout TREE at the same time */
+static int tree_dirty(struct tree *tree) {
+    int dirty = tree->dirty;
+
+    tree->dirty = 0;
+    list_for_each(c, tree->children) {
+        if (tree_dirty(c))
+            dirty = 1;
+    }
+    return dirty;
+}
+
 static int ftw_load_cb(const char *fpath, 
                        ATTRIBUTE_UNUSED const struct stat *st,
                        int type) {
@@ -148,8 +161,8 @@ int augp_spec_init(void) {
 }
 
 static void ast_set(struct ast *ast) {
-    if (LEAF_P(ast) && ast->path != NULL) {
-        aug_set(ast->path, ast->token);
+    if (ACTION_P(ast->match, STORE)) {
+        aug_set(ast->path, ast->children->token);
     }
     if (! LEAF_P(ast)) {
         list_for_each(c, ast->children) {
@@ -214,7 +227,7 @@ static int parse_file(const char *filename, struct filter *filter,
         fprintf(stderr, "Failed to read %s\n", filename);
         return -1;
     }
-            
+
     file = aug_make_file(filename, root);
     if (file == NULL)
         goto error;
@@ -226,10 +239,13 @@ static int parse_file(const char *filename, struct filter *filter,
         fprintf(stderr, "Parsing of %s failed\n", filename);
         goto error;
     }
-    
+
     list_append(augp_spec_data.files, file);
     ast_set(file->ast);
     free((void *) text);
+
+    struct tree *tree = aug_tree_find(aug_tree, file->ast->path);
+    tree_dirty(tree);
 
     return 0;
  error:
@@ -267,7 +283,7 @@ int augp_spec_load(void) {
                 ret = -1;
                 goto exit;
             }
-    
+
             for (int i=0; i < globbuf.gl_pathc; i++) {
                 const char *s = globbuf.gl_pathv[i];
                 if (strendswith(s, ".augnew") || strendswith(s, ".augnew.dot"))
@@ -291,26 +307,26 @@ int augp_spec_save(void) {
         // For now, we save into af->name + ".augnew"
         name = realloc(name, strlen(file->name) + 1 
                        + strlen(".augnew.dot") + 1);
-        
+
         sprintf(name, "%s.augnew", file->name);
-        if (ast_sync(&(file->ast))) {
+
+        // FIXME: If the whole tree went away, we should probably delete
+        // the file; but we don't have a mechanism to create a file, so
+        // we just leave an empty file there
+        struct tree *tree = aug_tree_find(aug_tree, file->ast->path);
+
+        if (tree == NULL || tree_dirty(tree)) {
             fp = fopen(name, "w");
             if (fp == NULL) {
                 free(name);
                 return -1;
             }
 
-            // FIXME: If the whole AST went away, we should probably delete
-            // the file; but we don't have a mechanism to create a file, so
-            // we just leave an empty file there
-            if (file->ast != NULL)
-                ast_emit(fp, file->ast);
-
+            put(fp, tree, file->ast);
             fclose(fp);
         }
-        
+
         // Also save a dot file with the AST for debugging
-            
         strcat(name, ".dot");
         if ((fp = fopen(name, "w")) != NULL) {
             ast_dot(fp, file->ast, PF_AST);

@@ -1,13 +1,13 @@
 # Parsing /etc/inittab
 
-map {
-  grammar pam
-  # We really need to be able to exclude some files, like
-  # backup files and .rpmsave files
-  include '/etc/pam.d/*' '/system/config/pam' $basename
-}
+#map
+#  grammar pam
+#  # We really need to be able to exclude some files, like
+#  # backup files and .rpmsave files
+#  include '/etc/pam.d/*' '/system/config/pam' $basename
+#end
 
-grammar pam {
+grammar pam
 
   token SEP /[ \t]+/ = '\t'
   token EOL '\n'
@@ -18,11 +18,13 @@ grammar pam {
 
   comment: ( /#.*?\n/ | /[ \t]*\n/ )
 
-  record: ... SEP (CONTROL SEP) ... ( SEP ... )? EOL {
-    @0  { $seq }
-    @$1 { 'type' = $1 }
-    @1  { 'control' = $3 }
-    @$5 { 'module' = $5 }
-    @$7 { 'opts' = $7 }
-  }
-}
+  record: [ seq 'record' .
+            [ label 'type' . store ... ] .
+            SEP .
+            [ label 'control' . store CONTROL] .
+            SEP .
+            [ label 'module' . store ... ] .
+            ( [ SEP . label 'opts' . store ... ] )? .
+            EOL
+          ]
+end

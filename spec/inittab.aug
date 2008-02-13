@@ -1,11 +1,11 @@
 # Parsing /etc/inittab
 
-map {
-  grammar inittab
-  include '/etc/inittab' '/system/config/inittab'
-}
+#map
+#  grammar inittab
+#  include '/etc/inittab' '/system/config/inittab'
+#end
 
-grammar inittab {
+grammar inittab
 
   token SEP ':'
   token EOL '\n'
@@ -14,16 +14,15 @@ grammar inittab {
 
   comment: ( /#.*?\n/ | /[ \t]*\n/ )
 
-  record: ..? SEP ..? SEP ..? SEP ..? EOL {
-    @0  { $seq }
-    @$1 { 'id' = $1 }
-    @$3 { 'runlevels' = $3 }
-    @$5 { 'action' = $5 }
-    @$7 { 'process' = $7 }
-  }
-}
-
-# Dual grammar:
-# file: ( comment | record ) *
-# comment: <e>
-# record: [seq ['id' = $1] ['runlevels' = $3] ['action' = $5] ['process' = $7]]
+  record: counter 'record' . 
+          [ seq 'record' . 
+            [ label 'id' . store ..? ] .
+            SEP .
+            [ label 'runlevels' . store ..? ] .
+            SEP .
+            [ label 'action' . store ..? ] .
+            SEP .
+            [ label 'process' . store ..? ] .
+            EOL
+          ]
+end

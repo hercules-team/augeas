@@ -388,7 +388,12 @@ The star combinator $\cstar{l}$ iterates.
 
 Want reordering and insertion in the middle to be reflected. If
 $\lget{\conc{c_1}{c_2}} = \conc{t_1}{t_2}$, want
-$\lput{(\conc{t_2}{t_1})}{\conc{c_1}{c_2}} = \conc{l.\lput{t_2}{c_2}}{l.\lput{t_1}{c_1}}$
+$\lput{(\conc{t_2}{t_1})}{\conc{c_1}{c_2}} =
+\conc{l.\lput{t_2}{c_2}}{l.\lput{t_1}{c_1}}$ This can only happen if the
+information to be reordered is in subtrees. In particular, comment lines
+need to become their own subtree, with some support from the language to
+create 'hidden' entries. Simplest: allow {\tt NULL} as the key for a
+subtree and ignore such tree entries in the public API.
 
 Need to split a tree $t\in T$ into subtrees according to ?? Keeping a fake
 'slot' $\rhd$ around for text that didn't produce a tree should help with

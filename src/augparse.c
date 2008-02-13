@@ -94,8 +94,6 @@ int main(int argc, char **argv) {
                 grammar_flags |= GF_FIRST;
             else if (STREQ(optarg, "handles"))
                 grammar_flags |= GF_HANDLES;
-            else if (STREQ(optarg, "actions"))
-                grammar_flags |= GF_ACTIONS;
             else if (STREQ(optarg, "pretty"))
                 grammar_flags |= GF_PRETTY;
             else if (STREQ(optarg, "dot"))

@@ -73,8 +73,6 @@ AT    @
                return T_REGEX;
   }
 
-  [{}|*?+()=@]       return yytext[0];
-
   {DOTS}    {
                yylval->intval = 0;
                return T_ANY;
@@ -83,10 +81,14 @@ AT    @
                yylval->intval = 1;
                return T_ANY;
             }
+
+  [|*?+()=@\.\[\]]       return yytext[0];
+
   grammar      return T_GRAMMAR;
   token        return T_TOKEN;
   map          return T_MAP;
   include      return T_INCLUDE;
+  end          return T_END;
 
   {ID}         {
                yylval->string = strndup(yytext, yyleng);
