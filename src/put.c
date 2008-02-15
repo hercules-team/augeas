@@ -356,9 +356,11 @@ static struct tree *split_tree_int(struct match *match,
         return result;
     case QUANT_MAYBE:
         if (state->tree != NULL) {
-            return split_tree_int(match->matches, state);
+            result = split_tree_int(match->matches, state);
         }
-        return NULL;
+        if (result == NULL)
+            CALLOC(result, 1);
+        return result;
     default:
         internal_error(NULL, -1,
                        "illegal match type %d", match->type);
@@ -465,7 +467,6 @@ static void put_quant_star(struct match *match, struct state *state) {
 }
 
 static void put_quant_maybe(struct match *match, struct state *state) {
-    // FIXME: This, and the way the tree is split for ? is very hokey
     assert(match->type == QUANT_MAYBE);
     assert(state->skel->match == match);
     struct tree *tree = state->tree;
@@ -474,7 +475,7 @@ static void put_quant_maybe(struct match *match, struct state *state) {
     struct skel *skel = state->skel;
 
     state->skel = skel->skels;
-    if (split != NULL) {
+    if (split != NULL && split->children != NULL) {
         state->tree = split->children;
         if (state->skel == NULL) {
             create_match(match->matches, state);
@@ -620,9 +621,18 @@ static void create_quant_star(struct match *match, struct state *state) {
     free_split(smark);
 }
 
-static void create_quant_maybe(struct match *match, ATTRIBUTE_UNUSED struct state *state) {
+static void create_quant_maybe(struct match *match, struct state *state) {
     assert(match->type == QUANT_MAYBE);
-    TODO;
+    struct tree *tree = state->tree;
+    struct tree *split = split_tree(match, state);
+    struct tree *smark = split;
+
+    if (split != NULL && split->children != NULL) {
+        state->tree = split->children;
+        create_match(match->matches, state);
+    }
+    state->tree = tree;
+    free_split(smark);
 }
 
 static void create_match(struct match *match, struct state *state) {
