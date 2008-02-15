@@ -1,20 +1,20 @@
 # Parse mail aliases in /etc/aliases
 
-#map
-#  grammar aliases
-#  include '/etc/aliases' '/system/config/aliases'
-#end
+map
+  grammar aliases
+  include '/etc/aliases' '/system/config/aliases'
+end
 
 grammar aliases
   token COMMENT /^[ \t]*(#.*?)?\n/ = '#\n'
   token COMMA /,[ \t]+(\n[ \t]+)?/ = ', '
   token NAME /([^ \t\n#:@]+|"[^"]*")/ = 'missing' # "
-  token COLON /:[ \t]+/ = ':'
+  token COLON /:[ \t]+/ = ': '
   token EOL /[ \t]*\n/ = '\n'
 
   file: (comment | alias)*
 
-  comment: COMMENT
+  comment: [ COMMENT ]
 
   alias: [ seq 'alias' .
            [ label 'name' . store NAME ] .
