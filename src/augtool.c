@@ -108,6 +108,15 @@ static void cmd_set(char *args[]) {
         printf ("Failed\n");
 }
 
+static void cmd_clear(char *args[]) {
+    const char *path = cleanpath(args[0]);
+    int r;
+
+    r = aug_set(path, NULL);
+    if (r == -1)
+        printf ("Failed\n");
+}
+
 static void cmd_get(char *args[]) {
     const char *path = cleanpath(args[0]);
     const char *val;
@@ -216,6 +225,11 @@ static struct command commands[] = {
     },
     { "set", 2, cmd_set, "set <PATH> <VALUE>",
       "Associate VALUE with PATH. If PATH is not in the tree yet,\n"
+      "        it and all its ancestors will be created. These new tree entries\n"
+      "        will appear last amongst their siblings"
+    },
+    { "clear", 1, cmd_clear, "clear <PATH>",
+      "Set the value for PATH to NULL. If PATH is not in the tree yet,\n"
       "        it and all its ancestors will be created. These new tree entries\n"
       "        will appear last amongst their siblings"
     },
