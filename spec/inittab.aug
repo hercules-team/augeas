@@ -9,10 +9,11 @@ grammar inittab
 
   token SEP ':'
   token EOL '\n'
+  token COMMENT /[ \t]*(#.*?)?\n/ = '# \n'
 
   file: ( comment | record ) *
 
-  comment: ( /#.*?\n/ | /[ \t]*\n/ )
+  comment: [ COMMENT ]
 
   record: [ seq 'record' . 
             [ label 'id' . store ..? ] .
