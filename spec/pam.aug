@@ -16,7 +16,7 @@ grammar pam
 
   file: ( comment | record ) *
 
-  comment: ( /#.*?\n/ | /[ \t]*\n/ )
+  comment: [ ( /#.*?\n/ | /[ \t]*\n/ ) ]
 
   record: [ seq 'record' .
             [ label 'type' . store ... ] .
