@@ -15,7 +15,7 @@ grammar hosts
 
   file: counter 'record' . ( comment | record ) *
 
-  comment: POUND_TO_EOL
+  comment: [ store POUND_TO_EOL ]
 
   record: [ seq 'record' .
             [ label 'ipaddr' . store ... . SEPTAB ] . 
