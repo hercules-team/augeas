@@ -1,9 +1,9 @@
 # Parsing /etc/inittab
 
-#map
-#  grammar inittab
-#  include '/etc/inittab' '/system/config/inittab'
-#end
+map
+  grammar inittab
+  include '/etc/inittab' '/system/config/inittab'
+end
 
 grammar inittab
 
@@ -14,8 +14,7 @@ grammar inittab
 
   comment: ( /#.*?\n/ | /[ \t]*\n/ )
 
-  record: counter 'record' . 
-          [ seq 'record' . 
+  record: [ seq 'record' . 
             [ label 'id' . store ..? ] .
             SEP .
             [ label 'runlevels' . store ..? ] .
