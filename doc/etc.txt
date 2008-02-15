@@ -1,0 +1,262 @@
+/etc/
+|-- DIR_COLORS
+|-- DIR_COLORS.xterm
+    records: line, 
+    format: kw ' '+ \value, fixed kw + user extensions
+    comments: #.*$
+|-- acpi
+|   |-- actions/*
+|   `-- events/*
+    shell scripts
+|-- adjtime
+    ???
+|-- aliases
+    records: line
+    format: alias ':' redir
+    comments: #.*$
+|-- anacrontab
+    format: crontab
+|-- apt
+    ???
+|-- at.deny
+    ???
+|-- auto.master
+    records: line
+    format: key [ options ] location
+    comments: #.*$
+|-- auto.misc
+    automounter map
+|-- autofs_ldap_auth.conf
+    XML
+|-- avahi
+    ??? some XML, some shell scripts
+|-- blkid
+|   |-- blkid.tab
+    XML
+|-- cron.d/*
+    crontab with users
+|-- cron.daily
+    shell scripts
+|-- cron.deny
+    ???
+|-- cron.hourly
+    shell scripts
+|-- cron.monthly
+    shell scripts
+|-- cron.weekly
+    shell scripts
+|-- crontab
+    crontab with users
+|-- cups
+    custom
+|-- dbus-1
+    XML
+|-- default
+    sysconfig
+|-- depmod.d/*
+    records: line, 
+    format: kw ' '+ \value, fixed kw + user extensions
+    comments: #.*$
+|-- dev.d
+    ???
+|-- diskdump
+    ???
+|-- dnsmasq.conf
+    records: line
+    kw [ '=' value ]
+    comments: #.*$
+|-- dnsmasq.d/*
+    ???
+|-- environment
+    ???
+|-- exports
+    records: line w/ continuation
+    export_point ( ' ' client [ '(' option ( ',' option ) * ')' ] )
+    comments: #.*$
+|-- fedora-release
+    freeform
+|-- fstab
+    records: line
+    device ' \t'+ mount_point ' \t'+ fs [ option ( ',' option ) * ] freq passno
+    comments: ^#.*$
+|-- group
+    POSIX
+|-- grub.conf -> ../boot/grub/grub.conf
+    records: line
+    format: kw ' '+ value
+    comments: #.*$
+|-- gshadow
+|-- hal
+    ???
+|-- host.conf
+|-- hosts
+    records: line
+    format: ip_addr ' \t'+ (hostname [ ' \t'+ alias ] * )
+    comments: #.*$
+|-- hosts.allow
+|-- hosts.deny
+    ???
+    records: line w/ continuation, ordered
+    format: daemon_list ':' client_list [ ':' shell_command ]
+    comments: #.*$
+|-- htdig
+|   `-- htdig.conf.rpmsave
+|-- httpd
+    custom
+|-- idmapd.conf
+    ini-style
+|-- initlog.conf
+    records: line
+    format: kw ' '+ value
+    comments: ^#.*$
+|-- inittab
+    records: line
+    format: id ':' runlevels ':' action ':' process ':'
+    comments: ^#.*$
+|-- iscsi
+    ???
+|-- issue
+|-- issue.net
+    freeform
+|-- jwhois.conf
+    custom (libconfuse ?)
+|-- kdump.conf
+    ???
+|-- koji.conf
+    inistyle
+|-- krb5.conf
+    inistyle wit { } subsections
+|-- ld.so.conf
+    ???
+|-- ldap.conf
+    records: line
+    format: kw ' '+ value
+    comments: #.*$
+|-- libaudit.conf
+    records: line
+    format: kw ' '+ '=' ' '+ value
+    comments: #.*$
+|-- libuser.conf
+    inistyle
+|-- libvirt
+    XML
+|-- localtime
+    opaque
+|-- login.defs
+    records: line
+    format: kw ' '+ value
+    comments: #.*$
+|-- logrotate.conf
+|-- logrotate.d
+    custom
+|-- logwatch
+    ???
+|-- mail.rc
+    custom
+|-- mailcap
+    records: line
+    format: kw ' '+ '=' ' '+ value
+    comments: #.*$
+|-- makedev.d
+    ???
+|-- man.config
+    records: line, 
+    format: kw ' '+ \value, fixed kw + user extensions
+    comments: #.*$
+|-- mime.types
+|-- minicom.users
+|-- mke2fs.conf
+    custom, like krb5.conf
+|-- mock/*.cfg
+    python script
+|-- modprobe.conf
+|-- modprobe.d/*
+    custom
+|-- multipath.conf
+    custom, libconfuse ?
+|-- netconfig
+    line records
+|-- nscd.conf
+    custom
+|-- nsswitch.conf
+|-- ntp
+    custom
+|-- ntp.conf
+    custom
+|-- openldap
+    ???
+|-- opt
+|-- pam.d
+    custom
+|-- pam_pkcs11
+|   |-- pam_pkcs11.conf
+|   `-- pkcs11_eventmgr.conf
+    libconfuse ?
+|-- passwd
+    Posix
+|-- postfix
+    ???
+|-- prelink.conf
+    custom
+|-- puppet
+|   |-- puppet.conf
+    Ini-style
+|-- quotagrpadmins
+    records: line
+    format: alias ':' redir
+    comments: #.*$
+|-- quotatab
+|-- racoon
+|   `-- racoon.conf
+    custom
+|-- readahead.conf
+    sysconfig
+|-- readahead.d
+    path lists
+|-- resolv.conf
+    custom
+|-- rpm
+    random rpm macros (kw ' ' value style)
+|-- rwtab
+|-- rwtab.d
+|-- sasl2
+|-- scsi_id.config
+|-- securetty
+    list of ttys
+|-- security
+    ???
+|-- selinux
+    ???
+|-- sensors.conf
+    custom
+|-- sestatus.conf
+    inistyle
+|-- shadow
+    POSIX
+|-- shells
+    list of shells
+|-- smartd.conf
+    custom
+|-- ssh
+    key/value pairs
+|-- statetab
+|-- statetab.d
+    list of paths
+|-- sudoers
+    custom
+|-- sysconfig
+    sysconfig
+|-- sysctl.conf
+    sysconfig, with special meaning for keys
+|-- syslog.conf
+    key/value, space separated
+|-- udev
+    custom
+|-- updatedb.conf
+    sysconfig
+|-- xinetd.d/*
+    custom
+|-- yum
+|-- yum.conf
+`-- yum.repos.d/*
+    inistyle with includes
