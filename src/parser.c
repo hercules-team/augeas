@@ -498,14 +498,15 @@ static void parse_subtree(struct match *match, struct state *state) {
     state->skel = NULL;
     state->dict = NULL;
     parse_match(match->matches, state);
-    if (state->tree != NULL) {
-        if (state->tree->label == NULL) {
-            state->tree->label = state->key;
-        } else {
-            struct tree *tree = make_tree(state->key, NULL);
-            tree->children = state->tree;
-            state->tree = tree;
-        }
+    if (state->tree == NULL) {
+        state->tree = make_tree(NULL, NULL);
+    }
+    if (state->tree->label == NULL) {
+        state->tree->label = state->key;
+    } else {
+        struct tree *tree = make_tree(state->key, NULL);
+        tree->children = state->tree;
+        state->tree = tree;
     }
     state->dict = make_dict(state->key, state->skel, state->dict);
     state->key = key;
