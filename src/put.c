@@ -272,6 +272,15 @@ static void put_alternative(struct match *match, struct state *state) {
     assert(0);
 }
 
+/* Free the list of trees created by split_tree */
+static void free_split(struct tree *tree) {
+    while (tree != NULL) {
+        struct tree *del = tree;
+        tree = del->next;
+        free(del);
+    }
+}
+
 /*
  * Split a list of trees into lists of trees to undo the fact that
  * sequence and the quantifiers all concatenate lists of trees.
@@ -356,7 +365,7 @@ static struct tree *split_tree_int(struct match *match,
         break;
     }
  error:
-    // FIXME: free result
+    free_split(result);
     return NULL;
 }
 
@@ -393,6 +402,7 @@ static void put_sequence(struct match *match, struct state *state) {
     assert(state->skel->match == match);
     struct tree *tree = state->tree;
     struct tree *split = split_tree(match, state);
+    struct tree *smark = split;
     struct skel *skel = state->skel;
 
     state->skel = skel->skels;
@@ -400,6 +410,7 @@ static void put_sequence(struct match *match, struct state *state) {
         if (split == NULL) {
             fprintf(stderr, "Short split on line %d for sequence %d\n",
                     skel->lineno, match->lineno);
+            free_split(smark);
             return;
         }
         state->tree = split->children;
@@ -409,6 +420,7 @@ static void put_sequence(struct match *match, struct state *state) {
     }
     state->tree = tree;
     state->skel = skel;
+    free_split(smark);
 }
 
 static void put_rule_ref(struct match *match, struct state *state) {
@@ -427,6 +439,7 @@ static void put_quant_star(struct match *match, struct state *state) {
     assert(state->skel->match == match);
     struct tree *tree = state->tree;
     struct tree *split = split_tree(match, state);
+    struct tree *smark = split;
     struct skel *skel = state->skel;
 
     state->skel = skel->skels;
@@ -448,6 +461,7 @@ static void put_quant_star(struct match *match, struct state *state) {
     }
     state->skel = skel;
     state->tree = tree;
+    free_split(smark);
 }
 
 static void put_quant_maybe(struct match *match, struct state *state) {
@@ -456,6 +470,7 @@ static void put_quant_maybe(struct match *match, struct state *state) {
     assert(state->skel->match == match);
     struct tree *tree = state->tree;
     struct tree *split = split_tree(match, state);
+    struct tree *smark = split;
     struct skel *skel = state->skel;
 
     state->skel = skel->skels;
@@ -469,6 +484,7 @@ static void put_quant_maybe(struct match *match, struct state *state) {
     }
     state->skel = skel;
     state->tree = tree;
+    free_split(smark);
 }
 
 static void put_match(struct match *match, struct state *state) {
@@ -557,11 +573,13 @@ static void create_sequence(struct match *match, struct state *state) {
     assert(match->type == SEQUENCE);
     struct tree *tree = state->tree;
     struct tree *split = split_tree(match, state);
+    struct tree *smark = split;
 
     list_for_each(m, match->matches) {
         if (split == NULL) {
             fprintf(stderr, "Short split for sequence %d\n",
                     match->lineno);
+            free_split(smark);
             return;
         }
         state->tree = split->children;
@@ -569,6 +587,7 @@ static void create_sequence(struct match *match, struct state *state) {
         split = split->next;
     }
     state->tree = tree;
+    free_split(smark);
 }
 
 static void create_rule_ref(struct match *match, ATTRIBUTE_UNUSED struct state *state) {
@@ -585,6 +604,7 @@ static void create_quant_star(struct match *match, struct state *state) {
     assert(match->type == QUANT_STAR);
     struct tree *tree = state->tree;
     struct tree *split = split_tree(match, state);
+    struct tree *smark = split;
 
     while (split != NULL) {
         // FIXME: Why ?
@@ -597,6 +617,7 @@ static void create_quant_star(struct match *match, struct state *state) {
         split = split->next;
     }
     state->tree = tree;
+    free_split(smark);
 }
 
 static void create_quant_maybe(struct match *match, ATTRIBUTE_UNUSED struct state *state) {
