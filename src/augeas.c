@@ -57,7 +57,7 @@ struct tree *aug_tree_find(struct tree *tree, const char *path) {
             if (STREQ(tree->label, path))
                 return tree;
             if (tree->children != NULL && pathprefix(tree->label, path)) {
-                struct tree *t = 
+                struct tree *t =
                     aug_tree_find(tree->children, pathstrip(path));
                 if (t != NULL)
                     return t;
@@ -92,7 +92,7 @@ static struct tree *aug_tree_find_or_create(const char *path,
     if (*path == SEP) path += 1;
 
     list_for_each(t, tree) {
-        if (STREQ(t->label, path))
+        if (streqv(t->label, path))
             return t;
         if (pathprefix(t->label, path)) {
             if (t->children == NULL) {
@@ -105,7 +105,7 @@ static struct tree *aug_tree_find_or_create(const char *path,
                 return aug_tree_find_or_create(pathstrip(path), t->children);
         }
     }
-    
+
     struct tree *new = aug_tree_create(path);
     list_append(tree, new);
     while (new->children != NULL)
@@ -241,34 +241,46 @@ static int del_rec(struct tree *tree) {
     return cnt;
 }
 
-int aug_rm(const char *path) {
-    char *ppath = strdupa(path);
+static const char *pathsplit(const char *path) {
+    char *ppath = strdup(path);
     char *pend = strrchr(ppath, SEP);
-    char *label = NULL;
-
-    if (ppath[strlen(ppath)-1] == SEP)
-        ppath[strlen(ppath)] = '\0';
-
-    if (pend == NULL)
-        return -1;
+    
+    if (pend == NULL) {
+        free(ppath);
+        return NULL;
+    }
     *pend = '\0';
-    label = pend + 1;
+    return ppath;
+}
+
+int aug_rm(const char *path) {
+    const char *ppath = pathsplit(path);
+    const char *label = NULL;
+
+    if (ppath == NULL)
+        return -1;
+
+    label = ppath + strlen(ppath) + 1;
 
     struct tree *parent = aug_tree_find(aug_tree, ppath);
-    if (parent == NULL)
+    if (parent == NULL || parent->children == NULL) {
+        free((void *) ppath);
         return 0;
+    }
 
     struct tree *del;
-    if (STREQ(label, parent->children->label)) {
+    if (streqv(label, parent->children->label)) {
         del = parent->children;
         parent->children = del->next;
     } else {
         struct tree *prev;
         for (prev=parent->children;
-             prev->next != NULL && STRNEQ(label, prev->next->label);
+             prev->next != NULL && !streqv(label, prev->next->label);
              prev = prev->next);
-        if (prev->next == NULL)
+        if (prev->next == NULL) {
+            free((void *) ppath);
             return 0;
+        }
         del = prev->next;
         prev->next = del->next;
     }
@@ -276,7 +288,25 @@ int aug_rm(const char *path) {
     int cnt = del_rec(del->children);
     aug_tree_free(del);
     parent->dirty = 1;
+    free((void *) ppath);
     return cnt + 1;
+}
+
+int aug_tree_replace(const char *path, struct tree *sub) {
+    struct tree *parent;
+    int r;
+
+    r = aug_rm(path);
+    if (r == -1)
+        goto error;
+    parent = aug_tree_find_or_create(path, aug_tree);
+    if (parent == NULL)
+        goto error;
+
+    list_append(parent->children, sub);
+    return 0;
+ error:
+    return -1;
 }
 
 int aug_ls(const char *path, const char ***children) {
@@ -288,7 +318,9 @@ int aug_ls(const char *path, const char ***children) {
         return 0;
 
     tree = tree->children;
-    for (struct tree *t = tree; t != NULL; cnt++, t = t->next);
+    for (struct tree *t = tree;
+         t != NULL;
+         cnt += (t->label != NULL), t = t->next);
 
     if (children == NULL)
         return cnt;
@@ -298,6 +330,7 @@ int aug_ls(const char *path, const char ***children) {
         return -1;
 
     for (int i=0; i < cnt; i++, tree = tree->next) {
+        while (tree->label == NULL) tree = tree->next;
         int len = strlen(path) + 1 + strlen(tree->label) + 1;
         char *p = malloc(len);
         snprintf(p, len, "%s/%s", path, tree->label);
@@ -313,7 +346,9 @@ static int match_rec(struct tree *tree, const char *pattern,
     int cnt = 0;
     int end = strlen(*path);
 
-    while (tree != NULL) {
+    for(;tree != NULL; tree = tree->next) {
+        if (tree->label == NULL)
+            continue;
         *path = realloc(*path, end + 1 + strlen(tree->label) + 1);
         (*path)[end] = SEP;
         strcpy(*path + end + 1, tree->label);
@@ -330,7 +365,6 @@ static int match_rec(struct tree *tree, const char *pattern,
         cnt += n;
         matches += n;
         size -= n;
-        tree = tree->next;
     }
 
     (*path)[end] = '\0';
@@ -358,7 +392,9 @@ int aug_save(void) {
 static void print_rec(FILE *out, struct tree *tree, char **path) {
     int end = strlen(*path);
 
-    while (tree != NULL) {
+    for (;tree != NULL; tree = tree->next) {
+        if (tree->label == NULL)
+            continue;
         *path = realloc(*path, strlen(*path) + 1 + strlen(tree->label) + 1);
         (*path)[end] = SEP;
         strcpy(*path + end + 1, tree->label);
@@ -368,17 +404,20 @@ static void print_rec(FILE *out, struct tree *tree, char **path) {
             fprintf(out, " = %s", tree->value);
         fputc('\n', out);
         print_rec(out, tree->children, path);
-        tree = tree->next;
     }
-    
+
     (*path)[end] = '\0';
 }
 
 void aug_print(FILE *out, const char *path) {
-    char *pbuf = calloc(10, 1);
+    char *pbuf = strdup(path);
     struct tree *tree = aug_tree_find(aug_tree, path);
-    if (tree == NULL)
+    if (tree != NULL)
+        tree = tree->children;
+    if (tree == NULL) {
         tree = aug_tree;
+        pbuf[0] = '\0';
+    }
     print_rec(out, tree, &pbuf);
     free(pbuf);
 }

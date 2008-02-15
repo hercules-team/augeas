@@ -30,11 +30,11 @@ void aug_file_free(struct aug_file *af) {
     if (af != NULL) {
         free((void *) af->name);
         free((void *) af->node);
-        /* FIXME: free af->ast */
     }
 }
 
-struct aug_file *aug_make_file(const char *name, const char *node) {
+struct aug_file *aug_make_file(const char *name, const char *node,
+                               struct grammar *grammar) {
     struct aug_file *result;
 
     result = calloc(1, sizeof(struct aug_file));
@@ -47,6 +47,7 @@ struct aug_file *aug_make_file(const char *name, const char *node) {
         free(result);
         return NULL;
     }
+    result->grammar = grammar;
 
     return result;
 }

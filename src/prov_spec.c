@@ -160,17 +160,6 @@ int augp_spec_init(void) {
     return 0;
 }
 
-static void ast_set(struct ast *ast) {
-    if (ACTION_P(ast->match, STORE)) {
-        aug_set(ast->path, ast->children->token);
-    }
-    if (! LEAF_P(ast)) {
-        list_for_each(c, ast->children) {
-            ast_set(c);
-        }
-    }
-}
-
 static char *pathjoin(char *path, const char *seg) {
     int len = strlen(seg) + 1;
     char *result;
@@ -219,7 +208,7 @@ static int parse_file(const char *filename, struct filter *filter,
     const char *text = aug_read_file(filename);
     const char *root = file_root(filename, filter);
     struct aug_file *file;
-    int r;
+    struct tree *tree;
 
     printf("Parse %s to %s with %s\n", filename, root, grammar->name);
 
@@ -228,23 +217,22 @@ static int parse_file(const char *filename, struct filter *filter,
         return -1;
     }
 
-    file = aug_make_file(filename, root);
+    file = aug_make_file(filename, root, grammar);
     if (file == NULL)
         goto error;
     free((void *) root);
     root = NULL;
 
-    r = parse(grammar, file, text, stdout, 0);
-    if (r != 0) {
+    tree = parse(file, text, stdout, 0);
+    if (tree == NULL) {
         fprintf(stderr, "Parsing of %s failed\n", filename);
         goto error;
     }
 
     list_append(augp_spec_data.files, file);
-    ast_set(file->ast);
     free((void *) text);
 
-    struct tree *tree = aug_tree_find(aug_tree, file->ast->path);
+    aug_tree_replace(file->node, tree);
     tree_dirty(tree);
 
     return 0;
@@ -313,7 +301,7 @@ int augp_spec_save(void) {
         // FIXME: If the whole tree went away, we should probably delete
         // the file; but we don't have a mechanism to create a file, so
         // we just leave an empty file there
-        struct tree *tree = aug_tree_find(aug_tree, file->ast->path);
+        struct tree *tree = aug_tree_find(aug_tree, file->node);
 
         if (tree == NULL || tree_dirty(tree)) {
             fp = fopen(name, "w");
@@ -322,14 +310,8 @@ int augp_spec_save(void) {
                 return -1;
             }
 
-            put(fp, tree, file->ast);
-            fclose(fp);
-        }
-
-        // Also save a dot file with the AST for debugging
-        strcat(name, ".dot");
-        if ((fp = fopen(name, "w")) != NULL) {
-            ast_dot(fp, file->ast, PF_AST);
+            if (tree != NULL)
+                put(fp, tree->children, file);
             fclose(fp);
         }
     }

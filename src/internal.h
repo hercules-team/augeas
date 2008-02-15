@@ -48,6 +48,13 @@
 #define STREQLEN(a,b,n) (strncmp((a),(b),(n)) == 0)
 #define STRNEQLEN(a,b,n) (strncmp((a),(b),(n)) != 0)
 
+__attribute__((pure))
+static inline int streqv(const char *a, const char *b) {
+    if (a == NULL || b == NULL)
+        return a == b;
+    return STREQ(a,b);
+}
+
 /* Path length and comparison */
 
 #define SEP '/'
@@ -66,6 +73,8 @@ static inline int pathlen(const char *path) {
 /* Return 1 if P1 is a prefix of P2. P1 as a string must have length <= P2 */
 __attribute__((pure))
 static inline int pathprefix(const char *p1, const char *p2) {
+    if (p1 == NULL || p2 == NULL)
+        return 0;
     int l1 = pathlen(p1);
 
     return STREQLEN(p1, p2, l1) && (p2[l1] == '\0' || p2[l1] == SEP);
@@ -138,17 +147,20 @@ static inline const char *pathstrip(const char *p) {
  * File tokenizing
  */
 struct aug_file {
+    struct aug_file  *next;
     const char *name;  // The absolute file name
     const char *node;  // The node in the tree for this file
-    struct ast *ast;
-    struct aug_file  *next;
+    struct dict *dict;
+    struct skel *skel;
+    struct grammar *grammar;
 };
 
 // internal.c
 void aug_file_free(struct aug_file *af);
 
 /* Allocate a new file. NAME and NODE are dup'd */
-struct aug_file *aug_make_file(const char *name, const char *node);
+struct aug_file *aug_make_file(const char *name, const char *node, 
+                               struct grammar *grammar);
 
 /* Read the contents of file PATH and return them as one long string. The
  * caller must free the result. Return NULL if any error occurs.
@@ -178,8 +190,9 @@ struct tree {
     int          dirty;
 };
 
-struct tree *aug_tree_find(struct tree *tree, const char *path);
 extern struct tree *aug_tree;
+struct tree *aug_tree_find(struct tree *tree, const char *path);
+int aug_tree_replace(const char *path, struct tree *sub);
 
 #endif
 

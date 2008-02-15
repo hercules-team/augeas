@@ -64,7 +64,7 @@ struct map {
 
 void augs_map_free(struct map *map);
 
-/* 
+/*
  * A filter is a list of glob patterns describing which files to
  * include.
  */
@@ -93,9 +93,7 @@ enum parse_debug_flags {
     PF_NONE    = 0,
     PF_ADVANCE = (1 << 0),  /* Show how the lexer advances through the input */
     PF_MATCH   = (1 << 1),  /* Show regex matches */
-    PF_TOKEN   = (1 << 2),  /* Show tokenization */
-    PF_ACTION  = (1 << 3),  /* Show actions (enter/assign/exit) */
-    PF_AST     = (1 << 4)   /* Print AST as dot file after parsing */
+    PF_TOKEN   = (1 << 2)   /* Show tokenization */
 };
 
 
@@ -104,8 +102,8 @@ enum parse_debug_flags {
  * LOG is used to print logging messages. FLAGS controls what is printed
  * and should be a set of flags from enum parse_flags
  */
-int parse(struct grammar *grammar, struct aug_file *file, const char *text,
-           FILE *log, int flags);
+struct tree *parse(struct aug_file *file, const char *text, 
+                   FILE *log, int flags);
 
 enum grammar_debug_flags {
     GF_NONE = 0,
@@ -289,40 +287,32 @@ struct entry {
     const char     *text;
 };
 
-/*
- * An abstract syntax tree created by parsing a file according to a grammar
- * The tree is built by parse in parser.c
- */
-#define LEAF_P(ast) ((ast)->match->type == ABBREV_REF                   \
-                     || (ast)->match->type == LITERAL                   \
-                     || ((ast)->match->type == ACTION                   \
-                         && (ast)->match->xaction->type != KEY          \
-                         && (ast)->match->xaction->type != STORE)       \
-                     || (ast)->match->type == ANY)
 
-struct ast {
-    struct ast       *next;
-    struct match     *match;
-    const char       *path;
+struct skel {
+    struct skel *next;
+    struct match *match;
+    int lineno;
+    enum match_type type;
     union {
-        struct ast       *children;  /* ! LEAF_P */
-        const char       *token;     /*   LEAF_P */
+        const char *text;    /* LITERAL */
+        struct skel *skels;  /* SEQUENCE, QUANT_* */
     };
+    /* Also type == SUBTREE, with no data in the union */
 };
 
-/* in parser.c */
-struct ast *make_ast(struct match *match);
-// Write the AST as a dot file if flags & PF_AST
-void ast_dot(FILE *out, struct ast *ast, int flags);
-/* Compute the longest prefix of the paths of all the entries in AST. 
-   AST is only viewed as a linked list through next, not as a tree */
-const char *longest_prefix(struct ast *ast);
-/* Is MATCH an iterator ('*' or '+') that has a $seq action
-   attached to it ? Those require special treatment: the effects of
-   the $seq only affect children, not the iterator itself. All otehr actions
-   affect the node directly.
-*/
-int is_seq_iter(struct match *match);
+/* A dictionary that maps key to a list of (skel, dict) */
+struct dict_entry {
+    struct dict_entry *next;
+    struct skel *skel;
+    struct dict *dict;
+};
+
+struct dict {
+    struct dict *next;
+    const char *key;
+    struct dict_entry *entry;
+    struct dict_entry *mark; /* Mark that will never change */
+};
 
 /*
  * Helpers to print (ast.c)
@@ -335,12 +325,8 @@ void print_literal_set(FILE *out, struct literal_set *set,
 /* Print CNT characters from TEXT. Escape newlines/tabs */
 int print_chars(FILE *out, const char *text, int cnt);
 
-/* in emit.c */
-int ast_sync(struct ast **ast);
-void ast_emit(FILE *out, struct ast *ast);
-
 /* in put.c */
-void put(FILE *out, struct tree *tree, struct ast *ast);
+void put(FILE *out, struct tree *tree, struct aug_file *file);
 
 #endif
 

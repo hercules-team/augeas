@@ -29,11 +29,11 @@ static struct grammar *load_grammar(const char *name, FILE *log, int flags) {
     struct grammar *grammars = NULL;
     struct map     *maps = NULL;
     int r;
-    
+
     r = load_spec(name, log, flags, &grammars, &maps);
     if (r == -1)
         exit(EXIT_FAILURE);
-    
+
     /* FIXME: free maps (if any) */
     if (grammars == NULL) {
         fprintf(stderr, "No grammars found\n");
@@ -46,6 +46,62 @@ static struct grammar *load_grammar(const char *name, FILE *log, int flags) {
     return grammars;
 }
 
+static void print_skel(struct skel *skel);
+static void print_skel_list(struct skel *skels, const char *beg,
+                            const char *sep, const char *end) {
+    printf(beg);
+    list_for_each(s, skels) {
+        print_skel(s);
+        if (s->next != NULL)
+            printf(sep);
+    }
+    printf(end);
+}
+
+static void print_skel(struct skel *skel) {
+    switch(skel->type) {
+    case LITERAL:
+        if (skel->text == NULL) {
+            printf("<>");
+        } else {
+            fputc('\'', stdout);
+            print_chars(stdout, skel->text, -1);
+            fputc('\'', stdout);
+        }
+        break;
+    case SEQUENCE:
+        print_skel_list(skel->skels, "", " . ", "");
+        break;
+    case QUANT_STAR:
+        print_skel_list(skel->skels, "(", " ", ")*");
+        break;
+    case QUANT_PLUS:
+        print_skel_list(skel->skels, "(", " ", ")+");
+        break;
+    case QUANT_MAYBE:
+        print_skel_list(skel->skels, "(", " ", ")?");
+        break;
+    case SUBTREE:
+        print_skel_list(skel->skels, "[", " ", "]");
+        break;
+    default:
+        printf("??");
+        break;
+    }
+}
+
+static void print_dict(struct dict *dict, int indent) {
+    list_for_each(d, dict) {
+        printf("%*s%s:\n", indent, "", d->key);
+        list_for_each(e, d->entry) {
+            printf("%*s", indent+2, "");
+            print_skel(e->skel);
+            printf("\n");
+            print_dict(e->dict, indent+2);
+        }
+    }
+}
+
 __attribute__((noreturn))
 static void usage(void) {
     fprintf(stderr, "Usage: %s [OPTIONS] GRAMMAR [FILE]\n", progname);
@@ -53,7 +109,7 @@ static void usage(void) {
     fprintf(stderr, "If FILE is omitted, the GRAMMAR is read and printed\n");
     fprintf(stderr, "\nOptions:\n\n");
     fprintf(stderr, "  -P WHAT       Show details of how FILE is parsed. Possible values for WHAT\n"
-                    "                are 'advance', 'match', 'tokens', 'actions', and 'ast'\n");
+                    "                are 'advance', 'match', and 'tokens'\n");
     fprintf(stderr, "  -G WHAT       Show details about GRAMMAR. Possible values for WHAT are\n"
                     "                'any', 'follow', 'first', 'handles', 'actions', 'pretty', 'dot' and 'all'\n");
     exit(EXIT_FAILURE);
@@ -76,10 +132,6 @@ int main(int argc, char **argv) {
                 parse_flags |= PF_MATCH;
             else if (STREQ(optarg, "tokens"))
                 parse_flags |= PF_TOKEN;
-            else if (STREQ(optarg, "actions"))
-                parse_flags |= PF_ACTION;
-            else if (STREQ(optarg, "ast"))
-                parse_flags |= PF_AST;
             else {
                 fprintf(stderr, "Illegal argument '%s' for -%c\n", optarg, opt);
                 usage();
@@ -113,12 +165,12 @@ int main(int argc, char **argv) {
             break;
         }
     }
-    
+
     if (optind >= argc) {
         fprintf(stderr, "Expected grammar file\n");
         usage();
     }
-    
+
     if (optind + 1 == argc) {
         if (grammar_flags == GF_NONE)
             grammar_flags |= GF_PRETTY;
@@ -127,7 +179,6 @@ int main(int argc, char **argv) {
             return EXIT_FAILURE;
     } else {
         const char *text = aug_read_file(argv[optind+1]);
-        struct aug_file *file = aug_make_file(argv[optind+1], "");
 
         if (text == NULL)
             return EXIT_FAILURE;
@@ -136,7 +187,11 @@ int main(int argc, char **argv) {
         if (grammar == NULL)
             return EXIT_FAILURE;
 
-        parse(grammar, file, text, stdout, parse_flags);
+        struct aug_file *file = aug_make_file(argv[optind+1], "", grammar);
+        parse(file, text, stdout, parse_flags);
+        print_skel(file->skel);
+        printf("\n");
+        print_dict(file->dict, 0);
     }
 }
 
