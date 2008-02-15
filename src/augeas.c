@@ -398,10 +398,10 @@ int aug_save(void) {
     return 0;
 }
 
-static void print_one(FILE *out, struct tree *tree, char **path) {
+static int print_one(FILE *out, struct tree *tree, char **path) {
     int end = strlen(*path);
     if (tree->label == NULL)
-        return;
+        return -1;
 
     *path = realloc(*path, strlen(*path) + 1 + strlen(tree->label) + 1);
     (*path)[end] = SEP;
@@ -412,13 +412,21 @@ static void print_one(FILE *out, struct tree *tree, char **path) {
         fprintf(out, " = %s", tree->value);
     fputc('\n', out);
 
-    (*path)[end] = '\0';    
+    (*path)[end] = '\0';
+    return end;
 }
 
 static void print_rec(FILE *out, struct tree *tree, char **path) {
     for (;tree != NULL; tree = tree->next) {
-        print_one(out, tree, path);
+        int end = print_one(out, tree, path);
+        if (end == -1)
+            continue;
+        /* We completely rely on how print_one does its thing here.
+           TREE's label is still on *path, but print_one removed it
+           by overwriting the / with a 0 */
+        (*path)[end] = SEP;
         print_rec(out, tree->children, path);
+        (*path)[end] = '\0';
     }
 }
 
