@@ -164,11 +164,14 @@ int aug_set(const char *path, const char *value) {
     }
     if (tree->value != NULL) {
         free((char *) tree->value);
+        tree->value = NULL;
     }
-    tree->value = strdup(value);
+    if (value != NULL) {
+        tree->value = strdup(value);
+        if (tree->value == NULL)
+            return -1;
+    }
     tree->dirty = 1;
-    if (tree->value == NULL)
-        return -1;
     return 0;
 }
 
@@ -204,9 +207,9 @@ int aug_insert(const char *path, const char *sibling) {
     
     label += 1;
     list_for_each(t, parent->children) {
-        if (STREQ(t->label, label))
+        if (streqv(t->label, label))
             goto error;
-        if (t->next != NULL && STREQ(t->next->label, sibling))
+        if (t->next != NULL && streqv(t->next->label, sibling))
             prev = t;
     }
 
