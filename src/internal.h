@@ -95,6 +95,16 @@ static inline const char *pathstrip(const char *p) {
     }
 }
 
+/* augeas.c */
+/* 
+ * Dup PATH and split it into a directory and basename. The returned value
+ * points to the copy of PATH. Adding strlen(PATH)+1 to it gives the
+ * basename.
+ *
+ * If PATH can not be split, returns NULL
+ */
+char *pathsplit(const char *path);
+
 /* Call calloc to allocate an array of N instances of *VAR */
 #define CALLOC(Var,N) do { (Var) = calloc ((N), sizeof (*(Var))); } while (0)
 

@@ -241,11 +241,11 @@ static int del_rec(struct tree *tree) {
     return cnt;
 }
 
-static const char *pathsplit(const char *path) {
+char *pathsplit(const char *path) {
     char *ppath = strdup(path);
     char *pend = strrchr(ppath, SEP);
-    
-    if (pend == NULL) {
+
+    if (pend == NULL || pend == ppath) {
         free(ppath);
         return NULL;
     }
@@ -313,11 +313,17 @@ int aug_ls(const char *path, const char ***children) {
     struct tree *tree = NULL;
     int cnt = 0;
 
-    tree = aug_tree_find(aug_tree, path);
-    if (tree == NULL || tree->children == NULL)
-        return 0;
+    // FIXME: Treating / special is a huge kludge
+    if (STREQ(path, "/")) {
+        tree = aug_tree;
+        path = "";
+    } else {
+        tree = aug_tree_find(aug_tree, path);
+        if (tree == NULL || tree->children == NULL)
+            return 0;
+        tree = tree->children;
+    }
 
-    tree = tree->children;
     for (struct tree *t = tree;
          t != NULL;
          cnt += (t->label != NULL), t = t->next);
@@ -389,36 +395,42 @@ int aug_save(void) {
     return 0;
 }
 
-static void print_rec(FILE *out, struct tree *tree, char **path) {
+static void print_one(FILE *out, struct tree *tree, char **path) {
     int end = strlen(*path);
+    if (tree->label == NULL)
+        return;
 
+    *path = realloc(*path, strlen(*path) + 1 + strlen(tree->label) + 1);
+    (*path)[end] = SEP;
+    strcpy(*path + end + 1, tree->label);
+    
+    fprintf(out, *path);
+    if (tree->value != NULL)
+        fprintf(out, " = %s", tree->value);
+    fputc('\n', out);
+
+    (*path)[end] = '\0';    
+}
+
+static void print_rec(FILE *out, struct tree *tree, char **path) {
     for (;tree != NULL; tree = tree->next) {
-        if (tree->label == NULL)
-            continue;
-        *path = realloc(*path, strlen(*path) + 1 + strlen(tree->label) + 1);
-        (*path)[end] = SEP;
-        strcpy(*path + end + 1, tree->label);
-
-        fprintf(out, *path);
-        if (tree->value != NULL)
-            fprintf(out, " = %s", tree->value);
-        fputc('\n', out);
+        print_one(out, tree, path);
         print_rec(out, tree->children, path);
     }
-
-    (*path)[end] = '\0';
 }
 
 void aug_print(FILE *out, const char *path) {
     char *pbuf = strdup(path);
     struct tree *tree = aug_tree_find(aug_tree, path);
-    if (tree != NULL)
-        tree = tree->children;
     if (tree == NULL) {
         tree = aug_tree;
         pbuf[0] = '\0';
     }
-    print_rec(out, tree, &pbuf);
+    if (tree->children != NULL) {
+        print_rec(out, tree->children, &pbuf);
+    } else {
+        print_one(out, tree, &pbuf);
+    }
     free(pbuf);
 }
 

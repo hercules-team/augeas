@@ -37,9 +37,16 @@ struct command {
 
 static struct command commands[];
 
+static char *cleanpath(char *path) {
+    char *e = path + strlen(path) - 1;
+    while (e != path && (*e == SEP || isspace(*e)))
+        *e-- = '\0';
+    return path;
+}
+
 static void cmd_ls(char *args[]) {
     int cnt;
-    const char *path = args[0];
+    const char *path = cleanpath(args[0]);
     const char **paths;
 
     cnt = aug_ls(path, &paths);
@@ -50,12 +57,13 @@ static void cmd_ls(char *args[]) {
         printf("%s = %s\n", paths[i] + strlen(path), val);
         free((void *) paths[i]);
     }
-    free(paths);
+    if (cnt > 0)
+        free(paths);
 }
 
 static void cmd_match(char *args[]) {
     int cnt;
-    const char *pattern = args[0];
+    const char *pattern = cleanpath(args[0]);
     const char **matches;
     int filter = (strlen(args[1]) > 0);
 
@@ -84,14 +92,14 @@ static void cmd_match(char *args[]) {
 
 static void cmd_rm(char *args[]) {
     int cnt;
-    const char *path = args[0];
+    const char *path = cleanpath(args[0]);
     printf("rm : %s", path);
     cnt = aug_rm(path);
     printf(" %d\n", cnt);
 }
 
 static void cmd_set(char *args[]) {
-    const char *path = args[0];
+    const char *path = cleanpath(args[0]);
     const char *val = args[1];
     int r;
 
@@ -101,7 +109,7 @@ static void cmd_set(char *args[]) {
 }
 
 static void cmd_get(char *args[]) {
-    const char *path = args[0];
+    const char *path = cleanpath(args[0]);
     const char *val;
 
     printf("%s", path);
@@ -115,8 +123,8 @@ static void cmd_get(char *args[]) {
     printf(" = %s\n", val);
 }
 
-static void cmd_print(ATTRIBUTE_UNUSED char *args[]) {
-    aug_print(stdout, args[0]);
+static void cmd_print(char *args[]) {
+    aug_print(stdout, cleanpath(args[0]));
 }
 
 static void cmd_save(ATTRIBUTE_UNUSED char *args[]) {
@@ -128,8 +136,8 @@ static void cmd_save(ATTRIBUTE_UNUSED char *args[]) {
 }
 
 static void cmd_ins(char *args[]) {
-    const char *path = args[0];
-    const char *sibling = args[1];
+    const char *path = cleanpath(args[0]);
+    const char *sibling = cleanpath(args[1]);
     int r;
 
     r = aug_insert(path, sibling);
@@ -186,7 +194,7 @@ static char *parseline(char *line, char *args[], int argc) {
     line = strdup(line);
 
     cmd = nexttoken(&line);
-    
+
     for (int i=0; i < argc; i++) {
         args[i] = nexttoken(&line);
     }
@@ -255,12 +263,82 @@ static int run_command(char *cmd, char **args) {
     return r;
 }
 
+static char *readline_path_generator(const char *text, int state) {
+    static int current = 0;
+    static const char **children = NULL;
+    static int nchildren = 0;
+
+    if (state == 0) {
+        char *path = pathsplit(text);
+        if (path == NULL) {
+            path = strdup("/");
+        }
+
+        for (;current < nchildren; current++)
+            free((void *) children[current]);
+        free((void *) children);
+        nchildren = aug_ls(path, &children);
+        current = 0;
+        free(path);
+    }
+
+    while (current < nchildren) {
+        char *child = (char *) children[current];
+        current += 1;
+        if (STREQLEN(child, text, strlen(text))) {
+            if (aug_ls(child, NULL) > 0) {
+                child = realloc(child, strlen(child)+2);
+                strcat(child, "/");
+            }
+            rl_filename_completion_desired = 1;
+            rl_completion_append_character = '\0';
+            return child;
+        } else {
+            free(child);
+        }
+    }
+    return NULL;
+}
+
+static char *readline_command_generator(const char *text, int state) {
+    static int current = 0;
+    const char *name;
+
+    if (state == 0)
+        current = 0;
+
+    rl_completion_append_character = ' ';
+    while ((name = commands[current].name) != NULL) {
+        current += 1;
+        if (STREQLEN(text, name, strlen(text)))
+            return strdup(name);
+    }
+    return NULL;
+}
+
+static char **readline_completion(const char *text, int start,
+                                  ATTRIBUTE_UNUSED int end) {
+    if (start == 0)
+        return rl_completion_matches(text, readline_command_generator);
+    else
+        return rl_completion_matches(text, readline_path_generator);
+
+    return NULL;
+}
+
+static void readline_init(void) {
+    rl_readline_name = "augtool";
+    rl_attempted_completion_function = readline_completion;
+    rl_completion_entry_function = readline_path_generator;
+}
+
 int main(int argc, char **argv) {
     char *line;
     char *cmd, *args[3];
     int r;
 
     aug_init();
+    readline_init();
     if (argc > 1) {
         // Accept one command from the command line
         r = run_command(argv[1], argv+2);
