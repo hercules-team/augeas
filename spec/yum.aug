@@ -1,22 +1,20 @@
 # Parsing inistyle files
 
-#map
-#  grammar yum
-#  include '/etc/yum.conf' '/system/config/yum'
-#end
+map
+  grammar yum
+  include '/etc/yum.conf' '/system/config/yum'
+end
 
 grammar yum
+
   token EOL /\n/ = '\n'
-
   token INDENT /[ \t]+/ = '\t'
-
   token EQ /\s*=\s*/ =  '='
-
-  token OPT_WS /[ \t]*/ = ''
+  token COMMENT /[ \t]*(#|REM|rem).*\n/ = '# \n'
 
   file: ( comment | section ) *
 
-  comment: OPT_WS . ( /#.*/ | 'REM' | 'rem' )? . EOL
+  comment: [ COMMENT ]
 
   section: [ 
              '[' . key ... . ']' . EOL .
