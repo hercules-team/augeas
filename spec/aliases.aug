@@ -9,7 +9,7 @@ grammar aliases
   token COMMENT /^[ \t]*(#.*?)?\n/ = '#\n'
   token COMMA /,[ \t]+(\n[ \t]+)?/ = ', '
   token NAME /([^ \t\n#:@]+|"[^"]*")/ = 'missing' # "
-  token COLON /:[ \t]+/ = ': '
+  token COLON /:[ \t]+/ = ':\t'
   token EOL /[ \t]*\n/ = '\n'
 
   file: (comment | alias)*
