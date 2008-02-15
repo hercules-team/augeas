@@ -342,6 +342,8 @@ static struct tree *split_tree_int(struct match *match,
             }
             list_append(result, t);
         }
+        if (result == NULL && match->type != QUANT_PLUS)
+            CALLOC(result, 1);
         return result;
     case QUANT_MAYBE:
         if (state->tree != NULL) {
@@ -429,6 +431,11 @@ static void put_quant_star(struct match *match, struct state *state) {
 
     state->skel = skel->skels;
     while (split != NULL) {
+        // FIXME: Why ?
+        if (split->children == NULL) {
+            split = split->next;
+            continue;
+        }
         state->tree = split->children;
         if (state->skel == NULL) {
             create_match(match->matches, state);
@@ -580,6 +587,11 @@ static void create_quant_star(struct match *match, struct state *state) {
     struct tree *split = split_tree(match, state);
 
     while (split != NULL) {
+        // FIXME: Why ?
+        if (split->children == NULL) {
+            split = split->next;
+            continue;
+        }
         state->tree = split->children;
         create_match(match->matches, state);
         split = split->next;
