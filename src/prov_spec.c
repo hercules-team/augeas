@@ -162,21 +162,18 @@ int augp_spec_init(void) {
 
 static char *pathjoin(char *path, const char *seg) {
     int len = strlen(seg) + 1;
-    char *result;
 
     if (path != NULL) {
-        len += strlen(path);
-    }
-
-    result = realloc(path, len+1);
-    if (path != NULL) {
+        len += strlen(path) + 1;
+        path = realloc(path, len);
         if (strlen(path) > 0 && path[strlen(path)-1] != SEP)
-            strcat(result, "/");
-        strcat(result, seg);
+            strcat(path, "/");
+        strcat(path, seg);
     } else {
-        strcpy(result, seg);
+        path = malloc(len);
+        strcpy(path, seg);
     }
-    return result;
+    return path;
 }
 
 static const char *file_root(const char *filename, struct filter *filter) {
