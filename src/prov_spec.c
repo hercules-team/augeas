@@ -40,11 +40,13 @@ struct augp_spec_data {
     struct grammar  *grammars;
     struct map      *maps;
     struct aug_file *files;
+    const  char     *root;     // The root in the filesystem
 };
 
 struct augp_spec_data augp_spec_data = {
     .grammars = NULL,
-    .maps = NULL
+    .maps = NULL,
+    .root = "/"
 };
 
 const struct aug_provider augp_spec = {
@@ -110,7 +112,18 @@ int augp_spec_init(void) {
                     AUGEAS_SPEC_DIR, strerror(errno));
         }
     }
-
+    
+    /* We report the root dir in AUGEAS_META_ROOT, but we only use the
+       value we store internally, to avoid any problems with
+       AUGEAS_META_ROOT getting changed. To make the tree entry the
+       canonical location of the root dir, we'd need some real security on
+       who is allowed to change tree entries */
+    env = getenv(AUGEAS_ROOT_ENV);
+    if (env != NULL) {
+        augp_spec_data.root = env;
+    }
+    aug_set(AUGEAS_META_ROOT, augp_spec_data.root);
+    
     env = getenv(AUGEAS_SPEC_ENV);
     if (env != NULL) {
         env = strndup(env, MAX_ENV_SIZE);
@@ -166,8 +179,10 @@ static char *pathjoin(char *path, const char *seg) {
     if (path != NULL) {
         len += strlen(path) + 1;
         path = realloc(path, len);
-        if (strlen(path) > 0 && path[strlen(path)-1] != SEP)
+        if (strlen(path) == 0 || path[strlen(path)-1] != SEP)
             strcat(path, "/");
+        if (seg[0] == SEP)
+            seg += 1;
         strcat(path, seg);
     } else {
         path = malloc(len);
@@ -176,7 +191,7 @@ static char *pathjoin(char *path, const char *seg) {
     return path;
 }
 
-static const char *file_root(const char *filename, struct filter *filter) {
+static const char *file_node(const char *filename, struct filter *filter) {
     char *result = NULL;
 
     list_for_each(e, filter->path) {
@@ -200,29 +215,61 @@ static const char *file_root(const char *filename, struct filter *filter) {
     return result;
 }
 
+static char *add_load_info(const char *filename, const char *node,
+                           const char *grammarname) {
+    static const char *const metatree = "/augeas/files";
+    static const char *const pnode = "/path";
+    static const char *const gnode = "/grammar";
+    static const char *const enode = "/error";
+
+    char *result = NULL;
+    int end = 0;
+    result = pathjoin(result, metatree);
+    result = pathjoin(result, filename + strlen(augp_spec_data.root));
+    end = strlen(result);
+    
+    result = pathjoin(result, pnode);
+    aug_set(result, node);
+    result[end] = '\0';
+    
+    result = pathjoin(result, gnode);
+    aug_set(result, grammarname);
+    result[end] = '\0';
+
+    result = pathjoin(result, enode);
+    return result;
+}
+
 static int parse_file(const char *filename, struct filter *filter, 
                       struct grammar *grammar) {
-    const char *text = aug_read_file(filename);
-    const char *root = file_root(filename, filter);
+    const char *text = NULL;
+    const char *node = file_node(filename, filter);
+    char *err_node = NULL;
+    const char *err_status = NULL;
     struct aug_file *file;
     struct tree *tree;
 
-    printf("Parse %s to %s with %s\n", filename, root, grammar->name);
+    err_node = add_load_info(filename, node, grammar->name);
+    if (err_node == NULL)
+        goto error;
 
+    text = aug_read_file(filename);
     if (text == NULL) {
-        fprintf(stderr, "Failed to read %s\n", filename);
-        return -1;
+        err_status = "read_failed";
+        goto error;
     }
 
-    file = aug_make_file(filename, root, grammar);
-    if (file == NULL)
+    file = aug_make_file(filename, node, grammar);
+    if (file == NULL) {
+        err_status = "out_of_memory";
         goto error;
-    free((void *) root);
-    root = NULL;
+    }
+    free((void *) node);
+    node = NULL;
 
     tree = parse(file, text, stdout, 0);
     if (tree == NULL) {
-        fprintf(stderr, "Parsing of %s failed\n", filename);
+        err_status = "parse_failed";
         goto error;
     }
 
@@ -232,8 +279,13 @@ static int parse_file(const char *filename, struct filter *filter,
     aug_tree_replace(file->node, tree);
     tree_dirty(tree);
 
+    aug_set(err_node, NULL);
+    free(err_node);
     return 0;
  error:
+    if (err_node != NULL)
+        aug_set(err_node, err_status);
+    free(err_node);
     free(file);
     free((void *) text);
     return -1;
@@ -249,21 +301,18 @@ int augp_spec_load(void) {
     glob_t globbuf;
     int ret = 0;
     int flags = GLOB_NOSORT;
-    const char *root = getenv(AUGEAS_ROOT_ENV);
 
     list_for_each(map, augp_spec_data.maps) {
         list_for_each(filter, map->filters) {
             char *globpat;
-            if (root == NULL) {
-                globpat = (char *) filter->glob;
-            } else {
-                ret = asprintf(&globpat, "%s%s", root, filter->glob);
-                if (ret == -1)
-                    goto exit;
-            }
+
+            ret = asprintf(&globpat, "%s%s", augp_spec_data.root, 
+                           filter->glob);
+            if (ret == -1)
+                goto exit;
             ret = glob(globpat, flags, NULL, &globbuf);
-            if (root != NULL)
-                free(globpat);
+            free(globpat);
+
             if (ret != 0 && ret != GLOB_NOMATCH) {
                 ret = -1;
                 goto exit;

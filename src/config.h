@@ -28,6 +28,15 @@
    Mostly useful for testing */
 #define AUGEAS_ROOT_ENV "AUGEAS_ROOT"
 
+/* Augeas reports some information in this subtree */
+#define AUGEAS_META_TREE "/augeas"
+
+/* Information about files */
+#define AUGEAS_META_FILES AUGEAS_META_TREE "/files"
+
+/* The root directory */
+#define AUGEAS_META_ROOT AUGEAS_META_TREE "/root"
+
 /* Where the default spec files live. */
 #define AUGEAS_SPEC_DIR "/usr/share/augeas/spec"
 
