@@ -72,7 +72,7 @@ static struct tree *aug_tree_create(const char *path) {
     struct tree *tree;
 
     CALLOC(tree, 1);
-    
+
     const char *end = pathstrip(path);
     if (end == NULL) {
         tree->label = strdup(path);
@@ -83,34 +83,40 @@ static struct tree *aug_tree_create(const char *path) {
         tree->label = strndup(path, end - path - 1);
         tree->children = aug_tree_create(end);
     }
-    
+
     return tree;
 }
 
-static struct tree *aug_tree_find_or_create(const char *path, 
+static struct tree *aug_tree_find_or_create(const char *path,
                                             struct tree *tree) {
+    struct tree *next = NULL;
+
     if (*path == SEP) path += 1;
 
     list_for_each(t, tree) {
         if (streqv(t->label, path))
             return t;
         if (pathprefix(t->label, path)) {
-            if (t->children == NULL) {
-                t->children = aug_tree_create(pathstrip(path));
-                while (t->children != NULL)
-                    t = t->children;
-                return t;
-            }
-            else
-                return aug_tree_find_or_create(pathstrip(path), t->children);
+            next = t;
         }
     }
 
-    struct tree *new = aug_tree_create(path);
-    list_append(tree, new);
-    while (new->children != NULL)
-        new = new->children;
-    return new;
+    if (next != NULL) {
+        if (next->children == NULL) {
+            next->children = aug_tree_create(pathstrip(path));
+            while (next->children != NULL)
+                next = next->children;
+            return next;
+        } else {
+            return aug_tree_find_or_create(pathstrip(path), next->children);
+        }
+    } else {
+        struct tree *new = aug_tree_create(path);
+        list_append(tree, new);
+        while (new->children != NULL)
+            new = new->children;
+        return new;
+    }
 }
 
 static void aug_tree_free(struct tree *tree) {
