@@ -122,7 +122,10 @@ X11Forwarding yes
 Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
 # Example of overriding settings on a per-user basis
-#Match User anoncvs
-#	X11Forwarding no
-#	AllowTcpForwarding no
-#	ForceCommand cvs server
+Match User anoncvs
+      X11Forwarding no
+      AllowTcpForwarding no
+      ForceCommand cvs server
+
+Match Group restricted
+      ForceCommand /usr/local/bin/restricted_group_command
