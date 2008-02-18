@@ -514,7 +514,7 @@ static void parse_subtree(struct match *match, struct state *state) {
 }
 
 static void parse_action(struct match *match, struct state *state) {
-    struct action *action = match->xaction;
+    struct action *action = match->action;
 
     state->skel = make_skel(LITERAL, match, state->lineno);
     switch(action->type) {
@@ -528,10 +528,10 @@ static void parse_action(struct match *match, struct state *state) {
         state->key = string_value(action->arg);
         break;
     case STORE:
-        state->tree = make_tree(NULL, re_match(match->xaction->arg, state));
+        state->tree = make_tree(NULL, re_match(match->action->arg, state));
         break;
     case KEY:
-        state->key = re_match(match->xaction->arg, state);
+        state->key = re_match(match->action->arg, state);
         break;
     default:
         internal_error(state->filename, state->lineno,

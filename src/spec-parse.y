@@ -359,11 +359,11 @@ static struct match *make_action_match(const char *name,
   struct match *result;
 
   result = make_match(ACTION, lineno);
-  CALLOC(result->xaction, 1);
-  result->xaction->lineno = lineno;
-  result->xaction->type = UNDEF;
-  result->xaction->name = name;
-  result->xaction->arg = match;
+  CALLOC(result->action, 1);
+  result->action->lineno = lineno;
+  result->action->type = UNDEF;
+  result->action->name = name;
+  result->action->arg = match;
 
   return result;
 }

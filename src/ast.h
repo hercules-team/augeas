@@ -244,7 +244,7 @@ struct match {
         struct match   *matches;   /* SUBTREE, ALTERNATIVE, SEQUENCE, QUANT_* */
         struct rule    *rule;        /* RULE_REF */
         struct abbrev  *abbrev;      /* ABBREV_REF */
-        struct action  *xaction;      /* ACTION */
+        struct action  *action;      /* ACTION */
     };
     struct rule        *owner;       /* the rule this match belongs to */
     struct literal_set *first;       /* the first set */
@@ -256,7 +256,7 @@ struct match {
 /* A hardwired list of actions, which are all functions with
    one argument ARG */
 #define ACTION_P(match, atype) ((match)->type == ACTION &&              \
-                                (match)->xaction->type == atype)
+                                (match)->action->type == atype)
 
 enum action_type {
     UNDEF,          /* NAME is garbage */

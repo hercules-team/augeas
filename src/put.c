@@ -194,7 +194,7 @@ static int skel_instance_of(struct match *match, struct skel *skel) {
  */
 static void put_action(struct match *match, struct state *state) {
     assert(match->type == ACTION);
-    struct action *action = match->xaction;
+    struct action *action = match->action;
 
     switch (action->type) {
     case COUNTER:
@@ -314,7 +314,7 @@ static struct tree *split_tree_int(struct match *match,
     switch (match->type) {
     case ACTION:
         CALLOC(result, 1);
-        if (match->xaction->type == STORE) {
+        if (match->action->type == STORE) {
             if (state->tree == NULL)
                 goto error;
             result->children = state->tree;

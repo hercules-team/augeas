@@ -181,10 +181,10 @@ static void print_matches(FILE *out, struct match *m, const char *sep,
             print_quantc(out, p);
             break;
         case ACTION:
-            if (p->xaction->type == UNDEF)
+            if (p->action->type == UNDEF)
                 fputc('_', out);
-            fprintf(out, "%s ", p->xaction->name);
-            print_matches(out, p->xaction->arg, " ", flags);
+            fprintf(out, "%s ", p->action->name);
+            print_matches(out, p->action->arg, " ", flags);
             break;
         case SUBTREE:
             fprintf(out, "[");
@@ -266,13 +266,13 @@ static void dump_matches(FILE *out, struct match *m, int indent, int flags) {
 
         switch (p->type) {
         case ACTION:
-            if (p->xaction->type == UNDEF)
+            if (p->action->type == UNDEF)
                 fputc('_', out);
-            fprintf(out, "%s ", p->xaction->name);
+            fprintf(out, "%s ", p->action->name);
             print_follow(out, p, flags);
             fprintf(out, " : ");
-            print_matches(out, p->xaction->arg, " ", flags);
-            print_follow(out, p->xaction->arg, flags);
+            print_matches(out, p->action->arg, " ", flags);
+            print_follow(out, p->action->arg, flags);
             putchar('\n');
             break;
         case SUBTREE:
@@ -609,13 +609,13 @@ static int make_match_firsts(struct match *matches) {
             break;
         case ACTION:
             if (ACTION_P(cur, STORE) || ACTION_P(cur, KEY)) {
-                if (make_match_firsts(cur->xaction->arg))
+                if (make_match_firsts(cur->action->arg))
                     changed = 1;
-                if (cur->epsilon != cur->xaction->arg->epsilon) {
-                    cur->epsilon = cur->xaction->arg->epsilon;
+                if (cur->epsilon != cur->action->arg->epsilon) {
+                    cur->epsilon = cur->action->arg->epsilon;
                     changed = 1;
                 }
-                if (merge_literal_set(&(cur->first), cur->xaction->arg->first))
+                if (merge_literal_set(&(cur->first), cur->action->arg->first))
                     changed = 1;
             } else {
                 if (! cur->epsilon) {
@@ -658,7 +658,7 @@ static int make_match_follows(struct match *matches, struct match *parent) {
             if (make_match_follows(cur->matches, cur))
                 changed = 1;
         } else if (ACTION_P(cur, KEY) || ACTION_P(cur, STORE)) {
-            if (merge_literal_set(&(cur->xaction->arg->follow), cur->follow))
+            if (merge_literal_set(&(cur->action->arg->follow), cur->follow))
                 changed = 1;
         }
     }
@@ -723,7 +723,7 @@ static int resolve_any(struct match *match) {
                 result = 0;
         }
         if (m->type == ACTION) {
-            if (! resolve_any(m->xaction->arg))
+            if (! resolve_any(m->action->arg))
                 result = 0;
         }
     }
@@ -814,9 +814,9 @@ static int make_subtree_handle(struct match *subtree, struct match *matches) {
                    "Handle for subtree starting at line %d already defined",
                               subtree->lineno);
                 merge_literal_set(&(subtree->handle), 
-                                  make_action_handle(m->xaction));
+                                  make_action_handle(m->action));
             } else {
-                subtree->handle = make_action_handle(m->xaction);
+                subtree->handle = make_action_handle(m->action);
                 changed = 1;
             }
         }
@@ -981,7 +981,7 @@ static int bind_match_names(struct grammar *grammar, struct match *matches) {
                 result = 0;
             }
         } else if (cur->type == ACTION) {
-            if (! bind_match_names(grammar, cur->xaction->arg))
+            if (! bind_match_names(grammar, cur->action->arg))
                 result = 0;
         } else if (QUANT_P(cur)) {
             if (! bind_match_names(grammar, cur->matches))
@@ -1007,10 +1007,10 @@ static void bind_owner(struct rule *owner, struct match *matches) {
         if (SUBMATCH_P(m))
             bind_owner(owner, m->matches);
         if (m->type == ACTION) {
-            bind_owner(owner, m->xaction->arg);
+            bind_owner(owner, m->action->arg);
             for (int type = 0; action_type_names[type] != NULL; type++) {
-                if (STREQ(m->xaction->name, action_type_names[type])) {
-                    m->xaction->type = type;
+                if (STREQ(m->action->name, action_type_names[type])) {
+                    m->action->type = type;
                     break;
                 }
             }
@@ -1237,7 +1237,7 @@ static int dot_match(FILE *out, struct match *matches, int parent, int next) {
             name = "?";
             break;
         case ACTION:
-            name = m->xaction->name;
+            name = m->action->name;
             break;
         case SUBTREE:
             name = "[]";
@@ -1258,7 +1258,7 @@ static int dot_match(FILE *out, struct match *matches, int parent, int next) {
         if (SUBMATCH_P(m)) {
             next = dot_match(out, m->matches, self, next);
         } else if (m->type == ACTION) {
-            next = dot_match(out, m->xaction->arg, self, next);
+            next = dot_match(out, m->action->arg, self, next);
         }
     }
     return next;
