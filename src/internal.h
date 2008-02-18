@@ -95,8 +95,15 @@ static inline const char *pathstrip(const char *p) {
     }
 }
 
+static inline int pathendswith(const char *path, const char *basenam) {
+    const char *p = strrchr(path, SEP);
+    if (p == NULL)
+        return 0;
+    return streqv(p+1, basenam);
+}
+
 /* augeas.c */
-/* 
+/*
  * Dup PATH and split it into a directory and basename. The returned value
  * points to the copy of PATH. Adding strlen(PATH)+1 to it gives the
  * basename.

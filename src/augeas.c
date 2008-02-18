@@ -439,14 +439,16 @@ static void print_rec(FILE *out, struct tree *tree, char **path) {
 void aug_print(FILE *out, const char *path) {
     char *pbuf = strdup(path);
     struct tree *tree = aug_tree_find(aug_tree, path);
-    if (tree == NULL) {
-        tree = aug_tree;
-        pbuf[0] = '\0';
-    }
-    if (tree->children != NULL) {
-        print_rec(out, tree->children, &pbuf);
-    } else {
-        print_one(out, tree, &pbuf);
+    while (tree != NULL) {
+        if (tree->children != NULL) {
+            print_rec(out, tree->children, &pbuf);
+        } else {
+            print_one(out, tree, &pbuf);
+        }
+        for (tree = tree->next; tree != NULL; tree = tree->next) {
+            if (pathendswith(path, tree->label))
+                break;
+        }
     }
     free(pbuf);
 }
