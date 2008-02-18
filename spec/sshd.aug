@@ -45,6 +45,6 @@ grammar sshd
   match: [ key 'Match' .
            [ seq 'match' .
              [ label 'cond' . store ... . EOL ] .
-             (other_entry) * ] ]
+             (SEP . other_entry) * ] ]
 
 end
