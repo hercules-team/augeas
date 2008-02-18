@@ -281,6 +281,24 @@ static void free_split(struct tree *tree) {
     }
 }
 
+/* Given a tree split SPLIT, return the first entry with non-NULL
+   children, and free the rest */
+static struct tree *split_tree_car(struct tree *split) {
+    if (split == NULL)
+        return NULL;
+    
+    struct tree *result;
+    for (result = split;
+         result != NULL && result->children == NULL;
+         result = result->next);
+    if (result == NULL)
+        result = split;
+    list_remove(result, split);
+    result->next = NULL;
+    free_split(split);
+    return result;
+}
+
 /*
  * Split a list of trees into lists of trees to undo the fact that
  * sequence and the quantifiers all concatenate lists of trees.
@@ -322,14 +340,14 @@ static struct tree *split_tree_int(struct match *match,
         list_for_each(m, match->matches) {
             if (((state->tree)->label == NULL) != (m->handle == NULL))
                 continue;
-            result = split_tree_int(m, state);
+            result = split_tree_car(split_tree_int(m, state));
             if (result != NULL)
                 return result;
         }
         return NULL;
     case SEQUENCE:
         list_for_each(m, match->matches) {
-            struct tree *t = split_tree_int(m, state);
+            struct tree *t = split_tree_car(split_tree_int(m, state));
             if (t == NULL) {
                 goto error;
             }
@@ -343,7 +361,7 @@ static struct tree *split_tree_int(struct match *match,
         // FIXME: THis is greedy in a really stupid way
         // It will preclude us from ever splitting a*.a properly
         while (state->tree != NULL) {
-            struct tree *t = split_tree_int(match->matches, state);
+            struct tree *t = split_tree_car(split_tree_int(match->matches, state));
             if (t == NULL) {
                 if (result == NULL && match->type != QUANT_PLUS)
                     CALLOC(result, 1);
@@ -356,7 +374,7 @@ static struct tree *split_tree_int(struct match *match,
         return result;
     case QUANT_MAYBE:
         if (state->tree != NULL) {
-            result = split_tree_int(match->matches, state);
+            result = split_tree_car(split_tree_int(match->matches, state));
         }
         if (result == NULL)
             CALLOC(result, 1);
