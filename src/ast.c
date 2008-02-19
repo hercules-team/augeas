@@ -847,34 +847,6 @@ static int resolve_any(struct match *match) {
     return result;
 }
 
-static int literal_sets_intersect(struct literal_set *set1, 
-                                  struct literal_set *set2) {
-    list_for_each(s1, set1) {
-        if (literal_set_contains(set2, s1->literal))
-            return 1;
-    }
-    return 0;
-}
-static int check_match_ambiguity(struct rule *rule, struct match *matches) {
-    list_for_each(m, matches) {
-        if (m->type == ALTERNATIVE) {
-            list_for_each(a1, m->matches) {
-                list_for_each(a2, a1->next) {
-                    if (literal_sets_intersect(a1->first, a2->first)) {
-                        grammar_error(_FR(rule), _L(rule), "rule %s is ambiguous", rule->name);
-                        return 0;
-                    }
-                }
-            }
-        }
-        if (SUBMATCH_P(m)) {
-            if (! check_match_ambiguity(rule, m->matches))
-                return 0;
-        }
-    }
-    return 1;
-}
-
 /* Find the regexp pattern that matches path components
    generated from MATCH->ACTION. MATCH must be of type ACTION */
 static struct literal_set *make_action_handle(const struct action *action) {
@@ -1063,11 +1035,6 @@ static int prepare(struct grammar *grammar) {
                 changed = 1;
         }
     } while (changed);
-
-    list_for_each(r, grammar->rules) {
-        if (! check_match_ambiguity(r, r->matches))
-            result =0;
-    }
 
     return result;
 }
