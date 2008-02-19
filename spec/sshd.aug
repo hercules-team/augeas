@@ -11,7 +11,7 @@ grammar sshd
   token COMMENT /(#.*|[ \t]*)\n/ = '\n'
 
   start: (comment | accept_env | allow_groups | allow_users 
-          | deny_groups | macs | match | other_entry ) *
+          | deny_groups | deny_users | macs | match | other_entry ) *
 
   comment: [ COMMENT ]
 

@@ -111,6 +111,7 @@ enum grammar_debug_flags {
     GF_FOLLOW = (1 << 1),   /* Print follow sets */
     GF_FIRST  = (1 << 2),   /* Print first sets/epsilon indicator */
     GF_HANDLES = (1 << 3),
+    GF_RE     = (1 << 4),
     GF_PRETTY = (1 << 5),
     GF_DOT    = (1 << 6)    /* Produce a dot graph for the grammar */
 };
@@ -220,11 +221,12 @@ struct literal_set {
  * EPSILON indicates if this match can match the empty string, where it is
  * obvious, it is set during parsing (literals and groupings qualified with
  * '*' or '?') , for other matches it is propagated during computing first
- * sets. 
- * 
+ * sets.
+ *
  * The FIRST and FOLLOW sets are intially null, and filled by calling
- * prepare() on the grammar. Grammars where a rule has an empty first set
- * are rejected (they contain unused rules).
+ * prepare() on the grammar. The FIRST and FOLLOW sets are only used for
+ * constructing the regular expressions for ANY. Parsing is solely based on
+ * the regular expressions in RE.
  *
  * A HANDLE is similar to a first set, though it is used when translating
  * back from the config tree to the underlying file. The handle guides the
@@ -251,6 +253,7 @@ struct match {
     struct literal_set *follow;
     int                 epsilon;     /* produces the empty string */
     struct literal_set *handle;
+    struct literal     *re;
 };
 
 /* A hardwired list of actions, which are all functions with

@@ -249,6 +249,11 @@ static void print_follow(FILE *out, struct match *m, int flags) {
         print_literal_set(out, m->follow, m->owner->grammar, '{', '}');
     }
 
+    if (flags & GF_RE) {
+        fprintf(out, " %%r");
+        print_literal(out, m->re);
+    }
+
     if (flags & GF_HANDLES) {
         print_literal_set(out, m->handle, m->owner->grammar, '<', '>');
     }
@@ -476,7 +481,7 @@ static struct literal_set *make_literal_set(struct literal *literal) {
 /* The set HEAD contains LITERAL iff head has an entry using
    LITERAL as its literal or if it has an entry where the
    pattern is identical to LITERAL's pattern.
-   
+
    Literals with a NULL pattern will be filled at some later point,
    so we optimistically assume that they will be different
 */
@@ -507,6 +512,118 @@ static int merge_literal_set(struct literal_set **first,
         }
     }
     return changed;
+}
+
+static char *string_append(char *s, const char *p) {
+    if (p == NULL)
+        return s;
+    if (s == NULL) {
+        s = strdup(p);
+    } else {
+        s = realloc(s, strlen(s) + strlen(p) + 1);
+        strcat(s, p);
+    }
+    return s;
+}
+
+static void set_match_re(struct match *match, const char *pattern) {
+    if (match->re == NULL) {
+        match->re = make_literal(pattern, REGEX, match->lineno);
+    } else {
+        set_literal_text(match->re, pattern);
+    }
+}
+
+static int make_match_re(struct match *matches);
+
+static int make_submatch_re(struct match *match, const char *pre,
+                            const char *sep, const char *suff) {
+    char *p = string_append(NULL, pre);
+    if (! make_match_re(match->matches))
+        return 0;
+    list_for_each(m, match->matches) {
+        p = string_append(p, m->re->pattern);
+        if (m->next != NULL)
+            p = string_append(p, sep);
+    }
+    p = string_append(p, suff);
+    set_match_re(match, p);
+    return 1;
+}
+
+static int make_rule_re(struct match *match) {
+    struct rule *rule = match->rule;
+    if (rule->matches->re == NULL) {
+        rule->matches->re = make_literal(NULL, REGEX, rule->matches->lineno);
+    } else {
+        if (rule->matches->re->pattern == NULL) {
+            grammar_error(_FM(match), _L(match),
+                          "Rule %s used recursively from %s",
+                          rule->name, match->owner->name);
+            return 0;
+        }
+    }
+    if (!make_match_re(rule->matches))
+        return 0;
+    match->re = rule->matches->re;
+    return 1;
+}
+
+static int make_match_re(struct match *matches) {
+    list_for_each(cur, matches) {
+        switch(cur->type) {
+        case LITERAL:
+            cur->re = cur->literal;
+            break;
+        case ANY:
+            cur->re = cur->literal;
+            break;
+        case ABBREV_REF:
+            cur->re = cur->abbrev->literal;
+            break;
+        case RULE_REF:
+            if (! make_rule_re(cur))
+                return 0;
+            break;
+        case ALTERNATIVE:
+            if (!make_submatch_re(cur, "(?:", "|", ")"))
+                return 0;
+            break;
+        case SEQUENCE:
+            if (!make_submatch_re(cur, NULL, NULL, NULL))
+                return 0;
+            break;
+        case SUBTREE:
+            if (!make_submatch_re(cur, NULL, NULL, NULL))
+                return 0;
+            break;
+        case QUANT_PLUS:
+            if (!make_submatch_re(cur, "(?:", NULL, ")+"))
+                return 0;
+            break;
+        case QUANT_STAR:
+            if (!make_submatch_re(cur, "(?:", NULL, ")*"))
+                return 0;
+            break;
+        case QUANT_MAYBE:
+            if (!make_submatch_re(cur, "(?:", NULL, ")?"))
+                return 0;
+            break;
+        case ACTION:
+            if (ACTION_P(cur, STORE) || ACTION_P(cur, KEY)) {
+                if (!make_match_re(cur->action->arg))
+                    return 0;
+                cur->re = cur->action->arg->re;
+            } else {
+                set_match_re(cur, "");
+            }
+            break;
+        default:
+            internal_error(_FM(cur), _L(cur), "unexpected type %d", cur->type);
+            break;
+        }
+    }
+    return 1;
 }
 
 static int make_match_firsts(struct match *matches) {
@@ -712,12 +829,12 @@ static int make_any_literal(struct match *any) {
 
 static int resolve_any(struct match *match) {
     int result = 1;
-    
+
     list_for_each(m, match) {
         if (m->type == ANY) {
             if (! make_any_literal(m))
                 result = 0;
-        } 
+        }
         if (SUBMATCH_P(m)) {
             if (! resolve_any(m->matches))
                 result = 0;
@@ -813,7 +930,7 @@ static int make_subtree_handle(struct match *subtree, struct match *matches) {
                 grammar_error(_FM(m), _L(m),
                    "Handle for subtree starting at line %d already defined",
                               subtree->lineno);
-                merge_literal_set(&(subtree->handle), 
+                merge_literal_set(&(subtree->handle),
                                   make_action_handle(m->action));
             } else {
                 subtree->handle = make_action_handle(m->action);
@@ -892,6 +1009,7 @@ static int make_match_handles(struct match *matches) {
  */
 static int prepare(struct grammar *grammar) {
     int changed;
+    int result = 1;
 
     /* First/epsilon */
     do {
@@ -924,6 +1042,19 @@ static int prepare(struct grammar *grammar) {
             return 0;
     }
 
+    /* Regular expressions */
+    if (! make_match_re(grammar->rules->matches))
+        return 0;
+
+    list_for_each(r, grammar->rules) {
+        if (r->matches->re == NULL) {
+            grammar_error(_FR(r), _L(r), "rule '%s' not used", r->name);
+            result = 0;
+        }
+    }
+    if (!result)
+        return 0;
+
     /* Handles */
     do {
         changed = 0;
@@ -933,7 +1064,6 @@ static int prepare(struct grammar *grammar) {
         }
     } while (changed);
 
-    int result = 1;
     list_for_each(r, grammar->rules) {
         if (! check_match_ambiguity(r, r->matches))
             result =0;

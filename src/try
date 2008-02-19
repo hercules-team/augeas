@@ -12,7 +12,7 @@ cp -pr ${topdir}/tests/root $AUGEAS_ROOT
 find $AUGEAS_ROOT -name \*.augnew\* | xargs -r rm
 
 cat > $AUGCMDS <<EOF
-set /system/config/yum/main/keepcache 0
+set /system/config/yum/main/keepcache 1
 save
 EOF
 

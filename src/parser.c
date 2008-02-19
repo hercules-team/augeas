@@ -384,11 +384,7 @@ static void parse_literal(struct match *match, struct state *state) {
 }
 
 static int applies(struct match *match, struct state *state) {
-    list_for_each(f, match->first) {
-        if (lex(f->literal, state) > 0)
-            return 1;
-    }
-    return 0;
+    return lex(match->re, state) > 0;
 }
 
 static void parse_alternative(struct match *match, struct state *state) {
@@ -438,7 +434,7 @@ static void parse_quant_star(struct match *match, struct state *state) {
     struct tree *tree = NULL;
     struct skel *skel = make_skel(QUANT_STAR, match, state->lineno);
     struct dict *dict = NULL;
-    while (applies(match, state)) {
+    while (applies(match->matches, state)) {
         state->tree = NULL;
         state->skel = NULL;
         state->dict = NULL;
@@ -461,7 +457,7 @@ static void parse_quant_plus(struct match *match, struct state *state) {
         struct tree *tree = NULL;
         struct skel *skel = make_skel(QUANT_PLUS, match, state->lineno);
         struct dict *dict = NULL;
-        while (applies(match, state)) {
+        while (applies(match->matches, state)) {
             state->tree = NULL;
             state->skel = NULL;
             state->dict = NULL;
@@ -479,7 +475,7 @@ static void parse_quant_plus(struct match *match, struct state *state) {
 
 static void parse_quant_maybe(struct match *match, struct state *state) {
     struct skel *skel = make_skel(QUANT_MAYBE, match, state->lineno);
-    if (applies(match, state)) {
+    if (applies(match->matches, state)) {
         state->tree = NULL;
         state->skel = NULL;
         state->dict = NULL;
