@@ -50,7 +50,6 @@ typedef void *yyscan_t;
 %parse-param    {yyscan_t scanner}
 %lex-param      {yyscan_t scanner}
 
-%token <intval> T_FIELD    /* $3 */
 %token <string> T_QUOTED   /* 'foo' */
 %token <string> T_REGEX    /* '/[ \t]+/' */
 %token <string> T_NAME     /* [a-z]+ */

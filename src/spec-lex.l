@@ -48,11 +48,6 @@ AT    @
 
 <INITIAL>
 {
-  \${DIGIT}+ {
-             yylval->intval = to_int(yytext+1);
-             return T_FIELD;
-  }
-
   \${ID}    {
                yylval->string = strndup(yytext+1, yyleng);
                return T_GLOBAL;
