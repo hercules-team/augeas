@@ -63,7 +63,7 @@ AT    @
                return T_QUOTED;
   }
 
-  \/[^/]+\/ {
+  \/([^/]|\\\/)+\/ {
                yylval->string = strndup(yytext+1, yyleng-2);
                return T_REGEX;
   }
