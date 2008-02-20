@@ -9,7 +9,7 @@ grammar inittab
 
   token SEP ':'
   token EOL '\n'
-  token COMMENT /[ \t]*(#.*?)?\n/ = '# \n'
+  token COMMENT /[ \t]*(#.*)?\n/ = '# \n'
   token VALUE /[^:\n]*/ = ''
 
   file: ( comment | record ) *

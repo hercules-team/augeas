@@ -11,7 +11,7 @@ grammar yum
   token INDENT /[ \t]+/ = '\t'
   token EQ /\s*=\s*/ =  '='
   token COMMENT /[ \t]*(#|REM|rem).*\n/ = '# \n'
-  token SECNAME /[^\]]+/ = ''
+  token SECNAME /[^]]+/ = ''
   token KEY /[^ \t\n=]+/ = ''
   token VALUE /[^\n]+/ = ''
 

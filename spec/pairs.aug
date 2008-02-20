@@ -4,7 +4,7 @@
 #end
 
 grammar pairs
-  token EOL /([ \t]+.*)?\n/ = '\n'
+  token EOL /[ \t]*\n/ = '\n'
   token SEP /\s*=\s*/ = '='
   token WORD /[^ \t\n=]+/ = ''
 

@@ -12,13 +12,13 @@ grammar pam
   token SEP /[ \t]+/ = '\t'
   token EOL '\n'
   token CONTROL /(\[[^\]]*\]|[^ \t]+)/ = 'none'
-  token POUND_TO_EOL /#.*\n/ = '# '
+  token COMMENT /[ \t]*(#.*)?\n/ = '# \n'
   token WORD /[^ \t\n]+/ = ''
   token OPTS /[^\n]+/ = ''
 
   file: ( comment | record ) *
 
-  comment: [ ( /#.*?\n/ | /[ \t]*\n/ ) ]
+  comment: [ COMMENT ]
 
   record: [ seq 'record' .
             [ label 'type' . store WORD ] .

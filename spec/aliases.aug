@@ -6,7 +6,7 @@ map
 end
 
 grammar aliases
-  token COMMENT /^[ \t]*(#.*?)?\n/ = '#\n'
+  token COMMENT /^[ \t]*(#.*)?\n/ = '#\n'
   token COMMA /,[ \t]+(\n[ \t]+)?/ = ', '
   token NAME /([^ \t\n#:@]+|"[^"]*")/ = 'missing' # "
   token COLON /:[ \t]+/ = ':\t'
