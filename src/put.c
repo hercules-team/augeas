@@ -24,9 +24,6 @@
 
 //#define DEBUG_SPEW
 
-// FIXME: Should be in a global header
-#define NMATCHES 100
-
 struct state {
     const char  *filename;
     FILE        *out;
@@ -45,7 +42,7 @@ static void put_match(struct match *match, struct state *state);
 
 static const char *_t(struct match *match) {
     static const char *types[] = {
-        "action", "[]", "literal", "name", "...", "|", ".",
+        "action", "[]", "literal", "name", "|", ".",
         "rule", "abbrev", "+", "*", "?"
     };
     return types[match->type];
@@ -74,16 +71,15 @@ static struct dict_entry *dict_lookup(const char *key, struct dict *dict) {
 
 /* Return 1 if MATCH->HANDLE is appropriate for TREE */
 static int handle_match(struct match *match, struct tree *tree) {
-    int rc;
-    int ovec[NMATCHES];
+    int count;
 
     if (tree->label == NULL)
         return match->handle == NULL;
 
     list_for_each(lit, match->handle) {
-        rc = pcre_exec(lit->literal->re, NULL, tree->label, strlen(tree->label),
-                       0, PCRE_ANCHORED, ovec, NMATCHES);
-        if (rc >= 1)
+        count = re_match(lit->literal->re, tree->label, strlen(tree->label),
+                         0, NULL);
+        if (count >= 1)
             return 1;
     }
     return 0;

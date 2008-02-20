@@ -1,5 +1,5 @@
 
-AM_CFLAGS = @AUGEAS_CFLAGS@ @WARN_CFLAGS@ @LIBPCRE_CFLAGS@
+AM_CFLAGS = @AUGEAS_CFLAGS@ @WARN_CFLAGS@
 
 AM_YFLAGS=-d -p spec_
 
@@ -12,7 +12,7 @@ libaugeas_la_SOURCES = augeas.h augeas.c \
 	internal.h internal.c \
 	prov_spec.c spec-parse.y ast.h ast.c parser.c put.c list.h
 
-libaugeas_la_LIBADD = liblexer.la @LIBPCRE_LIBS@
+libaugeas_la_LIBADD = liblexer.la
 
 augtool_SOURCES = augtool.c
 augtool_LDADD = libaugeas.la $(AUGTOOL_LIBS)

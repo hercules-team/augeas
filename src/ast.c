@@ -537,7 +537,7 @@ static int make_match_re(struct match *matches) {
                 return 0;
             break;
         case ALTERNATIVE:
-            if (!make_submatch_re(cur, "(?:", "|", ")"))
+            if (!make_submatch_re(cur, "(", "|", ")"))
                 return 0;
             break;
         case SEQUENCE:
@@ -549,15 +549,15 @@ static int make_match_re(struct match *matches) {
                 return 0;
             break;
         case QUANT_PLUS:
-            if (!make_submatch_re(cur, "(?:", NULL, ")+"))
+            if (!make_submatch_re(cur, "(", NULL, ")+"))
                 return 0;
             break;
         case QUANT_STAR:
-            if (!make_submatch_re(cur, "(?:", NULL, ")*"))
+            if (!make_submatch_re(cur, "(", NULL, ")*"))
                 return 0;
             break;
         case QUANT_MAYBE:
-            if (!make_submatch_re(cur, "(?:", NULL, ")?"))
+            if (!make_submatch_re(cur, "(", NULL, ")?"))
                 return 0;
             break;
         case ACTION:
@@ -830,63 +830,78 @@ static int resolve(struct grammar *grammar) {
  * Constructors for some of the data structures
  */
 
+static void tr_chars(char *s, const char *from, const char *to) {
+    /* Be very careful to not alter S in any way if it doesn't need it.
+       This makes it possible to run over strings that are true constants
+       as long as they contain no escape sequences */
+    for (char *p = s; *p != '\0'; p++) {
+        if (*p == '\\') {
+            char *f = strchr(from, *(p+1));
+            if (f == NULL) {
+                *s++ = *p;
+            } else {
+                p += 1;
+                *s++ = to[f-from];
+            }
+        } else {
+            if (s != p)
+                *s = *p;
+            s += 1;
+        }
+    }
+    if (*s != '\0')
+        *s = '\0';
+}
+
 static int set_literal_text(struct literal *literal, const char *text) {
-    const char *errptr;
-    int erroffset;
     int r;
-    int matches[3];
+    const char *c;
 
     if (literal->type == REGEX) {
         literal->pattern = text;
     } else if (literal->type == QUOTED) {
         char *pattern, *p;
-        
-        pattern = alloca(2*strlen(text)+1+4);
-        strcpy(pattern, "\\Q");
-        p = pattern + 2;
+
+        /* Escape special characters in text since it should be taken
+           literally */
+        CALLOC(pattern, 2*strlen(text)+1);
+        p = pattern;
         for (const char *t = text; *t != '\0'; t++) {
             if (*t == '\\') {
-                t += 1;
-                switch (*t) {
-                case 'n':
-                    *p++ = '\n';
-                    break;
-                case 't':
-                    *p++ = '\t';
-                    break;
-                case 'r':
-                    *p++ = '\r';
-                    break;
-                default:
-                    *p++ = *t;
-                }
+                *p++ = *t++;
+                *p++ = *t;
+            } else if (strchr(".{}[]()+*?", *t) != NULL) {
+                *p++ = '\\';
+                *p++ = *t;
             } else {
                 *p++ = *t;
             }
         }
-        *p++ = '\\';
-        *p++ = 'E';
         *p = '\0';
 
         literal->text = text;
-        literal->pattern = strdup(pattern);
+        literal->pattern = pattern;
     } else {
-        grammar_error(NULL, _L(literal), "Illegal literal type %d", 
+        grammar_error(NULL, _L(literal), "Illegal literal type %d",
                       literal->type);
         return -1;
     }
-  
-    literal->re = pcre_compile(literal->pattern, PCRE_MULTILINE, 
-                               &errptr, &erroffset, NULL);
-    if (literal->re == NULL) {
-        grammar_error(NULL, _L(literal), "ill-formed regular expression /%s/",
-                      literal->pattern);
+    tr_chars((char *) literal->pattern, "nrt", "\n\r\t");
+
+    CALLOC(literal->re, 1);
+    re_syntax_options = RE_SYNTAX_POSIX_MINIMAL_EXTENDED & ~(RE_DOT_NEWLINE);
+    c = re_compile_pattern(literal->pattern, strlen(literal->pattern),
+                           literal->re);
+    if (c != NULL) {
+        grammar_error(NULL, _L(literal),
+                      "error %s compiling regular expression /%s/",
+                      c, literal->pattern);
         return -1;
     }
-    r = pcre_exec(literal->re, NULL, "", 0, 0, 0, matches, 3);
-    if (r < 0 && r != PCRE_ERROR_NOMATCH) {
-        internal_error(NULL, _L(literal), "empty match failed on /%s/ %d",
-                       literal->pattern, r);
+    r = re_match(literal->re, "", 0, 0, NULL);
+    if (r == -2) {
+        internal_error(NULL, _L(literal), "empty match failed on /%s/",
+                       literal->pattern);
         return -1;
     }
     literal->epsilon = (r != -1);

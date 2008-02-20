@@ -21,8 +21,6 @@ AC_CHECK_LIB(readline, main,
 	[$AUGTOOL_LIBS])
 AC_SUBST(AUGTOOL_LIBS)
 
-PKG_CHECK_MODULES(LIBPCRE, libpcre >= 0.21)
-
 AC_OUTPUT(Makefile 
           src/Makefile
           tests/Makefile)

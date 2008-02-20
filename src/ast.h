@@ -23,7 +23,7 @@
 #ifndef __AST_H
 #define __AST_H
 
-#include <pcre.h>
+#include <regex.h>
 #include "internal.h"
 
 /*
@@ -107,8 +107,6 @@ struct tree *parse(struct aug_file *file, const char *text,
 
 enum grammar_debug_flags {
     GF_NONE = 0,
-    GF_FOLLOW = (1 << 1),   /* Print follow sets */
-    GF_FIRST  = (1 << 2),   /* Print first sets/epsilon indicator */
     GF_HANDLES = (1 << 3),
     GF_RE     = (1 << 4),
     GF_PRETTY = (1 << 5),
@@ -136,12 +134,12 @@ enum literal_type {
  * text, and PATTERN the regex that matches TEXT.
  */
 struct literal {
-    int                lineno;
-    enum literal_type  type;
-    const char        *pattern;
-    const char        *text;
-    pcre              *re;
-    int                epsilon;
+    int                       lineno;
+    enum literal_type         type;
+    const char               *pattern;
+    const char               *text;
+    struct re_pattern_buffer *re;
+    int                       epsilon;
 };
 
 /* Allocate a new literal. TEXT is not copied any further, but will be
@@ -197,7 +195,7 @@ enum match_type {
                        || (m)->type == SUBTREE                          \
                        || QUANT_P(m))
 
-/* A set of literals, for the first/follow sets */
+/* A set of literals, for the handles */
 struct literal_set {
     struct literal_set   *next;
     struct literal       *literal;
@@ -210,9 +208,7 @@ struct literal_set {
  * RULE_REF or ABBREV_REF entries.
  *
  * EPSILON indicates if this match can match the empty string, where it is
- * obvious, it is set during parsing (literals and groupings qualified with
- * '*' or '?') , for other matches it is propagated during computing first
- * sets.
+ * obvious.
  *
  * A HANDLE is similar to a first set, though it is used when translating
  * back from the config tree to the underlying file. The handle guides the

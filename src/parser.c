@@ -20,12 +20,10 @@
  * Author: David Lutterkort <dlutter@redhat.com>
  */
 
-#include <pcre.h>
+#include <regex.h>
 #include "ast.h"
 #include "list.h"
 #include "internal.h"
-
-#define NMATCHES 100
 
 #define parse_error(state, format, args ...) \
     grammar_error((state)->filename, (state)->lineno, format, ## args)
@@ -255,27 +253,29 @@ static void advance(struct state *state, int cnt) {
 }
 
 static int lex(struct literal *literal, struct state *state) {
-    int rc;
-    int matches[NMATCHES];
+    int count;
     int offset = state->pos - state->text;
-    rc = pcre_exec(literal->re, NULL, state->text, strlen(state->text),
-                   offset, PCRE_ANCHORED, matches, NMATCHES);
+    count = re_match(literal->re, state->text, strlen(state->text),
+                     offset, NULL);
     if (state->flags & PF_MATCH) {
         fprintf(state->log, "M %d ", offset);
         print_literal(state->log, literal);
-        fprintf(state->log, " %d..%d\n", matches[0], matches[1]);
+        fprintf(state->log, " %d..%d\n", offset, offset+count);
     }
 
-    if (rc >= 1) {
-        if (matches[0] != offset) {
-            parse_error(state, "Skipped %d characters", matches[0] - offset);
-        }
-        return (matches[1] - matches[0]);
+    if (count == -2) {
+        parse_error(state, "Match failed for /%s/ at %d", literal->pattern,
+                    offset);
+        return -1;
+
+    } else if (count == -1) {
+        return 0;
+    } else {
+        return count;
     }
-    return -1;
 }
 
-static const char *re_match(struct match *match, struct state *state) {
+static const char *match_literal(struct match *match, struct state *state) {
     struct literal *literal = NULL;
     const char *result = NULL;
 
@@ -366,7 +366,7 @@ static void parse_match(struct match *match, struct state *state);
 static void parse_literal(struct match *match, struct state *state) {
     const char *token = NULL;
 
-    token = re_match(match, state);
+    token = match_literal(match, state);
     if (token == NULL) {
         state->applied = 0;
     } else {
@@ -517,10 +517,10 @@ static void parse_action(struct match *match, struct state *state) {
         state->key = string_value(action->arg);
         break;
     case STORE:
-        state->tree = make_tree(NULL, re_match(match->action->arg, state));
+        state->tree = make_tree(NULL, match_literal(match->action->arg, state));
         break;
     case KEY:
-        state->key = re_match(match->action->arg, state);
+        state->key = match_literal(match->action->arg, state);
         break;
     default:
         internal_error(state->filename, state->lineno,
