@@ -202,9 +202,6 @@ static void parse_expected_error(struct state *state, struct match *exp) {
             else
                 name = exp->literal->pattern;
             break;
-        case ANY:
-            name = "...";
-            break;
         case RULE_REF:
             name = exp->rule->name;
             break;
@@ -284,7 +281,7 @@ static const char *re_match(struct match *match, struct state *state) {
 
     if (match->type == ABBREV_REF)
         literal = match->abbrev->literal;
-    else if (match->type == LITERAL || match->type == ANY)
+    else if (match->type == LITERAL)
         literal = match->literal;
     else {
         internal_error(state->filename, state->lineno,
@@ -309,11 +306,7 @@ static const char *re_match(struct match *match, struct state *state) {
             }
         }
         if (a == NULL) {
-            if (match->type == ANY) {
-                fprintf(state->log, "..%c", match->epsilon ? '?' : '.');
-            } else {
-                print_literal(state->log, literal);
-            }
+            print_literal(state->log, literal);
         }
         fprintf(state->log, " = <");
         print_chars(state->log, result, strlen(result));
@@ -539,9 +532,6 @@ static void parse_action(struct match *match, struct state *state) {
 static void parse_match(struct match *match, struct state *state) {
     switch(match->type) {
     case LITERAL:
-        parse_literal(match, state);
-        break;
-    case ANY:
         parse_literal(match, state);
         break;
     case ALTERNATIVE:

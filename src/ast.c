@@ -128,17 +128,6 @@ static void print_indent(FILE *out, int indent) {
         fputc(' ', out);
 }
 
-static void print_any(FILE *out, struct match *any, int flags) {
-    if (flags & GF_ANY_RE && 
-        any->literal != NULL && any->literal->pattern != NULL) {
-        print_literal(out, any->literal);
-    } else if (any->epsilon) {
-        fprintf(out, "..?");
-    } else {
-        fprintf(out, "...");
-    }
-}
-
 static void print_matches(FILE *out, struct match *m, const char *sep, 
                           int flags) {
 
@@ -154,9 +143,6 @@ static void print_matches(FILE *out, struct match *m, const char *sep,
             break;
         case NAME:
             fprintf(out, p->name);
-            break;
-        case ANY:
-            print_any(out, p, flags);
             break;
         case ALTERNATIVE:
             fprintf(out, "(");
@@ -240,15 +226,7 @@ static void print_entry(FILE *out, struct entry *entry) {
     }
 }
 
-static void print_follow(FILE *out, struct match *m, int flags) {
-    if (flags & GF_FIRST) {
-        print_literal_set(out, m->first, m->owner->grammar, '[', ']');
-    }
-
-    if (flags & GF_FOLLOW) {
-        print_literal_set(out, m->follow, m->owner->grammar, '{', '}');
-    }
-
+static void print_match_attrs(FILE *out, struct match *m, int flags) {
     if (flags & GF_RE) {
         fprintf(out, " %%r");
         print_literal(out, m->re);
@@ -274,60 +252,55 @@ static void dump_matches(FILE *out, struct match *m, int indent, int flags) {
             if (p->action->type == UNDEF)
                 fputc('_', out);
             fprintf(out, "%s ", p->action->name);
-            print_follow(out, p, flags);
+            print_match_attrs(out, p, flags);
             fprintf(out, " : ");
             print_matches(out, p->action->arg, " ", flags);
-            print_follow(out, p->action->arg, flags);
+            print_match_attrs(out, p->action->arg, flags);
             putchar('\n');
             break;
         case SUBTREE:
             fprintf(out, "[]");
-            print_follow(out, p, flags);
+            print_match_attrs(out, p, flags);
             putchar('\n');
             dump_matches(out, p->matches, indent + 2, flags);
             break;
         case LITERAL:
             print_literal(out, p->literal);
-            print_follow(out, p, flags);
+            print_match_attrs(out, p, flags);
             fprintf(out, "\n");
             break;
         case NAME:
             fprintf(out, ":%s", p->name);
-            print_follow(out, p, flags);
+            print_match_attrs(out, p, flags);
             putchar('\n');
-            break;
-        case ANY:
-            print_any(out, p, flags);
-            print_follow(out, p, flags);
-            fputc('\n', out);
             break;
         case ALTERNATIVE:
             fprintf(out, "|");
-            print_follow(out, p, flags);
+            print_match_attrs(out, p, flags);
             putchar('\n');
             dump_matches(out, p->matches, indent + 2, flags);
             break;
         case SEQUENCE:
             fprintf(out, ".");
-            print_follow(out, p, flags);
+            print_match_attrs(out, p, flags);
             putchar('\n');
             dump_matches(out, p->matches, indent + 2, flags);
             break;
         case ABBREV_REF:
             fprintf(out, "%s", p->abbrev->name);
-            print_follow(out, p, flags);
+            print_match_attrs(out, p, flags);
             fputc('\n', out);
             break;
         case RULE_REF:
             fprintf(out, "%s", p->rule->name);
-            print_follow(out, p, flags);
+            print_match_attrs(out, p, flags);
             fputc('\n', out);
             break;
         case QUANT_PLUS:
         case QUANT_STAR:
         case QUANT_MAYBE:
             print_quantc(out, p);
-            print_follow(out, p, flags);
+            print_match_attrs(out, p, flags);
             putchar('\n');
             dump_matches(out, p->matches, indent + 2, flags);
             break;
@@ -347,25 +320,6 @@ static void dump_rules(FILE *out, struct rule *r, int flags) {
         } else {
             fprintf(out, "  %s\n", p->name);
             dump_matches(out, p->matches, 4, flags);
-        }
-        if ((flags & GF_FIRST) && p->matches->first != NULL) {
-            fprintf(out, "    [");
-            list_for_each(f, p->matches->first) {
-                struct abbrev *abbrev = NULL;
-                list_for_each(a, p->matches->owner->grammar->abbrevs) {
-                    if (a->literal == f->literal) {
-                        abbrev = a;
-                        break;
-                    }
-                }
-                if (abbrev)
-                    fprintf(out, abbrev->name);
-                else
-                    print_literal(out, f->literal);
-                if (f->next != NULL)
-                    fputc(' ', out);
-            }
-            fprintf(out, "]\n");
         }
         fputc('\n', out);
     }
@@ -469,7 +423,7 @@ static int semantic_check(struct grammar *grammar) {
 }
 
 /*
- * Compute first/follow sets for the grammar
+ * Sets of literals
  */
 static struct literal_set *make_literal_set(struct literal *literal) {
     struct literal_set *new;
@@ -575,9 +529,6 @@ static int make_match_re(struct match *matches) {
         case LITERAL:
             cur->re = cur->literal;
             break;
-        case ANY:
-            cur->re = cur->literal;
-            break;
         case ABBREV_REF:
             cur->re = cur->abbrev->literal;
             break;
@@ -626,232 +577,10 @@ static int make_match_re(struct match *matches) {
     return 1;
 }
 
-static int make_match_firsts(struct match *matches) {
-    int changed = 0;
-
-    list_for_each(cur, matches) {
-        switch(cur->type) {
-        case LITERAL:
-            if (cur->epsilon != cur->literal->epsilon) {
-                changed = 1;
-                cur->epsilon = cur->literal->epsilon;
-            }
-            /* fall through, missing break intentional */
-        case ANY:
-            /* cur->literal */
-            if (! literal_set_contains(cur->first, cur->literal)) {
-                struct literal_set *ls = make_literal_set(cur->literal);
-                list_append(cur->first, ls);
-                changed = 1;
-            }
-            break;
-        case ABBREV_REF:
-            if (cur->epsilon != cur->abbrev->literal->epsilon) {
-                changed = 1;
-                cur->epsilon = cur->abbrev->literal->epsilon;
-            }
-            /* cur->abbrev->literal */
-            if (! literal_set_contains(cur->first, cur->abbrev->literal)) {
-                struct literal_set *ls = make_literal_set(cur->abbrev->literal);
-                list_append(cur->first, ls);
-                changed = 1;
-            }
-            break;
-        case RULE_REF:
-            if (cur->epsilon != cur->rule->matches->epsilon) {
-                changed = 1;
-                cur->epsilon = cur->rule->matches->epsilon;
-            }
-            /* first(rule) */
-            if (merge_literal_set(&(cur->first), cur->rule->matches->first))
-                changed = 1;
-            break;
-        case ALTERNATIVE:
-            if (make_match_firsts(cur->matches))
-                changed = 1;
-            /* union(first(cur->matches)) */
-            {
-                int eps = 0;
-                list_for_each(a, cur->matches) {
-                    if (a->epsilon) eps = 1;
-                    if (merge_literal_set(&(cur->first), a->first))
-                        changed = 1;
-                }
-                /* Never reset cur->epsilon; it might have been set
-                   if this alternative is qualified with a * or ? */
-                if (! cur->epsilon && eps) {
-                    changed = 1;
-                    cur->epsilon = eps;
-                }
-            }
-            break;
-        case SEQUENCE:
-            if (make_match_firsts(cur->matches))
-                changed = 1;
-            {
-                int eps = 1;
-                list_for_each(p, cur->matches) {
-                    if (! p->epsilon) eps = 0;
-                }
-                /* Never reset cur->epsilon; it might have been set
-                   if this sequence is qualified with a * or ? */
-                if (! cur->epsilon && eps) {
-                    changed = 1;
-                    cur->epsilon = eps;
-                }
-            }
-            /* union(p in cur->matches) up to the first one with p->epsilon == 0*/
-            list_for_each(p, cur->matches) {
-                if (merge_literal_set(&(cur->first), p->first))
-                    changed = 1;
-                if (! p->epsilon)
-                    break;
-            }
-            break;
-        case SUBTREE:
-        case QUANT_PLUS:
-        case QUANT_STAR:
-        case QUANT_MAYBE:
-            if (make_match_firsts(cur->matches))
-                changed = 1;
-            if (merge_literal_set(&(cur->first), cur->matches->first))
-                changed = 1;
-            if (! cur->epsilon) {
-                if (cur->type == QUANT_STAR || cur->type == QUANT_MAYBE
-                    || cur->matches->epsilon) {
-                    cur->epsilon = 1;
-                    changed = 1;
-                }
-            }
-            break;
-        case ACTION:
-            if (ACTION_P(cur, STORE) || ACTION_P(cur, KEY)) {
-                if (make_match_firsts(cur->action->arg))
-                    changed = 1;
-                if (cur->epsilon != cur->action->arg->epsilon) {
-                    cur->epsilon = cur->action->arg->epsilon;
-                    changed = 1;
-                }
-                if (merge_literal_set(&(cur->first), cur->action->arg->first))
-                    changed = 1;
-            } else {
-                if (! cur->epsilon) {
-                    cur->epsilon = 1;
-                    changed = 1;
-                }
-            }
-            break;
-        default:
-            internal_error(_FM(cur), _L(cur), "unexpected type %d", cur->type);
-            break;
-        }
-    }
-    return changed;
-}
-
-static int make_match_follows(struct match *matches, struct match *parent) {
-    int changed = 0;
-
-    list_for_each(cur, matches) {
-        if (cur->next == NULL || (parent->type == ALTERNATIVE)) {
-            if (merge_literal_set(&(cur->follow), parent->follow))
-                changed = 1;
-        } else {
-            struct match *next = cur->next;
-            if (merge_literal_set(&(cur->follow), next->first))
-                changed = 1;
-            if (next->epsilon && 
-                merge_literal_set(&(cur->follow), next->follow))
-                changed = 1;
-        }
-        if (cur->type == QUANT_PLUS || cur->type == QUANT_STAR) {
-            if (merge_literal_set(&(cur->follow), cur->first))
-                changed = 1;
-        }
-        if (cur->type == RULE_REF) {
-            if (merge_literal_set(&(cur->rule->matches->follow), cur->follow))
-                changed = 1;
-        } else if (SUBMATCH_P(cur)) {
-            if (make_match_follows(cur->matches, cur))
-                changed = 1;
-        } else if (ACTION_P(cur, KEY) || ACTION_P(cur, STORE)) {
-            if (merge_literal_set(&(cur->action->arg->follow), cur->follow))
-                changed = 1;
-        }
-    }
-    return changed;
-}
-
-static int make_any_literal(struct match *any) {
-    if (any->literal == NULL) {
-        internal_error(_FM(any), _L(any), "any misses literal");
-        return 0;
-    }
-    if (any->literal->pattern != NULL || any->literal->text != NULL) {
-        internal_error(_FM(any), _L(any),
-                       "any pattern already initialized");
-        return 0;
-    }
-    if (any->follow == NULL) {
-        grammar_error(_FM(any), _L(any), "any pattern ... not followed by anything");
-        return 0;
-    }
-    int size = 8;
-    char *pattern;
-    list_for_each(f, any->follow) {
-        if (f->literal->pattern == NULL) {
-            grammar_error(_FM(any), _L(any), 
-                          "any pattern ... followed by another any pattern");
-            return 0;
-        }
-        size += strlen(f->literal->pattern) + 1;
-    }
-    CALLOC(pattern, size+1);
-    if (any->epsilon)
-        strcpy(pattern, "(.*?)(?=");
-    else
-        strcpy(pattern, "(.+?)(?=");
-        
-    list_for_each(f, any->follow) {
-        strcat(pattern, f->literal->pattern);
-        if (f->next == NULL)
-            strcat(pattern, ")");
-        else
-            strcat(pattern, "|");
-    }
-    if (strlen(pattern) != size) {
-        internal_error(_FM(any), _L(any), "misallocation: allocated %d for a string of size %d", size, (int) strlen(pattern));
-        return 0;
-    }
-    set_literal_text(any->literal, pattern);
-    return 1;
-}
-
-static int resolve_any(struct match *match) {
-    int result = 1;
-
-    list_for_each(m, match) {
-        if (m->type == ANY) {
-            if (! make_any_literal(m))
-                result = 0;
-        }
-        if (SUBMATCH_P(m)) {
-            if (! resolve_any(m->matches))
-                result = 0;
-        }
-        if (m->type == ACTION) {
-            if (! resolve_any(m->action->arg))
-                result = 0;
-        }
-    }
-    return result;
-}
-
 /* Find the regexp pattern that matches path components
    generated from MATCH->ACTION. MATCH must be of type ACTION */
 static struct literal_set *make_action_handle(const struct action *action) {
     static const char *DIGITS = "[0-9]+";
-    static const char *PATH_COMPONENT = "[^/]+";
 
     const struct match *arg = action->arg;
     const char *pattern = NULL;
@@ -877,9 +606,6 @@ static struct literal_set *make_action_handle(const struct action *action) {
             const struct literal *l = arg->abbrev->literal;
             type = l->type;
             pattern = (type == REGEX) ? l->pattern : l->text;
-        } else if (arg->type == ANY) {
-            pattern = PATH_COMPONENT;
-            type = REGEX;
         } else {
             assert(0);
         }
@@ -970,11 +696,10 @@ static int make_match_handles(struct match *matches) {
     return changed;
 }
 
-/* Prepare the grammar by 
+/* Prepare the grammar by
  *
  * (1) computing first/follow sets for all rules and propagating epsilon
- * (2) determining regular expressions for all ANY symbols (... and ..?)
- * (3) computing handles for the actions and for alll rules/matches
+ * (2) computing handles for the actions and for alll rules/matches
  *
  * Only a grammar that has been successfully prepared can be used for
  * parsing
@@ -982,37 +707,6 @@ static int make_match_handles(struct match *matches) {
 static int prepare(struct grammar *grammar) {
     int changed;
     int result = 1;
-
-    /* First/epsilon */
-    do {
-        changed = 0;
-        list_for_each(r, grammar->rules) {
-            if (make_match_firsts(r->matches))
-                changed = 1;
-        }
-    } while (changed);
-
-    list_for_each(r, grammar->rules) {
-        if (r->matches->first == NULL) {
-            grammar_error(_FR(r), _L(r), "rule '%s' recurses infintely", r->name);
-            return 0;
-        }
-    }
-
-    /* Follow */
-    do {
-        changed = 0;
-        list_for_each(r, grammar->rules) {
-            if (make_match_follows(r->matches, r->matches))
-                changed = 1;
-        }
-    } while (changed);
-
-    /* Resolve any */
-    list_for_each(r, grammar->rules) {
-        if (! resolve_any(r->matches))
-            return 0;
-    }
 
     /* Regular expressions */
     if (! make_match_re(grammar->rules->matches))
@@ -1116,12 +810,11 @@ static void bind_owner(struct rule *owner, struct match *matches) {
 }
 
 /*
- * Resolve names to their rules/abbrevs. Resolve ANY matches to a regular 
- * expression. Convert quoted strings in matches to regexps by enclosing them
- * in '\Q..\E'
+ * Resolve names to their rules/abbrevs. Convert quoted strings in matches
+ * to regexps by enclosing them in '\Q..\E'
  *
  * Returns 1 on success, 0 on error. After a successful return, the grammar
- * does not contain anymore NAME or ANY matches
+ * does not contain anymore NAME matches
  */
 static int resolve(struct grammar *grammar) {
     list_for_each(r, grammar->rules) {
@@ -1308,9 +1001,6 @@ static int dot_match(FILE *out, struct match *matches, int parent, int next) {
             break;
         case NAME:
             name = "name";
-            break;
-        case ANY:
-            name = m->epsilon ? "..?" : "...";
             break;
         case ALTERNATIVE:
             name = "\\|";

@@ -22,7 +22,6 @@ static struct match* make_match_list(struct match *head, struct match *tail,
 static struct match *make_literal_match(struct literal *literal, int lineno);
 static struct match *make_name_match(const char *name, int lineno);
 static struct match *make_match(enum match_type type, int lineno);
-static struct match *make_any_match(int epsilon, int lineno);
 static struct match *make_quant_match(struct match *child, int quant,
                                       int lineno);
 static struct match *make_action_match(const char *name, 
@@ -55,7 +54,6 @@ typedef void *yyscan_t;
 %token <string> T_NAME     /* [a-z]+ */
 %token <string> T_NAME_COLON
 %token <string> T_GLOBAL   /* '$seq' or '$file_name' */
-%token <intval> T_ANY      /* '...' or '..?' */
 %token <intval> T_NUMBER
 
  /* Keywords */
@@ -176,8 +174,6 @@ match_prim: match_arg
 
 match_arg: literal
            { $$ = make_literal_match($1, @1.first_line); }
-         | T_ANY
-           { $$ = make_any_match($1, @1.first_line); }
          | T_NAME
            { $$ = make_name_match($1, @1.first_line); }
 
@@ -317,15 +313,6 @@ struct match *make_match(enum match_type type, int lineno) {
   CALLOC(result, 1);
   result->type = type;
   result->lineno = lineno;
-  return result;
-}
-
-struct match *make_any_match(int epsilon, int lineno) {
-  struct match *result;
-
-  result = make_match(ANY, lineno);
-  result->literal = make_literal(NULL, REGEX, lineno);
-  result->epsilon = epsilon;
   return result;
 }
 

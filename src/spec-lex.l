@@ -33,8 +33,6 @@ static int to_int(const char *str) {
 %}
 
 DIGIT [0-9]
-DOTS  \.\.\.
-DOTSQ \.\.\?
 ID    [A-Za-z][A-Za-z0-9_-]*
 AT    @
 %x SC_AFTER_ID
@@ -67,15 +65,6 @@ AT    @
                yylval->string = strndup(yytext+1, yyleng-2);
                return T_REGEX;
   }
-
-  {DOTS}    {
-               yylval->intval = 0;
-               return T_ANY;
-            }
-  {DOTSQ}   {
-               yylval->intval = 1;
-               return T_ANY;
-            }
 
   [|*?+()=@\.\[\]]       return yytext[0];
 

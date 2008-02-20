@@ -145,7 +145,6 @@ static int skel_instance_of(struct match *match, struct skel *skel) {
     case SUBTREE:
         return skel->type == SUBTREE;
     case ABBREV_REF:
-    case ANY:
     case LITERAL:
         return skel->type == LITERAL;
     case NAME:
@@ -250,8 +249,7 @@ static void put_subtree(struct match *match, struct state *state) {
 }
 
 static void put_literal(struct match *match, struct state *state) {
-    assert(match->type == LITERAL || match->type == ANY
-           || match->type == ABBREV_REF);
+    assert(match->type == LITERAL || match->type == ABBREV_REF);
     assert(state->skel != NULL);
     assert(state->skel->type == LITERAL);
     fprintf(state->out, state->skel->text);
@@ -332,7 +330,6 @@ static struct tree *split_tree_int(struct match *match,
         state->tree = (state->tree)->next;
         return result;
     case ABBREV_REF:
-    case ANY:
     case LITERAL:
         CALLOC(result, 1);
         return result;
@@ -512,9 +509,6 @@ static void put_match(struct match *match, struct state *state) {
     case LITERAL:
         put_literal(match, state);
         break;
-    case ANY:
-        put_literal(match, state);
-        break;
     case ALTERNATIVE:
         put_alternative(match, state);
         break;
@@ -559,8 +553,7 @@ static void create_subtree(struct match *match, struct state *state) {
 }
 
 static void create_literal(struct match *match, struct state *state) {
-    assert(match->type == LITERAL|| match->type == ANY
-           || match->type == ABBREV_REF);
+    assert(match->type == LITERAL || match->type == ABBREV_REF);
 
     struct literal *literal = NULL;
     if (match->type == ABBREV_REF) {
@@ -660,9 +653,6 @@ static void create_match(struct match *match, struct state *state) {
     case LITERAL:
         create_literal(match, state);
         break;
-    case ANY:
-        create_literal(match, state);
-        break;
     case ALTERNATIVE:
         create_alternative(match, state);
         break;
@@ -730,7 +720,7 @@ void put(FILE *out, struct tree *tree, struct aug_file *file) {
   (interactive)
   (insert "// BEGIN\n")
   (let
-      ((types '("ACTION" "SUBTREE" "LITERAL" "NAME" "ANY" "ALTERNATIVE" 
+      ((types '("ACTION" "SUBTREE" "LITERAL" "NAME" "ALTERNATIVE" 
                 "SEQUENCE" "RULE_REF" "ABBREV_REF" 
                 "QUANT_PLUS" "QUANT_STAR" "QUANT_MAYBE")))
     (mapcar 

@@ -107,7 +107,6 @@ struct tree *parse(struct aug_file *file, const char *text,
 
 enum grammar_debug_flags {
     GF_NONE = 0,
-    GF_ANY_RE = (1 << 0),   /* Print any expressions as full regexps */
     GF_FOLLOW = (1 << 1),   /* Print follow sets */
     GF_FIRST  = (1 << 2),   /* Print first sets/epsilon indicator */
     GF_HANDLES = (1 << 3),
@@ -178,7 +177,6 @@ enum match_type {
     SUBTREE,      /* enter a subtree */
     LITERAL,      /* literal string or regex */
     NAME,         /* use a rule or abbrev */
-    ANY,          /* match '...' */
     ALTERNATIVE,  /* match one of a number of other matches */
     SEQUENCE,     /* match a list of matches */
     RULE_REF,     /* reference to a rule */
@@ -207,26 +205,14 @@ struct literal_set {
 
 /*
  * An item on the right hand side of a rule. After parsing the grammar,
- * only items of types LITERAL, NAME, ANY, FIELD, ALTERNATIVE and SEQUENCE
+ * only items of types LITERAL, NAME, FIELD, ALTERNATIVE and SEQUENCE
  * are used. Name binding/resolution replaces all NAME entries with either
  * RULE_REF or ABBREV_REF entries.
- *
- * ANY items have a literal allocated right after parsing, though its
- * pattern and text are null, until after first/follow sets have been
- * computed. At that point, the pattern of the literal is filled with
- * /(.+?)(?=...)/ where the lookahead assertion matches all entries in the
- * item's follow set. If there are ANY items with empty follow sets, the
- * grammar is invalid.
  *
  * EPSILON indicates if this match can match the empty string, where it is
  * obvious, it is set during parsing (literals and groupings qualified with
  * '*' or '?') , for other matches it is propagated during computing first
  * sets.
- *
- * The FIRST and FOLLOW sets are intially null, and filled by calling
- * prepare() on the grammar. The FIRST and FOLLOW sets are only used for
- * constructing the regular expressions for ANY. Parsing is solely based on
- * the regular expressions in RE.
  *
  * A HANDLE is similar to a first set, though it is used when translating
  * back from the config tree to the underlying file. The handle guides the
@@ -241,7 +227,7 @@ struct match {
     int             lineno;
     enum match_type  type;
     union {
-        struct literal *literal;     /* LITERAL, ANY */
+        struct literal *literal;     /* LITERAL */
         const char     *name;        /* NAME */
         struct match   *matches;   /* SUBTREE, ALTERNATIVE, SEQUENCE, QUANT_* */
         struct rule    *rule;        /* RULE_REF */
@@ -249,8 +235,6 @@ struct match {
         struct action  *action;      /* ACTION */
     };
     struct rule        *owner;       /* the rule this match belongs to */
-    struct literal_set *first;       /* the first set */
-    struct literal_set *follow;
     int                 epsilon;     /* produces the empty string */
     struct literal_set *handle;
     struct literal     *re;
@@ -274,7 +258,7 @@ struct action {
     int                    lineno;
     enum action_type       type;
     const char            *name;
-    struct match          *arg;    /* Only LITERAL, NAME, ANY, ABBREV_REF */
+    struct match          *arg;    /* Only LITERAL, NAME, ABBREV_REF */
 };
 
 enum entry_type {

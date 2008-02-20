@@ -111,7 +111,7 @@ static void usage(void) {
     fprintf(stderr, "  -P WHAT       Show details of how FILE is parsed. Possible values for WHAT\n"
                     "                are 'advance', 'match', and 'tokens'\n");
     fprintf(stderr, "  -G WHAT       Show details about GRAMMAR. Possible values for WHAT are\n"
-                    "                'any', 'follow', 'first', 'handles', 're', 'pretty', 'dot' and 'all'\n");
+                    "                'handles', 're', 'pretty', 'dot' and 'all'\n");
     exit(EXIT_FAILURE);
 }
 
@@ -138,13 +138,7 @@ int main(int argc, char **argv) {
             }
             break;
         case 'G':
-            if (STREQ(optarg, "any"))
-                grammar_flags |= GF_ANY_RE;
-            else if (STREQ(optarg, "follow"))
-                grammar_flags |= GF_FOLLOW;
-            else if (STREQ(optarg, "first"))
-                grammar_flags |= GF_FIRST;
-            else if (STREQ(optarg, "handles"))
+            if (STREQ(optarg, "handles"))
                 grammar_flags |= GF_HANDLES;
             else if (STREQ(optarg, "re"))
                 grammar_flags |= GF_RE;
