@@ -109,7 +109,7 @@ static void usage(void) {
     fprintf(stderr, "If FILE is omitted, the GRAMMAR is read and printed\n");
     fprintf(stderr, "\nOptions:\n\n");
     fprintf(stderr, "  -P WHAT       Show details of how FILE is parsed. Possible values for WHAT\n"
-                    "                are 'advance', 'match', and 'tokens'\n");
+                    "                are 'advance', 'match', 'tokens', and 'skel'\n");
     fprintf(stderr, "  -G WHAT       Show details about GRAMMAR. Possible values for WHAT are\n"
                     "                'handles', 're', 'pretty', 'dot' and 'all'\n");
     exit(EXIT_FAILURE);
@@ -117,6 +117,7 @@ static void usage(void) {
 
 int main(int argc, char **argv) {
     int opt;
+    int print_skels = 0;
     int parse_flags = PF_NONE;
     int grammar_flags = GF_NONE;
     struct grammar *grammar;
@@ -132,6 +133,8 @@ int main(int argc, char **argv) {
                 parse_flags |= PF_MATCH;
             else if (STREQ(optarg, "tokens"))
                 parse_flags |= PF_TOKEN;
+            else if (STREQ(optarg, "skel"))
+                print_skels = 1;
             else {
                 fprintf(stderr, "Illegal argument '%s' for -%c\n", optarg, opt);
                 usage();
@@ -185,7 +188,7 @@ int main(int argc, char **argv) {
 
         struct aug_file *file = aug_make_file(argv[optind+1], "", grammar);
         struct tree *tree = parse(file, text, stdout, parse_flags);
-        if (tree != NULL) {
+        if (tree != NULL && print_skels) {
             print_skel(file->skel);
             printf("\n");
             print_dict(file->dict, 0);
