@@ -31,7 +31,12 @@ args=ARGV
 if args.size == 0
     args = Dir::glob("#{TEST_DIR}/*.rb")
 end
- 
+
+WIDTH = args.inject(0) do |max, arg|
+  s = File::basename(arg, ".rb").size
+  (s > max) ? s : max
+end
+
 args.each do |test|
     if File::directory?(AUGEAS_ROOT)
         FileUtils::rm_rf(AUGEAS_ROOT)
@@ -50,7 +55,7 @@ args.each do |test|
 
     eval(IO::read(test))
     redir = echo ? "" : "> /dev/null"
-    print "Test #{File::basename(test, ".rb")} ... "
+    printf("Test %-#{WIDTH}s ... ", File::basename(test, ".rb"))
     IO.popen("#{AUGTOOL} #{redir}", "w") do |io|
         io.print(commands)
         io.puts("\nquit")
