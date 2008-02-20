@@ -12,16 +12,17 @@ grammar hosts
   token OPT_WS /[ \t]*/ = '\t'
   token EOR '\n'
   token POUND_TO_EOL /#.*\n/ = '# '
+  token WORD /[^ \n\t]+/ = ''
 
   file: counter 'record' . ( comment | record ) *
 
   comment: [ store POUND_TO_EOL ]
 
   record: [ seq 'record' .
-            [ label 'ipaddr' . store ... . SEPTAB ] . 
-            [ label 'canonical' . store ... ] . 
+            [ label 'ipaddr' . store WORD . SEPTAB ] . 
+            [ label 'canonical' . store WORD ] . 
             [ label 'aliases' . counter 'aliases' .
-              ( [ seq 'aliases' . SEPSPC . store ... ] ) *
+              ( [ seq 'aliases' . SEPSPC . store WORD ] ) *
             ]
             . EOR
          ]

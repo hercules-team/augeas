@@ -13,18 +13,20 @@ grammar pam
   token EOL '\n'
   token CONTROL /(\[[^\]]*\]|[^ \t]+)/ = 'none'
   token POUND_TO_EOL /#.*\n/ = '# '
+  token WORD /[^ \t\n]+/ = ''
+  token OPTS /[^\n]+/ = ''
 
   file: ( comment | record ) *
 
   comment: [ ( /#.*?\n/ | /[ \t]*\n/ ) ]
 
   record: [ seq 'record' .
-            [ label 'type' . store ... ] .
+            [ label 'type' . store WORD ] .
             SEP .
             [ label 'control' . store CONTROL] .
             SEP .
-            [ label 'module' . store ... ] .
-            ( [ SEP . label 'opts' . store ... ] )? .
+            [ label 'module' . store WORD ] .
+            ( [ SEP . label 'opts' . store OPTS ] )? .
             EOL
           ]
 end

@@ -11,16 +11,19 @@ grammar yum
   token INDENT /[ \t]+/ = '\t'
   token EQ /\s*=\s*/ =  '='
   token COMMENT /[ \t]*(#|REM|rem).*\n/ = '# \n'
+  token SECNAME /[^\]]+/ = ''
+  token KEY /[^ \t\n=]+/ = ''
+  token VALUE /[^\n]+/ = ''
 
   file: ( comment | section ) *
 
   comment: [ COMMENT ]
 
   section: [ 
-             '[' . key ... . ']' . EOL .
+             '[' . key SECNAME . ']' . EOL .
              ( comment | kv ) *
            ]
 
-  kv: [ key ... . EQ . store ... . EOL ]
+  kv: [ key KEY . EQ . store VALUE . EOL ]
 
 end

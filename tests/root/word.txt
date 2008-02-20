@@ -1,4 +1,0 @@
-one
-two more
-# comment
-three and so on

@@ -6,9 +6,10 @@
 grammar pairs
   token EOL /([ \t]+.*)?\n/ = '\n'
   token SEP /\s*=\s*/ = '='
+  token WORD /[^ \t\n=]+/ = ''
 
   file: counter 'elt' . 
-        ([seq 'elt' . store ...] . 
+        ([seq 'elt' . store WORD] . 
          SEP . 
-         [seq 'elt' . store ...] . EOL)*
+         [seq 'elt' . store WORD] . EOL)*
 end

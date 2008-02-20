@@ -11,6 +11,7 @@ grammar aliases
   token NAME /([^ \t\n#:@]+|"[^"]*")/ = 'missing' # "
   token COLON /:[ \t]+/ = ':\t'
   token EOL /[ \t]*\n/ = '\n'
+  token WORD /[^, \t\n]+/ = ''
 
   file: (comment | alias)*
 
@@ -21,8 +22,8 @@ grammar aliases
            COLON .
            counter 'values' .
            [ label 'values' .
-             [ seq 'values' . store ... ] .
-             ([COMMA . seq 'values' . store ...])*
+             [ seq 'values' . store WORD ] .
+             ([COMMA . seq 'values' . store WORD])*
            ]
          ] . EOL
 end
