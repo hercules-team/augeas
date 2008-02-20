@@ -190,10 +190,12 @@ int main(int argc, char **argv) {
             return EXIT_FAILURE;
 
         struct aug_file *file = aug_make_file(argv[optind+1], "", grammar);
-        parse(file, text, stdout, parse_flags);
-        print_skel(file->skel);
-        printf("\n");
-        print_dict(file->dict, 0);
+        struct tree *tree = parse(file, text, stdout, parse_flags);
+        if (tree != NULL) {
+            print_skel(file->skel);
+            printf("\n");
+            print_dict(file->dict, 0);
+        }
     }
 }
 
