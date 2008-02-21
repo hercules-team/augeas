@@ -11,10 +11,11 @@ rm -rf $AUGEAS_ROOT
 cp -pr ${topdir}/tests/root $AUGEAS_ROOT
 find $AUGEAS_ROOT -name \*.augnew\* | xargs -r rm
 
-cat > $AUGCMDS <<EOF
-set /system/config/yum/main/keepcache 1
-save
+if [[ ! -f $AUGCMDS ]] ; then
+    cat > $AUGCMDS <<EOF
+print /system/config
 EOF
+fi
 
 cat > $GDBCMDS <<EOF
 set annotate 1
