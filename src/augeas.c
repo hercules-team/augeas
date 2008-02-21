@@ -68,6 +68,36 @@ struct tree *aug_tree_find(struct tree *tree, const char *path) {
     return NULL;
 }
 
+/* Return a list of tree nodes matching PATH. The list contains the
+ * matching nodes in the CHILDREN pointers and must be freed by the caller
+ */
+static struct tree *aug_tree_find_all(struct tree *tree, const char *path) {
+    struct tree *result = NULL;
+
+    if (path == NULL)
+        return NULL;
+    if (*path == SEP)
+        path += 1;
+
+    while (tree != NULL) {
+        if (tree->label != NULL) {
+            if (STREQ(tree->label, path)) {
+                struct tree *cons;
+                CALLOC(cons, 1);
+                cons->children = tree;
+                list_append(result, cons);
+            }
+            if (tree->children != NULL && pathprefix(tree->label, path)) {
+                struct tree *cdr =
+                    aug_tree_find_all(tree->children, pathstrip(path));
+                list_append(result, cdr);
+            }
+        }
+        tree = tree->next;
+    }
+    return result;
+}
+
 static struct tree *aug_tree_create(const char *path) {
     struct tree *tree;
 
@@ -319,38 +349,66 @@ int aug_tree_replace(const char *path, struct tree *sub) {
 }
 
 int aug_ls(const char *path, const char ***children) {
-    struct tree *tree = NULL;
+    struct tree *tl = NULL;
     int cnt = 0;
 
     // FIXME: Treating / special is a huge kludge
     if (STREQ(path, "/")) {
-        tree = aug_tree;
+        CALLOC(tl, 1);
+        CALLOC(tl->children, 1);
+        tl->children->children = aug_tree;
         path = "";
     } else {
-        tree = aug_tree_find(aug_tree, path);
-        if (tree == NULL || tree->children == NULL)
-            return 0;
-        tree = tree->children;
+        tl = aug_tree_find_all(aug_tree, path);
     }
 
-    for (struct tree *t = tree;
-         t != NULL;
-         cnt += (t->label != NULL), t = t->next);
+    list_for_each(l, tl) {
+        list_for_each(t, l->children->children) {
+            cnt += (t->label != NULL);
+        }
+    }
 
     if (children == NULL)
-        return cnt;
+        goto done;
 
     *children = calloc(cnt, sizeof(char *));
-    if (*children == NULL)
-        return -1;
-
-    for (int i=0; i < cnt; i++, tree = tree->next) {
-        while (tree->label == NULL) tree = tree->next;
-        int len = strlen(path) + 1 + strlen(tree->label) + 1;
-        char *p = malloc(len);
-        snprintf(p, len, "%s/%s", path, tree->label);
-        (*children)[i] = p;
+    if (*children == NULL) {
+        cnt = -1;
+        goto done;
     }
+
+    int i = 0;
+    list_for_each(l, tl) {
+        list_for_each(t, l->children->children) {
+            while (t->label == NULL) t = t->next;
+            if (t == NULL) break;
+            int exists = 0;
+            for (int j=0; j < i; j++) {
+                if (pathendswith((*children)[j], t->label)) {
+                    exists = 1;
+                    break;
+                }
+            }
+            if (! exists) {
+                int len = strlen(path) + 1 + strlen(t->label) + 1;
+                char *p = malloc(len);
+                snprintf(p, len, "%s/%s", path, t->label);
+                (*children)[i++] = p;
+            }
+        }
+    }
+    /* Because we skip duplicate nodes, we may actually have fewer than CNT
+       elements in CHILDREN */
+    if (i < cnt) {
+        cnt = i;
+        *children = realloc(*children, sizeof(char *)*cnt);
+    }
+ done:
+    /* Listing "/" is special */
+    if (strlen(path) == 0) {
+        free(tl->children);
+    }
+    list_free(tl);
     return cnt;
 }
 

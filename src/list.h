@@ -71,6 +71,13 @@
 
 #endif
 
+#define list_free(list)                                                 \
+    while ((list) != NULL) {                                            \
+        typeof(list) _p = list;                                         \
+        (list) = (list)->next;                                          \
+        free((void *) _p);                                              \
+    }
+
 
 /*
  * Local variables:
