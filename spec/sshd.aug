@@ -11,6 +11,7 @@ grammar sshd
   token COMMENT /(#.*|[ \t]*)\n/ = '\n'
   token KEY /[^ \t]+/ = ''
   token VALUE /([^ \t\n]|[ \t][^ \t\n])+/ = ''
+  token LISTELT /[^ \t\n]+/ = ''
   token MAC /([^, \t\n]|[ \t][^, \t\n])+/ = ''
   start: (comment | accept_env | allow_groups | allow_users 
           | deny_groups | deny_users | macs | match | other_entry ) *
@@ -20,7 +21,7 @@ grammar sshd
   other_entry: [ key KEY . SEP . store VALUE . EOL ]
 
   accept_env: [ key 'AcceptEnv' .
-              ([ SEP . seq 'accept_env' . store VALUE])* .
+              ([ SEP . seq 'accept_env' . store LISTELT])* .
               EOL]
 
   allow_groups: [ key 'AllowGroups' .
