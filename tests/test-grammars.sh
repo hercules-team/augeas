@@ -4,7 +4,8 @@
 # and report whether they are accepted/rejected as expected
 # If run with option '-v', error output from each augparse run is printed
 
-DATADIR=$(dirname $0)
+TOPDIR=$(cd $(dirname $0)/.. && pwd)
+DATADIR=${top_srcdir-${THISDIR}}/tests
 GRAMMARS=${DATADIR}/grammars
 AUGPARSE=${top_builddir-${DATADIR}/..}/src/augparse
 

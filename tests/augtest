@@ -18,11 +18,14 @@ def augnew?(path)
 end
 
 TOP_DIR=File::join(File::dirname(__FILE__), "..")
-TEST_DIR=File::join(TOP_DIR, "tests")
-AUGTOOL="#{TOP_DIR}/src/augtool"
+TOP_BUILDDIR=ENV["top_builddir"] || TOP_DIR
+TOP_SRCDIR=ENV["top_srcdir"] || TOP_DIR
 
-AUGEAS_ROOT=File::join(TOP_DIR, "build", "augtest")
-AUGEAS_SPECLIB=File::join(TOP_DIR, "spec")
+TEST_DIR=File::join(TOP_SRCDIR, "tests")
+
+AUGTOOL="#{TOP_BUILDDIR}/src/augtool"
+AUGEAS_ROOT=File::join(TOP_BUILDDIR, "build", "augtest")
+AUGEAS_SPECLIB=File::join(TOP_SRCDIR, "spec")
 
 ENV["AUGEAS_ROOT"] = AUGEAS_ROOT
 ENV["AUGEAS_SPECLIB"] = AUGEAS_SPECLIB
