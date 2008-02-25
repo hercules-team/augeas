@@ -246,7 +246,7 @@ static int parse_file(const char *filename, struct filter *filter,
     const char *node = file_node(filename, filter);
     char *err_node = NULL;
     const char *err_status = NULL;
-    struct aug_file *file;
+    struct aug_file *file = NULL;
     struct tree *tree;
 
     err_node = add_load_info(filename, node, grammar->name);

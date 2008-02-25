@@ -930,7 +930,7 @@ int spec_parse_file(const char *name, struct grammar **grammars,
 int load_spec(const char *filename, FILE *log, int flags,
               struct grammar **grammars, struct map **maps) {
     int ok = 1, r;
-    const char *errmsg;
+    const char *errmsg = NULL;
 
     r = spec_parse_file(filename, grammars, maps);
     ok = (r != -1);
@@ -939,7 +939,7 @@ int load_spec(const char *filename, FILE *log, int flags,
         if (ok) {
             ok = resolve(g);
             errmsg = "Resolve failed";
-        } 
+        }
         if (ok) {
             ok = semantic_check(g);
             errmsg = "Semantic checks failed";
@@ -951,7 +951,7 @@ int load_spec(const char *filename, FILE *log, int flags,
         if (!ok) {
             fprintf(stderr, "%s: %s\n", g->filename, errmsg);
         }
-    
+
         if (log == NULL)
             log = stdout;
 
