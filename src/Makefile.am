@@ -3,6 +3,8 @@ AM_CFLAGS = @AUGEAS_CFLAGS@ @WARN_CFLAGS@
 
 AM_YFLAGS=-d -p spec_
 
+EXTRA_DIST=try
+
 lib_LTLIBRARIES = libaugeas.la
 noinst_LTLIBRARIES = liblexer.la
 
