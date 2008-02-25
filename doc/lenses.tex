@@ -313,7 +313,8 @@ The concat combinator $\conc{l_1}{l_2}$ joins two trees.
 
 \infrule{l_1\in\lenstype[K_1,S_1,L]{C_1}{T_1} 
          \andalso l_2\in\lenstype[K_2,S_2,L]{C_2}{T_2}
-         \andalso \uaconc{C_1}{C_2}}
+         \andalso \uaconc{C_1}{C_2}
+         \andalso \uaconc{\key{T_1}}{\key{T_2}}}
         {\conc{l_1}{l_2}\in\lenstype[\conc{K_1}{K_2},S_1\times S_2, L]{\conc{C_1}{C_2}}{\conc{T_1}{T_2}}}
 
 \begin{align*}
@@ -329,10 +330,10 @@ The concat combinator $\conc{l_1}{l_2}$ joins two trees.
 
 The union combinator $\alt{l_1}{l_2}$ chooses.
 
-\infrule{l_1\in\lenstype[K_1,S_1,L]{C_1}{T_1} 
-  \andalso l_2\in\lenstype[K_2,S_2,L]{C_2}{T_2}
+\infrule{l_i\in\lenstype[K_i,S_i,L]{C_i}{T_i}\text{ for } i=1,2
   \andalso C_1 \cap C_2 = \emptyset
-  \andalso S_1 \cap S_2 = \emptyset}
+  \andalso S_1 \cap S_2 = \emptyset
+  \andalso \key{T_1} \cap \key{T_2} = \emptyset}
   {\alt{l_1}{l_2}\in\lenstype[K_1\cup K_2, S_1\cup S_2, L]{C_1 \cup C_2}{T_1 \cup T_2}}
 
 \begin{align*}
@@ -402,6 +403,20 @@ that.
 For $K^*$ to make any sense, must have $\rhd\in K$ and the application of
 $(l^*).\nparse$ must return $\rhd$ for all except at most one application.
 
+\section{Regular expressions and languages}
+
+For type checking, we need to compute the following properties of regular
+languages $R, R_1, R_2$
+\begin{itemize}
+\item decide unamibuguous concatenation $\uaconc{R_1}{R_2}$ and compute
+  $\conc{R_1}{R_2}$
+\item decide unambiguous iteration $\uastar{R}$ and compute $R^*$
+\item disjointness $R_1 \cap R_2 = \emptyset$ (we don't need general
+  intersection, though I don't know of a quicker way to decide
+  disjointness)
+\item compute the regular language $R = \reglang{E}$ for a regular
+  expression $E\in\Regexp$
+\end{itemize}
 \end{document}
 
 %% TeX-parse-self: t
