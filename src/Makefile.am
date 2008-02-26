@@ -22,7 +22,7 @@ augtool_SOURCES = augtool.c
 augtool_LDADD = libaugeas.la $(READLINE_LIBS)
 
 liblexer_la_SOURCES = spec-lex.l
-liblexer_la_CFLAGS = $(AM_CFLAGS) -Wno-unused-parameter -Wno-unused-function
+liblexer_la_CFLAGS = $(AM_CFLAGS) -Wno-error
 
 augparse_SOURCES = augparse.c
 augparse_LDADD = libaugeas.la
