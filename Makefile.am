@@ -2,9 +2,14 @@ SUBDIRS=src tests
 
 AUGFILES=$(wildcard spec/*.aug)
 
-data_DATA=$(AUGFILES)
+lensdir=$(DESTDIR)$(datadir)/augeas/lenses
 
-EXTRA_DIST=doc/lenses.tex $(AUGFILES)
+dist_lens_DATA=$(AUGFILES)
+
+EXTRA_DIST=doc/lenses.tex
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = augeas.pc
 
 distclean-local:
 	-rm -rf $(top_builddir)/build

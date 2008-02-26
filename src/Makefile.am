@@ -10,6 +10,8 @@ noinst_LTLIBRARIES = liblexer.la
 
 bin_PROGRAMS = augtool augparse
 
+include_HEADERS = augeas.h
+
 libaugeas_la_SOURCES = augeas.h augeas.c config.h \
 	internal.h internal.c \
 	prov_spec.c spec-parse.y ast.h ast.c parser.c put.c list.h

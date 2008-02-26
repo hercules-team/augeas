@@ -23,4 +23,5 @@ AC_SUBST(AUGTOOL_LIBS)
 
 AC_OUTPUT(Makefile 
           src/Makefile
-          tests/Makefile)
+          tests/Makefile
+          augeas.pc)
