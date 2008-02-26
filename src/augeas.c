@@ -380,7 +380,7 @@ int aug_ls(const char *path, const char ***children) {
     int i = 0;
     list_for_each(l, tl) {
         list_for_each(t, l->children->children) {
-            while (t->label == NULL) t = t->next;
+            while (t != NULL && t->label == NULL) t = t->next;
             if (t == NULL) break;
             int exists = 0;
             for (int j=0; j < i; j++) {
