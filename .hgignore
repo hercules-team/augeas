@@ -1,4 +1,5 @@
 .*~$
+^augeas\.(pc|spec)$
 ^build/
 ^aclocal\.m4$
 ^autom4te\.cache/
@@ -9,10 +10,14 @@ Makefile(\.in)?$
 ^install-sh$
 ^ltmain.sh$
 ^missing$
-^src/\.(deps|libs)/
+/\.(deps|libs)/
 \.l?[oa]$
 TAGS$
 ^libtool$
 ^ylwrap$
 ^src/spec-(parse|lex)\.[ch]$
 \.(aux|dvi|log|pdf)$
+
+# Some local stuff
+lenses/
+misc/
