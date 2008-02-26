@@ -19,4 +19,4 @@ AUGEAS_CHECK_READLINE
 AC_OUTPUT(Makefile 
           src/Makefile
           tests/Makefile
-          augeas.pc)
+          augeas.pc augeas.spec)

@@ -1,0 +1,71 @@
+Name:           augeas
+Version:        @VERSION@
+Release:        1%{?dist}
+Summary:        A library for changing configuration files
+
+Group:          System Environment/Libraries
+License:        LGPLv2+
+URL:            http://augeas.net/
+Source0:        http://augeas.net/download/augeas-@VERSION@.tar.gz
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+
+BuildRequires:  readline-devel
+Requires:       readline
+
+%description
+A library for programmatically editing configuration files. Augeas parses
+configuration files into a tree structure, which it exposes through its
+public API. Changes made through the API are written back to the initially
+read files.
+
+The transformation works very hard to preserve comments and formatting
+details. It is controlled by ``lens'' definitions that describe the file
+format and the transformation into a tree.
+
+%package        devel
+Summary:        Development files for %{name}
+Group:          Development/Libraries
+Requires:       %{name} = %{version}-%{release}
+
+%description    devel
+The %{name}-devel package contains libraries and header files for
+developing applications that use %{name}.
+
+
+%prep
+%setup -q
+
+%build
+%configure --disable-static
+make %{?_smp_mflags}
+
+%install
+rm -rf $RPM_BUILD_ROOT
+make install DESTDIR=$RPM_BUILD_ROOT
+find $RPM_BUILD_ROOT -name '*.la' -exec rm -f {} ';'
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%post -p /sbin/ldconfig
+
+%postun -p /sbin/ldconfig
+
+%files
+%defattr(-,root,root,-)
+%{_bindir}/augtool
+%{_bindir}/augparse
+%{_libdir}/*.so.*
+%{_datadir}/augeas
+%doc AUTHORS COPYING NEWS
+
+%files devel
+%defattr(-,root,root,-)
+%doc
+%{_includedir}/*
+%{_libdir}/*.so
+%{_libdir}/pkgconfig/augeas.pc
+
+%changelog
+* Mon Feb 25 2008 David Lutterkort <dlutter@redhat.com> - 0.0.4-1
+- Initial specfile
