@@ -126,6 +126,8 @@ static void print_skel(struct skel *skel) {
     }
 }
 
+// DICT_DUMP is only used for debugging
+#ifdef DICT_DUMP
 static void print_dict(struct dict *dict, int indent) {
     list_for_each(d, dict) {
         printf("%*s%s:\n", indent, "", d->key);
@@ -137,7 +139,7 @@ static void print_dict(struct dict *dict, int indent) {
         }
     }
 }
-
+#endif
 
 static struct dict *dict_append(struct dict *d1, struct dict *d2) {
     if (d1 == NULL) {
