@@ -1,3 +1,14 @@
+0.0.4 - 2008-02-25
+  - package as RPM and make sure Augeas can be build on Fedora/RHEL
+
+0.0.3 - 2008-02-25
+  - further rework; file processing now resembles Boomerang lenses much
+    more closely
+  - major revamp of the internal tree representation (ordered tree where
+    multiple children can have the same label, including NULL labels)
+  - move away from LL(1) parsing in favor of regular languages, since they
+    enable much better ahead-of-time checks (which are not implemented yet)
+
 0.0.2 - 2008-01-29:
   - completely reworked
   - processing of files is now based on a textual description of the
