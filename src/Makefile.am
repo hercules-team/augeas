@@ -19,7 +19,7 @@ libaugeas_la_SOURCES = augeas.h augeas.c config.h \
 libaugeas_la_LIBADD = liblexer.la
 
 augtool_SOURCES = augtool.c
-augtool_LDADD = libaugeas.la $(AUGTOOL_LIBS)
+augtool_LDADD = libaugeas.la $(READLINE_LIBS)
 
 liblexer_la_SOURCES = spec-lex.l
 liblexer_la_CFLAGS = $(AM_CFLAGS) -Wno-unused-parameter -Wno-unused-function
