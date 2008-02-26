@@ -169,8 +169,8 @@ static void cmd_help(ATTRIBUTE_UNUSED char *args[]) {
     }
     printf("\nEnvironment:\n\n");
     printf("    AUGEAS_ROOT\n        the file system root, defaults to '/'\n\n");
-    printf("    AUGEAS_SPECLIB\n        colon separated list of directories with spec files,\n\
-        defaults to " AUGEAS_SPEC_DIR "\n\n");
+    printf("    AUGEAS_LENS_LIB\n        colon separated list of directories with lenses,\n\
+        defaults to " AUGEAS_LENS_DIR "\n\n");
 }
 
 static int chk_args(const char *cmd, int n, char *args[]) {

@@ -38,11 +38,11 @@
 #define AUGEAS_META_ROOT AUGEAS_META_TREE "/root"
 
 /* Where the default spec files live. */
-#define AUGEAS_SPEC_DIR "/usr/share/augeas/spec"
+#define AUGEAS_LENS_DIR "/usr/share/augeas/lenses"
 
 /* Name of env var that contains list of paths to search for additional
    spec files */
-#define AUGEAS_SPEC_ENV "AUGEAS_SPECLIB"
+#define AUGEAS_LENS_ENV "AUGEAS_LENS_LIB"
 
 /* Fairly arbitrary bound on the length of the path we
    accept from AUGEAS_SPEC_ENV */

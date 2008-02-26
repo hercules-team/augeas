@@ -97,22 +97,22 @@ static int ftw_load_cb(const char *fpath,
 }
 
 /* Read spec files and parse maps/grammars into augp_spec_data. Spec files
- * are read from AUGEAS_SPEC_DIR (usually /usr/share/augeas/spec) and from
- * any directory mentioned on the env var AUGEAS_SPECLIB
+ * are read from AUGEAS_LENS_DIR and from any directory mentioned on the
+ * env var AUGEAS_LENS_LIB
  */
 int augp_spec_init(void) {
     int r;
     char *env, *path, *p;
-    
-    r = ftw(AUGEAS_SPEC_DIR, ftw_load_cb, MAX_DESCRIPTORS);
+
+    r = ftw(AUGEAS_LENS_DIR, ftw_load_cb, MAX_DESCRIPTORS);
     if (r == -1) {
         if (errno != EACCES && errno != ENOENT) {
             fprintf(stderr, "Ignoring failure of walk of %s.\n"
                     "  Reason was: %s\n",
-                    AUGEAS_SPEC_DIR, strerror(errno));
+                    AUGEAS_LENS_DIR, strerror(errno));
         }
     }
-    
+
     /* We report the root dir in AUGEAS_META_ROOT, but we only use the
        value we store internally, to avoid any problems with
        AUGEAS_META_ROOT getting changed. To make the tree entry the
@@ -123,8 +123,8 @@ int augp_spec_init(void) {
         augp_spec_data.root = env;
     }
     aug_set(AUGEAS_META_ROOT, augp_spec_data.root);
-    
-    env = getenv(AUGEAS_SPEC_ENV);
+
+    env = getenv(AUGEAS_LENS_ENV);
     if (env != NULL) {
         env = strndup(env, MAX_ENV_SIZE);
         path = env;

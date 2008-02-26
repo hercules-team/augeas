@@ -25,10 +25,10 @@ TEST_DIR=File::join(TOP_SRCDIR, "tests")
 
 AUGTOOL="#{TOP_BUILDDIR}/src/augtool"
 AUGEAS_ROOT=File::join(TOP_BUILDDIR, "build", "augtest")
-AUGEAS_SPECLIB=File::join(TOP_SRCDIR, "spec")
+AUGEAS_LENS_LIB=File::join(TOP_SRCDIR, "spec")
 
 ENV["AUGEAS_ROOT"] = AUGEAS_ROOT
-ENV["AUGEAS_SPECLIB"] = AUGEAS_SPECLIB
+ENV["AUGEAS_LENS_LIB"] = AUGEAS_LENS_LIB
 
 args=ARGV
 if args.size == 0
