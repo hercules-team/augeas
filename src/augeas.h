@@ -63,9 +63,12 @@ int aug_ls(const char *path, const char ***children);
  */
 int aug_match(const char *pattern, const char **matches, int size);
 
-/* Write all pending changes to disk */
+/* Write all pending changes to disk. Return -1 if an error is encountered,
+ * 0 on success.
+ */
 int aug_save(void);
 
+/* Print the subtree starting at PATH to OUT */
 void aug_print(FILE *out, const char *path);
 
 #endif
