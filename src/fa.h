@@ -1,0 +1,106 @@
+/*
+ * fa.h: finite automata
+ *
+ * Copyright (C) 2007 Red Hat Inc.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+ *
+ * Author: David Lutterkort <dlutter@redhat.com>
+ */
+
+#ifndef __FA_H
+#define __FA_H
+
+#include <stdio.h>
+#include <regex.h>
+
+/* The type for an finit automaton. */
+typedef struct fa *fa_t;
+
+/* Unless otherwise mentioned, automata passed into routines are never
+ * modified. It is the responsibility of the caller to free automata
+ * returned by any of these routines when they are no longer needed.
+ */
+
+/*
+ * Compile the regular expression RE into an automaton. The return value is
+ * the same as the return value for the POSIX function regcomp. The syntax
+ * for regular expressions is extended POSIX syntax, with the difference
+ * that '.' does not match newlines.
+ *
+ * On success, FA points to the newly allocated automaton constructed for
+ * RE, and the function returns REG_NOERROR. Otherwise, FA is NULL, and the
+ * return value indicates the error.
+ */
+int fa_compile(const char *re, fa_t *fa);
+
+/* Minimize FA using Brzozowski's algorithm. As a side-effect, the
+ * automaton will also be deterministic after being minimized. Modifies the
+ * automaton in place.
+ */
+void fa_minimize(fa_t fa);
+
+/* Return a finite automaton that accepts the concatenation of the
+ * languages for FA1 and FA2, i.e. L(FA1).L(FA2)
+ */
+fa_t fa_concat(fa_t fa1, fa_t fa2);
+
+/* Not implemented yet */
+//int fa_ua_concat(fa_t fa1, fa_t fa2);
+
+/* Return a finite automaton that accepts the union of the languages that
+ * FA1 and FA2 accept (the '|' operator in regular expressions).
+ */
+fa_t fa_union(fa_t fa1, fa_t fa2);
+
+/* Return a finite automaton that accepts a repetition of the language that
+ * FA accepts. If MAX == -1, the returned automaton accepts arbitrarily
+ * long repetitions. MIN must be 0 or bigger, and unless MAX == -1, MIN
+ * must be less or equal to MAX. If MIN is greater than 0, the returned
+ * automaton accepts only words that have at least MIN repetitions of words
+ * from L(FA).
+ *
+ * The following common regexp repetitios are achieved by the following
+ * calls (using a lose notation equating automata and their languages):
+ *
+ * - FA* = FA_ITER(FA, 0, -1)
+ * - FA+ = FA_ITER(FA, 1, -1)
+ * - FA? = FA_ITER(FA, 0, 1)
+ * - FA{n,m} = FA_ITER(FA, n, m) with 0 <= n and m = -1 or n <= m
+ */
+fa_t fa_iter(fa_t fa, int min, int max);
+
+/* Not implemented yet */
+//int fa_ua_iter(fa_t fa);
+
+/* Not implemented yet */
+//int fa_disjoint(fa_t fa1, fa_t fa2);
+
+/* Free all memory used by FA */
+void fa_free(fa_t fa);
+
+/* Print FA to OUT as a graphviz dot file */
+void fa_dot(FILE *out, fa_t fa);
+#endif
+
+
+/*
+ * Local variables:
+ *  indent-tabs-mode: nil
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  tab-width: 4
+ * End:
+ */

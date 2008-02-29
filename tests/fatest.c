@@ -1,0 +1,135 @@
+/*
+ * fatest.c: 
+ *
+ * Copyright (C) 2007 Red Hat Inc.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+ *
+ * Author: David Lutterkort <dlutter@redhat.com>
+ */
+
+#include "fa.h"
+#include "cutest.h"
+#include <stdio.h>
+#include <stdlib.h>
+
+#define FA_DOT_DIR "FA_DOT_DIR"
+
+static void testBadRegexps(CuTest *tc) {
+    fa_t fa;
+    int r;
+
+    r = fa_compile("(x", &fa);
+    CuAssertIntEquals(tc, REG_EPAREN, r);
+    CuAssertPtrEquals(tc, NULL, fa);
+
+    r = fa_compile("a{5,3}", &fa);
+    CuAssertIntEquals(tc, REG_BADBR, r);
+    CuAssertPtrEquals(tc, NULL, fa);
+
+}
+
+/* Stress test, mostly good to check that allocation works */
+static void testMonster(CuTest *tc) {
+#define WORD "[a-zA-Z_0-9]+"
+#define CWS  "([ \\n\\t]+|\\/\\*([^\\*]|\\*[^\\/])*\\*\\/)*"
+#define QUOTED "\"[^\"]*\""
+#define ELT    "\\(" WORD "(," CWS WORD "){3}\\)"
+
+    static const char *const monster = 
+        "(" WORD "|" QUOTED "|" "\\(" CWS ELT  "(," CWS ELT ")*" CWS "\\))";
+
+#undef ELT
+#undef QUOTED
+#undef CWS
+#undef WORD
+
+    fa_t fa;
+    int r;
+
+    r = fa_compile(monster, &fa);
+    CuAssertIntEquals(tc, REG_NOERROR, r);
+    fa_free(fa);
+}
+
+// Check that fa_build("[^-x-]") does the right thing
+
+static void dot(struct fa *fa, int i) {
+    FILE *fp;
+    const char *dot_dir;
+    char *fname;
+    int r;
+
+    if ((dot_dir = getenv(FA_DOT_DIR)) == NULL)
+        return;
+
+    r = asprintf(&fname, "%s/fa_test_%02d.dot", dot_dir, i);
+    if (r == -1)
+        return;
+
+    if ((fp = fopen(fname, "w")) == NULL) {
+        free(fname);
+        return;
+    }
+
+    fa_dot(fp, fa);
+    fclose(fp);
+
+    free(fname);
+}
+
+int main(int argc, __attribute__((unused)) char **argv) {
+    if (argc == 1) {
+        char *output = NULL;
+        CuSuite* suite = CuSuiteNew();
+        CuSuiteSetup(suite, NULL, NULL);
+
+        SUITE_ADD_TEST(suite, testBadRegexps);
+        SUITE_ADD_TEST(suite, testMonster);
+
+        CuSuiteRun(suite);
+        CuSuiteSummary(suite, &output);
+        CuSuiteDetails(suite, &output);
+        printf("%s\n", output);
+        free(output);
+        return suite->failCount;
+    }
+
+    for (int i=1; i<argc; i++) {
+        fa_t fa;
+        int r;
+        if ((r = fa_compile(argv[i], &fa)) != REG_NOERROR) {
+            size_t size;
+            char *errbuf;
+            size = regerror(r, NULL, NULL, 0);
+            errbuf = alloca(size);
+            regerror(r, NULL, errbuf, size);
+            fprintf(stderr, "Error building fa from %s:\n", argv[i]);
+            fprintf(stderr, "  %s\n", errbuf);
+        } else {
+            dot(fa, i);
+            fa_free(fa);
+        }
+    }
+}
+
+/*
+ * Local variables:
+ *  indent-tabs-mode: nil
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  tab-width: 4
+ * End:
+ */

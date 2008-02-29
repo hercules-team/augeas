@@ -47,6 +47,7 @@
             if (_p != NULL)                                             \
                 _p->next = elt->next;                                   \
         }                                                               \
+        (elt)->next = NULL;                                             \
     } while(0)
 
 /* Insert NEW in list LIST before element AC. NEW->next must be null,
@@ -78,6 +79,11 @@
         free((void *) _p);                                              \
     }
 
+#define list_length(len, list)                                          \
+    do {                                                                \
+        typeof(list) _p;                                                \
+        for (len=0, _p = (list); _p != NULL; len += 1, _p = _p->next);  \
+    } while(0)
 
 /*
  * Local variables:
