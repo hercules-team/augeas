@@ -27,18 +27,23 @@
 
 #define FA_DOT_DIR "FA_DOT_DIR"
 
-static void testBadRegexps(CuTest *tc) {
+static fa_t make_fa(CuTest *tc, const char *regexp, int exp_err) {
     fa_t fa;
     int r;
 
-    r = fa_compile("(x", &fa);
-    CuAssertIntEquals(tc, REG_EPAREN, r);
-    CuAssertPtrEquals(tc, NULL, fa);
+    r = fa_compile(regexp, &fa);
+    CuAssertIntEquals(tc, exp_err, r);
+    if (exp_err == REG_NOERROR) {
+        CuAssertPtrNotNull(tc, fa);
+    } else {
+        CuAssertPtrEquals(tc, NULL, fa);
+    }
+    return fa;
+}
 
-    r = fa_compile("a{5,3}", &fa);
-    CuAssertIntEquals(tc, REG_BADBR, r);
-    CuAssertPtrEquals(tc, NULL, fa);
-
+static void testBadRegexps(CuTest *tc) {
+    make_fa(tc, "(x", REG_EPAREN);
+    make_fa(tc, "a{5,3}", REG_BADBR);
 }
 
 /* Stress test, mostly good to check that allocation works */
@@ -57,11 +62,32 @@ static void testMonster(CuTest *tc) {
 #undef WORD
 
     fa_t fa;
-    int r;
 
-    r = fa_compile(monster, &fa);
-    CuAssertIntEquals(tc, REG_NOERROR, r);
+    fa = make_fa(tc, monster, REG_NOERROR);
     fa_free(fa);
+}
+
+static void testContains(CuTest *tc) {
+    fa_t fa1, fa2, fa3;
+
+    fa1 = make_fa(tc, "ab*", REG_NOERROR);
+    fa2 = make_fa(tc, "ab+", REG_NOERROR);
+    fa3 = make_fa(tc, "ab+c*|acc", REG_NOERROR);
+
+    CuAssertTrue(tc, fa_contains(fa1, fa1));
+    CuAssertTrue(tc, fa_contains(fa2, fa2));
+    CuAssertTrue(tc, fa_contains(fa3, fa3));
+
+    CuAssertTrue(tc, ! fa_contains(fa1, fa2));
+    CuAssertTrue(tc, fa_contains(fa2, fa1));
+    CuAssertTrue(tc, fa_contains(fa2, fa3));
+    CuAssertTrue(tc, ! fa_contains(fa3, fa2));
+    CuAssertTrue(tc, ! fa_contains(fa1, fa3));
+    CuAssertTrue(tc, ! fa_contains(fa3, fa1));
+
+    fa_free(fa1);
+    fa_free(fa2);
+    fa_free(fa3);
 }
 
 // Check that fa_build("[^-x-]") does the right thing
@@ -90,7 +116,7 @@ static void dot(struct fa *fa, int i) {
     free(fname);
 }
 
-int main(int argc, __attribute__((unused)) char **argv) {
+int main(int argc, char **argv) {
     if (argc == 1) {
         char *output = NULL;
         CuSuite* suite = CuSuiteNew();
@@ -98,6 +124,7 @@ int main(int argc, __attribute__((unused)) char **argv) {
 
         SUITE_ADD_TEST(suite, testBadRegexps);
         SUITE_ADD_TEST(suite, testMonster);
+        SUITE_ADD_TEST(suite, testContains);
 
         CuSuiteRun(suite);
         CuSuiteSummary(suite, &output);

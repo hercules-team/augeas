@@ -57,9 +57,6 @@ void fa_minimize(fa_t fa);
  */
 fa_t fa_concat(fa_t fa1, fa_t fa2);
 
-/* Not implemented yet */
-//int fa_ua_concat(fa_t fa1, fa_t fa2);
-
 /* Return a finite automaton that accepts the union of the languages that
  * FA1 and FA2 accept (the '|' operator in regular expressions).
  */
@@ -82,17 +79,29 @@ fa_t fa_union(fa_t fa1, fa_t fa2);
  */
 fa_t fa_iter(fa_t fa, int min, int max);
 
-/* Not implemented yet */
-//int fa_ua_iter(fa_t fa);
+/* Return 1 if the language of FA1 is contained in the language of FA2, 0
+ * otherwise.
+ */
+int fa_contains(fa_t fa1, fa_t fa2);
 
-/* Not implemented yet */
-//int fa_disjoint(fa_t fa1, fa_t fa2);
+/* Return 1 if the language of FA1 equals the language of FA2 */
+int fa_equals(fa_t fa1, fa_t fa2);
 
 /* Free all memory used by FA */
 void fa_free(fa_t fa);
 
 /* Print FA to OUT as a graphviz dot file */
 void fa_dot(FILE *out, fa_t fa);
+
+/* Not implemented yet */
+//int fa_ua_concat(fa_t fa1, fa_t fa2);
+
+/* Not implemented yet */
+//int fa_ua_iter(fa_t fa);
+
+/* Not implemented yet */
+//int fa_disjoint(fa_t fa1, fa_t fa2);
+
 #endif
 
 

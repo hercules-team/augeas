@@ -44,7 +44,8 @@
  */
 struct fa {
     struct fa_state *initial;
-    int              deterministic;
+    int              deterministic : 1;
+    int              minimal : 1;
 };
 
 /* A state in a finite automaton. Transitions are never shared between
@@ -237,6 +238,7 @@ static struct fa *fa_clone(struct fa *fa) {
 
     CALLOC(result, 1);
     result->deterministic = fa->deterministic;
+    result->minimal = fa->minimal;
     list_for_each(s, fa->initial) {
         struct fa_map *pair;
         CALLOC(pair, 1);
@@ -328,7 +330,7 @@ static void fa_merge(struct fa *fa1, struct fa *fa2) {
 /*
  * Operations in an FA_MAP
  */
-static struct fa_map *fa_map_append(struct fa_map *map, 
+static struct fa_map *fa_map_append(struct fa_map *map,
                                     struct fa_state *fst,
                                     struct fa_state *snd,
                                     struct fa_trans *trans) {
@@ -363,6 +365,15 @@ static struct fa_map *fa_map_find_fst(struct fa_map *map,
         map = map->next;
     }
     return NULL;
+}
+
+static int fa_map_contains(struct fa_map *map, struct fa_state *fst,
+                           struct fa_state *snd) {
+    list_for_each(m, map) {
+        if (m->fst == fst && m->snd == snd)
+            return 1;
+    }
+    return 0;
 }
 
 /*
@@ -494,6 +505,7 @@ static struct fa_map *fa_reverse(struct fa *fa) {
     }
 
     fa->deterministic = 0;
+    fa->minimal = 0;
     list_free(states);
 
     return accept;
@@ -647,7 +659,7 @@ static void remove_unreachable_states(struct fa *fa) {
 }
 
 /* Compare transitions lexicographically by (to, min, reverse max) */
-static int transcmp(const void *v1, const void *v2) {
+static int trans_to_cmp(const void *v1, const void *v2) {
     const struct fa_trans *t1 = * (struct fa_trans **) v1;
     const struct fa_trans *t2 = * (struct fa_trans **) v2;
 
@@ -663,7 +675,26 @@ static int transcmp(const void *v1, const void *v2) {
     return (t1->max < t2->max) ? 1 : 0;
 }
 
-/* 
+/* Compare transitions lexicographically by (min, reverse max, to) */
+static int trans_intv_cmp(const void *v1, const void *v2) {
+    const struct fa_trans *t1 = * (struct fa_trans **) v1;
+    const struct fa_trans *t2 = * (struct fa_trans **) v2;
+
+    if (t1->min < t2->min)
+        return -1;
+    if (t1->min > t2->min)
+        return 1;
+    if (t1->max > t2->max)
+        return -1;
+    if (t1->max < t2->max)
+        return 1;
+    if (t1->to != t2->to) {
+        return (t1->to < t2->to) ? -1 : 1;
+    }
+    return 0;
+}
+
+/*
  * Reduce an automaton by combining overlapping and adjacent edge intervals
  * with the same destination. Unreachable states are also removed from the
  * list of states.
@@ -684,7 +715,7 @@ static void reduce(struct fa *fa) {
         for (i=0, t = s->transitions; i < ntrans; i++, t = t->next)
             trans[i] = t;
 
-        qsort(trans, ntrans, sizeof(*trans), transcmp);
+        qsort(trans, ntrans, sizeof(*trans), trans_to_cmp);
         t = trans[0];
         t->next = NULL;
         s->transitions = t;
@@ -759,13 +790,19 @@ static void swap_initial(struct fa *fa) {
 
 /*
  * Make a finite automaton deterministic using the given set of initial
- * states, using the subset construction
+ * states with the subset construction. This also eliminates dead states
+ * and transitions and reduces and orders the transitions for each state
  */
 static void determinize(struct fa *fa, struct fa_map *ini) {
     int npoints;
+    int make_ini = (ini == NULL);
     const char *points = start_points(fa, &npoints);
     struct fa_set_map *newstate;
     struct fa_set_map *worklist;
+
+    if (make_ini) {
+        ini = fa_map_append(NULL, fa->initial, NULL, NULL);
+    }
 
     /* Data structures are a big headache here since we deal with sets of
      * states. We represent a set of states as a list of FA_MAP, where only
@@ -816,7 +853,7 @@ static void determinize(struct fa *fa, struct fa_map *ini) {
     fa->deterministic = 1;
 
     list_for_each(ns, newstate) {
-        if (ns->set != ini)
+        if (make_ini || ns->set != ini)
             list_free(ns->set);
     }
     list_free(newstate);
@@ -825,10 +862,14 @@ static void determinize(struct fa *fa, struct fa_map *ini) {
 }
 
 /*
- * Minimization
+ * Minimization. As a sideeffect of minimization, the transitions are
+ * reduced and ordered.
  */
 void fa_minimize(struct fa *fa) {
     struct fa_map *map;
+
+    if (fa->minimal)
+        return;
 
     /* Minimize using Brzozowski's algorithm */
     map = fa_reverse(fa);
@@ -838,6 +879,7 @@ void fa_minimize(struct fa *fa) {
     map = fa_reverse(fa);
     determinize(fa, map);
     list_free(map);
+    fa->minimal = 1;
 }
 
 /*
@@ -848,12 +890,15 @@ static struct fa *fa_make_empty(void) {
     struct fa_state *s = make_state(0);
     struct fa *fa = make_fa(s);
     fa->deterministic = 1;
+    fa->minimal = 1;
     return fa;
 }
 
 static struct fa *fa_make_epsilon(void) {
     struct fa *fa = fa_make_empty();
     fa->initial->accept = 1;
+    fa->deterministic= 1;
+    fa->minimal = 1;
     return fa;
 }
 
@@ -867,7 +912,7 @@ struct fa *fa_union(struct fa *fa1, struct fa *fa2) {
     add_epsilon_trans(s, fa2->initial);
 
     fa1->deterministic = 0;
-
+    fa1->minimal = 0;
     fa_merge(fa1, fa2);
 
     set_initial(fa1, s);
@@ -888,6 +933,7 @@ struct fa *fa_concat(struct fa *fa1, struct fa *fa2) {
     }
 
     fa1->deterministic = 0;
+    fa1->minimal = 0;
     fa_merge(fa1, fa2);
 
     fa_minimize(fa1);
@@ -912,6 +958,7 @@ static struct fa *fa_char_range(char min, char max, int negate) {
     }
 
     fa->deterministic = 1;
+    fa->minimal = 1;
     return fa;
 }
 
@@ -926,6 +973,7 @@ static struct fa *fa_star(struct fa *fa) {
     }
     set_initial(fa, s);
     fa->deterministic = 0;
+    fa->minimal = 0;
 
     fa_minimize(fa);
     return fa;
@@ -985,11 +1033,93 @@ struct fa *fa_iter(struct fa *fa, int min, int max) {
             }
             fa_merge(cfa, cfa2);
             cfa->deterministic = 0;
+            cfa->minimal = 0;
 
             fa_minimize(cfa);
         }
         return cfa;
     }
+}
+
+static void sort_transition_intervals(struct fa *fa) {
+    struct fa_trans **trans = NULL;
+
+    list_for_each(s, fa->initial) {
+        int ntrans, i;
+        struct fa_trans *t;
+
+        if (s->transitions == NULL)
+            continue;
+
+        list_length(ntrans, s->transitions);
+
+        REALLOC(trans, ntrans);
+
+        for (i=0, t = s->transitions; i < ntrans; i++, t = t->next)
+            trans[i] = t;
+
+        qsort(trans, ntrans, sizeof(*trans), trans_intv_cmp);
+
+        s->transitions = trans[0];
+        for (i=1; i < ntrans; i++)
+            trans[i-1]->next = trans[i];
+        trans[ntrans-1]->next = NULL;
+    }
+    free(trans);
+}
+
+int fa_contains(fa_t fa1, fa_t fa2) {
+    int result = 0;
+    struct fa_map *worklist;
+    struct fa_map *visited;
+
+    determinize(fa1, NULL);
+    determinize(fa2, NULL);
+    sort_transition_intervals(fa1);
+    sort_transition_intervals(fa2);
+
+    worklist = fa_map_append(NULL, fa1->initial, fa2->initial, NULL);
+    visited  = fa_map_append(NULL, fa1->initial, fa2->initial, NULL);
+    while (worklist != NULL) {
+        struct fa_state *p1 = worklist->fst;
+        struct fa_state *p2 = worklist->snd;
+        worklist = fa_map_pop(worklist);
+
+        if (p1->accept && !p2->accept)
+            goto done;
+
+        struct fa_trans *t2 = p2->transitions;
+        list_for_each(t1, p1->transitions) {
+            /* Find transition(s) from P2 whose interval contains that of
+               T1. There can be several transitions from P2 that together
+               cover T1's interval */
+            int min = t1->min, max = t1->max;
+            while (min <= max && t2 != NULL && t2->min <= max) {
+                while (t2 != NULL && (min < t2->min))
+                    t2 = t2->next;
+                if (t2 == NULL)
+                    goto done;
+                min = (t2->max == CHAR_MAX) ? max+1 : t2->max + 1;
+                if (! fa_map_contains(visited, t1->to, t2->to)) {
+                    worklist = fa_map_append(worklist, t1->to, t2->to, NULL);
+                    visited  = fa_map_append(visited, t1->to, t2->to, NULL);
+                }
+                t2 = t2->next;
+            }
+            if (min <= max)
+                goto done;
+        }
+    }
+
+    result = 1;
+ done:
+    list_free(worklist);
+    list_free(visited);
+    return result;
+}
+
+int fa_equals(fa_t fa1, fa_t fa2) {
+    return fa_contains(fa1, fa2) && fa_contains(fa2, fa1);
 }
 
 /*
@@ -999,7 +1129,7 @@ static struct fa *fa_from_re(struct re *re) {
     struct fa *result = NULL;
 
     switch(re->type) {
-    case UNION: 
+    case UNION:
         {
             struct fa *fa1 = fa_from_re(re->exp1);
             struct fa *fa2 = fa_from_re(re->exp2);
@@ -1334,7 +1464,7 @@ void fa_dot(FILE *out, struct fa *fa) {
     }
     fprintf(out, "%s -> \"%p\";\n", fa->deterministic ? "dfa" : "nfa", 
             fa->initial);
-    
+
     list_for_each(s, fa->initial) {
         list_for_each(t, s->transitions) {
             fprintf(out, "\"%p\" -> \"%p\" [ label = \"", s, t->to);
