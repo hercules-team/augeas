@@ -146,6 +146,13 @@ struct fa_set_map {
 
 static struct re *parse_regexp(const char **regexp, int *error);
 
+/* Clean up FA by removing dead transitions and states and reducing
+ * transitions. Unreachable states are freed. The return value is the same
+ * as FA; returning it is merely a convenience.
+ *
+ * Only automata in this state should be returned to the user
+ */
+static struct fa *cleanup(struct fa *fa);
 
 /* Print an FA into a (fairly) fixed file if the environment variable
  * FA_DOT_DIR is set. This code is only used for debugging
@@ -783,6 +790,11 @@ static void remove_dead_transitions(struct fa *fa) {
     reduce(fa);
 }
 
+static struct fa *cleanup(struct fa *fa) {
+    remove_dead_transitions(fa);
+    return fa;
+}
+
 static void swap_initial(struct fa *fa) {
     struct fa_state *s = fa->initial;
     if (s->next != NULL) {
@@ -800,10 +812,14 @@ static void swap_initial(struct fa *fa) {
 static void determinize(struct fa *fa, struct fa_map *ini) {
     int npoints;
     int make_ini = (ini == NULL);
-    const char *points = start_points(fa, &npoints);
+    const char *points = NULL;
     struct fa_set_map *newstate;
     struct fa_set_map *worklist;
 
+    if (fa->deterministic)
+        return;
+
+    points = start_points(fa, &npoints);
     if (make_ini) {
         ini = fa_map_push(NULL, fa->initial, NULL, NULL);
     }
@@ -921,8 +937,7 @@ struct fa *fa_union(struct fa *fa1, struct fa *fa2) {
 
     set_initial(fa1, s);
 
-    fa_minimize(fa1);
-    return fa1;
+    return cleanup(fa1);
 }
 
 struct fa *fa_concat(struct fa *fa1, struct fa *fa2) {
@@ -940,8 +955,7 @@ struct fa *fa_concat(struct fa *fa1, struct fa *fa2) {
     fa1->minimal = 0;
     fa_merge(fa1, fa2);
 
-    fa_minimize(fa1);
-    return fa1;
+    return cleanup(fa1);
 }
 
 static struct fa *fa_char_range(char min, char max, int negate) {
@@ -979,8 +993,7 @@ static struct fa *fa_star(struct fa *fa) {
     fa->deterministic = 0;
     fa->minimal = 0;
 
-    fa_minimize(fa);
-    return fa;
+    return cleanup(fa);
 }
 
 struct fa *fa_iter(struct fa *fa, int min, int max) {
@@ -1038,10 +1051,8 @@ struct fa *fa_iter(struct fa *fa, int min, int max) {
             fa_merge(cfa, cfa2);
             cfa->deterministic = 0;
             cfa->minimal = 0;
-
-            fa_minimize(cfa);
         }
-        return cfa;
+        return cleanup(cfa);
     }
 }
 
@@ -1197,6 +1208,7 @@ int fa_compile(const char *regexp, struct fa **fa) {
     *fa = fa_from_re(re);
     re_free(re);
 
+    fa_minimize(*fa);
     return ret;
 }
 
