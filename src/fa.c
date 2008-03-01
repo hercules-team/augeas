@@ -245,8 +245,12 @@ static struct fa *fa_clone(struct fa *fa) {
         pair->fst = s;
         CALLOC(pair->snd, 1);
         pair->snd->accept = s->accept;
-        list_append(state_map, pair);
-        list_append(result->initial, pair->snd);
+        list_cons(state_map, pair);
+        if (result->initial == NULL) {
+            result->initial = pair->snd;
+        } else {
+            list_cons(result->initial->next, pair->snd);
+        }
     }
     list_for_each(s, fa->initial) {
         struct fa_state *sc;
@@ -258,7 +262,7 @@ static struct fa *fa_clone(struct fa *fa) {
             tc->to = map_get(state_map, t->to);
             tc->min = t->min;
             tc->max = t->max;
-            list_append(sc->transitions, tc);
+            list_cons(sc->transitions, tc);
         }
     }
     list_free(state_map);
@@ -293,7 +297,7 @@ static struct fa_trans *add_new_trans(struct fa_state *from,
                                       struct fa_state *to,
                                       char min, char max) {
     struct fa_trans *trans = make_trans(to, min, max);
-    list_append(from->transitions, trans);
+    list_cons(from->transitions, trans);
     return trans;
 }
 
@@ -310,7 +314,7 @@ static void add_epsilon_trans(struct fa_state *from,
                               struct fa_state *to) {
     from->accept |= to->accept;
     list_for_each(t, to->transitions) {
-        list_append(from->transitions, clone_trans(t));
+        list_cons(from->transitions, clone_trans(t));
     }
 }
 
@@ -330,7 +334,7 @@ static void fa_merge(struct fa *fa1, struct fa *fa2) {
 /*
  * Operations in an FA_MAP
  */
-static struct fa_map *fa_map_append(struct fa_map *map,
+static struct fa_map *fa_map_push(struct fa_map *map,
                                     struct fa_state *fst,
                                     struct fa_state *snd,
                                     struct fa_trans *trans) {
@@ -340,7 +344,7 @@ static struct fa_map *fa_map_append(struct fa_map *map,
     e->fst = fst;
     e->snd = snd;
     e->trans = trans;
-    list_append(map, e);
+    list_cons(map, e);
 
     return map;
 }
@@ -387,15 +391,15 @@ static struct fa_map *fa_states(struct fa *fa) {
     struct fa_map *visited = NULL;
     struct fa_map *worklist = NULL;
 
-    worklist = fa_map_append(NULL, fa->initial, NULL, NULL);
-    visited = fa_map_append(NULL, fa->initial, NULL, NULL);
+    worklist = fa_map_push(NULL, fa->initial, NULL, NULL);
+    visited = fa_map_push(NULL, fa->initial, NULL, NULL);
     while (worklist != NULL) {
         struct fa_state *s = worklist->fst;
         worklist = fa_map_pop(worklist);
         list_for_each(t, s->transitions) {
             if (! fa_map_find_fst(visited, t->to)) {
-                visited = fa_map_append(visited, t->to, NULL, NULL);
-                worklist = fa_map_append(worklist, t->to, NULL, NULL);
+                visited = fa_map_push(visited, t->to, NULL, NULL);
+                worklist = fa_map_push(worklist, t->to, NULL, NULL);
             }
         }
     }
@@ -635,7 +639,7 @@ static struct fa_map *fa_set_add(struct fa_map *set, struct fa_state *s) {
 
     CALLOC(elt, 1);
     elt->fst = s;
-    list_append(set, elt);
+    list_cons(set, elt);
     return set;
 }
 
@@ -801,7 +805,7 @@ static void determinize(struct fa *fa, struct fa_map *ini) {
     struct fa_set_map *worklist;
 
     if (make_ini) {
-        ini = fa_map_append(NULL, fa->initial, NULL, NULL);
+        ini = fa_map_push(NULL, fa->initial, NULL, NULL);
     }
 
     /* Data structures are a big headache here since we deal with sets of
@@ -1078,8 +1082,8 @@ int fa_contains(fa_t fa1, fa_t fa2) {
     sort_transition_intervals(fa1);
     sort_transition_intervals(fa2);
 
-    worklist = fa_map_append(NULL, fa1->initial, fa2->initial, NULL);
-    visited  = fa_map_append(NULL, fa1->initial, fa2->initial, NULL);
+    worklist = fa_map_push(NULL, fa1->initial, fa2->initial, NULL);
+    visited  = fa_map_push(NULL, fa1->initial, fa2->initial, NULL);
     while (worklist != NULL) {
         struct fa_state *p1 = worklist->fst;
         struct fa_state *p2 = worklist->snd;
@@ -1101,8 +1105,8 @@ int fa_contains(fa_t fa1, fa_t fa2) {
                     goto done;
                 min = (t2->max == CHAR_MAX) ? max+1 : t2->max + 1;
                 if (! fa_map_contains(visited, t1->to, t2->to)) {
-                    worklist = fa_map_append(worklist, t1->to, t2->to, NULL);
-                    visited  = fa_map_append(visited, t1->to, t2->to, NULL);
+                    worklist = fa_map_push(worklist, t1->to, t2->to, NULL);
+                    visited  = fa_map_push(visited, t1->to, t2->to, NULL);
                 }
                 t2 = t2->next;
             }

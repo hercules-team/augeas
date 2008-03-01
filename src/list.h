@@ -85,6 +85,14 @@
         for (len=0, _p = (list); _p != NULL; len += 1, _p = _p->next);  \
     } while(0)
 
+/* Make ELT the new head of LIST and set LIST to it */
+#define list_cons(list, elt)                                            \
+    do {                                                                \
+        typeof(elt) _e = (elt);                                         \
+        _e->next = (list);                                              \
+        (list) = _e;                                                    \
+    } while(0)
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil
