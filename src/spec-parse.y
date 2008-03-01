@@ -7,8 +7,10 @@
 
 #define YYDEBUG 1
 
+#pragma GCC visibility push(hidden)
 int spec_parse_file(const char *name, struct grammar **grammars,
                     struct map **maps);
+#pragma GCC visibility pop
 
 /* AST cosntruction */
 static struct abbrev *make_abbrev(const char *name, struct literal *literal,
@@ -96,7 +98,7 @@ int spec_get_lineno (yyscan_t yyscanner );
 const char *spec_get_extra (yyscan_t yyscanner );
 char *spec_get_text (yyscan_t yyscanner );
 
-void spec_error(YYLTYPE *locp, struct grammar **grammar, struct map **map,
+static void spec_error(YYLTYPE *locp, struct grammar **grammar, struct map **map,
                 yyscan_t scanner, const char *s);
 %}
 

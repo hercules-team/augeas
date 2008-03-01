@@ -26,6 +26,8 @@
 #include <regex.h>
 #include "internal.h"
 
+#pragma GCC visibility push(hidden)
+
 /*
  * Error reporting
  */
@@ -102,8 +104,11 @@ enum parse_debug_flags {
  * LOG is used to print logging messages. FLAGS controls what is printed
  * and should be a set of flags from enum parse_flags
  */
+// FIXME: Default visibility needed by augtool/augparse
+#pragma GCC visibility pop
 struct tree *parse(struct aug_file *file, const char *text, 
                    FILE *log, int flags);
+#pragma GCC visibility push(hidden)
 
 enum grammar_debug_flags {
     GF_NONE = 0,
@@ -120,8 +125,11 @@ enum grammar_debug_flags {
  * what is printed and should be a set of flags from enum
  * grammar_debug_flags
  */
+// FIXME: Default visibility needed by augtool/augparse
+#pragma GCC visibility pop
 int load_spec(const char *filename, FILE *log, int flags,
               struct grammar **grammars, struct map **map);
+#pragma GCC visibility push(hidden)
 
 enum literal_type {
     QUOTED, 
@@ -306,10 +314,15 @@ void print_literal_set(FILE *out, struct literal_set *set,
                        char begin, char end);
 
 /* Print CNT characters from TEXT. Escape newlines/tabs */
+// FIXME: Default visibility needed by augtool/augparse
+#pragma GCC visibility pop
 int print_chars(FILE *out, const char *text, int cnt);
+#pragma GCC visibility push(hidden)
 
 /* in put.c */
 void put(FILE *out, struct tree *tree, struct aug_file *file);
+
+#pragma GCC visibility pop
 
 #endif
 

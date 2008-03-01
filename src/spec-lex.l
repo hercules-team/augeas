@@ -9,6 +9,8 @@
 #include "ast.h"
 #include "spec-parse.h"
 
+#pragma GCC visibility push(hidden)
+
 #define YY_USER_ACTION \
 		yylloc->first_line = yylineno;\
 		yylloc->first_column=1;\
@@ -17,8 +19,8 @@
 
 #define YY_EXTRA_TYPE const char *
 
-int spec_get_column  (yyscan_t yyscanner);
-void spec_set_column (int  column_no , yyscan_t yyscanner);
+static int spec_get_column  (yyscan_t yyscanner);
+static void spec_set_column (int  column_no , yyscan_t yyscanner);
 int spec_init_lexer(const char *name, yyscan_t *scanner);
 
 static int to_int(const char *str) {
@@ -29,6 +31,7 @@ static int to_int(const char *str) {
   }
   return v;
 }
+#pragma GCC visibility pop
 
 %}
 
