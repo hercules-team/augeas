@@ -127,12 +127,14 @@ struct re {
  * (1) a map between states, mapping fst -> snd
  * (2) a map from states to a list of transitions, mapping fst -> trans
  * (3) a set of states in fst
+ * (4) a map of pairs of states to states (fst, snd) -> s
  */
 struct fa_map {
     struct fa_map *next;
     struct fa_state *fst;
     struct fa_state *snd;
     struct fa_trans *trans;
+    struct fa_state *s;
 };
 
 /* A map from a set of states to a state. A set is represented by an
@@ -351,6 +353,18 @@ static struct fa_map *state_pair_push(struct fa_map *map,
     return map;
 }
 
+/* Add an entry (FST, SND) at the beginning of MAP. Return the new head of
+   the MAP */
+static struct fa_map *state_triple_push(struct fa_map *map,
+                                        struct fa_state *fst,
+                                        struct fa_state *snd,
+                                        struct fa_state *s) {
+
+    map = state_pair_push(map, fst, snd);
+    map->s = s;
+    return map;
+}
+
 /* Remove the first entry from MAP and return the new head */
 static struct fa_map *fa_map_pop(struct fa_map *map) {
     struct fa_map *del;
@@ -381,14 +395,15 @@ static struct fa_map *find_fst(struct fa_map *map,
     return NULL;
 }
 
-/* Return true if MAP has an entry with the given FST and SND */
-static int find_pair(struct fa_map *map, struct fa_state *fst,
-                           struct fa_state *snd) {
+/* Return the entry from MAP that has the given FST and SND, or return NULL
+   if no such entry exists */
+static struct fa_map *find_pair(struct fa_map *map, struct fa_state *fst,
+                                struct fa_state *snd) {
     list_for_each(m, map) {
         if (m->fst == fst && m->snd == snd)
-            return 1;
+            return m;
     }
-    return 0;
+    return NULL;
 }
 
 /*
@@ -1092,6 +1107,60 @@ static void sort_transition_intervals(struct fa *fa) {
     free(trans);
 }
 
+struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
+    struct fa *fa = fa_make_empty();
+    struct fa_map *worklist;
+    struct fa_map *newstates;
+
+    determinize(fa1, NULL);
+    determinize(fa2, NULL);
+    sort_transition_intervals(fa1);
+    sort_transition_intervals(fa2);
+
+    worklist  = state_triple_push(NULL, fa1->initial, fa2->initial,
+                                  fa->initial);
+    newstates = state_triple_push(NULL, fa1->initial, fa2->initial,
+                                  fa->initial);
+    while (worklist != NULL) {
+        struct fa_state *p1 = worklist->fst;
+        struct fa_state *p2 = worklist->snd;
+        struct fa_state *s = worklist->s;
+        worklist = fa_map_pop(worklist);
+        s->accept = p1->accept && p2->accept;
+
+        struct fa_trans *t1 = p1->transitions;
+        struct fa_trans *t2 = p2->transitions;
+        while (t1 != NULL && t2 != NULL) {
+            while (t2 != NULL && t2->min <= t1->max) {
+                while (t2 != NULL && (t2->max < t1->min))
+                    t2 = t2->next;
+                if (t2 == NULL)
+                    break;
+                struct fa_map *map = find_pair(newstates, t1->to, t2->to);
+                struct fa_state *r = NULL;
+                if (map == NULL) {
+                    r = add_state(fa, 0);
+                    worklist = state_triple_push(worklist,
+                                                 t1->to, t2->to, r);
+                    newstates= state_triple_push(newstates,
+                                                 t1->to, t2->to, r);
+                } else {
+                    r = map->s;
+                }
+                char min = t1->min > t2->min ? t1->min : t2->min;
+                char max = t1->max < t2->max ? t1->max : t2->max;
+                add_new_trans(s, r, min, max);
+                t2 = t2->next;
+            }
+            t1 = t1->next;
+        }
+    }
+
+    list_free(worklist);
+    list_free(newstates);
+    return fa;
+}
+
 int fa_contains(fa_t fa1, fa_t fa2) {
     int result = 0;
     struct fa_map *worklist;  /* List of pairs of states (FST, SND) */
@@ -1124,7 +1193,7 @@ int fa_contains(fa_t fa1, fa_t fa2) {
                 if (t2 == NULL)
                     goto done;
                 min = (t2->max == CHAR_MAX) ? max+1 : t2->max + 1;
-                if (! find_pair(visited, t1->to, t2->to)) {
+                if (find_pair(visited, t1->to, t2->to) == NULL) {
                     worklist = state_pair_push(worklist, t1->to, t2->to);
                     visited  = state_pair_push(visited, t1->to, t2->to);
                 }

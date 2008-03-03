@@ -90,6 +90,21 @@ static void testContains(CuTest *tc) {
     fa_free(fa3);
 }
 
+static void testIntersect(CuTest *tc) {
+    fa_t fa1, fa2, fa;
+
+    fa1 = make_fa(tc, "[a-zA-Z]*[.:=]([0-9]|[^A-Z])*", REG_NOERROR);
+    fa2 = make_fa(tc, "[a-z][:=][0-9a-z]+", REG_NOERROR);
+    fa = fa_intersect(fa1, fa2);
+    CuAssertPtrNotNull(tc, fa);
+    CuAssertTrue(tc, fa_equals(fa, fa2));
+    CuAssertTrue(tc, ! fa_equals(fa, fa1));
+
+    fa_free(fa1);
+    fa_free(fa2);
+    fa_free(fa);
+}
+
 // Check that fa_build("[^-x-]") does the right thing
 
 static void dot(struct fa *fa, int i) {
@@ -125,6 +140,7 @@ int main(int argc, char **argv) {
         SUITE_ADD_TEST(suite, testBadRegexps);
         SUITE_ADD_TEST(suite, testMonster);
         SUITE_ADD_TEST(suite, testContains);
+        SUITE_ADD_TEST(suite, testIntersect);
 
         CuSuiteRun(suite);
         CuSuiteSummary(suite, &output);

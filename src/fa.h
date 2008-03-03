@@ -62,6 +62,11 @@ fa_t fa_concat(fa_t fa1, fa_t fa2);
  */
 fa_t fa_union(fa_t fa1, fa_t fa2);
 
+/* Return a finite automaton that accepts the intersection of the languages
+ * of FA1 and FA2.
+ */
+fa_t fa_intersect(fa_t fa1, fa_t fa2);
+
 /* Return a finite automaton that accepts a repetition of the language that
  * FA accepts. If MAX == -1, the returned automaton accepts arbitrarily
  * long repetitions. MIN must be 0 or bigger, and unless MAX == -1, MIN
