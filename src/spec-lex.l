@@ -9,8 +9,6 @@
 #include "ast.h"
 #include "spec-parse.h"
 
-#pragma GCC visibility push(hidden)
-
 #define YY_USER_ACTION \
 		yylloc->first_line = yylineno;\
 		yylloc->first_column=1;\
@@ -31,7 +29,6 @@ static int to_int(const char *str) {
   }
   return v;
 }
-#pragma GCC visibility pop
 
 %}
 

@@ -32,7 +32,6 @@
 /* Arbitrary limit on the number of fd's to use with ftw */
 #define MAX_DESCRIPTORS 10
 
-#pragma GCC visibility push(hidden)
 int augp_spec_init(void);
 int augp_spec_load(void);
 int augp_spec_save(void);
@@ -56,7 +55,6 @@ const struct aug_provider augp_spec = {
     .load = augp_spec_load,
     .save = augp_spec_save
 };
-#pragma GCC visibility pop
 
 /* Return true if TREE or any of its children is marked as dirty. The
    dirty flag is reset throughout TREE at the same time */

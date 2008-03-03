@@ -3,7 +3,7 @@ AM_CFLAGS = @AUGEAS_CFLAGS@ @WARN_CFLAGS@
 
 AM_YFLAGS=-d -p spec_
 
-EXTRA_DIST=try
+EXTRA_DIST=try augeas_sym.version
 
 lib_LTLIBRARIES = libaugeas.la libfa.la
 noinst_LTLIBRARIES = liblexer.la
@@ -15,7 +15,7 @@ include_HEADERS = augeas.h fa.h
 libaugeas_la_SOURCES = augeas.h augeas.c config.h \
 	internal.h internal.c \
 	prov_spec.c spec-parse.y ast.h ast.c parser.c put.c list.h
-
+libaugeas_la_LDFLAGS = -Wl,--version-script=$(srcdir)/augeas_sym.version
 libaugeas_la_LIBADD = liblexer.la libfa.la
 
 augtool_SOURCES = augtool.c

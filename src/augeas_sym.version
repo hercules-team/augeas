@@ -1,0 +1,23 @@
+{
+    global:
+      aug_init;
+      aug_get;
+      aug_set;
+      aug_exists;
+      aug_insert;
+      aug_rm;
+      aug_ls;
+      aug_match;
+      aug_save;
+      aug_print;
+      /* These symbols are not part of the public API; they are used by
+         augtool/augparse. They need to be cleaned up some */
+      parse;
+      load_spec;
+      print_chars;
+      pathstrip;
+      pathsplit;
+      aug_make_file;
+      aug_read_file;
+    local: *;
+};

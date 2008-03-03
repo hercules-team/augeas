@@ -40,8 +40,6 @@
 #include <ansidecl.h>
 #endif
 
-#pragma GCC visibility push(hidden)
-
 /* String equality tests, suggested by Jim Meyering. */
 #define STREQ(a,b) (strcmp((a),(b)) == 0)
 #define STRCASEEQ(a,b) (strcasecmp((a),(b)) == 0)
@@ -86,8 +84,6 @@ static inline int pathprefix(const char *p1, const char *p2) {
    first SEP. If P contains no SEP, or the next occurence of SEP in P is at
    the end of P, return NULL
 */
-// FIXME: Default visibility needed by augtool/augparse
-#pragma GCC visibility pop
 __attribute__((pure))
 static inline const char *pathstrip(const char *p) {
     const char *c = strchr(p, SEP);
@@ -98,7 +94,6 @@ static inline const char *pathstrip(const char *p) {
         return NULL;
     }
 }
-#pragma GCC visibility push(hidden)
 
 static inline int pathendswith(const char *path, const char *basenam) {
     const char *p = strrchr(path, SEP);
@@ -115,10 +110,7 @@ static inline int pathendswith(const char *path, const char *basenam) {
  *
  * If PATH can not be split, returns NULL
  */
-// FIXME: Default visibility needed by augtool/augparse
-#pragma GCC visibility pop
 char *pathsplit(const char *path);
-#pragma GCC visibility push(hidden)
 
 /* Call calloc to allocate an array of N instances of *VAR */
 #define CALLOC(Var,N) do { (Var) = calloc ((N), sizeof (*(Var))); } while (0)
@@ -188,19 +180,13 @@ struct aug_file {
 void aug_file_free(struct aug_file *af);
 
 /* Allocate a new file. NAME and NODE are dup'd */
-// FIXME: Default visibility needed by augtool/augparse
-#pragma GCC visibility pop
 struct aug_file *aug_make_file(const char *name, const char *node, 
                                struct grammar *grammar);
-#pragma GCC visibility push(hidden)
 
 /* Read the contents of file PATH and return them as one long string. The
  * caller must free the result. Return NULL if any error occurs.
  */
-// FIXME: Default visibility needed by augtool/augparse
-#pragma GCC visibility pop
 const char* aug_read_file(const char *path);
-#pragma GCC visibility push(hidden)
 
 /*
  * Provider. Should eventually be the main interface between the tree
@@ -228,8 +214,6 @@ struct tree {
 extern struct tree *aug_tree;
 struct tree *aug_tree_find(struct tree *tree, const char *path);
 int aug_tree_replace(const char *path, struct tree *sub);
-
-#pragma GCC visibility pop
 
 #endif
 

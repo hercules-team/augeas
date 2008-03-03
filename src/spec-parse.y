@@ -7,10 +7,8 @@
 
 #define YYDEBUG 1
 
-#pragma GCC visibility push(hidden)
 int spec_parse_file(const char *name, struct grammar **grammars,
                     struct map **maps);
-#pragma GCC visibility pop
 
 /* AST cosntruction */
 static struct abbrev *make_abbrev(const char *name, struct literal *literal,
