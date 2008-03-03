@@ -2,6 +2,9 @@ AUGTESTS=$(wildcard *.rb)
 
 AM_CFLAGS = @AUGEAS_CFLAGS@ @WARN_CFLAGS@
 
+valgrind: fatest
+	libtool --mode=execute valgrind --quiet --leak-check=full ./fatest
+
 EXTRA_DIST=augtest $(AUGTESTS) root \
 	   test-grammars.sh grammars
 
