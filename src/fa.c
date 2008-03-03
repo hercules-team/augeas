@@ -1158,7 +1158,7 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
 
     list_free(worklist);
     list_free(newstates);
-    return fa;
+    return cleanup(fa);
 }
 
 int fa_contains(fa_t fa1, fa_t fa2) {
