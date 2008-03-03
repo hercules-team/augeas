@@ -232,6 +232,18 @@ void fa_free(struct fa *fa) {
     free(fa);
 }
 
+static struct fa_state *add_state(struct fa *fa, int accept) {
+    struct fa_state *s;
+    CALLOC(s, 1);
+    s->accept = accept;
+    if (fa->initial == NULL) {
+        fa->initial = s;
+    } else {
+        list_cons(fa->initial->next, s);
+    }
+    return s;
+}
+
 static struct fa_state *map_get(struct fa_map *map,
                                 struct fa_state *s) {
     while (map != NULL && map->fst != s)
@@ -250,14 +262,8 @@ static struct fa *fa_clone(struct fa *fa) {
         struct fa_map *pair;
         CALLOC(pair, 1);
         pair->fst = s;
-        CALLOC(pair->snd, 1);
-        pair->snd->accept = s->accept;
+        pair->snd = add_state(result, s->accept);
         list_cons(state_map, pair);
-        if (result->initial == NULL) {
-            result->initial = pair->snd;
-        } else {
-            list_cons(result->initial->next, pair->snd);
-        }
     }
     list_for_each(s, fa->initial) {
         struct fa_state *sc;
@@ -274,20 +280,6 @@ static struct fa *fa_clone(struct fa *fa) {
     }
     list_free(state_map);
     return result;
-}
-
-static struct fa *make_fa(struct fa_state *initial) {
-    struct fa *fa;
-    CALLOC(fa, 1);
-    fa->initial = initial;
-    return fa;
-}
-
-static struct fa_state *make_state(int accept) {
-    struct fa_state *s;
-    CALLOC(s, 1);
-    s->accept = accept;
-    return s;
 }
 
 static struct fa_trans *make_trans(struct fa_state *to,
@@ -326,8 +318,8 @@ static void add_epsilon_trans(struct fa_state *from,
 }
 
 static void set_initial(struct fa *fa, struct fa_state *s) {
-    s->next = fa->initial;
-    fa->initial = s;
+    list_remove(s, fa->initial);
+    list_cons(fa->initial, s);
 }
 
 /* Merge automaton FA2 into FA1. This simply adds FA2's states to FA1
@@ -508,7 +500,7 @@ static struct fa_map *fa_reverse(struct fa *fa) {
     }
 
     /* Make new initial and final states */
-    struct fa_state *s = make_state(0);
+    struct fa_state *s = add_state(fa, 0);
     fa->initial->accept = 1;
     set_initial(fa, s);
     list_for_each(a, accept) {
@@ -612,9 +604,8 @@ static struct fa_set_map *fa_set_map_add(struct fa_set_map *smap,
 
     CALLOC(sm, 1);
     sm->set = set;
-    sm->state = make_state(0);
+    sm->state = add_state(fa, 0);
     sm->next = smap;
-    list_insert_before(sm->state, fa->initial->next, fa->initial);
     return sm;
 }
 
@@ -907,8 +898,10 @@ void fa_minimize(struct fa *fa) {
  */
 
 static struct fa *fa_make_empty(void) {
-    struct fa_state *s = make_state(0);
-    struct fa *fa = make_fa(s);
+    struct fa *fa;
+
+    CALLOC(fa, 1);
+    add_state(fa, 0);
     fa->deterministic = 1;
     fa->minimal = 1;
     return fa;
@@ -923,11 +916,12 @@ static struct fa *fa_make_epsilon(void) {
 }
 
 struct fa *fa_union(struct fa *fa1, struct fa *fa2) {
-    struct fa_state *s = make_state(0);
+    struct fa_state *s;
 
     fa1 = fa_clone(fa1);
     fa2 = fa_clone(fa2);
 
+    s = add_state(fa1, 0);
     add_epsilon_trans(s, fa1->initial);
     add_epsilon_trans(s, fa2->initial);
 
@@ -959,11 +953,10 @@ struct fa *fa_concat(struct fa *fa1, struct fa *fa2) {
 }
 
 static struct fa *fa_char_range(char min, char max, int negate) {
-    struct fa_state *s = make_state(0);
-    struct fa_state *t = make_state(1);
-    struct fa *fa = make_fa(s);
+    struct fa *fa = fa_make_empty();
+    struct fa_state *s = fa->initial;
+    struct fa_state *t = add_state(fa, 1);
 
-    list_append(fa->initial, t);
     if (negate) {
         if (min > CHAR_MIN) {
             add_new_trans(s, t, CHAR_MIN, min-1);
@@ -981,9 +974,11 @@ static struct fa *fa_char_range(char min, char max, int negate) {
 }
 
 static struct fa *fa_star(struct fa *fa) {
-    struct fa_state *s = make_state(1);
+    struct fa_state *s;
 
     fa = fa_clone(fa);
+
+    s = add_state(fa, 1);
     add_epsilon_trans(s, fa->initial);
     list_for_each(p, fa->initial) {
         if (p->accept)
@@ -1202,8 +1197,8 @@ int fa_compile(const char *regexp, struct fa **fa) {
     if (re == NULL)
         return ret;
 
-    print_re(re);
-    printf("\n");
+    //print_re(re);
+    //printf("\n");
 
     *fa = fa_from_re(re);
     re_free(re);

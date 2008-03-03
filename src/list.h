@@ -39,15 +39,16 @@
 
 #define list_remove(elt, list)                                          \
     do {                                                                \
-        if ((elt) == (list)) {                                          \
-            (list) = (elt)->next;                                       \
+        typeof(elt) _e = (elt);                                         \
+        if (_e == (list)) {                                             \
+            (list) = _e->next;                                          \
         } else {                                                        \
-            typeof(elt) _p;                                             \
-            for (_p = (list); _p != NULL && _p->next != (elt); _p = _p->next); \
+            typeof(_e) _p;                                              \
+            for (_p = (list); _p != NULL && _p->next != _e; _p = _p->next); \
             if (_p != NULL)                                             \
-                _p->next = elt->next;                                   \
+                _p->next = _e->next;                                    \
         }                                                               \
-        (elt)->next = NULL;                                             \
+        _e->next = NULL;                                                \
     } while(0)
 
 /* Insert NEW in list LIST before element AC. NEW->next must be null,
