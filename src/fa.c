@@ -123,9 +123,10 @@ struct re {
 
 /*
  * Auxiliary data structure used internally in some automata
- * computations. It is used either as a map between states (mapping fst ->
- * snd) or as a map from states to a list of transitions (mapping fst ->
- * trans)
+ * computations. It is used as a variety of data structures:
+ * (1) a map between states, mapping fst -> snd
+ * (2) a map from states to a list of transitions, mapping fst -> trans
+ * (3) a set of states in fst
  */
 struct fa_map {
     struct fa_map *next;
@@ -140,7 +141,8 @@ struct fa_map {
  */
 struct fa_set_map {
     struct fa_set_map *next;
-    struct fa_map     *set;
+    struct fa_map     *set;      /* Set of states through set->next, states
+                                    in set->fst */
     struct fa_state   *state;
 };
 
@@ -253,7 +255,7 @@ static struct fa_state *map_get(struct fa_map *map,
 
 static struct fa *fa_clone(struct fa *fa) {
     struct fa *result = NULL;
-    struct fa_map *state_map = NULL;
+    struct fa_map *state_map = NULL; /* Map of states fst -> snd */
 
     CALLOC(result, 1);
     result->deterministic = fa->deterministic;
@@ -331,23 +333,25 @@ static void fa_merge(struct fa *fa1, struct fa *fa2) {
 }
 
 /*
- * Operations in an FA_MAP
+ * Operations on FA_MAP
  */
-static struct fa_map *fa_map_push(struct fa_map *map,
-                                    struct fa_state *fst,
-                                    struct fa_state *snd,
-                                    struct fa_trans *trans) {
+
+/* Add an entry (FST, SND) at the beginning of MAP. Return the new head of
+   the MAP */
+static struct fa_map *state_pair_push(struct fa_map *map,
+                                      struct fa_state *fst,
+                                      struct fa_state *snd) {
     struct fa_map *e;
 
     CALLOC(e, 1);
     e->fst = fst;
     e->snd = snd;
-    e->trans = trans;
     list_cons(map, e);
 
     return map;
 }
 
+/* Remove the first entry from MAP and return the new head */
 static struct fa_map *fa_map_pop(struct fa_map *map) {
     struct fa_map *del;
 
@@ -360,7 +364,14 @@ static struct fa_map *fa_map_pop(struct fa_map *map) {
     return map;
 }
 
-static struct fa_map *fa_map_find_fst(struct fa_map *map,
+static struct fa_map *state_set_push(struct fa_map *map,
+                                     struct fa_state *fst) {
+    return state_pair_push(map, fst, NULL);
+}
+
+/* Find an entry with FST == S on MAP and return that or return NULL if no
+   entry has FST == S */
+static struct fa_map *find_fst(struct fa_map *map,
                                       struct fa_state *s) {
     while (map != NULL) {
         if (map->fst == s)
@@ -370,7 +381,8 @@ static struct fa_map *fa_map_find_fst(struct fa_map *map,
     return NULL;
 }
 
-static int fa_map_contains(struct fa_map *map, struct fa_state *fst,
+/* Return true if MAP has an entry with the given FST and SND */
+static int find_pair(struct fa_map *map, struct fa_state *fst,
                            struct fa_state *snd) {
     list_for_each(m, map) {
         if (m->fst == fst && m->snd == snd)
@@ -387,18 +399,18 @@ static int fa_map_contains(struct fa_map *map, struct fa_state *fst,
  * FST entries.
  */
 static struct fa_map *fa_states(struct fa *fa) {
-    struct fa_map *visited = NULL;
-    struct fa_map *worklist = NULL;
+    struct fa_map *visited = NULL;  /* Set of states in FST */
+    struct fa_map *worklist = NULL; /* Set of states in FST */
 
-    worklist = fa_map_push(NULL, fa->initial, NULL, NULL);
-    visited = fa_map_push(NULL, fa->initial, NULL, NULL);
+    worklist = state_set_push(NULL, fa->initial);
+    visited = state_set_push(NULL, fa->initial);
     while (worklist != NULL) {
         struct fa_state *s = worklist->fst;
         worklist = fa_map_pop(worklist);
         list_for_each(t, s->transitions) {
-            if (! fa_map_find_fst(visited, t->to)) {
-                visited = fa_map_push(visited, t->to, NULL, NULL);
-                worklist = fa_map_push(worklist, t->to, NULL, NULL);
+            if (! find_fst(visited, t->to)) {
+                visited = state_set_push(visited, t->to);
+                worklist = state_set_push(worklist, t->to);
             }
         }
     }
@@ -411,7 +423,7 @@ static struct fa_map *fa_states(struct fa *fa) {
  */
 static struct fa_map *fa_accept_states(struct fa *fa) {
     struct fa_map *states = fa_states(fa);
-    struct fa_map *m;
+    struct fa_map *m;                 /* Set of states in FST */
 
     while (states != NULL && !states->fst->accept)
         states = fa_map_pop(states);
@@ -438,7 +450,7 @@ static struct fa_map *fa_accept_states(struct fa *fa) {
  */
 static struct fa_map *fa_live_states(struct fa *fa) {
     struct fa_map *states = fa_states(fa);
-    struct fa_map *live = NULL;
+    struct fa_map *live = NULL;         /* Set of states in FST */
     int changed;
 
     for (struct fa_map *s = states; s != NULL; ) {
@@ -456,7 +468,7 @@ static struct fa_map *fa_live_states(struct fa *fa) {
         while (s != NULL) {
             struct fa_map *next = s->next;
             list_for_each(t, s->fst->transitions) {
-                if (fa_map_find_fst(live, t->to) != NULL) {
+                if (find_fst(live, t->to) != NULL) {
                     changed = 1;
                     list_remove(s, states);
                     list_append(live, s);
@@ -479,7 +491,7 @@ static struct fa_map *fa_live_states(struct fa *fa) {
  * be freed by the caller.
  */
 static struct fa_map *fa_reverse(struct fa *fa) {
-    struct fa_map *states;
+    struct fa_map *states;        /* Map from FST -> TRANS */
     struct fa_map *accept;
 
     states = fa_states(fa);
@@ -490,7 +502,7 @@ static struct fa_map *fa_reverse(struct fa *fa) {
         m->fst->accept = 0;
         list_for_each(t, m->fst->transitions) {
             struct fa_trans *rev = make_trans(m->fst, t->min, t->max);
-            struct fa_map *mrev = fa_map_find_fst(states, t->to);
+            struct fa_map *mrev = find_fst(states, t->to);
             list_append(mrev->trans, rev);
         }
     }
@@ -560,7 +572,7 @@ static struct fa_set_map *fa_set_map_get(struct fa_set_map *smap,
         if (smlen == setlen) {
             int found = 1;
             list_for_each(s, set) {
-                if (fa_map_find_fst(sm->set, s->fst) == NULL) {
+                if (find_fst(sm->set, s->fst) == NULL) {
                     found = 0;
                     break;
                 }
@@ -577,7 +589,7 @@ static int fa_set_map_contains(struct fa_set_map *smap,
     return fa_set_map_get(smap, set) != NULL;
 }
 
-/* 
+/*
  * Find the set in SMAP that has the same states as SET. If the two are
  * different, i.e. they point to different memory locations, free SET and
  * return the set found in SMAP
@@ -627,6 +639,8 @@ static struct fa_map *fa_set_dequeue(struct fa_set_map **smap) {
     return set;
 }
 
+/* Add an entry with FST = S to SET if it does not have one yet and return
+   the new head of of SET. Do nothing if S is already in the set SET */
 static struct fa_map *fa_set_add(struct fa_map *set, struct fa_state *s) {
     struct fa_map *elt;
 
@@ -647,7 +661,7 @@ static void remove_unreachable_states(struct fa *fa) {
     struct fa_state *s = fa->initial;
 
     while (s->next != NULL) {
-        if (fa_map_find_fst(reach, s->next) == NULL) {
+        if (find_fst(reach, s->next) == NULL) {
             struct fa_state *del = s->next;
             s->next = del->next;
             /* Free the state del */
@@ -747,7 +761,7 @@ static void reduce(struct fa *fa) {
 static void remove_dead_transitions(struct fa *fa) {
     struct fa_map *live = fa_live_states(fa);
 
-    if (fa_map_find_fst(live, fa->initial) == NULL) {
+    if (find_fst(live, fa->initial) == NULL) {
         /* This automaton accepts nothing, make it the canonical
          * epsilon automaton
          */
@@ -760,13 +774,13 @@ static void remove_dead_transitions(struct fa *fa) {
     }
 
     list_for_each(s, fa->initial) {
-        if (fa_map_find_fst(live, s) == NULL) {
+        if (find_fst(live, s) == NULL) {
             list_free(s->transitions);
         } else {
             struct fa_trans *t = s->transitions;
             while (t != NULL) {
                 struct fa_trans *n = t->next;
-                if (fa_map_find_fst(live, t->to) == NULL) {
+                if (find_fst(live, t->to) == NULL) {
                     list_remove(t, s->transitions);
                     free(t);
                 }
@@ -812,7 +826,7 @@ static void determinize(struct fa *fa, struct fa_map *ini) {
 
     points = start_points(fa, &npoints);
     if (make_ini) {
-        ini = fa_map_push(NULL, fa->initial, NULL, NULL);
+        ini = state_set_push(NULL, fa->initial);
     }
 
     /* Data structures are a big headache here since we deal with sets of
@@ -877,7 +891,7 @@ static void determinize(struct fa *fa, struct fa_map *ini) {
  * reduced and ordered.
  */
 void fa_minimize(struct fa *fa) {
-    struct fa_map *map;
+    struct fa_map *map;    /* Set of states in FST */
 
     if (fa->minimal)
         return;
@@ -1080,16 +1094,16 @@ static void sort_transition_intervals(struct fa *fa) {
 
 int fa_contains(fa_t fa1, fa_t fa2) {
     int result = 0;
-    struct fa_map *worklist;
-    struct fa_map *visited;
+    struct fa_map *worklist;  /* List of pairs of states (FST, SND) */
+    struct fa_map *visited;   /* List of pairs of states (FST, SND) */
 
     determinize(fa1, NULL);
     determinize(fa2, NULL);
     sort_transition_intervals(fa1);
     sort_transition_intervals(fa2);
 
-    worklist = fa_map_push(NULL, fa1->initial, fa2->initial, NULL);
-    visited  = fa_map_push(NULL, fa1->initial, fa2->initial, NULL);
+    worklist = state_pair_push(NULL, fa1->initial, fa2->initial);
+    visited  = state_pair_push(NULL, fa1->initial, fa2->initial);
     while (worklist != NULL) {
         struct fa_state *p1 = worklist->fst;
         struct fa_state *p2 = worklist->snd;
@@ -1110,9 +1124,9 @@ int fa_contains(fa_t fa1, fa_t fa2) {
                 if (t2 == NULL)
                     goto done;
                 min = (t2->max == CHAR_MAX) ? max+1 : t2->max + 1;
-                if (! fa_map_contains(visited, t1->to, t2->to)) {
-                    worklist = fa_map_push(worklist, t1->to, t2->to, NULL);
-                    visited  = fa_map_push(visited, t1->to, t2->to, NULL);
+                if (! find_pair(visited, t1->to, t2->to)) {
+                    worklist = state_pair_push(worklist, t1->to, t2->to);
+                    visited  = state_pair_push(visited, t1->to, t2->to);
                 }
                 t2 = t2->next;
             }
