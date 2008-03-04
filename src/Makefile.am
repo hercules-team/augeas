@@ -5,7 +5,7 @@ AM_YFLAGS=-d -p spec_
 
 EXTRA_DIST=try augeas_sym.version
 
-lib_LTLIBRARIES = libaugeas.la libfa.la
+lib_LTLIBRARIES = libfa.la libaugeas.la
 noinst_LTLIBRARIES = liblexer.la
 
 bin_PROGRAMS = augtool augparse
@@ -22,7 +22,7 @@ augtool_SOURCES = augtool.c
 augtool_LDADD = libaugeas.la $(READLINE_LIBS)
 
 liblexer_la_SOURCES = spec-lex.l
-liblexer_la_CFLAGS = $(AM_CFLAGS) -Wno-error -fvisibility=hidden
+liblexer_la_CFLAGS = $(AM_CFLAGS) -Wno-error
 
 augparse_SOURCES = augparse.c
 augparse_LDADD = libaugeas.la
