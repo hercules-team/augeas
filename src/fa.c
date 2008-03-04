@@ -96,7 +96,7 @@ enum re_type {
     UNION,
     CONCAT,
     CSET,
-    NSET,
+    CHAR,
     ITER,
     EPSILON
 };
@@ -108,9 +108,12 @@ struct re {
             struct re *exp1;
             struct re *exp2;
         };
-        struct {                  /* CSET, NSET */
-            char from;
-            char to;
+        struct {                  /* CSET */
+            int negate;
+            char *cset;
+        };
+        struct {                  /* CHAR */
+            char c;
         };
         struct {                  /* ITER */
             struct re *exp;
@@ -183,6 +186,30 @@ static void fa_dot_debug(struct fa *fa, const char *tag) {
     free(fname);
 }
 
+static void print_char_set(struct re *set) {
+    int from, to;
+
+    if (set->negate)
+        printf("[^");
+    else
+        printf("[");
+    for (from = CHAR_MIN; from <= CHAR_MAX; from = to+1) {
+        while (set->cset[CHAR_IND(from)] == set->negate)
+            from += 1;
+        if (from > CHAR_MAX)
+            break;
+        for (to = from;
+             to < CHAR_MAX && (set->cset[CHAR_IND(to+1)] == ! set->negate);
+             to++);
+        if (to == from) {
+            printf("%c", from);
+        } else {
+            printf("%c-%c", from, to);
+        }
+    }
+    printf("]");
+}
+
 static void print_re(struct re *re) {
     switch(re->type) {
     case UNION:
@@ -196,16 +223,10 @@ static void print_re(struct re *re) {
         print_re(re->exp2);
         break;
     case CSET:
-        if (re->from == re->to)
-            printf("%c", re->from);
-        else
-            printf("[%c-%c]", re->from, re->to);
+        print_char_set(re);
         break;
-    case NSET:
-        if (re->from == re->to)
-            printf("[^%c]", re->from);
-        else
-            printf("[^%c-%c]", re->from, re->to);
+    case CHAR:
+        printf("%c", re->c);
         break;
     case ITER:
         printf("(");
@@ -943,6 +964,17 @@ static struct fa *fa_make_epsilon(void) {
     return fa;
 }
 
+static struct fa *fa_make_char(char c) {
+    struct fa *fa = fa_make_empty();
+    struct fa_state *s = fa->initial;
+    struct fa_state *t = add_state(fa, 1);
+
+    add_new_trans(s, t, c, c);
+    fa->deterministic = 1;
+    fa->minimal = 1;
+    return fa;
+}
+
 struct fa *fa_union(struct fa *fa1, struct fa *fa2) {
     struct fa_state *s;
 
@@ -980,20 +1012,22 @@ struct fa *fa_concat(struct fa *fa1, struct fa *fa2) {
     return cleanup(fa1);
 }
 
-static struct fa *fa_char_range(char min, char max, int negate) {
+static struct fa *fa_make_char_set(char *cset, int negate) {
     struct fa *fa = fa_make_empty();
     struct fa_state *s = fa->initial;
     struct fa_state *t = add_state(fa, 1);
+    int from = CHAR_MIN;
 
-    if (negate) {
-        if (min > CHAR_MIN) {
-            add_new_trans(s, t, CHAR_MIN, min-1);
-        }
-        if (max < CHAR_MAX) {
-            add_new_trans(s, t, max+1, CHAR_MAX);
-        }
-    } else {
-        add_new_trans(s, t, min, max);
+    while (from <= CHAR_MAX) {
+        while (from <= CHAR_MAX && cset[CHAR_IND(from)] == negate)
+            from += 1;
+        if (from > CHAR_MAX)
+            break;
+        int to = from + 1;
+        while (to < CHAR_MAX && (cset[CHAR_IND(to + 1)] == !negate))
+            to += 1;
+        add_new_trans(s, t, from, to);
+        from = to + 1;
     }
 
     fa->deterministic = 1;
@@ -1322,8 +1356,7 @@ static struct fa *fa_from_re(struct re *re) {
         }
         break;
     case CSET:
-    case NSET:
-        result = fa_char_range(re->from, re->to, re->type == NSET);
+        result = fa_make_char_set(re->cset, re->negate);
         break;
     case ITER:
         {
@@ -1334,6 +1367,9 @@ static struct fa *fa_from_re(struct re *re) {
         break;
     case EPSILON:
         result = fa_make_epsilon();
+        break;
+    case CHAR:
+        result = fa_make_char(re->c);
         break;
     default:
         assert(0);
@@ -1350,6 +1386,8 @@ static void re_free(struct re *re) {
         re_free(re->exp2);
     } else if (re->type == ITER) {
         re_free(re->exp);
+    } else if (re->type == CSET) {
+        free(re->cset);
     }
     free(re);
 }
@@ -1398,10 +1436,16 @@ static struct re *make_re_binop(enum re_type type, struct re *exp1,
     return re;
 }
 
-static struct re*make_re_char(int negate, char from, char to) {
-    struct re *re = make_re(negate ? NSET : CSET);
-    re->from = from;
-    re->to = to;
+static struct re *make_re_char(char c) {
+    struct re *re = make_re(CHAR);
+    re->c = c;
+    return re;
+}
+
+static struct re *make_re_char_set(int negate) {
+    struct re *re = make_re(CSET);
+    re->negate = negate;
+    CALLOC(re->cset, CHAR_NUM);
     return re;
 }
 
@@ -1451,8 +1495,14 @@ static char parse_char(const char **regexp, const char *special) {
     }
 }
 
-static struct re *parse_char_class(const char **regexp, int negate,
-                                   int *error) {
+static void add_re_char(struct re *re, char from, char to) {
+    assert(re->type == CSET);
+    for (char c = from; c <= to; c++)
+        re->cset[CHAR_IND(c)] = 1;
+}
+
+static void parse_char_class(const char **regexp, struct re *re,
+                             int *error) {
     if (! more(regexp)) {
         *error = REG_EBRACK;
         goto error;
@@ -1465,16 +1515,16 @@ static struct re *parse_char_class(const char **regexp, int negate,
             goto error;
         }
         if (peek(regexp, "]")) {
-            struct re *re1 = make_re_char(negate, from, from);
-            struct re *re2 = make_re_char(negate, '-', '-');
-            return make_re_binop(UNION, re1, re2);
+            add_re_char(re, from, to);
+            add_re_char(re, '-', '-');
+            return;
         } else {
             to = parse_char(regexp, NULL);
         }
     }
-    return make_re_char(negate, from, to);
+    add_re_char(re, from, to);
  error:
-    return NULL;
+    return;
 }
 
 static struct re *parse_simple_exp(const char **regexp, int *error) {
@@ -1482,18 +1532,21 @@ static struct re *parse_simple_exp(const char **regexp, int *error) {
 
     if (match(regexp, '[')) {
         int negate = match(regexp, '^');
-        re = parse_char_class(regexp, negate, error);
-        while (more(regexp) && ! peek(regexp, "]")) {
-            struct re *re2 = parse_char_class(regexp, negate, error);
-            re = make_re_binop(UNION, re, re2);
-        }
+        re = make_re_char_set(negate);
         if (re == NULL)
             goto error;
+        parse_char_class(regexp, re, error);
+        if (*error != REG_NOERROR)
+            goto error;
+        while (more(regexp) && ! peek(regexp, "]")) {
+            parse_char_class(regexp, re, error);
+            if (*error != REG_NOERROR)
+                goto error;
+        }
         if (! match(regexp, ']')) {
             *error = REG_EBRACK;
             goto error;
         }
-        return re;
     } else if (match(regexp, '(')) {
         if (match(regexp, ')')) {
             return make_re(EPSILON);
@@ -1505,16 +1558,16 @@ static struct re *parse_simple_exp(const char **regexp, int *error) {
             *error = REG_EPAREN;
             goto error;
         }
-        return re;
     } else if (match(regexp, '.')) {
-        return make_re_char(1, '\n', '\n');
+        re = make_re_char_set(1);
+        add_re_char(re, '\n', '\n');
     } else {
         if (more(regexp)) {
             char c = parse_char(regexp, special_chars);
-            re = make_re_char(0, c, c);
+            re = make_re_char(c);
         }
-        return re;
     }
+    return re;
  error:
     re_free(re);
     return NULL;

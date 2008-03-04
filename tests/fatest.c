@@ -35,6 +35,16 @@ struct fa_list {
 
 static struct fa_list *fa_list;
 
+static void print_regerror(int err, const char *regexp) {
+    size_t size;
+    char *errbuf;
+    size = regerror(err, NULL, NULL, 0);
+    errbuf = alloca(size);
+    regerror(err, NULL, errbuf, size);
+    fprintf(stderr, "Error building fa from %s:\n", regexp);
+    fprintf(stderr, "  %s\n", errbuf);
+}
+
 static void setup(ATTRIBUTE_UNUSED CuTest *tc) {
     fa_list = NULL;
 }
@@ -64,6 +74,8 @@ static fa_t make_fa(CuTest *tc, const char *regexp, int exp_err) {
     r = fa_compile(regexp, &fa);
     CuAssertIntEquals(tc, exp_err, r);
     if (exp_err == REG_NOERROR) {
+        if (r != REG_NOERROR)
+            print_regerror(r, regexp);
         CuAssertPtrNotNull(tc, fa);
         mark(fa);
     } else {
@@ -135,6 +147,8 @@ static void testChars(CuTest *tc) {
     CuAssertTrue(tc, fa_contains(fa2, fa1));
 
     fa1 = make_good_fa(tc, "(.|\n)");
+    dot(fa2, 41);
+    dot(fa1, 42);
     CuAssertTrue(tc, fa_contains(fa2, fa1));
 
     fa1 = mark(fa_intersect(fa1, fa2));
@@ -225,13 +239,7 @@ int main(int argc, char **argv) {
         fa_t fa;
         int r;
         if ((r = fa_compile(argv[i], &fa)) != REG_NOERROR) {
-            size_t size;
-            char *errbuf;
-            size = regerror(r, NULL, NULL, 0);
-            errbuf = alloca(size);
-            regerror(r, NULL, errbuf, size);
-            fprintf(stderr, "Error building fa from %s:\n", argv[i]);
-            fprintf(stderr, "  %s\n", errbuf);
+            print_regerror(r, argv[i]);
         } else {
             dot(fa, i);
             fa_free(fa);
