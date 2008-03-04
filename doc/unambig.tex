@@ -41,6 +41,8 @@
 \newcommand{\List}{\ensmath{\mathtt{List}}}
 \newcommand{\redigits}{\ensmath{\mathtt{D}}}
 
+\newcommand{\noeps}[1]{\ensmath{{#1}_{\setminus \epsilon}}}
+
 \newtheorem{theorem}{Theorem}
 \newtheorem{lemma}[theorem]{Lemma}
 {\theoremstyle{definition} 
@@ -50,14 +52,14 @@
 
 \begin{document}
 
-\section*{Unambiguously concatenable}
+\section*{Ambiguity}
 
 \begin{defn}
   For a language $L$ over $\Sigma$, define
   \begin{equation*}
     \begin{split}
-      \suff(L) = \{ p \in \Sigma^+ | u \in L \wedge up \in L \}\\
-      \pref(L) = \{ p \in \Sigma^+ | v \in L \wedge pv \in L \}
+      \suff(L) = \{ p \in \Sigma^+ | \exists u \in L: up \in L \}\\
+      \pref(L) = \{ p \in \Sigma^+ | \exists v \in L: pv \in L \}
     \end{split}
   \end{equation*}
 \end{defn}
@@ -66,13 +68,12 @@ we only take prefixes and suffixes that can be expanded to a word in $L$
 with another word in $L$, not any word in $\Sigma^*$.
 
 The set $\suff(L)$ is identical to the left quotient $L^{-1}L$ of $L$ by
-itself. Similarly, $\pref(L) = LL^{-1}$. That makes me happy, since
-libAmore provides right quotient and intersection.
+itself. Similarly, $\pref(L) = LL^{-1}$.
 
 \begin{defn}
-Two languages $L_1$ and $L_2$ are \emph{unambiguosuly concatenable} iff for
-every $u_1, v_1 \in L_1$ and $u_2, v_2 \in L_2$, if $u_1u_2=v_1v_2$ then
-$u_1=v_1$ and $u_2=v_2$.
+Two languages $L_1$ and $L_2$ are \emph{unambiguosuly concatenable},
+written \uaconc{L_1}{L_2}, iff for every $u_1, v_1 \in L_1$ and $u_2, v_2
+\in L_2$, if $u_1u_2=v_1v_2$ then $u_1=v_1$ and $u_2=v_2$.
 \end{defn}
 
 \begin{lemma}
@@ -92,6 +93,52 @@ L_2$. The word $upv$ can be split as $\conc{up}{v}$ and as $\conc{u}{pv}$
 and therefore $L_1$ and $L_2$ are not unambiguously concatenable.
 \end{proof}
 
+To ease notation we write $\noeps{L}$ for $L\setminus \{
+\epsilon \}$.
+
+\begin{defn}
+A language $L$ is \emph{unambiguously iterable}, written \uastar{L}, iff
+for every $u_1,\dots,u_m, v_1,\dots,v_n \in \noeps{L}$ with $u_1\cdots u_m
+= v_1 \cdots v_n$, $m=n$ and $u_i = v_i$.
+\end{defn}
+
+It is very important that we exclude $\epsilon$ in the definition of
+unambiguous iteration, since otherwise \emph{any} language $L$ that
+contains $\epsilon$ is trivially not ambiguously iterable, even though that
+presents no problems for our purposes, since we never split $\epsilon$ into
+more than one word.
+
+\begin{lemma}
+The language $L$ is unambiguously iterable if and only if $\noeps{L}$ and
+$\noeps{\cstar{L}}$ are unambiguously concatenable.
+\end{lemma}
+\begin{proof}
+Let $L$ be unambiguously iterable, and assume that there is $u_1v_1 =
+u_2v_2$ with $u_i \in \noeps{L}$ and $v_i \in \noeps{\cstar{L}}$ and $u_1
+\neq u_2$. This contradicts $\uastar{L}$ since $\noeps{L}\cdot
+\noeps{\cstar{L}}\subseteq \cstar{L}$.
+
+Let $\uaconc{\noeps{L}}{\noeps{\cstar{L}}}$ and assume there are
+$u_1,\dots,u_m, v_1,\dots,v_n \in \noeps{L}$ with $u_1\cdots u_m = v_1
+\cdots v_n$, but there is an $i \leq \min(m,n)$ with $u_i \neq v_i$. We can
+assume that $u_1 \neq v_1$\footnote{if $u_1 = v_1$, we simply use
+  $u_2\cdots u_m$ and $v_2 \cdots v_n$ for this argument}, and therefore
+$\min(m,n)\geq 2$. Since $u_1$ and $v_1$ are in $\noeps{L}$, we have an
+ambiguous split of a word from $\noeps{L}\cdot\noeps{\cstar{L}}$,
+contradicting the initial assumption.
+\end{proof}
+
+\begin{example}
+Using regular expression notation, the language $L=(a|b|c|abc)$ is
+unambiguously concatenable with itself, but not unambiguosly
+iterable. $\cstar{L} = (a|b|c)^*$ and the word $abcabc$ can be split into
+$abc\cdot abc$ and $a\cdot bcabc$. This example shows that $\uaconc{L}{L}$
+does not imply $\uastar{L}$, but as the previous lemma showed,
+$\uaconc{\noeps{L}}{\noeps{\cstar{L}}}$ does.
+\end{example}
+
+If you have $P = \suff(L_1) \cap \pref(L_2)$, how do you generate a word that
+is ambiguous ?
 \end{document}
 
 %% TeX-parse-self: t
