@@ -67,6 +67,16 @@ fa_t fa_union(fa_t fa1, fa_t fa2);
  */
 fa_t fa_intersect(fa_t fa1, fa_t fa2);
 
+/* Return a finite automaton that accepts the complement of the language of
+ * FA, i.e. the set of all words not accepted by FA
+ */
+fa_t fa_complement(fa_t fa);
+
+/* Return a finite automaton that accepts the set difference of the
+ * languages of FA1 and FA2, i.e. L(FA1)\L(FA2)
+ */
+fa_t fa_minus(fa_t fa1, fa_t fa2);
+
 /* Return a finite automaton that accepts a repetition of the language that
  * FA accepts. If MAX == -1, the returned automaton accepts arbitrarily
  * long repetitions. MIN must be 0 or bigger, and unless MAX == -1, MIN
@@ -97,6 +107,13 @@ void fa_free(fa_t fa);
 
 /* Print FA to OUT as a graphviz dot file */
 void fa_dot(FILE *out, fa_t fa);
+
+/* Return a finite automaton that accepts the overlap of the languages of
+ * FA1 and FA2. The overlap of two languages is the set of strings that can
+ * be split in more than one way into a left part accepted by FA1 and a
+ * right part accepted by FA2.
+ */
+fa_t fa_overlap(fa_t fa1, fa_t fa2);
 
 /* Not implemented yet */
 //int fa_ua_concat(fa_t fa1, fa_t fa2);

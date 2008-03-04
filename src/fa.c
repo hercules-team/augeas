@@ -25,9 +25,8 @@
  * by Anders Moeller. The project's website is
  * http://www.brics.dk/automaton/.
  *
- * It is by no means a complete
- * reimplementation of that package; only a subset of what Automaton
- * provides is implemented here.
+ * It is by no means a complete reimplementation of that package; only a
+ * subset of what Automaton provides is implemented here.
  */
 
 #include <limits.h>
@@ -1208,6 +1207,88 @@ int fa_contains(fa_t fa1, fa_t fa2) {
  done:
     list_free(worklist);
     list_free(visited);
+    return result;
+}
+
+static void totalize(struct fa *fa) {
+    struct fa_state *crash = add_state(fa, 0);
+    struct fa_map *states = fa_states(fa);
+
+    sort_transition_intervals(fa);
+
+    add_new_trans(crash, crash, CHAR_MIN, CHAR_MAX);
+    list_for_each(s, states) {
+        int next = CHAR_MIN;
+        list_for_each(t, s->fst->transitions) {
+            if (t->min > next)
+                add_new_trans(s->fst, crash, next, t->min - 1);
+            if (t->max + 1 > next)
+                next = t->max + 1;
+        }
+        if (next <= CHAR_MAX)
+            add_new_trans(s->fst, crash, next, CHAR_MAX);
+    }
+
+    list_free(states);
+}
+
+struct fa *fa_complement(struct fa *fa) {
+    fa = fa_clone(fa);
+    determinize(fa, NULL);
+    totalize(fa);
+    list_for_each(s, fa->initial)
+        s->accept = ! s->accept;
+
+    return cleanup(fa);
+}
+
+struct fa *fa_minus(struct fa *fa1, struct fa *fa2) {
+    struct fa *cfa2 = fa_complement(fa2);
+    struct fa *result = fa_intersect(fa1, cfa2);
+
+    fa_free(cfa2);
+    return result;
+}
+
+static void accept_to_accept(struct fa *fa) {
+    struct fa_state *s = add_state(fa, 0);
+    struct fa_map *accept = fa_accept_states(fa);
+
+    list_for_each(a, accept) {
+        add_epsilon_trans(s, a->fst);
+    }
+
+    set_initial(fa, s);
+    fa->deterministic = fa->minimal = 0;
+    list_free(accept);
+}
+
+struct fa *fa_overlap(struct fa *fa1, struct fa *fa2) {
+    struct fa *fa;
+    struct fa_map *map;
+
+    fa1 = fa_clone(fa1);
+    fa2 = fa_clone(fa2);
+
+    accept_to_accept(fa1);
+
+    map = fa_reverse(fa2);
+    list_free(map);
+    determinize(fa2, NULL);
+    accept_to_accept(fa2);
+    map = fa_reverse(fa2);
+    list_free(map);
+    determinize(fa2, NULL);
+
+    fa = fa_intersect(fa1, fa2);
+    fa_free(fa1);
+    fa_free(fa2);
+
+    struct fa *eps = fa_make_epsilon();
+    struct fa *result = fa_minus(fa, eps);
+
+    fa_free(fa);
+    fa_free(eps);
     return result;
 }
 

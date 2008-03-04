@@ -54,7 +54,6 @@ static fa_t mark(fa_t fa) {
         fl->fa = fa;
         list_cons(fa_list, fl);
     }
-
     return fa;
 }
 
@@ -73,76 +72,9 @@ static fa_t make_fa(CuTest *tc, const char *regexp, int exp_err) {
     return fa;
 }
 
-static void testBadRegexps(CuTest *tc) {
-    make_fa(tc, "(x", REG_EPAREN);
-    make_fa(tc, "a{5,3}", REG_BADBR);
+static fa_t make_good_fa(CuTest *tc, const char *regexp) {
+    return make_fa(tc, regexp, REG_NOERROR);
 }
-
-/* Stress test, mostly good to check that allocation works */
-static void testMonster(CuTest *tc) {
-#define WORD "[a-zA-Z_0-9]+"
-#define CWS  "([ \\n\\t]+|\\/\\*([^\\*]|\\*[^\\/])*\\*\\/)*"
-#define QUOTED "\"[^\"]*\""
-#define ELT    "\\(" WORD "(," CWS WORD "){3}\\)"
-
-    static const char *const monster =
-        "(" WORD "|" QUOTED "|" "\\(" CWS ELT  "(," CWS ELT ")*" CWS "\\))";
-
-#undef ELT
-#undef QUOTED
-#undef CWS
-#undef WORD
-
-    fa_t fa;
-
-    fa = make_fa(tc, monster, REG_NOERROR);
-}
-
-static void testChars(CuTest *tc) {
-    fa_t fa1, fa2;
-
-    fa1 = make_fa(tc, ".", REG_NOERROR);
-    fa2 = make_fa(tc, "[a-z]", REG_NOERROR);
-    CuAssertTrue(tc, fa_contains(fa2, fa1));
-
-    fa1 = make_fa(tc, "(.|\n)", REG_NOERROR);
-    CuAssertTrue(tc, fa_contains(fa2, fa1));
-
-    fa1 = fa_intersect(fa1, fa2);
-    CuAssertTrue(tc, fa_equals(fa1, fa2));
-}
-
-static void testContains(CuTest *tc) {
-    fa_t fa1, fa2, fa3;
-
-    fa1 = make_fa(tc, "ab*", REG_NOERROR);
-    fa2 = make_fa(tc, "ab+", REG_NOERROR);
-    fa3 = make_fa(tc, "ab+c*|acc", REG_NOERROR);
-
-    CuAssertTrue(tc, fa_contains(fa1, fa1));
-    CuAssertTrue(tc, fa_contains(fa2, fa2));
-    CuAssertTrue(tc, fa_contains(fa3, fa3));
-
-    CuAssertTrue(tc, ! fa_contains(fa1, fa2));
-    CuAssertTrue(tc, fa_contains(fa2, fa1));
-    CuAssertTrue(tc, fa_contains(fa2, fa3));
-    CuAssertTrue(tc, ! fa_contains(fa3, fa2));
-    CuAssertTrue(tc, ! fa_contains(fa1, fa3));
-    CuAssertTrue(tc, ! fa_contains(fa3, fa1));
-}
-
-static void testIntersect(CuTest *tc) {
-    fa_t fa1, fa2, fa;
-
-    fa1 = make_fa(tc, "[a-zA-Z]*[.:=]([0-9]|[^A-Z])*", REG_NOERROR);
-    fa2 = make_fa(tc, "[a-z][:=][0-9a-z]+", REG_NOERROR);
-    fa = mark(fa_intersect(fa1, fa2));
-    CuAssertPtrNotNull(tc, fa);
-    CuAssertTrue(tc, fa_equals(fa, fa2));
-    CuAssertTrue(tc, ! fa_equals(fa, fa1));
-}
-
-// Check that fa_build("[^-x-]") does the right thing
 
 static void dot(struct fa *fa, int i) {
     FILE *fp;
@@ -168,6 +100,105 @@ static void dot(struct fa *fa, int i) {
     free(fname);
 }
 
+static void testBadRegexps(CuTest *tc) {
+    make_fa(tc, "(x", REG_EPAREN);
+    make_fa(tc, "a{5,3}", REG_BADBR);
+}
+
+/* Stress test, mostly good to check that allocation works */
+static void testMonster(CuTest *tc) {
+#define WORD "[a-zA-Z_0-9]+"
+#define CWS  "([ \\n\\t]+|\\/\\*([^\\*]|\\*[^\\/])*\\*\\/)*"
+#define QUOTED "\"[^\"]*\""
+#define ELT    "\\(" WORD "(," CWS WORD "){3}\\)"
+
+    static const char *const monster =
+        "(" WORD "|" QUOTED "|" "\\(" CWS ELT  "(," CWS ELT ")*" CWS "\\))";
+
+#undef ELT
+#undef QUOTED
+#undef CWS
+#undef WORD
+
+    fa_t fa;
+
+    fa = make_good_fa(tc, monster);
+}
+
+static void testChars(CuTest *tc) {
+    fa_t fa1, fa2;
+
+    // Check that fa_build("[^bc]") does the right thing
+
+    fa1 = make_good_fa(tc, ".");
+    fa2 = make_good_fa(tc, "[a-z]");
+    CuAssertTrue(tc, fa_contains(fa2, fa1));
+
+    fa1 = make_good_fa(tc, "(.|\n)");
+    CuAssertTrue(tc, fa_contains(fa2, fa1));
+
+    fa1 = mark(fa_intersect(fa1, fa2));
+    CuAssertTrue(tc, fa_equals(fa1, fa2));
+}
+
+static void testContains(CuTest *tc) {
+    fa_t fa1, fa2, fa3;
+
+    fa1 = make_good_fa(tc, "ab*");
+    fa2 = make_good_fa(tc, "ab+");
+    fa3 = make_good_fa(tc, "ab+c*|acc");
+
+    CuAssertTrue(tc, fa_contains(fa1, fa1));
+    CuAssertTrue(tc, fa_contains(fa2, fa2));
+    CuAssertTrue(tc, fa_contains(fa3, fa3));
+
+    CuAssertTrue(tc, ! fa_contains(fa1, fa2));
+    CuAssertTrue(tc, fa_contains(fa2, fa1));
+    CuAssertTrue(tc, fa_contains(fa2, fa3));
+    CuAssertTrue(tc, ! fa_contains(fa3, fa2));
+    CuAssertTrue(tc, ! fa_contains(fa1, fa3));
+    CuAssertTrue(tc, ! fa_contains(fa3, fa1));
+}
+
+static void testIntersect(CuTest *tc) {
+    fa_t fa1, fa2, fa;
+
+    fa1 = make_good_fa(tc, "[a-zA-Z]*[.:=]([0-9]|[^A-Z])*");
+    fa2 = make_good_fa(tc, "[a-z][:=][0-9a-z]+");
+    fa = mark(fa_intersect(fa1, fa2));
+    CuAssertPtrNotNull(tc, fa);
+    CuAssertTrue(tc, fa_equals(fa, fa2));
+    CuAssertTrue(tc, ! fa_equals(fa, fa1));
+}
+
+static void testComplement(CuTest *tc) {
+    fa_t fa1 = make_good_fa(tc, "[b-y]+");
+    fa_t fa2 = mark(fa_complement(fa1));
+    /* We use '()' to match the empty word explicitly */
+    fa_t fa3 = make_good_fa(tc, "(()|[b-y]*[^b-y](.|\n)*)");
+
+    CuAssertTrue(tc, fa_equals(fa2, fa3));
+
+    fa2 = mark(fa_complement(fa2));
+    CuAssertTrue(tc, fa_equals(fa1, fa2));
+}
+
+static void testOverlap(CuTest *tc) {
+    fa_t fa1 = make_good_fa(tc, "a|ab");
+    fa_t fa2 = make_good_fa(tc, "a|ba");
+    fa_t p   = mark(fa_overlap(fa1, fa2));
+    fa_t exp = make_good_fa(tc, "b");
+
+    CuAssertTrue(tc, fa_equals(exp, p));
+
+    fa1 = make_good_fa(tc, "a|b|c|abc");
+    fa2 = mark(fa_iter(fa1, 0, -1));
+    exp = make_good_fa(tc, "bc");
+    p = mark(fa_overlap(fa1, fa2));
+
+    CuAssertTrue(tc, fa_equals(exp, p));
+}
+
 int main(int argc, char **argv) {
     if (argc == 1) {
         char *output = NULL;
@@ -179,6 +210,8 @@ int main(int argc, char **argv) {
         SUITE_ADD_TEST(suite, testChars);
         SUITE_ADD_TEST(suite, testContains);
         SUITE_ADD_TEST(suite, testIntersect);
+        SUITE_ADD_TEST(suite, testComplement);
+        SUITE_ADD_TEST(suite, testOverlap);
 
         CuSuiteRun(suite);
         CuSuiteSummary(suite, &output);
