@@ -22,10 +22,41 @@
 
 #include "fa.h"
 #include "cutest.h"
+#include "internal.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 #define FA_DOT_DIR "FA_DOT_DIR"
+
+struct fa_list {
+    struct fa_list *next;
+    fa_t fa;
+};
+
+static struct fa_list *fa_list;
+
+static void setup(ATTRIBUTE_UNUSED CuTest *tc) {
+    fa_list = NULL;
+}
+
+static void teardown(ATTRIBUTE_UNUSED CuTest *tc) {
+    list_for_each(fl, fa_list) {
+        fa_free(fl->fa);
+    }
+    list_free(fa_list);
+}
+
+static fa_t mark(fa_t fa) {
+    struct fa_list *fl;
+
+    if (fa != NULL) {
+        CALLOC(fl, 1);
+        fl->fa = fa;
+        list_cons(fa_list, fl);
+    }
+
+    return fa;
+}
 
 static fa_t make_fa(CuTest *tc, const char *regexp, int exp_err) {
     fa_t fa;
@@ -35,6 +66,7 @@ static fa_t make_fa(CuTest *tc, const char *regexp, int exp_err) {
     CuAssertIntEquals(tc, exp_err, r);
     if (exp_err == REG_NOERROR) {
         CuAssertPtrNotNull(tc, fa);
+        mark(fa);
     } else {
         CuAssertPtrEquals(tc, NULL, fa);
     }
@@ -64,7 +96,6 @@ static void testMonster(CuTest *tc) {
     fa_t fa;
 
     fa = make_fa(tc, monster, REG_NOERROR);
-    fa_free(fa);
 }
 
 static void testContains(CuTest *tc) {
@@ -84,10 +115,6 @@ static void testContains(CuTest *tc) {
     CuAssertTrue(tc, ! fa_contains(fa3, fa2));
     CuAssertTrue(tc, ! fa_contains(fa1, fa3));
     CuAssertTrue(tc, ! fa_contains(fa3, fa1));
-
-    fa_free(fa1);
-    fa_free(fa2);
-    fa_free(fa3);
 }
 
 static void testIntersect(CuTest *tc) {
@@ -95,14 +122,10 @@ static void testIntersect(CuTest *tc) {
 
     fa1 = make_fa(tc, "[a-zA-Z]*[.:=]([0-9]|[^A-Z])*", REG_NOERROR);
     fa2 = make_fa(tc, "[a-z][:=][0-9a-z]+", REG_NOERROR);
-    fa = fa_intersect(fa1, fa2);
+    fa = mark(fa_intersect(fa1, fa2));
     CuAssertPtrNotNull(tc, fa);
     CuAssertTrue(tc, fa_equals(fa, fa2));
     CuAssertTrue(tc, ! fa_equals(fa, fa1));
-
-    fa_free(fa1);
-    fa_free(fa2);
-    fa_free(fa);
 }
 
 // Check that fa_build("[^-x-]") does the right thing
@@ -135,7 +158,7 @@ int main(int argc, char **argv) {
     if (argc == 1) {
         char *output = NULL;
         CuSuite* suite = CuSuiteNew();
-        CuSuiteSetup(suite, NULL, NULL);
+        CuSuiteSetup(suite, setup, teardown);
 
         SUITE_ADD_TEST(suite, testBadRegexps);
         SUITE_ADD_TEST(suite, testMonster);
