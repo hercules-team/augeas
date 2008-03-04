@@ -1188,7 +1188,7 @@ int fa_contains(fa_t fa1, fa_t fa2) {
                cover T1's interval */
             int min = t1->min, max = t1->max;
             while (min <= max && t2 != NULL && t2->min <= max) {
-                while (t2 != NULL && (min < t2->min))
+                while (t2 != NULL && (min > t2->max))
                     t2 = t2->next;
                 if (t2 == NULL)
                     goto done;
@@ -1426,7 +1426,7 @@ static struct re *parse_simple_exp(const char **regexp, int *error) {
         }
         return re;
     } else if (match(regexp, '.')) {
-        return make_re_char(0, '\n', '\n');
+        return make_re_char(1, '\n', '\n');
     } else {
         if (more(regexp)) {
             char c = parse_char(regexp, special_chars);

@@ -85,7 +85,7 @@ static void testMonster(CuTest *tc) {
 #define QUOTED "\"[^\"]*\""
 #define ELT    "\\(" WORD "(," CWS WORD "){3}\\)"
 
-    static const char *const monster = 
+    static const char *const monster =
         "(" WORD "|" QUOTED "|" "\\(" CWS ELT  "(," CWS ELT ")*" CWS "\\))";
 
 #undef ELT
@@ -96,6 +96,20 @@ static void testMonster(CuTest *tc) {
     fa_t fa;
 
     fa = make_fa(tc, monster, REG_NOERROR);
+}
+
+static void testChars(CuTest *tc) {
+    fa_t fa1, fa2;
+
+    fa1 = make_fa(tc, ".", REG_NOERROR);
+    fa2 = make_fa(tc, "[a-z]", REG_NOERROR);
+    CuAssertTrue(tc, fa_contains(fa2, fa1));
+
+    fa1 = make_fa(tc, "(.|\n)", REG_NOERROR);
+    CuAssertTrue(tc, fa_contains(fa2, fa1));
+
+    fa1 = fa_intersect(fa1, fa2);
+    CuAssertTrue(tc, fa_equals(fa1, fa2));
 }
 
 static void testContains(CuTest *tc) {
@@ -162,6 +176,7 @@ int main(int argc, char **argv) {
 
         SUITE_ADD_TEST(suite, testBadRegexps);
         SUITE_ADD_TEST(suite, testMonster);
+        SUITE_ADD_TEST(suite, testChars);
         SUITE_ADD_TEST(suite, testContains);
         SUITE_ADD_TEST(suite, testIntersect);
 
