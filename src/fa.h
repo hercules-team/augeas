@@ -115,15 +115,6 @@ void fa_dot(FILE *out, fa_t fa);
  */
 fa_t fa_overlap(fa_t fa1, fa_t fa2);
 
-/* Not implemented yet */
-//int fa_ua_concat(fa_t fa1, fa_t fa2);
-
-/* Not implemented yet */
-//int fa_ua_iter(fa_t fa);
-
-/* Not implemented yet */
-//int fa_disjoint(fa_t fa1, fa_t fa2);
-
 #endif
 
 
