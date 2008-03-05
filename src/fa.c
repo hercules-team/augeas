@@ -210,6 +210,7 @@ static void print_char_set(struct re *set) {
     printf("]");
 }
 
+ATTRIBUTE_UNUSED
 static void print_re(struct re *re) {
     switch(re->type) {
     case UNION:
