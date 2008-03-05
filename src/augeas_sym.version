@@ -1,6 +1,7 @@
 {
     global:
       aug_init;
+      aug_close;
       aug_get;
       aug_set;
       aug_exists;
