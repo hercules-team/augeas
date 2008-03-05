@@ -138,21 +138,23 @@ static void testMonster(CuTest *tc) {
 }
 
 static void testChars(CuTest *tc) {
-    fa_t fa1, fa2;
-
-    // Check that fa_build("[^bc]") does the right thing
+    fa_t fa1, fa2, fa3;
 
     fa1 = make_good_fa(tc, ".");
     fa2 = make_good_fa(tc, "[a-z]");
     CuAssertTrue(tc, fa_contains(fa2, fa1));
 
     fa1 = make_good_fa(tc, "(.|\n)");
-    dot(fa2, 41);
-    dot(fa1, 42);
     CuAssertTrue(tc, fa_contains(fa2, fa1));
 
     fa1 = mark(fa_intersect(fa1, fa2));
     CuAssertTrue(tc, fa_equals(fa1, fa2));
+
+    fa1 = make_good_fa(tc, "[^b-dxyz]");
+    fa2 = make_good_fa(tc, "[a-z]");
+    fa3 = mark(fa_intersect(fa1, fa2));
+    fa2 = make_good_fa(tc, "[ae-w]");
+    CuAssertTrue(tc, fa_equals(fa2, fa3));
 }
 
 static void testContains(CuTest *tc) {

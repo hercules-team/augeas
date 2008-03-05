@@ -1023,7 +1023,7 @@ static struct fa *fa_make_char_set(char *cset, int negate) {
             from += 1;
         if (from > CHAR_MAX)
             break;
-        int to = from + 1;
+        int to = from;
         while (to < CHAR_MAX && (cset[CHAR_IND(to + 1)] == !negate))
             to += 1;
         add_new_trans(s, t, from, to);
@@ -1164,11 +1164,16 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
         struct fa_trans *t1 = p1->transitions;
         struct fa_trans *t2 = p2->transitions;
         while (t1 != NULL && t2 != NULL) {
-            while (t2 != NULL && t2->min <= t1->max) {
-                while (t2 != NULL && (t2->max < t1->min))
-                    t2 = t2->next;
-                if (t2 == NULL)
-                    break;
+            for (; t1 != NULL && t1->max < t2->min; t1 = t1->next);
+            if (t1 == NULL)
+                break;
+            // t1->max >= t2->min
+            for (; t2 != NULL && t2->max < t1->min; t2 = t2->next);
+            if (t2 == NULL)
+                break;
+            // t2->max >= t1->min
+            // t2->min <= t2->max
+            if (t2->min <= t1->max) {
                 struct fa_map *map = find_pair(newstates, t1->to, t2->to);
                 struct fa_state *r = NULL;
                 if (map == NULL) {
@@ -1183,9 +1188,11 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
                 char min = t1->min > t2->min ? t1->min : t2->min;
                 char max = t1->max < t2->max ? t1->max : t2->max;
                 add_new_trans(s, r, min, max);
-                t2 = t2->next;
             }
-            t1 = t1->next;
+            if (t1->max < t2->max)
+                t1 = t1->next;
+            else
+                t2 = t2->next;
         }
     }
 
