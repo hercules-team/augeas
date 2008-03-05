@@ -1,3 +1,9 @@
+0.0.5 - 2008-03-05
+  - Changed public API to contain explicit reference to augeas_t
+    structure. This makes it easier to write threadsafe code using Augeas
+  - Added libfa, finite automata library, though its not yet used by
+    Augeas
+
 0.0.4 - 2008-02-25
   - package as RPM and make sure Augeas can be build on Fedora/RHEL
 

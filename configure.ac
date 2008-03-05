@@ -1,4 +1,4 @@
-AC_INIT(augeas, 0.0.4)
+AC_INIT(augeas, 0.0.5)
 AM_INIT_AUTOMAKE([-Wno-portability])
 
 AC_GNU_SOURCE
