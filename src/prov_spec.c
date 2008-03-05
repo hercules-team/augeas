@@ -32,9 +32,9 @@
 /* Arbitrary limit on the number of fd's to use with ftw */
 #define MAX_DESCRIPTORS 10
 
-int augp_spec_init(void);
-int augp_spec_load(void);
-int augp_spec_save(void);
+int augp_spec_init(struct augeas *);
+int augp_spec_load(struct augeas *);
+int augp_spec_save(struct augeas *);
 
 struct augp_spec_data {
     struct grammar  *grammars;
@@ -100,7 +100,7 @@ static int ftw_load_cb(const char *fpath,
  * are read from AUGEAS_LENS_DIR and from any directory mentioned on the
  * env var AUGEAS_LENS_LIB
  */
-int augp_spec_init(void) {
+int augp_spec_init(struct augeas *aug) {
     int r;
     char *env, *path, *p;
 
@@ -122,7 +122,7 @@ int augp_spec_init(void) {
     if (env != NULL) {
         augp_spec_data.root = env;
     }
-    aug_set(AUGEAS_META_ROOT, augp_spec_data.root);
+    aug_set(aug, AUGEAS_META_ROOT, augp_spec_data.root);
 
     env = getenv(AUGEAS_LENS_ENV);
     if (env != NULL) {
@@ -145,7 +145,7 @@ int augp_spec_init(void) {
             path = p;
         } while (*path != '\0');
     }
-    
+
     // CHECK: Multiple grammars with the same name
     list_for_each(map, augp_spec_data.maps) {
         list_for_each(g, augp_spec_data.grammars) {
@@ -215,7 +215,8 @@ static const char *file_node(const char *filename, struct filter *filter) {
     return result;
 }
 
-static char *add_load_info(const char *filename, const char *node,
+static char *add_load_info(struct augeas *aug, const char *filename,
+                           const char *node,
                            const char *grammarname) {
     static const char *const metatree = "/augeas/files";
     static const char *const pnode = "/path";
@@ -227,20 +228,21 @@ static char *add_load_info(const char *filename, const char *node,
     result = pathjoin(result, metatree);
     result = pathjoin(result, filename + strlen(augp_spec_data.root));
     end = strlen(result);
-    
+
     result = pathjoin(result, pnode);
-    aug_set(result, node);
+    aug_set(aug, result, node);
     result[end] = '\0';
-    
+
     result = pathjoin(result, gnode);
-    aug_set(result, grammarname);
+    aug_set(aug, result, grammarname);
     result[end] = '\0';
 
     result = pathjoin(result, enode);
     return result;
 }
 
-static int parse_file(const char *filename, struct filter *filter, 
+static int parse_file(struct augeas *aug,
+                      const char *filename, struct filter *filter,
                       struct grammar *grammar) {
     const char *text = NULL;
     const char *node = file_node(filename, filter);
@@ -249,7 +251,7 @@ static int parse_file(const char *filename, struct filter *filter,
     struct aug_file *file = NULL;
     struct tree *tree;
 
-    err_node = add_load_info(filename, node, grammar->name);
+    err_node = add_load_info(aug, filename, node, grammar->name);
     if (err_node == NULL)
         goto error;
 
@@ -276,15 +278,15 @@ static int parse_file(const char *filename, struct filter *filter,
     list_append(augp_spec_data.files, file);
     free((void *) text);
 
-    aug_tree_replace(file->node, tree);
+    aug_tree_replace(aug, file->node, tree);
     tree_dirty(tree);
 
-    aug_set(err_node, NULL);
+    aug_set(aug, err_node, NULL);
     free(err_node);
     return 0;
  error:
     if (err_node != NULL)
-        aug_set(err_node, err_status);
+        aug_set(aug, err_node, err_status);
     free(err_node);
     free(file);
     free((void *) text);
@@ -297,7 +299,7 @@ static int strendswith(const char *s, const char *end) {
 }
 
 /* Parse all the files mentioned in maps and load them into the tree */
-int augp_spec_load(void) {
+int augp_spec_load(struct augeas *aug) {
     glob_t globbuf;
     int ret = 0;
     int flags = GLOB_NOSORT;
@@ -306,7 +308,7 @@ int augp_spec_load(void) {
         list_for_each(filter, map->filters) {
             char *globpat;
 
-            ret = asprintf(&globpat, "%s%s", augp_spec_data.root, 
+            ret = asprintf(&globpat, "%s%s", augp_spec_data.root,
                            filter->glob);
             if (ret == -1)
                 goto exit;
@@ -322,7 +324,7 @@ int augp_spec_load(void) {
                 const char *s = globbuf.gl_pathv[i];
                 if (strendswith(s, ".augnew") || strendswith(s, ".augnew.dot"))
                     continue;
-                parse_file(globbuf.gl_pathv[i], filter, map->grammar);
+                parse_file(aug, globbuf.gl_pathv[i], filter, map->grammar);
             }
         }
     }
@@ -331,10 +333,10 @@ int augp_spec_load(void) {
     /* If we called glob at least once, free globbuf */
     if (flags & GLOB_APPEND)
         globfree(&globbuf);
-    return -1;
+    return ret;
 }
 
-int augp_spec_save(void) {
+int augp_spec_save(struct augeas *aug) {
     char *name = calloc(1, 80); /* Completely arbitrary initial size */
     list_for_each(file, augp_spec_data.files) {
         FILE *fp;
@@ -347,7 +349,7 @@ int augp_spec_save(void) {
         // FIXME: If the whole tree went away, we should probably delete
         // the file; but we don't have a mechanism to create a file, so
         // we just leave an empty file there
-        struct tree *tree = aug_tree_find(aug_tree, file->node);
+        struct tree *tree = aug_tree_find(aug->tree, file->node);
 
         if (tree == NULL || tree_dirty(tree)) {
             fp = fopen(name, "w");

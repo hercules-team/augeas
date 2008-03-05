@@ -25,25 +25,27 @@
 #ifndef __AUGEAS_H
 #define __AUGEAS_H
 
+typedef struct augeas *augeas_t;
+
 /* Initialize the library; returns -1 on error, 0 on success */
-int aug_init(void);
+augeas_t aug_init(void);
 
 /* Lookup the value associated with PATH */
-const char *aug_get(const char *path);
+const char *aug_get(augeas_t aug, const char *path);
 
 /* Set the value associated with PATH to VALUE. VALUE is copied into the
    internal data structure. Intermediate entries are created if they don't
    exist. Return -1 on error, 0 on success */
-int aug_set(const char *path, const char *value);
+int aug_set(augeas_t aug, const char *path, const char *value);
 
 /* Return 1 if there is an entry for this path, 0 otherwise */
-int aug_exists(const char *path);
+int aug_exists(augeas_t aug, const char *path);
 
 /* Make PATH a SIBLING of PATH by inserting it directly before SIBLING. */
-int aug_insert(const char *path, const char *sibling);
+int aug_insert(augeas_t aug, const char *path, const char *sibling);
 
 /* Remove path and all its children. Returns the number of entries removed */
-int aug_rm(const char *path);
+int aug_rm(augeas_t aug, const char *path);
 
 /* Return a list of the direct children of PATH in CHILDREN, which is
    allocated and must be freed by the caller, including the strings it
@@ -51,7 +53,7 @@ int aug_rm(const char *path);
    of children is returned. Returns -1 on error, or the total number of
    children of PATH.
 */
-int aug_ls(const char *path, const char ***children);
+int aug_ls(augeas_t aug, const char *path, const char ***children);
 
 /* Return the first SIZE paths that match PATTERN in MATCHES, which must be
  * preallocated to hold at least SIZE entries. The return value is the total
@@ -61,15 +63,22 @@ int aug_ls(const char *path, const char ***children);
  * The PATTERN is passed to fnmatch(3) verbatim, and FNM_FILE_NAME is not set,
  * so that '*' does not match a '/'
  */
-int aug_match(const char *pattern, const char **matches, int size);
+int aug_match(augeas_t aug, const char *pattern,
+              const char **matches, int size);
 
 /* Write all pending changes to disk. Return -1 if an error is encountered,
  * 0 on success.
  */
-int aug_save(void);
+int aug_save(augeas_t aug);
 
 /* Print the subtree starting at PATH to OUT */
-void aug_print(FILE *out, const char *path);
+void aug_print(augeas_t aug, FILE *out, const char *path);
+
+/* Close this Augeas instance and free any storage associated with
+ * it. After running AUG_CLOSE, AUG is invalid and can not be used for any
+ * more operations.
+ */
+void aug_close(augeas_t aug);
 
 #endif
 

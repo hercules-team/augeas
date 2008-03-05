@@ -188,16 +188,23 @@ struct aug_file *aug_make_file(const char *name, const char *node,
  */
 const char* aug_read_file(const char *path);
 
+/* The data structure representing a connection to Augeas. */
+struct augeas {
+    struct tree *tree;
+};
+
 /*
  * Provider. Should eventually be the main interface between the tree
- * and the handling of individual config files
+ * and the handling of individual config files. FIXME: We should probably
+ * do away with the notion of providers since there is only one now, though
+ * a decision needs to wait until the language has been reworked.
  */
 
 struct aug_provider {
     const char *name;
-    int (*init)(void);
-    int (*load)(void);
-    int (*save)(void);
+    int (*init)(struct augeas *aug);
+    int (*load)(struct augeas *aug);
+    int (*save)(struct augeas *aug);
 };
 
 /* An entry in the global config tree. The data structure allows associating
@@ -211,9 +218,8 @@ struct tree {
     int          dirty;
 };
 
-extern struct tree *aug_tree;
 struct tree *aug_tree_find(struct tree *tree, const char *path);
-int aug_tree_replace(const char *path, struct tree *sub);
+int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub);
 
 #endif
 

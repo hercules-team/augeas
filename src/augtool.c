@@ -37,6 +37,8 @@ struct command {
 
 static struct command commands[];
 
+static augeas_t augeas = NULL;
+
 static char *cleanpath(char *path) {
     char *e = path + strlen(path) - 1;
     while (e != path && (*e == SEP || isspace(*e)))
@@ -49,9 +51,9 @@ static void cmd_ls(char *args[]) {
     const char *path = cleanpath(args[0]);
     const char **paths;
 
-    cnt = aug_ls(path, &paths);
+    cnt = aug_ls(augeas, path, &paths);
     for (int i=0; i < cnt; i++) {
-        const char *val = aug_get(paths[i]);
+        const char *val = aug_get(augeas, paths[i]);
         if (val == NULL)
             val = "(none)";
         printf("%s = %s\n", paths[i] + strlen(path), val);
@@ -67,16 +69,16 @@ static void cmd_match(char *args[]) {
     const char **matches;
     int filter = (strlen(args[1]) > 0);
 
-    cnt = aug_match(pattern, NULL, 0);
+    cnt = aug_match(augeas, pattern, NULL, 0);
     if (cnt == 0) {
         printf("  (no matches)\n");
         return;
     }
 
     matches = calloc(cnt, sizeof(char *));
-    cnt = aug_match(pattern, matches, cnt);
+    cnt = aug_match(augeas, pattern, matches, cnt);
     for (int i=0; i < cnt; i++) {
-        const char *val = aug_get(matches[i]);
+        const char *val = aug_get(augeas, matches[i]);
         if (val == NULL)
             val = "(none)";
         if (filter) {
@@ -94,7 +96,7 @@ static void cmd_rm(char *args[]) {
     int cnt;
     const char *path = cleanpath(args[0]);
     printf("rm : %s", path);
-    cnt = aug_rm(path);
+    cnt = aug_rm(augeas, path);
     printf(" %d\n", cnt);
 }
 
@@ -103,7 +105,7 @@ static void cmd_set(char *args[]) {
     const char *val = args[1];
     int r;
 
-    r = aug_set(path, val);
+    r = aug_set(augeas, path, val);
     if (r == -1)
         printf ("Failed\n");
 }
@@ -112,7 +114,7 @@ static void cmd_clear(char *args[]) {
     const char *path = cleanpath(args[0]);
     int r;
 
-    r = aug_set(path, NULL);
+    r = aug_set(augeas, path, NULL);
     if (r == -1)
         printf ("Failed\n");
 }
@@ -122,23 +124,23 @@ static void cmd_get(char *args[]) {
     const char *val;
 
     printf("%s", path);
-    if (! aug_exists(path)) {
+    if (! aug_exists(augeas, path)) {
         printf(" (o)\n");
         return;
     }
-    val = aug_get(path);
+    val = aug_get(augeas, path);
     if (val == NULL)
         val = "(none)";
     printf(" = %s\n", val);
 }
 
 static void cmd_print(char *args[]) {
-    aug_print(stdout, cleanpath(args[0]));
+    aug_print(augeas, stdout, cleanpath(args[0]));
 }
 
 static void cmd_save(ATTRIBUTE_UNUSED char *args[]) {
     int r;
-    r = aug_save();
+    r = aug_save(augeas);
     if (r == -1) {
         printf("Saving failed\n");
     }
@@ -149,7 +151,7 @@ static void cmd_ins(char *args[]) {
     const char *sibling = cleanpath(args[1]);
     int r;
 
-    r = aug_insert(path, sibling);
+    r = aug_insert(augeas, path, sibling);
     if (r == -1)
         printf ("Failed\n");
 }
@@ -291,7 +293,7 @@ static char *readline_path_generator(const char *text, int state) {
         for (;current < nchildren; current++)
             free((void *) children[current]);
         free((void *) children);
-        nchildren = aug_ls(path, &children);
+        nchildren = aug_ls(augeas, path, &children);
         current = 0;
         free(path);
     }
@@ -300,7 +302,7 @@ static char *readline_path_generator(const char *text, int state) {
         char *child = (char *) children[current];
         current += 1;
         if (STREQLEN(child, text, strlen(text))) {
-            if (aug_ls(child, NULL) > 0) {
+            if (aug_ls(augeas, child, NULL) > 0) {
                 child = realloc(child, strlen(child)+2);
                 strcat(child, "/");
             }
@@ -351,7 +353,11 @@ int main(int argc, char **argv) {
     char *cmd, *args[3];
     int r;
 
-    aug_init();
+    augeas = aug_init();
+    if (augeas == NULL) {
+        fprintf(stderr, "Failed to initialize Augeas\n");
+        exit(EXIT_FAILURE);
+    }
     readline_init();
     if (argc > 1) {
         // Accept one command from the command line
