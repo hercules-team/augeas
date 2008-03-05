@@ -246,6 +246,23 @@ static void testOverlap(CuTest *tc) {
     CuAssertTrue(tc, fa_equals(exp, p));
 }
 
+static void assertExample(CuTest *tc, const char *regexp, const char *exp) {
+    fa_t fa = make_good_fa(tc, regexp);
+    char *xmpl = fa_example(fa);
+    CuAssertStrEquals(tc, exp, xmpl);
+    free(xmpl);
+}
+
+static void testExample(CuTest *tc) {
+    assertExample(tc, "(.|\n)", "A");
+    assertExample(tc, "(\n|\t|x)", "x");
+    assertExample(tc, "[^b-y]", "z");
+    assertExample(tc, "x*", "x");
+    assertExample(tc, "ab+cx*", "abc");
+    /* Here, we don't get the shortest example */
+    assertExample(tc, "ab+cx*|y*", "abc");
+}
+
 int main(int argc, char **argv) {
     if (argc == 1) {
         char *output = NULL;
@@ -260,6 +277,7 @@ int main(int argc, char **argv) {
         SUITE_ADD_TEST(suite, testIntersect);
         SUITE_ADD_TEST(suite, testComplement);
         SUITE_ADD_TEST(suite, testOverlap);
+        SUITE_ADD_TEST(suite, testExample);
 
         CuSuiteRun(suite);
         CuSuiteSummary(suite, &output);
@@ -276,6 +294,7 @@ int main(int argc, char **argv) {
             print_regerror(r, argv[i]);
         } else {
             dot(fa, i);
+            printf("Example for %s: %s\n", argv[i], fa_example(fa));
             fa_free(fa);
         }
     }

@@ -1167,12 +1167,9 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
             for (; t1 != NULL && t1->max < t2->min; t1 = t1->next);
             if (t1 == NULL)
                 break;
-            // t1->max >= t2->min
             for (; t2 != NULL && t2->max < t1->min; t2 = t2->next);
             if (t2 == NULL)
                 break;
-            // t2->max >= t1->min
-            // t2->min <= t2->max
             if (t2->min <= t1->max) {
                 struct fa_map *map = find_pair(newstates, t1->to, t2->to);
                 struct fa_state *r = NULL;
@@ -1335,6 +1332,66 @@ struct fa *fa_overlap(struct fa *fa1, struct fa *fa2) {
 
 int fa_equals(fa_t fa1, fa_t fa2) {
     return fa_contains(fa1, fa2) && fa_contains(fa2, fa1);
+}
+
+static struct fa_trans *find_char_trans(struct fa_trans *trans,
+                                        struct fa_map *visited,
+                                        char *c,
+                                        int (*is) (int)) {
+    list_for_each(t, trans) {
+        for (char x = t->min; x <= t->max; x++) {
+            if (find_fst(visited, t->to) != NULL)
+                continue;
+            if ((*is)(x)) {
+                *c = x;
+                return t;
+            }
+        }
+    }
+    return NULL;
+}
+
+char *fa_example(fa_t fa) {
+    struct fa_map *path = NULL;
+    struct fa_state *s = fa->initial;
+    char *word;
+
+    CALLOC(word, 5);  /* Initial size of 5 competley arbitrary */
+    path = state_pair_push(NULL, fa->initial, NULL);
+    do {
+        if (s->transitions != NULL) {
+            char c;
+            struct fa_trans *t;
+            t = find_char_trans(s->transitions, path, &c, isalpha);
+            if (t == NULL) {
+                t = find_char_trans(s->transitions, path, &c, isalnum);
+            }
+            if (t == NULL) {
+                t = find_char_trans(s->transitions, path, &c, isprint);
+            }
+            if (t == NULL) {
+                t = s->transitions;
+                c = t->min;
+            }
+            if (t != NULL) {
+                s = t->to;
+                path = state_pair_push(path, s, NULL);
+                int len = strlen(word);
+                word = realloc(word, len + 2);
+                word[len] = c;
+                word[len+1] = '\0';
+            } else {
+                s = NULL;
+            }
+        }
+    } while (s != NULL && ! s->accept);
+    list_free(path);
+    if (s == NULL) {
+        free(word);
+        return NULL;
+    } else {
+        return word;
+    }
 }
 
 /*

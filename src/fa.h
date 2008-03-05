@@ -115,6 +115,12 @@ void fa_dot(FILE *out, fa_t fa);
  */
 fa_t fa_overlap(fa_t fa1, fa_t fa2);
 
+/* Produce an example for the language of FA. The example is not
+ * necessarily the shortest possible. The implementation works very hard to
+ * have printable characters (preferrably alphanumeric) in the example, and
+ * to avoid just an empty word.
+ */
+char *fa_example(fa_t fa);
 #endif
 
 
