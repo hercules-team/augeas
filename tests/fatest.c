@@ -157,6 +157,37 @@ static void testChars(CuTest *tc) {
     CuAssertTrue(tc, fa_equals(fa2, fa3));
 }
 
+static void testManualAmbig(CuTest *tc) {
+    /* The point of this test is mostly to teach me how Anders Moeller's
+       algorithm for finding ambiguous strings works.
+
+       For the two languages a1 = a|ab and a2 = a|ba, a1.a2 has one
+       ambiguous word aba, which can be split as a.ba and ab.a.
+
+       This uses X and Y as the markers*/
+
+    fa_t a1f = make_good_fa(tc, "Xa|XaXb");
+    fa_t a1t = make_good_fa(tc, "(YX)*Xa|(YX)*Xa(YX)*Xb");
+    fa_t a2f = make_good_fa(tc, "Xa|XbXa");
+    fa_t a2t = make_good_fa(tc, "(YX)*Xa|((YX)*Xb(YX)*Xa)");
+    fa_t mp = make_good_fa(tc, "YX(X(.|\n))+");
+    fa_t ms = make_good_fa(tc, "YX(X(.|\n))*");
+    fa_t sp = make_good_fa(tc, "(X(.|\n))+YX");
+    fa_t ss = make_good_fa(tc, "(X(.|\n))*YX");
+
+    fa_t a1f_mp = mark(fa_concat(a1f, mp));
+    fa_t a1f_mp$a1t = mark(fa_intersect(a1f_mp, a1t));
+    fa_t b1 = mark(fa_concat(a1f_mp$a1t, ms));
+
+    fa_t sp_a2f = mark(fa_concat(sp, a2f));
+    fa_t sp_a2f$a2t = mark(fa_intersect(sp_a2f, a2t));
+    fa_t b2 = mark(fa_concat(ss, sp_a2f$a2t));
+
+    fa_t amb = mark(fa_intersect(b1, b2));
+    fa_t exp = make_good_fa(tc, "XaYXXbYXXa");
+    CuAssertTrue(tc, fa_equals(exp, amb));
+}
+
 static void testContains(CuTest *tc) {
     fa_t fa1, fa2, fa3;
 
@@ -224,6 +255,7 @@ int main(int argc, char **argv) {
         SUITE_ADD_TEST(suite, testBadRegexps);
         SUITE_ADD_TEST(suite, testMonster);
         SUITE_ADD_TEST(suite, testChars);
+        SUITE_ADD_TEST(suite, testManualAmbig);
         SUITE_ADD_TEST(suite, testContains);
         SUITE_ADD_TEST(suite, testIntersect);
         SUITE_ADD_TEST(suite, testComplement);
