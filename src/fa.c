@@ -1415,9 +1415,9 @@ char *fa_example(fa_t fa) {
                 s = NULL;
             }
         }
-    } while (s != NULL && ! s->accept);
+    } while (s != NULL && s->transitions != NULL && ! s->accept);
     list_free(path);
-    if (s == NULL) {
+    if (s == NULL || ! s->accept) {
         free(word);
         return NULL;
     } else {

@@ -261,6 +261,13 @@ static void testExample(CuTest *tc) {
     assertExample(tc, "ab+cx*", "abc");
     /* Here, we don't get the shortest example */
     assertExample(tc, "ab+cx*|y*", "abc");
+    fa_t fa1 = mark(fa_make_basic(FA_EMPTY));
+    CuAssertPtrEquals(tc, NULL, fa_example(fa1));
+
+    fa1 = mark(fa_make_basic(FA_EPSILON));
+    char *s = fa_example(fa1);
+    CuAssertStrEquals(tc, "", s);
+    free(s);
 }
 
 int main(int argc, char **argv) {
