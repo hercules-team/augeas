@@ -976,6 +976,36 @@ static struct fa *fa_make_char(char c) {
     return fa;
 }
 
+struct fa *fa_make_basic(unsigned int basic) {
+    if (basic == FA_EMPTY) {
+        return fa_make_empty();
+    } else if (basic == FA_EPSILON) {
+        return fa_make_epsilon();
+    } else if (basic == FA_TOTAL) {
+        struct fa *fa = fa_make_epsilon();
+        add_new_trans(fa->initial, fa->initial, CHAR_MIN, CHAR_MAX);
+        return fa;
+    }
+    return NULL;
+}
+
+int fa_is_basic(struct fa *fa, unsigned int basic) {
+    if (basic == FA_EMPTY) {
+        return ! fa->initial->accept && fa->initial->transitions == NULL;
+    } else if (basic == FA_EPSILON) {
+        return fa->initial->accept && fa->initial->transitions == NULL;
+    } else if (basic == FA_TOTAL) {
+        struct fa_trans *t = fa->initial->transitions;
+        if (! fa->initial->accept || t == NULL)
+            return 0;
+        if (t->next != NULL)
+            return 0;
+        return t->to == fa->initial && 
+            t->min == CHAR_MIN && t->max == CHAR_MAX;
+    }
+    return 0;
+}
+
 struct fa *fa_union(struct fa *fa1, struct fa *fa2) {
     struct fa_state *s;
 

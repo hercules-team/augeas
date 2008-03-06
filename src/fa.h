@@ -26,8 +26,15 @@
 #include <stdio.h>
 #include <regex.h>
 
-/* The type for an finit automaton. */
+/* The type for a finite automaton. */
 typedef struct fa *fa_t;
+
+/* Denote some basic automata, used by fa_is_basic and fa_make_basic */
+enum fa_basic {
+    FA_EMPTY,        /* Accepts the empty language, i.e. no strings */
+    FA_EPSILON,      /* Accepts only the empty word */
+    FA_TOTAL         /* Accepts all words */
+};
 
 /* Unless otherwise mentioned, automata passed into routines are never
  * modified. It is the responsibility of the caller to free automata
@@ -45,6 +52,16 @@ typedef struct fa *fa_t;
  * return value indicates the error.
  */
 int fa_compile(const char *re, fa_t *fa);
+
+/* Make a new automaton that accepts one of the basic languages defined in
+ * the enum FA_BASIC.
+ */
+fa_t fa_make_basic(unsigned int basic);
+
+/* Return 1 if FA accepts the basic language BASIC, which must be one of
+ * the constantsfrom enum FA_BASIC.
+ */
+int fa_is_basic(fa_t fa, unsigned int basic);
 
 /* Minimize FA using Brzozowski's algorithm. As a side-effect, the
  * automaton will also be deterministic after being minimized. Modifies the
