@@ -1,5 +1,5 @@
 0.0.6 - 2008-03-05
-  - Make it possible to overwrite files when saving with and wiithout
+  - Make it possible to overwrite files when saving with and without
     backups 
   - Take the filesystem root as an optional argument to aug_init
   - Expose these two things as command line options in augtool
@@ -7,7 +7,7 @@
 0.0.5 - 2008-03-05
   - Changed public API to contain explicit reference to augeas_t
     structure. This makes it easier to write threadsafe code using Augeas
-  - Added libfa, finite automata library, though its not yet used by
+  - Added libfa, finite automata library, though it's not yet used by
     Augeas
 
 0.0.4 - 2008-02-25
