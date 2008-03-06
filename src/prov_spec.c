@@ -32,6 +32,11 @@
 /* Arbitrary limit on the number of fd's to use with ftw */
 #define MAX_DESCRIPTORS 10
 
+/* Extension for newly created files */
+#define EXT_AUGNEW ".augnew"
+/* Extension for backup files */
+#define EXT_AUGSAVE ".augsave"
+
 int augp_spec_init(struct augeas *);
 int augp_spec_load(struct augeas *);
 int augp_spec_save(struct augeas *);
@@ -40,13 +45,11 @@ struct augp_spec_data {
     struct grammar  *grammars;
     struct map      *maps;
     struct aug_file *files;
-    const  char     *root;     // The root in the filesystem
 };
 
 struct augp_spec_data augp_spec_data = {
     .grammars = NULL,
-    .maps = NULL,
-    .root = "/"
+    .maps = NULL
 };
 
 const struct aug_provider augp_spec = {
@@ -100,7 +103,7 @@ static int ftw_load_cb(const char *fpath,
  * are read from AUGEAS_LENS_DIR and from any directory mentioned on the
  * env var AUGEAS_LENS_LIB
  */
-int augp_spec_init(struct augeas *aug) {
+int augp_spec_init(ATTRIBUTE_UNUSED struct augeas *aug) {
     int r;
     char *env, *path, *p;
 
@@ -112,17 +115,6 @@ int augp_spec_init(struct augeas *aug) {
                     AUGEAS_LENS_DIR, strerror(errno));
         }
     }
-
-    /* We report the root dir in AUGEAS_META_ROOT, but we only use the
-       value we store internally, to avoid any problems with
-       AUGEAS_META_ROOT getting changed. To make the tree entry the
-       canonical location of the root dir, we'd need some real security on
-       who is allowed to change tree entries */
-    env = getenv(AUGEAS_ROOT_ENV);
-    if (env != NULL) {
-        augp_spec_data.root = env;
-    }
-    aug_set(aug, AUGEAS_META_ROOT, augp_spec_data.root);
 
     env = getenv(AUGEAS_LENS_ENV);
     if (env != NULL) {
@@ -226,7 +218,7 @@ static char *add_load_info(struct augeas *aug, const char *filename,
     char *result = NULL;
     int end = 0;
     result = pathjoin(result, metatree);
-    result = pathjoin(result, filename + strlen(augp_spec_data.root));
+    result = pathjoin(result, filename + strlen(aug->root));
     end = strlen(result);
 
     result = pathjoin(result, pnode);
@@ -308,7 +300,7 @@ int augp_spec_load(struct augeas *aug) {
         list_for_each(filter, map->filters) {
             char *globpat;
 
-            ret = asprintf(&globpat, "%s%s", augp_spec_data.root,
+            ret = asprintf(&globpat, "%s%s", aug->root,
                            filter->glob);
             if (ret == -1)
                 goto exit;
@@ -337,34 +329,49 @@ int augp_spec_load(struct augeas *aug) {
 }
 
 int augp_spec_save(struct augeas *aug) {
-    char *name = calloc(1, 80); /* Completely arbitrary initial size */
+    char *augnew = calloc(1, 80);  /* Completely arbitrary initial size */
+    char *augsave = calloc(1, 80);
+    int ret = -1;
+    
     list_for_each(file, augp_spec_data.files) {
-        FILE *fp;
-        // For now, we save into af->name + ".augnew"
-        name = realloc(name, strlen(file->name) + 1 
-                       + strlen(".augnew.dot") + 1);
-
-        sprintf(name, "%s.augnew", file->name);
-
         // FIXME: If the whole tree went away, we should probably delete
         // the file; but we don't have a mechanism to create a file, so
         // we just leave an empty file there
         struct tree *tree = aug_tree_find(aug->tree, file->node);
 
         if (tree == NULL || tree_dirty(tree)) {
-            fp = fopen(name, "w");
-            if (fp == NULL) {
-                free(name);
-                return -1;
-            }
+            FILE *fp;
+            augnew = realloc(augnew, 
+                             strlen(file->name) + strlen(EXT_AUGNEW) + 1);
+            sprintf(augnew, "%s" EXT_AUGNEW, file->name);
+            
+            fp = fopen(augnew, "w");
+            if (fp == NULL)
+                goto done;
 
             if (tree != NULL)
                 put(fp, tree->children, file);
-            fclose(fp);
+
+            if (fclose(fp) != 0)
+                goto done;
+            if (!(aug->flags & AUG_SAVE_NEWFILE)) {
+                if (aug->flags & AUG_SAVE_BACKUP) {
+                    augsave = realloc(augsave,
+                               strlen(file->name) + strlen(EXT_AUGSAVE) + 1);
+                    sprintf(augsave, "%s" EXT_AUGSAVE, file->name);
+                    if (rename(file->name, augsave) != 0)
+                        goto done;
+                }
+                if (rename(augnew, file->name) != 0)
+                    goto done;
+            }
         }
     }
-    free(name);
-    return 0;
+    ret = 0;
+ done:
+    free(augnew);
+    free(augsave);
+    return ret;
 }
 
 /*

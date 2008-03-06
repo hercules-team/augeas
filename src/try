@@ -33,7 +33,7 @@ elif [[ "x$1" == "xcli" ]] ; then
     shift
     ./augtool "$@"
 else
-    ./augtool < $AUGCMDS
+    ./augtool "$@" < $AUGCMDS
     echo
     for f in $(find $AUGEAS_ROOT -name \*.augnew); do
         echo "File $f"

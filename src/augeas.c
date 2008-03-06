@@ -22,6 +22,7 @@
 
 #include "augeas.h"
 #include "internal.h"
+#include "config.h"
 
 #include <fnmatch.h>
 
@@ -154,13 +155,35 @@ static void aug_tree_free(struct tree *tree) {
     }
 }
 
-struct augeas *aug_init(void) {
+struct augeas *aug_init(const char *root, unsigned int flags) {
     struct augeas *result;
 
     CALLOC(result, 1);
     CALLOC(result->tree, 1);
+
+    result->flags = flags;
+
+    if (root == NULL)
+        root = getenv(AUGEAS_ROOT_ENV);
+    if (root == NULL)
+        root = "/";
+    result->root = strdup(root);
+
     result->tree->label = strdup(P_ROOT);
     aug_tree_find_or_create(P_SYSTEM_CONFIG, result->tree);
+
+    /* We report the root dir in AUGEAS_META_ROOT, but we only use the
+       value we store internally, to avoid any problems with
+       AUGEAS_META_ROOT getting changed. */
+    aug_set(result, AUGEAS_META_ROOT, result->root);
+
+    if (flags & AUG_SAVE_NEWFILE) {
+        aug_set(result, AUGEAS_META_SAVE_MODE, "newfile");
+    } else if (flags & AUG_SAVE_BACKUP) {
+        aug_set(result, AUGEAS_META_SAVE_MODE, "backup");
+    } else {
+        aug_set(result, AUGEAS_META_SAVE_MODE, "overwrite");
+    }
 
     for (int i=0; providers[i] != NULL; i++) {
         const struct aug_provider *prov = providers[i];
@@ -516,6 +539,7 @@ void aug_close(struct augeas *aug) {
     if (aug == NULL)
         return;
     del_rec(aug->tree);
+    free((void *) aug->root);
     free(aug);
 }
 

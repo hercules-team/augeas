@@ -38,6 +38,9 @@ struct command {
 static struct command commands[];
 
 static augeas_t augeas = NULL;
+static const char *const progname = "augtool";
+static unsigned int flags = AUG_NONE;
+const char *root = NULL;
 
 static char *cleanpath(char *path) {
     char *e = path + strlen(path) - 1;
@@ -159,12 +162,7 @@ static void cmd_ins(char *args[]) {
 static void cmd_help(ATTRIBUTE_UNUSED char *args[]) {
     struct command *c;
 
-    printf ("  augtool [COMMAND OPTIONS]\n\n");
-    printf ("      Inspect the configuration tree. Without arguments, "
-            "run interactively.\n"
-            "      With arguments, execute that command, print its output and exit.\n\n");
-
-    printf("Subcommands:\n\n");
+    printf("Commands:\n\n");
     printf("    exit, quit\n        Exit the program\n\n");
     for (c=commands; c->name != NULL; c++) {
         printf("    %s\n        %s\n\n", c->synopsis, c->help);
@@ -219,8 +217,8 @@ static struct command commands[] = {
     },
     { "match",  1, cmd_match, "match <PATTERN> [<VALUE>]",
       "Find all paths that match PATTERN (according to fnmatch(3)). If\n"
-      "        VALUE is given, only the matching paths whose value equals VALUE\n" 
-      "        are printed\n"
+      "        VALUE is given, only the matching paths whose value equals VALUE\n"
+      "        are printed"
     },
     { "rm",  1, cmd_rm, "rm <PATH>",
       "Delete PATH and all its children from the tree"
@@ -348,20 +346,61 @@ static void readline_init(void) {
     rl_completion_entry_function = readline_path_generator;
 }
 
+__attribute__((noreturn))
+static void usage(void) {
+    fprintf(stderr, "Usage: %s [OPTIONS] [COMMAND]\n", progname);
+    fprintf(stderr, "Load the Augeas tree and modify it. If no COMMAND is given, run interactively\n");
+    fprintf(stderr, "Run '%s help' to get a list of possible commands.\n",
+            progname);
+    fprintf(stderr, "\nOptions:\n\n");
+    fprintf(stderr, "  -b            When files are changed, preserve the originals in a file\n"
+                    "                with extension '.augsave'\n");
+    fprintf(stderr, "  -n            Save changes in files with extension '.augnew', do not modify\n"
+                    "                the original files\n");
+    fprintf(stderr, "  -r ROOT       Use directory ROOT as the root of the filesystem\n");
+    exit(EXIT_FAILURE);
+}
+
+static void parse_opts(int argc, char **argv) {
+    int opt;
+
+    while ((opt = getopt(argc, argv, "hnbr:")) != -1) {
+        switch(opt) {
+        case 'b':
+            flags |= AUG_SAVE_BACKUP;
+            break;
+        case 'n':
+            flags |= AUG_SAVE_NEWFILE;
+            break;
+        case 'h':
+            usage();
+            break;
+        case 'r':
+            root = optarg;
+            break;
+        default:
+            usage();
+            break;
+        }
+    }
+}
+
 int main(int argc, char **argv) {
     char *line;
     char *cmd, *args[3];
     int r;
 
-    augeas = aug_init();
+    parse_opts(argc, argv);
+
+    augeas = aug_init(root, flags);
     if (augeas == NULL) {
         fprintf(stderr, "Failed to initialize Augeas\n");
         exit(EXIT_FAILURE);
     }
     readline_init();
-    if (argc > 1) {
+    if (optind < argc) {
         // Accept one command from the command line
-        r = run_command(argv[1], argv+2);
+        r = run_command(argv[optind], argv+optind+1);
         return r;
     }
 

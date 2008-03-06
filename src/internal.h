@@ -191,6 +191,8 @@ const char* aug_read_file(const char *path);
 /* The data structure representing a connection to Augeas. */
 struct augeas {
     struct tree *tree;
+    const char  *root;  /* Filesystem root for all files */
+    unsigned int flags; /* Flags passed to AUG_INIT */
 };
 
 /*
