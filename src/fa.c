@@ -1365,64 +1365,95 @@ int fa_equals(fa_t fa1, fa_t fa2) {
     return fa_contains(fa1, fa2) && fa_contains(fa2, fa1);
 }
 
-static struct fa_trans *find_char_trans(struct fa_trans *trans,
-                                        struct fa_map *visited,
-                                        char *c,
-                                        int (*is) (int)) {
-    list_for_each(t, trans) {
-        for (char x = t->min; x <= t->max; x++) {
-            if (find_fst(visited, t->to) != NULL)
-                continue;
-            if ((*is)(x)) {
-                *c = x;
-                return t;
-            }
-        }
+static unsigned int chr_score(char c) {
+    if (isalpha(c)) {
+        return 1;
+    } else if (isalnum(c)) {
+        return 2;
+    } else if (isprint(c)) {
+        return 3;
+    } else {
+        return 100;
     }
-    return NULL;
 }
 
-char *fa_example(fa_t fa) {
-    struct fa_map *path = NULL;
-    struct fa_state *s = fa->initial;
-    char *word;
+static unsigned int str_score(const char *s) {
+    unsigned int score = 0;
+    for ( ;*s; s++) {
+        score += chr_score(*s);
+    }
+    return score;
+}
 
-    CALLOC(word, 5);  /* Initial size of 5 competley arbitrary */
-    path = state_pair_push(NULL, fa->initial, NULL);
-    do {
-        if (s->transitions != NULL) {
-            char c;
-            struct fa_trans *t;
-            t = find_char_trans(s->transitions, path, &c, isalpha);
-            if (t == NULL) {
-                t = find_char_trans(s->transitions, path, &c, isalnum);
-            }
-            if (t == NULL) {
-                t = find_char_trans(s->transitions, path, &c, isprint);
-            }
-            if (t == NULL) {
-                t = s->transitions;
-                c = t->min;
-            }
-            if (t != NULL) {
-                s = t->to;
-                path = state_pair_push(path, s, NULL);
-                int len = strlen(word);
-                word = realloc(word, len + 2);
-                word[len] = c;
-                word[len+1] = '\0';
+/* See if we get a better string for DST by appending C to SRC. If DST is
+ * NULL or empty, always use SRC + C
+ */
+static char *string_extend(char *dst, const char *src, char c) {
+    if (dst == NULL
+        || *dst == '\0'
+        || str_score(src) + chr_score(c) < str_score(dst)) {
+        int slen = strlen(src);
+        dst = realloc(dst, slen + 2);
+        strncpy(dst, src, slen);
+        dst[slen] = c;
+        dst[slen + 1] = '\0';
+    }
+    return dst;
+}
+
+static char pick_char(struct fa_trans *t) {
+    for (char c = t->min; c <= t->max; c++)
+        if (isalpha(c)) return c;
+    for (char c = t->min; c <= t->max; c++)
+        if (isalnum(c)) return c;
+    for (char c = t->min; c <= t->max; c++)
+        if (isprint(c)) return c;
+    return t->min;
+}
+
+/* Generate an example string for FA. Traverse all transitions and record
+ * at each turn the "best" word found for that state.
+ */
+char *fa_example(fa_t fa) {
+    /* Map from state to string */
+    struct fa_map *path = state_pair_push(NULL, fa->initial,
+                                          (void*) strdup(""));
+    /* List of states still to visit */
+    struct fa_map *worklist = state_pair_push(NULL, fa->initial, NULL);
+
+    while (worklist != NULL) {
+        struct fa_state *s = worklist->fst;
+        worklist = fa_map_pop(worklist);
+        struct fa_map *p = find_fst(path, s);
+        char *ps = (char *) p->snd;
+        list_for_each(t, s->transitions) {
+            char c = pick_char(t);
+            struct fa_map *to = find_fst(path, t->to);
+            if (to == NULL) {
+                char *w = string_extend(NULL, ps, c);
+                worklist = state_pair_push(worklist, t->to, NULL);
+                path = state_pair_push(path, t->to, (void *) w);
             } else {
-                s = NULL;
+                char *ts = (char *) to->snd;
+                to->snd = (void *) string_extend(ts, ps, c);
             }
         }
-    } while (s != NULL && s->transitions != NULL && ! s->accept);
-    list_free(path);
-    if (s == NULL || ! s->accept) {
-        free(word);
-        return NULL;
-    } else {
-        return word;
     }
+
+    char *word = NULL;
+    list_for_each(p, path) {
+        char *ps = (char *) p->snd;
+        if (p->fst->accept &&
+            (word == NULL || *word == '\0'
+             || (*ps != '\0' && str_score(word) > str_score(ps)))) {
+            free(word);
+            word = ps;
+        } else {
+            free(p->snd);
+        }
+    }
+    list_free(path);
+    return word;
 }
 
 /*

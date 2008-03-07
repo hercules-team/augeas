@@ -88,7 +88,8 @@ static fa_t make_good_fa(CuTest *tc, const char *regexp) {
     return make_fa(tc, regexp, REG_NOERROR);
 }
 
-static void dot(struct fa *fa, int i) {
+static void dot(struct fa *fa) {
+    static int count = 0;
     FILE *fp;
     const char *dot_dir;
     char *fname;
@@ -97,7 +98,7 @@ static void dot(struct fa *fa, int i) {
     if ((dot_dir = getenv(FA_DOT_DIR)) == NULL)
         return;
 
-    r = asprintf(&fname, "%s/fa_test_%02d.dot", dot_dir, i);
+    r = asprintf(&fname, "%s/fa_test_%02d.dot", dot_dir, count++);
     if (r == -1)
         return;
 
@@ -258,9 +259,17 @@ static void testExample(CuTest *tc) {
     assertExample(tc, "(\n|\t|x)", "x");
     assertExample(tc, "[^b-y]", "z");
     assertExample(tc, "x*", "x");
+    assertExample(tc, "yx*", "y");
     assertExample(tc, "ab+cx*", "abc");
-    /* Here, we don't get the shortest example */
-    assertExample(tc, "ab+cx*|y*", "abc");
+    assertExample(tc, "ab+cx*|y*", "y");
+    assertExample(tc, "u*|[0-9]", "u");
+    assertExample(tc, "u+|[0-9]", "u");
+    assertExample(tc, "vu+|[0-9]", "vu");
+    assertExample(tc, "vu{2}|[0-9]", "0");
+
+    assertExample(tc, "\001((\002.)*\001)+\002", "\001\001\002");
+    assertExample(tc, "\001((\001.)*\002)+\002", "\001\002\002");
+
     fa_t fa1 = mark(fa_make_basic(FA_EMPTY));
     CuAssertPtrEquals(tc, NULL, fa_example(fa1));
 
@@ -300,7 +309,7 @@ int main(int argc, char **argv) {
         if ((r = fa_compile(argv[i], &fa)) != REG_NOERROR) {
             print_regerror(r, argv[i]);
         } else {
-            dot(fa, i);
+            dot(fa);
             printf("Example for %s: %s\n", argv[i], fa_example(fa));
             fa_free(fa);
         }
