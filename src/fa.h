@@ -138,6 +138,26 @@ fa_t fa_overlap(fa_t fa1, fa_t fa2);
  * to avoid just an empty word.
  */
 char *fa_example(fa_t fa);
+
+/* Produce an example of an ambiguous word for the concatenation of the
+ * languages of FA1 and FA2. The return value is such a word (which must be
+ * freed by the caller) if it exists. If none exists, NULL is returned.
+ *
+ * The returned word is of the form UPV and PV and V are set to the first
+ * character of P and V in the returned word. The word UPV has the property
+ * that U and UP are accepted by FA1 and that PV and V are accepted by FA2.
+ *
+ * Neither the language of FA1 or of FA2 may contain words with the
+ * characters '\001' and '\002', as they are used during construction of
+ * the ambiguous word.
+ *
+ * This is a rather expensive operation, involving three intersections and
+ * construction of a number of intermediate automata; you may want to check
+ * if the languages for FA1 and FA2 overlap at all with FA_OVERLAP before
+ * calling this routine.
+ */
+char *fa_ambig_example(fa_t fa1, fa_t fa2, char **pv, char **v);
+
 #endif
 
 

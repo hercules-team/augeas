@@ -1456,6 +1456,120 @@ char *fa_example(fa_t fa) {
     return word;
 }
 
+/* Expand the automaton FA by replacing every transition s(c) -> p from
+ * state s to p on character c by two transitions s(X) -> r, r(c) -> p via
+ * a new state r.
+ * If ADD_MARKER is true, also add for each original state s a new a loop
+ * s(Y) -> q and q(X) -> s through a new state q.
+ *
+ * The end result is that an automaton accepting "a|ab" is turned into one
+ * accepting "Xa|XaXb" if add_marker is false and "(YX)*Xa|(YX)*Xa(YX)*Xb"
+ * when add_marker is true.
+ *
+ * The returned automaton is a copy of FA, FA is not modified.
+ */
+static struct fa *expand_alphabet(struct fa *fa, int add_marker, 
+                                  char X, char Y) {
+    fa = fa_clone(fa);
+    struct fa_map *states = fa_states(fa);
+
+    list_for_each(s, states) {
+        struct fa_state *p = s->fst;
+        struct fa_state *r = add_state(fa, 0);
+        r->transitions = p->transitions;
+        p->transitions = NULL;
+        add_new_trans(p, r, X, X);
+        if (add_marker) {
+            struct fa_state *q = add_state(fa, 0);
+            add_new_trans(p, q, Y, Y);
+            add_new_trans(q, p, X, X);
+        }
+    }
+    list_free(states);
+    return fa;
+}
+
+/* This algorithm is due to Anders Moeller, and can be found in class
+ * AutomatonOperations in dk.brics.grammar
+ */
+char *fa_ambig_example(fa_t fa1, fa_t fa2, char **pv, char **v) {
+    static const char X = '\001';
+    static const char Y = '\002';
+
+#define Xs "\001"
+#define Ys "\002"
+    /* These could become static constants */
+    fa_t mp, ms, sp, ss;
+    fa_compile( Ys Xs "(" Xs "(.|\n))+", &mp);
+    fa_compile( Ys Xs "(" Xs "(.|\n))*", &ms);
+    fa_compile( "(" Xs "(.|\n))+" Ys Xs, &sp);
+    fa_compile("(" Xs "(.|\n))*" Ys Xs, &ss);
+#undef Xs
+#undef Ys
+
+    /* Compute b1 = ((a1f . mp) & a1t) . ms */
+    fa_t a1f = expand_alphabet(fa1, 0, X, Y);
+    fa_t a1t = expand_alphabet(fa1, 1, X, Y);
+    fa_t a2f = expand_alphabet(fa2, 0, X, Y);
+    fa_t a2t = expand_alphabet(fa2, 1, X, Y);
+
+    fa_t a1f_mp = fa_concat(a1f, mp);
+    fa_t a1f_mp$a1t = fa_intersect(a1f_mp, a1t);
+    fa_t b1 = fa_concat(a1f_mp$a1t, ms);
+
+    /* Compute b2 = ss . ((sp . a2f) & a2t) */
+    fa_t sp_a2f = fa_concat(sp, a2f);
+    fa_t sp_a2f$a2t = fa_intersect(sp_a2f, a2t);
+    fa_t b2 = fa_concat(ss, sp_a2f$a2t);
+
+    /* The automaton we are really interested in */
+    fa_t amb = fa_intersect(b1, b2);
+
+    /* Clean up intermediate automata */
+    fa_free(mp);
+    fa_free(ms);
+    fa_free(sp);
+    fa_free(ss);
+    fa_free(a1f);
+    fa_free(a1t);
+    fa_free(a2f);
+    fa_free(a2t);
+    fa_free(a1f_mp);
+    fa_free(a1f_mp$a1t);
+    fa_free(b1);
+    fa_free(sp_a2f);
+    fa_free(sp_a2f$a2t);
+    fa_free(b2);
+
+    char *s = fa_example(amb);
+    fa_free(amb);
+
+    if (s == NULL)
+        return NULL;
+
+    char *result, *t;
+    CALLOC(result, (strlen(s)-1)/2 + 1);
+    t = result;
+    int i = 0;
+    for (i=0; s[2*i] == X; i++)
+        *t++ = s[2*i + 1];
+    if (pv != NULL)
+        *pv = t;
+    i += 1;
+
+    for ( ;s[2*i] == X; i++)
+        *t++ = s[2*i + 1];
+    if (v != NULL)
+        *v = t;
+    i += 1;
+
+    for (; 2*i+1 < strlen(s); i++)
+        *t++ = s[2*i + 1];
+
+    free(s);
+    return result;
+}
+
 /*
  * Construct an fa from a regular expression
  */

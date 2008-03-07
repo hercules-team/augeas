@@ -118,7 +118,7 @@ static void testBadRegexps(CuTest *tc) {
     make_fa(tc, "a{5,3}", REG_BADBR);
 }
 
-/* Stress test, mostly good to check that allocation works */
+/* Stress test, mostly good to check that allocation is clean */
 static void testMonster(CuTest *tc) {
 #define WORD "[a-zA-Z_0-9]+"
 #define CWS  "([ \\n\\t]+|\\/\\*([^\\*]|\\*[^\\/])*\\*\\/)*"
@@ -133,9 +133,36 @@ static void testMonster(CuTest *tc) {
 #undef CWS
 #undef WORD
 
-    fa_t fa;
+    fa_t fa, fas;
+    char *upv, *pv, *v;
 
     fa = make_good_fa(tc, monster);
+
+    upv = fa_ambig_example(fa, fa, &pv, &v);
+
+    /* Monster can't be concatenated with itself */
+    CuAssertStrEquals(tc, "AAA", upv);
+    CuAssertStrEquals(tc, "AA", pv);
+    CuAssertStrEquals(tc, "A", v);
+    free(upv);
+
+    /* Monster can also not be starred */
+    fas = mark(fa_iter(fa, 0, -1));
+    /* Minimize FAS, otherwise the example returned is nondeterministic,
+       since example generation depends on the structure of the FA.
+       FIXME: Explain why UPV with the unminimized FAS changes to a much
+       longer string simply when allocation patterns change (e.g., by
+       running the test under valgrind vs. plain glibc malloc. Fishy ?
+       FA_EXAMPLE should depend on the structure of the FA, but not
+       incidental details like sorting of transitions.
+     */
+    fa_minimize(fas);
+    upv = fa_ambig_example(fas, fa, &pv, &v);
+
+    CuAssertStrEquals(tc, "AA", upv);
+    CuAssertStrEquals(tc, "AA", pv);
+    CuAssertStrEquals(tc, "A", v);
+    free(upv);
 }
 
 static void testChars(CuTest *tc) {
@@ -279,6 +306,45 @@ static void testExample(CuTest *tc) {
     free(s);
 }
 
+static void assertAmbig(CuTest *tc, const char *regexp1, const char *regexp2,
+                        const char *exp_upv,
+                        const char *exp_pv, const char *exp_v) {
+
+    fa_t fa1 = make_good_fa(tc, regexp1);
+    fa_t fa2 = make_good_fa(tc, regexp2);
+    char *pv, *v;
+    char *upv = fa_ambig_example(fa1, fa2, &pv, &v);
+    CuAssertPtrNotNull(tc, upv);
+    CuAssertPtrNotNull(tc, pv);
+    CuAssertPtrNotNull(tc, v);
+
+    CuAssertStrEquals(tc, exp_upv, upv);
+    CuAssertStrEquals(tc, exp_pv, pv);
+    CuAssertStrEquals(tc, exp_v, v);
+    free(upv);
+}
+
+static void assertNotAmbig(CuTest *tc, const char *regexp1,
+                           const char *regexp2) {
+    fa_t fa1 = make_good_fa(tc, regexp1);
+    fa_t fa2 = make_good_fa(tc, regexp2);
+    char *upv = fa_ambig_example(fa1, fa2, NULL, NULL);
+    CuAssertPtrEquals(tc, NULL, upv);
+}
+
+static void testAmbig(CuTest *tc) {
+    assertAmbig(tc, "a|ab", "a|ba", "aba", "ba", "a");
+    assertAmbig(tc, "(a|ab)*", "a|ba", "aba", "ba", "a");
+    assertAmbig(tc, "(a|b|c|d|abcd)", "(a|b|c|d|abcd)*",
+                "abcd", "bcd", "");
+    assertAmbig(tc, "(a*)*", "a*", "a", "a", "");
+    assertAmbig(tc, "(a+)*", "a+", "aa", "aa", "a");
+
+    assertNotAmbig(tc, "a*", "a");
+    assertNotAmbig(tc, "(a*b)*", "a*b");
+    assertNotAmbig(tc, "(a|b|c|d|abcd)", "(a|b|c|d|abcd)");
+}
+
 int main(int argc, char **argv) {
     if (argc == 1) {
         char *output = NULL;
@@ -294,6 +360,7 @@ int main(int argc, char **argv) {
         SUITE_ADD_TEST(suite, testComplement);
         SUITE_ADD_TEST(suite, testOverlap);
         SUITE_ADD_TEST(suite, testExample);
+        SUITE_ADD_TEST(suite, testAmbig);
 
         CuSuiteRun(suite);
         CuSuiteSummary(suite, &output);
