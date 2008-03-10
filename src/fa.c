@@ -906,7 +906,7 @@ static void determinize(struct fa *fa, struct fa_map *ini) {
             struct fa_state *q = fa_set_map_get_state(newstate, pset);
             char min = points[n];
             char max = CHAR_MAX;
-            if (n+1 < strlen(points))
+            if (n+1 < npoints)
                 max = points[n+1] - 1;
             add_new_trans(r, q, min, max);
         }
