@@ -31,6 +31,7 @@
 
 #include <limits.h>
 #include <ctype.h>
+#include <glib.h>
 
 #include "internal.h"
 #include "fa.h"
@@ -141,15 +142,22 @@ struct fa_map {
     struct fa_state *s;
 };
 
-/* A map from a set of states to a state. A set is represented by an
- * FA_MAP, where only the FST entries of the FA_MAP are used. Used by
- * determinize for the subset construction of turning an NFA into a DFA
- */
-struct fa_set_map {
-    struct fa_set_map *next;
-    struct fa_map     *set;      /* Set of states through set->next, states
-                                    in set->fst */
-    struct fa_state   *state;
+/* A map from a set of states to a state. */
+typedef GHashTable state_set_hash;
+
+static const int state_set_initial_size = 4;
+static const int state_set_max_stride   = 128;
+
+struct state_set {
+    size_t            size;
+    size_t            used;
+    struct fa_state **states;
+    void            **data;
+};
+
+struct state_set_list {
+    struct state_set_list *next;
+    struct state_set      *set;
 };
 
 static struct re *parse_regexp(const char **regexp, int *error);
@@ -358,6 +366,93 @@ static void fa_merge(struct fa *fa1, struct fa *fa2) {
 }
 
 /*
+ * Operations on STATE_SET
+ */
+#define set_for_each(iter, set)                                         \
+    for(typeof(set->states) (iter) = set->states;                       \
+        iter - set->states < set->used;                                 \
+        iter++)
+
+static struct state_set *state_set_init(void) {
+    struct state_set *set;
+    CALLOC(set, 1);
+    set->size = state_set_initial_size;
+    CALLOC(set->states, set->size);
+    return set;
+}
+
+static void state_set_init_data(struct state_set *set) {
+    if (set->data == NULL)
+        CALLOC(set->data, set->size);
+}
+
+static void state_set_free(struct state_set *set) {
+    if (set == NULL)
+        return;
+    free(set->states);
+    free(set->data);
+    free(set);
+}
+
+static void state_set_expand(struct state_set *set) {
+    size_t new = 2 * set->size;
+    if (new > state_set_max_stride)
+        new = set->size + state_set_max_stride;
+    set->size = new;
+    set->states = realloc(set->states, new * sizeof(* set->states));
+    if (set->data != NULL)
+        set->data = realloc(set->data, new * sizeof(* set->data));
+}
+
+static int state_set_push(struct state_set *set, struct fa_state *s) {
+    if (set->size == set->used)
+        state_set_expand(set);
+    set->states[set->used++] = s;
+    return set->used - 1;
+}
+
+static int state_set_index(const struct state_set *set,
+                           const struct fa_state *s) {
+    for (int i=0; i < set->used; i++) {
+        if (set->states[i] == s)
+            return i;
+    }
+    return -1;
+}
+
+/* Only add S if it's not in SET yet. Return 1 if S was added */
+static int state_set_add(struct state_set *set, struct fa_state *s) {
+    if (state_set_index(set, s) >= 0)
+            return 0;
+    state_set_push(set, s);
+    return 1;
+}
+
+static struct fa_state *state_set_pop(struct state_set *set) {
+    struct fa_state *s = NULL;
+    if (set->used > 0)
+        s = set->states[--set->used];
+    return s;
+}
+
+#if 0
+static void state_set_compact(struct state_set *set) {
+    while (set->used > 0 && set->states[set->used] == NULL)
+        set->used -= 1;
+    for (int i=0; i < set->used; i++) {
+        if (set->states[i] == NULL) {
+            set->used -= 1;
+            set->states[i] = set->states[set->used];
+            if (set->data)
+                set->data[i] = set->data[set->used];
+        }
+        while (set->used > 0 && set->states[set->used] == NULL)
+            set->used -= 1;
+    }
+}
+#endif
+
+/*
  * Operations on FA_MAP
  */
 
@@ -401,15 +496,10 @@ static struct fa_map *fa_map_pop(struct fa_map *map) {
     return map;
 }
 
-static struct fa_map *state_set_push(struct fa_map *map,
-                                     struct fa_state *fst) {
-    return state_pair_push(map, fst, NULL);
-}
-
 /* Find an entry with FST == S on MAP and return that or return NULL if no
    entry has FST == S */
-static struct fa_map *find_fst(struct fa_map *map,
-                                      struct fa_state *s) {
+static const struct fa_map *find_fst(const struct fa_map *map,
+                                     const struct fa_state *s) {
     while (map != NULL) {
         if (map->fst == s)
             return map;
@@ -434,37 +524,36 @@ static struct fa_map *find_pair(struct fa_map *map, struct fa_state *fst,
  */
 
 static void mark_reachable(struct fa *fa) {
-    struct fa_map *worklist = NULL; /* Set of states in FST */
+    struct state_set *worklist = state_set_init();
 
     list_for_each(s, fa->initial) {
         s->reachable = 0;
     }
     fa->initial->reachable = 1;
-    worklist = state_set_push(NULL, fa->initial);
 
-    while (worklist != NULL) {
-        struct fa_state *s = worklist->fst;
-        worklist = fa_map_pop(worklist);
+    for (struct fa_state *s = fa->initial;
+         s != NULL;
+         s = state_set_pop(worklist)) {
         list_for_each(t, s->transitions) {
             if (! t->to->reachable) {
                 t->to->reachable = 1;
-                worklist = state_set_push(worklist, t->to);
+                state_set_push(worklist, t->to);
             }
         }
     }
-
+    state_set_free(worklist);
 }
 
 /* Return all reachable states. The returned FA_MAP has the states in its
  * FST entries.
  */
-static struct fa_map *fa_states(struct fa *fa) {
-    struct fa_map *visited = NULL;  /* Set of states in FST */
+static struct state_set *fa_states(struct fa *fa) {
+    struct state_set *visited = state_set_init();
 
     mark_reachable(fa);
     list_for_each(s, fa->initial) {
         if (s->reachable)
-            visited = state_set_push(visited, s);
+            state_set_push(visited, s);
     }
     return visited;
 }
@@ -472,13 +561,13 @@ static struct fa_map *fa_states(struct fa *fa) {
 /* Return all reachable accepting states. The returned FA_MAP has the
  * accepting states in its FST entries.
  */
-static struct fa_map *fa_accept_states(struct fa *fa) {
-    struct fa_map *accept = NULL;
+static struct state_set *fa_accept_states(struct fa *fa) {
+    struct state_set *accept = state_set_init();
 
     mark_reachable(fa);
     list_for_each(s, fa->initial) {
         if (s->reachable && s->accept)
-            accept = state_set_push(accept, s);
+            state_set_push(accept, s);
     }
     return accept;
 }
@@ -497,7 +586,7 @@ static void mark_live(struct fa *fa) {
     do {
         changed = 0;
         list_for_each(s, fa->initial) {
-            if (! s->live) {
+            if (! s->live && s->reachable) {
                 list_for_each(t, s->transitions) {
                     if (t->to->live) {
                         s->live = 1;
@@ -517,39 +606,41 @@ static void mark_live(struct fa *fa) {
  * Returns a list of the new initial states of the automaton. The list must
  * be freed by the caller.
  */
-static struct fa_map *fa_reverse(struct fa *fa) {
-    struct fa_map *states;        /* Map from FST -> TRANS */
-    struct fa_map *accept;
+static struct state_set *fa_reverse(struct fa *fa) {
+    struct state_set *all;
+    struct state_set *accept;
 
-    states = fa_states(fa);
+    all = fa_states(fa);
     accept = fa_accept_states(fa);
 
+    state_set_init_data(all);
+
     /* Reverse all transitions */
-    list_for_each(m, states) {
-        m->fst->accept = 0;
-        list_for_each(t, m->fst->transitions) {
-            struct fa_trans *rev = make_trans(m->fst, t->min, t->max);
-            struct fa_map *mrev = find_fst(states, t->to);
-            list_append(mrev->trans, rev);
+    for (int i=0; i < all->used; i++) {
+        struct fa_state *s = all->states[i];
+        s->accept = 0;
+        list_for_each(t, s->transitions) {
+            struct fa_trans *rev = make_trans(s, t->min, t->max);
+            int to = state_set_index(all, t->to);
+            list_cons(all->data[to], rev);
         }
     }
-    list_for_each(m, states) {
-        list_free(m->fst->transitions);
-        m->fst->transitions = m->trans;
+    for (int i=0; i < all->used; i++) {
+        list_free(all->states[i]->transitions);
+        all->states[i]->transitions = all->data[i];
     }
 
     /* Make new initial and final states */
     struct fa_state *s = add_state(fa, 0);
     fa->initial->accept = 1;
     set_initial(fa, s);
-    list_for_each(a, accept) {
-        add_epsilon_trans(s, a->fst);
+    for (int i=0; i < accept->used; i++) {
+        add_epsilon_trans(s, accept->states[i]);
     }
 
     fa->deterministic = 0;
     fa->minimal = 0;
-    list_free(states);
-
+    state_set_free(all);
     return accept;
 }
 
@@ -587,34 +678,11 @@ static char* start_points(struct fa *fa, int *npoints) {
 }
 
 /*
- * Operations on FA_SET_MAP
+ * Operations on STATE_SET_HASH
  */
-static struct fa_set_map *fa_set_map_get(struct fa_set_map *smap,
-                                         struct fa_map *set) {
-    int setlen;
-    list_length(setlen, set);
-
-    list_for_each(sm, smap) {
-        int smlen;
-        list_length(smlen, sm->set);
-        if (smlen == setlen) {
-            int found = 1;
-            list_for_each(s, set) {
-                if (find_fst(sm->set, s->fst) == NULL) {
-                    found = 0;
-                    break;
-                }
-            }
-            if (found)
-                return sm;
-        }
-    }
-    return NULL;
-}
-
-static int fa_set_map_contains(struct fa_set_map *smap,
-                               struct fa_map *set) {
-    return fa_set_map_get(smap, set) != NULL;
+static int state_set_hash_contains(state_set_hash *smap,
+                               struct state_set *set) {
+    return g_hash_table_lookup(smap, set) != NULL;
 }
 
 /*
@@ -622,64 +690,97 @@ static int fa_set_map_contains(struct fa_set_map *smap,
  * different, i.e. they point to different memory locations, free SET and
  * return the set found in SMAP
  */
-static struct fa_map *fa_set_map_uniq(struct fa_set_map *smap,
-                                      struct fa_map *set) {
-    struct fa_set_map *sm = fa_set_map_get(smap, set);
-    if (sm->set != set) {
-        list_free(set);
+static struct state_set *state_set_hash_uniq(state_set_hash *smap,
+                                         struct state_set *set) {
+    struct state_set *orig_set;
+    g_hash_table_lookup_extended(smap, set, (gpointer*) &orig_set, NULL);
+    if (orig_set != set) {
+        state_set_free(set);
     }
-    return sm->set;
+    return orig_set;
+ }
+
+static struct fa_state *state_set_hash_get_state(state_set_hash *smap,
+                                             struct state_set *set) {
+    return (struct fa_state *) g_hash_table_lookup(smap, set);
 }
 
-static struct fa_state *fa_set_map_get_state(struct fa_set_map *smap,
-                                             struct fa_map *set) {
-    struct fa_set_map *sm = fa_set_map_get(smap, set);
-    return sm->state;
+/* Jenkins' hash for void* */
+static guint ptr_hash(void *p) {
+    guint hash = 0;
+    char *c = (char *) &p;
+    for (int i=0; i < sizeof(p); i++) {
+        hash += c[i];
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+    }
+    hash += (hash << 3);
+    hash ^= (hash >> 11);
+    hash += (hash << 15);
+    return hash;
 }
 
-static struct fa_set_map *fa_set_map_add(struct fa_set_map *smap,
-                                         struct fa_map *set,
-                                         struct fa *fa) {
-    struct fa_set_map *sm;
+static guint set_hash(gconstpointer key) {
+    guint hash = 0;
+    const struct state_set *set = key;
 
-    CALLOC(sm, 1);
-    sm->set = set;
-    sm->state = add_state(fa, 0);
-    sm->next = smap;
-    return sm;
+    for (int i = 0; i < set->used; i++) {
+        hash += ptr_hash(set->states[i]);
+    }
+    return hash;
 }
 
-static struct fa_set_map *fa_set_enqueue(struct fa_set_map *smap,
-                                         struct fa_map *set) {
-    struct fa_set_map *sm;
-    CALLOC(sm, 1);
-    sm->set = set;
-    list_append(smap, sm);
+static gboolean set_equal(gconstpointer key1, gconstpointer key2) {
+    const struct state_set *set1 = key1;
+    const struct state_set *set2 = key2;
+
+    if (set1->used != set2->used)
+        return FALSE;
+
+    for (int i=0; i < set1->used; i++)
+        if (state_set_index(set2, set1->states[i]) == -1)
+            return FALSE;
+    return TRUE;
+}
+
+static void set_destroy(gpointer key) {
+    struct state_set *set = key;
+    state_set_free(set);
+}
+
+static state_set_hash *state_set_hash_add(state_set_hash *smap,
+                                  struct state_set *set,
+                                  struct fa *fa) {
+    if (smap == NULL) {
+        smap = g_hash_table_new_full(set_hash, set_equal,
+                                     set_destroy, NULL);
+    }
+    g_hash_table_insert(smap, set, add_state(fa, 0));
     return smap;
 }
 
-static struct fa_map *fa_set_dequeue(struct fa_set_map **smap) {
-    struct fa_set_map *sm = *smap;
-    struct fa_map *set = sm->set;
-
-    *smap = sm->next;
-    free(sm);
-    return set;
+static void state_set_hash_free(state_set_hash *smap,
+                            struct state_set *protect) {
+    if (protect != NULL)
+        g_hash_table_steal(smap, protect);
+    g_hash_table_destroy(smap);
 }
 
-/* Add an entry with FST = S to SET if it does not have one yet and return
-   the new head of of SET. Do nothing if S is already in the set SET */
-static struct fa_map *fa_set_add(struct fa_map *set, struct fa_state *s) {
-    struct fa_map *elt;
-
-    list_for_each(q, set) {
-        if (q->fst == s)
-            return set;
-    }
-
+static struct state_set_list *state_set_list_add(struct state_set_list *list,
+                                                 struct state_set *set) {
+    struct state_set_list *elt;
     CALLOC(elt, 1);
-    elt->fst = s;
-    list_cons(set, elt);
+    elt->set = set;
+    list_append(list, elt);
+    return list;
+}
+
+static struct state_set *state_set_list_pop(struct state_set_list **list) {
+    struct state_set_list *elt = *list;
+    struct state_set      *set = elt->set;
+
+    *list = elt->next;
+    free(elt);
     return set;
 }
 
@@ -721,8 +822,7 @@ static int trans_intv_cmp(const void *v1, const void *v2) {
 
 /*
  * Reduce an automaton by combining overlapping and adjacent edge intervals
- * with the same destination. Unreachable states are also removed from the
- * list of states.
+ * with the same destination.
  */
 static void reduce(struct fa *fa) {
     struct fa_trans **trans = NULL;
@@ -830,60 +930,48 @@ static void swap_initial(struct fa *fa) {
  * states with the subset construction. This also eliminates dead states
  * and transitions and reduces and orders the transitions for each state
  */
-static void determinize(struct fa *fa, struct fa_map *ini) {
+static void determinize(struct fa *fa, struct state_set *ini) {
     int npoints;
     int make_ini = (ini == NULL);
     const char *points = NULL;
-    struct fa_set_map *newstate;
-    struct fa_set_map *worklist;
+    state_set_hash *newstate;
+    struct state_set_list *worklist;
 
     if (fa->deterministic)
         return;
 
     points = start_points(fa, &npoints);
     if (make_ini) {
-        ini = state_set_push(NULL, fa->initial);
+        ini = state_set_init();
+        state_set_push(ini, fa->initial);
     }
 
-    /* Data structures are a big headache here since we deal with sets of
-     * states. We represent a set of states as a list of FA_MAP, where only
-     * the FST entry is used for the state in the list.
-     *
-     * WORKLIST is a queue of sets of states; only the SET entries
-     *          in the FA_SET_MAP is used
-     * NEWSTATE is a map from sets of states to states. The VALUE entry
-     *          only ever contains one state (in FST)
-     *
-     * To reduce confusion some, the accessor functions for the various
-     * data structures are named to make that a little clearer.
-     */
-    worklist = fa_set_enqueue(NULL, ini);
-    newstate = fa_set_map_add(NULL, ini, fa);
+    worklist = state_set_list_add(NULL, ini);
+    newstate = state_set_hash_add(NULL, ini, fa);
     // Make the new state the initial state
     swap_initial(fa);
     while (worklist != NULL) {
-        struct fa_map *sset = fa_set_dequeue(&worklist);
-        struct fa_state *r = fa_set_map_get_state(newstate, sset);
-        list_for_each(q, sset) {
-            if (q->fst->accept)
-                r->accept = 1;
+        struct state_set *sset = state_set_list_pop(&worklist);
+        struct fa_state *r = state_set_hash_get_state(newstate, sset);
+        for (int q=0; q < sset->used; q++) {
+            r->accept |= sset->states[q]->accept;
         }
         for (int n=0; n < npoints; n++) {
-            struct fa_map *pset = NULL;
-            list_for_each(q, sset) {
-                list_for_each(t, q->fst->transitions) {
+            struct state_set *pset = state_set_init();
+            for(int q=0 ; q < sset->used; q++) {
+                list_for_each(t, sset->states[q]->transitions) {
                     if (t->min <= points[n] && points[n] <= t->max) {
-                        pset = fa_set_add(pset, t->to);
+                        state_set_add(pset, t->to);
                     }
                 }
             }
-            if (!fa_set_map_contains(newstate, pset)) {
-                worklist = fa_set_enqueue(worklist, pset);
-                newstate = fa_set_map_add(newstate, pset, fa);
+            if (!state_set_hash_contains(newstate, pset)) {
+                worklist = state_set_list_add(worklist, pset);
+                newstate = state_set_hash_add(newstate, pset, fa);
             }
-            pset = fa_set_map_uniq(newstate, pset);
+            pset = state_set_hash_uniq(newstate, pset);
 
-            struct fa_state *q = fa_set_map_get_state(newstate, pset);
+            struct fa_state *q = state_set_hash_get_state(newstate, pset);
             char min = points[n];
             char max = CHAR_MAX;
             if (n+1 < npoints)
@@ -893,11 +981,7 @@ static void determinize(struct fa *fa, struct fa_map *ini) {
     }
     fa->deterministic = 1;
 
-    list_for_each(ns, newstate) {
-        if (make_ini || ns->set != ini)
-            list_free(ns->set);
-    }
-    list_free(newstate);
+    state_set_hash_free(newstate, make_ini ? NULL : ini);
     free((void *) points);
     collect(fa);
 }
@@ -907,19 +991,19 @@ static void determinize(struct fa *fa, struct fa_map *ini) {
  * reduced and ordered.
  */
 void fa_minimize(struct fa *fa) {
-    struct fa_map *map;    /* Set of states in FST */
+    struct state_set *set;
 
     if (fa->minimal)
         return;
 
     /* Minimize using Brzozowski's algorithm */
-    map = fa_reverse(fa);
-    determinize(fa, map);
-    list_free(map);
+    set = fa_reverse(fa);
+    determinize(fa, set);
+    state_set_free(set);
 
-    map = fa_reverse(fa);
-    determinize(fa, map);
-    list_free(map);
+    set = fa_reverse(fa);
+    determinize(fa, set);
+    state_set_free(set);
     fa->minimal = 1;
 }
 
@@ -1312,7 +1396,7 @@ static void accept_to_accept(struct fa *fa) {
 
 struct fa *fa_overlap(struct fa *fa1, struct fa *fa2) {
     struct fa *fa;
-    struct fa_map *map;
+    struct state_set *map;
 
     fa1 = fa_clone(fa1);
     fa2 = fa_clone(fa2);
@@ -1320,11 +1404,11 @@ struct fa *fa_overlap(struct fa *fa1, struct fa *fa2) {
     accept_to_accept(fa1);
 
     map = fa_reverse(fa2);
-    list_free(map);
+    state_set_free(map);
     determinize(fa2, NULL);
     accept_to_accept(fa2);
     map = fa_reverse(fa2);
-    list_free(map);
+    state_set_free(map);
     determinize(fa2, NULL);
 
     fa = fa_intersect(fa1, fa2);
@@ -1402,11 +1486,11 @@ char *fa_example(fa_t fa) {
     while (worklist != NULL) {
         struct fa_state *s = worklist->fst;
         worklist = fa_map_pop(worklist);
-        struct fa_map *p = find_fst(path, s);
+        struct fa_map *p = (struct fa_map *) find_fst(path, s);
         char *ps = (char *) p->snd;
         list_for_each(t, s->transitions) {
             char c = pick_char(t);
-            struct fa_map *to = find_fst(path, t->to);
+            struct fa_map *to = (struct fa_map *) find_fst(path, t->to);
             if (to == NULL) {
                 char *w = string_extend(NULL, ps, c);
                 worklist = state_pair_push(worklist, t->to, NULL);
@@ -1624,6 +1708,8 @@ int fa_compile(const char *regexp, struct fa **fa) {
     *fa = fa_from_re(re);
     re_free(re);
 
+    // FIXME: it should be enough to clean up here, but that makes
+    // various tests fail
     fa_minimize(*fa);
     return ret;
 }

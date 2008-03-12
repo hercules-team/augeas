@@ -8,6 +8,8 @@ AC_PROG_LIBTOOL
 AC_PROG_YACC
 AC_PROG_LEX
 
+AM_PATH_GLIB_2_0
+
 AUGEAS_COMPILE_WARNINGS(error)
 
 ## Compiler flags to be used everywhere

@@ -1,5 +1,5 @@
 
-AM_CFLAGS = @AUGEAS_CFLAGS@ @WARN_CFLAGS@
+AM_CFLAGS = @AUGEAS_CFLAGS@ @WARN_CFLAGS@ @GLIB_CFLAGS@
 
 AM_YFLAGS=-d -p spec_
 
@@ -28,3 +28,4 @@ augparse_SOURCES = augparse.c
 augparse_LDADD = libaugeas.la
 
 libfa_la_SOURCES = fa.c fa.h
+libfa_la_LDFLAGS = @GLIB_LIBS@

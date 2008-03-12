@@ -9,7 +9,7 @@ URL:            http://augeas.net/
 Source0:        http://augeas.net/download/augeas-@VERSION@.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-BuildRequires:  readline-devel
+BuildRequires:  readline-devel glib2-devel
 Requires:       readline
 
 %description
