@@ -279,44 +279,6 @@ static struct fa_state *add_state(struct fa *fa, int accept) {
     return s;
 }
 
-static struct fa_state *map_get(struct fa_map *map,
-                                struct fa_state *s) {
-    while (map != NULL && map->fst != s)
-        map = map->next;
-    return map->snd;
-}
-
-static struct fa *fa_clone(struct fa *fa) {
-    struct fa *result = NULL;
-    struct fa_map *state_map = NULL; /* Map of states fst -> snd */
-
-    CALLOC(result, 1);
-    result->deterministic = fa->deterministic;
-    result->minimal = fa->minimal;
-    list_for_each(s, fa->initial) {
-        struct fa_map *pair;
-        CALLOC(pair, 1);
-        pair->fst = s;
-        pair->snd = add_state(result, s->accept);
-        list_cons(state_map, pair);
-    }
-    list_for_each(s, fa->initial) {
-        struct fa_state *sc;
-        sc = map_get(state_map, s);
-        assert(sc != NULL);
-        list_for_each(t, s->transitions) {
-            struct fa_trans *tc;
-            CALLOC(tc, 1);
-            tc->to = map_get(state_map, t->to);
-            tc->min = t->min;
-            tc->max = t->max;
-            list_cons(sc->transitions, tc);
-        }
-    }
-    list_free(state_map);
-    return result;
-}
-
 static struct fa_trans *make_trans(struct fa_state *to,
                                    char min, char max) {
     struct fa_trans *trans;
@@ -1120,6 +1082,37 @@ int fa_is_basic(struct fa *fa, unsigned int basic) {
             t->min == CHAR_MIN && t->max == CHAR_MAX;
     }
     return 0;
+}
+
+static struct fa *fa_clone(struct fa *fa) {
+    struct fa *result = NULL;
+    struct state_set *set = state_set_init();
+
+    state_set_init_data(set);
+
+    CALLOC(result, 1);
+    result->deterministic = fa->deterministic;
+    result->minimal = fa->minimal;
+    list_for_each(s, fa->initial) {
+        int i = state_set_push(set, s);
+        struct fa_state *q = add_state(result, s->accept);
+        set->data[i] = q;
+        q->live = s->live;
+        q->reachable = s->reachable;
+    }
+    for (int i=0; i < set->used; i++) {
+        struct fa_state *s = set->states[i];
+        struct fa_state *sc = set->data[i];
+        list_for_each(t, s->transitions) {
+            int to = state_set_index(set, t->to);
+            assert(to >= 0);
+            struct fa_state *toc = set->data[to];
+            struct fa_trans *tc = make_trans(toc, t->min, t->max);
+            list_cons(sc->transitions, tc);
+        }
+    }
+    state_set_free(set);
+    return result;
 }
 
 struct fa *fa_union(struct fa *fa1, struct fa *fa2) {
