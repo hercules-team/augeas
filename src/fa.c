@@ -667,17 +667,19 @@ static struct state_set *fa_reverse(struct fa *fa) {
 
     /* Reverse all transitions */
     for (int i=0; i < all->used; i++) {
-        struct fa_state *s = all->states[i];
-        s->accept = 0;
-        list_for_each(t, s->transitions) {
-            struct fa_trans *rev = make_trans(s, t->min, t->max);
-            int to = state_set_index(all, t->to);
-            list_cons(all->data[to], rev);
-        }
+        all->data[i] = all->states[i]->transitions;
+        all->states[i]->transitions = NULL;
     }
     for (int i=0; i < all->used; i++) {
-        list_free(all->states[i]->transitions);
-        all->states[i]->transitions = all->data[i];
+        struct fa_state *s = all->states[i];
+        struct fa_trans *t = all->data[i];
+        s->accept = 0;
+        while (t != NULL) {
+            struct fa_trans *cur = t;
+            t = cur->next;
+            list_cons(cur->to->transitions, cur);
+            cur->to = s;
+        }
     }
 
     /* Make new initial and final states */
