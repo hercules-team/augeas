@@ -1513,6 +1513,9 @@ static char pick_char(struct fa_trans *t) {
  * at each turn the "best" word found for that state.
  */
 char *fa_example(fa_t fa) {
+    /* Sort to avoid any ambiguity because of reordering of transitions */
+    sort_transition_intervals(fa);
+
     /* Map from state to string */
     struct fa_map *path = state_pair_push(NULL, fa->initial,
                                           (void*) strdup(""));

@@ -284,7 +284,7 @@ static void assertExample(CuTest *tc, const char *regexp, const char *exp) {
 static void testExample(CuTest *tc) {
     assertExample(tc, "(.|\n)", "A");
     assertExample(tc, "(\n|\t|x)", "x");
-    assertExample(tc, "[^b-y]", "z");
+    assertExample(tc, "[^b-y]", "A");
     assertExample(tc, "x*", "x");
     assertExample(tc, "yx*", "y");
     assertExample(tc, "ab+cx*", "abc");
