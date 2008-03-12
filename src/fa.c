@@ -52,7 +52,9 @@ struct fa {
 struct fa_state {
     struct fa_state *next;
     struct fa_trans *transitions;
-    int              accept;
+    unsigned int     accept : 1;
+    unsigned int     live : 1;
+    unsigned int     reachable : 1;
 };
 
 /* A transition. If the input has a character in the inclusive 
@@ -158,7 +160,7 @@ static struct re *parse_regexp(const char **regexp, int *error);
  *
  * Only automata in this state should be returned to the user
  */
-static struct fa *cleanup(struct fa *fa);
+static struct fa *collect(struct fa *fa);
 
 /* Print an FA into a (fairly) fixed file if the environment variable
  * FA_DOT_DIR is set. This code is only used for debugging
@@ -431,26 +433,39 @@ static struct fa_map *find_pair(struct fa_map *map, struct fa_state *fst,
  * State operations
  */
 
-/* Return all reachable states. The returned FA_MAP has the states in its
- * FST entries.
- */
-static struct fa_map *fa_states(struct fa *fa) {
-    struct fa_map *visited = NULL;  /* Set of states in FST */
+static void mark_reachable(struct fa *fa) {
     struct fa_map *worklist = NULL; /* Set of states in FST */
 
+    list_for_each(s, fa->initial) {
+        s->reachable = 0;
+    }
+    fa->initial->reachable = 1;
     worklist = state_set_push(NULL, fa->initial);
-    visited = state_set_push(NULL, fa->initial);
+
     while (worklist != NULL) {
         struct fa_state *s = worklist->fst;
         worklist = fa_map_pop(worklist);
         list_for_each(t, s->transitions) {
-            if (! find_fst(visited, t->to)) {
-                visited = state_set_push(visited, t->to);
+            if (! t->to->reachable) {
+                t->to->reachable = 1;
                 worklist = state_set_push(worklist, t->to);
             }
         }
     }
 
+}
+
+/* Return all reachable states. The returned FA_MAP has the states in its
+ * FST entries.
+ */
+static struct fa_map *fa_states(struct fa *fa) {
+    struct fa_map *visited = NULL;  /* Set of states in FST */
+
+    mark_reachable(fa);
+    list_for_each(s, fa->initial) {
+        if (s->reachable)
+            visited = state_set_push(visited, s);
+    }
     return visited;
 }
 
@@ -458,65 +473,41 @@ static struct fa_map *fa_states(struct fa *fa) {
  * accepting states in its FST entries.
  */
 static struct fa_map *fa_accept_states(struct fa *fa) {
-    struct fa_map *states = fa_states(fa);
-    struct fa_map *m;                 /* Set of states in FST */
+    struct fa_map *accept = NULL;
 
-    while (states != NULL && !states->fst->accept)
-        states = fa_map_pop(states);
-
-    if (states == NULL)
-        return NULL;
-
-    m = states;
-    while (m->next != NULL) {
-        if (m->next->fst->accept) {
-            m = m->next;
-        } else {
-            struct fa_map *del = m->next;
-            m->next = del->next;
-            free(del);
-        }
+    mark_reachable(fa);
+    list_for_each(s, fa->initial) {
+        if (s->reachable && s->accept)
+            accept = state_set_push(accept, s);
     }
-
-    return states;
+    return accept;
 }
 
 /* Return all live states, i.e. states from which an accepting state can be
  * reached. The returned FA_MAP has the live states in its FST entries.
  */
-static struct fa_map *fa_live_states(struct fa *fa) {
-    struct fa_map *states = fa_states(fa);
-    struct fa_map *live = NULL;         /* Set of states in FST */
+static void mark_live(struct fa *fa) {
     int changed;
 
-    for (struct fa_map *s = states; s != NULL; ) {
-        struct fa_map *n = s->next;
-        if (s->fst->accept) {
-            list_remove(s, states);
-            list_append(live, s);
-        }
-        s = n;
+    mark_reachable(fa);
+    list_for_each(s, fa->initial) {
+        s->live = s->reachable && s->accept;
     }
 
     do {
         changed = 0;
-        struct fa_map *s = states;
-        while (s != NULL) {
-            struct fa_map *next = s->next;
-            list_for_each(t, s->fst->transitions) {
-                if (find_fst(live, t->to) != NULL) {
-                    changed = 1;
-                    list_remove(s, states);
-                    list_append(live, s);
-                    break;
+        list_for_each(s, fa->initial) {
+            if (! s->live) {
+                list_for_each(t, s->transitions) {
+                    if (t->to->live) {
+                        s->live = 1;
+                        changed = 1;
+                        break;
+                    }
                 }
             }
-            s = next;
         }
-    } while (changed && states != NULL);
-
-    list_free(states);
-    return live;
+    } while (changed);
 }
 
 /*
@@ -568,12 +559,14 @@ static struct fa_map *fa_reverse(struct fa *fa) {
  */
 static char* start_points(struct fa *fa, int *npoints) {
     char pointset[CHAR_NUM];
-    struct fa_map *states = fa_states(fa);
 
+    mark_reachable(fa);
     memset(pointset, 0, CHAR_NUM * sizeof(char));
-    list_for_each(m, states) {
+    list_for_each(s, fa->initial) {
+        if (! s->reachable)
+            continue;
         pointset[CHAR_IND(CHAR_MIN)] = 1;
-        list_for_each(t, m->fst->transitions) {
+        list_for_each(t, s->transitions) {
             pointset[CHAR_IND(t->min)] = 1;
             if (t->max < CHAR_MAX)
                 pointset[CHAR_IND(t->max+1)] = 1;
@@ -590,7 +583,6 @@ static char* start_points(struct fa *fa, int *npoints) {
             points[n++] = (char) (i + CHAR_MIN);
     }
 
-    list_free(states);
     return points;
 }
 
@@ -691,25 +683,6 @@ static struct fa_map *fa_set_add(struct fa_map *set, struct fa_state *s) {
     return set;
 }
 
-/* Remove all unreachable states on FA->INITIAL and free their storage */
-static void remove_unreachable_states(struct fa *fa) {
-    struct fa_map *reach = fa_states(fa);
-    struct fa_state *s = fa->initial;
-
-    while (s->next != NULL) {
-        if (find_fst(reach, s->next) == NULL) {
-            struct fa_state *del = s->next;
-            s->next = del->next;
-            /* Free the state del */
-            list_free(del->transitions);
-            free(del);
-        } else {
-            s = s->next;
-        }
-    }
-    list_free(reach);
-}
-
 /* Compare transitions lexicographically by (to, min, reverse max) */
 static int trans_to_cmp(const void *v1, const void *v2) {
     const struct fa_trans *t1 = * (struct fa_trans **) v1;
@@ -785,7 +758,6 @@ static void reduce(struct fa *fa) {
             }
         }
     }
-
     free(trans);
 }
 
@@ -793,11 +765,14 @@ static void reduce(struct fa *fa) {
  * Remove dead transitions from an FA; a transition is dead is it does not
  * lead to a live state. This also removes any states that are not
  * reachable any longer from FA->INITIAL.
+ *
+ * Returns the same FA as a convenience
  */
-static void remove_dead_transitions(struct fa *fa) {
-    struct fa_map *live = fa_live_states(fa);
+static struct fa *collect(struct fa *fa) {
 
-    if (find_fst(live, fa->initial) == NULL) {
+    mark_live(fa);
+
+    if (! fa->initial->live) {
         /* This automaton accepts nothing, make it the canonical
          * epsilon automaton
          */
@@ -805,34 +780,39 @@ static void remove_dead_transitions(struct fa *fa) {
             list_free(s->transitions);
         }
         list_free(fa->initial->next);
+        fa->initial->transitions = NULL;
         fa->deterministic = 1;
-        return;
-    }
-
-    list_for_each(s, fa->initial) {
-        if (find_fst(live, s) == NULL) {
-            list_free(s->transitions);
-        } else {
-            struct fa_trans *t = s->transitions;
-            while (t != NULL) {
-                struct fa_trans *n = t->next;
-                if (find_fst(live, t->to) == NULL) {
-                    list_remove(t, s->transitions);
-                    free(t);
+    } else {
+        list_for_each(s, fa->initial) {
+            if (! s->live) {
+                list_free(s->transitions);
+                s->transitions = NULL;
+            } else {
+                struct fa_trans *t = s->transitions;
+                while (t != NULL) {
+                    struct fa_trans *n = t->next;
+                    if (! t->to->live) {
+                        list_remove(t, s->transitions);
+                        free(t);
+                    }
+                    t = n;
                 }
-                t = n;
             }
         }
+        /* Remove all dead states and free their storage */
+        for (struct fa_state *s = fa->initial; s->next != NULL; ) {
+           if (! s->next->live) {
+               struct fa_state *del = s->next;
+               s->next = del->next;
+               /* Free the state del */
+               list_free(del->transitions);
+               free(del);
+           } else {
+               s = s->next;
+           }
+       }
     }
-
-    list_free(live);
-
-    remove_unreachable_states(fa);
     reduce(fa);
-}
-
-static struct fa *cleanup(struct fa *fa) {
-    remove_dead_transitions(fa);
     return fa;
 }
 
@@ -919,7 +899,7 @@ static void determinize(struct fa *fa, struct fa_map *ini) {
     }
     list_free(newstate);
     free((void *) points);
-    remove_dead_transitions(fa);
+    collect(fa);
 }
 
 /*
@@ -1022,7 +1002,7 @@ struct fa *fa_union(struct fa *fa1, struct fa *fa2) {
 
     set_initial(fa1, s);
 
-    return cleanup(fa1);
+    return collect(fa1);
 }
 
 struct fa *fa_concat(struct fa *fa1, struct fa *fa2) {
@@ -1040,7 +1020,7 @@ struct fa *fa_concat(struct fa *fa1, struct fa *fa2) {
     fa1->minimal = 0;
     fa_merge(fa1, fa2);
 
-    return cleanup(fa1);
+    return collect(fa1);
 }
 
 static struct fa *fa_make_char_set(char *cset, int negate) {
@@ -1081,7 +1061,7 @@ static struct fa *fa_star(struct fa *fa) {
     fa->deterministic = 0;
     fa->minimal = 0;
 
-    return cleanup(fa);
+    return collect(fa);
 }
 
 struct fa *fa_iter(struct fa *fa, int min, int max) {
@@ -1140,7 +1120,7 @@ struct fa *fa_iter(struct fa *fa, int min, int max) {
             cfa->deterministic = 0;
             cfa->minimal = 0;
         }
-        return cleanup(cfa);
+        return collect(cfa);
     }
 }
 
@@ -1226,7 +1206,7 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
 
     list_free(worklist);
     list_free(newstates);
-    return cleanup(fa);
+    return collect(fa);
 }
 
 int fa_contains(fa_t fa1, fa_t fa2) {
@@ -1281,24 +1261,22 @@ int fa_contains(fa_t fa1, fa_t fa2) {
 
 static void totalize(struct fa *fa) {
     struct fa_state *crash = add_state(fa, 0);
-    struct fa_map *states = fa_states(fa);
 
+    mark_reachable(fa);
     sort_transition_intervals(fa);
 
     add_new_trans(crash, crash, CHAR_MIN, CHAR_MAX);
-    list_for_each(s, states) {
+    list_for_each(s, fa->initial) {
         int next = CHAR_MIN;
-        list_for_each(t, s->fst->transitions) {
+        list_for_each(t, s->transitions) {
             if (t->min > next)
-                add_new_trans(s->fst, crash, next, t->min - 1);
+                add_new_trans(s, crash, next, t->min - 1);
             if (t->max + 1 > next)
                 next = t->max + 1;
         }
         if (next <= CHAR_MAX)
-            add_new_trans(s->fst, crash, next, CHAR_MAX);
+            add_new_trans(s, crash, next, CHAR_MAX);
     }
-
-    list_free(states);
 }
 
 struct fa *fa_complement(struct fa *fa) {
@@ -1308,7 +1286,7 @@ struct fa *fa_complement(struct fa *fa) {
     list_for_each(s, fa->initial)
         s->accept = ! s->accept;
 
-    return cleanup(fa);
+    return collect(fa);
 }
 
 struct fa *fa_minus(struct fa *fa1, struct fa *fa2) {
@@ -1321,15 +1299,15 @@ struct fa *fa_minus(struct fa *fa1, struct fa *fa2) {
 
 static void accept_to_accept(struct fa *fa) {
     struct fa_state *s = add_state(fa, 0);
-    struct fa_map *accept = fa_accept_states(fa);
 
-    list_for_each(a, accept) {
-        add_epsilon_trans(s, a->fst);
+    mark_reachable(fa);
+    list_for_each(a, fa->initial) {
+        if (a->accept && a->reachable)
+            add_epsilon_trans(s, a);
     }
 
     set_initial(fa, s);
     fa->deterministic = fa->minimal = 0;
-    list_free(accept);
 }
 
 struct fa *fa_overlap(struct fa *fa1, struct fa *fa2) {
@@ -1471,10 +1449,12 @@ char *fa_example(fa_t fa) {
 static struct fa *expand_alphabet(struct fa *fa, int add_marker, 
                                   char X, char Y) {
     fa = fa_clone(fa);
-    struct fa_map *states = fa_states(fa);
 
-    list_for_each(s, states) {
-        struct fa_state *p = s->fst;
+    mark_reachable(fa);
+    list_for_each(p, fa->initial) {
+        if (! p->reachable)
+            continue;
+
         struct fa_state *r = add_state(fa, 0);
         r->transitions = p->transitions;
         p->transitions = NULL;
@@ -1485,7 +1465,6 @@ static struct fa *expand_alphabet(struct fa *fa, int add_marker,
             add_new_trans(q, p, X, X);
         }
     }
-    list_free(states);
     return fa;
 }
 
