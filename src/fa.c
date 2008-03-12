@@ -785,7 +785,7 @@ static struct state_set_list *state_set_list_add(struct state_set_list *list,
     struct state_set_list *elt;
     CALLOC(elt, 1);
     elt->set = set;
-    list_append(list, elt);
+    list_cons(list, elt);
     return list;
 }
 
