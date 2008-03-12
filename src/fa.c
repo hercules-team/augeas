@@ -1053,11 +1053,11 @@ static struct fa *fa_star(struct fa *fa) {
 
     s = add_state(fa, 1);
     add_epsilon_trans(s, fa->initial);
-    list_for_each(p, fa->initial) {
+    set_initial(fa, s);
+    list_for_each(p, fa->initial->next) {
         if (p->accept)
             add_epsilon_trans(p, s);
     }
-    set_initial(fa, s);
     fa->deterministic = 0;
     fa->minimal = 0;
 
