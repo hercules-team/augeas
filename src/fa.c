@@ -36,6 +36,9 @@
 #include "internal.h"
 #include "fa.h"
 
+/* Which algorithm to use in FA_MINIMIZE */
+int fa_minimization_algorithm = FA_MIN_HOPCROFT;
+
 /* A finite automaton. INITIAL is both the initial state and the head of
  * the list of all states. Any state that is allocated for this automaton
  * is put on this list. Dead/unreachable states are cleared from the list
@@ -170,6 +173,8 @@ static struct re *parse_regexp(const char **regexp, int *error);
  */
 static struct fa *collect(struct fa *fa);
 
+static void totalize(struct fa *fa);
+
 /* Print an FA into a (fairly) fixed file if the environment variable
  * FA_DOT_DIR is set. This code is only used for debugging
  */
@@ -257,19 +262,29 @@ static void print_re(struct re *re) {
  * Memory management
  */
 
-void fa_free(struct fa *fa) {
-    if (fa == NULL)
-        return;
+static void gut(struct fa *fa) {
     list_for_each(s, fa->initial) {
         list_free(s->transitions);
     }
     list_free(fa->initial);
+    fa->initial = NULL;
+}
+
+void fa_free(struct fa *fa) {
+    if (fa == NULL)
+        return;
+    gut(fa);
     free(fa);
 }
 
-static struct fa_state *add_state(struct fa *fa, int accept) {
+static struct fa_state *make_state(void) {
     struct fa_state *s;
     CALLOC(s, 1);
+    return s;
+}
+
+static struct fa_state *add_state(struct fa *fa, int accept) {
+    struct fa_state *s = make_state();
     s->accept = accept;
     if (fa->initial == NULL) {
         fa->initial = s;
@@ -335,12 +350,16 @@ static void fa_merge(struct fa *fa1, struct fa *fa2) {
         iter - set->states < set->used;                                 \
         iter++)
 
-static struct state_set *state_set_init(void) {
+static struct state_set *state_set_create(size_t size) {
     struct state_set *set;
     CALLOC(set, 1);
-    set->size = state_set_initial_size;
+    set->size = size;
     CALLOC(set->states, set->size);
     return set;
+}
+
+static struct state_set *state_set_init(void) {
+    return state_set_create(state_set_initial_size);
 }
 
 static void state_set_init_data(struct state_set *set) {
@@ -380,6 +399,14 @@ static int state_set_index(const struct state_set *set,
             return i;
     }
     return -1;
+}
+
+static void state_set_remove(struct state_set *set,
+                             const struct fa_state *s) {
+    int i = state_set_index(set, s);
+    if (i >= 0) {
+        set->states[i] = set->states[--set->used];
+    }
 }
 
 /* Only add S if it's not in SET yet. Return 1 if S was added */
@@ -1004,11 +1031,373 @@ static void determinize(struct fa *fa, struct state_set *ini) {
  * Minimization. As a sideeffect of minimization, the transitions are
  * reduced and ordered.
  */
-void fa_minimize(struct fa *fa) {
-    struct state_set *set;
 
-    if (fa->minimal)
+static struct fa_state *step(struct fa_state *s, char c) {
+    list_for_each(t, s->transitions) {
+        if (t->min <= c && c <= t->max)
+            return t->to;
+    }
+    return NULL;
+}
+
+#define UINT_BIT (sizeof(unsigned int) * CHAR_BIT)
+
+typedef unsigned int *bitset_t;
+
+static bitset_t bitset_init(size_t nbits) {
+    bitset_t bs;
+    CALLOC(bs, (nbits + UINT_BIT) / UINT_BIT);
+    return bs;
+}
+
+static void bitset_clr(bitset_t bs, unsigned int bit) {
+    bs[bit/UINT_BIT] &= ~(1 << (bit % UINT_BIT));
+}
+
+static void bitset_set(bitset_t bs, unsigned int bit) {
+    bs[bit/UINT_BIT] |= 1 << (bit % UINT_BIT);
+}
+
+static int bitset_get(bitset_t bs, unsigned int bit) {
+    return bs[bit/UINT_BIT] & (1 << (bit % UINT_BIT));
+}
+
+static void bitset_free(bitset_t bs) {
+    free(bs);
+}
+
+struct state_list {
+    struct state_list_node *first;
+    struct state_list_node *last;
+    unsigned int            size;
+};
+
+struct state_list_node {
+    struct state_list      *sl;
+    struct state_list_node *next;
+    struct state_list_node *prev;
+    struct fa_state        *state;
+};
+
+static struct state_list *state_list_init(void) {
+    struct state_list *sl;
+    CALLOC(sl, 1);
+    return sl;
+}
+
+static struct state_list_node *state_list_add(struct state_list *sl,
+                                              struct fa_state *s) {
+    struct state_list_node *n;
+    CALLOC(n, 1);
+    n->state = s;
+    n->sl = sl;
+
+    if (sl->size++ == 0) {
+        sl->first = n;
+        sl->last = n;
+    } else {
+        sl->last->next = n;
+        n->prev = sl->last;
+        sl->last = n;
+    }
+    return n;
+}
+
+static void state_list_remove(struct state_list_node *n) {
+    struct state_list *sl = n->sl;
+    sl->size -= 1;
+    if (sl->first == n)
+        sl->first = n->next;
+    else
+        n->prev->next = n->next;
+    if (sl->last == n)
+        sl->last = n->prev;
+    else
+        n->next->prev = n->prev;
+
+    free(n);
+}
+
+static void state_list_free(struct state_list *sl) {
+    list_free(sl->first);
+    free(sl);
+}
+
+/* The linear index of element (q,c) in an NSTATES * NSIGMA matrix */
+#define INDEX(q, c) (q * nsigma + c)
+
+static void minimize_hopcroft(struct fa *fa) {
+    determinize(fa, NULL);
+
+    /* Total automaton, nothing to do */
+    if (fa->initial->transitions->next == NULL
+        && fa->initial->transitions->to == fa->initial
+        && fa->initial->transitions->min == CHAR_MIN
+        && fa->initial->transitions->max == CHAR_MAX)
         return;
+
+    totalize(fa);
+
+    /* make arrays for numbered states and effective alphabet */
+    struct state_set *states = state_set_init();
+    list_for_each(s, fa->initial) {
+        state_set_push(states, s);
+    }
+    unsigned int nstates = states->used;
+
+    int nsigma;
+    char *sigma = start_points(fa, &nsigma);
+
+    /* initialize data structures */
+
+    /* An ss->used x nsigma matrix of lists of states */
+    struct state_set **reverse;
+    CALLOC(reverse, nstates * nsigma);
+    bitset_t reverse_nonempty = bitset_init(nstates * nsigma);
+
+    struct state_set **partition;
+    CALLOC(partition, nstates);
+
+    unsigned int *block;
+    CALLOC(block, nstates);
+
+    struct state_list **active;
+    CALLOC(active, nstates * nsigma);
+    struct state_list_node **active2;
+    CALLOC(active2, nstates * nsigma);
+
+    /* PENDING is an array of pairs of ints. The i'th pair is stored in
+     * PENDING[2*i] and PENDING[2*i + 1]. There are NPENDING pairs in
+     * PENDING at any time. SPENDING is the maximum number of pairs
+     * allocated for PENDING.
+     */
+    int *pending = NULL;
+    size_t npending = 0, spending = 0;
+    bitset_t pending2 = bitset_init(nstates * nsigma);
+
+    struct state_set *split = state_set_init();
+    bitset_t split2 = bitset_init(nstates);
+
+    int *refine;
+    CALLOC(refine, nstates);
+    bitset_t refine2 = bitset_init(nstates);
+
+    struct state_set **splitblock;
+    CALLOC(splitblock, nstates);
+
+    for (int q = 0; q < nstates; q++) {
+        splitblock[q] = state_set_init();
+        partition[q] = state_set_init();
+        for (int x = 0; x < nsigma; x++) {
+            reverse[INDEX(q, x)] = state_set_init();
+            active[INDEX(q, x)] = state_list_init();
+        }
+    }
+
+    /* find initial partition and reverse edges */
+    for (int q = 0; q < nstates; q++) {
+        struct fa_state *qq = states->states[q];
+        int j;
+        if (qq->accept)
+            j = 0;
+        else
+            j = 1;
+        state_set_push(partition[j], qq);
+        block[q] = j;
+        for (int x = 0; x < nsigma; x++) {
+            char y = sigma[x];
+            struct fa_state *p = step(qq, y);
+            int pn = state_set_index(states, p);
+            state_set_push(reverse[INDEX(pn, x)], qq);
+            bitset_set(reverse_nonempty, INDEX(pn, x));
+        }
+    }
+
+    /* initialize active sets */
+    for (int j = 0; j <= 1; j++)
+        for (int x = 0; x < nsigma; x++)
+            for (int q = 0; q < partition[j]->used; q++) {
+                struct fa_state *qq = partition[j]->states[q];
+                int qn = state_set_index(states, qq);
+                if (bitset_get(reverse_nonempty, INDEX(qn, x)))
+                    active2[INDEX(qn, x)] =
+                        state_list_add(active[INDEX(j, x)], qq);
+            }
+
+    /* initialize pending */
+    CALLOC(pending, 2*nsigma);
+    npending = nsigma;
+    spending = nsigma;
+    for (int x = 0; x < nsigma; x++) {
+        int a0 = active[INDEX(0,x)]->size;
+        int a1 = active[INDEX(1,x)]->size;
+        int j;
+        if (a0 <= a1)
+            j = 0;
+        else
+            j = 1;
+        pending[2*x] = j;
+        pending[2*x+1] = x;
+        bitset_set(pending2, INDEX(j, x));
+    }
+
+    /* process pending until fixed point */
+    int k = 2;
+    while (npending-- > 0) {
+        int p = pending[2*npending];
+        int x = pending[2*npending+1];
+        bitset_clr(pending2, INDEX(p, x));
+        int ref = 0;
+        /* find states that need to be split off their blocks */
+        struct state_list *sh = active[INDEX(p,x)];
+        for (struct state_list_node *m = sh->first; m != NULL; m = m->next) {
+            int q = state_set_index(states, m->state);
+            struct state_set *rev = reverse[INDEX(q, x)];
+            for (int r =0; r < rev->used; r++) {
+                struct fa_state *rs = rev->states[r];
+                int s = state_set_index(states, rs);
+                if (! bitset_get(split2, s)) {
+                    bitset_set(split2, s);
+                    state_set_push(split, rs);
+                    int j = block[s];
+                    state_set_push(splitblock[j], rs);
+                    if (!bitset_get(refine2, j)) {
+                        bitset_set(refine2, j);
+                        refine[ref++] = j;
+                    }
+                }
+            }
+        }
+        // refine blocks
+        for(int rr=0; rr < ref; rr++) {
+            int j = refine[rr];
+            struct state_set *sp = splitblock[j];
+            if (sp->used < partition[j]->used) {
+                struct state_set *b1 = partition[j];
+                struct state_set *b2 = partition[k];
+                for (int s = 0; s < sp->used; s++) {
+                    state_set_remove(b1, sp->states[s]);
+                    state_set_push(b2, sp->states[s]);
+                    int snum = state_set_index(states, sp->states[s]);
+                    block[snum] = k;
+                    for (int c = 0; c < nsigma; c++) {
+                        struct state_list_node *sn = active2[INDEX(snum, c)];
+                        if (sn != NULL && sn->sl == active[INDEX(j,c)]) {
+                            state_list_remove(sn);
+                            active2[INDEX(snum, c)] =
+                                state_list_add(active[INDEX(k, c)],
+                                               sp->states[s]);
+                        }
+                    }
+                }
+                // update pending
+                for (int c = 0; c < nsigma; c++) {
+                    int aj = active[INDEX(j, c)]->size;
+                    int ak = active[INDEX(k, c)]->size;
+                    if (npending + 1 > spending) {
+                        spending *= 2;
+                        REALLOC(pending, 2 * spending);
+                    }
+                    pending[2*npending + 1] = c;
+                    if (!bitset_get(pending2, INDEX(j, c))
+                        && 0 < aj && aj <= ak) {
+                        bitset_set(pending2, INDEX(j, c));
+                        pending[2*npending] = j;
+                    } else {
+                        bitset_set(pending2, INDEX(k, c));
+                        pending[2*npending] = k;
+                    }
+                    npending += 1;
+                }
+                k++;
+            }
+            for (int s = 0; s < sp->used; s++) {
+                int snum = state_set_index(states, sp->states[s]);
+                bitset_clr(split2, snum);
+            }
+            bitset_clr(refine2, j);
+            sp->used = 0;
+        }
+        split->used = 0;
+    }
+
+    /* make a new state for each equivalence class, set initial state */
+    struct state_set *newstates = state_set_create(k);
+    int *nsnum;
+    CALLOC(nsnum, k);
+    int *nsind;
+    CALLOC(nsind, nstates);
+
+    for (int n = 0; n < k; n++) {
+        struct fa_state *s = make_state();
+        newstates->states[n] = s;
+        struct state_set *partn = partition[n];
+        for (int q=0; q < partn->used; q++) {
+            struct fa_state *qs = partn->states[q];
+            int qnum = state_set_index(states, qs);
+            if (qs == fa->initial)
+                s->live = 1;     /* Abuse live to flag the new intial state */
+            nsnum[n] = qnum;     /* select representative */
+            nsind[qnum] = n;     /* and point from partition to new state */
+        }
+    }
+
+    /* build transitions and set acceptance */
+    for (int n = 0; n < k; n++) {
+        struct fa_state *s = newstates->states[n];
+        s->accept = states->states[nsnum[n]]->accept;
+        list_for_each(t, states->states[nsnum[n]]->transitions) {
+            int toind = state_set_index(states, t->to);
+            struct fa_state *nto = newstates->states[nsind[toind]];
+            add_new_trans(s, nto, t->min, t->max);
+        }
+    }
+    free(nsind);
+    free(nsnum);
+
+    /* Get rid of old states and transitions and turn NEWTSTATES into
+       a linked list */
+    gut(fa);
+    for (int n=0; n < k; n++)
+        if (newstates->states[n]->live) {
+            struct fa_state *ini = newstates->states[n];
+            newstates->states[n] = newstates->states[0];
+            newstates->states[0] = ini;
+        }
+    for (int n=0; n < k-1; n++)
+        newstates->states[n]->next = newstates->states[n+1];
+    fa->initial = newstates->states[0];
+
+    /* clean up */
+    state_set_free(states);
+    free(sigma);
+    bitset_free(reverse_nonempty);
+    free(block);
+    for (int i=0; i < nstates*nsigma; i++) {
+        state_set_free(reverse[i]);
+        state_list_free(active[i]);
+    }
+    free(reverse);
+    free(active);
+    free(active2);
+    free(pending);
+    bitset_free(pending2);
+    state_set_free(split);
+    bitset_free(split2);
+    free(refine);
+    bitset_free(refine2);
+    for (int q=0; q < nstates; q++) {
+        state_set_free(splitblock[q]);
+        state_set_free(partition[q]);
+    }
+    free(splitblock);
+    free(partition);
+
+    collect(fa);
+}
+
+static void minimize_brzozowski(struct fa *fa) {
+    struct state_set *set;
 
     /* Minimize using Brzozowski's algorithm */
     set = fa_reverse(fa);
@@ -1018,6 +1407,18 @@ void fa_minimize(struct fa *fa) {
     set = fa_reverse(fa);
     determinize(fa, set);
     state_set_free(set);
+}
+
+void fa_minimize(struct fa *fa) {
+    if (fa->minimal)
+        return;
+
+    if (fa_minimization_algorithm == FA_MIN_BRZOZOWSKI) {
+        minimize_brzozowski(fa);
+    } else {
+        minimize_hopcroft(fa);
+    }
+
     fa->minimal = 1;
 }
 

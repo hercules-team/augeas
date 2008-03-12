@@ -36,6 +36,23 @@ enum fa_basic {
     FA_TOTAL         /* Accepts all words */
 };
 
+/* Choice of minimization algorithm to use; either Hopcroft's O(n log(n))
+ * algorithm or Brzozowski's reverse-determinize-reverse-determinize
+ * algorithm. While the latter has exponential complexity in theory, it
+ * works quite well for some cases.
+ */
+enum fa_minimization_algorithms {
+    FA_MIN_HOPCROFT,
+    FA_MIN_BRZOZOWSKI
+};
+
+/* Which minimization algorithm to use in FA_MINIMIZE. The library
+ * minimizes internally at certain points, too.
+ *
+ * Defaults to FA_MIN_HOPCROFT
+ */
+extern int fa_minimization_algorithm;
+
 /* Unless otherwise mentioned, automata passed into routines are never
  * modified. It is the responsibility of the caller to free automata
  * returned by any of these routines when they are no longer needed.
