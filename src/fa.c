@@ -471,16 +471,66 @@ static struct fa_map *state_pair_push(struct fa_map *map,
     return map;
 }
 
-/* Add an entry (FST, SND) at the beginning of MAP. Return the new head of
-   the MAP */
-static struct fa_map *state_triple_push(struct fa_map *map,
-                                        struct fa_state *fst,
-                                        struct fa_state *snd,
-                                        struct fa_state *s) {
+static struct state_set *state_triple_init(void) {
+    struct state_set *set = state_set_init();
+    state_set_init_data(set);
+    return set;
+}
 
-    map = state_pair_push(map, fst, snd);
-    map->s = s;
-    return map;
+/* Store triples of states (S1, S2, S3) as nested state_sets. The set
+ * TRIPLES has a state_set for each S1 in its DATA field. Those are sets
+ * of S2 whose DATA fields contain the S3
+ */
+static void state_triple_push(struct state_set *triples,
+                              struct fa_state *s1,
+                              struct fa_state *s2,
+                              struct fa_state *s3) {
+    int i1 = state_set_index(triples, s1);
+    if (i1 == -1) {
+        i1 = state_set_push(triples, s1);
+        triples->data[i1] = state_set_init();
+        state_set_init_data(triples->data[i1]);
+    }
+    struct state_set *set2 = triples->data[i1];
+    int i2 = state_set_index(set2, s2);
+    if (i2 == -1) {
+        i2 = state_set_push(set2, s2);
+    }
+    set2->data[i2] = s3;
+}
+
+static int state_triple_pop(struct state_set *triples,
+                            struct fa_state **s1,
+                            struct fa_state **s2,
+                            struct fa_state **s3) {
+    if (triples->used == 0)
+        return 0;
+
+    struct state_set *set2 = triples->data[triples->used - 1];
+    *s1 = triples->states[triples->used - 1];
+    set2->used -= 1;
+    *s2 = set2->states[set2->used];
+    *s3 = set2->data[set2->used];
+    if (set2->used == 0) {
+        state_set_free(set2);
+        triples->used -= 1;
+    }
+    return 1;
+}
+
+static struct fa_state * state_triple_thd(struct state_set *triples,
+                                          struct fa_state *s1,
+                                          struct fa_state *s2) {
+    int i1 = state_set_index(triples, s1);
+    if (i1 == -1) {
+        return NULL;
+    }
+    struct state_set *set2 = triples->data[i1];
+    int i2 = state_set_index(set2, s2);
+    if (i2 == -1) {
+        return NULL;
+    }
+    return set2->data[i2];
 }
 
 /* Remove the first entry from MAP and return the new head */
@@ -1237,23 +1287,18 @@ static void sort_transition_intervals(struct fa *fa) {
 
 struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
     struct fa *fa = fa_make_empty();
-    struct fa_map *worklist;
-    struct fa_map *newstates;
+    struct state_set *worklist = state_triple_init();
+    struct state_set *newstates = state_triple_init();
 
     determinize(fa1, NULL);
     determinize(fa2, NULL);
     sort_transition_intervals(fa1);
     sort_transition_intervals(fa2);
 
-    worklist  = state_triple_push(NULL, fa1->initial, fa2->initial,
-                                  fa->initial);
-    newstates = state_triple_push(NULL, fa1->initial, fa2->initial,
-                                  fa->initial);
-    while (worklist != NULL) {
-        struct fa_state *p1 = worklist->fst;
-        struct fa_state *p2 = worklist->snd;
-        struct fa_state *s = worklist->s;
-        worklist = fa_map_pop(worklist);
+    state_triple_push(worklist, fa1->initial, fa2->initial, fa->initial);
+    state_triple_push(newstates, fa1->initial, fa2->initial, fa->initial);
+    struct fa_state *p1, *p2, *s;
+    while (state_triple_pop(worklist, &p1, &p2, &s)) {
         s->accept = p1->accept && p2->accept;
 
         struct fa_trans *t1 = p1->transitions;
@@ -1266,16 +1311,11 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
             if (t2 == NULL)
                 break;
             if (t2->min <= t1->max) {
-                struct fa_map *map = find_pair(newstates, t1->to, t2->to);
-                struct fa_state *r = NULL;
-                if (map == NULL) {
+                struct fa_state *r = state_triple_thd(newstates, t1->to, t2->to);
+                if (r == NULL) {
                     r = add_state(fa, 0);
-                    worklist = state_triple_push(worklist,
-                                                 t1->to, t2->to, r);
-                    newstates= state_triple_push(newstates,
-                                                 t1->to, t2->to, r);
-                } else {
-                    r = map->s;
+                    state_triple_push(worklist, t1->to, t2->to, r);
+                    state_triple_push(newstates, t1->to, t2->to, r);
                 }
                 char min = t1->min > t2->min ? t1->min : t2->min;
                 char max = t1->max < t2->max ? t1->max : t2->max;
@@ -1287,10 +1327,11 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
                 t2 = t2->next;
         }
     }
+    state_set_free(worklist);
+    state_set_free(newstates);
+    collect(fa);
 
-    list_free(worklist);
-    list_free(newstates);
-    return collect(fa);
+    return fa;
 }
 
 int fa_contains(fa_t fa1, fa_t fa2) {
