@@ -110,7 +110,8 @@ enum grammar_debug_flags {
     GF_HANDLES = (1 << 3),
     GF_RE     = (1 << 4),
     GF_PRETTY = (1 << 5),
-    GF_DOT    = (1 << 6)    /* Produce a dot graph for the grammar */
+    GF_DOT    = (1 << 6),         /* Produce a dot graph for the grammar */
+    GF_LENS_TYPE_CHECK = (1 << 7) /* Do (expensive) lens type checks */
 };
 
 /*

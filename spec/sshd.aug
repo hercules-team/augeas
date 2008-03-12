@@ -9,8 +9,8 @@ grammar sshd
   token EOL /[ \t]*\n/ = '\n'
   token SEP /[ \t]+/ = ' '
   token COMMENT /(#.*|[ \t]*)\n/ = '\n'
-  token KEY /[^ \t]+/ = ''
-  token VALUE /([^ \t\n]|[ \t][^ \t\n])+/ = ''
+  token KEY /[A-Za-z0-9]+/ = ''
+  token VALUE /[^ \t\n]+([ \t]+[^ \t\n]+)*/ = ''
   token LISTELT /[^ \t\n]+/ = ''
   token MAC /([^, \t\n]|[ \t][^, \t\n])+/ = ''
   start: (comment | accept_env | allow_groups | allow_users 
@@ -45,7 +45,7 @@ grammar sshd
            ([ seq 'macs' . ',' . store MAC])* .
           EOL ]
 
-  match: [ key 'Match' .
+  match: [ key 'Match' . SEP .
            [ seq 'match' .
              [ label 'cond' . store VALUE . EOL ] .
              (SEP . other_entry) * ] ]

@@ -22,8 +22,11 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <ctype.h>
+
 #include "ast.h"
 #include "list.h"
+#include "fa.h"
 
 static void dot_grammar(FILE *out, struct grammar *grammar, int flags);
 
@@ -35,10 +38,47 @@ static const char * const action_type_names[] = {
  * Debug printing
  */
 
+/* Escape nonprintable characters within TEXT, similar to how it's done in
+ * C string literals. Caller must free the returned string.
+ */
+static char *escape(const char *text, int cnt) {
+    static const char *const named_escs    = "\a\b\t\n\v\f\r\\";
+    static const char *const named_escs_to = "abtnvfr\\";
+
+    int len = 0;
+    char *esc = NULL, *e;
+
+    if (cnt < 0)
+        cnt = strlen(text);
+
+    for (int i=0; i < cnt; i++) {
+        if (strchr(named_escs, text[i]) != NULL)
+            len += 2;  /* Escaped as '\x' */
+        else if (! isprint(text[i]))
+            len += 4;  /* Escaped as '\ooo' */
+        else
+            len += 1;
+    }
+    CALLOC(esc, len+1);
+    e = esc;
+    for (int i=0; i < cnt; i++) {
+        char *p;
+        if ((p = strchr(named_escs, text[i])) != NULL) {
+            *e++ = '\\';
+            *e++ = named_escs_to[p - named_escs];
+        } else if (! isprint(text[i])) {
+            sprintf(e, "\\%03o", text[i]);
+        } else {
+            *e++ = text[i];
+        }
+    }
+    return esc;
+}
+
 int print_chars(FILE *out, const char *text, int cnt) {
     int total = 0;
-    int print = (out != NULL);
-    
+    char *esc;
+
     if (text == NULL) {
         fprintf(out, "nil");
         return 3;
@@ -46,34 +86,12 @@ int print_chars(FILE *out, const char *text, int cnt) {
     if (cnt < 0)
         cnt = strlen(text);
 
-    for (int i=0; i<cnt; i++) {
-        switch(text[i]) {
-        case '\n':
-            if (print)
-                fprintf(out, "~n");
-            total += 2;
-            break;
-        case '\t':
-            if (print)
-                fprintf(out, "~t");
-            total += 2;
-            break;
-        case '\0':
-            if (print)
-                fprintf(out, "~0");
-            return total + 2;
-        case '~':
-            if (print)
-                fprintf(out, "~~");
-            total += 2;
-            break;
-        default:
-            if (print)
-                fputc(text[i], out);
-            total += 1;
-            break;
-        }
-    }
+    esc = escape(text, cnt);
+    total = strlen(esc);
+    if (out != NULL)
+        fprintf(out, esc);
+    free(esc);
+
     return total;
 }
 
@@ -696,6 +714,204 @@ static int make_match_handles(struct match *matches) {
     return changed;
 }
 
+/*
+ * Typechecking of lenses
+ */
+static fa_t typecheck(struct match *match);
+
+static fa_t literal_to_fa(struct literal *literal) {
+    fa_t fa;
+    int error = fa_compile(literal->pattern, &fa);
+    if (error != REG_NOERROR) {
+        /* Should never happen since re_compile already compiled PATTERN
+           happily */
+        internal_error(NULL, _L(literal),
+                       "unexpected error from fa_compile %d", error);
+    }
+    return fa;
+}
+
+static fa_t typecheck_union(struct match *match) {
+    fa_t fa = NULL, fa1 = NULL;
+    list_for_each(cur, match->matches) {
+        fa1 = typecheck(cur);
+        if (fa == NULL) {
+            fa = fa1;
+        } else {
+            fa_t isect = fa_intersect(fa, fa1);
+            if (! fa_is_basic(isect, FA_EMPTY)) {
+                char *xmpl = fa_example(isect);
+                char *esc = escape(xmpl, -1);
+                grammar_error(_FM(match), _L(match),
+                   "warning: nonempty intersection in union: '%s' matched by both\n",
+                              esc);
+                free(xmpl);
+                free(esc);
+                /* FIXME: We leave it with a warning since fixing this
+                   error with the curent language is a huge pain and it is
+                   fairly harmless as we always use the first match in a
+                   union, so it's predictable to the user what happens */
+            }
+            fa_free(isect);
+            isect = fa_union(fa, fa1);
+            fa_free(fa);
+            fa_free(fa1);
+            fa = isect;
+        }
+    }
+    return fa;
+}
+
+static int ambig_check(struct match *m, fa_t fa1, fa_t fa2, const char *msg) {
+    char *upv, *pv, *v;
+    upv = fa_ambig_example(fa1, fa2, &pv, &v);
+    int result = 1;
+    if (upv != NULL) {
+        char *e_u = escape(upv, pv - upv);
+        char *e_up = escape(upv, v - upv);
+        char *e_upv = escape(upv, -1);
+        char *e_pv = escape(pv, -1);
+        char *e_v = escape(v, -1);
+        grammar_error(_FM(m), _L(m),
+                      "%s:\n"
+                      "  '%s' can be split into\n"
+                      "  '%s|=|%s'\n"
+                      " and\n"
+                      "  '%s|=|%s'", msg, e_upv, e_u, e_pv, e_up, e_v);
+        free(e_u);
+        free(e_up);
+        free(e_upv);
+        free(e_pv);
+        free(e_v);
+        result = 0;
+    }
+    free(upv);
+    return result;
+}
+
+static fa_t typecheck_concat(struct match *match) {
+    fa_t fa = NULL, fa1 = NULL;
+    list_for_each(cur, match->matches) {
+        fa1 = typecheck(cur);
+        if (fa1 == NULL) {
+            fa_free(fa);
+            return NULL;
+        }
+        if (fa == NULL) {
+            fa = fa1;
+        } else {
+            if (! ambig_check(match, fa, fa1, "ambiguous concatenation")) {
+                fa_free(fa);
+                fa_free(fa1);
+                return NULL;
+            }
+            fa_t conc = fa_concat(fa, fa1);
+            fa_free(fa);
+            fa_free(fa1);
+            fa = conc;
+        }
+    }
+    return fa;
+}
+
+static fa_t typecheck_subtree(struct match *match) {
+    return typecheck(match->matches);
+}
+
+static fa_t typecheck_iter(struct match *match) {
+    fa_t fas, fa;
+
+    fa = typecheck(match->matches);
+    if (fa == NULL)
+        return NULL;
+    if (match->type == QUANT_STAR)
+        fas = fa_iter(fa, 0, -1);
+    else
+        fas = fa_iter(fa, 1, -1);
+    if (! ambig_check(match, fa, fas, "ambiguous iteration")) {
+        fa_free(fas);
+        fa_free(fa);
+        return NULL;
+    }
+    fa_free(fa);
+    return fas;
+}
+
+static fa_t typecheck_qmark(struct match *match) {
+    /* Check (r)? as (<e>|r) where <e> is the empty language */
+    fa_t fa, eps;
+
+    fa = typecheck(match->matches);
+    if (fa == NULL)
+        return NULL;
+
+    eps = fa_make_basic(FA_EPSILON);
+    if (fa_contains(eps, fa)) {
+        grammar_error(_FM(match), _L(match),
+            "illegal optional expression: expression matches the empty word");
+        fa_free(eps);
+        fa_free(fa);
+        return NULL;
+    }
+    fa_free(eps);
+    return fa;
+}
+
+static fa_t typecheck_action(struct match *match) {
+    struct action *action = match->action;
+    switch(action->type) {
+    case COUNTER:
+    case SEQ:
+    case LABEL:
+        return fa_make_basic(FA_EMPTY);
+    case STORE:
+    case KEY:
+        return typecheck(action->arg);
+    default:
+        assert(0);
+        break;
+    }
+}
+
+static fa_t typecheck(struct match *match) {
+    fa_t fa = NULL;
+
+    switch (match->type) {
+    case LITERAL:
+    case ABBREV_REF:
+    case RULE_REF:
+        fa = literal_to_fa(match->re);
+        break;
+    case ALTERNATIVE:
+        fa = typecheck_union(match);
+        break;
+    case SEQUENCE:
+        fa = typecheck_concat(match);
+        break;
+    case SUBTREE:
+        fa = typecheck_subtree(match);
+        break;
+    case QUANT_PLUS:
+        fa = typecheck_iter(match);
+        break;
+    case QUANT_STAR:
+        fa = typecheck_iter(match);
+        break;
+    case QUANT_MAYBE:
+        fa = typecheck_qmark(match);
+        break;
+    case ACTION:
+        fa = typecheck_action(match);
+        break;
+    default:
+        internal_error(_FM(match), _L(match),
+                       "unexpected type %d", match->type);
+        assert(0);
+        break;
+    }
+    return fa;
+}
+
 /* Prepare the grammar by
  *
  * (1) computing first/follow sets for all rules and propagating epsilon
@@ -704,7 +920,7 @@ static int make_match_handles(struct match *matches) {
  * Only a grammar that has been successfully prepared can be used for
  * parsing
  */
-static int prepare(struct grammar *grammar) {
+static int prepare(struct grammar *grammar, int do_typecheck) {
     int changed;
     int result = 1;
 
@@ -730,6 +946,15 @@ static int prepare(struct grammar *grammar) {
         }
     } while (changed);
 
+    /* Typecheck */
+    if (do_typecheck) {
+        list_for_each(r, grammar->rules) {
+            fa_t fa = typecheck(r->matches);
+            if (fa == NULL)
+                return 0;
+            fa_free(fa);
+        }
+    }
     return result;
 }
 
@@ -945,7 +1170,7 @@ int load_spec(const char *filename, FILE *log, int flags,
             errmsg = "Semantic checks failed";
         }
         if (ok) {
-            ok = prepare(g);
+            ok = prepare(g, flags & GF_LENS_TYPE_CHECK);
             errmsg = "First computation failed";
         }
         if (!ok) {

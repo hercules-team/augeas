@@ -8,7 +8,7 @@ end
 grammar aliases
   token COMMENT /^[ \t]*(#.*)?\n/ = '#\n'
   token COMMA /,[ \t]+(\n[ \t]+)?/ = ', '
-  token NAME /([^ \t\n#:@]+|"[^"]*")/ = 'missing' # "
+  token NAME /([^ \t\n#:@]+|"[^"\n]*")/ = 'missing' # "
   token COLON /:[ \t]+/ = ':\t'
   token EOL /[ \t]*\n/ = '\n'
   token WORD /[^, \t\n]+/ = ''

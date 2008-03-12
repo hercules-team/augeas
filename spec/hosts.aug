@@ -12,7 +12,7 @@ grammar hosts
   token OPT_WS /[ \t]*/ = '\t'
   token EOR '\n'
   token POUND_TO_EOL /#.*\n/ = '# '
-  token WORD /[^ \n\t]+/ = ''
+  token WORD /[^# \n\t]+/ = ''
 
   file: counter 'record' . ( comment | record ) *
 

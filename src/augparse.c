@@ -111,7 +111,7 @@ static void usage(void) {
     fprintf(stderr, "  -P WHAT       Show details of how FILE is parsed. Possible values for WHAT\n"
                     "                are 'advance', 'match', 'tokens', and 'skel'\n");
     fprintf(stderr, "  -G WHAT       Show details about GRAMMAR. Possible values for WHAT are\n"
-                    "                'handles', 're', 'pretty', 'dot' and 'all'\n");
+                    "                'handles', 're', 'pretty', 'dot', 'notypecheck' and 'all'\n");
     exit(EXIT_FAILURE);
 }
 
@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
     int opt;
     int print_skels = 0;
     int parse_flags = PF_NONE;
-    int grammar_flags = GF_NONE;
+    int grammar_flags = GF_LENS_TYPE_CHECK;
     struct grammar *grammar;
 
     progname = argv[0];
@@ -149,6 +149,8 @@ int main(int argc, char **argv) {
                 grammar_flags |= GF_PRETTY;
             else if (STREQ(optarg, "dot"))
                 grammar_flags |= GF_DOT;
+            else if (STREQ(optarg, "notypecheck"))
+                grammar_flags &= ~ GF_LENS_TYPE_CHECK;
             else if (STREQ(optarg, "all"))
                 grammar_flags = ~ GF_DOT;
             else {
@@ -171,7 +173,7 @@ int main(int argc, char **argv) {
     }
 
     if (optind + 1 == argc) {
-        if (grammar_flags == GF_NONE)
+        if (grammar_flags == GF_NONE || grammar_flags == GF_LENS_TYPE_CHECK)
             grammar_flags |= GF_PRETTY;
         grammar = load_grammar(argv[optind], stdout, grammar_flags);
         if (grammar == NULL)
