@@ -536,6 +536,13 @@ static struct state * state_triple_thd(struct state_set *triples,
     return set2->data[i2];
 }
 
+static void state_triple_free(struct state_set *triples) {
+    for (int i=0; i < triples->used; i++) {
+        state_set_free(triples->data[i]);
+    }
+    state_set_free(triples);
+}
+
 /*
  * State operations
  */
@@ -1371,6 +1378,7 @@ static void minimize_hopcroft(struct fa *fa) {
     }
     free(splitblock);
     free(partition);
+    state_set_free(newstates);
 
     collect(fa);
 }
@@ -1702,8 +1710,8 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
                 t2 = t2->next;
         }
     }
-    state_set_free(worklist);
-    state_set_free(newstates);
+    state_triple_free(worklist);
+    state_triple_free(newstates);
     collect(fa);
 
     return fa;
