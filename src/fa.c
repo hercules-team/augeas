@@ -1579,11 +1579,9 @@ static struct fa *fa_clone(struct fa *fa) {
     return result;
 }
 
-struct fa *fa_union(struct fa *fa1, struct fa *fa2) {
+/* Compute FA1|FA2 and set FA1 to that automaton. FA2 is freed */
+static void union_in_place(struct fa *fa1, struct fa *fa2) {
     struct state *s;
-
-    fa1 = fa_clone(fa1);
-    fa2 = fa_clone(fa2);
 
     s = add_state(fa1, 0);
     add_epsilon_trans(s, fa1->initial);
@@ -1595,13 +1593,20 @@ struct fa *fa_union(struct fa *fa1, struct fa *fa2) {
 
     set_initial(fa1, s);
 
-    return collect(fa1);
+    collect(fa1);
 }
 
-struct fa *fa_concat(struct fa *fa1, struct fa *fa2) {
+struct fa *fa_union(struct fa *fa1, struct fa *fa2) {
     fa1 = fa_clone(fa1);
     fa2 = fa_clone(fa2);
 
+    union_in_place(fa1, fa2);
+
+    return fa1;
+}
+
+/* Concat FA2 onto FA1; frees FA2 and changes FA1 to FA1.FA2 */
+static void concat_in_place(struct fa *fa1, struct fa *fa2) {
     list_for_each(s, fa1->initial) {
         if (s->accept) {
             s->accept = 0;
@@ -1613,7 +1618,14 @@ struct fa *fa_concat(struct fa *fa1, struct fa *fa2) {
     fa1->minimal = 0;
     fa_merge(fa1, fa2);
 
-    return collect(fa1);
+    collect(fa1);
+}
+
+struct fa *fa_concat(struct fa *fa1, struct fa *fa2) {
+    fa1 = fa_clone(fa1);
+    fa2 = fa_clone(fa2);
+    concat_in_place(fa1, fa2);
+    return fa1;
 }
 
 static struct fa *fa_make_char_set(char *cset, int negate) {
@@ -1685,9 +1697,8 @@ struct fa *fa_iter(struct fa *fa, int min, int max) {
         } else {
             cfa = fa_clone(fa);
             while (min > 1) {
-                struct fa *cfa2 = cfa;
-                cfa = fa_concat(cfa2, fa);
-                fa_free(cfa2);
+                struct fa *tfa = fa_clone(fa);
+                concat_in_place(cfa, tfa);
                 min -= 1;
             }
         }
@@ -2081,38 +2092,31 @@ char *fa_ambig_example(fa_t fa1, fa_t fa2, char **pv, char **v) {
 #undef Xs
 #undef Ys
 
-    /* Compute b1 = ((a1f . mp) & a1t) . ms */
     fa_t a1f = expand_alphabet(fa1, 0, X, Y);
     fa_t a1t = expand_alphabet(fa1, 1, X, Y);
     fa_t a2f = expand_alphabet(fa2, 0, X, Y);
     fa_t a2t = expand_alphabet(fa2, 1, X, Y);
 
-    fa_t a1f_mp = fa_concat(a1f, mp);
-    fa_t a1f_mp$a1t = fa_intersect(a1f_mp, a1t);
-    fa_t b1 = fa_concat(a1f_mp$a1t, ms);
+    /* Compute b1 = ((a1f . mp) & a1t) . ms */
+    concat_in_place(a1f, mp);
+    fa_t b1 = fa_intersect(a1f, a1t);
+    concat_in_place(b1, ms);
 
     /* Compute b2 = ss . ((sp . a2f) & a2t) */
-    fa_t sp_a2f = fa_concat(sp, a2f);
-    fa_t sp_a2f$a2t = fa_intersect(sp_a2f, a2t);
-    fa_t b2 = fa_concat(ss, sp_a2f$a2t);
+    concat_in_place(sp, a2f);
+    fa_t b2 = fa_intersect(sp, a2t);
+    concat_in_place(ss, b2);
+    b2 = ss;
 
     /* The automaton we are really interested in */
     fa_t amb = fa_intersect(b1, b2);
 
     /* Clean up intermediate automata */
-    fa_free(mp);
-    fa_free(ms);
     fa_free(sp);
-    fa_free(ss);
     fa_free(a1f);
     fa_free(a1t);
-    fa_free(a2f);
     fa_free(a2t);
-    fa_free(a1f_mp);
-    fa_free(a1f_mp$a1t);
     fa_free(b1);
-    fa_free(sp_a2f);
-    fa_free(sp_a2f$a2t);
     fa_free(b2);
 
     char *s = fa_example(amb);
@@ -2153,20 +2157,16 @@ static struct fa *fa_from_re(struct re *re) {
     switch(re->type) {
     case UNION:
         {
-            struct fa *fa1 = fa_from_re(re->exp1);
+            result = fa_from_re(re->exp1);
             struct fa *fa2 = fa_from_re(re->exp2);
-            result = fa_union(fa1, fa2);
-            fa_free(fa1);
-            fa_free(fa2);
+            union_in_place(result, fa2);
         }
         break;
     case CONCAT:
         {
-            struct fa *fa1 = fa_from_re(re->exp1);
+            result = fa_from_re(re->exp1);
             struct fa *fa2 = fa_from_re(re->exp2);
-            result = fa_concat(fa1, fa2);
-            fa_free(fa1);
-            fa_free(fa2);
+            concat_in_place(result, fa2);
         }
         break;
     case CSET:
