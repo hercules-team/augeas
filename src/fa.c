@@ -1936,11 +1936,11 @@ int fa_equals(fa_t fa1, fa_t fa2) {
 
 static unsigned int chr_score(char c) {
     if (isalpha(c)) {
-        return 1;
-    } else if (isalnum(c)) {
         return 2;
-    } else if (isprint(c)) {
+    } else if (isalnum(c)) {
         return 3;
+    } else if (isprint(c)) {
+        return 7;
     } else {
         return 100;
     }
