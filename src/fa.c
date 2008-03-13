@@ -1552,7 +1552,7 @@ int fa_is_basic(struct fa *fa, unsigned int basic) {
 
 static struct fa *fa_clone(struct fa *fa) {
     struct fa *result = NULL;
-    struct state_set *set = state_set_init(-1, S_DATA);
+    struct state_set *set = state_set_init(-1, S_DATA|S_SORTED);
 
     CALLOC(result, 1);
     result->deterministic = fa->deterministic;
