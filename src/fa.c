@@ -129,22 +129,6 @@ struct re {
     };
 };
 
-/*
- * Auxiliary data structure used internally in some automata
- * computations. It is used as a variety of data structures:
- * (1) a map between states, mapping fst -> snd
- * (2) a map from states to a list of transitions, mapping fst -> trans
- * (3) a set of states in fst
- * (4) a map of pairs of states to states (fst, snd) -> s
- */
-struct fa_map {
-    struct fa_map *next;
-    struct state *fst;
-    struct state *snd;
-    struct trans *trans;
-    struct state *s;
-};
-
 /* A map from a set of states to a state. */
 typedef GHashTable state_set_hash;
 
@@ -392,6 +376,13 @@ static int state_set_push(struct state_set *set, struct state *s) {
     return set->used - 1;
 }
 
+static int state_set_push_data(struct state_set *set, struct state *s, 
+                               void *d) {
+    int i = state_set_push(set, s);
+    set->data[i] = d;
+    return i;
+}
+
 static int state_set_index(const struct state_set *set,
                            const struct state *s) {
     for (int i=0; i < set->used; i++) {
@@ -424,6 +415,21 @@ static struct state *state_set_pop(struct state_set *set) {
     return s;
 }
 
+static struct state *state_set_pop_data(struct state_set *set, void **d) {
+    struct state *s = NULL;
+    s = state_set_pop(set);
+    *d = set->data[set->used];
+    return s;
+}
+
+static void *state_set_find_data(struct state_set *set, struct state *s) {
+    int i = state_set_index(set, s);
+    if (i >= 0)
+        return set->data[i];
+    else
+        return NULL;
+}
+
 #if 0
 static void state_set_compact(struct state_set *set) {
     while (set->used > 0 && set->states[set->used] == NULL)
@@ -441,23 +447,31 @@ static void state_set_compact(struct state_set *set) {
 }
 #endif
 
-/*
- * Operations on FA_MAP
+/* Add an entry (FST, SND) to SET. FST is stored in SET->STATES, and SND is
+   stored in SET->DATA at the same index.
+*/
+static struct state_set *state_pair_push(struct state_set *set,
+                                         struct state *fst,
+                                         struct state *snd) {
+    if (set == NULL) {
+        set = state_set_init();
+        state_set_init_data(set);
+    }
+    int i = state_set_push(set, fst);
+    set->data[i] = snd;
+
+    return set;
+}
+
+/* Return the index of the pair (FST, SND) in SET, or -1 if SET contains no
+   such pair.
  */
-
-/* Add an entry (FST, SND) at the beginning of MAP. Return the new head of
-   the MAP */
-static struct fa_map *state_pair_push(struct fa_map *map,
-                                      struct state *fst,
-                                      struct state *snd) {
-    struct fa_map *e;
-
-    CALLOC(e, 1);
-    e->fst = fst;
-    e->snd = snd;
-    list_cons(map, e);
-
-    return map;
+static int state_pair_find(struct state_set *set, struct state *fst,
+                           struct state *snd) {
+    for (int i=0; i < set->used; i++)
+        if (set->states[i] == fst && set->data[i] == snd)
+            return i;
+    return -1;
 }
 
 static struct state_set *state_triple_init(void) {
@@ -522,42 +536,6 @@ static struct state * state_triple_thd(struct state_set *triples,
     return set2->data[i2];
 }
 
-/* Remove the first entry from MAP and return the new head */
-static struct fa_map *fa_map_pop(struct fa_map *map) {
-    struct fa_map *del;
-
-    if (map == NULL)
-        return NULL;
-
-    del = map;
-    map = map->next;
-    free(del);
-    return map;
-}
-
-/* Find an entry with FST == S on MAP and return that or return NULL if no
-   entry has FST == S */
-static const struct fa_map *find_fst(const struct fa_map *map,
-                                     const struct state *s) {
-    while (map != NULL) {
-        if (map->fst == s)
-            return map;
-        map = map->next;
-    }
-    return NULL;
-}
-
-/* Return the entry from MAP that has the given FST and SND, or return NULL
-   if no such entry exists */
-static struct fa_map *find_pair(struct fa_map *map, struct state *fst,
-                                struct state *snd) {
-    list_for_each(m, map) {
-        if (m->fst == fst && m->snd == snd)
-            return m;
-    }
-    return NULL;
-}
-
 /*
  * State operations
  */
@@ -583,8 +561,8 @@ static void mark_reachable(struct fa *fa) {
     state_set_free(worklist);
 }
 
-/* Return all reachable states. The returned FA_MAP has the states in its
- * FST entries.
+/* Return all reachable states. As a sideeffect, all states have their
+   REACHABLE flag set appropriately.
  */
 static struct state_set *fa_states(struct fa *fa) {
     struct state_set *visited = state_set_init();
@@ -597,8 +575,8 @@ static struct state_set *fa_states(struct fa *fa) {
     return visited;
 }
 
-/* Return all reachable accepting states. The returned FA_MAP has the
- * accepting states in its FST entries.
+/* Return all reachable accepting states. As a sideeffect, all states have
+   their REACHABLE flag set appropriately.
  */
 static struct state_set *fa_accept_states(struct fa *fa) {
     struct state_set *accept = state_set_init();
@@ -611,8 +589,9 @@ static struct state_set *fa_accept_states(struct fa *fa) {
     return accept;
 }
 
-/* Return all live states, i.e. states from which an accepting state can be
- * reached. The returned FA_MAP has the live states in its FST entries.
+/* Mark all live states, i.e. states from which an accepting state can be
+   reached. All states have their REACHABLE and LIVE flags set
+   appropriately.
  */
 static void mark_live(struct fa *fa) {
     int changed;
@@ -1732,8 +1711,8 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
 
 int fa_contains(fa_t fa1, fa_t fa2) {
     int result = 0;
-    struct fa_map *worklist;  /* List of pairs of states (FST, SND) */
-    struct fa_map *visited;   /* List of pairs of states (FST, SND) */
+    struct state_set *worklist;  /* List of pairs of states */
+    struct state_set *visited;   /* List of pairs of states */
 
     determinize(fa1, NULL);
     determinize(fa2, NULL);
@@ -1742,10 +1721,9 @@ int fa_contains(fa_t fa1, fa_t fa2) {
 
     worklist = state_pair_push(NULL, fa1->initial, fa2->initial);
     visited  = state_pair_push(NULL, fa1->initial, fa2->initial);
-    while (worklist != NULL) {
-        struct state *p1 = worklist->fst;
-        struct state *p2 = worklist->snd;
-        worklist = fa_map_pop(worklist);
+    while (worklist->used) {
+        struct state *p1, *p2;
+        p1 = state_set_pop_data(worklist, (void **) &p2);
 
         if (p1->accept && !p2->accept)
             goto done;
@@ -1762,7 +1740,7 @@ int fa_contains(fa_t fa1, fa_t fa2) {
                 if (t2 == NULL)
                     goto done;
                 min = (t2->max == CHAR_MAX) ? max+1 : t2->max + 1;
-                if (find_pair(visited, t1->to, t2->to) == NULL) {
+                if (state_pair_find(visited, t1->to, t2->to) == -1) {
                     worklist = state_pair_push(worklist, t1->to, t2->to);
                     visited  = state_pair_push(visited, t1->to, t2->to);
                 }
@@ -1775,8 +1753,8 @@ int fa_contains(fa_t fa1, fa_t fa2) {
 
     result = 1;
  done:
-    list_free(worklist);
-    list_free(visited);
+    state_set_free(worklist);
+    state_set_free(visited);
     return result;
 }
 
@@ -1918,43 +1896,45 @@ char *fa_example(fa_t fa) {
     sort_transition_intervals(fa);
 
     /* Map from state to string */
-    struct fa_map *path = state_pair_push(NULL, fa->initial,
-                                          (void*) strdup(""));
-    /* List of states still to visit */
-    struct fa_map *worklist = state_pair_push(NULL, fa->initial, NULL);
+    struct state_set *path = state_set_init();
+    state_set_init_data(path);
+    state_set_push_data(path, fa->initial,(void*) strdup(""));
 
-    while (worklist != NULL) {
-        struct state *s = worklist->fst;
-        worklist = fa_map_pop(worklist);
-        struct fa_map *p = (struct fa_map *) find_fst(path, s);
-        char *ps = (char *) p->snd;
+    /* List of states still to visit */
+    struct state_set *worklist = state_set_init();
+    state_set_push(worklist, fa->initial);
+
+    while (worklist->used) {
+        struct state *s = state_set_pop(worklist);
+        char *ps = state_set_find_data(path, s);
         list_for_each(t, s->transitions) {
             char c = pick_char(t);
-            struct fa_map *to = (struct fa_map *) find_fst(path, t->to);
-            if (to == NULL) {
+            int toind = state_set_index(path, t->to);
+            if (toind == -1) {
                 char *w = string_extend(NULL, ps, c);
-                worklist = state_pair_push(worklist, t->to, NULL);
-                path = state_pair_push(path, t->to, (void *) w);
+                state_set_push(worklist, t->to);
+                state_set_push_data(path, t->to, (void *) w);
             } else {
-                char *ts = (char *) to->snd;
-                to->snd = (void *) string_extend(ts, ps, c);
+                path->data[toind] = string_extend(path->data[toind], ps, c);
             }
         }
     }
 
     char *word = NULL;
-    list_for_each(p, path) {
-        char *ps = (char *) p->snd;
-        if (p->fst->accept &&
+    for (int i=0; i < path->used; i++) {
+        struct state *p = path->states[i];
+        char *ps = path->data[i];
+        if (p->accept &&
             (word == NULL || *word == '\0'
              || (*ps != '\0' && str_score(word) > str_score(ps)))) {
             free(word);
             word = ps;
         } else {
-            free(p->snd);
+            free(ps);
         }
     }
-    list_free(path);
+    state_set_free(path);
+    state_set_free(worklist);
     return word;
 }
 
