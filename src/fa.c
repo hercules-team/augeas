@@ -336,11 +336,6 @@ static void fa_merge(struct fa *fa1, struct fa *fa2) {
 /*
  * Operations on STATE_SET
  */
-#define set_for_each(iter, set)                                         \
-    for(typeof(set->states) (iter) = set->states;                       \
-        iter - set->states < set->used;                                 \
-        iter++)
-
 static void state_set_init_data(struct state_set *set) {
     if (set->data == NULL)
         CALLOC(set->data, set->size);
