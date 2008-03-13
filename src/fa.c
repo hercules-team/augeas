@@ -1988,7 +1988,7 @@ char *fa_example(fa_t fa) {
     sort_transition_intervals(fa);
 
     /* Map from state to string */
-    struct state_set *path = state_set_init(-1, S_DATA);
+    struct state_set *path = state_set_init(-1, S_DATA|S_SORTED);
     state_set_push_data(path, fa->initial,(void*) strdup(""));
 
     /* List of states still to visit */
