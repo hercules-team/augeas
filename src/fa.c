@@ -1669,6 +1669,23 @@ static struct fa *fa_star(struct fa *fa) {
     return collect(fa);
 }
 
+/* Form the automaton (FA){N}; FA is not modified */
+static struct fa *repeat(struct fa *fa, int n) {
+    if (n == 0) {
+        return fa_make_epsilon();
+    } else if (n == 1) {
+        return fa_clone(fa);
+    } else {
+        struct fa *cfa = fa_clone(fa);
+        while (n > 1) {
+            struct fa *tfa = fa_clone(fa);
+            concat_in_place(cfa, tfa);
+            n -= 1;
+        }
+        return cfa;
+    }
+}
+
 struct fa *fa_iter(struct fa *fa, int min, int max) {
     if (min < 0)
         min = 0;
@@ -1678,30 +1695,16 @@ struct fa *fa_iter(struct fa *fa, int min, int max) {
     }
     if (max == -1) {
         struct fa *sfa = fa_star(fa);
-        struct fa *cfa = sfa;
-        while (min > 0) {
-            cfa = fa_concat(fa, cfa);
-            min -= 1;
-        }
-        if (sfa != cfa)
-            fa_free(sfa);
+        if (min == 0)
+            return sfa;
+        struct fa *cfa = repeat(fa, min);
+        concat_in_place(cfa, sfa);
         return cfa;
     } else {
         struct fa *cfa = NULL;
 
         max -= min;
-        if (min == 0) {
-            cfa = fa_make_epsilon();
-        } else if (min == 1) {
-            cfa = fa_clone(fa);
-        } else {
-            cfa = fa_clone(fa);
-            while (min > 1) {
-                struct fa *tfa = fa_clone(fa);
-                concat_in_place(cfa, tfa);
-                min -= 1;
-            }
-        }
+        cfa = repeat(fa, min);
         if (max > 0) {
             struct fa *cfa2 = fa_clone(fa);
             while (max > 1) {
