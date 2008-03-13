@@ -135,10 +135,17 @@ typedef GHashTable state_set_hash;
 static const int state_set_initial_size = 4;
 static const int state_set_max_stride   = 128;
 
+enum state_set_init_flags {
+    S_NONE   = 0,
+    S_SORTED = (1 << 0),
+    S_DATA   = (1 << 1)
+};
+
 struct state_set {
     size_t            size;
     size_t            used;
-    struct state **states;
+    int               sorted : 1;
+    struct state    **states;
     void            **data;
 };
 
@@ -334,21 +341,32 @@ static void fa_merge(struct fa *fa1, struct fa *fa2) {
         iter - set->states < set->used;                                 \
         iter++)
 
-static struct state_set *state_set_create(size_t size) {
-    struct state_set *set;
-    CALLOC(set, 1);
-    set->size = size;
-    CALLOC(set->states, set->size);
-    return set;
-}
-
-static struct state_set *state_set_init(void) {
-    return state_set_create(state_set_initial_size);
-}
-
 static void state_set_init_data(struct state_set *set) {
     if (set->data == NULL)
         CALLOC(set->data, set->size);
+}
+
+/* Create a new STATE_SET with an initial size of SIZE. If SIZE is -1, use
+   the default size STATE_SET_INITIAL_SIZE. FLAGS is a bitmask indicating
+   some options:
+   - S_SORTED: keep the states in the set sorted by their address, and use
+     binary search for lookups. If it is not set, entries are kept in the
+     order in which they are added and lookups scan linearly through the
+     set of states.
+   - S_DATA: allocate the DATA array in the set, and keep its size in sync
+     with the size of the STATES array.
+*/
+static struct state_set *state_set_init(int size, int flags) {
+    struct state_set *set;
+    if (size < 0)
+        size = state_set_initial_size;
+    CALLOC(set, 1);
+    set->size = size;
+    set->sorted = (flags & S_SORTED) ? 1 : 0;
+    CALLOC(set->states, set->size);
+    if (flags & S_DATA)
+        state_set_init_data(set);
+    return set;
 }
 
 static void state_set_free(struct state_set *set) {
@@ -369,14 +387,51 @@ static void state_set_expand(struct state_set *set) {
         set->data = realloc(set->data, new * sizeof(* set->data));
 }
 
+/* Return the index where S belongs in SET->STATES to keep it sorted.  S
+   may not be in SET->STATES. The returned index is in the interval [0
+   .. SET->USED], with the latter indicating that S is larger than all
+   values in SET->STATES
+*/
+static int state_set_pos(const struct state_set *set, const struct state *s) {
+    int l = 0, h = set->used;
+    while (l < h) {
+        int m = (l + h)/2;
+        if (set->states[m] > s)
+            h = m;
+        else if (set->states[m] < s)
+            l = m + 1;
+        else
+            return m;
+    }
+    return l;
+}
+
 static int state_set_push(struct state_set *set, struct state *s) {
     if (set->size == set->used)
         state_set_expand(set);
-    set->states[set->used++] = s;
-    return set->used - 1;
+    if (set->sorted) {
+        int p = state_set_pos(set, s);
+        if (set->size == set->used)
+            state_set_expand(set);
+        while (p < set->used && set->states[p] <= s)
+            p += 1;
+        if (p < set->used) {
+            memmove(set->states + p + 1, set->states + p,
+                    sizeof(*set->states) * (set->used - p));
+            if (set->data != NULL)
+                memmove(set->data + p + 1, set->data + p,
+                        sizeof(*set->data) * (set->used - p));
+        }
+        set->states[p] = s;
+        set->used += 1;
+        return p;
+    } else {
+        set->states[set->used++] = s;
+        return set->used - 1;
+    }
 }
 
-static int state_set_push_data(struct state_set *set, struct state *s, 
+static int state_set_push_data(struct state_set *set, struct state *s,
                                void *d) {
     int i = state_set_push(set, s);
     set->data[i] = d;
@@ -385,26 +440,61 @@ static int state_set_push_data(struct state_set *set, struct state *s,
 
 static int state_set_index(const struct state_set *set,
                            const struct state *s) {
-    for (int i=0; i < set->used; i++) {
-        if (set->states[i] == s)
-            return i;
+    if (set->sorted) {
+        int p = state_set_pos(set, s);
+        return (p < set->used && set->states[p] == s) ? p : -1;
+    } else {
+        for (int i=0; i < set->used; i++) {
+            if (set->states[i] == s)
+                return i;
+        }
     }
     return -1;
 }
 
 static void state_set_remove(struct state_set *set,
                              const struct state *s) {
-    int i = state_set_index(set, s);
-    if (i >= 0) {
-        set->states[i] = set->states[--set->used];
-    }
+   if (set->sorted) {
+       int p = state_set_index(set, s);
+       if (p == -1) return;
+       memmove(set->states + p, set->states + p + 1,
+               sizeof(*set->states) * (set->used - p - 1));
+       if (set->data != NULL)
+           memmove(set->data + p, set->data + p + 1,
+                   sizeof(*set->data) * (set->used - p - 1));
+   } else {
+       int p = state_set_index(set, s);
+       if (p >= 0) {
+           set->states[p] = set->states[--set->used];
+       }
+   }
 }
 
-/* Only add S if it's not in SET yet. Return 1 if S was added */
+/* Only add S if it's not in SET yet. Return 1 if S was added, 0 if it was
+   already in the set. */
 static int state_set_add(struct state_set *set, struct state *s) {
-    if (state_set_index(set, s) >= 0)
+    if (set->sorted) {
+        int p = state_set_pos(set, s);
+        if (p < set->used && set->states[p] == s)
             return 0;
-    state_set_push(set, s);
+        if (set->size == set->used)
+            state_set_expand(set);
+        while (p < set->used && set->states[p] <= s)
+            p += 1;
+        if (p < set->used) {
+            memmove(set->states + p + 1, set->states + p,
+                    sizeof(*set->states) * (set->used - p));
+            if (set->data != NULL)
+                memmove(set->data + p + 1, set->data + p,
+                        sizeof(*set->data) * (set->used - p));
+        }
+        set->states[p] = s;
+        set->used += 1;
+    } else {
+        if (state_set_index(set, s) >= 0)
+            return 0;
+        state_set_push(set, s);
+    }
     return 1;
 }
 
@@ -430,6 +520,23 @@ static void *state_set_find_data(struct state_set *set, struct state *s) {
         return NULL;
 }
 
+static int state_set_equal(const struct state_set *set1,
+                           const struct state_set *set2) {
+    if (set1->used != set2->used)
+        return 0;
+    if (set1->sorted && set2->sorted) {
+        for (int i = 0; i < set1->used; i++)
+            if (set1->states[i] != set2->states[i])
+                return 0;
+        return 1;
+    } else {
+        for (int i=0; i < set1->used; i++)
+            if (state_set_index(set2, set1->states[i]) == -1)
+                return 0;
+        return 1;
+    }
+}
+
 #if 0
 static void state_set_compact(struct state_set *set) {
     while (set->used > 0 && set->states[set->used] == NULL)
@@ -453,10 +560,8 @@ static void state_set_compact(struct state_set *set) {
 static struct state_set *state_pair_push(struct state_set *set,
                                          struct state *fst,
                                          struct state *snd) {
-    if (set == NULL) {
-        set = state_set_init();
-        state_set_init_data(set);
-    }
+    if (set == NULL)
+        set = state_set_init(-1, S_DATA);
     int i = state_set_push(set, fst);
     set->data[i] = snd;
 
@@ -475,9 +580,7 @@ static int state_pair_find(struct state_set *set, struct state *fst,
 }
 
 static struct state_set *state_triple_init(void) {
-    struct state_set *set = state_set_init();
-    state_set_init_data(set);
-    return set;
+    return state_set_init(-1, S_SORTED|S_DATA);
 }
 
 /* Store triples of states (S1, S2, S3) as nested state_sets. The set
@@ -491,8 +594,7 @@ static void state_triple_push(struct state_set *triples,
     int i1 = state_set_index(triples, s1);
     if (i1 == -1) {
         i1 = state_set_push(triples, s1);
-        triples->data[i1] = state_set_init();
-        state_set_init_data(triples->data[i1]);
+        triples->data[i1] = state_set_init(-1, S_SORTED|S_DATA);
     }
     struct state_set *set2 = triples->data[i1];
     int i2 = state_set_index(set2, s2);
@@ -548,7 +650,7 @@ static void state_triple_free(struct state_set *triples) {
  */
 
 static void mark_reachable(struct fa *fa) {
-    struct state_set *worklist = state_set_init();
+    struct state_set *worklist = state_set_init(-1, S_NONE);
 
     list_for_each(s, fa->initial) {
         s->reachable = 0;
@@ -572,7 +674,7 @@ static void mark_reachable(struct fa *fa) {
    REACHABLE flag set appropriately.
  */
 static struct state_set *fa_states(struct fa *fa) {
-    struct state_set *visited = state_set_init();
+    struct state_set *visited = state_set_init(-1, S_NONE);
 
     mark_reachable(fa);
     list_for_each(s, fa->initial) {
@@ -586,7 +688,7 @@ static struct state_set *fa_states(struct fa *fa) {
    their REACHABLE flag set appropriately.
  */
 static struct state_set *fa_accept_states(struct fa *fa) {
-    struct state_set *accept = state_set_init();
+    struct state_set *accept = state_set_init(-1, S_NONE);
 
     mark_reachable(fa);
     list_for_each(s, fa->initial) {
@@ -718,9 +820,10 @@ static int state_set_hash_contains(state_set_hash *smap,
  * return the set found in SMAP
  */
 static struct state_set *state_set_hash_uniq(state_set_hash *smap,
-                                         struct state_set *set) {
-    struct state_set *orig_set;
-    g_hash_table_lookup_extended(smap, set, (gpointer*) &orig_set, NULL);
+                                             struct state_set *set) {
+    gpointer o;
+    g_hash_table_lookup_extended(smap, set, &o, NULL);
+    struct state_set *orig_set = o;
     if (orig_set != set) {
         state_set_free(set);
     }
@@ -761,13 +864,7 @@ static gboolean set_equal(gconstpointer key1, gconstpointer key2) {
     const struct state_set *set1 = key1;
     const struct state_set *set2 = key2;
 
-    if (set1->used != set2->used)
-        return FALSE;
-
-    for (int i=0; i < set1->used; i++)
-        if (state_set_index(set2, set1->states[i]) == -1)
-            return FALSE;
-    return TRUE;
+    return state_set_equal(set1, set2) ? TRUE : FALSE;
 }
 
 static void set_destroy(gpointer key) {
@@ -969,7 +1066,7 @@ static void determinize(struct fa *fa, struct state_set *ini) {
 
     points = start_points(fa, &npoints);
     if (make_ini) {
-        ini = state_set_init();
+        ini = state_set_init(-1, S_NONE);
         state_set_push(ini, fa->initial);
     }
 
@@ -984,7 +1081,7 @@ static void determinize(struct fa *fa, struct state_set *ini) {
             r->accept |= sset->states[q]->accept;
         }
         for (int n=0; n < npoints; n++) {
-            struct state_set *pset = state_set_init();
+            struct state_set *pset = state_set_init(-1, S_SORTED);
             for(int q=0 ; q < sset->used; q++) {
                 list_for_each(t, sset->states[q]->transitions) {
                     if (t->min <= points[n] && points[n] <= t->max) {
@@ -1125,7 +1222,7 @@ static void minimize_hopcroft(struct fa *fa) {
     totalize(fa);
 
     /* make arrays for numbered states and effective alphabet */
-    struct state_set *states = state_set_init();
+    struct state_set *states = state_set_init(-1, S_NONE);
     list_for_each(s, fa->initial) {
         state_set_push(states, s);
     }
@@ -1161,7 +1258,7 @@ static void minimize_hopcroft(struct fa *fa) {
     size_t npending = 0, spending = 0;
     bitset_t pending2 = bitset_init(nstates * nsigma);
 
-    struct state_set *split = state_set_init();
+    struct state_set *split = state_set_init(-1, S_NONE);
     bitset_t split2 = bitset_init(nstates);
 
     int *refine;
@@ -1172,10 +1269,10 @@ static void minimize_hopcroft(struct fa *fa) {
     CALLOC(splitblock, nstates);
 
     for (int q = 0; q < nstates; q++) {
-        splitblock[q] = state_set_init();
-        partition[q] = state_set_init();
+        splitblock[q] = state_set_init(-1, S_NONE);
+        partition[q] = state_set_init(-1, S_NONE);
         for (int x = 0; x < nsigma; x++) {
-            reverse[INDEX(q, x)] = state_set_init();
+            reverse[INDEX(q, x)] = state_set_init(-1, S_NONE);
             active[INDEX(q, x)] = state_list_init();
         }
     }
@@ -1308,7 +1405,7 @@ static void minimize_hopcroft(struct fa *fa) {
     }
 
     /* make a new state for each equivalence class, set initial state */
-    struct state_set *newstates = state_set_create(k);
+    struct state_set *newstates = state_set_init(k, S_NONE);
     int *nsnum;
     CALLOC(nsnum, k);
     int *nsind;
@@ -1474,9 +1571,7 @@ int fa_is_basic(struct fa *fa, unsigned int basic) {
 
 static struct fa *fa_clone(struct fa *fa) {
     struct fa *result = NULL;
-    struct state_set *set = state_set_init();
-
-    state_set_init_data(set);
+    struct state_set *set = state_set_init(-1, S_DATA);
 
     CALLOC(result, 1);
     result->deterministic = fa->deterministic;
@@ -1731,7 +1826,9 @@ int fa_contains(fa_t fa1, fa_t fa2) {
     visited  = state_pair_push(NULL, fa1->initial, fa2->initial);
     while (worklist->used) {
         struct state *p1, *p2;
-        p1 = state_set_pop_data(worklist, (void **) &p2);
+        void *v2;
+        p1 = state_set_pop_data(worklist, &v2);
+        p2 = v2;
 
         if (p1->accept && !p2->accept)
             goto done;
@@ -1904,12 +2001,11 @@ char *fa_example(fa_t fa) {
     sort_transition_intervals(fa);
 
     /* Map from state to string */
-    struct state_set *path = state_set_init();
-    state_set_init_data(path);
+    struct state_set *path = state_set_init(-1, S_DATA);
     state_set_push_data(path, fa->initial,(void*) strdup(""));
 
     /* List of states still to visit */
-    struct state_set *worklist = state_set_init();
+    struct state_set *worklist = state_set_init(-1, S_NONE);
     state_set_push(worklist, fa->initial);
 
     while (worklist->used) {
