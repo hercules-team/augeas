@@ -55,17 +55,20 @@ struct fa {
    states so that we can free the list when we need to free the state */
 struct state {
     struct state *next;
-    struct trans *transitions;
     unsigned int  accept : 1;
     unsigned int  live : 1;
     unsigned int  reachable : 1;
+    /* Array of transitions. The TUSED first entries are used, the array
+       has allocated room for TSIZE */
+    size_t        tused;
+    size_t        tsize;
+    struct trans *trans;
 };
 
 /* A transition. If the input has a character in the inclusive 
  * range [MIN, MAX], move to TO
  */
 struct trans {
-    struct trans *next;
     struct state *to;
     char          min;
     char          max;
@@ -253,9 +256,15 @@ static void print_re(struct re *re) {
  * Memory management
  */
 
+static void free_trans(struct state *s) {
+    free(s->trans);
+    s->trans = NULL;
+    s->tused = s->tsize = 0;
+}
+
 static void gut(struct fa *fa) {
     list_for_each(s, fa->initial) {
-        list_free(s->transitions);
+        free_trans(s);
     }
     list_free(fa->initial);
     fa->initial = NULL;
@@ -285,38 +294,33 @@ static struct state *add_state(struct fa *fa, int accept) {
     return s;
 }
 
-static struct trans *make_trans(struct state *to,
-                                char min, char max) {
-    struct trans *trans;
-    CALLOC(trans, 1);
-    trans->min = min;
-    trans->max = max;
-    trans->to = to;
-    return trans;
-}
+#define for_each_trans(t, s)                                            \
+    for (struct trans *t = (s)->trans;                                  \
+         (t - (s)->trans) < (s)->tused;                                 \
+         t++)
 
-static struct trans *add_new_trans(struct state *from,
-                                   struct state *to,
-                                   char min, char max) {
-    struct trans *trans = make_trans(to, min, max);
-    list_cons(from->transitions, trans);
-    return trans;
-}
-
-static struct trans *clone_trans(struct trans *t) {
-    struct trans *c;
-    CALLOC(c, 1);
-    c->to = t->to;
-    c->min = t->min;
-    c->max = t->max;
-    return c;
+static void add_new_trans(struct state *from, struct state *to,
+                          char min, char max) {
+    if (from->tused == from->tsize) {
+        if (from->tsize == 0)
+            from->tsize = state_set_initial_size;
+        else if (from->tsize > state_set_max_stride)
+            from->tsize += state_set_max_stride;
+        else
+            from->tsize *= 2;
+        REALLOC(from->trans, from->tsize);
+    }
+    from->trans[from->tused].to  = to;
+    from->trans[from->tused].min = min;
+    from->trans[from->tused].max = max;
+    from->tused += 1;
 }
 
 static void add_epsilon_trans(struct state *from,
                               struct state *to) {
     from->accept |= to->accept;
-    list_for_each(t, to->transitions) {
-        list_cons(from->transitions, clone_trans(t));
+    for_each_trans(t, to) {
+        add_new_trans(from, t->to, t->min, t->max);
     }
 }
 
@@ -651,7 +655,7 @@ static void mark_reachable(struct fa *fa) {
     for (struct state *s = fa->initial;
          s != NULL;
          s = state_set_pop(worklist)) {
-        list_for_each(t, s->transitions) {
+        for_each_trans(t, s) {
             if (! t->to->reachable) {
                 t->to->reachable = 1;
                 state_set_push(worklist, t->to);
@@ -705,7 +709,7 @@ static void mark_live(struct fa *fa) {
         changed = 0;
         list_for_each(s, fa->initial) {
             if (! s->live && s->reachable) {
-                list_for_each(t, s->transitions) {
+                for_each_trans(t, s) {
                     if (t->to->live) {
                         s->live = 1;
                         changed = 1;
@@ -734,21 +738,25 @@ static struct state_set *fa_reverse(struct fa *fa) {
     state_set_init_data(all);
 
     /* Reverse all transitions */
+    int *tused;
+    CALLOC(tused, all->used);
     for (int i=0; i < all->used; i++) {
-        all->data[i] = all->states[i]->transitions;
-        all->states[i]->transitions = NULL;
+        all->data[i] = all->states[i]->trans;
+        tused[i] = all->states[i]->tused;
+        all->states[i]->trans = NULL;
+        all->states[i]->tsize = 0;
+        all->states[i]->tused = 0;
     }
     for (int i=0; i < all->used; i++) {
         struct state *s = all->states[i];
         struct trans *t = all->data[i];
         s->accept = 0;
-        while (t != NULL) {
-            struct trans *cur = t;
-            t = cur->next;
-            list_cons(cur->to->transitions, cur);
-            cur->to = s;
+        for (int j=0; j < tused[i]; j++) {
+            add_new_trans(t[j].to, s, t[j].min, t[j].max);
         }
+        free(t);
     }
+    free(tused);
 
     /* Make new initial and final states */
     struct state *s = add_state(fa, 0);
@@ -777,7 +785,7 @@ static char* start_points(struct fa *fa, int *npoints) {
         if (! s->reachable)
             continue;
         pointset[CHAR_IND(CHAR_MIN)] = 1;
-        list_for_each(t, s->transitions) {
+        for_each_trans(t, s) {
             pointset[CHAR_IND(t->min)] = 1;
             if (t->max < CHAR_MAX)
                 pointset[CHAR_IND(t->max+1)] = 1;
@@ -886,8 +894,8 @@ static struct state_set *state_set_list_pop(struct state_set_list **list) {
 
 /* Compare transitions lexicographically by (to, min, reverse max) */
 static int trans_to_cmp(const void *v1, const void *v2) {
-    const struct trans *t1 = * (struct trans **) v1;
-    const struct trans *t2 = * (struct trans **) v2;
+    const struct trans *t1 = v1;
+    const struct trans *t2 = v2;
 
     if (t1->to != t2->to) {
         return (t1->to < t2->to) ? -1 : 1;
@@ -903,8 +911,8 @@ static int trans_to_cmp(const void *v1, const void *v2) {
 
 /* Compare transitions lexicographically by (min, reverse max, to) */
 static int trans_intv_cmp(const void *v1, const void *v2) {
-    const struct trans *t1 = * (struct trans **) v1;
-    const struct trans *t2 = * (struct trans **) v2;
+    const struct trans *t1 = v1;
+    const struct trans *t2 = v2;
 
     if (t1->min < t2->min)
         return -1;
@@ -925,40 +933,34 @@ static int trans_intv_cmp(const void *v1, const void *v2) {
  * with the same destination.
  */
 static void reduce(struct fa *fa) {
-    struct trans **trans = NULL;
-
     list_for_each(s, fa->initial) {
-        int ntrans, i;
-        struct trans *t;
-
-        if (s->transitions == NULL)
+        if (s->tused == 0)
             continue;
 
-        list_length(ntrans, s->transitions);
-        REALLOC(trans, ntrans);
-
-        for (i=0, t = s->transitions; i < ntrans; i++, t = t->next)
-            trans[i] = t;
-
-        qsort(trans, ntrans, sizeof(*trans), trans_to_cmp);
-        t = trans[0];
-        t->next = NULL;
-        s->transitions = t;
-        for (i=1; i < ntrans; i++) {
-            if (t->to == trans[i]->to && (trans[i]->min <= t->max + 1)) {
-                /* Same target and overlapping/adjacent intervals */
-                if (trans[i]->max > t->max)
-                    t->max = trans[i]->max;
-                free(trans[i]);
-                trans[i] = NULL;
+        qsort(s->trans, s->tused, sizeof(*s->trans), trans_to_cmp);
+        int i=0, j=1;
+        struct trans *t = s->trans;
+        while (j < s->tused) {
+            if (t[i].to == t[j].to && t[j].min <= t[i].max + 1) {
+                if (t[j].max > t[i].max)
+                    t[i].max = t[j].max;
+                j += 1;
             } else {
-                t->next = trans[i];
-                t = trans[i];
-                t->next = NULL;
+                i += 1;
+                if (i < j)
+                    memmove(s->trans + i, s->trans + j,
+                            sizeof(*s->trans) * (s->tused - j));
+                s->tused -= j - i;
+                j = i + 1;
             }
         }
+        s->tused = i+1;
+        /* Shrink if we use less than half the allocated size */
+        if (s->tsize > state_set_initial_size && 2*s->tused < s->tsize) {
+            s->tsize = s->tused;
+            REALLOC(s->trans, s->tsize);
+        }
     }
-    free(trans);
 }
 
 /*
@@ -977,25 +979,24 @@ static struct fa *collect(struct fa *fa) {
          * epsilon automaton
          */
         list_for_each(s, fa->initial) {
-            list_free(s->transitions);
+            free_trans(s);
         }
         list_free(fa->initial->next);
-        fa->initial->transitions = NULL;
         fa->deterministic = 1;
     } else {
         list_for_each(s, fa->initial) {
             if (! s->live) {
-                list_free(s->transitions);
-                s->transitions = NULL;
+                free_trans(s);
             } else {
-                struct trans *t = s->transitions;
-                while (t != NULL) {
-                    struct trans *n = t->next;
-                    if (! t->to->live) {
-                        list_remove(t, s->transitions);
-                        free(t);
+                int i=0;
+                while (i < s->tused) {
+                    if (! s->trans[i].to->live) {
+                        s->tused -= 1;
+                        memmove(s->trans + i, s->trans + s->tused,
+                                sizeof(*s->trans));
+                    } else {
+                        i += 1;
                     }
-                    t = n;
                 }
             }
         }
@@ -1004,8 +1005,7 @@ static struct fa *collect(struct fa *fa) {
            if (! s->next->live) {
                struct state *del = s->next;
                s->next = del->next;
-               /* Free the state del */
-               list_free(del->transitions);
+               free_trans(del);
                free(del);
            } else {
                s = s->next;
@@ -1059,7 +1059,7 @@ static void determinize(struct fa *fa, struct state_set *ini) {
         for (int n=0; n < npoints; n++) {
             struct state_set *pset = state_set_init(-1, S_SORTED);
             for(int q=0 ; q < sset->used; q++) {
-                list_for_each(t, sset->states[q]->transitions) {
+                for_each_trans(t, sset->states[q]) {
                     if (t->min <= points[n] && points[n] <= t->max) {
                         state_set_add(pset, t->to);
                     }
@@ -1092,7 +1092,7 @@ static void determinize(struct fa *fa, struct state_set *ini) {
  */
 
 static struct state *step(struct state *s, char c) {
-    list_for_each(t, s->transitions) {
+    for_each_trans(t, s) {
         if (t->min <= c && c <= t->max)
             return t->to;
     }
@@ -1189,10 +1189,10 @@ static void minimize_hopcroft(struct fa *fa) {
     determinize(fa, NULL);
 
     /* Total automaton, nothing to do */
-    if (fa->initial->transitions->next == NULL
-        && fa->initial->transitions->to == fa->initial
-        && fa->initial->transitions->min == CHAR_MIN
-        && fa->initial->transitions->max == CHAR_MAX)
+    if (fa->initial->tused == 1
+        && fa->initial->trans[0].to == fa->initial
+        && fa->initial->trans[0].min == CHAR_MIN
+        && fa->initial->trans[0].max == CHAR_MAX)
         return;
 
     totalize(fa);
@@ -1405,7 +1405,7 @@ static void minimize_hopcroft(struct fa *fa) {
     for (int n = 0; n < k; n++) {
         struct state *s = newstates->states[n];
         s->accept = states->states[nsnum[n]]->accept;
-        list_for_each(t, states->states[nsnum[n]]->transitions) {
+        for_each_trans(t, states->states[nsnum[n]]) {
             int toind = state_set_index(states, t->to);
             struct state *nto = newstates->states[nsind[toind]];
             add_new_trans(s, nto, t->min, t->max);
@@ -1530,16 +1530,14 @@ struct fa *fa_make_basic(unsigned int basic) {
 
 int fa_is_basic(struct fa *fa, unsigned int basic) {
     if (basic == FA_EMPTY) {
-        return ! fa->initial->accept && fa->initial->transitions == NULL;
+        return ! fa->initial->accept && fa->initial->tused == 0;
     } else if (basic == FA_EPSILON) {
-        return fa->initial->accept && fa->initial->transitions == NULL;
+        return fa->initial->accept && fa->initial->tused == 0;
     } else if (basic == FA_TOTAL) {
-        struct trans *t = fa->initial->transitions;
-        if (! fa->initial->accept || t == NULL)
+        if (! fa->initial->accept || fa->initial->tused != 1)
             return 0;
-        if (t->next != NULL)
-            return 0;
-        return t->to == fa->initial && 
+        struct trans *t = fa->initial->trans;
+        return t->to == fa->initial &&
             t->min == CHAR_MIN && t->max == CHAR_MAX;
     }
     return 0;
@@ -1562,12 +1560,11 @@ static struct fa *fa_clone(struct fa *fa) {
     for (int i=0; i < set->used; i++) {
         struct state *s = set->states[i];
         struct state *sc = set->data[i];
-        list_for_each(t, s->transitions) {
+        for_each_trans(t, s) {
             int to = state_set_index(set, t->to);
             assert(to >= 0);
             struct state *toc = set->data[to];
-            struct trans *tc = make_trans(toc, t->min, t->max);
-            list_cons(sc->transitions, tc);
+            add_new_trans(sc, toc, t->min, t->max);
         }
     }
     state_set_free(set);
@@ -1727,30 +1724,9 @@ struct fa *fa_iter(struct fa *fa, int min, int max) {
 }
 
 static void sort_transition_intervals(struct fa *fa) {
-    struct trans **trans = NULL;
-
     list_for_each(s, fa->initial) {
-        int ntrans, i;
-        struct trans *t;
-
-        if (s->transitions == NULL)
-            continue;
-
-        list_length(ntrans, s->transitions);
-
-        REALLOC(trans, ntrans);
-
-        for (i=0, t = s->transitions; i < ntrans; i++, t = t->next)
-            trans[i] = t;
-
-        qsort(trans, ntrans, sizeof(*trans), trans_intv_cmp);
-
-        s->transitions = trans[0];
-        for (i=1; i < ntrans; i++)
-            trans[i-1]->next = trans[i];
-        trans[ntrans-1]->next = NULL;
+        qsort(s->trans, s->tused, sizeof(*s->trans), trans_intv_cmp);
     }
-    free(trans);
 }
 
 struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
@@ -1773,14 +1749,15 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
         struct state *p1 = state_set_pop(worklist);
         s->accept = p1->accept && p2->accept;
 
-        struct trans *t1 = p1->transitions;
-        struct trans *t2 = p2->transitions;
-        while (t1 != NULL && t2 != NULL) {
-            for (; t1 != NULL && t1->max < t2->min; t1 = t1->next);
-            if (t1 == NULL)
+        int n1 = 0, n2 = 0;
+        while (n1 < p1->tused && n2 < p2->tused) {
+            struct trans *t1 = p1->trans + n1;
+            struct trans *t2 = p2->trans + n2;
+            for (; n1 < p1->tused && t1->max < t2->min; n1++, t1++);
+            if (n1 == p1->tused)
                 break;
-            for (; t2 != NULL && t2->max < t1->min; t2 = t2->next);
-            if (t2 == NULL)
+            for (; n2 < p2->tused && t2->max < t1->min; n2++, t2++);
+            if (n2 == p2->tused)
                 break;
             if (t2->min <= t1->max) {
                 struct state *r = state_triple_thd(newstates, t1->to, t2->to);
@@ -1796,9 +1773,9 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
                 add_new_trans(s, r, min, max);
             }
             if (t1->max < t2->max)
-                t1 = t1->next;
+                n1++;
             else
-                t2 = t2->next;
+                n2++;
         }
     }
     state_set_free(worklist);
@@ -1829,23 +1806,22 @@ int fa_contains(fa_t fa1, fa_t fa2) {
         if (p1->accept && !p2->accept)
             goto done;
 
-        struct trans *t2 = p2->transitions;
-        list_for_each(t1, p1->transitions) {
+        struct trans *t2 = p2->trans;
+        for_each_trans(t1, p1) {
             /* Find transition(s) from P2 whose interval contains that of
                T1. There can be several transitions from P2 that together
                cover T1's interval */
             int min = t1->min, max = t1->max;
-            while (min <= max && t2 != NULL && t2->min <= max) {
-                while (t2 != NULL && (min > t2->max))
-                    t2 = t2->next;
-                if (t2 == NULL)
+            while (min <= max && t2 - p2->trans < p2->tused && t2->min <= max) {
+                for (;t2 - p2->trans < p2->tused && (min > t2->max); t2++);
+                if (t2 - p2->trans >= p2->tused)
                     goto done;
                 min = (t2->max == CHAR_MAX) ? max+1 : t2->max + 1;
                 if (state_pair_find(visited, t1->to, t2->to) == -1) {
                     worklist = state_pair_push(worklist, t1->to, t2->to);
                     visited  = state_pair_push(visited, t1->to, t2->to);
                 }
-                t2 = t2->next;
+                t2 += 1;
             }
             if (min <= max)
                 goto done;
@@ -1868,11 +1844,13 @@ static void totalize(struct fa *fa) {
     add_new_trans(crash, crash, CHAR_MIN, CHAR_MAX);
     list_for_each(s, fa->initial) {
         int next = CHAR_MIN;
-        list_for_each(t, s->transitions) {
-            if (t->min > next)
-                add_new_trans(s, crash, next, t->min - 1);
-            if (t->max + 1 > next)
-                next = t->max + 1;
+        int tused = s->tused;
+        for (int i=0; i < tused; i++) {
+            char min = s->trans[i].min, max = s->trans[i].max;
+            if (min > next)
+                add_new_trans(s, crash, next, min - 1);
+            if (max + 1 > next)
+                next = max + 1;
         }
         if (next <= CHAR_MAX)
             add_new_trans(s, crash, next, CHAR_MAX);
@@ -2007,7 +1985,7 @@ char *fa_example(fa_t fa) {
     while (worklist->used) {
         struct state *s = state_set_pop(worklist);
         char *ps = state_set_find_data(path, s);
-        list_for_each(t, s->transitions) {
+        for_each_trans(t, s) {
             char c = pick_char(t);
             int toind = state_set_index(path, t->to);
             if (toind == -1) {
@@ -2060,8 +2038,11 @@ static struct fa *expand_alphabet(struct fa *fa, int add_marker,
             continue;
 
         struct state *r = add_state(fa, 0);
-        r->transitions = p->transitions;
-        p->transitions = NULL;
+        r->trans = p->trans;
+        r->tused = p->tused;
+        r->tsize = p->tsize;
+        p->trans = NULL;
+        p->tused = p->tsize = 0;
         add_new_trans(p, r, X, X);
         if (add_marker) {
             struct state *q = add_state(fa, 0);
@@ -2508,7 +2489,7 @@ void fa_dot(FILE *out, struct fa *fa) {
             fa->initial);
 
     list_for_each(s, fa->initial) {
-        list_for_each(t, s->transitions) {
+        for_each_trans(t, s) {
             fprintf(out, "\"%p\" -> \"%p\" [ label = \"", s, t->to);
             print_char(out, t->min);
             if (t->min != t->max) {
