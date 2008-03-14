@@ -316,8 +316,7 @@ static struct tree *split_tree_int(struct match *match,
         }
         return result;
     case SUBTREE:
-        // FIXME: Check that trees->label
-        if (state->leaf)
+        if (state->leaf || ! handle_match(match, state->tree))
             return NULL;
         CALLOC(result, 1);
         if (state->tree == NULL)
