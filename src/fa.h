@@ -167,11 +167,6 @@ char *fa_example(fa_t fa);
  * Neither the language of FA1 or of FA2 may contain words with the
  * characters '\001' and '\002', as they are used during construction of
  * the ambiguous word.
- *
- * This is a rather expensive operation, involving three intersections and
- * construction of a number of intermediate automata; you may want to check
- * if the languages for FA1 and FA2 overlap at all with FA_OVERLAP before
- * calling this routine.
  */
 char *fa_ambig_example(fa_t fa1, fa_t fa2, char **pv, char **v);
 
