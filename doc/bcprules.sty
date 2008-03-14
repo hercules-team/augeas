@@ -1,0 +1,317 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%                                                                   %%%
+%%%        BCP's latex tricks for typesetting inference rules         %%%
+%%%                                                                   %%%
+%%%                         Version 1.4                               %%%
+%%%                                                                   %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%
+%%% This package supports two styles of rules: named and unnamed.  
+%%% Unnamed rules are centered on the page.  Named rules are set so
+%%% that a series of them will have the rules centered in a vertical
+%%% column taking most of the page and the labels right-justified.
+%%% When a label would overlap its rule, the label is moved down.  
+%%% 
+%%% The width of the column of labels can be varied using a command of the
+%%% form 
+%%% 
+%%%   \typicallabel{T-Arrow-I}
+%%% 
+%%% The default setting is:
+%%%
+%%%   \typicallabel{}
+%%%
+%%% In other words, the column of rules takes up the whole width of
+%%% the page: rules are centered on the centerline of the text, and no
+%%% extra space is left for the labels.
+%%%
+%%% The minimum distance between a rule and its label can be altered by a
+%%% command of the form
+%%% 
+%%%   \setlength{\labelminsep}{0.5em}
+%%% 
+%%% (This is the default value.)
+%%% 
+%%% Examples:
+%%% 
+%%% An axiom with a label in the right-hand column:
+%%% 
+%%%   \infax[The name]{x - x = 0}
+%%% 
+%%% An inference rule with a name:
+%%% 
+%%%   \infrule[Another name]
+%%%     {\mbox{false}}
+%%%     {x - x = 1}
+%%% 
+%%% A rule with multiple premises on the same line:
+%%% 
+%%%   \infrule[Wide premises]
+%%%     {x > 0  \andalso y > 0  \andalso z > 0}
+%%%     {x + y + z > 0}
+%%%   
+%%% A rule with several lines of premises:
+%%% 
+%%%   \infrule[Long premises]
+%%%     {x > 0  \\ y > 0  \\ z > 0}
+%%%     {x + y + z > 0}
+%%%   
+%%% A rule without a name, but centered on the same vertical line as rules
+%%% and axioms with names:
+%%% 
+%%%   \infrule[]
+%%%     {x - y = 5}
+%%%     {y - x = -5}
+%%% 
+%%% A rule without a name, centered on the page:
+%%% 
+%%%   \infrule
+%%%     {x = 5}
+%%%     {x - 1 > 0}
+%%%
+%%%
+%%% Setting the flag \indexrulestrue causes an index entry to be 
+%%% generated for each named rule.
+%%%
+%%% Setting the flag \suppressrulenamestrue causes the names of all rules
+%%% to be left blank
+%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%% A switch controlling the sizes of rule names
+\newif\ifsmallrulenames  \smallrulenamesfalse
+\newcommand{\smallrulenames}{\smallrulenamestrue}
+\newcommand{\choosernsize}[2]{\ifsmallrulenames#1\else#2\fi}
+
+%%% The font for setting inference rule names
+\newcommand{\rn}[1]{%
+  \ifmmode 
+    \mathchoice
+      {\mbox{\choosernsize{\small}{}\sc #1}}
+      {\mbox{\choosernsize{\small}{}\sc #1}}
+      {\mbox{\choosernsize{\tiny}{\small}\sc #1}}
+      {\mbox{\choosernsize{\tiny}{\tiny}\uppercase{#1}}}%
+  \else
+    \hbox{\choosernsize{\small}{}\sc #1}%
+  \fi}
+
+\newif\ifsuppressrulenames  
+\suppressrulenamesfalse
+
+\newif\ifbcprulessavespace
+\bcprulessavespacefalse
+
+\newif\ifbcprulestwocol
+\bcprulestwocolfalse
+
+%%% How to display a rule's name to the right of the rule
+\newcommand{\inflabel}[1]{%
+  \ifsuppressrulenames\else
+    \def\lab{#1}%
+    \ifx\lab\empty
+      \relax
+    \else
+      (\rn{\lab})%
+  \fi\fi
+}
+
+%%% Amount of extra space to add before and after a rule
+\newlength{\afterruleskip}
+\setlength{\afterruleskip}{\bigskipamount}
+
+%%% Minimum distance between a rule and its label
+\newlength{\labelminsep}
+\setlength{\labelminsep}{0.2em}
+
+%%% The ``typical'' width of the column of labels: labels are allowed
+%%% to project further to the left if necessary; the rules will be
+%%% centered in a column of width \linewidth - \labelcolwidth
+\newdimen\labelcolwidth
+
+%%% Set the label column width by providing a ``typical'' label --
+%%% i.e. a label of average length
+\newcommand{\typicallabel}[1]{
+  \setbox \@tempboxa \hbox{\inflabel{#1}}
+  \labelcolwidth \wd\@tempboxa
+  }
+\typicallabel{}
+
+%%% A flag controlling generation of index entries
+\newif  \ifindexrules   \indexrulesfalse
+
+%%% Allocate some temporary registers
+\newbox\@labelbox
+\newbox\rulebox
+\newdimen\ruledim
+\newdimen\labeldim
+
+%%% Put a rule and its label on the same line if this can be done
+%%% without overlapping them; otherwise, put the label on the next
+%%% line.  Put a small amount of vertical space above and below.
+\newcommand{\layoutruleverbose}[2]%
+  {\unvbox\voidb@x  % to make sure we're in vmode
+   \addvspace{\afterruleskip}%
+
+   \setbox \rulebox \hbox{$\displaystyle #2$}
+
+   \setbox \@labelbox \hbox{#1}
+   \ruledim \wd \rulebox
+   \labeldim \wd \@labelbox
+
+   %%% Will it all fit comfortably on one line?
+   \@tempdima \linewidth
+   \advance \@tempdima -\labelcolwidth
+   \ifdim \@tempdima < \ruledim
+     \@tempdima \ruledim
+   \else
+     \advance \@tempdima by \ruledim
+     \divide \@tempdima by 2
+   \fi
+   \advance \@tempdima by \labelminsep
+   \advance \@tempdima by \labeldim
+   \ifdim \@tempdima < \linewidth
+     % Yes, everything fits on a line
+     \@tempdima \linewidth
+     \advance \@tempdima -\labelcolwidth
+     \hbox to \linewidth{%
+       \hbox to \@tempdima{%
+         \hfil
+         \box\rulebox
+         \hfil}%
+       \hfill
+       \hbox to 0pt{\hss\box\@labelbox}%
+     }%
+   \else
+   %
+   % Will it all fit _UN_comfortably on one line?
+   \@tempdima 0pt
+   \advance \@tempdima by \ruledim
+   \advance \@tempdima by \labelminsep
+   \advance \@tempdima by \labeldim
+   \ifdim \@tempdima < \linewidth
+     % Yes, everything fits, but not centered
+     \hbox to \linewidth{%
+         \hfil
+         \box\rulebox
+         \hskip \labelminsep
+         \box\@labelbox}%
+   \else
+   %
+   % Better put the label on the next line
+     \@tempdima \linewidth
+     \advance \@tempdima -\labelcolwidth
+     \hbox to \linewidth{%
+       \hbox to \@tempdima{%
+          \hfil
+          \box\rulebox
+          \hfil}
+       \hfil}%
+     \penalty10000
+     \hbox to \linewidth{%
+         \hfil
+         \box\@labelbox}%
+   \fi\fi
+
+   \addvspace{\afterruleskip}%
+   \@doendpe  % use LaTeX's trick of inhibiting paragraph indent for
+              % text immediately following a rule
+   \ignorespaces
+   }
+
+% Simplified form for when there is no label
+\newcommand{\layoutrulenolabel}[1]%
+  {\unvbox\voidb@x  % to make sure we're in vmode
+   \addvspace{\afterruleskip}%
+
+   \setbox \rulebox \hbox{$\displaystyle #1$}
+
+   \@tempdima \linewidth
+   \advance \@tempdima -\labelcolwidth
+   \hbox to \@tempdima{%
+      \hfil 
+      \box\rulebox
+      \hfil}%
+
+   \addvspace{\afterruleskip}%
+   \@doendpe  % use LaTeX's trick of inhibiting paragraph indent for
+              % text immediately following a rule
+   \ignorespaces
+   }
+
+% Alternate form, for when we need to save space
+%\newcommand{\layoutruleterse}[2]%
+%  {\noindent
+%   \parbox[b]{0.5\linewidth}{\layoutruleverbose{#1}{#2}}}
+
+\newcommand{\layoutruleterse}[2]%
+  {\setbox \rulebox \hbox{$\displaystyle #2$}
+   \noindent
+   \parbox[b]{0.5\linewidth}
+    {\vspace*{0.4em} \hfill\box\rulebox\hfill~}
+   }
+
+%%% Select low-level layout driver based on \bcprulessavespace flag
+\newcommand{\layoutrule}[2]{%
+      \ifbcprulessavespace 
+        \layoutruleterse{#1}{#2}
+      \else
+        \layoutruleverbose{#1}{#2}
+      \fi
+}
+
+%%% Highlighting for new versions of rules
+\newif\ifnewrule   \newrulefalse
+\newcommand{\setrulebody}[1]{%
+  \ifnewrule
+     \@ifundefined{HIGHLIGHT}{%
+        \fbox{\ensuremath{#1}}%
+     }{%
+        \HIGHLIGHT{#1}}%
+  \else
+     #1
+  \fi
+}
+
+%%% Commands for setting axioms and rules
+\newcommand{\typesetax}[1]{%
+   \setrulebody{%
+     \begin{array}{@{}c@{}}#1\end{array}}}
+\newcommand{\typesetrule}[2]{%
+   \setrulebody{%
+      \frac{\begin{array}{@{}c@{}}#1\end{array}}%
+           {\begin{array}{@{}c@{}}#2\end{array}}}}
+
+%%% Indexing
+\newcommand{\ruleindexprefix}[1]{%
+  \gdef\ruleindexprefixstring{#1}}
+\ruleindexprefix{}
+\newcommand{\maybeindex}[1]{%
+  \ifindexrules
+    \index{\ruleindexprefixstring#1@\rn{#1}}%
+  \fi}
+
+%%% Setting axioms, with or without names
+\def\infax{\@ifnextchar[{\@infaxy}{\@infaxx}}
+\def\@infaxx#1{%
+  \ifbcprulessavespace $\typesetax{#1}$%
+  \else \layoutrulenolabel{\typesetax{#1}}%
+  \fi\newrulefalse\ignorespaces}
+\def\@infaxy[#1]{\maybeindex{#1}\@infax{\inflabel{#1}}}
+\def\@infax#1#2{\layoutrule{#1}{\typesetax{#2}}\ignorespaces}
+
+%%% Setting rules, with or without names
+\def\infrule{\@ifnextchar[{\@infruley}{\@infrulex}}
+\def\@infrulex#1#2{%
+  \ifbcprulessavespace $\typesetrule{#1}{#2}$%
+  \else \layoutrulenolabel{\typesetrule{#1}{#2}}%
+  \fi\newrulefalse\ignorespaces}
+\def\@infruley[#1]{\maybeindex{#1}\@infrule{\inflabel{#1}}}
+\def\@infrule#1#2#3{\layoutrule{#1}{\typesetrule{#2}{#3}}\ignorespaces}
+
+%%% Miscellaneous helpful definitions
+\newcommand{\andalso}{\quad\quad}
+
+% Abbreviations
+\newcommand{\infabbrev}[2]{\infax{#1 \quad\eqdef\quad #2}}
+
