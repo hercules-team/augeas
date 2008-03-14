@@ -45,8 +45,10 @@ struct augp_spec_data {
     struct grammar  *grammars;
     struct map      *maps;
     struct aug_file *files;
+    unsigned int     gf_flags;
 };
 
+// FIXME: This whole business is unsavory, and not threadsafe
 struct augp_spec_data augp_spec_data = {
     .grammars = NULL,
     .maps = NULL
@@ -87,8 +89,7 @@ static int ftw_load_cb(const char *fpath,
 
     /* FIXME: fpath may be a socket, fifo etc. but ignore that for now */
 
-    printf("Load %s\n", fpath);
-    r = load_spec(fpath, stderr, 0, &grammars, &maps);
+    r = load_spec(fpath, stderr, augp_spec_data.gf_flags, &grammars, &maps);
     if (r == -1) {
         /* FIXME: Record the error somewhere, but keep going */
         return 0;
@@ -103,9 +104,13 @@ static int ftw_load_cb(const char *fpath,
  * are read from AUGEAS_LENS_DIR and from any directory mentioned on the
  * env var AUGEAS_LENS_LIB
  */
-int augp_spec_init(ATTRIBUTE_UNUSED struct augeas *aug) {
+int augp_spec_init(struct augeas *aug) {
     int r;
     char *env, *path, *p;
+
+    augp_spec_data.gf_flags = GF_NONE;
+    if (aug->flags & AUG_TYPE_CHECK)
+        augp_spec_data.gf_flags |= GF_LENS_TYPE_CHECK;
 
     r = ftw(AUGEAS_LENS_DIR, ftw_load_cb, MAX_DESCRIPTORS);
     if (r == -1) {
@@ -261,7 +266,7 @@ static int parse_file(struct augeas *aug,
     free((void *) node);
     node = NULL;
 
-    tree = parse(file, text, stdout, 0);
+    tree = parse(file, text, stdout, GF_NONE);
     if (tree == NULL) {
         err_status = "parse_failed";
         goto error;

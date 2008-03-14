@@ -34,10 +34,12 @@ enum aug_flags {
     AUG_NONE = 0,
     AUG_SAVE_BACKUP  = (1 << 0),  /* Keep the original file with a
                                      .augsave extension */
-    AUG_SAVE_NEWFILE = (1 << 1)   /* Save changes into a file with
+    AUG_SAVE_NEWFILE = (1 << 1),  /* Save changes into a file with
                                      extension .augnew, and do not
                                      overwrite the original file. Takes
                                      precedence over AUG_SAVE_BACKUP */
+    AUG_TYPE_CHECK   = (2 << 1)   /* Typecheck lenses; since it can be very
+                                     expensive it is not done by default */
 };
 
 /* Initialize the library.

@@ -353,6 +353,8 @@ static void usage(void) {
     fprintf(stderr, "Run '%s help' to get a list of possible commands.\n",
             progname);
     fprintf(stderr, "\nOptions:\n\n");
+    fprintf(stderr, "  -c            Typecheck lenses. This can be very slow, and is therefore not\n"
+                    "                done by default, but is highly recommended during development.\n");
     fprintf(stderr, "  -b            When files are changed, preserve the originals in a file\n"
                     "                with extension '.augsave'\n");
     fprintf(stderr, "  -n            Save changes in files with extension '.augnew', do not modify\n"
@@ -364,8 +366,11 @@ static void usage(void) {
 static void parse_opts(int argc, char **argv) {
     int opt;
 
-    while ((opt = getopt(argc, argv, "hnbr:")) != -1) {
+    while ((opt = getopt(argc, argv, "hnbcr:")) != -1) {
         switch(opt) {
+        case 'c':
+            flags |= AUG_TYPE_CHECK;
+            break;
         case 'b':
             flags |= AUG_SAVE_BACKUP;
             break;
