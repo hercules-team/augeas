@@ -1792,7 +1792,9 @@ int fa_contains(fa_t fa1, fa_t fa2) {
     struct state_set *worklist;  /* List of pairs of states */
     struct state_set *visited;   /* List of pairs of states */
 
-    determinize(fa1, NULL);
+    if (fa1 == fa2)
+        return 1;
+
     determinize(fa2, NULL);
     sort_transition_intervals(fa1);
     sort_transition_intervals(fa2);
@@ -1808,24 +1810,29 @@ int fa_contains(fa_t fa1, fa_t fa2) {
         if (p1->accept && !p2->accept)
             goto done;
 
+        struct trans *t1 = p1->trans;
         struct trans *t2 = p2->trans;
-        for_each_trans(t1, p1) {
-            /* Find transition(s) from P2 whose interval contains that of
-               T1. There can be several transitions from P2 that together
-               cover T1's interval */
-            int min = t1->min, max = t1->max;
-            while (min <= max && t2 - p2->trans < p2->tused && t2->min <= max) {
-                for (;t2 - p2->trans < p2->tused && (min > t2->max); t2++);
-                if (t2 - p2->trans >= p2->tused)
+        for(int n1 = 0, b2 = 0; n1 < p1->tused; n1++) {
+            while (b2 < p2->tused && t2[b2].max < t1[n1].min)
+                b2++;
+            int min1 = t1[n1].min, max1 = t1[n1].max;
+            for (int n2 = b2; 
+                 n2 < p2->tused && t1[n1].max >= t2[n2].min; 
+                 n2++) {
+                if (t2[n2].min > min1)
                     goto done;
-                min = (t2->max == CHAR_MAX) ? max+1 : t2->max + 1;
-                if (state_pair_find(visited, t1->to, t2->to) == -1) {
-                    worklist = state_pair_push(worklist, t1->to, t2->to);
-                    visited  = state_pair_push(visited, t1->to, t2->to);
+                if (t2[n2].max < CHAR_MAX)
+                    min1 = t2[n2].max + 1;
+                else {
+                    min1 = CHAR_MAX;
+                    max1 = CHAR_MIN;
                 }
-                t2 += 1;
+                if (state_pair_find(visited, t1[n1].to, t2[n2].to) == -1) {
+                    worklist = state_pair_push(worklist, t1[n1].to, t2[n2].to);
+                    visited  = state_pair_push(visited, t1[n1].to, t2[n2].to);
+                }
             }
-            if (min <= max)
+            if (min1 <= max1)
                 goto done;
         }
     }
