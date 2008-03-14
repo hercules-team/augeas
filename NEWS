@@ -1,3 +1,14 @@
+0.0.7 - 2008-03-14
+  - Typecheck lenses; in particular, discover and complain about ambiguous
+    concatenation and iteration
+  - Enable typechecking for augparse by default, and for augtool via the
+    '-c' flag
+  - Fixed lens definitions in spec/ to pass typechecking. They contained
+    quite a few stupid and subtle problems
+  - Greatly improved libfa performance to make typechecking reasonably
+    fast. Typechecking cmfm.aug went from more than two hours to under two
+    seconds
+
 0.0.6 - 2008-03-05
   - Make it possible to overwrite files when saving with and without
     backups 
