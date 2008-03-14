@@ -344,7 +344,7 @@ static void dump_rules(FILE *out, struct rule *r, int flags) {
 }
 
 static void dump_grammar(struct grammar *grammar, FILE *out, int flags) {
-    if (flags & ~ GF_DOT) {
+    if (flags & (GF_HANDLES|GF_RE|GF_PRETTY)) {
         fprintf(out, "abbrevs:\n");
         dump_abbrevs(out, grammar->abbrevs);
         fprintf(out, "rules:\n");
