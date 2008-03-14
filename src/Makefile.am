@@ -14,7 +14,7 @@ include_HEADERS = augeas.h fa.h
 
 libaugeas_la_SOURCES = augeas.h augeas.c config.h \
 	internal.h internal.c \
-	prov_spec.c spec-parse.y ast.h ast.c parser.c put.c list.h
+	prov_spec.c spec-parse.y ast.h ast.c get.c put.c list.h
 libaugeas_la_LDFLAGS = -Wl,--version-script=$(srcdir)/augeas_sym.version
 libaugeas_la_LIBADD = liblexer.la libfa.la
 
