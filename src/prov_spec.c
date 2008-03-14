@@ -266,7 +266,7 @@ static int parse_file(struct augeas *aug,
     free((void *) node);
     node = NULL;
 
-    tree = parse(file, text, stdout, GF_NONE);
+    tree = get(file, text, stdout, GF_NONE);
     if (tree == NULL) {
         err_status = "parse_failed";
         goto error;

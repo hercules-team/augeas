@@ -189,7 +189,7 @@ int main(int argc, char **argv) {
             return EXIT_FAILURE;
 
         struct aug_file *file = aug_make_file(argv[optind+1], "", grammar);
-        struct tree *tree = parse(file, text, stdout, parse_flags);
+        struct tree *tree = get(file, text, stdout, parse_flags);
         if (tree != NULL && print_skels) {
             print_skel(file->skel);
             printf("\n");

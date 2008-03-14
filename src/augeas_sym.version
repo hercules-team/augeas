@@ -13,7 +13,7 @@
       aug_print;
       /* These symbols are not part of the public API; they are used by
          augtool/augparse. They need to be cleaned up some */
-      parse;
+      get;
       load_spec;
       print_chars;
       pathstrip;

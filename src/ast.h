@@ -102,8 +102,8 @@ enum parse_debug_flags {
  * LOG is used to print logging messages. FLAGS controls what is printed
  * and should be a set of flags from enum parse_flags
  */
-struct tree *parse(struct aug_file *file, const char *text, 
-                   FILE *log, int flags);
+struct tree *get(struct aug_file *file, const char *text,
+                 FILE *log, int flags);
 
 enum grammar_debug_flags {
     GF_NONE = 0,

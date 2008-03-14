@@ -25,7 +25,7 @@
 #include "list.h"
 #include "internal.h"
 
-#define parse_error(state, format, args ...) \
+#define get_error(state, format, args ...) \
     grammar_error((state)->filename, (state)->lineno, format, ## args)
 
 struct seq {
@@ -184,7 +184,7 @@ static struct dict *dict_append(struct dict *d1, struct dict *d2) {
     return d1;
 }
 
-static void parse_expected_error(struct state *state, struct match *exp) {
+static void get_expected_error(struct state *state, struct match *exp) {
     char *word, *p;
     const char *name = NULL;
 
@@ -220,7 +220,7 @@ static void parse_expected_error(struct state *state, struct match *exp) {
             break;
         }
     }
-    parse_error(state, "expected %s at '%s'", name, word);
+    get_error(state, "expected %s at '%s'", name, word);
 }
 
 /* 
@@ -266,7 +266,7 @@ static int lex(struct literal *literal, struct state *state) {
     }
 
     if (count == -2) {
-        parse_error(state, "Match failed for /%s/ at %d", literal->pattern,
+        get_error(state, "Match failed for /%s/ at %d", literal->pattern,
                     offset);
         return -1;
 
@@ -363,9 +363,9 @@ static void seq_init(struct match *arg, struct state *state) {
     seq->value = 0;
 }
 
-static void parse_match(struct match *match, struct state *state);
+static void get_match(struct match *match, struct state *state);
 
-static void parse_literal(struct match *match, struct state *state) {
+static void get_literal(struct match *match, struct state *state) {
     const char *token = NULL;
 
     token = match_literal(match, state);
@@ -382,22 +382,22 @@ static int applies(struct match *match, struct state *state) {
     return lex(match->re, state) > 0;
 }
 
-static void parse_alternative(struct match *match, struct state *state) {
+static void get_alternative(struct match *match, struct state *state) {
     state->applied = 0;
 
     list_for_each(p, match->matches) {
         if (applies(p, state)) {
-            parse_match(p, state);
+            get_match(p, state);
             state->applied = 1;
             break;
         }
     }
     if (! state->applied) {
-        parse_expected_error(state, match);
+        get_expected_error(state, match);
     }
 }
 
-static void parse_sequence(struct match *match, struct state *state) {
+static void get_sequence(struct match *match, struct state *state) {
     struct tree *tree = NULL;
     struct skel *skel = make_skel(SEQUENCE, match, state->lineno);
     struct dict *dict = NULL;
@@ -407,9 +407,9 @@ static void parse_sequence(struct match *match, struct state *state) {
         state->tree = NULL;
         state->skel = NULL;
         state->dict = NULL;
-        parse_match(p, state);
+        get_match(p, state);
         if (! state->applied) {
-            parse_expected_error(state, p);
+            get_expected_error(state, p);
             break;
         }
         list_append(tree, state->tree);
@@ -421,11 +421,11 @@ static void parse_sequence(struct match *match, struct state *state) {
     state->dict = dict;
 }
 
-static void parse_rule_ref(struct match *match, struct state *state) {
-    parse_match(match->rule->matches, state);
+static void get_rule_ref(struct match *match, struct state *state) {
+    get_match(match->rule->matches, state);
 }
 
-static void parse_quant_star(struct match *match, struct state *state) {
+static void get_quant_star(struct match *match, struct state *state) {
     struct tree *tree = NULL;
     struct skel *skel = make_skel(QUANT_STAR, match, state->lineno);
     struct dict *dict = NULL;
@@ -433,7 +433,7 @@ static void parse_quant_star(struct match *match, struct state *state) {
         state->tree = NULL;
         state->skel = NULL;
         state->dict = NULL;
-        parse_match(match->matches, state);
+        get_match(match->matches, state);
         list_append(tree, state->tree);
         list_append(skel->skels, state->skel);
         dict = dict_append(dict, state->dict);
@@ -444,7 +444,7 @@ static void parse_quant_star(struct match *match, struct state *state) {
     state->dict = dict;
 }
 
-static void parse_quant_plus(struct match *match, struct state *state) {
+static void get_quant_plus(struct match *match, struct state *state) {
     if (! applies(match, state)) {
         grammar_error(state->filename, state->lineno,
                       "match did not apply");
@@ -456,7 +456,7 @@ static void parse_quant_plus(struct match *match, struct state *state) {
             state->tree = NULL;
             state->skel = NULL;
             state->dict = NULL;
-            parse_match(match->matches, state);
+            get_match(match->matches, state);
             list_append(tree, state->tree);
             list_append(skel->skels, state->skel);
             dict = dict_append(dict, state->dict);
@@ -468,27 +468,27 @@ static void parse_quant_plus(struct match *match, struct state *state) {
     }
 }
 
-static void parse_quant_maybe(struct match *match, struct state *state) {
+static void get_quant_maybe(struct match *match, struct state *state) {
     struct skel *skel = make_skel(QUANT_MAYBE, match, state->lineno);
     if (applies(match->matches, state)) {
         state->tree = NULL;
         state->skel = NULL;
         state->dict = NULL;
-        parse_match(match->matches, state);
+        get_match(match->matches, state);
         list_append(skel->skels, state->skel);
     }
     state->skel = skel;
     state->applied = 1;
 }
 
-static void parse_subtree(struct match *match, struct state *state) {
+static void get_subtree(struct match *match, struct state *state) {
     const char *key = state->key;
 
     state->key = NULL;
     state->tree = NULL;
     state->skel = NULL;
     state->dict = NULL;
-    parse_match(match->matches, state);
+    get_match(match->matches, state);
     if (state->tree == NULL) {
         state->tree = make_tree(NULL, NULL);
     }
@@ -504,7 +504,7 @@ static void parse_subtree(struct match *match, struct state *state) {
     state->skel = make_skel(SUBTREE, match, state->lineno);
 }
 
-static void parse_action(struct match *match, struct state *state) {
+static void get_action(struct match *match, struct state *state) {
     struct action *action = match->action;
 
     state->skel = make_skel(LITERAL, match, state->lineno);
@@ -531,37 +531,37 @@ static void parse_action(struct match *match, struct state *state) {
     }
 }
 
-static void parse_match(struct match *match, struct state *state) {
+static void get_match(struct match *match, struct state *state) {
     switch(match->type) {
     case LITERAL:
-        parse_literal(match, state);
+        get_literal(match, state);
         break;
     case ALTERNATIVE:
-        parse_alternative(match, state);
+        get_alternative(match, state);
         break;
     case SEQUENCE:
-        parse_sequence(match, state);
+        get_sequence(match, state);
         break;
     case RULE_REF:
-        parse_rule_ref(match, state);
+        get_rule_ref(match, state);
         break;
     case ABBREV_REF:
-        parse_literal(match, state);
+        get_literal(match, state);
         break;
     case QUANT_PLUS:
-        parse_quant_plus(match, state);
+        get_quant_plus(match, state);
         break;
     case QUANT_STAR:
-        parse_quant_star(match, state);
+        get_quant_star(match, state);
         break;
     case QUANT_MAYBE:
-        parse_quant_maybe(match, state);
+        get_quant_maybe(match, state);
         break;
     case ACTION:
-        parse_action(match, state);
+        get_action(match, state);
         break;
     case SUBTREE:
-        parse_subtree(match, state);
+        get_subtree(match, state);
         break;
     default:
         internal_error(state->filename, state->lineno,
@@ -570,8 +570,8 @@ static void parse_match(struct match *match, struct state *state) {
     }
 }
 
-struct tree *parse(struct aug_file *file, const char *text,
-                   FILE *log, int flags) {
+struct tree *get(struct aug_file *file, const char *text,
+                 FILE *log, int flags) {
     struct state state;
 
     state.filename = file->name;
@@ -591,9 +591,9 @@ struct tree *parse(struct aug_file *file, const char *text,
         state.flags = PF_NONE;
         state.log = stdout;
     }
-    parse_match(file->grammar->rules->matches, &state);
+    get_match(file->grammar->rules->matches, &state);
     if (! state.applied || *state.pos != '\0') {
-        parse_error(&state, "parse did not read entire file");
+        get_error(&state, "parse did not read entire file");
         return NULL;
     }
     file->skel = state.skel;
