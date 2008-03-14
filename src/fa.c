@@ -1877,6 +1877,11 @@ struct fa *fa_complement(struct fa *fa) {
 }
 
 struct fa *fa_minus(struct fa *fa1, struct fa *fa2) {
+    if (fa_is_basic(fa1, FA_EMPTY) || fa1 == fa2)
+        return fa_make_empty();
+    if (fa_is_basic(fa2, FA_EMPTY))
+        return fa_clone(fa1);
+
     struct fa *cfa2 = fa_complement(fa2);
     struct fa *result = fa_intersect(fa1, cfa2);
 
