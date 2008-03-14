@@ -147,7 +147,8 @@ enum state_set_init_flags {
 struct state_set {
     size_t            size;
     size_t            used;
-    int               sorted : 1;
+    unsigned int      sorted : 1;
+    unsigned int      with_data : 1;
     struct state    **states;
     void            **data;
 };
@@ -341,6 +342,7 @@ static void fa_merge(struct fa *fa1, struct fa *fa2) {
  * Operations on STATE_SET
  */
 static void state_set_init_data(struct state_set *set) {
+    set->with_data = 1;
     if (set->data == NULL)
         CALLOC(set->data, set->size);
 }
@@ -357,14 +359,15 @@ static void state_set_init_data(struct state_set *set) {
 */
 static struct state_set *state_set_init(int size, int flags) {
     struct state_set *set;
-    if (size < 0)
-        size = array_initial_size;
     CALLOC(set, 1);
-    set->size = size;
     set->sorted = (flags & S_SORTED) ? 1 : 0;
-    CALLOC(set->states, set->size);
-    if (flags & S_DATA)
-        state_set_init_data(set);
+    set->with_data = (flags & S_DATA) ? 1 : 0;
+    if (size > 0) {
+        set->size = size;
+        CALLOC(set->states, set->size);
+        if (set->with_data)
+            state_set_init_data(set);
+    }
     return set;
 }
 
@@ -377,13 +380,15 @@ static void state_set_free(struct state_set *set) {
 }
 
 static void state_set_expand(struct state_set *set) {
-    size_t new = 2 * set->size;
-    if (new > array_max_expansion)
-        new = set->size + array_max_expansion;
-    set->size = new;
-    set->states = realloc(set->states, new * sizeof(* set->states));
-    if (set->data != NULL)
-        set->data = realloc(set->data, new * sizeof(* set->data));
+    if (set->size == 0)
+        set->size = array_initial_size;
+    else if (set->size > array_max_expansion)
+        set->size += array_max_expansion;
+    else
+        set->size *= 2;
+    set->states = realloc(set->states, set->size * sizeof(* set->states));
+    if (set->with_data)
+        set->data = realloc(set->data, set->size * sizeof(* set->data));
 }
 
 /* Return the index where S belongs in SET->STATES to keep it sorted.  S
