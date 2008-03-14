@@ -11,10 +11,10 @@ grammar pam
 
   token SEP /[ \t]+/ = '\t'
   token EOL '\n'
-  token CONTROL /(\[[^\]]*\]|[^ \t]+)/ = 'none'
+  token CONTROL /(\[[^]#\n]*\]|[^ \t]+)/ = 'none'
   token COMMENT /[ \t]*(#.*)?\n/ = '# \n'
-  token WORD /[^ \t\n]+/ = ''
-  token OPTS /[^\n]+/ = ''
+  token WORD /[^# \t\n]+/ = ''
+  token OPTS /[^#\n]+/ = ''
 
   file: ( comment | record ) *
 

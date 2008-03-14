@@ -9,13 +9,17 @@ grammar yum
 
   token EOL /\n/ = '\n'
   token INDENT /[ \t]+/ = '\t'
-  token EQ /\s*=\s*/ =  '='
-  token COMMENT /[ \t]*((#|REM|rem).*)?\n/ = '# \n'
-  token SECNAME /[^]]+/ = ''
-  token KEY /[^ \t\n=]+/ = ''
-  token VALUE /[^\n]+/ = ''
+  token EQ /[ \t]*=[ \t]*/ =  '='
+  # We really need to allow comments starting with REM and rem but that
+  # leads to ambiguities with keys 'rem=' and 'REM=' The regular expression
+  # to do that cleanly is somewhat annoying to craft by hand; we'd need to
+  # define KEY as /[A-Za-z0-9]+/ - "REM" - "rem"
+  token COMMENT /[ \t]*(#.*)?\n/ = '# \n'
+  token SECNAME /[A-Za-z0-9]+/ = ''
+  token KEY /[A-Za-z0-9_-]+/ = ''
+  token VALUE /[^ \t][^\n]*/ = ''
 
-  file: ( comment | section ) *
+  file: (comment) * . (section) *
 
   comment: [ COMMENT ]
 
