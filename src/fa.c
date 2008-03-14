@@ -1730,12 +1730,16 @@ static void sort_transition_intervals(struct fa *fa) {
 }
 
 struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
+    if (fa1 == fa2)
+        return fa_clone(fa1);
+
+    if (fa_is_basic(fa1, FA_EMPTY) || fa_is_basic(fa2, FA_EMPTY))
+        return fa_make_empty();
+
     struct fa *fa = fa_make_empty();
     struct state_set *worklist = state_set_init(-1, S_NONE);
     state_triple_hash *newstates = state_triple_init();
 
-    determinize(fa1, NULL);
-    determinize(fa2, NULL);
     sort_transition_intervals(fa1);
     sort_transition_intervals(fa2);
 
@@ -1749,33 +1753,31 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
         struct state *p1 = state_set_pop(worklist);
         s->accept = p1->accept && p2->accept;
 
-        int n1 = 0, n2 = 0;
-        while (n1 < p1->tused && n2 < p2->tused) {
-            struct trans *t1 = p1->trans + n1;
-            struct trans *t2 = p2->trans + n2;
-            for (; n1 < p1->tused && t1->max < t2->min; n1++, t1++);
-            if (n1 == p1->tused)
-                break;
-            for (; n2 < p2->tused && t2->max < t1->min; n2++, t2++);
-            if (n2 == p2->tused)
-                break;
-            if (t2->min <= t1->max) {
-                struct state *r = state_triple_thd(newstates, t1->to, t2->to);
-                if (r == NULL) {
-                    r = add_state(fa, 0);
-                    state_set_push(worklist, t1->to);
-                    state_set_push(worklist, t2->to);
-                    state_set_push(worklist, r);
-                    state_triple_push(newstates, t1->to, t2->to, r);
+        struct trans *t1 = p1->trans;
+        struct trans *t2 = p2->trans;
+        for (int n1 = 0, b2 = 0; n1 < p1->tused; n1++) {
+            while (b2 < p2->tused && t2[b2].max < t1[n1].min)
+                b2++;
+            for (int n2 = b2; 
+                 n2 < p2->tused && t1[n1].max >= t2[n2].min;
+                 n2++) {
+                if (t2[n2].max >= t1[n1].min) {
+                    struct state *r = state_triple_thd(newstates, 
+                                                       t1[n1].to, t2[n2].to);
+                    if (r == NULL) {
+                        r = add_state(fa, 0);
+                        state_set_push(worklist, t1[n1].to);
+                        state_set_push(worklist, t2[n2].to);
+                        state_set_push(worklist, r);
+                        state_triple_push(newstates, t1[n1].to, t2[n2].to, r);
+                    }
+                    char min = t1[n1].min > t2[n2].min 
+                        ? t1[n1].min : t2[n2].min;
+                    char max = t1[n1].max < t2[n2].max 
+                        ? t1[n1].max : t2[n2].max;
+                    add_new_trans(s, r, min, max);
                 }
-                char min = t1->min > t2->min ? t1->min : t2->min;
-                char max = t1->max < t2->max ? t1->max : t2->max;
-                add_new_trans(s, r, min, max);
             }
-            if (t1->max < t2->max)
-                n1++;
-            else
-                n2++;
         }
     }
     state_set_free(worklist);
