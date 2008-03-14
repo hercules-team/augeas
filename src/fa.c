@@ -135,8 +135,8 @@ struct re {
 /* A map from a set of states to a state. */
 typedef GHashTable state_set_hash;
 
-static const int state_set_initial_size = 4;
-static const int state_set_max_stride   = 128;
+static const int array_initial_size = 4;
+static const int array_max_expansion   = 128;
 
 enum state_set_init_flags {
     S_NONE   = 0,
@@ -303,9 +303,9 @@ static void add_new_trans(struct state *from, struct state *to,
                           char min, char max) {
     if (from->tused == from->tsize) {
         if (from->tsize == 0)
-            from->tsize = state_set_initial_size;
-        else if (from->tsize > state_set_max_stride)
-            from->tsize += state_set_max_stride;
+            from->tsize = array_initial_size;
+        else if (from->tsize > array_max_expansion)
+            from->tsize += array_max_expansion;
         else
             from->tsize *= 2;
         REALLOC(from->trans, from->tsize);
@@ -346,7 +346,7 @@ static void state_set_init_data(struct state_set *set) {
 }
 
 /* Create a new STATE_SET with an initial size of SIZE. If SIZE is -1, use
-   the default size STATE_SET_INITIAL_SIZE. FLAGS is a bitmask indicating
+   the default size ARRAY_INITIAL_SIZE. FLAGS is a bitmask indicating
    some options:
    - S_SORTED: keep the states in the set sorted by their address, and use
      binary search for lookups. If it is not set, entries are kept in the
@@ -358,7 +358,7 @@ static void state_set_init_data(struct state_set *set) {
 static struct state_set *state_set_init(int size, int flags) {
     struct state_set *set;
     if (size < 0)
-        size = state_set_initial_size;
+        size = array_initial_size;
     CALLOC(set, 1);
     set->size = size;
     set->sorted = (flags & S_SORTED) ? 1 : 0;
@@ -378,8 +378,8 @@ static void state_set_free(struct state_set *set) {
 
 static void state_set_expand(struct state_set *set) {
     size_t new = 2 * set->size;
-    if (new > state_set_max_stride)
-        new = set->size + state_set_max_stride;
+    if (new > array_max_expansion)
+        new = set->size + array_max_expansion;
     set->size = new;
     set->states = realloc(set->states, new * sizeof(* set->states));
     if (set->data != NULL)
@@ -956,7 +956,7 @@ static void reduce(struct fa *fa) {
         }
         s->tused = i+1;
         /* Shrink if we use less than half the allocated size */
-        if (s->tsize > state_set_initial_size && 2*s->tused < s->tsize) {
+        if (s->tsize > array_initial_size && 2*s->tused < s->tsize) {
             s->tsize = s->tused;
             REALLOC(s->trans, s->tsize);
         }
