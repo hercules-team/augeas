@@ -220,8 +220,11 @@ struct tree {
     int          dirty;
 };
 
-struct tree *aug_tree_find(struct tree *tree, const char *path);
 int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub);
+
+int tree_rm(struct tree *tree, const char *path);
+int tree_set(struct tree *tree, const char *path, const char *value);
+struct tree *tree_find(struct tree *tree, const char *path);
 
 #endif
 

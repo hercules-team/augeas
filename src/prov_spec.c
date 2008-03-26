@@ -342,7 +342,7 @@ int augp_spec_save(struct augeas *aug) {
         // FIXME: If the whole tree went away, we should probably delete
         // the file; but we don't have a mechanism to create a file, so
         // we just leave an empty file there
-        struct tree *tree = aug_tree_find(aug->tree, file->node);
+        struct tree *tree = tree_find(aug->tree, file->node);
 
         if (tree == NULL || tree_dirty(tree)) {
             FILE *fp;

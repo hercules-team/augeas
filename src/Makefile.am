@@ -6,9 +6,9 @@ AM_YFLAGS=-d -p spec_
 EXTRA_DIST=try augeas_sym.version
 
 lib_LTLIBRARIES = libfa.la libaugeas.la
-noinst_LTLIBRARIES = liblexer.la
+noinst_LTLIBRARIES = liblexer.la libnewlang.la
 
-bin_PROGRAMS = augtool augparse
+bin_PROGRAMS = augtool augparse syntax
 
 include_HEADERS = augeas.h fa.h
 
@@ -29,3 +29,9 @@ augparse_LDADD = libaugeas.la
 
 libfa_la_SOURCES = fa.c fa.h
 libfa_la_LDFLAGS = @GLIB_LIBS@
+
+syntax_SOURCES = syntax.c syntax.h parser.y builtin.c lens.c lens.h
+syntax_LDADD = libnewlang.la libaugeas.la
+
+libnewlang_la_SOURCES = lexer.l
+libnewlang_la_CFLAGS = $(AM_CFLAGS) -Wno-error

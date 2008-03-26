@@ -1,0 +1,174 @@
+/*
+ * builtin.c: builtin primitives
+ *
+ * Copyright (C) 2007 Red Hat Inc.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+ *
+ * Author: David Lutterkort <dlutter@redhat.com>
+ */
+
+#include <stdio.h>
+#include <stdarg.h>
+
+#include "syntax.h"
+
+#define UNIMPL_BODY(name)                       \
+    {                                           \
+        FIXME(#name " called");                 \
+        abort();                                \
+    }
+
+/*
+ * Lenses
+ */
+
+/* V_REGEXP -> V_STRING -> V_LENS */
+static struct value *lns_del(struct info *info,
+                             struct value *rxp, struct value *dflt) {
+    assert(rxp->tag == V_REGEXP);
+    assert(dflt->tag == V_STRING);
+    struct value *v = make_value(V_LENS, ref(info));
+    v->lens = lns_make_prim(L_DEL, ref(info),
+                            ref(rxp->regexp), ref(rxp->string));
+    return v;
+}
+
+/* V_REGEXP -> V_LENS */
+static struct value *lns_store(struct info *info, struct value *rxp) {
+    assert(rxp->tag == V_REGEXP);
+    struct value *v = make_value(V_LENS, ref(info));
+    v->lens = lns_make_prim(L_STORE, ref(info), ref(rxp->regexp), NULL);
+    return v;
+}
+
+/* V_REGEXP -> V_LENS */
+static struct value *lns_key(struct info *info, struct value *rxp) {
+    assert(rxp->tag == V_REGEXP);
+    struct value *v = make_value(V_LENS, ref(info));
+    v->lens = lns_make_prim(L_KEY, ref(info), ref(rxp->regexp), NULL);
+    return v;
+}
+
+/* V_STRING -> V_LENS */
+static struct value *lns_label(struct info *info, struct value *str) {
+    assert(str->tag == V_STRING);
+    struct value *v = make_value(V_LENS, ref(info));
+    v->lens = lns_make_prim(L_LABEL, ref(info), NULL, ref(str->string));
+    return v;
+}
+
+/* V_STRING -> V_LENS */
+static struct value *lns_seq(struct info *info, struct value *str) {
+    assert(str->tag == V_STRING);
+    struct value *v = make_value(V_LENS, ref(info));
+    v->lens = lns_make_prim(L_SEQ, ref(info), NULL, ref(str->string));
+    return v;
+}
+
+/* V_STRING -> V_LENS */
+static struct value *lns_counter(struct info *info, struct value *str) {
+    assert(str->tag == V_STRING);
+    struct value *v = make_value(V_LENS, ref(info));
+    v->lens = lns_make_prim(L_COUNTER, ref(info), NULL, ref(str->string));
+    return v;
+}
+
+/* V_LENS -> V_STRING -> V_TREE */
+static struct value *lens_get(ATTRIBUTE_UNUSED struct info *info, struct value *l,
+                              struct value *str) {
+    assert(l->tag == V_LENS);
+    assert(str->tag == V_STRING);
+#if 0
+    struct tree *tree = lns_get(info, l->lens, str->string->str, NULL, 0);
+    if (tree != NULL) {
+        struct value *v = make_value(V_TREE, ref(info));
+        v->tree = tree;
+        return v;
+    } else {
+        print_info(stderr, info);
+        FIXME("Call to lns_get failed; need better error reporting");
+    }
+#endif
+    return NULL;
+}
+
+
+/* V_LENS -> V_TREE -> V_STRING -> V_STRING */
+static struct value *lens_put(ATTRIBUTE_UNUSED struct info *info, ATTRIBUTE_UNUSED struct value *l, ATTRIBUTE_UNUSED struct value *tree, ATTRIBUTE_UNUSED struct value *str)
+    UNIMPL_BODY(lens_put)
+
+/* V_STRING -> V_STRING -> V_TREE -> V_TREE */
+static struct value *tree_set_glue(ATTRIBUTE_UNUSED struct info *info, struct value *path,
+                                   struct value *val, struct value *tree) {
+    // FIXME: This only works if TREE is not referenced more than once;
+    // otherwise we'll have some pretty weird semantics, and would really
+    // need to copy TREE first
+    assert(path->tag == V_STRING);
+    assert(val->tag == V_STRING);
+    assert(tree->tag == V_TREE);
+#if 0
+    if (tree_set(tree->tree, path->string->str, val->string->str) == -1) {
+        print_info(stderr, info);
+        FIXME("Unexpected error from tree_set");
+    }
+#endif
+    return tree;
+}
+
+/* V_STRING -> V_TREE -> V_TREE */
+static struct value *tree_rm_glue(ATTRIBUTE_UNUSED struct info *info,
+                                  struct value *path,
+                                  struct value *tree) {
+    // FIXME: This only works if TREE is not referenced more than once;
+    // otherwise we'll have some pretty weird semantics, and would really
+    // need to copy TREE first
+    assert(path->tag == V_STRING);
+    assert(tree->tag == V_TREE);
+#if 0
+    tree_rm(tree->tree, path->string->str);
+#endif
+    return tree;
+}
+
+struct env *builtin_init(void) {
+    struct env *env = env_create("Builtin");
+    /* Primitive lenses */
+    define_native(env, "del",     2, lns_del, T_REGEXP, T_STRING, T_LENS);
+    define_native(env, "store",   1, lns_store, T_REGEXP, T_LENS);
+    define_native(env, "key",     1, lns_key, T_REGEXP, T_LENS);
+    define_native(env, "label",   1, lns_label, T_STRING, T_LENS);
+    define_native(env, "seq",     1, lns_seq, T_STRING, T_LENS);
+    define_native(env, "counter", 1, lns_counter, T_STRING, T_LENS);
+    /* Applying lenses (mostly for tests) */
+    define_native(env, "get",     2, lens_get, T_LENS, T_STRING, T_TREE);
+    define_native(env, "put",     3, lens_put, T_LENS, T_TREE, T_STRING,
+                                               T_STRING);
+    /* Tree manipulation used by the PUT tests */
+    define_native(env, "set", 3, tree_set_glue, T_STRING, T_STRING, T_TREE, T_TREE);
+    define_native(env, "rm", 2, tree_rm_glue, T_STRING, T_TREE, T_TREE);
+
+    return env;
+}
+
+
+/*
+ * Local variables:
+ *  indent-tabs-mode: nil
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  tab-width: 4
+ * End:
+ */

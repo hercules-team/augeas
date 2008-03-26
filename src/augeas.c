@@ -45,7 +45,7 @@ static const struct aug_provider *providers[] = {
     NULL
 };
 
-struct tree *aug_tree_find(struct tree *tree, const char *path) {
+struct tree *tree_find(struct tree *tree, const char *path) {
     if (path == NULL)
         return NULL;
     if (*path == SEP)
@@ -57,7 +57,7 @@ struct tree *aug_tree_find(struct tree *tree, const char *path) {
                 return tree;
             if (tree->children != NULL && pathprefix(tree->label, path)) {
                 struct tree *t =
-                    aug_tree_find(tree->children, pathstrip(path));
+                    tree_find(tree->children, pathstrip(path));
                 if (t != NULL)
                     return t;
             }
@@ -70,7 +70,7 @@ struct tree *aug_tree_find(struct tree *tree, const char *path) {
 /* Return a list of tree nodes matching PATH. The list contains the
  * matching nodes in the CHILDREN pointers and must be freed by the caller
  */
-static struct tree *aug_tree_find_all(struct tree *tree, const char *path) {
+static struct tree *tree_find_all(struct tree *tree, const char *path) {
     struct tree *result = NULL;
 
     if (path == NULL)
@@ -88,7 +88,7 @@ static struct tree *aug_tree_find_all(struct tree *tree, const char *path) {
             }
             if (tree->children != NULL && pathprefix(tree->label, path)) {
                 struct tree *cdr =
-                    aug_tree_find_all(tree->children, pathstrip(path));
+                    tree_find_all(tree->children, pathstrip(path));
                 list_append(result, cdr);
             }
         }
@@ -116,7 +116,7 @@ static struct tree *aug_tree_create(const char *path) {
     return tree;
 }
 
-static struct tree *aug_tree_find_or_create(const char *path,
+static struct tree *tree_find_or_create(const char *path,
                                             struct tree *tree) {
     struct tree *next = NULL;
 
@@ -137,7 +137,7 @@ static struct tree *aug_tree_find_or_create(const char *path,
                 next = next->children;
             return next;
         } else {
-            return aug_tree_find_or_create(pathstrip(path), next->children);
+            return tree_find_or_create(pathstrip(path), next->children);
         }
     } else {
         struct tree *new = aug_tree_create(path);
@@ -170,7 +170,7 @@ struct augeas *aug_init(const char *root, unsigned int flags) {
     result->root = strdup(root);
 
     result->tree->label = strdup(P_ROOT);
-    aug_tree_find_or_create(P_SYSTEM_CONFIG, result->tree);
+    tree_find_or_create(P_SYSTEM_CONFIG, result->tree);
 
     /* We report the root dir in AUGEAS_META_ROOT, but we only use the
        value we store internally, to avoid any problems with
@@ -205,19 +205,19 @@ struct augeas *aug_init(const char *root, unsigned int flags) {
 const char *aug_get(struct augeas *aug, const char *path) {
     struct tree *tree;
 
-    tree = aug_tree_find(aug->tree, path);
+    tree = tree_find(aug->tree, path);
     if (tree != NULL)
         return tree->value;
 
     return NULL;
 }
 
-int aug_set(struct augeas *aug, const char *path, const char *value) {
+int tree_set(struct tree *root, const char *path, const char *value) {
     struct tree *tree;
 
-    tree = aug_tree_find(aug->tree, path);
+    tree = tree_find(root, path);
     if (tree == NULL) {
-        tree = aug_tree_find_or_create(path, aug->tree);
+        tree = tree_find_or_create(path, root);
         if (tree == NULL)
             return -1;
     }
@@ -234,8 +234,12 @@ int aug_set(struct augeas *aug, const char *path, const char *value) {
     return 0;
 }
 
+int aug_set(struct augeas *aug, const char *path, const char *value) {
+    return tree_set(aug->tree, path, value);
+}
+
 int aug_exists(struct augeas *aug, const char *path) {
-    return (aug_tree_find(aug->tree, path) != NULL);
+    return (tree_find(aug->tree, path) != NULL);
 }
 
 int aug_insert(struct augeas *aug, const char *path, const char *sibling) {
@@ -258,7 +262,7 @@ int aug_insert(struct augeas *aug, const char *path, const char *sibling) {
         goto error;
     sibling = sibling + strlen(pathdup) + 1;
 
-    parent = aug_tree_find(aug->tree, pathdup);
+    parent = tree_find(aug->tree, pathdup);
     *label = SEP;
 
     if (parent == NULL)
@@ -315,7 +319,7 @@ char *pathsplit(const char *path) {
     return ppath;
 }
 
-int aug_rm(struct augeas *aug, const char *path) {
+int tree_rm(struct tree *tree, const char *path) {
     const char *ppath = pathsplit(path);
     const char *label = NULL;
 
@@ -324,7 +328,7 @@ int aug_rm(struct augeas *aug, const char *path) {
 
     label = ppath + strlen(ppath) + 1;
 
-    struct tree *parent = aug_tree_find(aug->tree, ppath);
+    struct tree *parent = tree_find(tree, ppath);
     if (parent == NULL || parent->children == NULL) {
         free((void *) ppath);
         return 0;
@@ -354,6 +358,10 @@ int aug_rm(struct augeas *aug, const char *path) {
     return cnt + 1;
 }
 
+int aug_rm(struct augeas *aug, const char *path) {
+    return tree_rm(aug->tree, path);
+}
+
 int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub) {
     struct tree *parent;
     int r;
@@ -361,7 +369,7 @@ int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub) {
     r = aug_rm(aug, path);
     if (r == -1)
         goto error;
-    parent = aug_tree_find_or_create(path, aug->tree);
+    parent = tree_find_or_create(path, aug->tree);
     if (parent == NULL)
         goto error;
 
@@ -382,7 +390,7 @@ int aug_ls(struct augeas *aug, const char *path, const char ***children) {
         tl->children->children = aug->tree;
         path = "";
     } else {
-        tl = aug_tree_find_all(aug->tree, path);
+        tl = tree_find_all(aug->tree, path);
     }
 
     list_for_each(l, tl) {
@@ -520,7 +528,7 @@ static void print_rec(FILE *out, struct tree *tree, char **path) {
 
 void aug_print(struct augeas *aug, FILE *out, const char *path) {
     char *pbuf = strdup(path);
-    struct tree *tree = aug_tree_find(aug->tree, path);
+    struct tree *tree = tree_find(aug->tree, path);
     while (tree != NULL) {
         if (tree->children != NULL) {
             print_rec(out, tree->children, &pbuf);
