@@ -253,6 +253,14 @@ int transform_applies(struct transform *transform, const char *path);
 int transform_save(struct augeas *aug, struct transform *transform,
                    const char *path, struct tree *tree);
 
+/* An exception in the interpreter */
+struct exn {
+    struct info *info;
+    const char  *message;
+    size_t       nlines;
+    char       **lines;
+};
+
 /*
  * Values in the interpreter
  */
@@ -264,8 +272,11 @@ enum value_tag {
     V_FILTER,
     V_TRANSFORM,
     V_NATIVE,
+    V_EXN,
     V_CLOS
 };
+
+#define EXN(v) ((v)->tag == V_EXN)
 
 struct value {
     unsigned int   ref;
@@ -279,6 +290,7 @@ struct value {
         struct tree    *tree;    /* V_TREE */
         struct filter  *filter;  /* V_FILTER */
         struct transform *transform; /* V_TRANSFORM */
+        struct exn     *exn;     /* V_EXN */
         struct {                 /* V_CLOS */
             struct term     *func;
             struct binding  *bindings;

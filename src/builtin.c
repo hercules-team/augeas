@@ -86,23 +86,52 @@ static struct value *lns_counter(struct info *info, struct value *str) {
     return v;
 }
 
+static struct exn *make_exn(struct info *info, const char *message) {
+    struct exn *exn;
+
+    CALLOC(exn, 1);
+    exn->info = ref(info);
+    exn->message = message;
+    return exn;
+}
+
+static void exn_add_lines(struct exn *exn, int nlines, ...) {
+    va_list ap;
+    REALLOC(exn->lines, exn->nlines + nlines);
+    va_start(ap, nlines);
+    for (int i=0; i < nlines; i++) {
+        char *line = va_arg(ap, char *);
+        exn->lines[exn->nlines + i] = line;
+    }
+    va_end(ap);
+    exn->nlines += nlines;
+}
+
 /* V_LENS -> V_STRING -> V_TREE */
 static struct value *lens_get(struct info *info, struct value *l,
                               struct value *str) {
     assert(l->tag == V_LENS);
     assert(str->tag == V_STRING);
+    struct lns_error *err;
+    struct value *v;
+    const char *text = str->string->str;
 
-    struct tree *tree = lns_get(info, l->lens, str->string->str, NULL, 0);
-    if (tree != NULL) {
-        struct value *v = make_value(V_TREE, ref(info));
+    struct tree *tree = lns_get(info, l->lens, text, NULL, 0, &err);
+    if (err == NULL) {
+        v = make_value(V_TREE, ref(info));
         v->tree = tree;
-        return v;
     } else {
-        print_info(stderr, info);
-        FIXME("Call to lns_get failed; need better error reporting");
+        struct exn *exn = make_exn(info, err->message);
+        char *here;
+        asprintf(&here, "Error encountered here (%d characters into string)",
+                 err->pos);
+        exn_add_lines(exn, 2, here, format_pos(text, err->pos));
+        err->message = NULL;
+        free_lns_error(err);
+        v = make_value(V_EXN, ref(info));
+        v->exn = exn;
     }
-
-    return NULL;
+    return v;
 }
 
 

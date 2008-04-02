@@ -108,17 +108,26 @@ struct dict {
     struct dict_entry *mark; /* Mark that will never change */
 };
 
+struct lns_error {
+    struct lens * lens;
+    unsigned int  pos;
+    char         *message;
+};
+
+void free_lns_error(struct lns_error *err);
+
 /* Parse text TEXT according to GRAMMAR. FILENAME indicates what file TEXT
  * was read from.
  * LOG is used to print logging messages. FLAGS controls what is printed
  * and should be a set of flags from enum parse_flags
  */
 struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
-                     FILE *log, int flags);
+                     FILE *log, int flags, struct lns_error **err);
 void lns_parse(struct lens *lens, const char *text, struct skel **skel,
                struct dict **dict);
 void lns_put(FILE *out, struct lens *lens, struct tree *tree, const char *text);
 
+void free_lens(struct lens *lens);
 #endif
 
 

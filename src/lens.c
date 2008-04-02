@@ -334,6 +334,14 @@ static struct regexp *lns_key_regexp(struct lens *l) {
     return NULL;
 }
 
+void free_lens(struct lens *lens) {
+    if (lens == NULL)
+        return;
+    //assert(lens->ref == 0);
+
+    FIXME("Free lens");
+}
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil

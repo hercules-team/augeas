@@ -184,6 +184,7 @@ static int load_file(struct augeas *aug, struct lens *lens,
     struct aug_file *file = NULL;
     struct tree *tree;
     char *path = NULL;
+    struct lns_error *err;
 
     pathjoin(&path, 2, AUGEAS_FILES_TREE, filename);
 
@@ -202,7 +203,7 @@ static int load_file(struct augeas *aug, struct lens *lens,
     make_ref(info->filename);
     info->filename->str = filename;
     info->first_line = 1;
-    tree = lns_get(info, lens, text, stdout, PF_NONE);
+    tree = lns_get(info, lens, text, stdout, PF_NONE, &err);
     if (tree == NULL) {
         err_status = "parse_failed";
         goto error;

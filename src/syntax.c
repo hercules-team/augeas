@@ -158,14 +158,6 @@ static void free_param(struct param *param) {
     free(param);
 }
 
-static void free_lens(struct lens *lens) {
-    if (lens == NULL)
-        return;
-    //assert(lens->ref == 0);
-
-    FIXME("Free lens");
-}
-
 static void free_term(struct term *term) {
     if (term == NULL)
         return;
@@ -277,6 +269,14 @@ static void free_value(struct value *v) {
     case V_CLOS:
         unref(v->func, term);
         unref(v->bindings, binding);
+        break;
+    case V_EXN:
+        unref(v->exn->info, info);
+        free((char *) v->exn->message);
+        for (int i=0; i < v->exn->nlines; i++) {
+            free(v->exn->lines[i]);
+        }
+        free(v->exn->lines);
         break;
     default:
         assert(0);
@@ -544,6 +544,13 @@ static void print_value(struct value *v) {
         print_info(stdout, v->func->info);
         printf(">");
         break;
+    case V_EXN:
+        print_info(stdout, v->exn->info);
+        printf(" %s\n", v->exn->message);
+        for (int i=0; i < v->exn->nlines; i++) {
+            printf("    %s\n", v->exn->lines[i]);
+        }
+        break;
     default:
         assert(0);
         break;
@@ -734,11 +741,12 @@ static struct type *value_type(struct value *v) {
     case V_FILTER:
         return make_base_type(T_FILTER);
     case V_TRANSFORM:
-        return make_base_type(V_TRANSFORM);
+        return make_base_type(T_TRANSFORM);
     case V_NATIVE:
         return ref(v->native->type);
     case V_CLOS:
         return ref(v->func->type);
+    case V_EXN:   /* Fail on exceptions */
     default:
         assert(0);
     }
@@ -752,11 +760,12 @@ static struct value *coerce(struct value *v, struct type *t) {
     struct type *vt = value_type(v);
     if (type_equal(vt, t)) {
         unref(vt, type);
-        return ref(v);
+        return v;
     }
     if (vt->tag == T_STRING && t->tag == T_REGEXP) {
         struct value *rxp = make_value(V_REGEXP, ref(v->info));
         rxp->regexp = make_regexp_literal(v->info, v->string->str);
+        unref(v, value);
         return rxp;
     }
     fatal_error(v->info, "Failed to coerce %s to %s",
@@ -1108,11 +1117,14 @@ static struct value *compile_exp(struct info *, struct term *, struct ctx *);
 
 static struct value *compile_union(struct term *exp, struct ctx *ctx) {
     struct value *v1 = compile_exp(exp->info, exp->left, ctx);
+    if (EXN(v1))
+        return v1;
     struct value *v2 = compile_exp(exp->info, exp->right, ctx);
-    if (v1 == NULL || v2 == NULL) {
-        // FIXME: unref v1/v2 ?? Figure out convention for compile
-        return NULL;
+    if (EXN(v2)) {
+        unref(v1, value);
+        return v2;
     }
+
     struct type *t = exp->type;
     struct info *info = exp->info;
     struct value *v;
@@ -1140,11 +1152,14 @@ static struct value *compile_union(struct term *exp, struct ctx *ctx) {
 
 static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
     struct value *v1 = compile_exp(exp->info, exp->left, ctx);
+    if (EXN(v1))
+        return v1;
     struct value *v2 = compile_exp(exp->info, exp->right, ctx);
-    if (v1 == NULL || v2 == NULL) {
-        // FIXME: unref v1/v2 ?? Figure out convention for compile
-        return NULL;
+    if (EXN(v2)) {
+        unref(v1, value);
+        return v2;
     }
+
     struct type *t = exp->type;
     struct info *info = exp->info;
     struct value *v;
@@ -1196,7 +1211,14 @@ static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
 
 static struct value *apply(struct term *app, struct ctx *ctx) {
     struct value *f = compile_exp(app->info, app->left, ctx);
+    if (EXN(f))
+        return f;
+
     struct value *arg = compile_exp(app->info, app->right, ctx);
+    if (EXN(arg)) {
+        unref(f, value);
+        return arg;
+    }
 
     assert(f->tag == V_CLOS);
     struct value *result;
@@ -1222,8 +1244,9 @@ static struct value *apply(struct term *app, struct ctx *ctx) {
 
 static struct value *compile_bracket(struct term *exp, struct ctx *ctx) {
     struct value *arg = compile_exp(exp->info, exp->brexp, ctx);
-    if (arg == NULL)
-        return NULL;
+    if (EXN(arg))
+        return arg;
+
     struct value *v = make_value(V_LENS, ref(exp->info));
     assert(arg->tag == V_LENS);
     v->lens = lns_make_subtree(ref(exp->info), ref(arg->lens));
@@ -1234,8 +1257,9 @@ static struct value *compile_rep(struct term *rep, struct ctx *ctx) {
     struct value *arg = compile_exp(rep->info, rep->rexp, ctx);
     struct value *v;
     
-    if (arg == NULL)
-        return NULL;
+    if (EXN(arg))
+        return arg;
+
     arg = coerce(arg, rep->type);
     if (rep->type->tag == T_REGEXP) {
         v = make_value(V_REGEXP, ref(rep->info));
@@ -1290,7 +1314,7 @@ static struct value *compile_exp(struct info *info,
         if (exp->value->tag == V_NATIVE) {
             v = native_call(info, exp->value->native, ctx);
         } else {
-            v = exp->value;
+            v = ref(exp->value);
         }
         break;
     case A_IDENT:
@@ -1313,10 +1337,48 @@ static struct value *compile_exp(struct info *info,
     return v;
 }
 
+static int compile_test(struct term *term, struct ctx *ctx) {
+    struct value *actual = compile_exp(term->info, term->test, ctx);
+    struct value *expect = NULL;
+    int ret = 1;
+
+    if (EXN(actual)) {
+        printf("Test run encountered exception:\n");
+        print_value(actual);
+        printf("\n");
+        ret = 0;
+    } else if (term->result != NULL) {
+        expect = compile_exp(term->info, term->result, ctx);
+        if (EXN(expect))
+            goto done;
+        if (! value_equal(actual, expect)) {
+            printf("Test failure:");
+            print_info(stdout, term->info);
+            printf("\n");
+            printf(" Expected:\n");
+            print_value(expect);
+            printf("\n");
+            printf(" Actual:\n");
+            print_value(actual);
+            printf("\n");
+        }
+    } else {
+        printf("Test result: ");
+        print_info(stdout, term->info);
+        printf("\n");
+        print_value(actual);
+        printf("\n");
+    }
+ done:
+    unref(actual, value);
+    unref(expect, value);
+    return ret;
+}
+
 static int compile_decl(struct term *term, struct ctx *ctx) {
     if (term->tag == A_BIND) {
         struct value *v = compile_exp(term->info, term->exp, ctx);
-        if (v != NULL)
+        if (!EXN(v))
             bind(&ctx->local, term->bname, term->type, v);
         else {
             syntax_error(term->info, "Failed to compile %s",
@@ -1324,29 +1386,7 @@ static int compile_decl(struct term *term, struct ctx *ctx) {
         }
         return v != NULL;
     } else if (term->tag == A_TEST) {
-        struct value *test = compile_exp(term->info, term->test, ctx);
-        if (term->result != NULL) {
-            struct value *result = compile_exp(term->info, term->result, ctx);
-            if (! value_equal(test, result)) {
-                printf("Test failure:");
-                print_info(stdout, term->info);
-                printf("\n");
-                printf(" Expected:\n");
-                print_value(result);
-                printf("\n");
-                printf(" Actual:\n");
-                print_value(test);
-                printf("\n");
-            }
-            return 1;
-        } else {
-            printf("Test result: ");
-            print_info(stdout, term->info);
-            printf("\n");
-            print_value(test);
-            printf("\n");
-            return 1;
-        }
+        return compile_test(term, ctx);
     } else {
         assert(0);
     }

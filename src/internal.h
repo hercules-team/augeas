@@ -173,6 +173,10 @@ char *escape(const char *text, int cnt);
 char *unescape(const char *s, int len);
 int print_chars(FILE *out, const char *text, int cnt);
 
+/* Print a pretty representation of being at position POS within TEXT */
+void print_pos(FILE *out, const char *text, int pos);
+char *format_pos(const char *text, int pos);
+
 /* Read the contents of file PATH and return them as one long string. The
  * caller must free the result. Return NULL if any error occurs.
  */

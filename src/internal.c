@@ -144,6 +144,30 @@ int print_chars(FILE *out, const char *text, int cnt) {
     return total;
 }
 
+char *format_pos(const char *text, int pos) {
+    char *buf;
+    size_t size;
+    FILE *stream = open_memstream(&buf, &size);
+    print_pos(stream, text, pos);
+    fclose(stream);
+    return buf;
+}
+
+void print_pos(FILE *out, const char *text, int pos) {
+    static const int window = 28;
+    int before = pos;
+    int total;
+    if (before > window)
+        before = window;
+    total = print_chars(NULL, text + pos - before, before);
+    if (total < window)
+        fprintf(out, "%*s", window - total, "<");
+    print_chars(out, text + pos - before, before);
+    fprintf(out, "|=|");
+    total = print_chars(out, text + pos, window);
+    fprintf(out, "%*s\n", window - total, ">");
+}
+
 
 
 /*

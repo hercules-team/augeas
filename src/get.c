@@ -21,12 +21,11 @@
  */
 
 #include <regex.h>
+#include <stdarg.h>
+
 #include "syntax.h"
 #include "list.h"
 #include "internal.h"
-
-#define get_error(state, format, args ...) \
-    syntax_error(&((state)->info), format, ## args)
 
 #define assert_error(state, format, args ...) \
     assert_error_at(__FILE__, __LINE__, &(state->info), format, ## args)
@@ -38,15 +37,43 @@ struct seq {
 };
 
 struct state {
-    struct info info;
-    const char *text;
-    const char *pos;
-    int         applied;
-    int         flags;     /* set of parse_flags */
-    FILE       *log;
-    struct seq *seqs;
-    const char *key;
+    struct info       info;
+    const char       *text;
+    const char       *pos;
+    int               applied;
+    int               flags;     /* set of parse_flags */
+    FILE             *log;
+    struct seq       *seqs;
+    const char       *key;
+    struct lns_error *error;
 };
+
+static void get_error(struct state *state, struct lens *lens,
+                      const char *format, ...) 
+    ATTRIBUTE_FORMAT(printf, 3, 4);
+
+void free_lns_error(struct lns_error *err) {
+    if (err == NULL)
+        return;
+    free(err->message);
+    unref(err->lens, lens);
+    free(err);
+}
+
+static void get_error(struct state *state, struct lens *lens,
+                      const char *format, ...)
+{
+    va_list ap;
+
+    if (state->error != NULL)
+        return;
+    CALLOC(state->error, 1);
+    state->error->lens = ref(lens);
+    state->error->pos  = state->pos - state->text;
+    va_start(ap, format);
+    vasprintf(&state->error->message, format, ap);
+    va_end(ap);
+}
 
 static struct tree *make_tree(const char *label, const char *value) {
     struct tree *tree;
@@ -192,28 +219,13 @@ static void get_expected_error(struct state *state, struct lens *l) {
     *p = '\0';
 
     pat = escape(l->ctype->pattern->str, -1);
-    get_error(state, "expected %s at '%s'", pat, word);
+    get_error(state, l, "expected %s at '%s'", pat, word);
     free(pat);
 }
 
 /*
  * Parsing/construction of the AST
  */
-static void print_pos(struct state *state) {
-    static const int window = 28;
-    int before = state->pos - state->text;
-    int total;
-    if (before > window)
-        before = window;
-    total = print_chars(NULL, state->pos - before, before);
-    if (total < window + 10)
-        fprintf(state->log, "%*s", window + 10 - total, "<");
-    print_chars(state->log, state->pos - before, before);
-    fprintf(state->log, "|=|");
-    total = print_chars(state->log, state->pos, 20);
-    fprintf(state->log, "%*s\n", window-total, ">");
-}
-
 static void advance(struct state *state, int cnt) {
     if (cnt == 0)
         return;
@@ -227,11 +239,11 @@ static void advance(struct state *state, int cnt) {
     state->pos += cnt;
     if (state->flags & PF_ADVANCE) {
         fprintf(state->log, "A %3d ", cnt);
-        print_pos(state);
+        print_pos(state->log, state->text, state->pos - state->text);
     }
 }
 
-static int lex(struct regexp *regexp, struct state *state) {
+static int lex(struct lens *lens, struct regexp *regexp, struct state *state) {
     int count;
     int offset = state->pos - state->text;
     count = regexp_match(regexp, state->text, strlen(state->text),
@@ -243,8 +255,8 @@ static int lex(struct regexp *regexp, struct state *state) {
     }
 
     if (count == -2) {
-        get_error(state, "Match failed for /%s/ at %d", regexp->pattern->str,
-                  offset);
+        get_error(state, lens, "Match failed for /%s/ at %d",
+                  regexp->pattern->str, offset);
         return -1;
     } else if (count == -1) {
         return 0;
@@ -257,7 +269,7 @@ static int match(struct lens *lens, struct state *state,
                  const char **token) {
     assert(lens->tag == L_DEL || lens->tag == L_STORE || lens->tag == L_KEY);
 
-    int len = lex(lens->regexp, state);
+    int len = lex(lens, lens->regexp, state);
     if (len < 0)
         return -1;
     if (token != NULL)
@@ -278,6 +290,11 @@ static int match(struct lens *lens, struct state *state,
 static struct tree *get_lens(struct lens *lens, struct state *state);
 static struct skel *parse_lens(struct lens *lens, struct state *state,
                                struct dict **dict);
+
+static void free_seqs(struct seq *seqs) {
+    /* Do not free seq->name; it's not owned by the seq, but by some lens */
+    list_free(seqs);
+}
 
 static struct seq *find_seq(const char *name, struct state *state) {
     assert(name != NULL);
@@ -388,7 +405,7 @@ static struct skel *parse_label(struct lens *lens, struct state *state) {
 }
 
 static int applies(struct lens *lens, struct state *state) {
-    return lex(lens->ctype, state) > 0;
+    return lex(lens, lens->ctype, state) > 0;
 }
 
 static struct tree *get_union(struct lens *lens, struct state *state) {
@@ -502,7 +519,7 @@ static struct tree *get_quant_plus(struct lens *lens, struct state *state) {
     assert(lens->tag == L_PLUS);
 
     if (! applies(lens->child, state)) {
-        get_error(state, "lens does not apply");
+        get_error(state, lens, "lens does not apply");
         return NULL;
     } else {
         struct tree *tree = NULL;
@@ -521,7 +538,7 @@ static struct skel *parse_quant_plus(struct lens *lens, struct state *state,
     assert(lens->tag == L_PLUS);
 
     if (! applies(lens->child, state)) {
-        get_error(state, "lens does not apply");
+        get_error(state, lens, "lens does not apply");
         return NULL;
     } else {
         struct skel *skel = make_skel(lens);
@@ -643,7 +660,7 @@ static struct tree *get_lens(struct lens *lens, struct state *state) {
 }
 
 struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
-                     FILE *log, int flags) {
+                     FILE *log, int flags, struct lns_error **err) {
     struct state state;
     struct tree *tree;
 
@@ -655,6 +672,7 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
     state.applied = 0;
     state.seqs  = NULL;
     state.key = NULL;
+    state.error = NULL;
     if (flags != PF_NONE && log != NULL) {
         state.flags = flags;
         state.log = log;
@@ -662,13 +680,22 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
         state.flags = PF_NONE;
         state.log = stdout;
     }
+
     tree = get_lens(lens, &state);
+
+    free_seqs(state.seqs);
     if (! state.applied || *state.pos != '\0') {
-        get_error(&state, "get did not read entire file");
-        print_pos(&state);
-        return NULL;
+        get_error(&state, lens, "get did not process entire input");
     }
-    // FIXME: free state->seqs
+    if (state.error != NULL) {
+        free_tree(tree);
+        tree = NULL;
+    }
+    if (err != NULL) {
+        *err = state.error;
+    } else {
+        free_lns_error(state.error);
+    }
     return tree;
 }
 
@@ -736,7 +763,7 @@ void lns_parse(struct lens *lens, const char *text, struct skel **skel,
     *skel = parse_lens(lens, &state, dict);
     if (! state.applied || *state.pos != '\0') {
         // This should never happen during lns_parse
-        get_error(&state, "parse did not read entire file");
+        get_error(&state, lens, "parse did not read entire file");
         return;
     }
     // FIXME: free state->seqs
