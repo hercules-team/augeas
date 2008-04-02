@@ -132,7 +132,7 @@ void assert_error_at(const char *srcfile, int srclineno, struct info *info,
 
 static void free_value(struct value *v);
 
-static void free_string(struct string *string) {
+void free_string(struct string *string) {
     if (string == NULL)
         return;
     assert(string->ref == 0);
@@ -140,7 +140,7 @@ static void free_string(struct string *string) {
     free(string);
 }
 
-static void free_info(struct info *info) {
+void free_info(struct info *info) {
     if (info == NULL)
         return;
     assert(info->ref == 0);
@@ -156,17 +156,6 @@ static void free_param(struct param *param) {
     unref(param->name, string);
     unref(param->type, type);
     free(param);
-}
-
-static void free_regexp(struct regexp *regexp) {
-    if (regexp == NULL)
-        return;
-    assert(regexp->ref == 0);
-    unref(regexp->info, info);
-    free((void *) regexp->pattern);
-    if (regexp->re != NULL)
-        FIXME("Free regexp->re");
-    free(regexp);
 }
 
 static void free_lens(struct lens *lens) {

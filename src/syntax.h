@@ -170,6 +170,9 @@ struct regexp *make_regexp(struct info *info, const char *pat);
  */
 struct regexp *make_regexp_literal(struct info *info, const char *text);
 
+/* Do not call directly, use UNREF instead */
+void free_regexp(struct regexp *regexp);
+
 /* Compile R->PATTERN into R->RE; return -1 and print an error
  * if compilation fails. Return 0 otherwise
  */
@@ -344,6 +347,9 @@ struct term *make_app_term(struct term *func, struct term *arg,
                            struct info *info);
 struct term *make_app_ident(const char *id, struct term *func,
                             struct info *info);
+/* Do not call these directly, use UNREF instead */
+void free_info(struct info *info);
+void free_string(struct string *string);
 
 /* Turn a list of PARAMS (represented as terms tagged as A_FUNC with the
  * param in PARAM) into nested A_FUNC terms

@@ -49,6 +49,16 @@ struct regexp *make_regexp(struct info *info, const char *pat) {
     return regexp;
 }
 
+void free_regexp(struct regexp *regexp) {
+    if (regexp == NULL)
+        return;
+    assert(regexp->ref == 0);
+    unref(regexp->info, info);
+    unref(regexp->pattern, string);
+    free(regexp->re);
+    free(regexp);
+}
+
 struct regexp *make_regexp_literal(struct info *info, const char *text) {
     char *pattern, *p;
 
@@ -139,10 +149,7 @@ int regexp_compile(struct regexp *r) {
 
     if (c != NULL) {
         char *p = escape(r->pattern->str, -1);
-        syntax_error(r->info,
-                     "invalid regexp: compiling regular expression /%s/"
-                     " failed with error %s",
-                     p, c);
+        syntax_error(r->info, "invalid regexp /%s/: %s", p, c);
         free(p);
         return -1;
     }
