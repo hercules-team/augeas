@@ -23,24 +23,58 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <limits.h>
+#include <ctype.h>
+#include <glob.h>
+#include <argz.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "syntax.h"
+#include "config.h"
 
 static const char *const builtin_module = "Builtin";
 
-const struct type string_type = { .ref = UINT_MAX, .tag = T_STRING };
-const struct type regexp_type = { .ref = UINT_MAX, .tag = T_REGEXP };
-const struct type lens_type =   { .ref = UINT_MAX, .tag = T_LENS };
-const struct type tree_type =   { .ref = UINT_MAX, .tag = T_TREE };
+static const struct type string_type    = { .ref = UINT_MAX, .tag = T_STRING };
+static const struct type regexp_type    = { .ref = UINT_MAX, .tag = T_REGEXP };
+static const struct type lens_type      = { .ref = UINT_MAX, .tag = T_LENS };
+static const struct type tree_type      = { .ref = UINT_MAX, .tag = T_TREE };
+static const struct type filter_type    = { .ref = UINT_MAX, .tag = T_FILTER };
+static const struct type transform_type =
+                                       { .ref = UINT_MAX, .tag = T_TRANSFORM };
 
-const struct type *const t_string = &string_type;
-const struct type *const t_regexp = &regexp_type;
-const struct type *const t_lens   = &lens_type;
-const struct type *const t_tree   = &tree_type;
+const struct type *const t_string    = &string_type;
+const struct type *const t_regexp    = &regexp_type;
+const struct type *const t_lens      = &lens_type;
+const struct type *const t_tree      = &tree_type;
+const struct type *const t_filter    = &filter_type;
+const struct type *const t_transfrom = &transform_type;
 
 static const char *const type_names[] = {
-    "string", "regexp", "lens", "tree", "function", NULL
+    "string", "regexp", "lens", "tree", "filter",
+    "transform", "function", NULL
 };
+
+char *format_info(struct info *info) {
+    const char *fname;
+    char *result;
+    int fl = info->first_line, ll = info->last_line;
+    int fc = info->first_column, lc = info->last_column;
+    fname = (info->filename != NULL) ? info->filename->str : "(unknown file)";
+
+    if (fl > 0) {
+        if (fl == ll) {
+            if (fc == lc) {
+                asprintf(&result, "%s:%d.%d", fname, fl, fc);
+            } else {
+                asprintf(&result, "%s:%d.%d-.%d", fname, fl, fc, lc);
+            }
+        } else {
+            asprintf(&result, "%s:%d.%d-%d.%d", fname, fl, fc, ll, lc);
+        }
+    }
+    return result;
+}
 
 void print_info(FILE *out, struct info *info) {
     fprintf(out, "%s:",
@@ -81,6 +115,19 @@ void fatal_error(struct info *info, const char *format, ...) {
     va_end(ap);
     fprintf(stderr, "\n");
     abort();
+}
+
+void assert_error_at(const char *srcfile, int srclineno, struct info *info,
+                     const char *format, ...) {
+    va_list ap;
+
+    fprintf(stderr, "%s:%d:(", srcfile, srclineno);
+    print_info(stderr, info);
+    fprintf(stderr,"):Internal error:"); 
+	va_start(ap, format);
+    vfprintf(stderr, format, ap);
+    va_end(ap);
+    fprintf(stderr, "\n");
 }
 
 static void free_value(struct value *v);
@@ -142,6 +189,7 @@ static void free_term(struct term *term) {
     case A_BIND:
         free((char *) term->bname);
         unref(term->exp, term);
+        break;
     case A_UNION:
     case A_CONCAT:
     case A_APP:
@@ -164,11 +212,14 @@ static void free_term(struct term *term) {
     case A_REP:
         unref(term->rexp, term);
         break;
+    case A_TEST:
+        unref(term->test, term);
+        unref(term->result, term);
+        break;
     default:
         assert(0);
         break;
     }
-    unref(term->next, term);
     unref(term->info, info);
     unref(term->type, type);
     free(term);
@@ -184,6 +235,7 @@ static void free_binding(struct binding *binding) {
     free(binding);
 }
 
+ATTRIBUTE_UNUSED
 static void free_env(struct env *env) {
     if (env == NULL)
         return;
@@ -219,6 +271,19 @@ static void free_value(struct value *v) {
         break;
     case V_LENS:
         unref(v->lens, lens);
+        break;
+    case V_TREE:
+        free_tree(v->tree);
+        break;
+    case V_FILTER:
+        FIXME("Free filter");
+        break;
+    case V_TRANSFORM:
+        FIXME("Free transform");
+        break;
+    case V_NATIVE:
+        unref(v->native->type, type);
+        free(v->native);
         break;
     case V_CLOS:
         unref(v->func, term);
@@ -443,6 +508,99 @@ static void dump_ctx(struct ctx *ctx) {
 }
 
 /*
+ * Values
+ */
+static void print_value(struct value *v) {
+    if (v == NULL) {
+        printf("<null>");
+        return;
+    }
+
+    switch(v->tag) {
+    case V_STRING:
+        printf("\"%s\"", v->string->str);
+        break;
+    case V_REGEXP:
+        printf("/%s/", v->regexp->pattern->str);
+        break;
+    case V_LENS:
+        printf("<lens:");
+        print_info(stdout, v->lens->info);
+        printf(">");
+        break;
+    case V_TREE:
+        list_for_each(t, v->tree) {
+            print_tree(t, stdout, t->label);
+        }
+        break;
+    case V_FILTER:
+        printf("<filter:");
+        list_for_each(f, v->filter) {
+            printf("%c%s%c", f->include ? '+' : '-', f->glob,
+                   (f->next != NULL) ? ':' : '>');
+        }
+        break;
+    case V_TRANSFORM:
+        printf("<transform:");
+        print_info(stdout, v->transform->lens->info);
+        printf(">");
+        break;
+    case V_NATIVE:
+        printf("<native:");
+        print_info(stdout, v->info);
+        printf(">");
+        break;
+    case V_CLOS:
+        printf("<closure:");
+        print_info(stdout, v->func->info);
+        printf(">");
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+
+static int value_equal(struct value *v1, struct value *v2) {
+    if (v1 == NULL && v2 == NULL)
+        return 1;
+    if (v1 == NULL || v2 == NULL)
+        return 0;
+    if (v1->tag != v2->tag)
+        return 0;
+    switch (v1->tag) {
+    case V_STRING:
+        return STREQ(v1->string->str, v2->string->str);
+        break;
+    case V_REGEXP:
+        // FIXME: Should probably build FA's and compare them
+        return STREQ(v1->regexp->pattern->str, v2->regexp->pattern->str);
+        break;
+    case V_LENS:
+        return v1->lens == v2->lens;
+        break;
+    case V_TREE:
+        return tree_equal(v1->tree, v2->tree);
+        break;
+    case V_FILTER:
+        return v1->filter == v2->filter;
+        break;
+    case V_TRANSFORM:
+        return v1->transform == v2->transform;
+        break;
+    case V_NATIVE:
+        return v1->native == v2->native;
+        break;
+    case V_CLOS:
+        return v1->func == v2->func && v1->bindings == v2->bindings;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+
+/*
  * Types
  */
 struct type *make_arrow_type(struct type *dom, struct type *img) {
@@ -530,9 +688,7 @@ static struct type *type_join(struct type *t1, struct type *t2) {
         else if (t2->tag == T_REGEXP)
             return ref(t2);
     } else if (t1->tag == T_REGEXP) {
-        if (t2->tag == T_STRING)
-            return ref(t1);
-        else if (t2->tag == T_REGEXP)
+        if (t2->tag == T_STRING || t2->tag == T_REGEXP)
             return ref(t1);
     } else if (t1->tag == T_ARROW) {
         if (t2->tag != T_ARROW)
@@ -586,6 +742,10 @@ static struct type *value_type(struct value *v) {
         return make_base_type(T_LENS);
     case V_TREE:
         return make_base_type(T_TREE);
+    case V_FILTER:
+        return make_base_type(T_FILTER);
+    case V_TRANSFORM:
+        return make_base_type(V_TRANSFORM);
     case V_NATIVE:
         return ref(v->native->type);
     case V_CLOS:
@@ -607,16 +767,12 @@ static struct value *coerce(struct value *v, struct type *t) {
     }
     if (vt->tag == T_STRING && t->tag == T_REGEXP) {
         struct value *rxp = make_value(V_REGEXP, ref(v->info));
-        make_ref(rxp->regexp);
-        // FIXME: Escape special characters in v->string; we take
-        // it to be a regexp matching v->string literally
-        rxp->regexp->pattern = ref(v->string);
+        rxp->regexp = make_regexp_literal(v->info, v->string->str);
         return rxp;
     }
     fatal_error(v->info, "Failed to coerce %s to %s",
                 type_name(vt), type_name(t));
 }
-
 
 /* Return one of the expected types (passed as ...).
    Does not give ownership of the returned type */
@@ -720,7 +876,7 @@ static void type_error1(struct info *info, const char *msg, struct type *type) {
     syntax_error(info, msg, s);
     free((char *) s);
 }
-                        
+
 static void type_error2(struct info *info, const char *msg, 
                         struct type *type1, struct type *type2) {
     const char *s1 = type_string(type1);
@@ -753,7 +909,7 @@ static struct type *require_exp_type(struct term *term, struct ctx *ctx,
 
 static int check_concat(struct term *term, struct ctx *ctx) {
     struct type *tl = NULL, *tr = NULL;
-    
+
     if (! check_exp(term->left, ctx))
         return 0;
     tl = term->left->type;
@@ -783,10 +939,18 @@ static int check_concat(struct term *term, struct ctx *ctx) {
     }
     return 1;
  print_error:
-    type_error2(term->info, 
+    type_error2(term->info,
                 "concatenation of %s and %s is not possible",
                 term->left->type, term->right->type);
     return 0;
+}
+
+static int check_value(struct value *v) {
+    if (v->tag == V_REGEXP) {
+        if (regexp_compile(v->regexp) == -1)
+            return 0;
+    }
+    return 1;
 }
 
 /* Return 1 if TERM passes, 0 otherwise */
@@ -833,14 +997,13 @@ static int check_exp(struct term *term, struct ctx *ctx) {
                             "application of %s to %s is not possible",
                             term->left->type, term->right->type);
                 result = 0;
-                
             }
         }
         if (result)
             term->type = ref(term->left->type->img);
         break;
     case A_VALUE:
-        /* Type filled in by the parser */
+        result = check_value(term->value);
         break;
     case A_IDENT:
         {
@@ -968,24 +1131,13 @@ static struct value *compile_union(struct term *exp, struct ctx *ctx) {
     v1 = coerce(v1, t);
     v2 = coerce(v2, t);
     if (t->tag == T_REGEXP) {
-        const char *p1 = v1->regexp->pattern->str;
-        const char *p2 = v2->regexp->pattern->str;
         v = make_value(V_REGEXP, ref(info));
-        make_ref(v->regexp);
-        v->regexp->info = ref(info);
-        make_ref(v->regexp->pattern);
-        CALLOC(v->regexp->pattern->str, strlen(p1) + strlen(p2) + 6);
-        char *s = (char *) v->regexp->pattern->str;
-        strcpy(s, "(");
-        strcat(s, p1);
-        strcat(s, ")|(");
-        strcat(s, p2);
-        strcat(s, ")");
+        v->regexp = regexp_union(info, v1->regexp, v2->regexp);
     } else if (t->tag == T_LENS) {
         struct lens *l1 = v1->lens;
         struct lens *l2 = v2->lens;
         v = make_value(V_LENS, ref(info));
-        v->lens = lns_make_binop(L_UNION, ref(info), l1, l2);
+        v->lens = lns_make_union(ref(info), ref(l1), ref(l2));
     } else {
         fatal_error(info, "Tried to union a %s and a %s to yield a %s",
                     type_name(exp->left->type), type_name(exp->right->type),
@@ -1020,24 +1172,13 @@ static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
         strcpy(s, s1);
         strcat(s, s2);
     } else if (t->tag == T_REGEXP) {
-        const char *p1 = v1->regexp->pattern->str;
-        const char *p2 = v2->regexp->pattern->str;
         v = make_value(V_REGEXP, ref(info));
-        make_ref(v->regexp);
-        v->regexp->info = ref(info);
-        make_ref(v->regexp->pattern);
-        CALLOC(v->regexp->pattern->str, strlen(p1) + strlen(p2) + 5);
-        char *s = (char *) v->regexp->pattern->str;
-        strcpy(s, "(");
-        strcat(s, p1);
-        strcat(s, ")(");
-        strcat(s, p2);
-        strcat(s, ")");
+        v->regexp = regexp_concat(info, v1->regexp, v2->regexp);
     } else if (t->tag == T_LENS) {
         struct lens *l1 = v1->lens;
         struct lens *l2 = v2->lens;
         v = make_value(V_LENS, ref(info));
-        v->lens = lns_make_binop(L_CONCAT, ref(info), l1, l2);
+        v->lens = lns_make_concat(ref(info), ref(l1), ref(l2));
     } else if (t->tag == T_ARROW) {
         /* Build lambda x: exp->right (exp->left x) as a closure */
         char *var = strdup("@0");
@@ -1096,7 +1237,7 @@ static struct value *compile_bracket(struct term *exp, struct ctx *ctx) {
         return NULL;
     struct value *v = make_value(V_LENS, ref(exp->info));
     assert(arg->tag == V_LENS);
-    v->lens = lns_make_unop(L_SUBTREE, ref(exp->info), ref(arg->lens));
+    v->lens = lns_make_subtree(ref(exp->info), ref(arg->lens));
     return v;
 }
 
@@ -1126,17 +1267,15 @@ static struct value *compile_rep(struct term *rep, struct ctx *ctx) {
                 arg->regexp->pattern->str, repchar);
     } else if (rep->type->tag == T_LENS) {
         v = make_value(V_LENS, ref(rep->info));
-        enum lens_tag ltag;
         if (rep->quant == Q_STAR) {
-            ltag = L_STAR;
+            v->lens = lns_make_star(ref(rep->info), ref(arg->lens));
         } else if (rep->quant == Q_PLUS) {
-            ltag = L_PLUS;
+            v->lens = lns_make_plus(ref(rep->info), ref(arg->lens));
         } else if (rep->quant == Q_MAYBE) {
-            ltag = L_MAYBE;
+            v->lens = lns_make_maybe(ref(rep->info), ref(arg->lens));
         } else {
             assert(0);
         }
-        v->lens = lns_make_unop(ltag, ref(rep->info), ref(arg->lens));
     } else {
         fatal_error(rep->info, "Tried to repeat a %s to yield a %s",
                     type_name(rep->rexp->type), type_name(rep->type));
@@ -1197,13 +1336,25 @@ static int compile_decl(struct term *term, struct ctx *ctx) {
         return v != NULL;
     } else if (term->tag == A_TEST) {
         struct value *test = compile_exp(term->info, term->test, ctx);
-        if (term->result != NULL) { 
+        if (term->result != NULL) {
             struct value *result = compile_exp(term->info, term->result, ctx);
-            if (result != test)
-                FIXME("Verify that test and result are equal");
+            if (! value_equal(test, result)) {
+                printf("Test failure:");
+                print_info(stdout, term->info);
+                printf("\n");
+                printf(" Expected:\n");
+                print_value(result);
+                printf("\n");
+                printf(" Actual:\n");
+                print_value(test);
+                printf("\n");
+            }
             return 1;
         } else {
-            FIXME("Print test");
+            printf("Test result: ");
+            print_info(stdout, term->info);
+            printf("\n");
+            print_value(test);
             return 1;
         }
     } else {
@@ -1305,40 +1456,120 @@ void define_native_intl(const char *file, int line,
 /* Defined in parser.y */
 int augl_parse_file(const char *name, struct term **term);
 
-/* Scaffold for testing */
-static void die(const char *msg) {
-    fprintf(stderr, "%s\n", msg);
-    exit(EXIT_FAILURE);
+static char *module_filename(struct augeas *aug, const char *modname) {
+    char *dir = NULL;
+    char *filename = NULL;
+    char *name = strdup(modname);
+    if (name == NULL)
+        return NULL;
+    name[0] = tolower(name[0]);
+    while ((dir = argz_next(aug->modpathz, aug->nmodpath, dir)) != NULL) {
+        int len = strlen(name) + strlen(dir) + 1;
+        struct stat st;
+
+        REALLOC(filename, len);
+        sprintf(filename, "%s/%s.aug", dir, name);
+        if (stat(filename, &st) == 0)
+            goto done;
+    }
+    free(filename);
+    filename = NULL;
+ done:
+    free(name);
+    return filename;
 }
 
-int main(int argc, char **argv) {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: syntax FILE\n");
-        return 1;
-    }
+int __aug_load_module_file(struct augeas *aug, const char *filename) {
+    struct term *term = NULL;
+    int result = -1;
 
+    if (augl_parse_file(filename, &term) == -1)
+        goto error;
+
+    if (! typecheck(term, aug->modules))
+        goto error;
+
+    struct env *module = compile(term, aug->modules);
+    if (module == NULL)
+        goto error;
+
+    list_append(aug->modules, module);
+    result = 0;
+ error:
+    unref(term, term);
+    return result;
+}
+
+static int load_module(struct augeas *aug, const char *name) {
+    char *filename = NULL;
+
+    if (env_find(aug->modules, name) != NULL)
+        return 0;
+
+    if ((filename = module_filename(aug, name)) == NULL)
+        return -1;
+
+    if (__aug_load_module_file(aug, filename) == -1)
+        goto error;
+
+    free(filename);
+    return 0;
+
+ error:
+    free(filename);
+    return -1;
+}
+
+int interpreter_init(struct augeas *aug) {
     int r;
-    struct term *term;
+    char *env;
 
-    r = augl_parse_file(argv[1], &term);
-    if (r == -1)
-        die("Parse error");
+    aug->modules = builtin_init();
 
-    struct env *env = builtin_init();
-    dump_env(env);
-    if (! typecheck(term, env))
-        die("Typecheck error");
+    env = getenv(AUGEAS_LENS_ENV);
+    if (env != NULL) {
+        argz_create_sep(env, PATH_SEP_CHAR, &aug->modpathz, &aug->nmodpath);
+    } else {
+        aug->modpathz = NULL;
+        aug->nmodpath = 0;
+    }
+    argz_add(&aug->modpathz, &aug->nmodpath, AUGEAS_LENS_DIR);
 
-    env = compile(term, env);
-    if (env == NULL)
-        die("Compile error");
+    if (aug->flags & AUG_NO_DEFAULT_LOAD)
+        return 0;
 
-    fprintf(stderr, "Compile succeeded\n");
-    dump_env(env);
-    unref(env, env);
-    /*
-      Eval ??
-    */
+    // For now, we just load every file on the search path
+    const char *dir = NULL;
+    glob_t globbuf;
+    int gl_flags = GLOB_NOSORT;
+
+    while ((dir = argz_next(aug->modpathz, aug->nmodpath, dir)) != NULL) {
+        char *globpat;
+        asprintf(&globpat, "%s/*.aug", dir);
+        r = glob(globpat, gl_flags, NULL, &globbuf);
+        if (r != 0 && r != GLOB_NOMATCH)
+            FIXME("glob failure for %s", globpat);
+        gl_flags |= GLOB_APPEND;
+        free(globpat);
+    }
+    
+    for (int i=0; i < globbuf.gl_pathc; i++) {
+        char *name, *p, *q;
+        p = strrchr(globbuf.gl_pathv[i], SEP);
+        if (p == NULL)
+            p = globbuf.gl_pathv[i];
+        q = strchr(p, '.');
+        name = strndup(p, q - p);
+        name[0] = toupper(name[0]);
+        if (load_module(aug, name) == -1)
+            goto error;
+        free(name);
+    }
+    globfree(&globbuf);
+    return 0;
+ error:
+    FIXME("Cleanup loaded modules");
+    return -1;
 }
 
 /*

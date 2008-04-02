@@ -43,7 +43,7 @@ enum lens_tag {
 
 struct lens {
     unsigned int              ref;
-    enum lens_tag             tag;  /* Same as vt->tag */
+    enum lens_tag             tag;
     struct info              *info;
     struct regexp            *ctype;
     struct regexp            *atype;
@@ -54,10 +54,10 @@ struct lens {
             struct string *string; /* L_LABEL, L_SEQ, L_COUNTER */
         };
         /* Combinators */
-        struct lens * exp;         /* L_SUBTREE, L_STAR, L_PLUS, L_MAYBE */
-        struct {                   /* L_UNION, L_CONCAT */
-            struct lens *exp1;
-            struct lens *exp2;
+        struct lens *child;         /* L_SUBTREE, L_STAR, L_PLUS, L_MAYBE */
+        struct {                    /* L_UNION, L_CONCAT */
+            unsigned int nchildren;
+            struct lens **children;
         };
     };
 };
@@ -67,10 +67,58 @@ struct lens {
  */
 struct lens *lns_make_prim(enum lens_tag tag, struct info *info,
                            struct regexp *regexp, struct string *string);
-struct lens *lns_make_unop(enum lens_tag tag, struct info *info,
-                           struct lens *exp);
-struct lens *lns_make_binop(enum lens_tag tag, struct info *info,
-                            struct lens *exp1, struct lens *exp2);
+struct lens *lns_make_union(struct info *, struct lens *, struct lens *);
+struct lens *lns_make_concat(struct info *, struct lens *, struct lens *);
+struct lens *lns_make_subtree(struct info *, struct lens *);
+struct lens *lns_make_star(struct info *, struct lens *);
+struct lens *lns_make_plus(struct info *, struct lens *);
+struct lens *lns_make_maybe(struct info *, struct lens *);
+
+/* Flags to control debug printing during parsing */
+enum parse_debug_flags {
+    PF_NONE    = 0,
+    PF_ADVANCE = (1 << 0),  /* Show how the lexer advances through the input */
+    PF_MATCH   = (1 << 1),  /* Show regex matches */
+    PF_TOKEN   = (1 << 2)   /* Show tokenization */
+};
+
+/* Auxiliary data structures used during get/put/create */
+struct skel {
+    struct skel *next;
+    struct lens *lens;
+    enum lens_tag tag;
+    union {
+        const char *text;    /* L_DEL */
+        struct skel *skels;  /* L_CONCAT, L_PLUS, L_STAR, L_MAYBE */
+    };
+    /* Also tag == L_SUBTREE, with no data in the union */
+};
+
+/* A dictionary that maps key to a list of (skel, dict) */
+struct dict_entry {
+    struct dict_entry *next;
+    struct skel *skel;
+    struct dict *dict;
+};
+
+struct dict {
+    struct dict *next;
+    const char *key;
+    struct dict_entry *entry;
+    struct dict_entry *mark; /* Mark that will never change */
+};
+
+/* Parse text TEXT according to GRAMMAR. FILENAME indicates what file TEXT
+ * was read from.
+ * LOG is used to print logging messages. FLAGS controls what is printed
+ * and should be a set of flags from enum parse_flags
+ */
+struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
+                     FILE *log, int flags);
+void lns_parse(struct lens *lens, const char *text, struct skel **skel,
+               struct dict **dict);
+void lns_put(FILE *out, struct lens *lens, struct tree *tree, const char *text);
+
 #endif
 
 

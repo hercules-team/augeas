@@ -237,11 +237,11 @@ atype: KW_STRING
        { $$ = $2; }
 
 tree_const: '{' tree_branch '}' tree_const
-            { 
-              $$ = tree_concat($2, $4); 
-            } 
+            {
+              $$ = tree_concat($2, $4);
+            }
           | /* empty */
-            { $$ = NULL; } 
+            { $$ = NULL; }
 
 tree_branch: DQUOTED tree_const
              { 
@@ -360,9 +360,7 @@ static struct term *make_value_term(enum value_tag tag, const char *value,
     term->type = make_base_type(T_STRING);
   } else {
     term->type = make_base_type(T_REGEXP);
-    make_ref(term->value->regexp);
-    term->value->regexp->info = ref(term->info);
-    term->value->regexp->pattern = make_string(value);
+    term->value->regexp = make_regexp(term->info, value);
   }
   return term;
 }

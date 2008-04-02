@@ -21,12 +21,15 @@
  */
 
 #include <regex.h>
-#include "ast.h"
+#include "syntax.h"
 #include "list.h"
 #include "internal.h"
 
 #define get_error(state, format, args ...) \
-    grammar_error((state)->filename, (state)->lineno, format, ## args)
+    syntax_error(&((state)->info), format, ## args)
+
+#define assert_error(state, format, args ...) \
+    assert_error_at(__FILE__, __LINE__, &(state->info), format, ## args)
 
 struct seq {
     struct seq *next;
@@ -35,8 +38,7 @@ struct seq {
 };
 
 struct state {
-    const char *filename;
-    int         lineno;
+    struct info info;
     const char *text;
     const char *pos;
     int         applied;
@@ -44,9 +46,6 @@ struct state {
     FILE       *log;
     struct seq *seqs;
     const char *key;
-    struct tree *tree;
-    struct skel *skel;
-    struct dict *dict;
 };
 
 static struct tree *make_tree(const char *label, const char *value) {
@@ -57,16 +56,12 @@ static struct tree *make_tree(const char *label, const char *value) {
     return tree;
 }
 
-static struct skel *make_skel(enum match_type type, struct match *match,
-                              int lineno) {
+static struct skel *make_skel(struct lens *lens) {
     struct skel *skel;
-    assert(type == LITERAL || type == SEQUENCE ||
-           type == QUANT_STAR || type == QUANT_PLUS || type == QUANT_MAYBE ||
-           type == SUBTREE);
+    enum lens_tag tag = lens->tag;
     CALLOC(skel, 1);
-    skel->type = type;
-    skel->match = match;
-    skel->lineno = lineno;
+    skel->tag = tag;
+    skel->lens = lens;
     return skel;
 }
 
@@ -95,8 +90,8 @@ static void print_skel_list(struct skel *skels, const char *beg,
 }
 
 static void print_skel(struct skel *skel) {
-    switch(skel->type) {
-    case LITERAL:
+    switch(skel->tag) {
+    case L_DEL:
         if (skel->text == NULL) {
             printf("<>");
         } else {
@@ -105,19 +100,19 @@ static void print_skel(struct skel *skel) {
             fputc('\'', stdout);
         }
         break;
-    case SEQUENCE:
+    case L_CONCAT:
         print_skel_list(skel->skels, "", " . ", "");
         break;
-    case QUANT_STAR:
+    case L_STAR:
         print_skel_list(skel->skels, "(", " ", ")*");
         break;
-    case QUANT_PLUS:
+    case L_PLUS:
         print_skel_list(skel->skels, "(", " ", ")+");
         break;
-    case QUANT_MAYBE:
+    case L_MAYBE:
         print_skel_list(skel->skels, "(", " ", ")?");
         break;
-    case SUBTREE:
+    case L_SUBTREE:
         print_skel_list(skel->skels, "[", " ", "]");
         break;
     default:
@@ -141,9 +136,12 @@ static void print_dict(struct dict *dict, int indent) {
 }
 #endif
 
-static struct dict *dict_append(struct dict *d1, struct dict *d2) {
+static void dict_append(struct dict **dict, struct dict *d2) {
+    struct dict *d1 = *dict;
+
     if (d1 == NULL) {
-        return d2;
+        *dict = d2;
+        return;
     }
 
     struct dict *e2 = d2;
@@ -181,12 +179,11 @@ static struct dict *dict_append(struct dict *d1, struct dict *d2) {
     print_dict(d1, 0);
     printf("END\n");
 #endif
-    return d1;
+    *dict = d1;
 }
 
-static void get_expected_error(struct state *state, struct match *exp) {
-    char *word, *p;
-    const char *name = NULL;
+static void get_expected_error(struct state *state, struct lens *l) {
+    char *word, *p, *pat;
 
     word = alloca(11);
     strncpy(word, state->pos, 10);
@@ -194,82 +191,61 @@ static void get_expected_error(struct state *state, struct match *exp) {
     for (p = word; *p != '\0' && *p != '\n'; p++);
     *p = '\0';
 
-    while (name == NULL) {
-        switch (exp->type) {
-        case LITERAL:
-            if (exp->literal->type == QUOTED)
-                name = exp->literal->text;
-            else
-                name = exp->literal->pattern;
-            break;
-        case RULE_REF:
-            name = exp->rule->name;
-            break;
-        case ABBREV_REF:
-            name = exp->abbrev->name;
-            break;
-        case ALTERNATIVE:
-        case SEQUENCE:
-        case QUANT_PLUS:
-        case QUANT_STAR:
-        case QUANT_MAYBE:
-            exp = exp->matches;
-            break;
-        default:
-            name = "unknown";
-            break;
-        }
-    }
-    get_error(state, "expected %s at '%s'", name, word);
+    pat = escape(l->ctype->pattern->str, -1);
+    get_error(state, "expected %s at '%s'", pat, word);
+    free(pat);
 }
 
-/* 
- * Parsing/construction of the AST 
+/*
+ * Parsing/construction of the AST
  */
+static void print_pos(struct state *state) {
+    static const int window = 28;
+    int before = state->pos - state->text;
+    int total;
+    if (before > window)
+        before = window;
+    total = print_chars(NULL, state->pos - before, before);
+    if (total < window + 10)
+        fprintf(state->log, "%*s", window + 10 - total, "<");
+    print_chars(state->log, state->pos - before, before);
+    fprintf(state->log, "|=|");
+    total = print_chars(state->log, state->pos, 20);
+    fprintf(state->log, "%*s\n", window-total, ">");
+}
+
 static void advance(struct state *state, int cnt) {
     if (cnt == 0)
         return;
 
     for (int i=0; i<cnt; i++) {
-        if (! state->pos)
-            internal_error(NULL, state->lineno, "moved beyond end of input");
+        assert(state->pos != '\0');
         if (state->pos[i] == '\n')
-            state->lineno++;
+            state->info.first_line++;
+        state->info.last_line = state->info.first_line;
     }
     state->pos += cnt;
     if (state->flags & PF_ADVANCE) {
-        static const int window = 28;
-        int before = state->pos - state->text;
-        int total;
-        if (before > window)
-            before = window;
         fprintf(state->log, "A %3d ", cnt);
-        total = print_chars(NULL, state->pos - before, before);
-        if (total < window + 10)
-            fprintf(state->log, "%*s", window + 10 - total, "<");
-        print_chars(state->log, state->pos - before, before);
-        fprintf(state->log, "|=|");
-        total = print_chars(state->log, state->pos, 20);
-        fprintf(state->log, "%*s\n", window-total, ">");
+        print_pos(state);
     }
 }
 
-static int lex(struct literal *literal, struct state *state) {
+static int lex(struct regexp *regexp, struct state *state) {
     int count;
     int offset = state->pos - state->text;
-    count = re_match(literal->re, state->text, strlen(state->text),
-                     offset, NULL);
+    count = regexp_match(regexp, state->text, strlen(state->text),
+                         offset, NULL);
     if (state->flags & PF_MATCH) {
         fprintf(state->log, "M %d ", offset);
-        print_literal(state->log, literal);
+        print_regexp(state->log, regexp);
         fprintf(state->log, " %d..%d\n", offset, offset+count);
     }
 
     if (count == -2) {
-        get_error(state, "Match failed for /%s/ at %d", literal->pattern,
-                    offset);
+        get_error(state, "Match failed for /%s/ at %d", regexp->pattern->str,
+                  offset);
         return -1;
-
     } else if (count == -1) {
         return 0;
     } else {
@@ -277,62 +253,37 @@ static int lex(struct literal *literal, struct state *state) {
     }
 }
 
-static const char *match_literal(struct match *match, struct state *state) {
-    struct literal *literal = NULL;
-    const char *result = NULL;
+static int match(struct lens *lens, struct state *state,
+                 const char **token) {
+    assert(lens->tag == L_DEL || lens->tag == L_STORE || lens->tag == L_KEY);
 
-    if (match->type == ABBREV_REF)
-        literal = match->abbrev->literal;
-    else if (match->type == LITERAL)
-        literal = match->literal;
-    else {
-        internal_error(state->filename, state->lineno,
-                       "Illegal match type %d for literal", match->type);
-        state->applied = 0;
-        return NULL;
-    }
-
-    int len = lex(literal, state);
+    int len = lex(lens->regexp, state);
     if (len < 0)
-        return NULL;
-    result = strndup(state->pos, len);
-    advance(state, len);
+        return -1;
+    if (token != NULL)
+        *token = strndup(state->pos, len);
 
-    if (state->flags & PF_TOKEN) {
-        struct abbrev *a;
+    if ((state->log != NULL) && (state->flags & PF_TOKEN)) {
         fprintf(state->log, "T ");
-        for (a=match->owner->grammar->abbrevs; a != NULL; a = a->next) {
-            if (a->literal == literal) {
-                fprintf(state->log, a->name);
-                break;
-            }
-        }
-        if (a == NULL) {
-            print_literal(state->log, literal);
-        }
+        print_regexp(state->log, lens->regexp);
         fprintf(state->log, " = <");
-        print_chars(state->log, result, strlen(result));
+        print_chars(state->log, state->pos, len);
         fprintf(state->log, ">\n");
     }
 
-    return result;
+    advance(state, len);
+    return len;
 }
 
-static const char *string_value(struct match *arg) {
-    if (arg->type == LITERAL && arg->literal->type == QUOTED)
-        return strdup(arg->literal->text);
-    assert(0);
-}
+static struct tree *get_lens(struct lens *lens, struct state *state);
+static struct skel *parse_lens(struct lens *lens, struct state *state,
+                               struct dict **dict);
 
-static struct seq *get_seq(struct match *arg, struct state *state) {
-    const char *name = NULL;
+static struct seq *find_seq(const char *name, struct state *state) {
+    assert(name != NULL);
     struct seq *seq;
 
-    if (arg->type == LITERAL && arg->literal->type == QUOTED)
-        name = arg->literal->text;
-    assert(name != NULL);
-
-    for (seq=state->seqs; 
+    for (seq=state->seqs;
          seq != NULL && STRNEQ(seq->name, name); 
          seq = seq->next);
 
@@ -345,245 +296,365 @@ static struct seq *get_seq(struct match *arg, struct state *state) {
     return seq;
 }
 
-static const char *seq_next_value(struct match *arg, struct state *state) {
-    struct seq *seq = get_seq(arg, state);
-    char *result;
+static struct tree *get_seq(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_SEQ);
+    struct seq *seq = find_seq(lens->string->str, state);
 
-    int len = snprintf(NULL, 0, "%d", seq->value);
-    CALLOC(result, len+1);
-    snprintf(result, len + 1, "%d", seq->value);
+    asprintf((char **) &(state->key), "%d", seq->value);
     seq->value += 1;
-
-    return result;
+    return NULL;
 }
 
-static void seq_init(struct match *arg, struct state *state) {
-    struct seq *seq = get_seq(arg, state);
+static struct skel *parse_seq(struct lens *lens, struct state *state) {
+    get_seq(lens, state);
+    return make_skel(lens);
+}
 
+static struct tree *get_counter(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_COUNTER);
+    struct seq *seq = find_seq(lens->string->str, state);
     seq->value = 0;
+    return NULL;
 }
 
-static void get_match(struct match *match, struct state *state);
+static struct skel *parse_counter(struct lens *lens, struct state *state) {
+    get_counter(lens, state);
+    return make_skel(lens);
+}
 
-static void get_literal(struct match *match, struct state *state) {
+static struct tree *get_del(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_DEL);
+
+    state->applied = match(lens, state, NULL) >= 0;
+    return NULL;
+}
+
+static struct skel *parse_del(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_DEL);
     const char *token = NULL;
+    struct skel *skel = NULL;
 
-    token = match_literal(match, state);
-    if (token == NULL) {
-        state->applied = 0;
-    } else {
-        state->skel = make_skel(LITERAL, match, state->lineno);
-        state->skel->text = token;
-        state->applied = 1;
+    state->applied = match(lens, state, &token) >= 0;
+    if (state->applied) {
+        skel = make_skel(lens);
+        skel->text = token;
     }
+    return skel;
 }
 
-static int applies(struct match *match, struct state *state) {
-    return lex(match->re, state) > 0;
+static struct tree *get_store(struct lens *lens, struct state *state) {
+    assert(lens->tag = L_STORE);
+    const char *token = NULL;
+    struct tree *tree = NULL;
+
+    if (match(lens, state, &token) < 0)
+        get_expected_error(state, lens);
+    else
+        tree = make_tree(NULL, token);
+    return tree;
 }
 
-static void get_alternative(struct match *match, struct state *state) {
+static struct skel *parse_store(struct lens *lens, struct state *state) {
+    assert(lens->tag = L_STORE);
+    if (match(lens, state, NULL) < 0)
+        get_expected_error(state, lens);
+    return make_skel(lens);
+}
+
+static struct tree *get_key(struct lens *lens, struct state *state) {
+    assert(lens->tag = L_KEY);
+    const char *token = NULL;
+    if (match(lens, state, &token) < 0)
+        get_expected_error(state, lens);
+    else
+        state->key = token;
+    return NULL;
+}
+
+static struct skel *parse_key(struct lens *lens, struct state *state) {
+    get_key(lens, state);
+    return make_skel(lens);
+}
+
+static struct tree *get_label(struct lens *lens, struct state *state) {
+    assert(lens->tag = L_LABEL);
+    state->key = strdup(lens->string->str);
+    return NULL;
+}
+
+static struct skel *parse_label(struct lens *lens, struct state *state) {
+    get_label(lens, state);
+    return make_skel(lens);
+}
+
+static int applies(struct lens *lens, struct state *state) {
+    return lex(lens->ctype, state) > 0;
+}
+
+static struct tree *get_union(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_UNION);
+    struct tree *tree = NULL;
+
     state->applied = 0;
-
-    list_for_each(p, match->matches) {
-        if (applies(p, state)) {
-            get_match(p, state);
+    for (int i=0; i < lens->nchildren; i++) {
+        struct lens *l = lens->children[i];
+        if (applies(l, state)) {
+            tree = get_lens(l, state);
             state->applied = 1;
-            break;
         }
     }
-    if (! state->applied) {
-        get_expected_error(state, match);
-    }
+    if (! state->applied)
+        get_expected_error(state, lens);
+    return tree;
 }
 
-static void get_sequence(struct match *match, struct state *state) {
+static struct skel *parse_union(struct lens *lens, struct state *state,
+                                struct dict **dict) {
+    assert(lens->tag == L_UNION);
+    struct skel *skel = NULL;
+
+    state->applied = 0;
+    for (int i=0; i < lens->nchildren; i++) {
+        struct lens *l = lens->children[i];
+        if (applies(l, state)) {
+            skel = parse_lens(l, state, dict);
+            state->applied = 1;
+        }
+    }
+    if (! state->applied)
+        get_expected_error(state, lens);
+
+    return skel;
+}
+
+static struct tree *get_concat(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_CONCAT);
+
     struct tree *tree = NULL;
-    struct skel *skel = make_skel(SEQUENCE, match, state->lineno);
-    struct dict *dict = NULL;
 
     state->applied = 1;
-    list_for_each(p, match->matches) {
-        state->tree = NULL;
-        state->skel = NULL;
-        state->dict = NULL;
-        get_match(p, state);
+    for (int i=0; i < lens->nchildren; i++) {
+        struct tree *t = NULL;
+        t = get_lens(lens->children[i], state);
         if (! state->applied) {
-            get_expected_error(state, p);
+            get_expected_error(state, lens->children[i]);
             break;
         }
-        list_append(tree, state->tree);
-        list_append(skel->skels, state->skel);
-        dict = dict_append(dict, state->dict);
+        list_append(tree, t);
     }
-    state->tree = tree;
-    state->skel = skel;
-    state->dict = dict;
+
+    return tree;
 }
 
-static void get_rule_ref(struct match *match, struct state *state) {
-    get_match(match->rule->matches, state);
+static struct skel *parse_concat(struct lens *lens, struct state *state,
+                                 struct dict **dict) {
+    assert(lens->tag == L_CONCAT);
+    struct skel *skel = make_skel(lens);
+
+    state->applied = 1;
+    for (int i=0; i < lens->nchildren; i++) {
+        struct skel *sk = NULL;
+        struct dict *di = NULL;
+
+        sk = parse_lens(lens->children[i], state, &di);
+        if (! state->applied) {
+            get_expected_error(state, lens->children[i]);
+            break;
+        }
+        list_append(skel->skels, sk);
+        dict_append(dict, di);
+    }
+    return skel;
 }
 
-static void get_quant_star(struct match *match, struct state *state) {
+static struct tree *get_quant_star(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_STAR);
+
     struct tree *tree = NULL;
-    struct skel *skel = make_skel(QUANT_STAR, match, state->lineno);
-    struct dict *dict = NULL;
-    while (applies(match->matches, state)) {
-        state->tree = NULL;
-        state->skel = NULL;
-        state->dict = NULL;
-        get_match(match->matches, state);
-        list_append(tree, state->tree);
-        list_append(skel->skels, state->skel);
-        dict = dict_append(dict, state->dict);
+    while (applies(lens->child, state)) {
+        struct tree *t = NULL;
+        t = get_lens(lens->child, state);
+        list_append(tree, t);
     }
     state->applied = 1;
-    state->tree = tree;
-    state->skel = skel;
-    state->dict = dict;
+    return tree;
 }
 
-static void get_quant_plus(struct match *match, struct state *state) {
-    if (! applies(match, state)) {
-        grammar_error(state->filename, state->lineno,
-                      "match did not apply");
+static struct skel *parse_quant_star(struct lens *lens, struct state *state, 
+                                     struct dict **dict) {
+    assert(lens->tag == L_STAR);
+
+    struct skel *skel = make_skel(lens);
+    *dict = NULL;
+    while (applies(lens->child, state)) {
+        struct skel *sk;
+        struct dict *di = NULL;
+        sk = parse_lens(lens->child, state, &di);
+        list_append(skel->skels, sk);
+        dict_append(dict, di);
+    }
+    state->applied = 1;
+
+    return skel;
+}
+
+static struct tree *get_quant_plus(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_PLUS);
+
+    if (! applies(lens->child, state)) {
+        get_error(state, "lens does not apply");
+        return NULL;
     } else {
         struct tree *tree = NULL;
-        struct skel *skel = make_skel(QUANT_PLUS, match, state->lineno);
-        struct dict *dict = NULL;
-        while (applies(match->matches, state)) {
-            state->tree = NULL;
-            state->skel = NULL;
-            state->dict = NULL;
-            get_match(match->matches, state);
-            list_append(tree, state->tree);
-            list_append(skel->skels, state->skel);
-            dict = dict_append(dict, state->dict);
+        while (applies(lens->child, state)) {
+            struct tree *t = NULL;
+            t = get_lens(lens->child, state);
+            list_append(tree, t);
         }
-        state->tree = tree;
-        state->skel = skel;
-        state->dict = dict;
         state->applied = 1;
+        return tree;
     }
 }
 
-static void get_quant_maybe(struct match *match, struct state *state) {
-    struct skel *skel = make_skel(QUANT_MAYBE, match, state->lineno);
-    if (applies(match->matches, state)) {
-        state->tree = NULL;
-        state->skel = NULL;
-        state->dict = NULL;
-        get_match(match->matches, state);
-        list_append(skel->skels, state->skel);
+static struct skel *parse_quant_plus(struct lens *lens, struct state *state,
+                                     struct dict **dict) {
+    assert(lens->tag == L_PLUS);
+
+    if (! applies(lens->child, state)) {
+        get_error(state, "lens does not apply");
+        return NULL;
+    } else {
+        struct skel *skel = make_skel(lens);
+        while (applies(lens->child, state)) {
+            struct skel *sk;
+            struct dict *di = NULL;
+            sk = parse_lens(lens->child, state, &di);
+            list_append(skel->skels, sk);
+            dict_append(dict, di);
+        }
+        state->applied = 1;
+        return skel;
     }
-    state->skel = skel;
+}
+
+static struct tree *get_quant_maybe(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_PLUS);
+    struct tree *tree = NULL;
+
+    if (applies(lens->child, state)) {
+        tree = get_lens(lens->child, state);
+    }
     state->applied = 1;
+    return tree;
 }
 
-static void get_subtree(struct match *match, struct state *state) {
+static struct skel *parse_quant_maybe(struct lens *lens, struct state *state,
+                                      struct dict **dict) {
+    assert(lens->tag == L_PLUS);
+
+    struct skel *skel = make_skel(lens);
+    if (applies(lens->child, state)) {
+        struct skel *sk;
+        sk = parse_lens(lens->child, state, dict);
+        list_append(skel->skels, sk);
+    }
+    state->applied = 1;
+    return skel;
+}
+
+static struct tree *get_subtree(struct lens *lens, struct state *state) {
     const char *key = state->key;
+    struct tree *tree = NULL;
 
     state->key = NULL;
-    state->tree = NULL;
-    state->skel = NULL;
-    state->dict = NULL;
-    get_match(match->matches, state);
-    if (state->tree == NULL) {
-        state->tree = make_tree(NULL, NULL);
+    tree = get_lens(lens->child, state);
+    if (tree == NULL) {
+        tree = make_tree(NULL, NULL);
     }
-    if (state->tree->label == NULL) {
-        state->tree->label = state->key;
+    if (tree->label == NULL) {
+        tree->label = state->key;
     } else {
-        struct tree *tree = make_tree(state->key, NULL);
-        tree->children = state->tree;
-        state->tree = tree;
+        struct tree *t = make_tree(state->key, NULL);
+        t->children = tree;
+        tree = t;
     }
-    state->dict = make_dict(state->key, state->skel, state->dict);
     state->key = key;
-    state->skel = make_skel(SUBTREE, match, state->lineno);
+    return tree;
 }
 
-static void get_action(struct match *match, struct state *state) {
-    struct action *action = match->action;
+static struct skel *parse_subtree(struct lens *lens, struct state *state,
+                                  struct dict **dict) {
+    const char *key = state->key;
+    struct skel *skel;
+    struct dict *di = NULL;
 
-    state->skel = make_skel(LITERAL, match, state->lineno);
-    switch(action->type) {
-    case COUNTER:
-        seq_init(action->arg, state);
+    state->key = NULL;
+    skel = parse_lens(lens->child, state, &di);
+    *dict = make_dict(state->key, skel, di);
+    state->key = key;
+    return make_skel(lens);
+}
+
+static struct tree *get_lens(struct lens *lens, struct state *state) {
+    struct tree *tree = NULL;
+
+    switch(lens->tag) {
+    case L_DEL:
+        tree = get_del(lens, state);
         break;
-    case SEQ:
-        state->key = seq_next_value(action->arg, state);
+    case L_STORE:
+        tree = get_store(lens, state);
         break;
-    case LABEL:
-        state->key = string_value(action->arg);
+    case L_KEY:
+        tree = get_key(lens, state);
         break;
-    case STORE:
-        state->tree = make_tree(NULL, match_literal(match->action->arg, state));
+    case L_LABEL:
+        tree = get_label(lens, state);
         break;
-    case KEY:
-        state->key = match_literal(match->action->arg, state);
+    case L_SEQ:
+        tree = get_seq(lens, state);
+        break;
+    case L_COUNTER:
+        tree = get_counter(lens, state);
+        break;
+    case L_CONCAT:
+        tree = get_concat(lens, state);
+        break;
+    case L_UNION:
+        tree = get_union(lens, state);
+        break;
+    case L_SUBTREE:
+        tree = get_subtree(lens, state);
+        break;
+    case L_STAR:
+        tree = get_quant_star(lens, state);
+        break;
+    case L_PLUS:
+        tree = get_quant_plus(lens, state);
+        break;
+    case L_MAYBE:
+        tree = get_quant_maybe(lens, state);
         break;
     default:
-        internal_error(state->filename, state->lineno,
-                       "illegal action type %d", action->type);
+        assert_error(state, "illegal lens tag %d", lens->tag);
         break;
     }
+    return tree;
 }
 
-static void get_match(struct match *match, struct state *state) {
-    switch(match->type) {
-    case LITERAL:
-        get_literal(match, state);
-        break;
-    case ALTERNATIVE:
-        get_alternative(match, state);
-        break;
-    case SEQUENCE:
-        get_sequence(match, state);
-        break;
-    case RULE_REF:
-        get_rule_ref(match, state);
-        break;
-    case ABBREV_REF:
-        get_literal(match, state);
-        break;
-    case QUANT_PLUS:
-        get_quant_plus(match, state);
-        break;
-    case QUANT_STAR:
-        get_quant_star(match, state);
-        break;
-    case QUANT_MAYBE:
-        get_quant_maybe(match, state);
-        break;
-    case ACTION:
-        get_action(match, state);
-        break;
-    case SUBTREE:
-        get_subtree(match, state);
-        break;
-    default:
-        internal_error(state->filename, state->lineno,
-                       "illegal match type %d", match->type);
-        break;
-    }
-}
-
-struct tree *get(struct aug_file *file, const char *text,
-                 FILE *log, int flags) {
+struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
+                     FILE *log, int flags) {
     struct state state;
+    struct tree *tree;
 
-    state.filename = file->name;
-    state.lineno = 1;
+    state.info = *info;
+    state.info.ref = UINT_MAX;
+
     state.text = text;
     state.pos = text;
     state.applied = 0;
     state.seqs  = NULL;
     state.key = NULL;
-    state.tree = NULL;
-    state.skel = NULL;
-    state.dict = NULL;
     if (flags != PF_NONE && log != NULL) {
         state.flags = flags;
         state.log = log;
@@ -591,15 +662,84 @@ struct tree *get(struct aug_file *file, const char *text,
         state.flags = PF_NONE;
         state.log = stdout;
     }
-    get_match(file->grammar->rules->matches, &state);
+    tree = get_lens(lens, &state);
     if (! state.applied || *state.pos != '\0') {
-        get_error(&state, "parse did not read entire file");
+        get_error(&state, "get did not read entire file");
+        print_pos(&state);
         return NULL;
     }
-    file->skel = state.skel;
-    file->dict = state.dict;
     // FIXME: free state->seqs
-    return state.tree;
+    return tree;
+}
+
+static struct skel *parse_lens(struct lens *lens, struct state *state, 
+                               struct dict **dict) {
+    struct skel *skel = NULL;
+
+    switch(lens->tag) {
+    case L_DEL:
+        skel = parse_del(lens, state);
+        break;
+    case L_STORE:
+        skel = parse_store(lens, state);
+        break;
+    case L_KEY:
+        skel = parse_key(lens, state);
+        break;
+    case L_LABEL:
+        skel = parse_label(lens, state);
+        break;
+    case L_SEQ:
+        skel = parse_seq(lens, state);
+        break;
+    case L_COUNTER:
+        skel = parse_counter(lens, state);
+        break;
+    case L_CONCAT:
+        skel = parse_concat(lens, state, dict);
+        break;
+    case L_UNION:
+        skel = parse_union(lens, state, dict);
+        break;
+    case L_SUBTREE:
+        skel = parse_subtree(lens, state, dict);
+        break;
+    case L_STAR:
+        skel = parse_quant_star(lens, state, dict);
+        break;
+    case L_PLUS:
+        skel = parse_quant_plus(lens, state, dict);
+        break;
+    case L_MAYBE:
+        skel = parse_quant_maybe(lens, state, dict);
+        break;
+    default:
+        assert_error(state, "illegal lens tag %d", lens->tag);
+        break;
+    }
+    return skel;
+}
+
+void lns_parse(struct lens *lens, const char *text, struct skel **skel,
+               struct dict **dict) {
+    struct state state;
+
+    state.info.ref = UINT_MAX;
+    state.text = text;
+    state.pos = text;
+    state.applied = 0;
+    state.seqs  = NULL;
+    state.key = NULL;
+    state.log = NULL;
+    state.flags = PF_NONE;
+    *dict = NULL;
+    *skel = parse_lens(lens, &state, dict);
+    if (! state.applied || *state.pos != '\0') {
+        // This should never happen during lns_parse
+        get_error(&state, "parse did not read entire file");
+        return;
+    }
+    // FIXME: free state->seqs
 }
 
 /*

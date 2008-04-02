@@ -28,11 +28,14 @@
    Mostly useful for testing */
 #define AUGEAS_ROOT_ENV "AUGEAS_ROOT"
 
+/* The root for actual file contents */
+#define AUGEAS_FILES_TREE "/files"
+
 /* Augeas reports some information in this subtree */
 #define AUGEAS_META_TREE "/augeas"
 
 /* Information about files */
-#define AUGEAS_META_FILES AUGEAS_META_TREE "/files"
+#define AUGEAS_META_FILES AUGEAS_META_TREE AUGEAS_FILES_TREE
 
 /* The root directory */
 #define AUGEAS_META_ROOT AUGEAS_META_TREE "/root"

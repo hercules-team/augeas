@@ -23,34 +23,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include "internal.h"
-
-void aug_file_free(struct aug_file *af) {
-    if (af != NULL) {
-        free((void *) af->name);
-        free((void *) af->node);
-    }
-}
-
-struct aug_file *aug_make_file(const char *name, const char *node,
-                               struct grammar *grammar) {
-    struct aug_file *result;
-
-    result = calloc(1, sizeof(struct aug_file));
-    if (result == NULL)
-        return NULL;
-
-    result->name = strdup(name);
-    result->node = strdup(node);
-    if (result->name == NULL || result->node == NULL) {
-        free(result);
-        return NULL;
-    }
-    result->grammar = grammar;
-
-    return result;
-}
 
 const char* aug_read_file(const char *path) {
     FILE *fp = fopen(path, "r");
@@ -64,7 +39,7 @@ const char* aug_read_file(const char *path) {
         fclose(fp);
         return NULL;
     }
-    
+
     CALLOC(result, st.st_size + 1);
     if (result == NULL) {
         fclose(fp);
@@ -83,6 +58,93 @@ const char* aug_read_file(const char *path) {
     fclose(fp);
     return result;
 }
+
+/*
+ * Escape/unescape of string literals
+ */
+static const char *const escape_chars    = "\a\b\t\n\v\f\r\\";
+static const char *const escape_names = "abtnvfr\\";
+
+char *unescape(const char *s, int len) {
+    size_t size;
+    const char *n;
+    char *result, *t;
+    int i;
+
+    if (len > strlen(s))
+        len = strlen(s);
+
+    size = 0;
+    for (i=0; i < len; i++, size++)
+        if (s[i] == '\\' && strchr(escape_names, s[i+1]) != NULL) {
+            i += 1;
+        }
+
+    CALLOC(result, size);
+    for (i = 0, t = result; i < len; i++, size++) {
+        if (s[i] == '\\' && (n = strchr(escape_names, s[i+1])) != NULL) {
+            *t++ = escape_chars[n - escape_names];
+            i += 1;
+        } else {
+            *t++ = s[i];
+        }
+    }
+    return result;
+}
+
+char *escape(const char *text, int cnt) {
+
+    int len = 0;
+    char *esc = NULL, *e;
+
+    if (cnt < 0 || cnt > strlen(text))
+        cnt = strlen(text);
+
+    for (int i=0; i < cnt; i++) {
+        if (strchr(escape_chars, text[i]) != NULL)
+            len += 2;  /* Escaped as '\x' */
+        else if (! isprint(text[i]))
+            len += 4;  /* Escaped as '\ooo' */
+        else
+            len += 1;
+    }
+    CALLOC(esc, len+1);
+    e = esc;
+    for (int i=0; i < cnt; i++) {
+        char *p;
+        if ((p = strchr(escape_chars, text[i])) != NULL) {
+            *e++ = '\\';
+            *e++ = escape_names[p - escape_chars];
+        } else if (! isprint(text[i])) {
+            sprintf(e, "\\%03o", text[i]);
+        } else {
+            *e++ = text[i];
+        }
+    }
+    return esc;
+}
+
+int print_chars(FILE *out, const char *text, int cnt) {
+    int total = 0;
+    char *esc;
+
+    if (text == NULL) {
+        fprintf(out, "nil");
+        return 3;
+    }
+    if (cnt < 0)
+        cnt = strlen(text);
+
+    esc = escape(text, cnt);
+    total = strlen(esc);
+    if (out != NULL)
+        fprintf(out, esc);
+    free(esc);
+
+    return total;
+}
+
+
 
 /*
  * Local variables:

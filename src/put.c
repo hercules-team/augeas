@@ -20,27 +20,49 @@
  * Author: David Lutterkort <dlutter@redhat.com>
  */
 
-#include "ast.h"
+#include "syntax.h"
 
 //#define DEBUG_SPEW
 
-struct state {
-    const char  *filename;
-    FILE        *out;
-    struct tree *tree;
-    const char  *key;
-    int         leaf;
-    struct dict *dict;
-    struct skel *skel;
+/* Data structure to keep track of where we are in the tree. The split
+ * describes a sublist of the list of siblings in the current tree. The
+ * put_* functions don't operate on the tree directly, instead they operate
+ * on a split.
+ *
+ * The TREE field points to the first tree node for the current invocation
+ * of put_*, FOLLOW points to the first sibling following TREE that is not
+ * part of the split anymore (NULL if we are talking about all the siblings
+ * of TREE)
+ *
+ * LABELS is a string containing all the labels of the siblings joined with
+ * '/' as a separator. We are currently looking at a part of that string,
+ * namely the END - START characters starting at LABELS + START.
+ */
+struct split {
+    struct split *next;
+    struct tree  *tree;
+    struct tree  *follow;
+    const char   *labels;
+    size_t        start;
+    size_t        end;
 };
 
-static void create_match(struct match *match, struct state *state);
-static void put_match(struct match *match, struct state *state);
+struct state {
+    FILE         *out;
+    struct split *split;
+    const char   *key;
+    int           leaf;
+    struct dict  *dict;
+    struct skel  *skel;
+};
+
+static void create_lens(struct lens *lens, struct state *state);
+static void put_lens(struct lens *lens, struct state *state);
 
 #ifdef DEBUG_SPEW
 #define _l(obj) (((obj) == NULL) ? "nil" : (obj)->label)
 
-static const char *_t(struct match *match) {
+static const char *_t(struct lens *lens) {
     static const char *types[] = {
         "action", "[]", "literal", "name", "|", ".",
         "rule", "abbrev", "+", "*", "?"
@@ -52,6 +74,142 @@ static const char *_t(struct match *match) {
 #else
 #define debug(fmt, args ...)
 #endif
+
+static struct split *make_split(struct tree *tree, struct tree *follow) {
+    struct split *split;
+    CALLOC(split, 1);
+    split->tree = tree;
+    split->follow = follow;
+
+    split->start = 0;
+    for (struct tree *t = tree; t != follow; t = t->next) {
+        if (t->label != NULL)
+            split->end += strlen(t->label);
+        split->end += 1;
+    }
+    char *l;
+    CALLOC(l, split->end + 1);
+    for (struct tree *t = tree; t != follow; t = t->next) {
+        if (t->label != NULL)
+            strcat(l, t->label);
+        strcat(l, "/");
+    }
+    split->labels = l;
+    return split;
+}
+
+static void split_append(struct split **split,
+                         struct tree *tree, struct tree *follow,
+                         const char *labels, size_t start, size_t end) {
+    struct split *sp;
+    CALLOC(sp, 1);
+    sp->tree = tree;
+    sp->follow = follow;
+    sp->labels = labels;
+    sp->start = start;
+    sp->end = end;
+    list_append(*split, sp);
+}
+
+/* Refine a tree split OUTER according to the L_CONCAT lens LENS */
+static struct split *split_concat(struct lens *lens, struct split *outer) {
+    assert(lens->tag == L_CONCAT);
+
+    int count = 0;
+    struct re_registers regs;
+    struct split *split = NULL;
+    struct regexp *atype = lens->atype;
+
+    if (atype->re != NULL)
+        atype->re->regs_allocated = REGS_UNALLOCATED;
+    count = regexp_match(atype, outer->labels,
+                         outer->end - outer->start, outer->start, &regs);
+    if (count == -2) {
+        FIXME("Match failed - produce better error");
+        abort();
+    } else if (count == -1) {
+        FIXME("No match - produce better error");
+        abort();
+    }
+
+    struct tree *cur = outer->tree;
+    int reg = 1;
+    for (int i=0; i < lens->nchildren; i++) {
+        assert(reg < regs.num_regs);
+        assert(regs.start[reg] != -1);
+        struct tree *follow = cur;
+        for (int j = regs.start[reg]; j < regs.end[reg]; j++) {
+            if (outer->labels[j] == '/')
+                follow = follow->next;
+        }
+        split_append(&split, cur, follow,
+                     outer->labels, regs.start[reg], regs.end[reg]);
+        cur = follow;
+        reg += 1 + regexp_nsub(lens->children[i]->atype);
+    }
+    assert(reg < regs.num_regs);
+    free(regs.start);
+    free(regs.end);
+    return split;
+}
+
+static struct split *split_iter(struct lens *lens, struct split *outer) {
+    assert(lens->tag == L_STAR);
+
+    int count = 0;
+    struct re_registers regs;
+    struct split *split = NULL;
+    struct regexp *atype = lens->child->atype;
+
+    if (atype->re != NULL)
+        atype->re->regs_allocated = REGS_UNALLOCATED;
+    count = regexp_match(atype, outer->labels,
+                         outer->end - outer->start, outer->start, &regs);
+    if (count == -2) {
+        FIXME("Match failed - produce better error");
+        abort();
+    } else if (count == -1) {
+        return NULL;
+    }
+
+    struct tree *cur = outer->tree;
+    const int reg = 0;
+    int pos = outer->start;
+    while (pos < outer->end) {
+        count = regexp_match(atype, outer->labels,
+                             outer->end - pos, pos, &regs);
+        if (count == -2) {
+            FIXME("Match failed - produce better error");
+            abort();
+        } else if (count == -1) {
+            break;
+        }
+        struct tree *follow = cur;
+        for (int j = regs.start[reg]; j < regs.end[reg]; j++) {
+            if (outer->labels[j] == '/')
+                follow = follow->next;
+        }
+        split_append(&split, cur, follow,
+                     outer->labels, regs.start[reg], regs.end[reg]);
+        cur = follow;
+        pos = regs.end[reg];
+    }
+    free(regs.start);
+    free(regs.end);
+    return split;
+}
+
+/* Check if LENS applies to the current split in STATE */
+static int applies(struct lens *lens, struct split *split) {
+    int count;
+    count = regexp_match(lens->atype, split->labels, split->end - split->start,
+                         split->start, NULL);
+    if (count == -2) {
+        FIXME("Match failed - produce better error");
+        abort();
+    }
+    return (count > -1);
+}
 
 static struct dict_entry *dict_lookup(const char *key, struct dict *dict) {
     struct dict *d;
@@ -67,22 +225,6 @@ static struct dict_entry *dict_lookup(const char *key, struct dict *dict) {
     if (result != NULL)
         d->entry = result->next;
     return result;
-}
-
-/* Return 1 if MATCH->HANDLE is appropriate for TREE */
-static int handle_match(struct match *match, struct tree *tree) {
-    int count;
-
-    if (tree->label == NULL)
-        return match->handle == NULL;
-
-    list_for_each(lit, match->handle) {
-        count = re_match(lit->literal->re, tree->label, strlen(tree->label),
-                         0, NULL);
-        if (count >= 1)
-            return 1;
-    }
-    return 0;
 }
 
 /* Print TEXT to OUT, translating common escapes like \n */
@@ -129,56 +271,65 @@ static void print_escaped_chars(FILE *out, const char *text) {
 }
 
 /*
- * Check whether SKEL has the skeleton type required by MATCH
+ * Check whether SKEL has the skeleton type required by LENS
  */
-static int skel_instance_of(struct match *match, struct skel *skel) {
+static int skel_instance_of(struct lens *lens, struct skel *skel) {
     if (skel == NULL)
         return 0;
 
-    switch (match->type) {
-    case ACTION:
-        return skel->type == LITERAL;
-    case SUBTREE:
-        return skel->type == SUBTREE;
-    case ABBREV_REF:
-    case LITERAL:
-        return skel->type == LITERAL;
-    case NAME:
+    switch (lens->tag) {
+    case L_DEL:
+        // FIXME: skel->text must match lens->regexp
+        return skel->tag == L_DEL;
+    case L_STORE:
+        // FIXME: skel->text must match lens->regexp
+        return skel->tag == L_STORE;
+    case L_KEY:
         return 0;
-    case ALTERNATIVE:
-        list_for_each(m, match->matches) {
-            if (skel_instance_of(m, skel))
-                return 1;
-        }
+    case L_LABEL:
         return 0;
-    case SEQUENCE:
-        if (skel->type != SEQUENCE)
-            return 0;
-        skel = skel->skels;
-        list_for_each(m, match->matches) {
-            if (! skel_instance_of(m, skel))
-                return 0;
-            skel = skel->next;
+    case L_SEQ:
+        return 0;
+    case L_COUNTER:
+        return 0;
+    case L_CONCAT:
+        {
+            struct skel *s = skel->skels;
+            for (int i=0; i < lens->nchildren; i++) {
+                if (! skel_instance_of(lens->children[i], s))
+                    return 0;
+                s = s->next;
+            }
+            return 1;
         }
-        return 1;
-    case RULE_REF:
-        return skel_instance_of(match->rule->matches, skel);
-    case QUANT_PLUS:
-    case QUANT_STAR:
-    case QUANT_MAYBE:
-        if (skel->type != match->type)
+        break;
+    case L_UNION:
+        {
+            for (int i=0; i < lens->nchildren; i++) {
+                if (skel_instance_of(lens->children[i], skel))
+                    return 1;
+            }
             return 0;
-        if (match->type == QUANT_MAYBE &&
+        }
+        break;
+    case L_SUBTREE:
+        return skel->tag == L_SUBTREE;
+    case L_STAR:
+    case L_PLUS:
+    case L_MAYBE:
+        if (skel->tag != lens->tag)
+            return 0;
+        if (lens->tag == L_MAYBE &&
             skel->skels != NULL && skel->skels->next != NULL)
             return 0;
         list_for_each(s, skel->skels) {
-            if (! skel_instance_of(match->matches, s))
+            if (! skel_instance_of(lens->child, s))
                 return 0;
         }
         return 1;
     default:
-        internal_error(NULL, -1,
-                       "illegal match type %d", match->type);
+        assert_error_at(__FILE__, __LINE__, lens->info,
+                        "illegal lens tag %d", lens->tag);
         break;
     }
     return 0;
@@ -187,21 +338,171 @@ static int skel_instance_of(struct match *match, struct skel *skel) {
 /*
  * put
  */
-static void put_action(struct match *match, struct state *state) {
-    assert(match->type == ACTION);
-    struct action *action = match->action;
+static void put_subtree(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_SUBTREE);
+    struct state oldstate = *state;
+    struct split oldsplit = *state->split;
 
-    switch (action->type) {
-    case COUNTER:
-    case SEQ:
-    case LABEL:
-        // Nothing to do
+    struct tree *tree = state->split->tree;
+    struct dict_entry *entry = dict_lookup(tree->label, state->dict);
+    state->key = tree->label;
+    if (tree->children != NULL) {
+        state->split = make_split(tree->children, NULL);
+    } else {
+        // FIXME: state->leaf == 1 means the tree is too flat
+        assert(! state->leaf);
+        state->leaf = 1;
+        state->split->labels = "";
+        state->split->start = state->split->end = 0;
+    }
+    if (entry == NULL)
+        create_lens(lens->child, state);
+    else {
+        state->skel = entry->skel;
+        state->dict = entry->dict;
+        put_lens(lens->child, state);
+    }
+
+    assert(state->split->next == NULL);
+    if (tree->children != NULL) {
+        free((char *) state->split->labels);
+        free(state->split);
+    }
+    *state = oldstate;
+    *state->split= oldsplit;
+}
+
+static void put_del(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_DEL);
+    assert(state->skel != NULL);
+    assert(state->skel->tag == L_DEL);
+    fprintf(state->out, state->skel->text);
+}
+
+static void put_union(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_UNION);
+
+    for (int i=0; i < lens->nchildren; i++) {
+        struct lens *l = lens->children[i];
+        if (applies(l, state->split)) {
+            if (skel_instance_of(l, state->skel))
+                put_lens(l, state);
+            else
+                create_lens(l, state);
+            return;
+        }
+    }
+    assert(0);
+}
+
+static void put_concat(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_CONCAT);
+    assert(state->skel->lens == lens);
+    struct split *oldsplit = state->split;
+    struct skel *oldskel = state->skel;
+
+    struct split *split = split_concat(lens, state->split);
+
+    state->skel = state->skel->skels;
+    state->split = split;
+    for (int i=0; i < lens->nchildren; i++) {
+        if (state->split == NULL) {
+            syntax_error(lens->info, "Short split for concat");
+            list_free(split);
+            return;
+        }
+        put_lens(lens->children[i], state);
+        state->split = state->split->next;
+        state->skel = state->skel->next;
+    }
+    list_free(split);
+    state->split = oldsplit;
+    state->skel = oldskel;
+}
+
+static void put_quant_plus(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_PLUS);
+    assert(state != NULL);
+    TODO;
+}
+
+static void put_quant_star(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_STAR);
+    assert(state->skel->lens == lens);
+    struct split *oldsplit = state->split;
+    struct skel *oldskel = state->skel;
+
+    struct split *split = split_iter(lens, state->split);
+    if (split == NULL)
+        return;
+
+    state->skel = state->skel->skels;
+    state->split = split;
+    while (state->split != NULL && state->skel != NULL) {
+        put_lens(lens->child, state);
+        state->split = state->split->next;
+        state->skel = state->skel->next;
+    }
+    while (state->split != NULL) {
+        create_lens(lens->child, state);
+        state->split = state->split->next;
+    }
+    list_free(split);
+    state->split = oldsplit;
+    state->skel = oldskel;
+}
+
+static void put_quant_maybe(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_MAYBE);
+    assert(state->skel->lens == lens);
+
+    if (applies(lens->child, state->split)) {
+        if (skel_instance_of(lens->child, state->skel))
+            put_lens(lens->child, state);
+        else
+            create_lens(lens->child, state);
+    }
+}
+
+static void put_lens(struct lens *lens, struct state *state) {
+    debug("put_lens: %s:%d %s\n", _t(lens), lens->info->first_line,
+          _l(state->tree));
+    switch(lens->tag) {
+    case L_DEL:
+        put_del(lens, state);
         break;
-    case STORE:
-        fprintf(state->out, state->tree->value);
+    case L_STORE:
+        fprintf(state->out, state->split->tree->value);
         break;
-    case KEY:
+    case L_KEY:
         fprintf(state->out, state->key);
+        break;
+    case L_LABEL:
+        /* Nothing to do */
+        break;
+    case L_SEQ:
+        /* Nothing to do */
+        break;
+    case L_COUNTER:
+        /* Nothing to do */
+        break;
+    case L_CONCAT:
+        put_concat(lens, state);
+        break;
+    case L_UNION:
+        put_union(lens, state);
+        break;
+    case L_SUBTREE:
+        put_subtree(lens, state);
+        break;
+    case L_STAR:
+        put_quant_star(lens, state);
+        break;
+    case L_PLUS:
+        put_quant_plus(lens, state);
+        break;
+    case L_MAYBE:
+        put_quant_maybe(lens, state);
         break;
     default:
         assert(0);
@@ -209,475 +510,123 @@ static void put_action(struct match *match, struct state *state) {
     }
 }
 
-static void put_subtree(struct match *match, struct state *state) {
-    assert(match->type == SUBTREE);
-    // FIXME: Why ?
-    if (state->tree == NULL) {
-        if (! match->epsilon)
-            internal_error(NULL, -1, "put_subtree with empty tree");
-        return;
-    }
-    const char *key = state->key;
-    struct dict *dict = state->dict;
-    struct skel *skel = state->skel;
-
-    state->key = state->tree->label;
-    struct dict_entry *entry = dict_lookup(state->key, dict);
-    struct tree *tree = state->tree;
-    if (tree->children != NULL) {
-        state->tree = tree->children;
-    } else {
-        // FIXME: state->leaf == 1 means the tree is too flat
-        assert(! state->leaf);
-        state->leaf = 1;
-    }
-    if (entry == NULL)
-        create_match(match->matches, state);
-    else {
-        state->skel = entry->skel;
-        state->dict = entry->dict;
-        put_match(match->matches, state);
-    }
-    state->key = key;
-    state->dict = dict;
-    state->skel = skel;
-    state->leaf = 0;
+static void create_subtree(struct lens *lens, struct state *state) {
+    put_subtree(lens, state);
 }
 
-static void put_literal(struct match *match, struct state *state) {
-    assert(match->type == LITERAL || match->type == ABBREV_REF);
-    assert(state->skel != NULL);
-    assert(state->skel->type == LITERAL);
-    fprintf(state->out, state->skel->text);
+static void create_del(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_DEL);
+
+    print_escaped_chars(state->out, lens->string->str);
 }
 
-static void put_alternative(struct match *match, struct state *state) {
-    assert(match->type == ALTERNATIVE);
+static void create_union(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_UNION);
 
-    list_for_each(m, match->matches) {
-        if (handle_match(m, state->tree)) {
-            if (skel_instance_of(m, state->skel))
-                put_match(m, state);
-            else
-                create_match(m, state);
+    for (int i=0; i < lens->nchildren; i++) {
+        if (applies(lens->children[i], state->split)) {
+            create_lens(lens->children[i], state);
             return;
         }
     }
     assert(0);
 }
 
-/* Free the list of trees created by split_tree */
-static void free_split(struct tree *tree) {
-    while (tree != NULL) {
-        struct tree *del = tree;
-        tree = del->next;
-        free(del);
+static void create_concat(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_CONCAT);
+    assert(state->skel == NULL);
+    struct split *oldsplit = state->split;
+
+    struct split *split = split_concat(lens, state->split);
+
+    state->split = split;
+    for (int i=0; i < lens->nchildren; i++) {
+        if (state->split == NULL) {
+            syntax_error(lens->info, "Short split for concat");
+            list_free(split);
+            return;
+        }
+        create_lens(lens->children[i], state);
+        state->split = state->split->next;
     }
+    list_free(split);
+    state->split = oldsplit;
 }
 
-/* Given a tree split SPLIT, return the first entry with non-NULL
-   children, and free the rest */
-static struct tree *split_tree_car(struct tree *split) {
+static void create_quant_plus(struct lens *lens, ATTRIBUTE_UNUSED struct state *state) {
+    assert(lens->tag == L_PLUS);
+    TODO;
+}
+
+static void create_quant_star(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_STAR);
+    assert(state->skel == NULL);
+    struct split *oldsplit = state->split;
+
+    struct split *split = split_iter(lens, state->split);
     if (split == NULL)
-        return NULL;
-    
-    struct tree *result;
-    for (result = split;
-         result != NULL && result->children == NULL;
-         result = result->next);
-    if (result == NULL)
-        result = split;
-    list_remove(result, split);
-    result->next = NULL;
-    free_split(split);
-    return result;
-}
+        return;
 
-/*
- * Split a list of trees into lists of trees to undo the fact that
- * sequence and the quantifiers all concatenate lists of trees.
- */
-static struct tree *split_tree_int(struct match *match,
-                                   struct state *state) {
-    /* The goal is to reorganize the flat list TREES into a list of lists
-       of trees, e.g. something like [t1; t2; t3] might get turned into
-       [[]; [t1]; []; [t2; t3]] The exact shape of the resulting list
-       depends on MATCH.
-     */
-    struct tree *result = NULL;
-    switch (match->type) {
-    case ACTION:
-        CALLOC(result, 1);
-        if (match->action->type == STORE) {
-            if (state->tree == NULL)
-                goto error;
-            result->children = state->tree;
-            state->tree = (state->tree)->next;
-        }
-        return result;
-    case SUBTREE:
-        if (state->leaf || ! handle_match(match, state->tree))
-            return NULL;
-        CALLOC(result, 1);
-        if (state->tree == NULL)
-            goto error;
-        result->children = state->tree;
-        state->tree = (state->tree)->next;
-        return result;
-    case ABBREV_REF:
-    case LITERAL:
-        CALLOC(result, 1);
-        return result;
-    case ALTERNATIVE:
-        list_for_each(m, match->matches) {
-            if (((state->tree)->label == NULL) != (m->handle == NULL))
-                continue;
-            result = split_tree_car(split_tree_int(m, state));
-            if (result != NULL)
-                return result;
-        }
-        return NULL;
-    case SEQUENCE:
-        list_for_each(m, match->matches) {
-            struct tree *t = split_tree_car(split_tree_int(m, state));
-            if (t == NULL) {
-                goto error;
-            }
-            list_append(result, t);
-        }
-        return result;
-    case RULE_REF:
-        return split_tree_int(match->rule->matches, state);
-    case QUANT_PLUS:
-    case QUANT_STAR:
-        // FIXME: THis is greedy in a really stupid way
-        // It will preclude us from ever splitting a*.a properly
-        while (state->tree != NULL) {
-            struct tree *t = split_tree_car(split_tree_int(match->matches, state));
-            if (t == NULL) {
-                if (result == NULL && match->type != QUANT_PLUS)
-                    CALLOC(result, 1);
-                return result;
-            }
-            list_append(result, t);
-        }
-        if (result == NULL && match->type != QUANT_PLUS)
-            CALLOC(result, 1);
-        return result;
-    case QUANT_MAYBE:
-        if (state->tree != NULL) {
-            result = split_tree_car(split_tree_int(match->matches, state));
-        }
-        if (result == NULL)
-            CALLOC(result, 1);
-        return result;
-    default:
-        internal_error(NULL, -1,
-                       "illegal match type %d", match->type);
-        break;
+    state->split = split;
+    while (state->split != NULL) {
+        create_lens(lens->child, state);
+        state->split = state->split->next;
     }
- error:
-    free_split(result);
-    return NULL;
+    list_free(split);
+    state->split = oldsplit;
 }
 
-static struct tree *split_tree(struct match *match, struct state *state) {
-    struct tree *tree = state->tree;
-#ifdef DEBUG_SPEW
-    printf("SPLIT_TREE %s:%d %c ", _t(match), match->lineno,
-           state->leaf ? 'L' : 'i');
-    list_for_each(t, state->tree) {
-        printf("%s ", t->label);
-    }
-    printf("\n");
-#endif
-    struct tree *split = split_tree_int(match, state);
-#ifdef DEBUG_SPEW
-    printf("IS ");
-    list_for_each(s, split) {
-        printf("[");
-        list_for_each(t, s->children) {
-            if (s->next != NULL && t == s->next->children)
-                break;
-            printf("%s ", t->label);
-        }
-        printf("] ");
-    }
-    printf("\n");
-#endif
-    state->tree = tree;
-    return split;
-}
+static void create_quant_maybe(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_MAYBE);
+    assert(state->skel == NULL);
 
-static void put_sequence(struct match *match, struct state *state) {
-    assert(match->type == SEQUENCE);
-    assert(state->skel->match == match);
-    struct tree *tree = state->tree;
-    struct tree *split = split_tree(match, state);
-    struct tree *smark = split;
-    struct skel *skel = state->skel;
-
-    state->skel = skel->skels;
-    list_for_each(m, match->matches) {
-        if (split == NULL) {
-            fprintf(stderr, "Short split on line %d for sequence %d\n",
-                    skel->lineno, match->lineno);
-            free_split(smark);
-            return;
-        }
-        state->tree = split->children;
-        put_match(m, state);
-        split = split->next;
-        state->skel = state->skel->next;
-    }
-    state->tree = tree;
-    state->skel = skel;
-    free_split(smark);
-}
-
-static void put_rule_ref(struct match *match, struct state *state) {
-    assert(match->type == RULE_REF);
-    put_match(match->rule->matches, state);
-}
-
-static void put_quant_plus(struct match *match, struct state *state) {
-    assert(match->type == QUANT_PLUS);
-    assert(state != NULL);
-    TODO;
-}
-
-static void put_quant_star(struct match *match, struct state *state) {
-    assert(match->type == QUANT_STAR);
-    assert(state->skel->match == match);
-    struct tree *tree = state->tree;
-    struct tree *split = split_tree(match, state);
-    struct tree *smark = split;
-    struct skel *skel = state->skel;
-
-    state->skel = skel->skels;
-    while (split != NULL) {
-        // FIXME: Why ?
-        if (split->children == NULL) {
-            split = split->next;
-            continue;
-        }
-        state->tree = split->children;
-        if (state->skel == NULL) {
-            create_match(match->matches, state);
-        } else {
-            put_match(match->matches, state);
-        }
-        split = split->next;
-        if (state->skel != NULL)
-            state->skel = state->skel->next;
-    }
-    state->skel = skel;
-    state->tree = tree;
-    free_split(smark);
-}
-
-static void put_quant_maybe(struct match *match, struct state *state) {
-    assert(match->type == QUANT_MAYBE);
-    assert(state->skel->match == match);
-    struct tree *tree = state->tree;
-    struct tree *split = split_tree(match, state);
-    struct tree *smark = split;
-    struct skel *skel = state->skel;
-
-    state->skel = skel->skels;
-    if (split != NULL && split->children != NULL) {
-        state->tree = split->children;
-        if (state->skel == NULL) {
-            create_match(match->matches, state);
-        } else {
-            put_match(match->matches, state);
-        }
-    }
-    state->skel = skel;
-    state->tree = tree;
-    free_split(smark);
-}
-
-static void put_match(struct match *match, struct state *state) {
-    debug("put_match: %s:%d %s\n", _t(match), match->lineno, _l(state->tree));
-    switch(match->type) {
-    case LITERAL:
-        put_literal(match, state);
-        break;
-    case ALTERNATIVE:
-        put_alternative(match, state);
-        break;
-    case SEQUENCE:
-        put_sequence(match, state);
-        break;
-    case RULE_REF:
-        put_rule_ref(match, state);
-        break;
-    case ABBREV_REF:
-        put_literal(match, state);
-        break;
-    case QUANT_PLUS:
-        put_quant_plus(match, state);
-        break;
-    case QUANT_STAR:
-        put_quant_star(match, state);
-        break;
-    case QUANT_MAYBE:
-        put_quant_maybe(match, state);
-        break;
-    case ACTION:
-        put_action(match, state);
-        break;
-    case SUBTREE:
-        put_subtree(match, state);
-        break;
-    default:
-        internal_error(NULL, -1,
-                       "illegal match type %d", match->type);
-        break;
+    if (applies(lens->child, state->split)) {
+        create_lens(lens->child, state);
     }
 }
 
-static void create_action(struct match *match, struct state *state) {
-    assert(match->type == ACTION);
-    put_action(match, state);
-}
-
-static void create_subtree(struct match *match, struct state *state) {
-    put_subtree(match, state);
-}
-
-static void create_literal(struct match *match, struct state *state) {
-    assert(match->type == LITERAL || match->type == ABBREV_REF);
-
-    struct literal *literal = NULL;
-    if (match->type == ABBREV_REF) {
-        literal = match->abbrev->literal;
-    } else if (match->type == LITERAL) {
-        literal = match->literal;
-    } else {
-        internal_error(_FM(match), _L(match),
-                       "illegal match type '%d'", match->type);
-    }
-    if (literal != NULL) {
-        print_escaped_chars(state->out, literal->text);
-    }
-}
-
-static void create_alternative(struct match *match, struct state *state) {
-    assert(match->type == ALTERNATIVE);
-
-    list_for_each(m, match->matches) {
-        if (handle_match(m, state->tree)) {
-            create_match(m, state);
-            return;
-        }
-    }
-    assert(0);
-}
-
-static void create_sequence(struct match *match, struct state *state) {
-    assert(match->type == SEQUENCE);
-    struct tree *tree = state->tree;
-    struct tree *split = split_tree(match, state);
-    struct tree *smark = split;
-
-    list_for_each(m, match->matches) {
-        if (split == NULL) {
-            fprintf(stderr, "Short split for sequence %d\n",
-                    match->lineno);
-            free_split(smark);
-            return;
-        }
-        state->tree = split->children;
-        create_match(m, state);
-        split = split->next;
-    }
-    state->tree = tree;
-    free_split(smark);
-}
-
-static void create_rule_ref(struct match *match, ATTRIBUTE_UNUSED struct state *state) {
-    assert(match->type == RULE_REF);
-    create_match(match->rule->matches, state);
-}
-
-static void create_quant_plus(struct match *match, ATTRIBUTE_UNUSED struct state *state) {
-    assert(match->type == QUANT_PLUS);
-    TODO;
-}
-
-static void create_quant_star(struct match *match, struct state *state) {
-    assert(match->type == QUANT_STAR);
-    struct tree *tree = state->tree;
-    struct tree *split = split_tree(match, state);
-    struct tree *smark = split;
-
-    while (split != NULL) {
-        // FIXME: Why ?
-        if (split->children == NULL) {
-            split = split->next;
-            continue;
-        }
-        state->tree = split->children;
-        create_match(match->matches, state);
-        split = split->next;
-    }
-    state->tree = tree;
-    free_split(smark);
-}
-
-static void create_quant_maybe(struct match *match, struct state *state) {
-    assert(match->type == QUANT_MAYBE);
-    struct tree *tree = state->tree;
-    struct tree *split = split_tree(match, state);
-    struct tree *smark = split;
-
-    if (split != NULL && split->children != NULL) {
-        state->tree = split->children;
-        create_match(match->matches, state);
-    }
-    state->tree = tree;
-    free_split(smark);
-}
-
-static void create_match(struct match *match, struct state *state) {
-    debug("create_match: %s:%d %s\n", _t(match), match->lineno,
+static void create_lens(struct lens *lens, struct state *state) {
+    debug("create_lens: %s:%d %s\n", _t(lens), lens->info->first_line,
           _l(state->tree));
-    switch(match->type) {
-    case LITERAL:
-        create_literal(match, state);
+    switch(lens->tag) {
+    case L_DEL:
+        create_del(lens, state);
         break;
-    case ALTERNATIVE:
-        create_alternative(match, state);
+    case L_STORE:
+        fprintf(state->out, state->split->tree->value);
         break;
-    case SEQUENCE:
-        create_sequence(match, state);
+    case L_KEY:
+        fprintf(state->out, state->key);
         break;
-    case RULE_REF:
-        create_rule_ref(match, state);
+    case L_LABEL:
+        /* Nothing to do */
         break;
-    case ABBREV_REF:
-        create_literal(match, state);
+    case L_SEQ:
+        /* Nothing to do */
         break;
-    case QUANT_PLUS:
-        create_quant_plus(match, state);
+    case L_COUNTER:
+        /* Nothing to do */
         break;
-    case QUANT_STAR:
-        create_quant_star(match, state);
+    case L_CONCAT:
+        create_concat(lens, state);
         break;
-    case QUANT_MAYBE:
-        create_quant_maybe(match, state);
+    case L_UNION:
+        create_union(lens, state);
         break;
-    case ACTION:
-        create_action(match, state);
+    case L_SUBTREE:
+        create_subtree(lens, state);
         break;
-    case SUBTREE:
-        create_subtree(match, state);
+    case L_STAR:
+        create_quant_star(lens, state);
+        break;
+    case L_PLUS:
+        create_quant_plus(lens, state);
+        break;
+    case L_MAYBE:
+        create_quant_maybe(lens, state);
         break;
     default:
-        internal_error(NULL, -1,
-                       "illegal match type %d", match->type);
+        assert(0);
         break;
     }
 }
@@ -691,22 +640,20 @@ static void dict_revert(struct dict *dict) {
     }
 }
 
-void put(FILE *out, struct tree *tree, struct aug_file *file) {
+void lns_put(FILE *out, struct lens *lens, struct tree *tree,
+             const char *text) {
     struct state state;
 
     if (tree == NULL)
         return;
 
-    dict_revert(file->dict);
+    lns_parse(lens, text, &state.skel, &state.dict);
 
-    state.filename = "stderr";
     state.out = out;
-    state.skel = file->skel;
-    state.dict = file->dict;
-    state.tree = tree;
+    state.split = make_split(tree, tree->next);
     state.leaf = 0;
     state.key = tree->label;
-    put_match(file->grammar->rules->matches, &state);
+    put_lens(lens, &state);
 }
 
 /*

@@ -46,6 +46,7 @@ static int to_int(const char *str) {
   }
   return v;
 }
+
 %}
 
 DIGIT [0-9]
@@ -70,12 +71,12 @@ ARROW  ->
 <INITIAL>
 {
   \"([^\"]|\\\")*\"   {
-               yylval->string = strndup(yytext+1, yyleng-2);
+               yylval->string = unescape(yytext+1, yyleng-2);
                return DQUOTED;
   }
 
   \/([^/]|\\\/)+\/ {
-               yylval->string = strndup(yytext+1, yyleng-2);
+               yylval->string = unescape(yytext+1, yyleng-2);
                return REGEXP;
   }
 

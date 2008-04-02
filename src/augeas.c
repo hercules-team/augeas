@@ -23,27 +23,12 @@
 #include "augeas.h"
 #include "internal.h"
 #include "config.h"
+#include "syntax.h"
 
 #include <fnmatch.h>
 
-/* Two special entries: they are always on the main list
-   so that we don't need to worry about some corner cases in dealing
-   with empty lists */
-
-#define P_ROOT   "system"
-#define P_SYSTEM_CONFIG "system/config"
-
-/* Hardcoded list of existing providers. Ultimately, they should be created
- * from a metadata description, not in code
- */
-
-/* Provider for parsed files (prov_spec.c) */
-extern const struct aug_provider augp_spec;
-
-static const struct aug_provider *providers[] = {
-    &augp_spec,
-    NULL
-};
+/* We always have a toplevel entry for P_ROOT */
+#define P_ROOT   "augeas"
 
 struct tree *tree_find(struct tree *tree, const char *path) {
     if (path == NULL)
@@ -170,7 +155,6 @@ struct augeas *aug_init(const char *root, unsigned int flags) {
     result->root = strdup(root);
 
     result->tree->label = strdup(P_ROOT);
-    tree_find_or_create(P_SYSTEM_CONFIG, result->tree);
 
     /* We report the root dir in AUGEAS_META_ROOT, but we only use the
        value we store internally, to avoid any problems with
@@ -185,16 +169,8 @@ struct augeas *aug_init(const char *root, unsigned int flags) {
         aug_set(result, AUGEAS_META_SAVE_MODE, "overwrite");
     }
 
-    for (int i=0; providers[i] != NULL; i++) {
-        const struct aug_provider *prov = providers[i];
-        int r;
-        r = prov->init(result);
-        if (r == -1)
-            goto error;
-        r = prov->load(result);
-        if (r == -1)
-            goto error;
-    }
+    if (interpreter_init(result) == -1)
+        goto error;
     return result;
 
  error:
@@ -293,13 +269,13 @@ int aug_insert(struct augeas *aug, const char *path, const char *sibling) {
     return -1;
 }
 
-static int del_rec(struct tree *tree) {
+int free_tree(struct tree *tree) {
     int cnt = 0;
 
     while (tree != NULL) {
         struct tree *del = tree;
         tree = del->next;
-        cnt += del_rec(del->children);
+        cnt += free_tree(del->children);
         aug_tree_free(del);
         cnt += 1;
     }
@@ -351,7 +327,7 @@ int tree_rm(struct tree *tree, const char *path) {
         prev->next = del->next;
     }
 
-    int cnt = del_rec(del->children);
+    int cnt = free_tree(del->children);
     aug_tree_free(del);
     parent->dirty = 1;
     free((void *) ppath);
@@ -483,15 +459,63 @@ int aug_match(struct augeas *aug, const char *pattern,
     return n;
 }
 
-int aug_save(struct augeas *aug) {
-    int r;
-
-    for (int i=0; providers[i] != NULL; i++) {
-        r = providers[i]->save(aug);
-        if (r == -1)
-            return -1;
+/* Propagate dirty flags towards the root */
+static int tree_propagate_dirty(struct tree *tree) {
+    if (tree->dirty)
+        return 1;
+    list_for_each(c, tree->children) {
+        tree->dirty |= tree_propagate_dirty(c);
     }
-    return 0;
+    return tree->dirty;
+}
+
+static void tree_clean(struct tree *tree) {
+    tree->dirty = 0;
+    list_for_each(c, tree->children)
+        tree_clean(c);
+}
+
+static int tree_save(struct augeas *aug, struct tree *tree, const char *path) {
+    int result = 0;
+    // FIXME: We need to detect subtrees that aren't saved by anything
+    list_for_each(t, tree) {
+        if (t->dirty) {
+            char *tpath;
+            struct transform *transform = NULL;
+            asprintf(&tpath, "%s/%s", path, t->label);
+            list_for_each(xform, aug->transforms) {
+                if (transform_applies(xform, tpath)) {
+                    if (transform == NULL || transform == xform) {
+                        transform = xform;
+                    } else {
+                        FIXME("Multiple transforms for %s", path);
+                        result = -1;
+                    }
+                }
+            }
+            if (transform != NULL) {
+                transform_save(aug, transform, tpath, t);
+            } else {
+                if (tree_save(aug, tree->children, tpath) == -1)
+                    result = -1;
+            }
+            free(tpath);
+        }
+    }
+    return result;
+}
+
+int aug_save(struct augeas *aug) {
+    int ret;
+    struct tree *files;
+
+    tree_propagate_dirty(aug->tree);
+    files = tree_find(aug->tree, AUGEAS_FILES_TREE);
+    if (files == NULL)
+        return -1;
+    ret = tree_save(aug, files, AUGEAS_FILES_TREE);
+    tree_clean(aug->tree);
+    return ret;
 }
 
 static int print_one(FILE *out, struct tree *tree, char **path) {
@@ -526,9 +550,8 @@ static void print_rec(FILE *out, struct tree *tree, char **path) {
     }
 }
 
-void aug_print(struct augeas *aug, FILE *out, const char *path) {
+void print_tree(struct tree *tree, FILE *out, const char *path) {
     char *pbuf = strdup(path);
-    struct tree *tree = tree_find(aug->tree, path);
     while (tree != NULL) {
         if (tree->children != NULL) {
             print_rec(out, tree->children, &pbuf);
@@ -543,12 +566,33 @@ void aug_print(struct augeas *aug, FILE *out, const char *path) {
     free(pbuf);
 }
 
+void aug_print(struct augeas *aug, FILE *out, const char *path) {
+    struct tree *tree = tree_find(aug->tree, path);
+    if (tree != NULL)
+        print_tree(tree, out, path);
+}
+
 void aug_close(struct augeas *aug) {
     if (aug == NULL)
         return;
-    del_rec(aug->tree);
+    free_tree(aug->tree);
+    // FIXME: Free modules, transforms and modpathz
     free((void *) aug->root);
     free(aug);
+}
+
+int tree_equal(struct tree *t1, struct tree *t2) {
+    while (t1 != NULL && t2 != NULL) {
+        if (!streqv(t1->label, t2->label))
+            return 0;
+        if (!streqv(t1->value, t2->value))
+            return 0;
+        if (! tree_equal(t1->children, t2->children))
+            return 0;
+        t1 = t1->next;
+        t2 = t2->next;
+    }
+    return t1 == t2;
 }
 
 /*

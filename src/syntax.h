@@ -67,6 +67,7 @@ struct info {
 };
 
 /* syntax.c */
+char *format_info(struct info *info);
 void print_info(FILE *out, struct info *info);
 
 void syntax_error(struct info *info, const char *format, ...)
@@ -74,6 +75,10 @@ void syntax_error(struct info *info, const char *format, ...)
 
 __attribute__((noreturn))
 void fatal_error(struct info *info, const char *format, ...);
+
+void assert_error_at(const char *srcfile, int srclineno, struct info *info,
+                     const char *format, ...)
+    ATTRIBUTE_FORMAT(printf, 4, 5);
 
 enum term_tag {
     A_MODULE,
@@ -151,17 +156,110 @@ struct regexp {
     struct re_pattern_buffer *re;
 };
 
+/* Defined in regexp.c */
+
+void print_regexp(FILE *out, struct regexp *regexp);
+
+/* Make a regexp with pattern PAT, which is not copied. Ownership
+ * of INFO is taken.
+ */
+struct regexp *make_regexp(struct info *info, const char *pat);
+
+/* Make a regexp that matches TEXT literally; the string TEXT
+ * is not used by the returned rgexp and must be freed by the caller
+ */
+struct regexp *make_regexp_literal(struct info *info, const char *text);
+
+/* Compile R->PATTERN into R->RE; return -1 and print an error
+ * if compilation fails. Return 0 otherwise
+ */
+int regexp_compile(struct regexp *r);
+
+/* Call RE_MATCH on R->RE and return its result; if R hasn't been compiled
+ * yet, compile it. Return -3 if compilation fails
+ */
+int regexp_match(struct regexp *r, const char *string, const int size,
+                 const int start, struct re_registers *regs);
+
+/* Return the number of subexpressions (parentheses) inside R. May cause
+ * compilation of R; return -1 if compilation fails.
+ */
+int regexp_nsub(struct regexp *r);
+
+struct regexp *
+regexp_union(struct info *, struct regexp *r1, struct regexp *r2);
+
+struct regexp *
+regexp_concat(struct info *, struct regexp *r1, struct regexp *r2);
+
+struct regexp *
+regexp_iter(struct info *info, struct regexp *r, int min, int max);
+
+struct regexp *
+regexp_maybe(struct info *info, struct regexp *r);
+
+struct regexp *regexp_make_empty(struct info *);
+
 struct native {
     unsigned int argc;
     struct type *type;
     struct value *(*impl)(void);
 };
 
+/*
+ * Transformers for going from file globs to path names in the tree
+ * functions are in transform.c
+ */
+
+/* Filters for globbing files. Include filters always come before exclude
+   filters on the list */
+struct filter {
+    unsigned int   ref;
+    struct filter *next;
+    const char    *glob;
+    unsigned int   include : 1;
+};
+
+void filter_generate(struct filter *filter, int *nmatches, char ***matches);
+int filter_matches(struct filter *filter, const char *path);
+
+/* Transformers that actually run lenses on contents of files */
+struct transform {
+    struct transform *next;
+    unsigned int      ref;
+    struct lens      *lens;
+    struct filter    *filter;
+};
+
+/* Load all files matching the TRANSFORM's filter into the tree in AUG by
+ * applying the TRANSFORM's lens to their contents and putting the
+ * resulting tree under "/files" + filename. Also stores some information
+ * about filename underneath "/augeas/files" + filename
+ */
+void transform_load(struct augeas *aug, struct transform *transform);
+
+/* Return 1 if TRANSFORM applies to PATH, 0 otherwise. The TRANSFORM
+ * applies to PATH if (1) PATH starts with "/files/" and (2) the rest of
+ * PATH matches the transform's filter
+*/
+int transform_applies(struct transform *transform, const char *path);
+
+/* Save TREE into the file corresponding to PATH. It is assumed that the
+ * TRANSFORM applies to that PATH
+ */
+int transform_save(struct augeas *aug, struct transform *transform,
+                   const char *path, struct tree *tree);
+
+/*
+ * Values in the interpreter
+ */
 enum value_tag {
     V_STRING,
     V_REGEXP,
     V_LENS,
     V_TREE,
+    V_FILTER,
+    V_TRANSFORM,
     V_NATIVE,
     V_CLOS
 };
@@ -175,7 +273,9 @@ struct value {
         struct regexp  *regexp;  /* V_REGEXP */
         struct lens    *lens;    /* V_LENS */
         struct native  *native;  /* V_NATIVE */
-        struct tree    *tree;    /* V_TREE, FIXME: really needed ? */
+        struct tree    *tree;    /* V_TREE */
+        struct filter  *filter;  /* V_FILTER */
+        struct transform *transform; /* V_TRANSFORM */
         struct {                 /* V_CLOS */
             struct term     *func;
             struct binding  *bindings;
@@ -183,11 +283,18 @@ struct value {
     };
 };
 
+/* All types except for T_ARROW (functions) are simple. Subtype relations
+ * for the simple types:
+ *   T_STRING <: T_REGEXP
+ * and the usual subtype relation for functions.
+ */
 enum type_tag {
     T_STRING,
     T_REGEXP,
     T_LENS,
     T_TREE,
+    T_FILTER,
+    T_TRANSFORM,
     T_ARROW
 };
 
@@ -255,6 +362,11 @@ void define_native_intl(const char *fname, int line,
 int typecheck(struct term *module, struct env *env);
 struct env *compile(struct term *term, struct env *global);
 struct env *builtin_init(void);
+
+/* Used by augparse for some testing */
+int __aug_load_module_file(struct augeas *aug, const char *filename);
+
+int interpreter_init(struct augeas *aug);
 #endif
 
 

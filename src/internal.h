@@ -154,8 +154,8 @@ char *pathsplit(const char *path);
 
 #define FIXME(msg, args ...)                            \
     do {                                                \
-      fprintf(stderr, "%s:%d Unhandled error ",			\
-              __FILE__, __LINE__);                      \
+        fprintf(stderr, "%s:%d Fixme: ",                \
+                __FILE__, __LINE__);                    \
       fprintf(stderr, msg, ## args);                    \
       fputc('\n', stderr);                              \
     } while(0)
@@ -164,49 +164,34 @@ char *pathsplit(const char *path);
  * Internal data structures
  */
 
-/*
- * File tokenizing
- */
-struct aug_file {
-    struct aug_file  *next;
-    const char *name;  // The absolute file name
-    const char *node;  // The node in the tree for this file
-    struct dict *dict;
-    struct skel *skel;
-    struct grammar *grammar;
-};
-
 // internal.c
-void aug_file_free(struct aug_file *af);
 
-/* Allocate a new file. NAME and NODE are dup'd */
-struct aug_file *aug_make_file(const char *name, const char *node, 
-                               struct grammar *grammar);
+/* Escape nonprintable characters within TEXT, similar to how it's done in
+ * C string literals. Caller must free the returned string.
+ */
+char *escape(const char *text, int cnt);
+char *unescape(const char *s, int len);
+int print_chars(FILE *out, const char *text, int cnt);
 
 /* Read the contents of file PATH and return them as one long string. The
  * caller must free the result. Return NULL if any error occurs.
  */
 const char* aug_read_file(const char *path);
 
+/* A hidden flag used by augparse to suppress loading of all the modules
+   on the path */
+#define AUG_NO_DEFAULT_LOAD (1 << 15)
+
 /* The data structure representing a connection to Augeas. */
 struct augeas {
-    struct tree *tree;
-    const char  *root;  /* Filesystem root for all files */
-    unsigned int flags; /* Flags passed to AUG_INIT */
-};
-
-/*
- * Provider. Should eventually be the main interface between the tree
- * and the handling of individual config files. FIXME: We should probably
- * do away with the notion of providers since there is only one now, though
- * a decision needs to wait until the language has been reworked.
- */
-
-struct aug_provider {
-    const char *name;
-    int (*init)(struct augeas *aug);
-    int (*load)(struct augeas *aug);
-    int (*save)(struct augeas *aug);
+    struct tree      *tree;
+    const char       *root;       /* Filesystem root for all files */
+    unsigned int      flags;      /* Flags passed to AUG_INIT */
+    struct transform *transforms; /* Transforms to run */
+    struct env       *modules;    /* Loaded modules */
+    size_t            nmodpath;
+    char             *modpathz;   /* The search path for modules as a
+                                     glibc argz vector */
 };
 
 /* An entry in the global config tree. The data structure allows associating
@@ -225,6 +210,9 @@ int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub);
 int tree_rm(struct tree *tree, const char *path);
 int tree_set(struct tree *tree, const char *path, const char *value);
 struct tree *tree_find(struct tree *tree, const char *path);
+int free_tree(struct tree *tree);
+void print_tree(struct tree *tree, FILE *out, const char *path);
+int tree_equal(struct tree *t1, struct tree *t2);
 
 #endif
 

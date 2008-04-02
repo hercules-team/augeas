@@ -12,10 +12,11 @@ Makefile(\.in)?$
 ^missing$
 /\.(deps|libs)/
 \.l?[oa]$
+\.loT$
 TAGS$
 ^libtool$
 ^ylwrap$
-^src/spec-(parse|lex)\.[ch]$
+^src/(parser|lexer)\.[ch]$
 \.(aux|dvi|log|pdf)$
 
 # Some local stuff

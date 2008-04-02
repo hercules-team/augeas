@@ -20,87 +20,11 @@
  * Author: David Lutterkort <dlutter@redhat.com>
  */
 
-#include "ast.h"
 #include "list.h"
+#include "syntax.h"
+#include "augeas.h"
 
 const char *progname;
-
-static struct grammar *load_grammar(const char *name, FILE *log, int flags) {
-    struct grammar *grammars = NULL;
-    struct map     *maps = NULL;
-    int r;
-
-    r = load_spec(name, log, flags, &grammars, &maps);
-    if (r == -1)
-        exit(EXIT_FAILURE);
-
-    /* FIXME: free maps (if any) */
-    if (grammars == NULL) {
-        fprintf(stderr, "No grammars found\n");
-        exit(EXIT_FAILURE);
-    }
-    if (grammars->next != NULL) {
-        fprintf(stderr, "Warning: multiple grammars found, only using %s\n",
-                grammars->name);
-    }
-    return grammars;
-}
-
-static void print_skel(struct skel *skel);
-static void print_skel_list(struct skel *skels, const char *beg,
-                            const char *sep, const char *end) {
-    printf(beg);
-    list_for_each(s, skels) {
-        print_skel(s);
-        if (s->next != NULL)
-            printf(sep);
-    }
-    printf(end);
-}
-
-static void print_skel(struct skel *skel) {
-    switch(skel->type) {
-    case LITERAL:
-        if (skel->text == NULL) {
-            printf("<>");
-        } else {
-            fputc('\'', stdout);
-            print_chars(stdout, skel->text, -1);
-            fputc('\'', stdout);
-        }
-        break;
-    case SEQUENCE:
-        print_skel_list(skel->skels, "", " . ", "");
-        break;
-    case QUANT_STAR:
-        print_skel_list(skel->skels, "(", " ", ")*");
-        break;
-    case QUANT_PLUS:
-        print_skel_list(skel->skels, "(", " ", ")+");
-        break;
-    case QUANT_MAYBE:
-        print_skel_list(skel->skels, "(", " ", ")?");
-        break;
-    case SUBTREE:
-        print_skel_list(skel->skels, "[", " ", "]");
-        break;
-    default:
-        printf("??");
-        break;
-    }
-}
-
-static void print_dict(struct dict *dict, int indent) {
-    list_for_each(d, dict) {
-        printf("%*s%s:\n", indent, "", d->key);
-        list_for_each(e, d->entry) {
-            printf("%*s", indent+2, "");
-            print_skel(e->skel);
-            printf("\n");
-            print_dict(e->dict, indent+2);
-        }
-    }
-}
 
 __attribute__((noreturn))
 static void usage(void) {
@@ -110,8 +34,6 @@ static void usage(void) {
     fprintf(stderr, "\nOptions:\n\n");
     fprintf(stderr, "  -P WHAT       Show details of how FILE is parsed. Possible values for WHAT\n"
                     "                are 'advance', 'match', 'tokens', and 'skel'\n");
-    fprintf(stderr, "  -G WHAT       Show details about GRAMMAR. Possible values for WHAT are\n"
-                    "                'handles', 're', 'pretty', 'dot', 'notypecheck' and 'all'\n");
     exit(EXIT_FAILURE);
 }
 
@@ -119,12 +41,11 @@ int main(int argc, char **argv) {
     int opt;
     int print_skels = 0;
     int parse_flags = PF_NONE;
-    int grammar_flags = GF_LENS_TYPE_CHECK;
-    struct grammar *grammar;
+    struct augeas *augeas;
 
     progname = argv[0];
 
-    while ((opt = getopt(argc, argv, "hP:G:")) != -1) {
+    while ((opt = getopt(argc, argv, "hP:")) != -1) {
         switch(opt) {
         case 'P':
             if (STREQ(optarg, "advance"))
@@ -140,24 +61,6 @@ int main(int argc, char **argv) {
                 usage();
             }
             break;
-        case 'G':
-            if (STREQ(optarg, "handles"))
-                grammar_flags |= GF_HANDLES;
-            else if (STREQ(optarg, "re"))
-                grammar_flags |= GF_RE;
-            else if (STREQ(optarg, "pretty"))
-                grammar_flags |= GF_PRETTY;
-            else if (STREQ(optarg, "dot"))
-                grammar_flags |= GF_DOT;
-            else if (STREQ(optarg, "notypecheck"))
-                grammar_flags &= ~ GF_LENS_TYPE_CHECK;
-            else if (STREQ(optarg, "all"))
-                grammar_flags = ~ GF_DOT;
-            else {
-                fprintf(stderr, "Illegal argument '%s' for -%c\n", optarg, opt);
-                usage();
-            }
-            break;
         case 'h':
             usage();
             break;
@@ -168,34 +71,19 @@ int main(int argc, char **argv) {
     }
 
     if (optind >= argc) {
-        fprintf(stderr, "Expected grammar file\n");
+        fprintf(stderr, "Expected .aug file\n");
         usage();
     }
 
-    if (optind + 1 == argc) {
-        if (grammar_flags == GF_NONE || grammar_flags == GF_LENS_TYPE_CHECK)
-            grammar_flags |= GF_PRETTY;
-        grammar = load_grammar(argv[optind], stdout, grammar_flags);
-        if (grammar == NULL)
-            return EXIT_FAILURE;
-    } else {
-        const char *text = aug_read_file(argv[optind+1]);
-
-        if (text == NULL)
-            return EXIT_FAILURE;
-
-        grammar = load_grammar(argv[optind], stdout, grammar_flags);
-        if (grammar == NULL)
-            return EXIT_FAILURE;
-
-        struct aug_file *file = aug_make_file(argv[optind+1], "", grammar);
-        struct tree *tree = get(file, text, stdout, parse_flags);
-        if (tree != NULL && print_skels) {
-            print_skel(file->skel);
-            printf("\n");
-            print_dict(file->dict, 0);
-        }
+    augeas = aug_init(NULL, AUG_TYPE_CHECK|AUG_NO_DEFAULT_LOAD);
+    if (__aug_load_module_file(augeas, argv[optind]) == -1) {
+        fprintf(stderr, "Loading from %s failed\n", argv[optind]);
+        exit(EXIT_FAILURE);
     }
+    //if (optind + 1 < argc) {
+        //const char *text = aug_read_file(argv[optind+1]);
+        // Run text through some sort of lens
+    //}
 }
 
 /*

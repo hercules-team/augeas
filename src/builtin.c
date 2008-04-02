@@ -87,11 +87,11 @@ static struct value *lns_counter(struct info *info, struct value *str) {
 }
 
 /* V_LENS -> V_STRING -> V_TREE */
-static struct value *lens_get(ATTRIBUTE_UNUSED struct info *info, struct value *l,
+static struct value *lens_get(struct info *info, struct value *l,
                               struct value *str) {
     assert(l->tag == V_LENS);
     assert(str->tag == V_STRING);
-#if 0
+
     struct tree *tree = lns_get(info, l->lens, str->string->str, NULL, 0);
     if (tree != NULL) {
         struct value *v = make_value(V_TREE, ref(info));
@@ -101,17 +101,34 @@ static struct value *lens_get(ATTRIBUTE_UNUSED struct info *info, struct value *
         print_info(stderr, info);
         FIXME("Call to lns_get failed; need better error reporting");
     }
-#endif
+
     return NULL;
 }
 
 
 /* V_LENS -> V_TREE -> V_STRING -> V_STRING */
-static struct value *lens_put(ATTRIBUTE_UNUSED struct info *info, ATTRIBUTE_UNUSED struct value *l, ATTRIBUTE_UNUSED struct value *tree, ATTRIBUTE_UNUSED struct value *str)
-    UNIMPL_BODY(lens_put)
+static struct value *lens_put(struct info *info, struct value *l,
+                              struct value *tree, struct value *str) {
+    assert(l->tag == V_LENS);
+    assert(tree->tag == V_TREE);
+    assert(str->tag == V_STRING);
+    
+    FILE *stream;
+    char *buf;
+    size_t size;
+    struct value *v;
+
+    stream = open_memstream(&buf, &size);
+    lns_put(stream, l->lens, tree->tree, str->string->str);
+    fclose (stream);
+
+    v = make_value(V_STRING, ref(info));
+    v->string = make_string(buf);
+    return v;
+}
 
 /* V_STRING -> V_STRING -> V_TREE -> V_TREE */
-static struct value *tree_set_glue(ATTRIBUTE_UNUSED struct info *info, struct value *path,
+static struct value *tree_set_glue(struct info *info, struct value *path,
                                    struct value *val, struct value *tree) {
     // FIXME: This only works if TREE is not referenced more than once;
     // otherwise we'll have some pretty weird semantics, and would really
@@ -119,12 +136,10 @@ static struct value *tree_set_glue(ATTRIBUTE_UNUSED struct info *info, struct va
     assert(path->tag == V_STRING);
     assert(val->tag == V_STRING);
     assert(tree->tag == V_TREE);
-#if 0
     if (tree_set(tree->tree, path->string->str, val->string->str) == -1) {
         print_info(stderr, info);
         FIXME("Unexpected error from tree_set");
     }
-#endif
     return tree;
 }
 
@@ -137,9 +152,7 @@ static struct value *tree_rm_glue(ATTRIBUTE_UNUSED struct info *info,
     // need to copy TREE first
     assert(path->tag == V_STRING);
     assert(tree->tag == V_TREE);
-#if 0
     tree_rm(tree->tree, path->string->str);
-#endif
     return tree;
 }
 
