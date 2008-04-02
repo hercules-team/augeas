@@ -30,6 +30,7 @@ static int typecheck_iter(struct info *info, struct lens *l);
 static int typecheck_maybe(struct info *info, struct lens *l);
 
 static struct regexp *lns_key_regexp(struct lens *l);
+static struct regexp *make_key_regexp(struct info *info, const char *pat);
 
 static struct lens *make_lens(enum lens_tag tag, struct info *info) {
     struct lens *lens;
@@ -81,11 +82,10 @@ struct lens *lns_make_concat(struct info *info,
 
 struct lens *lns_make_subtree(struct info *info, struct lens *l) {
     struct lens *lens = make_lens_unop(L_SUBTREE, info, l);
-    FIXME("Typecheck L_SUBTREE");
     lens->ctype = ref(l->ctype);
     lens->atype = lns_key_regexp(l);
     if (lens->atype == NULL)
-        lens->atype = regexp_make_empty(info);
+        lens->atype = make_key_regexp(info, "");
     return lens;
 }
 
