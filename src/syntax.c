@@ -1344,6 +1344,7 @@ static int compile_decl(struct term *term, struct ctx *ctx) {
             print_info(stdout, term->info);
             printf("\n");
             print_value(test);
+            printf("\n");
             return 1;
         }
     } else {
