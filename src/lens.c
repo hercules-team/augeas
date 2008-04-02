@@ -84,6 +84,8 @@ struct lens *lns_make_subtree(struct info *info, struct lens *l) {
     FIXME("Typecheck L_SUBTREE");
     lens->ctype = ref(l->ctype);
     lens->atype = lns_key_regexp(l);
+    if (lens->atype == NULL)
+        lens->atype = regexp_make_empty(info);
     return lens;
 }
 
