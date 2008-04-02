@@ -80,7 +80,7 @@ char *unescape(const char *s, int len) {
             i += 1;
         }
 
-    CALLOC(result, size);
+    CALLOC(result, size + 1);
     for (i = 0, t = result; i < len; i++, size++) {
         if (s[i] == '\\' && (n = strchr(escape_names, s[i+1])) != NULL) {
             *t++ = escape_chars[n - escape_names];
