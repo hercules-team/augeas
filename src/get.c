@@ -448,6 +448,7 @@ static struct tree *get_union(struct lens *lens, struct state *state) {
         if (applies(l, state)) {
             tree = get_lens(l, state);
             state->applied = 1;
+            break;
         }
     }
     if (! state->applied)
@@ -466,6 +467,7 @@ static struct skel *parse_union(struct lens *lens, struct state *state,
         if (applies(l, state)) {
             skel = parse_lens(l, state, dict);
             state->applied = 1;
+            break;
         }
     }
     if (! state->applied)
