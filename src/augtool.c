@@ -26,6 +26,7 @@
 
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <argz.h>
 
 struct command {
     const char *name;
@@ -41,6 +42,7 @@ static augeas_t augeas = NULL;
 static const char *const progname = "augtool";
 static unsigned int flags = AUG_NONE;
 const char *root = NULL;
+char *loadpath = NULL;
 
 static char *cleanpath(char *path) {
     char *e = path + strlen(path) - 1;
@@ -360,13 +362,15 @@ static void usage(void) {
     fprintf(stderr, "  -n            Save changes in files with extension '.augnew', do not modify\n"
                     "                the original files\n");
     fprintf(stderr, "  -r ROOT       Use directory ROOT as the root of the filesystem\n");
+    fprintf(stderr, "  -I DIR        Add DIR to the module loadpath. Can be given multiple times.\n");
     exit(EXIT_FAILURE);
 }
 
 static void parse_opts(int argc, char **argv) {
     int opt;
+    size_t loadpathlen = 0;
 
-    while ((opt = getopt(argc, argv, "hnbcr:")) != -1) {
+    while ((opt = getopt(argc, argv, "hnbcr:I:")) != -1) {
         switch(opt) {
         case 'c':
             flags |= AUG_TYPE_CHECK;
@@ -383,11 +387,15 @@ static void parse_opts(int argc, char **argv) {
         case 'r':
             root = optarg;
             break;
+        case 'I':
+            argz_add(&loadpath, &loadpathlen, optarg);
+            break;
         default:
             usage();
             break;
         }
     }
+    argz_stringify(loadpath, loadpathlen, PATH_SEP_CHAR);
 }
 
 int main(int argc, char **argv) {
@@ -397,7 +405,7 @@ int main(int argc, char **argv) {
 
     parse_opts(argc, argv);
 
-    augeas = aug_init(root, flags);
+    augeas = aug_init(root, loadpath, flags);
     if (augeas == NULL) {
         fprintf(stderr, "Failed to initialize Augeas\n");
         exit(EXIT_FAILURE);

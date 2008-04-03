@@ -47,12 +47,16 @@ enum aug_flags {
  * Use ROOT as the filesystem root. If ROOT is NULL, use the value of the
  * environment variable AUGEAS_ROOT. If that doesn't exist eitehr, use "/".
  *
+ * LOADPATH is a colon-spearated list of directories that modules should be
+ * searched in. This is in addition to the standard load path and the
+ * directories in AUGEAS_LENS_LIB
+ *
  * FLAGS is a bitmask made up of values from AUG_FLAGS.
  *
  * Return a handle to the Augeas tree upon success. If initialization
  * fails, returns NULL.
  */
-augeas_t aug_init(const char *root, unsigned int flags);
+augeas_t aug_init(const char *root, const char *loadpath, unsigned int flags);
 
 /* Lookup the value associated with PATH */
 const char *aug_get(augeas_t aug, const char *path);

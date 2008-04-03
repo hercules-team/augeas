@@ -1623,18 +1623,8 @@ static int load_module(struct augeas *aug, const char *name) {
 
 int interpreter_init(struct augeas *aug) {
     int r;
-    char *env;
 
     aug->modules = builtin_init();
-
-    env = getenv(AUGEAS_LENS_ENV);
-    if (env != NULL) {
-        argz_create_sep(env, PATH_SEP_CHAR, &aug->modpathz, &aug->nmodpath);
-    } else {
-        aug->modpathz = NULL;
-        aug->nmodpath = 0;
-    }
-    argz_add(&aug->modpathz, &aug->nmodpath, AUGEAS_LENS_DIR);
 
     if (aug->flags & AUG_NO_DEFAULT_LOAD)
         return 0;

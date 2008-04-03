@@ -20,9 +20,12 @@
  * Author: David Lutterkort <dlutter@redhat.com>
  */
 
+#include <argz.h>
+
 #include "list.h"
 #include "syntax.h"
 #include "augeas.h"
+#include "config.h"
 
 const char *progname;
 
@@ -34,6 +37,7 @@ static void usage(void) {
     fprintf(stderr, "\nOptions:\n\n");
     fprintf(stderr, "  -P WHAT       Show details of how FILE is parsed. Possible values for WHAT\n"
                     "                are 'advance', 'match', 'tokens', and 'skel'\n");
+    fprintf(stderr, "  -I DIR        Add DIR to the module loadpath. Can be given multiple times.\n");
     exit(EXIT_FAILURE);
 }
 
@@ -42,10 +46,12 @@ int main(int argc, char **argv) {
     int print_skels = 0;
     int parse_flags = PF_NONE;
     struct augeas *augeas;
+    char *loadpath = NULL;
+    size_t loadpathlen = 0;
 
     progname = argv[0];
 
-    while ((opt = getopt(argc, argv, "hP:")) != -1) {
+    while ((opt = getopt(argc, argv, "hP:I:")) != -1) {
         switch(opt) {
         case 'P':
             if (STREQ(optarg, "advance"))
@@ -61,6 +67,9 @@ int main(int argc, char **argv) {
                 usage();
             }
             break;
+        case 'I':
+            argz_add(&loadpath, &loadpathlen, optarg);
+            break;
         case 'h':
             usage();
             break;
@@ -75,7 +84,8 @@ int main(int argc, char **argv) {
         usage();
     }
 
-    augeas = aug_init(NULL, AUG_TYPE_CHECK|AUG_NO_DEFAULT_LOAD);
+    argz_stringify(loadpath, loadpathlen, PATH_SEP_CHAR);
+    augeas = aug_init(NULL, loadpath, AUG_TYPE_CHECK|AUG_NO_DEFAULT_LOAD);
     if (__aug_load_module_file(augeas, argv[optind]) == -1) {
         fprintf(stderr, "Loading from %s failed\n", argv[optind]);
         exit(EXIT_FAILURE);

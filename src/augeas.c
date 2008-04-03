@@ -26,6 +26,7 @@
 #include "syntax.h"
 
 #include <fnmatch.h>
+#include <argz.h>
 
 /* We always have a toplevel entry for P_ROOT */
 #define P_ROOT   "augeas"
@@ -140,7 +141,8 @@ static void aug_tree_free(struct tree *tree) {
     }
 }
 
-struct augeas *aug_init(const char *root, unsigned int flags) {
+struct augeas *aug_init(const char *root, const char *loadpath,
+                        unsigned int flags) {
     struct augeas *result;
 
     CALLOC(result, 1);
@@ -155,6 +157,18 @@ struct augeas *aug_init(const char *root, unsigned int flags) {
     result->root = strdup(root);
 
     result->tree->label = strdup(P_ROOT);
+
+    result->modpathz = NULL;
+    result->nmodpath = 0;
+    if (loadpath != NULL) {
+        argz_add_sep(&result->modpathz, &result->nmodpath, 
+                     loadpath, PATH_SEP_CHAR);
+    }
+    char *env = getenv(AUGEAS_LENS_ENV);
+    if (env != NULL) {
+        argz_add_sep(&result->modpathz, &result->nmodpath, env, PATH_SEP_CHAR);
+    }
+    argz_add(&result->modpathz, &result->nmodpath, AUGEAS_LENS_DIR);
 
     /* We report the root dir in AUGEAS_META_ROOT, but we only use the
        value we store internally, to avoid any problems with
