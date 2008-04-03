@@ -459,7 +459,7 @@ static void unbind_param(struct binding **bnds, struct param *param) {
     unref(b, binding);
 }
 
-/* Takes ownership as needed */
+/* Takes ownership of TYPE and VALUE */
 static void bind(struct binding **bnds,
                  const char *name, struct type *type, struct value *value) {
     struct binding *b = bind_type(bnds, name, type);

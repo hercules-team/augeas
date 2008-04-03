@@ -28,7 +28,16 @@
 #include "internal.h"
 #include "lens.h"
 
-/* Reference counting for pointers to structs with a REF field */
+/* Reference counting for pointers to structs with a REF field
+ *
+ * When a pointer to such a struct is passed into a function that stores
+ * it, the function can either "receive ownership", meaning it does not
+ * increment the reference count, or it can "take ownership", meaning it
+ * increments the reference count. In the first case, the reference is now
+ * owned by wherever the function stored it, and not the caller anymore; in
+ * the second case, the caller and whereever the reference was stored both
+ * own the reference.
+ */
 // FIXME: This is not threadsafe; incr/decr ref needs to be protected
 #define make_ref(var)                                                   \
     do {                                                                \
