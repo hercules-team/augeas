@@ -346,11 +346,6 @@ struct module {
     struct binding    *bindings;
 };
 
-struct ctx {
-    struct module  *modules;
-    struct binding *local;
-};
-
 struct type *make_arrow_type(struct type *dom, struct type *img);
 struct type *make_base_type(enum type_tag tag);
 /* Do not call this directly. Use unref(t, type) instead */
@@ -386,8 +381,6 @@ void define_native_intl(const char *fname, int line,
                         struct module *module, const char *name,
                         int argc, void *impl, ...);
 
-int typecheck(struct term *term, struct module *module);
-struct module *compile(struct term *term, struct module *global);
 struct module *builtin_init(void);
 
 /* Used by augparse for some testing */

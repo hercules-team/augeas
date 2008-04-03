@@ -52,7 +52,7 @@ static int to_int(const char *str) {
 DIGIT [0-9]
 UID    [A-Z][A-Za-z0-9_]*
 LID    [a-z][A-Za-z0-9_]*
-QID    ({UID}\.)*LID
+QID    {UID}\.{LID}
 ARROW  ->
 
 %s COMMENT
@@ -95,6 +95,10 @@ ARROW  ->
 
   {ARROW}       return ARROW;
 
+  {QID}         {
+                   yylval->string = strndup(yytext, yyleng);
+                   return QIDENT;
+                }
   {LID}         {
                    yylval->string = strndup(yytext, yyleng);
                    return LIDENT;
@@ -102,10 +106,6 @@ ARROW  ->
   {UID}         {
                    yylval->string = strndup(yytext, yyleng);
                    return UIDENT;
-                }
-  {QID}         {
-                   yylval->string = strndup(yytext, yyleng);
-                   return QIDENT;
                 }
   \(\*          {
                    comment_depth = 1;

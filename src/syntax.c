@@ -55,6 +55,14 @@ static const char *const type_names[] = {
     "transform", "function", NULL
 };
 
+/* The evaluation context with all loaded modules and the bindings for the
+ * module we are working on in LOCAL 
+ */
+struct ctx {
+    struct augeas  *augeas;
+    struct binding *local;
+};
+
 char *format_info(struct info *info) {
     const char *fname;
     char *result;
@@ -366,6 +374,8 @@ static struct value *make_closure(struct term *func, struct binding *bnds) {
 /*
  * Modules
  */
+static int load_module(struct augeas *aug, const char *name);
+
 struct module *module_create(const char *name) {
     struct module *module;
     make_ref(module);
@@ -389,42 +399,51 @@ static struct binding *bnd_lookup(struct binding *bindings, const char *name) {
     return NULL;
 }
 
-static struct binding *module_qual_lookup(struct module *module, const char *name) {
-    if (module == NULL)
-        return NULL;
-    int nlen = strlen(module->name);
-    if (STREQLEN(module->name, name, strlen(module->name))
-        && name[nlen] == '.')
-        return bnd_lookup(module->bindings, name + nlen + 1);
-    return NULL;
-}
-
-static struct binding *ctx_lookup_bnd(struct ctx *ctx, const char *name) {
+static struct binding *ctx_lookup_bnd(struct info *info,
+                                      struct ctx *ctx, const char *name) {
     struct binding *b = bnd_lookup(ctx->local, name);
     if (b != NULL)
         return b;
 
-    if (strchr(name, '.') != NULL) {
-        list_for_each(module, ctx->modules) {
-            b = module_qual_lookup(module, name);
-            if (b != NULL)
-                return b;
+    if (ctx->augeas != NULL) {
+        char *dot = strchr(name, '.');
+        if (dot != NULL) {
+        qual_lookup:
+            list_for_each(module, ctx->augeas->modules) {
+                if (STREQLEN(module->name, name, strlen(module->name))
+                    && dot - name == strlen(module->name))
+                    return bnd_lookup(module->bindings, dot + 1);
+            }
+            /* Try to load the module */
+            char *modname = strndup(name, dot - name);
+            int loaded = load_module(ctx->augeas, modname) == 0;
+            if (loaded) {
+                free(modname);
+                goto qual_lookup;
+            } else {
+                syntax_error(info, "Could not load module %s for %s",
+                             modname, name);
+                free(modname);
+            }
+        } else {
+            struct module *builtin = 
+                module_find(ctx->augeas->modules, builtin_module);
+            assert(builtin != NULL);
+            return bnd_lookup(builtin->bindings, name);
         }
-    } else {
-        struct module *builtin = module_find(ctx->modules, builtin_module);
-        assert(builtin != NULL);
-        return bnd_lookup(builtin->bindings, name);
     }
     return NULL;
 }
 
-static struct value *ctx_lookup(struct ctx *ctx, struct string *ident) {
-    struct binding *b = ctx_lookup_bnd(ctx, ident->str);
+static struct value *ctx_lookup(struct info *info,
+                                struct ctx *ctx, struct string *ident) {
+    struct binding *b = ctx_lookup_bnd(info, ctx, ident->str);
     return b == NULL ? NULL : b->value;
 }
 
-static struct type *ctx_lookup_type(struct ctx *ctx, struct string *ident) {
-    struct binding *b = ctx_lookup_bnd(ctx, ident->str);
+static struct type *ctx_lookup_type(struct info *info,
+                                    struct ctx *ctx, struct string *ident) {
+    struct binding *b = ctx_lookup_bnd(info, ctx, ident->str);
     return b == NULL ? NULL : b->type;
 }
 
@@ -494,7 +513,10 @@ ATTRIBUTE_UNUSED
 static void dump_ctx(struct ctx *ctx) {
     fprintf(stderr, "Context:\n");
     dump_bindings(ctx->local);
-    dump_module(ctx->modules);
+    if (ctx->augeas != NULL) {
+        list_for_each(m, ctx->augeas->modules)
+            dump_module(m);
+    }
 }
 
 /*
@@ -1026,7 +1048,7 @@ static int check_exp(struct term *term, struct ctx *ctx) {
         break;
     case A_IDENT:
         {
-            struct type *t = ctx_lookup_type(ctx, term->ident);
+            struct type *t = ctx_lookup_type(term->info, ctx, term->ident);
             if (t == NULL) {
                 syntax_error(term->info, "Undefined variable %s",
                              term->ident->str);
@@ -1120,12 +1142,12 @@ static int check_decl(struct term *term, struct ctx *ctx) {
     return 1;
 }
 
-int typecheck(struct term *term, struct module *modules) {
+static int typecheck(struct term *term, struct augeas *augeas) {
     int ok = 1;
     struct ctx ctx;
     assert(term->tag == A_MODULE);
 
-    ctx.modules = modules;
+    ctx.augeas = augeas;
     ctx.local = NULL;
     list_for_each(dcl, term->decls) {
         ok &= check_decl(dcl, &ctx);
@@ -1270,7 +1292,7 @@ static struct value *apply(struct term *app, struct ctx *ctx) {
     struct value *result;
     struct ctx lctx;
 
-    lctx.modules = ctx->modules;
+    lctx.augeas = ctx->augeas;
     lctx.local = ref(f->bindings);
 
     arg = coerce(arg, f->func->param->type);
@@ -1367,7 +1389,7 @@ static struct value *compile_exp(struct info *info,
         }
         break;
     case A_IDENT:
-        v = ctx_lookup(ctx, exp->ident);
+        v = ctx_lookup(exp->info, ctx, exp->ident);
         break;
     case A_BRACKET:
         v = compile_bracket(exp, ctx);
@@ -1441,12 +1463,12 @@ static int compile_decl(struct term *term, struct ctx *ctx) {
     }
 }
 
-struct module *compile(struct term *term, struct module *modules) {
+static struct module *compile(struct term *term, struct augeas *augeas) {
     struct ctx ctx;
     int ok = 1;
     assert(term->tag == A_MODULE);
 
-    ctx.modules = modules;
+    ctx.augeas = augeas;
     ctx.local = NULL;
     list_for_each(dcl, term->decls) {
         ok &= compile_decl(dcl, &ctx);
@@ -1518,7 +1540,7 @@ void define_native_intl(const char *file, int line,
 
     struct term *func = build_func(params, body);
     struct ctx ctx;
-    ctx.modules = NULL;
+    ctx.augeas = NULL;
     ctx.local = ref(module->bindings);
     if (! check_exp(func, &ctx)) {
         fatal_error(info, "Typechecking native %s failed",
@@ -1565,10 +1587,10 @@ int __aug_load_module_file(struct augeas *aug, const char *filename) {
     if (augl_parse_file(filename, &term) == -1)
         goto error;
 
-    if (! typecheck(term, aug->modules))
+    if (! typecheck(term, aug))
         goto error;
 
-    struct module *module = compile(term, aug->modules);
+    struct module *module = compile(term, aug);
     if (module == NULL)
         goto error;
 
