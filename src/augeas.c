@@ -532,8 +532,12 @@ static int print_one(FILE *out, struct tree *tree, char **path,
     }
 
     *path = realloc(*path, strlen(*path) + 1 + strlen(label) + 1);
-    (*path)[end] = SEP;
-    strcpy(*path + end + 1, label);
+    if (end > 0) {
+        (*path)[end] = SEP;
+        strcpy(*path + end + 1, label);
+    } else {
+        strcpy(*path, label);
+    }
 
     fprintf(out, *path);
     if (tree->value != NULL)
@@ -562,7 +566,7 @@ static void print_rec(FILE *out, struct tree *tree, char **path,
 void print_tree(struct tree *tree, FILE *out, const char *path,
                 int pr_hidden) {
     if (path == NULL)
-        path = "()";
+        path = "";
     char *pbuf = strdup(path);
     while (tree != NULL) {
         if (tree->children != NULL) {
