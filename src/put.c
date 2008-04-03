@@ -355,9 +355,11 @@ static void put_subtree(struct lens *lens, struct state *state) {
         state->split->start = 0;
         state->split->end = 1;
     }
-    if (entry == NULL)
+    if (entry == NULL) {
+        state->skel = NULL;
+        state->dict = NULL;
         create_lens(lens->child, state);
-    else {
+    } else {
         state->skel = entry->skel;
         state->dict = entry->dict;
         put_lens(lens->child, state);
