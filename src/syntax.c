@@ -218,13 +218,13 @@ static void free_binding(struct binding *binding) {
 }
 
 ATTRIBUTE_UNUSED
-static void free_env(struct env *env) {
-    if (env == NULL)
+static void free_module(struct module *module) {
+    if (module == NULL)
         return;
-    assert(env->ref == 0);
-    free((char *) env->name);
-    list_unref(env->bindings, binding);
-    free(env);
+    assert(module->ref == 0);
+    free((char *) module->name);
+    list_unref(module->bindings, binding);
+    free(module);
 }
 
 void free_type(struct type *type) {
@@ -364,17 +364,17 @@ static struct value *make_closure(struct term *func, struct binding *bnds) {
 }
 
 /*
- * Environments
+ * Modules
  */
-struct env *env_create(const char *name) {
-    struct env *env;
-    make_ref(env);
-    env->name = strdup(name);
-    return env;
+struct module *module_create(const char *name) {
+    struct module *module;
+    make_ref(module);
+    module->name = strdup(name);
+    return module;
 }
 
-static struct env *env_find(struct env *env, const char *name) {
-    list_for_each(e, env) {
+static struct module *module_find(struct module *module, const char *name) {
+    list_for_each(e, module) {
         if (STREQ(e->name, name))
             return e;
     }
@@ -389,13 +389,13 @@ static struct binding *bnd_lookup(struct binding *bindings, const char *name) {
     return NULL;
 }
 
-static struct binding *env_qual_lookup(struct env *env, const char *name) {
-    if (env == NULL)
+static struct binding *module_qual_lookup(struct module *module, const char *name) {
+    if (module == NULL)
         return NULL;
-    int nlen = strlen(env->name);
-    if (STREQLEN(env->name, name, strlen(env->name))
+    int nlen = strlen(module->name);
+    if (STREQLEN(module->name, name, strlen(module->name))
         && name[nlen] == '.')
-        return bnd_lookup(env->bindings, name + nlen + 1);
+        return bnd_lookup(module->bindings, name + nlen + 1);
     return NULL;
 }
 
@@ -405,13 +405,13 @@ static struct binding *ctx_lookup_bnd(struct ctx *ctx, const char *name) {
         return b;
 
     if (strchr(name, '.') != NULL) {
-        list_for_each(env, ctx->global) {
-            b = env_qual_lookup(env, name);
+        list_for_each(module, ctx->modules) {
+            b = module_qual_lookup(module, name);
             if (b != NULL)
                 return b;
         }
     } else {
-        struct env *builtin = env_find(ctx->global, builtin_module);
+        struct module *builtin = module_find(ctx->modules, builtin_module);
         assert(builtin != NULL);
         return bnd_lookup(builtin->bindings, name);
     }
@@ -482,19 +482,19 @@ static void dump_bindings(struct binding *bnds) {
     }
 }
 
-static void dump_env(struct env *env) {
-    if (env == NULL)
+static void dump_module(struct module *module) {
+    if (module == NULL)
         return;
-    fprintf(stderr, "Env %s\n:", env->name);
-    dump_bindings(env->bindings);
-    dump_env(env->next);
+    fprintf(stderr, "Module %s\n:", module->name);
+    dump_bindings(module->bindings);
+    dump_module(module->next);
 }
 
 ATTRIBUTE_UNUSED
 static void dump_ctx(struct ctx *ctx) {
     fprintf(stderr, "Context:\n");
     dump_bindings(ctx->local);
-    dump_env(ctx->global);
+    dump_module(ctx->modules);
 }
 
 /*
@@ -1120,12 +1120,12 @@ static int check_decl(struct term *term, struct ctx *ctx) {
     return 1;
 }
 
-int typecheck(struct term *term, struct env *global) {
+int typecheck(struct term *term, struct module *modules) {
     int ok = 1;
     struct ctx ctx;
     assert(term->tag == A_MODULE);
 
-    ctx.global = global;
+    ctx.modules = modules;
     ctx.local = NULL;
     list_for_each(dcl, term->decls) {
         ok &= check_decl(dcl, &ctx);
@@ -1270,7 +1270,7 @@ static struct value *apply(struct term *app, struct ctx *ctx) {
     struct value *result;
     struct ctx lctx;
 
-    lctx.global = ctx->global;
+    lctx.modules = ctx->modules;
     lctx.local = ref(f->bindings);
 
     arg = coerce(arg, f->func->param->type);
@@ -1441,12 +1441,12 @@ static int compile_decl(struct term *term, struct ctx *ctx) {
     }
 }
 
-struct env *compile(struct term *term, struct env *global) {
+struct module *compile(struct term *term, struct module *modules) {
     struct ctx ctx;
     int ok = 1;
     assert(term->tag == A_MODULE);
 
-    ctx.global = global;
+    ctx.modules = modules;
     ctx.local = NULL;
     list_for_each(dcl, term->decls) {
         ok &= compile_decl(dcl, &ctx);
@@ -1456,9 +1456,9 @@ struct env *compile(struct term *term, struct env *global) {
         return NULL;
     }
 
-    struct env *env = env_create(term->mname);
-    env->bindings = ctx.local;
-    return env;
+    struct module *module = module_create(term->mname);
+    module->bindings = ctx.local;
+    return module;
 }
 
 /*
@@ -1475,7 +1475,7 @@ static struct info *make_native_info(const char *fname, int line) {
 }
 
 void define_native_intl(const char *file, int line,
-                        struct env *env, const char *name,
+                        struct module *module, const char *name,
                         int argc, void *impl, ...) {
     assert(argc > 0);  /* We have no unit type */
     assert(argc <= 5);
@@ -1518,8 +1518,8 @@ void define_native_intl(const char *file, int line,
 
     struct term *func = build_func(params, body);
     struct ctx ctx;
-    ctx.global = NULL;
-    ctx.local = ref(env->bindings);
+    ctx.modules = NULL;
+    ctx.local = ref(module->bindings);
     if (! check_exp(func, &ctx)) {
         fatal_error(info, "Typechecking native %s failed",
                     name);
@@ -1528,7 +1528,7 @@ void define_native_intl(const char *file, int line,
     v = make_closure(func, ctx.local);
     bind(&ctx.local, name, func->type, v);
 
-    env->bindings = ctx.local;
+    module->bindings = ctx.local;
 }
 
 
@@ -1568,7 +1568,7 @@ int __aug_load_module_file(struct augeas *aug, const char *filename) {
     if (! typecheck(term, aug->modules))
         goto error;
 
-    struct env *module = compile(term, aug->modules);
+    struct module *module = compile(term, aug->modules);
     if (module == NULL)
         goto error;
 
@@ -1582,7 +1582,7 @@ int __aug_load_module_file(struct augeas *aug, const char *filename) {
 static int load_module(struct augeas *aug, const char *name) {
     char *filename = NULL;
 
-    if (env_find(aug->modules, name) != NULL)
+    if (module_find(aug->modules, name) != NULL)
         return 0;
 
     if ((filename = module_filename(aug, name)) == NULL)

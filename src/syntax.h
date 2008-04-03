@@ -338,17 +338,16 @@ struct binding {
     struct value   *value;
 };
 
-/* An environment maps names to TYPE * VALUE. Each module has its own
-   environment */
-struct env {
-    unsigned int    ref;
-    struct env     *next;     /* Only used for the global list of modules */
-    const char     *name;
-    struct binding *bindings;
+/* A module maps names to TYPE * VALUE. */
+struct module {
+    unsigned int       ref;
+    struct module     *next;     /* Only used for the global list of modules */
+    const char        *name;
+    struct binding    *bindings;
 };
 
 struct ctx {
-    struct env     *global;
+    struct module  *modules;
     struct binding *local;
 };
 
@@ -378,18 +377,18 @@ void free_string(struct string *string);
  */
 struct term *build_func(struct term *params, struct term *exp);
 
-struct env *env_create(const char *name);
+struct module *module_create(const char *name);
 
-#define define_native(env, name, argc, impl, types ...)       \
-    define_native_intl(__FILE__, __LINE__, env, name, argc, impl, ## types)
+#define define_native(module, name, argc, impl, types ...)       \
+    define_native_intl(__FILE__, __LINE__, module, name, argc, impl, ## types)
 
 void define_native_intl(const char *fname, int line,
-                        struct env *env, const char *name,
+                        struct module *module, const char *name,
                         int argc, void *impl, ...);
 
-int typecheck(struct term *module, struct env *env);
-struct env *compile(struct term *term, struct env *global);
-struct env *builtin_init(void);
+int typecheck(struct term *term, struct module *module);
+struct module *compile(struct term *term, struct module *global);
+struct module *builtin_init(void);
 
 /* Used by augparse for some testing */
 int __aug_load_module_file(struct augeas *aug, const char *filename);

@@ -186,24 +186,24 @@ static struct value *tree_rm_glue(ATTRIBUTE_UNUSED struct info *info,
     return tree;
 }
 
-struct env *builtin_init(void) {
-    struct env *env = env_create("Builtin");
+struct module *builtin_init(void) {
+    struct module *modl = module_create("Builtin");
     /* Primitive lenses */
-    define_native(env, "del",     2, lns_del, T_REGEXP, T_STRING, T_LENS);
-    define_native(env, "store",   1, lns_store, T_REGEXP, T_LENS);
-    define_native(env, "key",     1, lns_key, T_REGEXP, T_LENS);
-    define_native(env, "label",   1, lns_label, T_STRING, T_LENS);
-    define_native(env, "seq",     1, lns_seq, T_STRING, T_LENS);
-    define_native(env, "counter", 1, lns_counter, T_STRING, T_LENS);
+    define_native(modl, "del",     2, lns_del, T_REGEXP, T_STRING, T_LENS);
+    define_native(modl, "store",   1, lns_store, T_REGEXP, T_LENS);
+    define_native(modl, "key",     1, lns_key, T_REGEXP, T_LENS);
+    define_native(modl, "label",   1, lns_label, T_STRING, T_LENS);
+    define_native(modl, "seq",     1, lns_seq, T_STRING, T_LENS);
+    define_native(modl, "counter", 1, lns_counter, T_STRING, T_LENS);
     /* Applying lenses (mostly for tests) */
-    define_native(env, "get",     2, lens_get, T_LENS, T_STRING, T_TREE);
-    define_native(env, "put",     3, lens_put, T_LENS, T_TREE, T_STRING,
+    define_native(modl, "get",     2, lens_get, T_LENS, T_STRING, T_TREE);
+    define_native(modl, "put",     3, lens_put, T_LENS, T_TREE, T_STRING,
                                                T_STRING);
     /* Tree manipulation used by the PUT tests */
-    define_native(env, "set", 3, tree_set_glue, T_STRING, T_STRING, T_TREE, T_TREE);
-    define_native(env, "rm", 2, tree_rm_glue, T_STRING, T_TREE, T_TREE);
+    define_native(modl, "set", 3, tree_set_glue, T_STRING, T_STRING, T_TREE, T_TREE);
+    define_native(modl, "rm", 2, tree_rm_glue, T_STRING, T_TREE, T_TREE);
 
-    return env;
+    return modl;
 }
 
 
