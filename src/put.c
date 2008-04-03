@@ -97,6 +97,14 @@ static struct split *make_split(struct tree *tree) {
     return split;
 }
 
+static void free_split(struct split *split) {
+    if (split == NULL)
+        return;
+
+    free((char *) split->labels);
+    free(split);
+}
+
 static void split_append(struct split **split,
                          struct tree *tree, struct tree *follow,
                          const char *labels, size_t start, size_t end) {
@@ -367,8 +375,7 @@ static void put_subtree(struct lens *lens, struct state *state) {
 
     if (tree->children != NULL) {
         assert(state->split->next == NULL);
-        free((char *) state->split->labels);
-        free(state->split);
+        free_split(state->split);
     }
     *state = oldstate;
     *state->split= oldsplit;
@@ -667,6 +674,7 @@ void lns_put(FILE *out, struct lens *lens, struct tree *tree,
     state.key = tree->label;
     put_lens(lens, &state);
 
+    free_split(state.split);
     free_skel(state.skel);
     free_dict(state.dict);
 }
