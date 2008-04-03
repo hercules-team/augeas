@@ -766,6 +766,7 @@ static struct value *coerce(struct value *v, struct type *t) {
         struct value *rxp = make_value(V_REGEXP, ref(v->info));
         rxp->regexp = make_regexp_literal(v->info, v->string->str);
         unref(v, value);
+        unref(vt, type);
         return rxp;
     }
     fatal_error(v->info, "Failed to coerce %s to %s",
@@ -1203,7 +1204,6 @@ static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
                     type_name(exp->left->type), type_name(exp->right->type),
                     type_name(t));
     }
-    unref(t, type);
     unref(v1, value);
     unref(v2, value);
     return v;
