@@ -123,14 +123,14 @@ static struct dict *make_dict(const char *key,
 void free_dict(struct dict *dict) {
     if (dict == NULL)
         return;
-    while (dict->entry != NULL) {
-        struct dict_entry *del = dict->entry;
-        dict->entry = del->next;
+    while (dict->mark != NULL) {
+        struct dict_entry *del = dict->mark;
+        dict->mark = del->next;
         free_skel(del->skel);
         free_dict(del->dict);
         free(del);
     }
-    // FIXME: Free dict->key ??
+    free((char *) dict->key);
     free(dict);
 }
 

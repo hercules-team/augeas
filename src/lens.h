@@ -104,8 +104,8 @@ struct dict_entry {
 struct dict {
     struct dict *next;
     const char *key;
-    struct dict_entry *entry;
-    struct dict_entry *mark; /* Mark that will never change */
+    struct dict_entry *entry; /* This will change as entries are looked up */
+    struct dict_entry *mark;  /* Pointer to initial entry, will never change */
 };
 
 struct lns_error {
