@@ -250,6 +250,7 @@ int transform_save(struct augeas *aug, struct transform *xform,
     const char *text = NULL;
     const char *filename = path + strlen(AUGEAS_FILES_TREE);
     const char *err_status = NULL;
+    struct lns_error *err;
 
     asprintf(&augnew, "%s" EXT_AUGNEW, filename);
 
@@ -264,7 +265,7 @@ int transform_save(struct augeas *aug, struct transform *xform,
         goto error;
 
     if (tree != NULL)
-        lns_put(fp, xform->lens, tree, text);
+        lns_put(fp, xform->lens, tree, text, &err);
     // FIXME: Delete file if tree == NULL
 
     if (fclose(fp) != 0)

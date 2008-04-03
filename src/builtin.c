@@ -146,9 +146,10 @@ static struct value *lens_put(struct info *info, struct value *l,
     char *buf;
     size_t size;
     struct value *v;
+    struct lns_error *err;
 
     stream = open_memstream(&buf, &size);
-    lns_put(stream, l->lens, tree->tree, str->string->str);
+    lns_put(stream, l->lens, tree->tree, str->string->str, &err);
     fclose (stream);
 
     v = make_value(V_STRING, ref(info));

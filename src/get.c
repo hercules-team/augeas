@@ -92,6 +92,22 @@ static struct skel *make_skel(struct lens *lens) {
     return skel;
 }
 
+void free_skel(struct skel *skel) {
+    if (skel == NULL)
+        return;
+    if (skel->tag == L_CONCAT || skel->tag == L_PLUS 
+        || skel->tag == L_STAR || skel->tag == L_MAYBE) {
+        while (skel->skels != NULL) {
+            struct skel *del = skel->skels;
+            skel->skels = del->next;
+            free_skel(del);
+        }
+    } else if (skel->tag == L_DEL) {
+        free((char *) skel->text);
+    }
+    free(skel);
+}
+
 static struct dict *make_dict(const char *key,
                               struct skel *skel, struct dict *subdict) {
     struct dict *dict;
@@ -102,6 +118,20 @@ static struct dict *make_dict(const char *key,
     dict->entry->dict = subdict;
     dict->mark = dict->entry;
     return dict;
+}
+
+void free_dict(struct dict *dict) {
+    if (dict == NULL)
+        return;
+    while (dict->entry != NULL) {
+        struct dict_entry *del = dict->entry;
+        dict->entry = del->next;
+        free_skel(del->skel);
+        free_dict(del->dict);
+        free(del);
+    }
+    // FIXME: Free dict->key ??
+    free(dict);
 }
 
 static void print_skel(struct skel *skel);
@@ -664,15 +694,12 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
     struct state state;
     struct tree *tree;
 
+    MEMZERO(&state, 1);
     state.info = *info;
     state.info.ref = UINT_MAX;
 
     state.text = text;
     state.pos = text;
-    state.applied = 0;
-    state.seqs  = NULL;
-    state.key = NULL;
-    state.error = NULL;
     if (flags != PF_NONE && log != NULL) {
         state.flags = flags;
         state.log = log;
@@ -747,26 +774,37 @@ static struct skel *parse_lens(struct lens *lens, struct state *state,
     return skel;
 }
 
-void lns_parse(struct lens *lens, const char *text, struct skel **skel,
-               struct dict **dict) {
+struct skel *lns_parse(struct lens *lens, const char *text, struct dict **dict,
+                       struct lns_error **err) {
     struct state state;
+    struct skel *skel;
 
+    MEMZERO(&state, 1);
     state.info.ref = UINT_MAX;
     state.text = text;
     state.pos = text;
-    state.applied = 0;
-    state.seqs  = NULL;
-    state.key = NULL;
-    state.log = NULL;
     state.flags = PF_NONE;
+
     *dict = NULL;
-    *skel = parse_lens(lens, &state, dict);
+    skel = parse_lens(lens, &state, dict);
+
+    free_seqs(state.seqs);
     if (! state.applied || *state.pos != '\0') {
         // This should never happen during lns_parse
-        get_error(&state, lens, "parse did not read entire file");
-        return;
+        get_error(&state, lens, "parse did not process entire input");
     }
-    // FIXME: free state->seqs
+    if (state.error != NULL) {
+        free_skel(skel);
+        skel = NULL;
+        free_dict(*dict);
+        *dict = NULL;
+    }
+    if (err != NULL) {
+        *err = state.error;
+    } else {
+        free_lns_error(state.error);
+    }
+    return skel;
 }
 
 /*

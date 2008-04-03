@@ -114,6 +114,8 @@ struct lns_error {
     char         *message;
 };
 
+void free_skel(struct skel *skel);
+void free_dict(struct dict *dict);
 void free_lns_error(struct lns_error *err);
 
 /* Parse text TEXT according to GRAMMAR. FILENAME indicates what file TEXT
@@ -123,9 +125,10 @@ void free_lns_error(struct lns_error *err);
  */
 struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
                      FILE *log, int flags, struct lns_error **err);
-void lns_parse(struct lens *lens, const char *text, struct skel **skel,
-               struct dict **dict);
-void lns_put(FILE *out, struct lens *lens, struct tree *tree, const char *text);
+struct skel *lns_parse(struct lens *lens, const char *text,
+                       struct dict **dict, struct lns_error **err);
+void lns_put(FILE *out, struct lens *lens, struct tree *tree,
+             const char *text, struct lns_error **err);
 
 void free_lens(struct lens *lens);
 #endif

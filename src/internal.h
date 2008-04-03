@@ -119,6 +119,8 @@ char *pathsplit(const char *path);
         (var) = realloc((var), (n) * sizeof (*(var)));                  \
     } while (0)
 
+#define MEMZERO(ptr, n) memset((ptr), 0, (n) * sizeof(*(ptr)));
+
 /**
  * ATTRIBUTE_UNUSED:
  *

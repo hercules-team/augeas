@@ -641,19 +641,32 @@ static void dict_revert(struct dict *dict) {
 }
 
 void lns_put(FILE *out, struct lens *lens, struct tree *tree,
-             const char *text) {
+             const char *text, struct lns_error **err) {
     struct state state;
+    struct lns_error *err1;
 
     if (tree == NULL)
         return;
+    if (err != NULL)
+        *err = NULL;
 
-    lns_parse(lens, text, &state.skel, &state.dict);
+    state.skel = lns_parse(lens, text, &state.dict, &err1);
 
+    if (err1 != NULL) {
+        if (err != NULL)
+            *err = err1;
+        else
+            free_lns_error(err1);
+        return;
+    }
     state.out = out;
     state.split = make_split(tree, tree->next);
     state.leaf = 0;
     state.key = tree->label;
     put_lens(lens, &state);
+
+    free_skel(state.skel);
+    free_dict(state.dict);
 }
 
 /*
