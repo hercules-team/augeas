@@ -171,6 +171,7 @@ static void free_term(struct term *term) {
         free((char *) term->bname);
         unref(term->exp, term);
         break;
+    case A_COMPOSE:
     case A_UNION:
     case A_CONCAT:
     case A_APP:
@@ -906,7 +907,7 @@ static struct type *require_exp_type(struct term *term, struct ctx *ctx,
     return expect_types_arr(term->info, term->type, ntypes, allowed);
 }
 
-static int check_concat(struct term *term, struct ctx *ctx) {
+static int check_compose(struct term *term, struct ctx *ctx) {
     struct type *tl = NULL, *tr = NULL;
 
     if (! check_exp(term->left, ctx))
@@ -914,9 +915,9 @@ static int check_concat(struct term *term, struct ctx *ctx) {
     tl = term->left->type;
 
     if (tl->tag == T_ARROW) {
-        /* Concatenation (composition) of functions f: a -> b and g: c -> d
-           if defined as (f . g) x = g (f x) and is type correct if b <: c
-           yielding a function with type a -> d */
+        /* Composition of functions f: a -> b and g: c -> d is defined as
+           (f . g) x = g (f x) and is type correct if b <: c yielding a
+           function with type a -> d */
         if (! check_exp(term->right, ctx))
             return 0;
         tr = term->right->type;
@@ -926,16 +927,32 @@ static int check_concat(struct term *term, struct ctx *ctx) {
             goto print_error;
         term->type = make_arrow_type(tl->dom, tr->img);
     } else {
-        tl = require_exp_type(term->left, ctx, 
-                              3, t_string, t_regexp, t_lens);
-        tr = require_exp_type(term->right, ctx, 
-                              3, t_string, t_regexp, t_lens);
-        if ((tl == NULL) || (tr == NULL))
-            return 0;
-        term->type = type_join(tl, tr);
-        if (term->type == NULL)
-            goto print_error;
+        goto print_error;
     }
+    return 1;
+ print_error:
+    type_error2(term->info,
+                "composition of %s and %s is not possible",
+                term->left->type, term->right->type);
+    return 0;
+}
+
+static int check_concat(struct term *term, struct ctx *ctx) {
+    struct type *tl = NULL, *tr = NULL;
+
+    if (! check_exp(term->left, ctx))
+        return 0;
+    tl = term->left->type;
+
+    tl = require_exp_type(term->left, ctx, 
+                          3, t_string, t_regexp, t_lens);
+    tr = require_exp_type(term->right, ctx, 
+                          3, t_string, t_regexp, t_lens);
+    if ((tl == NULL) || (tr == NULL))
+        return 0;
+    term->type = type_join(tl, tr);
+    if (term->type == NULL)
+        goto print_error;
     return 1;
  print_error:
     type_error2(term->info,
@@ -973,6 +990,9 @@ static int check_exp(struct term *term, struct ctx *ctx) {
                 }
             }
         }
+        break;
+    case A_COMPOSE:
+        result = check_compose(term, ctx);
         break;
     case A_CONCAT:
         result = check_concat(term, ctx);
@@ -1151,6 +1171,47 @@ static struct value *compile_union(struct term *exp, struct ctx *ctx) {
     return v;
 }
 
+static struct value *compile_compose(struct term *exp, struct ctx *ctx) {
+    struct value *v1 = compile_exp(exp->info, exp->left, ctx);
+    if (EXN(v1))
+        return v1;
+    struct value *v2 = compile_exp(exp->info, exp->right, ctx);
+    if (EXN(v2)) {
+        unref(v1, value);
+        return v2;
+    }
+
+    struct type *t = exp->type;
+    struct info *info = exp->info;
+    struct value *v;
+
+    v1 = coerce(v1, t);
+    v2 = coerce(v2, t);
+    if (t->tag == T_ARROW) {
+        /* Build lambda x: exp->right (exp->left x) as a closure */
+        char *var = strdup("@0");
+        struct term *param = make_param(var, ref(exp->left->type->dom),
+                                        ref(info));
+        struct term *ident = make_term(A_IDENT, ref(info));
+        ident->ident = ref(param->param->name);
+        struct term *app = make_app_term(ref(exp->left), ident, ref(info));
+        app = make_app_term(ref(exp->right), app, ref(info));
+        struct term *func = build_func(param, app);
+
+        if (! check_exp(func, ctx))
+            fatal_error(info, "Func for concat failed typecheck");
+        assert(type_equal(func->type, exp->type));
+        v = make_closure(func, ctx->local);
+    } else {
+        fatal_error(info, "Tried to compose a %s and a %s to yield a %s",
+                    type_name(exp->left->type), type_name(exp->right->type),
+                    type_name(t));
+    }
+    unref(v1, value);
+    unref(v2, value);
+    return v;
+}
+
 static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
     struct value *v1 = compile_exp(exp->info, exp->left, ctx);
     if (EXN(v1))
@@ -1184,21 +1245,6 @@ static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
         struct lens *l2 = v2->lens;
         v = make_value(V_LENS, ref(info));
         v->lens = lns_make_concat(ref(info), ref(l1), ref(l2));
-    } else if (t->tag == T_ARROW) {
-        /* Build lambda x: exp->right (exp->left x) as a closure */
-        char *var = strdup("@0");
-        struct term *param = make_param(var, ref(exp->left->type->dom),
-                                        ref(info));
-        struct term *ident = make_term(A_IDENT, ref(info));
-        ident->ident = ref(param->param->name);
-        struct term *app = make_app_term(ref(exp->left), ident, ref(info));
-        app = make_app_term(ref(exp->right), app, ref(info));
-        struct term *func = build_func(param, app);
-
-        if (! check_exp(func, ctx))
-            fatal_error(info, "Func for concat failed typecheck");
-        assert(type_equal(func->type, exp->type));
-        v = make_closure(func, ctx->local);
     } else {
         fatal_error(info, "Tried to concat a %s and a %s to yield a %s",
                     type_name(exp->left->type), type_name(exp->right->type),
@@ -1301,6 +1347,9 @@ static struct value *compile_exp(struct info *info,
     struct value *v = NULL;
 
     switch (exp->tag) {
+    case A_COMPOSE:
+        v = compile_compose(exp, ctx);
+        break;
     case A_UNION:
         v = compile_union(exp, ctx);
         break;

@@ -92,6 +92,7 @@ void assert_error_at(const char *srcfile, int srclineno, struct info *info,
 enum term_tag {
     A_MODULE,
     A_BIND,
+    A_COMPOSE,
     A_UNION,
     A_CONCAT,
     A_APP,
@@ -124,8 +125,8 @@ struct term {
             const char    *bname;
             struct term   *exp;
         };
-        struct {
-            struct term *left;          /* A_UNION, A_CONCAT, A_APP */
+        struct {                   /* A_COMPOSE, A_UNION, A_CONCAT, A_APP */
+            struct term *left;
             struct term *right;
         };
         struct value    *value;         /* A_VALUE */

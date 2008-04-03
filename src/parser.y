@@ -66,7 +66,7 @@ typedef struct info YYLTYPE;
 }
 
 %type<term>   start decls
-%type<term>   exp catexp appexp rexp aexp
+%type<term>   exp unionexp catexp appexp rexp aexp
 %type<term>   param param_list
 %type<string> qid id
 %type<type>  type atype
@@ -159,7 +159,12 @@ test_res: '?'
         | exp
 
 /* General expressions */
-exp: exp '|' catexp
+exp: exp ';' unionexp
+     { $$ = make_binop(A_COMPOSE, $1, $3, &@$); }
+   | unionexp
+     { $$ = $1; }
+
+unionexp: unionexp '|' catexp
      { $$ = make_binop(A_UNION, $1, $3, &@$); }
    | catexp
      { $$ = $1; }
@@ -333,7 +338,8 @@ static struct term *make_bind(const char *ident, struct term *params,
 static struct term *make_binop(enum term_tag tag,
                               struct term *left, struct term *right,
                               struct info *locp) {
-  assert(tag == A_CONCAT || tag == A_UNION || tag == A_APP);
+  assert(tag == A_COMPOSE || tag == A_CONCAT
+         || tag == A_UNION || tag == A_APP);
   struct term *term = make_term_locp(tag, locp);
   term->left = left;
   term->right = right;
