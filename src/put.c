@@ -75,21 +75,20 @@ static const char *_t(struct lens *lens) {
 #define debug(fmt, args ...)
 #endif
 
-static struct split *make_split(struct tree *tree, struct tree *follow) {
+static struct split *make_split(struct tree *tree) {
     struct split *split;
     CALLOC(split, 1);
-    split->tree = tree;
-    split->follow = follow;
 
+    split->tree = tree;
     split->start = 0;
-    for (struct tree *t = tree; t != follow; t = t->next) {
+    for (struct tree *t = tree; t != NULL; t = t->next) {
         if (t->label != NULL)
             split->end += strlen(t->label);
         split->end += 1;
     }
     char *l;
     CALLOC(l, split->end + 1);
-    for (struct tree *t = tree; t != follow; t = t->next) {
+    for (struct tree *t = tree; t != NULL; t = t->next) {
         if (t->label != NULL)
             strcat(l, t->label);
         strcat(l, "/");
@@ -347,7 +346,7 @@ static void put_subtree(struct lens *lens, struct state *state) {
     struct dict_entry *entry = dict_lookup(tree->label, state->dict);
     state->key = tree->label;
     if (tree->children != NULL) {
-        state->split = make_split(tree->children, NULL);
+        state->split = make_split(tree->children);
     } else {
         // FIXME: state->leaf == 1 means the tree is too flat
         assert(! state->leaf);
@@ -364,8 +363,8 @@ static void put_subtree(struct lens *lens, struct state *state) {
         put_lens(lens->child, state);
     }
 
-    assert(state->split->next == NULL);
     if (tree->children != NULL) {
+        assert(state->split->next == NULL);
         free((char *) state->split->labels);
         free(state->split);
     }
@@ -661,7 +660,7 @@ void lns_put(FILE *out, struct lens *lens, struct tree *tree,
         return;
     }
     state.out = out;
-    state.split = make_split(tree, tree->next);
+    state.split = make_split(tree);
     state.leaf = 0;
     state.key = tree->label;
     put_lens(lens, &state);
