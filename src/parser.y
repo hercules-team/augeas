@@ -73,6 +73,7 @@ typedef struct info YYLTYPE;
 %type<quant> rep
 %type<term>  test_res test_exp
 %type<tree>  tree_const tree_branch
+%type<string> tree_label
 
 %{
 /* Lexer */
@@ -243,14 +244,17 @@ tree_const: '{' tree_branch '}' tree_const
           | /* empty */
             { $$ = NULL; }
 
-tree_branch: DQUOTED tree_const
-             { 
-               $$ = make_tree($1, NULL, $2); 
+tree_branch: tree_label tree_const
+             {
+               $$ = make_tree($1, NULL, $2);
              }
-           | DQUOTED '=' DQUOTED tree_const
+           | tree_label '=' DQUOTED tree_const
              {
                $$ = make_tree($1, $3, $4);
              }
+tree_label: DQUOTED
+          | /* empty */
+            { $$ = NULL; }
 %%
 
 int augl_parse_file(const char *name, struct term **term) {
