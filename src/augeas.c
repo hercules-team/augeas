@@ -518,14 +518,22 @@ int aug_save(struct augeas *aug) {
     return ret;
 }
 
-static int print_one(FILE *out, struct tree *tree, char **path) {
+static int print_one(FILE *out, struct tree *tree, char **path,
+                     int pr_hidden) {
     int end = strlen(*path);
-    if (tree->label == NULL)
-        return -1;
+    const char *label;
 
-    *path = realloc(*path, strlen(*path) + 1 + strlen(tree->label) + 1);
+    if (tree->label == NULL) {
+        if (! pr_hidden)
+            return -1;
+        label = "()";
+    } else {
+        label = tree->label;
+    }
+
+    *path = realloc(*path, strlen(*path) + 1 + strlen(label) + 1);
     (*path)[end] = SEP;
-    strcpy(*path + end + 1, tree->label);
+    strcpy(*path + end + 1, label);
 
     fprintf(out, *path);
     if (tree->value != NULL)
@@ -536,27 +544,31 @@ static int print_one(FILE *out, struct tree *tree, char **path) {
     return end;
 }
 
-static void print_rec(FILE *out, struct tree *tree, char **path) {
+static void print_rec(FILE *out, struct tree *tree, char **path,
+                      int pr_hidden) {
     for (;tree != NULL; tree = tree->next) {
-        int end = print_one(out, tree, path);
+        int end = print_one(out, tree, path, pr_hidden);
         if (end == -1)
             continue;
         /* We completely rely on how print_one does its thing here.
            TREE's label is still on *path, but print_one removed it
            by overwriting the / with a 0 */
         (*path)[end] = SEP;
-        print_rec(out, tree->children, path);
+        print_rec(out, tree->children, path, pr_hidden);
         (*path)[end] = '\0';
     }
 }
 
-void print_tree(struct tree *tree, FILE *out, const char *path) {
+void print_tree(struct tree *tree, FILE *out, const char *path,
+                int pr_hidden) {
+    if (path == NULL)
+        path = "()";
     char *pbuf = strdup(path);
     while (tree != NULL) {
         if (tree->children != NULL) {
-            print_rec(out, tree->children, &pbuf);
+            print_rec(out, tree->children, &pbuf, pr_hidden);
         } else {
-            print_one(out, tree, &pbuf);
+            print_one(out, tree, &pbuf, pr_hidden);
         }
         for (tree = tree->next; tree != NULL; tree = tree->next) {
             if (pathendswith(path, tree->label))
@@ -569,7 +581,7 @@ void print_tree(struct tree *tree, FILE *out, const char *path) {
 void aug_print(struct augeas *aug, FILE *out, const char *path) {
     struct tree *tree = tree_find(aug->tree, path);
     if (tree != NULL)
-        print_tree(tree, out, path);
+        print_tree(tree, out, path, 0);
 }
 
 void aug_close(struct augeas *aug) {

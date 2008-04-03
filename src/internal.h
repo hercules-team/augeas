@@ -217,7 +217,7 @@ int tree_rm(struct tree *tree, const char *path);
 int tree_set(struct tree *tree, const char *path, const char *value);
 struct tree *tree_find(struct tree *tree, const char *path);
 int free_tree(struct tree *tree);
-void print_tree(struct tree *tree, FILE *out, const char *path);
+void print_tree(struct tree *tree, FILE *out, const char *path, int pr_hidden);
 int tree_equal(struct tree *t1, struct tree *t2);
 
 #endif
