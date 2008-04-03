@@ -121,17 +121,19 @@ static struct dict *make_dict(const char *key,
 }
 
 void free_dict(struct dict *dict) {
-    if (dict == NULL)
-        return;
-    while (dict->mark != NULL) {
-        struct dict_entry *del = dict->mark;
-        dict->mark = del->next;
-        free_skel(del->skel);
-        free_dict(del->dict);
-        free(del);
+    while (dict != NULL) {
+        struct dict *next = dict->next;
+        while (dict->mark != NULL) {
+            struct dict_entry *del = dict->mark;
+            dict->mark = del->next;
+            free_skel(del->skel);
+            free_dict(del->dict);
+            free(del);
+        }
+        free((char *) dict->key);
+        free(dict);
+        dict = next;
     }
-    free((char *) dict->key);
-    free(dict);
 }
 
 static void print_skel(struct skel *skel);
