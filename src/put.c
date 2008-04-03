@@ -122,8 +122,8 @@ static struct split *split_concat(struct lens *lens, struct split *outer) {
 
     if (atype->re != NULL)
         atype->re->regs_allocated = REGS_UNALLOCATED;
-    count = regexp_match(atype, outer->labels,
-                         outer->end - outer->start, outer->start, &regs);
+    count = regexp_match(atype, outer->labels, outer->end,
+                         outer->start, &regs);
     if (count == -2) {
         FIXME("Match failed - produce better error");
         abort();
@@ -163,8 +163,8 @@ static struct split *split_iter(struct lens *lens, struct split *outer) {
 
     if (atype->re != NULL)
         atype->re->regs_allocated = REGS_UNALLOCATED;
-    count = regexp_match(atype, outer->labels,
-                         outer->end - outer->start, outer->start, &regs);
+    count = regexp_match(atype, outer->labels, outer->end,
+                         outer->start, &regs);
     if (count == -2) {
         FIXME("Match failed - produce better error");
         abort();
@@ -177,7 +177,7 @@ static struct split *split_iter(struct lens *lens, struct split *outer) {
     int pos = outer->start;
     while (pos < outer->end) {
         count = regexp_match(atype, outer->labels,
-                             outer->end - pos, pos, &regs);
+                             outer->end, pos, &regs);
         if (count == -2) {
             FIXME("Match failed - produce better error");
             abort();
@@ -202,7 +202,7 @@ static struct split *split_iter(struct lens *lens, struct split *outer) {
 /* Check if LENS applies to the current split in STATE */
 static int applies(struct lens *lens, struct split *split) {
     int count;
-    count = regexp_match(lens->atype, split->labels, split->end - split->start,
+    count = regexp_match(lens->atype, split->labels, split->end,
                          split->start, NULL);
     if (count == -2) {
         FIXME("Match failed - produce better error");
@@ -353,7 +353,8 @@ static void put_subtree(struct lens *lens, struct state *state) {
         assert(! state->leaf);
         state->leaf = 1;
         state->split->labels = "";
-        state->split->start = state->split->end = 0;
+        state->split->start = 0;
+        state->split->end = 1;
     }
     if (entry == NULL)
         create_lens(lens->child, state);
