@@ -22,7 +22,6 @@
 
 #include <fnmatch.h>
 #include <glob.h>
-#include <stdarg.h>
 
 #include "internal.h"
 #include "augeas.h"
@@ -107,35 +106,6 @@ int filter_matches(struct filter *filter, const char *path) {
             return 0;
     }
     return 1;
-}
-
-/* Join NSEG path components (passed as const char *) into one PATH.
-   Allocate as needed. Return 0 on success, -1 on failure */
-static int pathjoin(char **path, int nseg, ...) {
-    va_list ap;
-
-    va_start(ap, nseg);
-    for (int i=0; i < nseg; i++) {
-        const char *seg = va_arg(ap, const char *);
-        int len = strlen(seg) + 1;
-
-        if (*path != NULL) {
-            len += strlen(*path) + 1;
-            REALLOC(*path, len);
-            if (*path == NULL)
-                return -1;
-            if (strlen(*path) == 0 || (*path)[strlen(*path)-1] != SEP)
-                strcat(*path, "/");
-            if (seg[0] == SEP)
-                seg += 1;
-            strcat(*path, seg);
-        } else {
-            *path = malloc(len);
-            strcpy(*path, seg);
-        }
-    }
-    va_end(ap);
-    return 0;
 }
 
 /*

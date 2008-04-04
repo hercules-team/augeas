@@ -24,8 +24,38 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <stdarg.h>
 
 #include "internal.h"
+
+int pathjoin(char **path, int nseg, ...) {
+    va_list ap;
+
+    va_start(ap, nseg);
+    for (int i=0; i < nseg; i++) {
+        const char *seg = va_arg(ap, const char *);
+        if (seg == NULL)
+            seg = "()";
+        int len = strlen(seg) + 1;
+
+        if (*path != NULL) {
+            len += strlen(*path) + 1;
+            REALLOC(*path, len);
+            if (*path == NULL)
+                return -1;
+            if (strlen(*path) == 0 || (*path)[strlen(*path)-1] != SEP)
+                strcat(*path, "/");
+            if (seg[0] == SEP)
+                seg += 1;
+            strcat(*path, seg);
+        } else {
+            *path = malloc(len);
+            strcpy(*path, seg);
+        }
+    }
+    va_end(ap);
+    return 0;
+}
 
 const char* aug_read_file(const char *path) {
     FILE *fp = fopen(path, "r");

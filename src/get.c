@@ -56,6 +56,7 @@ void free_lns_error(struct lns_error *err) {
     if (err == NULL)
         return;
     free(err->message);
+    free(err->path);
     unref(err->lens, lens);
     free(err);
 }

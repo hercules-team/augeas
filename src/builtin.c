@@ -107,6 +107,28 @@ static void exn_add_lines(struct exn *exn, int nlines, ...) {
     exn->nlines += nlines;
 }
 
+static struct value *make_exn_value(struct info *info, struct lns_error *err,
+                                    const char *text) {
+    struct value *v;
+    struct exn *exn;
+    char *here = NULL;
+
+    exn = make_exn(info, err->message);
+    err->message = NULL;
+    if (err->pos >= 0) {
+        asprintf(&here, "Error encountered here (%d characters into string)",
+                 err->pos);
+        exn_add_lines(exn, 2, here, format_pos(text, err->pos));
+    } else {
+        asprintf(&here, "Error encountered at path %s", err->path);
+        exn_add_lines(exn, 1, here);
+    }
+
+    v = make_value(V_EXN, ref(info));
+    v->exn = exn;
+    return v;
+}
+
 /* V_LENS -> V_STRING -> V_TREE */
 static struct value *lens_get(struct info *info, struct value *l,
                               struct value *str) {
@@ -121,15 +143,8 @@ static struct value *lens_get(struct info *info, struct value *l,
         v = make_value(V_TREE, ref(info));
         v->tree = tree;
     } else {
-        struct exn *exn = make_exn(info, err->message);
-        char *here;
-        asprintf(&here, "Error encountered here (%d characters into string)",
-                 err->pos);
-        exn_add_lines(exn, 2, here, format_pos(text, err->pos));
-        err->message = NULL;
+        v = make_exn_value(info, err, text);
         free_lns_error(err);
-        v = make_value(V_EXN, ref(info));
-        v->exn = exn;
     }
     return v;
 }
@@ -141,7 +156,7 @@ static struct value *lens_put(struct info *info, struct value *l,
     assert(l->tag == V_LENS);
     assert(tree->tag == V_TREE);
     assert(str->tag == V_STRING);
-    
+
     FILE *stream;
     char *buf;
     size_t size;
@@ -152,8 +167,13 @@ static struct value *lens_put(struct info *info, struct value *l,
     lns_put(stream, l->lens, tree->tree, str->string->str, &err);
     fclose (stream);
 
-    v = make_value(V_STRING, ref(info));
-    v->string = make_string(buf);
+    if (err == NULL) {
+        v = make_value(V_STRING, ref(info));
+        v->string = make_string(buf);
+    } else {
+        v = make_exn_value(info, err, str->string->str);
+        free(buf);
+    }
     return v;
 }
 

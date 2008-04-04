@@ -20,6 +20,7 @@
  * Author: David Lutterkort <dlutter@redhat.com>
  */
 
+#include <stdarg.h>
 #include "syntax.h"
 
 //#define DEBUG_SPEW
@@ -48,12 +49,14 @@ struct split {
 };
 
 struct state {
-    FILE         *out;
-    struct split *split;
-    const char   *key;
-    int           leaf;
-    struct dict  *dict;
-    struct skel  *skel;
+    FILE             *out;
+    struct split     *split;
+    const char       *key;
+    int               leaf;
+    struct dict      *dict;
+    struct skel      *skel;
+    char             *path;   /* Position in the tree, for errors */
+    struct lns_error *error;
 };
 
 static void create_lens(struct lens *lens, struct state *state);
@@ -74,6 +77,23 @@ static const char *_t(struct lens *lens) {
 #else
 #define debug(fmt, args ...)
 #endif
+
+static void put_error(struct state *state, struct lens *lens,
+                      const char *format, ...)
+{
+    va_list ap;
+
+    if (state->error != NULL)
+        return;
+    CALLOC(state->error, 1);
+    state->error->lens = ref(lens);
+    state->error->pos  = -1;
+    state->error->path = strdup(state->path);
+
+    va_start(ap, format);
+    vasprintf(&state->error->message, format, ap);
+    va_end(ap);
+}
 
 static struct split *make_split(struct tree *tree) {
     struct split *split;
@@ -119,10 +139,11 @@ static void split_append(struct split **split,
 }
 
 /* Refine a tree split OUTER according to the L_CONCAT lens LENS */
-static struct split *split_concat(struct lens *lens, struct split *outer) {
+static struct split *split_concat(struct state *state, struct lens *lens) {
     assert(lens->tag == L_CONCAT);
 
     int count = 0;
+    struct split *outer = state->split;
     struct re_registers regs;
     struct split *split = NULL;
     struct regexp *atype = lens->atype;
@@ -135,8 +156,13 @@ static struct split *split_concat(struct lens *lens, struct split *outer) {
         FIXME("Match failed - produce better error");
         abort();
     } else if (count == -1) {
-        FIXME("No match - produce better error");
-        abort();
+        char *labels = strndup(outer->labels + outer->start, 
+                               outer->end - outer->start);
+        put_error(state, lens,
+                  "Failed to match /%s/ with %s",
+                  atype->pattern->str, labels);
+        free(labels);
+        return NULL;
     }
 
     struct tree *cur = outer->tree;
@@ -349,10 +375,13 @@ static void put_subtree(struct lens *lens, struct state *state) {
     assert(lens->tag == L_SUBTREE);
     struct state oldstate = *state;
     struct split oldsplit = *state->split;
+    size_t oldpathlen = strlen(state->path);
 
     struct tree *tree = state->split->tree;
     struct dict_entry *entry = dict_lookup(tree->label, state->dict);
     state->key = tree->label;
+    pathjoin(&state->path, 1, state->key);
+
     if (tree->children != NULL) {
         state->split = make_split(tree->children);
     } else {
@@ -373,12 +402,15 @@ static void put_subtree(struct lens *lens, struct state *state) {
         put_lens(lens->child, state);
     }
 
-    if (tree->children != NULL) {
+    if (state->split != NULL && tree->children != NULL) {
         assert(state->split->next == NULL);
         free_split(state->split);
     }
+    oldstate.error = state->error;
+    oldstate.path = state->path;
     *state = oldstate;
     *state->split= oldsplit;
+    state->path[oldpathlen] = '\0';
 }
 
 static void put_del(struct lens *lens, struct state *state) {
@@ -410,13 +442,14 @@ static void put_concat(struct lens *lens, struct state *state) {
     struct split *oldsplit = state->split;
     struct skel *oldskel = state->skel;
 
-    struct split *split = split_concat(lens, state->split);
+    struct split *split = split_concat(state, lens);
 
     state->skel = state->skel->skels;
     state->split = split;
     for (int i=0; i < lens->nchildren; i++) {
         if (state->split == NULL) {
-            syntax_error(lens->info, "Short split for concat");
+            put_error(state, lens,
+                      "Not enough components in concat");
             list_free(split);
             return;
         }
@@ -476,6 +509,9 @@ static void put_quant_maybe(struct lens *lens, struct state *state) {
 static void put_lens(struct lens *lens, struct state *state) {
     debug("put_lens: %s:%d %s\n", _t(lens), lens->info->first_line,
           _l(state->tree));
+    if (state->error != NULL)
+        return;
+
     switch(lens->tag) {
     case L_DEL:
         put_del(lens, state);
@@ -546,7 +582,7 @@ static void create_concat(struct lens *lens, struct state *state) {
     assert(state->skel == NULL);
     struct split *oldsplit = state->split;
 
-    struct split *split = split_concat(lens, state->split);
+    struct split *split = split_concat(state, lens);
 
     state->split = split;
     for (int i=0; i < lens->nchildren; i++) {
@@ -597,6 +633,8 @@ static void create_quant_maybe(struct lens *lens, struct state *state) {
 static void create_lens(struct lens *lens, struct state *state) {
     debug("create_lens: %s:%d %s\n", _t(lens), lens->info->first_line,
           _l(state->tree));
+    if (state->error != NULL)
+        return;
     switch(lens->tag) {
     case L_DEL:
         create_del(lens, state);
@@ -659,6 +697,8 @@ void lns_put(FILE *out, struct lens *lens, struct tree *tree,
     if (err != NULL)
         *err = NULL;
 
+    MEMZERO(&state, 1);
+    state.path = strdup("");
     state.skel = lns_parse(lens, text, &state.dict, &err1);
 
     if (err1 != NULL) {
@@ -674,9 +714,15 @@ void lns_put(FILE *out, struct lens *lens, struct tree *tree,
     state.key = tree->label;
     put_lens(lens, &state);
 
+    free(state.path);
     free_split(state.split);
     free_skel(state.skel);
     free_dict(state.dict);
+    if (err != NULL) {
+        *err = state.error;
+    } else {
+        free_lns_error(state.error);
+    }
 }
 
 /*

@@ -112,6 +112,10 @@ static inline int pathendswith(const char *path, const char *basenam) {
  */
 char *pathsplit(const char *path);
 
+/* Join NSEG path components (passed as const char *) into one PATH.
+   Allocate as needed. Return 0 on success, -1 on failure */
+int pathjoin(char **path, int nseg, ...);
+
 /* Call calloc to allocate an array of N instances of *VAR */
 #define CALLOC(Var,N) do { (Var) = calloc ((N), sizeof (*(Var))); } while (0)
 
