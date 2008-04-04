@@ -6,8 +6,7 @@ module Hosts =
   let sep_tab = sep "\t"
   let sep_spc = sep " "
 
-  let del_str (s:string) = del s s
-  let eol = del_str "\n"
+  let eol = Util.del_str "\n"
 
   let comment = [ del /#.*\n/ "# " ]
   let word = /[^# \n\t]+/
