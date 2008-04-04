@@ -33,6 +33,12 @@ static struct value *typecheck_maybe(struct info *info, struct lens *l);
 static struct regexp *lns_key_regexp(struct lens *l, struct value **exn);
 static struct regexp *make_key_regexp(struct info *info, const char *pat);
 
+/* Lens names for pretty printing */
+static const char *const tags[] = {
+    "del", "store", "key", "label", "seq", "counter", "concat", "union",
+    "subtree", "star", "maybe"
+};
+
 static struct lens *make_lens(enum lens_tag tag, struct info *info) {
     struct lens *lens;
     make_ref(lens);
@@ -314,11 +320,31 @@ static struct regexp *make_key_regexp(struct info *info, const char *pat) {
     return regexp;
 }
 
+/* Calculate the regexp that matches the labels if the trees that L can
+   generate.
+
+   We have some headache here because of the behavior of STORE: since STORE
+   creates a tree with no label (a leaf, really), its key regexp should be
+   "/", but only of there is no KEY or LABEL statement that fills in the
+   label of the tree that STORE created.
+ */
 static struct regexp *lns_key_regexp(struct lens *l, struct value **exn) {
+    static const struct string leaf_key_string = {
+        .ref = UINT_MAX, .str = "/"
+    };
+    static const struct string *const leaf_key_pat = &leaf_key_string;
+
     *exn = NULL;
     switch(l->tag) {
-    case L_DEL:
     case L_STORE:
+        {
+            struct regexp *r;
+            make_ref(r);
+            r->info = ref(l->info);
+            r->pattern = (struct string *) leaf_key_pat;
+            return r;
+        }
+    case L_DEL:
     case L_COUNTER:
         return NULL;
     case L_SEQ:
@@ -344,11 +370,18 @@ static struct regexp *lns_key_regexp(struct lens *l, struct value **exn) {
                 }
                 if (r != NULL) {
                     if (k != NULL) {
-                        *exn = make_exn_value(ref(l->info),
-                                              "More than one key");
-                        unref(r, regexp);
-                        unref(k, regexp);
-                        return NULL;
+                        if (k->pattern == leaf_key_pat) {
+                            unref(k, regexp);
+                            k = r;
+                        } else if (r->pattern == leaf_key_pat) {
+                            unref(r, regexp);
+                        } else {
+                            *exn = make_exn_value(ref(l->info),
+                                                  "More than one key");
+                            unref(r, regexp);
+                            unref(k, regexp);
+                            return NULL;
+                        }
                     } else {
                         k = r;
                     }
@@ -364,9 +397,6 @@ static struct regexp *lns_key_regexp(struct lens *l, struct value **exn) {
                 struct regexp *r = lns_key_regexp(l->children[i], exn);
                 if (*exn != NULL)
                     return NULL;
-                if (r == NULL) {
-                    r = make_key_regexp(l->info, "");
-                }
                 if (k == NULL) {
                     k = r;
                 } else {
