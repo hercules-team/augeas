@@ -1,0 +1,4 @@
+Modules that test the interpreter, particularly ones that make module
+loading fail.
+
+Tests for actually shipping lenses should go into ../lenses/tests.

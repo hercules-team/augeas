@@ -1,12 +1,13 @@
 #! /bin/bash
 
-# Run all grammars in tests/grammars/{reject,accept} through augparse
-# and report whether they are accepted/rejected as expected
+# Run test modules that make sure the interpreter fails/succeeds in
+# various hairy situations.
+#
 # If run with option '-v', error output from each augparse run is printed
 
 TOPDIR=$(cd $(dirname $0)/.. && pwd)
-DATADIR=${top_srcdir-${THISDIR}}/tests
-GRAMMARS=${DATADIR}/grammars
+DATADIR=${top_srcdir-${TOPDIR}}/tests
+MODULES=${DATADIR}/modules
 AUGPARSE=${top_builddir-${DATADIR}/..}/src/augparse
 
 VERBOSE=n
@@ -14,7 +15,7 @@ if [[ "x$1" == "x-v" ]]; then
     VERBOSE=y
 fi
 
-function run_grammars {
+function run_tests {
     ret_succ=$1
     ret_fail=$(( 1 - $ret_succ ))
     action=$2
@@ -26,7 +27,7 @@ function run_grammars {
             echo "Grammar file $g is not readable"
             exit 19
         fi
-        printf "$action %-30s ... " $(basename $g)
+        printf "$action %-30s ... " $(basename $g .aug)
         errs=$(${AUGPARSE} $g 2>&1 > /dev/null)
         ret=$?
         if [[ $ret -eq $ret_fail ]]; then
@@ -55,7 +56,7 @@ echo "Checking grammars"
 echo
 
 result=0
-run_grammars 1 reject $GRAMMARS/reject/*.aug
-run_grammars 0 accept $GRAMMARS/accept/*.aug
+run_tests 1 reject $MODULES/fail_*.aug
+run_tests 0 accept $MODULES/pass_*.aug
 
 exit $result
