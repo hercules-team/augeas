@@ -163,14 +163,15 @@ static struct value *tree_set_glue(struct info *info, struct value *path,
     assert(val->tag == V_STRING);
     assert(tree->tag == V_TREE);
     if (tree_set(tree->tree, path->string->str, val->string->str) == -1) {
-        print_info(stderr, info);
-        FIXME("Unexpected error from tree_set");
+        return make_exn_value(ref(info),
+                              "Tree set of %s to '%s' failed",
+                              path->string->str, val->string->str);
     }
     return tree;
 }
 
 /* V_STRING -> V_TREE -> V_TREE */
-static struct value *tree_rm_glue(ATTRIBUTE_UNUSED struct info *info,
+static struct value *tree_rm_glue(struct info *info,
                                   struct value *path,
                                   struct value *tree) {
     // FIXME: This only works if TREE is not referenced more than once;
@@ -178,7 +179,10 @@ static struct value *tree_rm_glue(ATTRIBUTE_UNUSED struct info *info,
     // need to copy TREE first
     assert(path->tag == V_STRING);
     assert(tree->tag == V_TREE);
-    tree_rm(tree->tree, path->string->str);
+    if (tree_rm(tree->tree, path->string->str) == -1) {
+        return make_exn_value(ref(info), "Tree rm of %s failed",
+                              path->string->str);
+    }
     return tree;
 }
 
