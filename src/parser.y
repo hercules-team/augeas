@@ -71,7 +71,8 @@ typedef struct info YYLTYPE;
 %type<string> qid id
 %type<type>  type atype
 %type<quant> rep
-%type<term>  test_res test_exp
+%type<term>  test_exp
+%type<intval> test_special_res
 %type<tree>  tree_const tree_branch
 %type<string> tree_label
 
@@ -111,7 +112,8 @@ static void augl_error(struct info *locp, struct term **term,
                                    struct info *info);
  static struct term *make_put_test(struct term *lens, struct term *arg,
                                    struct term *cmds, struct info *info);
- static struct term *make_test(struct term *test, struct term *result, 
+ static struct term *make_test(struct term *test, struct term *result,
+                               enum test_result_tag tr_tag,
                                struct term *decls, struct info *locp);
  static struct term *make_tree_value(struct tree *, struct info*);
  static struct tree *tree_concat(struct tree *, struct tree *);
@@ -139,10 +141,15 @@ decls: KW_LET LIDENT param_list '=' exp decls
          LOC_MERGE(@1, @1, @5);
          $$ = make_bind($2, $3, $5, $6, &@1);
        }
-     | KW_TEST test_exp '=' test_res decls
+     | KW_TEST test_exp '=' exp decls
        {
          LOC_MERGE(@1, @1, @4);
-         $$ = make_test($2, $4, $5, &@1);
+         $$ = make_test($2, $4, TR_CHECK, $5, &@1);
+       }
+     | KW_TEST test_exp '=' test_special_res decls
+       {
+         LOC_MERGE(@1, @1, @4);
+         $$ = make_test($2, NULL, $4, $5, &@1);
        }
      | /* epsilon */
        { $$ = NULL; }
@@ -154,9 +161,10 @@ test_exp: aexp KW_GET exp
         | aexp KW_PUT aexp KW_AFTER exp
           { $$ = make_put_test($1, $3, $5, &@$); }
 
-test_res: '?'
-          { $$ = NULL; }
-        | exp
+test_special_res: '?'
+                  { $$ = TR_PRINT; }
+                | '*'
+                  { $$ = TR_EXN; }
 
 /* General expressions */
 exp: exp ';' unionexp
@@ -404,8 +412,10 @@ static struct term *make_put_test(struct term *lens, struct term *arg,
 }
 
 static struct term *make_test(struct term *test, struct term *result,
+                              enum test_result_tag tr_tag,
                               struct term *decls, struct info *locp) {
   struct term *term = make_term_locp(A_TEST, locp);
+  term->tr_tag = tr_tag;
   term->test = test;
   term->result = result;
   term->next = decls;

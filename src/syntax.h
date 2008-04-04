@@ -104,6 +104,12 @@ enum term_tag {
     A_TEST
 };
 
+enum test_result_tag {
+    TR_CHECK,
+    TR_PRINT,
+    TR_EXN
+};
+
 enum quant_tag {
     Q_STAR,
     Q_PLUS,
@@ -141,8 +147,9 @@ struct term {
             struct term   *body;
         };
         struct {                       /* A_TEST */
-            struct term *test;
-            struct term *result;
+            enum test_result_tag tr_tag;
+            struct term         *test;
+            struct term         *result;
         };
     };
 };

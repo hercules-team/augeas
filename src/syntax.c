@@ -1437,32 +1437,40 @@ static int compile_test(struct term *term, struct ctx *ctx) {
     struct value *expect = NULL;
     int ret = 1;
 
-    if (EXN(actual)) {
-        printf("Test run encountered exception:\n");
-        print_value(actual);
-        printf("\n");
-        ret = 0;
-    } else if (term->result != NULL) {
-        expect = compile_exp(term->info, term->result, ctx);
-        if (EXN(expect))
-            goto done;
-        if (! value_equal(actual, expect)) {
-            printf("Test failure:");
-            print_info(stdout, term->info);
-            printf("\n");
-            printf(" Expected:\n");
-            print_value(expect);
-            printf("\n");
-            printf(" Actual:\n");
+    if (term->tr_tag == TR_EXN) {
+        if (!EXN(actual)) {
+            printf("Test run should have produced exception, but produced\n");
             print_value(actual);
             printf("\n");
         }
     } else {
-        printf("Test result: ");
-        print_info(stdout, term->info);
-        printf("\n");
-        print_value(actual);
-        printf("\n");
+        if (EXN(actual)) {
+            printf("Test run encountered exception:\n");
+            print_value(actual);
+            printf("\n");
+            ret = 0;
+        } else if (term->tr_tag == TR_CHECK) {
+            expect = compile_exp(term->info, term->result, ctx);
+            if (EXN(expect))
+                goto done;
+            if (! value_equal(actual, expect)) {
+                printf("Test failure:");
+                print_info(stdout, term->info);
+                printf("\n");
+                printf(" Expected:\n");
+                print_value(expect);
+                printf("\n");
+                printf(" Actual:\n");
+                print_value(actual);
+                printf("\n");
+            }
+        } else {
+            printf("Test result: ");
+            print_info(stdout, term->info);
+            printf("\n");
+            print_value(actual);
+            printf("\n");
+        }
     }
  done:
     unref(actual, value);
