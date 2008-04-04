@@ -8,7 +8,7 @@ module Hosts =
 
   let del_str (s:string) = del s s
   let eol = del_str "\n"
-  (* What now ? *)
+
   let comment = [ del /#.*\n/ "# " ]
   let word = /[^# \n\t]+/
   let record = [ seq "line" . [ label "ipaddr" . store  word ] . sep_tab .

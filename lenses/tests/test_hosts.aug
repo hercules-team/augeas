@@ -1,4 +1,4 @@
-(* Parsing /etc/hosts *)
+(* Tests for the Hosts module *)
 
 module Test_hosts =
 
@@ -7,7 +7,6 @@ module Test_hosts =
 192.168.0.1 pigiron.example.com pigiron pigiron.example
 "
 
-  (* Unit tests *)
   test Hosts.record get "127.0.0.1 foo" =
     { "0" { "ipaddr" = "127.0.0.1" } 
           { "canonical" = "foo" }
@@ -37,6 +36,8 @@ module Test_hosts =
 192.168.0.1 pigiron.example.com pigiron piggy
 "
 
+  (* Deleting the 'aliases' node violates the schema; each host entry *)
+  (* must have one, even if it has no aliases                         *)
   test Hosts.lns put two_entries after
       rm "1/aliases"
     = *
