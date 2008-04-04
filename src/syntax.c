@@ -33,6 +33,9 @@
 #include "syntax.h"
 #include "config.h"
 
+/* Extension of source files */
+#define AUG_EXT ".aug"
+
 static const char *const builtin_module = "Builtin";
 
 static const struct type string_type    = { .ref = UINT_MAX, .tag = T_STRING };
@@ -375,6 +378,7 @@ static struct value *make_closure(struct term *func, struct binding *bnds) {
  * Modules
  */
 static int load_module(struct augeas *aug, const char *name);
+static char *module_basename(const char *modname);
 
 struct module *module_create(const char *name) {
     struct module *module;
@@ -1145,7 +1149,27 @@ static int check_decl(struct term *term, struct ctx *ctx) {
 static int typecheck(struct term *term, struct augeas *augeas) {
     int ok = 1;
     struct ctx ctx;
+    char *fname;
+    const char *basenam;
+
     assert(term->tag == A_MODULE);
+
+    /* Check that the module name is consistent with the filename */
+    fname = module_basename(term->mname);
+
+    basenam = strrchr(term->info->filename->str, SEP);
+    if (basenam == NULL)
+        basenam = term->info->filename->str;
+    else
+        basenam += 1;
+    if (STRNEQ(fname, basenam)) {
+        syntax_error(term->info, 
+                     "The module %s must be in a file named %s",
+                     term->mname, fname);
+        free(fname);
+        return 0;
+    }
+    free(fname);
 
     ctx.augeas = augeas;
     ctx.local = NULL;
@@ -1557,19 +1581,26 @@ void define_native_intl(const char *file, int line,
 /* Defined in parser.y */
 int augl_parse_file(const char *name, struct term **term);
 
+static char *module_basename(const char *modname) {
+    char *fname;
+
+    asprintf(&fname, "%s" AUG_EXT, modname);
+    for (int i=0; i < strlen(modname); i++)
+        fname[i] = tolower(fname[i]);
+    return fname;
+}
+
 static char *module_filename(struct augeas *aug, const char *modname) {
     char *dir = NULL;
     char *filename = NULL;
-    char *name = strdup(modname);
-    if (name == NULL)
-        return NULL;
-    name[0] = tolower(name[0]);
+    char *name = module_basename(modname);
+    
     while ((dir = argz_next(aug->modpathz, aug->nmodpath, dir)) != NULL) {
-        int len = strlen(name) + strlen(dir) + 1;
+        int len = strlen(name) + strlen(dir) + 2;
         struct stat st;
 
         REALLOC(filename, len);
-        sprintf(filename, "%s/%s.aug", dir, name);
+        sprintf(filename, "%s/%s", dir, name);
         if (stat(filename, &st) == 0)
             goto done;
     }
