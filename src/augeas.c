@@ -309,47 +309,62 @@ char *pathsplit(const char *path) {
     return ppath;
 }
 
-int tree_rm(struct tree *tree, const char *path) {
+int tree_rm(struct tree **htree, const char *path) {
     const char *ppath = pathsplit(path);
-    const char *label = NULL;
+    struct tree *tree = *htree;
+    struct tree *del = NULL;
+    int cnt = 0;
 
-    if (ppath == NULL)
-        return -1;
-
-    label = ppath + strlen(ppath) + 1;
-
-    struct tree *parent = tree_find(tree, ppath);
-    if (parent == NULL || parent->children == NULL) {
-        free((void *) ppath);
-        return 0;
-    }
-
-    struct tree *del;
-    if (streqv(label, parent->children->label)) {
-        del = parent->children;
-        parent->children = del->next;
+    if (ppath == NULL) {
+        /* Delete one of TREE's siblings */
+        if (streqv(path, tree->label)) {
+            del = tree;
+            *htree = tree->next;
+            /* This is not quite right: TREE's parent should be marked
+               dirty, but we don't have that. Mark one of its siblings as
+               dirty and hope for the best. */
+            if (tree != NULL)
+                tree->dirty = 1;
+        }
     } else {
-        struct tree *prev;
-        for (prev=parent->children;
-             prev->next != NULL && !streqv(label, prev->next->label);
-             prev = prev->next);
-        if (prev->next == NULL) {
+        struct tree *parent = tree_find(tree, ppath);
+        const char *label = ppath + strlen(ppath) + 1;
+        if (parent == NULL || parent->children == NULL) {
             free((void *) ppath);
             return 0;
         }
-        del = prev->next;
-        prev->next = del->next;
+        if (streqv(label, parent->children->label)) {
+            del = parent->children;
+            parent->children = del->next;
+        } else {
+            tree = parent->children;
+        }
+        parent->dirty = 1;
+    }
+    
+    if (del == NULL) {
+        /* Delete one of TREE's siblings, never TREE itself */
+        struct tree *prev;
+        for (prev = tree;
+             prev->next != NULL && !streqv(path, prev->next->label);
+             prev = prev->next);
+        if (prev->next != NULL) {
+            del = prev->next;
+            prev->next = del->next;
+        }
     }
 
-    int cnt = free_tree(del->children);
-    aug_tree_free(del);
-    parent->dirty = 1;
+    if (del != NULL) {
+        cnt = free_tree(del->children);
+        aug_tree_free(del);
+    }
+
     free((void *) ppath);
     return cnt + 1;
 }
 
 int aug_rm(struct augeas *aug, const char *path) {
-    return tree_rm(aug->tree, path);
+    return tree_rm(&aug->tree, path);
 }
 
 int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub) {

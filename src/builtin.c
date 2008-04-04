@@ -179,7 +179,7 @@ static struct value *tree_rm_glue(struct info *info,
     // need to copy TREE first
     assert(path->tag == V_STRING);
     assert(tree->tag == V_TREE);
-    if (tree_rm(tree->tree, path->string->str) == -1) {
+    if (tree_rm(&tree->tree, path->string->str) == -1) {
         return make_exn_value(ref(info), "Tree rm of %s failed",
                               path->string->str);
     }
