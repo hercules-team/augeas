@@ -1521,7 +1521,7 @@ static int compile_decl(struct term *term, struct ctx *ctx) {
                      term->bname);
         print_value(v);
         printf("\n");
-        return 1;
+        return 0;
     } else if (term->tag == A_TEST) {
         return compile_test(term, ctx);
     } else {
