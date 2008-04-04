@@ -125,17 +125,15 @@ struct value *lns_make_star(struct info *info, struct lens *l) {
 }
 
 struct value *lns_make_plus(struct info *info, struct lens *l) {
-    struct lens *lens;
-    struct value *exn;
+    struct value *star, *conc;
 
-    exn = typecheck_iter(info, l);
-    if (exn != NULL) {
-        return exn;
-    }
-    lens = make_lens_unop(L_PLUS, info, l);
-    lens->ctype = regexp_iter(info, l->ctype, 1, -1);
-    lens->atype = regexp_iter(info, l->atype, 1, -1);
-    return make_lens_value(lens);
+    star = lns_make_star(info, l);
+    if (EXN(star))
+        return star;
+
+    conc = lns_make_concat(ref(info), l, star->lens);
+    unref(star, value);
+    return conc;
 }
 
 struct value *lns_make_maybe(struct info *info, struct lens *l) {
@@ -385,7 +383,6 @@ static struct regexp *lns_key_regexp(struct lens *l, struct value **exn) {
         return NULL;
         break;
     case L_STAR:
-    case L_PLUS:
     case L_MAYBE:
         return lns_key_regexp(l->child, exn);
     default:

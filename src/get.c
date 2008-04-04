@@ -96,8 +96,7 @@ static struct skel *make_skel(struct lens *lens) {
 void free_skel(struct skel *skel) {
     if (skel == NULL)
         return;
-    if (skel->tag == L_CONCAT || skel->tag == L_PLUS 
-        || skel->tag == L_STAR || skel->tag == L_MAYBE) {
+    if (skel->tag == L_CONCAT || skel->tag == L_STAR || skel->tag == L_MAYBE) {
         while (skel->skels != NULL) {
             struct skel *del = skel->skels;
             skel->skels = del->next;
@@ -165,9 +164,6 @@ static void print_skel(struct skel *skel) {
         break;
     case L_STAR:
         print_skel_list(skel->skels, "(", " ", ")*");
-        break;
-    case L_PLUS:
-        print_skel_list(skel->skels, "(", " ", ")+");
         break;
     case L_MAYBE:
         print_skel_list(skel->skels, "(", " ", ")?");
@@ -550,47 +546,8 @@ static struct skel *parse_quant_star(struct lens *lens, struct state *state,
     return skel;
 }
 
-static struct tree *get_quant_plus(struct lens *lens, struct state *state) {
-    assert(lens->tag == L_PLUS);
-
-    if (! applies(lens->child, state)) {
-        get_error(state, lens, "lens does not apply");
-        return NULL;
-    } else {
-        struct tree *tree = NULL;
-        while (applies(lens->child, state)) {
-            struct tree *t = NULL;
-            t = get_lens(lens->child, state);
-            list_append(tree, t);
-        }
-        state->applied = 1;
-        return tree;
-    }
-}
-
-static struct skel *parse_quant_plus(struct lens *lens, struct state *state,
-                                     struct dict **dict) {
-    assert(lens->tag == L_PLUS);
-
-    if (! applies(lens->child, state)) {
-        get_error(state, lens, "lens does not apply");
-        return NULL;
-    } else {
-        struct skel *skel = make_skel(lens);
-        while (applies(lens->child, state)) {
-            struct skel *sk;
-            struct dict *di = NULL;
-            sk = parse_lens(lens->child, state, &di);
-            list_append(skel->skels, sk);
-            dict_append(dict, di);
-        }
-        state->applied = 1;
-        return skel;
-    }
-}
-
 static struct tree *get_quant_maybe(struct lens *lens, struct state *state) {
-    assert(lens->tag == L_PLUS);
+    assert(lens->tag == L_MAYBE);
     struct tree *tree = NULL;
 
     if (applies(lens->child, state)) {
@@ -602,7 +559,7 @@ static struct tree *get_quant_maybe(struct lens *lens, struct state *state) {
 
 static struct skel *parse_quant_maybe(struct lens *lens, struct state *state,
                                       struct dict **dict) {
-    assert(lens->tag == L_PLUS);
+    assert(lens->tag == L_MAYBE);
 
     struct skel *skel = make_skel(lens);
     if (applies(lens->child, state)) {
@@ -680,9 +637,6 @@ static struct tree *get_lens(struct lens *lens, struct state *state) {
         break;
     case L_STAR:
         tree = get_quant_star(lens, state);
-        break;
-    case L_PLUS:
-        tree = get_quant_plus(lens, state);
         break;
     case L_MAYBE:
         tree = get_quant_maybe(lens, state);
@@ -765,9 +719,6 @@ static struct skel *parse_lens(struct lens *lens, struct state *state,
         break;
     case L_STAR:
         skel = parse_quant_star(lens, state, dict);
-        break;
-    case L_PLUS:
-        skel = parse_quant_plus(lens, state, dict);
         break;
     case L_MAYBE:
         skel = parse_quant_maybe(lens, state, dict);

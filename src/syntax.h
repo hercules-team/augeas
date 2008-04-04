@@ -393,6 +393,7 @@ void exn_printf_line(struct value *exn, const char *format, ...)
 /* Do not call these directly, use UNREF instead */
 void free_info(struct info *info);
 void free_string(struct string *string);
+void free_value(struct value *v);
 
 /* Turn a list of PARAMS (represented as terms tagged as A_FUNC with the
  * param in PARAM) into nested A_FUNC terms

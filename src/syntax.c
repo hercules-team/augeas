@@ -141,8 +141,6 @@ void assert_error_at(const char *srcfile, int srclineno, struct info *info,
     fprintf(stderr, "\n");
 }
 
-static void free_value(struct value *v);
-
 void free_string(struct string *string) {
     if (string == NULL)
         return;
@@ -250,7 +248,7 @@ void free_type(struct type *type) {
     free(type);
 }
 
-static void free_value(struct value *v) {
+void free_value(struct value *v) {
     if (v == NULL)
         return;
     assert(v->ref == 0);

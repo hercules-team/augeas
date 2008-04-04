@@ -348,7 +348,6 @@ static int skel_instance_of(struct lens *lens, struct skel *skel) {
     case L_SUBTREE:
         return skel->tag == L_SUBTREE;
     case L_STAR:
-    case L_PLUS:
     case L_MAYBE:
         if (skel->tag != lens->tag)
             return 0;
@@ -462,12 +461,6 @@ static void put_concat(struct lens *lens, struct state *state) {
     state->skel = oldskel;
 }
 
-static void put_quant_plus(struct lens *lens, struct state *state) {
-    assert(lens->tag == L_PLUS);
-    assert(state != NULL);
-    TODO;
-}
-
 static void put_quant_star(struct lens *lens, struct state *state) {
     assert(lens->tag == L_STAR);
     assert(state->skel->lens == lens);
@@ -543,9 +536,6 @@ static void put_lens(struct lens *lens, struct state *state) {
     case L_STAR:
         put_quant_star(lens, state);
         break;
-    case L_PLUS:
-        put_quant_plus(lens, state);
-        break;
     case L_MAYBE:
         put_quant_maybe(lens, state);
         break;
@@ -596,11 +586,6 @@ static void create_concat(struct lens *lens, struct state *state) {
     }
     list_free(split);
     state->split = oldsplit;
-}
-
-static void create_quant_plus(struct lens *lens, ATTRIBUTE_UNUSED struct state *state) {
-    assert(lens->tag == L_PLUS);
-    TODO;
 }
 
 static void create_quant_star(struct lens *lens, struct state *state) {
@@ -665,9 +650,6 @@ static void create_lens(struct lens *lens, struct state *state) {
         break;
     case L_STAR:
         create_quant_star(lens, state);
-        break;
-    case L_PLUS:
-        create_quant_plus(lens, state);
         break;
     case L_MAYBE:
         create_quant_maybe(lens, state);

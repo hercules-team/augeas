@@ -37,7 +37,6 @@ enum lens_tag {
     L_UNION,
     L_SUBTREE,
     L_STAR,
-    L_PLUS,
     L_MAYBE
 };
 
@@ -54,7 +53,7 @@ struct lens {
             struct string *string; /* L_LABEL, L_SEQ, L_COUNTER */
         };
         /* Combinators */
-        struct lens *child;         /* L_SUBTREE, L_STAR, L_PLUS, L_MAYBE */
+        struct lens *child;         /* L_SUBTREE, L_STAR, L_MAYBE */
         struct {                    /* L_UNION, L_CONCAT */
             unsigned int nchildren;
             struct lens **children;
@@ -92,7 +91,7 @@ struct skel {
     enum lens_tag tag;
     union {
         const char *text;    /* L_DEL */
-        struct skel *skels;  /* L_CONCAT, L_PLUS, L_STAR, L_MAYBE */
+        struct skel *skels;  /* L_CONCAT, L_STAR, L_MAYBE */
     };
     /* Also tag == L_SUBTREE, with no data in the union */
 };
