@@ -406,6 +406,17 @@ void exn_add_lines(struct value *v, int nlines, ...) {
     v->exn->nlines += nlines;
 }
 
+void exn_printf_line(struct value *exn, const char *format, ...) {
+    va_list ap;
+    char *line;
+
+    va_start(ap, format);
+    vasprintf(&line, format, ap);
+    va_end(ap);
+
+    exn_add_lines(exn, 1, line);
+}
+
 /*
  * Modules
  */
@@ -605,7 +616,7 @@ static void print_value(struct value *v) {
         break;
     case V_EXN:
         print_info(stdout, v->exn->info);
-        printf(" %s\n", v->exn->message);
+        printf("exception: %s\n", v->exn->message);
         for (int i=0; i < v->exn->nlines; i++) {
             printf("    %s\n", v->exn->lines[i]);
         }

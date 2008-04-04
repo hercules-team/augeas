@@ -25,9 +25,10 @@
 static struct regexp *regexp_digits = NULL;
 
 static int typecheck_union(struct info *, struct lens *l1, struct lens *l2);
-static int typecheck_concat(struct info *, struct lens *l1, struct lens *l2);
-static int typecheck_iter(struct info *info, struct lens *l);
-static int typecheck_maybe(struct info *info, struct lens *l);
+static struct value *typecheck_concat(struct info *,
+                                      struct lens *l1, struct lens *l2);
+static struct value *typecheck_iter(struct info *info, struct lens *l);
+static struct value *typecheck_maybe(struct info *info, struct lens *l);
 
 static struct regexp *lns_key_regexp(struct lens *l, struct value **exn);
 static struct regexp *make_key_regexp(struct info *info, const char *pat);
@@ -80,8 +81,11 @@ struct value *lns_make_union(struct info *info,
 struct value *lns_make_concat(struct info *info,
                               struct lens *l1, struct lens *l2) {
     struct lens *lens = NULL;
-    if (typecheck_concat(info, l1, l2) == -1) {
-        return make_exn_value(info, "Lens concat failed");
+    struct value *exn;
+
+    exn = typecheck_concat(info, l1, l2);
+    if (exn != NULL) {
+        return exn;
     }
     lens = make_lens_binop(L_CONCAT, info, l1, l2);
     lens->ctype = regexp_concat(info, l1->ctype, l2->ctype);
@@ -108,9 +112,11 @@ struct value *lns_make_subtree(struct info *info, struct lens *l) {
 
 struct value *lns_make_star(struct info *info, struct lens *l) {
     struct lens *lens;
+    struct value *exn;
 
-    if (typecheck_iter(info, l) == -1) {
-        return make_exn_value(info, "Lens iteration '*' failed");
+    exn = typecheck_iter(info, l);
+    if (exn != NULL) {
+        return exn;
     }
     lens = make_lens_unop(L_STAR, info, l);
     lens->ctype = regexp_iter(info, l->ctype, 0, -1);
@@ -120,9 +126,11 @@ struct value *lns_make_star(struct info *info, struct lens *l) {
 
 struct value *lns_make_plus(struct info *info, struct lens *l) {
     struct lens *lens;
+    struct value *exn;
 
-    if (typecheck_iter(info, l) == -1) {
-        return make_exn_value(info, "Lens iteration '+' failed");
+    exn = typecheck_iter(info, l);
+    if (exn != NULL) {
+        return exn;
     }
     lens = make_lens_unop(L_PLUS, info, l);
     lens->ctype = regexp_iter(info, l->ctype, 1, -1);
@@ -132,9 +140,11 @@ struct value *lns_make_plus(struct info *info, struct lens *l) {
 
 struct value *lns_make_maybe(struct info *info, struct lens *l) {
     struct lens *lens;
+    struct value *exn;
 
-    if (typecheck_maybe(info, l) == -1) {
-        return make_exn_value(info, "Lens optional '?' failed");
+    exn = typecheck_maybe(info, l);
+    if (exn != NULL) {
+        return exn;
     }
     lens = make_lens_unop(L_MAYBE, info, l);
     lens->ctype = regexp_maybe(info, l->ctype);
@@ -214,23 +224,23 @@ static int typecheck_union(struct info *info,
     return 0;
 }
 
-static int is_ambiguous(struct info *info, fa_t fa1, fa_t fa2,
-                        const char *msg) {
+static struct value *ambig_check(struct info *info, fa_t fa1, fa_t fa2,
+                                 const char *msg) {
     char *upv, *pv, *v;
     upv = fa_ambig_example(fa1, fa2, &pv, &v);
-    int result = (upv != NULL);
+    struct value *exn = NULL;
+
     if (upv != NULL) {
         char *e_u = escape(upv, pv - upv);
         char *e_up = escape(upv, v - upv);
         char *e_upv = escape(upv, -1);
         char *e_pv = escape(pv, -1);
         char *e_v = escape(v, -1);
-        syntax_error(info,
-                      "%s:\n"
-                      "  '%s' can be split into\n"
-                      "  '%s|=|%s'\n"
-                      " and\n"
-                      "  '%s|=|%s'", msg, e_upv, e_u, e_pv, e_up, e_v);
+        exn = make_exn_value(ref(info), msg);
+        exn_printf_line(exn, "  '%s' can be split into", e_upv);
+        exn_printf_line(exn, "  '%s|=|%s'\n", e_u, e_pv);
+        exn_printf_line(exn, " and");
+        exn_printf_line(exn, "  '%s|=|%s'\n", e_up, e_v);
         free(e_u);
         free(e_up);
         free(e_upv);
@@ -238,61 +248,60 @@ static int is_ambiguous(struct info *info, fa_t fa1, fa_t fa2,
         free(e_v);
     }
     free(upv);
-    return result;
+    return exn;
 }
 
-static int typecheck_concat(struct info *info,
-                            struct lens *l1, struct lens *l2) {
+static struct value *typecheck_concat(struct info *info,
+                                      struct lens *l1, struct lens *l2) {
     fa_t fa1 = regexp_to_fa(l1->ctype);
     fa_t fa2 = regexp_to_fa(l2->ctype);
-    int result = 0;
+    struct value *result = NULL;
 
     if (fa1 == NULL || fa2 == NULL) {
         fa_free(fa1);
         fa_free(fa2);
-        return -1;
+        return make_exn_value(ref(info), "Internal error: regexp_to_fa failed");
     }
 
-    if (is_ambiguous(info, fa1, fa2, "ambiguous concatenation"))
-        result = -1;
+    result = ambig_check(info, fa1, fa2, "ambiguous concatenation");
 
     fa_free(fa1);
     fa_free(fa2);
     return result;
 }
 
-static int typecheck_iter(struct info *info, struct lens *l) {
+static struct value *typecheck_iter(struct info *info, struct lens *l) {
     fa_t fas, fa;
-    int result = 0;
+    struct value *result = NULL;
 
     fa = regexp_to_fa(l->ctype);
     fas = fa_iter(fa, 0, -1);
-    if (is_ambiguous(info, fa, fas, "ambiguous iteration")) {
-        result = -1;
-    }
+
+    result = ambig_check(info, fa, fas, "ambiguous iteration");
+
     fa_free(fa);
     fa_free(fas);
     return result;
 }
 
-static int typecheck_maybe(struct info *info, struct lens *l) {
+static struct value *typecheck_maybe(struct info *info, struct lens *l) {
     /* Check (r)? as (<e>|r) where <e> is the empty language */
     fa_t fa, eps;
-    int result = 0;
+    struct value *exn = NULL;
 
     fa = regexp_to_fa(l->ctype);
     if (fa == NULL)
-        return -1;
+        return make_exn_value(ref(info), "Internal error: regexp_to_fa failed");
 
     eps = fa_make_basic(FA_EPSILON);
     if (fa_contains(eps, fa)) {
-        syntax_error(info,
-          "illegal optional expression: expression matches the empty word");
-        result = -1;
+        exn = make_exn_value(ref(info),
+                "illegal optional expression: /%s/ matches the empty word",
+                l->ctype->pattern->str);
     }
     fa_free(eps);
     fa_free(fa);
-    return result;
+    return exn;
 }
 
 static struct regexp *make_key_regexp(struct info *info, const char *pat) {

@@ -387,6 +387,9 @@ struct value *make_exn_value(struct info *info, const char *format, ...)
  */
 void exn_add_lines(struct value *exn, int nlines, ...);
 
+void exn_printf_line(struct value *exn, const char *format, ...)
+    ATTRIBUTE_FORMAT(printf, 2, 3);
+
 /* Do not call these directly, use UNREF instead */
 void free_info(struct info *info);
 void free_string(struct string *string);
