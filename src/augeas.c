@@ -334,6 +334,7 @@ int tree_rm(struct tree **htree, const char *path) {
     const char *ppath = pathsplit(path);
     struct tree *tree = *htree;
     struct tree *del = NULL;
+    const char *label;
     int cnt = 0;
 
     if (ppath == NULL) {
@@ -346,10 +347,12 @@ int tree_rm(struct tree **htree, const char *path) {
                dirty and hope for the best. */
             if (tree != NULL)
                 tree->dirty = 1;
+        } else {
+            label = path;
         }
     } else {
         struct tree *parent = tree_find(tree, ppath);
-        const char *label = ppath + strlen(ppath) + 1;
+        label = ppath + strlen(ppath) + 1;
         if (parent == NULL || parent->children == NULL) {
             free((void *) ppath);
             return 0;
@@ -367,7 +370,7 @@ int tree_rm(struct tree **htree, const char *path) {
         /* Delete one of TREE's siblings, never TREE itself */
         struct tree *prev;
         for (prev = tree;
-             prev->next != NULL && !streqv(path, prev->next->label);
+             prev->next != NULL && !streqv(label, prev->next->label);
              prev = prev->next);
         if (prev->next != NULL) {
             del = prev->next;
