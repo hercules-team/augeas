@@ -587,7 +587,7 @@ static void print_value(struct value *v) {
         break;
     case V_TREE:
         list_for_each(t, v->tree) {
-            print_tree(t, stdout, t->label, 1);
+            print_tree(t, stdout, (t->children == NULL) ? NULL : t->label, 1);
         }
         break;
     case V_FILTER:

@@ -571,6 +571,10 @@ int aug_save(struct augeas *aug) {
     return ret;
 }
 
+/* FIXME: The usage of PATH is inconsistent between calls from PRINT_REC
+ * and PRINT_TREE. In the former case, PATH does not include the label for
+ * TREE yet, in the latter it does
+ */
 static int print_one(FILE *out, struct tree *tree, char **path,
                      int pr_hidden) {
     int end = strlen(*path);
