@@ -86,46 +86,22 @@ static struct value *lns_counter(struct info *info, struct value *str) {
     return v;
 }
 
-static struct exn *make_exn(struct info *info, const char *message) {
-    struct exn *exn;
-
-    CALLOC(exn, 1);
-    exn->info = ref(info);
-    exn->message = message;
-    return exn;
-}
-
-static void exn_add_lines(struct exn *exn, int nlines, ...) {
-    va_list ap;
-    REALLOC(exn->lines, exn->nlines + nlines);
-    va_start(ap, nlines);
-    for (int i=0; i < nlines; i++) {
-        char *line = va_arg(ap, char *);
-        exn->lines[exn->nlines + i] = line;
-    }
-    va_end(ap);
-    exn->nlines += nlines;
-}
-
-static struct value *make_exn_value(struct info *info, struct lns_error *err,
-                                    const char *text) {
+static struct value *make_exn_lns_error(struct info *info,
+                                        struct lns_error *err,
+                                        const char *text) {
     struct value *v;
-    struct exn *exn;
     char *here = NULL;
 
-    exn = make_exn(info, err->message);
-    err->message = NULL;
+    v = make_exn_value(ref(info), err->message);
     if (err->pos >= 0) {
         asprintf(&here, "Error encountered here (%d characters into string)",
                  err->pos);
-        exn_add_lines(exn, 2, here, format_pos(text, err->pos));
+        exn_add_lines(v, 2, here, format_pos(text, err->pos));
     } else {
         asprintf(&here, "Error encountered at path %s", err->path);
-        exn_add_lines(exn, 1, here);
+        exn_add_lines(v, 1, here);
     }
 
-    v = make_value(V_EXN, ref(info));
-    v->exn = exn;
     return v;
 }
 
@@ -143,7 +119,7 @@ static struct value *lens_get(struct info *info, struct value *l,
         v = make_value(V_TREE, ref(info));
         v->tree = tree;
     } else {
-        v = make_exn_value(info, err, text);
+        v = make_exn_lns_error(info, err, text);
         free_lns_error(err);
     }
     return v;
@@ -171,7 +147,7 @@ static struct value *lens_put(struct info *info, struct value *l,
         v = make_value(V_STRING, ref(info));
         v->string = make_string(buf);
     } else {
-        v = make_exn_value(info, err, str->string->str);
+        v = make_exn_lns_error(info, err, str->string->str);
         free(buf);
     }
     return v;

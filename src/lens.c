@@ -58,68 +58,80 @@ static struct lens *make_lens_binop(enum lens_tag tag, struct info *info,
     return lens;
 }
 
-struct lens *lns_make_union(struct info *info,
-                            struct lens *l1, struct lens *l2) {
+static struct value *make_lens_value(struct lens *lens) {
+    struct value *v;
+    v = make_value(V_LENS, ref(lens->info));
+    v->lens = lens;
+    return v;
+}
+
+struct value *lns_make_union(struct info *info,
+                             struct lens *l1, struct lens *l2) {
     struct lens *lens = NULL;
-    if (typecheck_union(info, l1, l2) == -1)
-        return NULL;
+    if (typecheck_union(info, l1, l2) == -1) {
+        return make_exn_value(info, "Lens union failed");
+    }
     lens = make_lens_binop(L_UNION, info, l1, l2);
     lens->ctype = regexp_union(info, l1->ctype, l2->ctype);
     lens->atype = regexp_union(info, l1->atype, l2->atype);
-    return lens;
+    return make_lens_value(lens);
 }
 
-struct lens *lns_make_concat(struct info *info,
-                             struct lens *l1, struct lens *l2) {
+struct value *lns_make_concat(struct info *info,
+                              struct lens *l1, struct lens *l2) {
     struct lens *lens = NULL;
-    if (typecheck_concat(info, l1, l2) == -1)
-        return NULL;
+    if (typecheck_concat(info, l1, l2) == -1) {
+        return make_exn_value(info, "Lens concat failed");
+    }
     lens = make_lens_binop(L_CONCAT, info, l1, l2);
     lens->ctype = regexp_concat(info, l1->ctype, l2->ctype);
     lens->atype = regexp_concat(info, l1->atype, l2->atype);
-    return lens;
+    return make_lens_value(lens);
 }
 
-struct lens *lns_make_subtree(struct info *info, struct lens *l) {
+struct value *lns_make_subtree(struct info *info, struct lens *l) {
     struct lens *lens = make_lens_unop(L_SUBTREE, info, l);
     lens->ctype = ref(l->ctype);
     lens->atype = lns_key_regexp(l);
     if (lens->atype == NULL)
         lens->atype = make_key_regexp(info, "");
-    return lens;
+    return make_lens_value(lens);
 }
 
-struct lens *lns_make_star(struct info *info, struct lens *l) {
+struct value *lns_make_star(struct info *info, struct lens *l) {
     struct lens *lens;
 
-    if (typecheck_iter(info, l) == -1)
-        return NULL;
+    if (typecheck_iter(info, l) == -1) {
+        return make_exn_value(info, "Lens iteration '*' failed");
+    }
     lens = make_lens_unop(L_STAR, info, l);
     lens->ctype = regexp_iter(info, l->ctype, 0, -1);
     lens->atype = regexp_iter(info, l->atype, 0, -1);
-    return lens;
+    return make_lens_value(lens);
 }
 
-struct lens *lns_make_plus(struct info *info, struct lens *l) {
+struct value *lns_make_plus(struct info *info, struct lens *l) {
     struct lens *lens;
 
-    if (typecheck_iter(info, l) == -1)
-        return NULL;
+    if (typecheck_iter(info, l) == -1) {
+        return make_exn_value(info, "Lens iteration '+' failed");
+    }
     lens = make_lens_unop(L_PLUS, info, l);
     lens->ctype = regexp_iter(info, l->ctype, 1, -1);
     lens->atype = regexp_iter(info, l->atype, 1, -1);
-    return lens;
+    return make_lens_value(lens);
 }
 
-struct lens *lns_make_maybe(struct info *info, struct lens *l) {
+struct value *lns_make_maybe(struct info *info, struct lens *l) {
     struct lens *lens;
 
-    if (typecheck_maybe(info, l) == -1)
-        return NULL;
+    if (typecheck_maybe(info, l) == -1) {
+        return make_exn_value(info, "Lens optional '?' failed");
+    }
     lens = make_lens_unop(L_MAYBE, info, l);
     lens->ctype = regexp_maybe(info, l->ctype);
     lens->atype = regexp_maybe(info, l->atype);
-    return lens;
+    return make_lens_value(lens);
 }
 
 /*

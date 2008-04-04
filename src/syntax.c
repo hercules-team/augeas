@@ -374,6 +374,38 @@ static struct value *make_closure(struct term *func, struct binding *bnds) {
     return v;
 }
 
+struct value *make_exn_value(struct info *info,
+                             const char *format, ...) {
+    va_list ap;
+    struct value *v;
+    char *message;
+
+    va_start(ap, format);
+    vasprintf(&message, format, ap);
+    va_end(ap);
+
+    v = make_value(V_EXN, ref(info));
+    CALLOC(v->exn, 1);
+    v->exn->info = info;
+    v->exn->message = message;
+
+    return v;
+}
+
+void exn_add_lines(struct value *v, int nlines, ...) {
+    assert(v->tag == V_EXN);
+
+    va_list ap;
+    REALLOC(v->exn->lines, v->exn->nlines + nlines);
+    va_start(ap, nlines);
+    for (int i=0; i < nlines; i++) {
+        char *line = va_arg(ap, char *);
+        v->exn->lines[v->exn->nlines + i] = line;
+    }
+    va_end(ap);
+    v->exn->nlines += nlines;
+}
+
 /*
  * Modules
  */
@@ -1204,8 +1236,7 @@ static struct value *compile_union(struct term *exp, struct ctx *ctx) {
     } else if (t->tag == T_LENS) {
         struct lens *l1 = v1->lens;
         struct lens *l2 = v2->lens;
-        v = make_value(V_LENS, ref(info));
-        v->lens = lns_make_union(ref(info), ref(l1), ref(l2));
+        v = lns_make_union(ref(info), ref(l1), ref(l2));
     } else {
         fatal_error(info, "Tried to union a %s and a %s to yield a %s",
                     type_name(exp->left->type), type_name(exp->right->type),
@@ -1289,8 +1320,7 @@ static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
     } else if (t->tag == T_LENS) {
         struct lens *l1 = v1->lens;
         struct lens *l2 = v2->lens;
-        v = make_value(V_LENS, ref(info));
-        v->lens = lns_make_concat(ref(info), ref(l1), ref(l2));
+        v = lns_make_concat(ref(info), ref(l1), ref(l2));
     } else {
         fatal_error(info, "Tried to concat a %s and a %s to yield a %s",
                     type_name(exp->left->type), type_name(exp->right->type),
@@ -1338,46 +1368,44 @@ static struct value *compile_bracket(struct term *exp, struct ctx *ctx) {
     struct value *arg = compile_exp(exp->info, exp->brexp, ctx);
     if (EXN(arg))
         return arg;
-
-    struct value *v = make_value(V_LENS, ref(exp->info));
     assert(arg->tag == V_LENS);
-    v->lens = lns_make_subtree(ref(exp->info), ref(arg->lens));
-    return v;
+
+    return lns_make_subtree(ref(exp->info), ref(arg->lens));
 }
 
 static struct value *compile_rep(struct term *rep, struct ctx *ctx) {
     struct value *arg = compile_exp(rep->info, rep->rexp, ctx);
     struct value *v;
-    
+
     if (EXN(arg))
         return arg;
+
+    char repchar;
+    if (rep->quant == Q_STAR) {
+        repchar = '*';
+    } else if (rep->quant == Q_PLUS) {
+        repchar = '+';
+    } else if (rep->quant == Q_MAYBE) {
+        repchar = '?';
+    } else {
+        assert(0);
+    }
 
     arg = coerce(arg, rep->type);
     if (rep->type->tag == T_REGEXP) {
         v = make_value(V_REGEXP, ref(rep->info));
         make_ref(v->regexp);
-        CALLOC(v->regexp->pattern->str, 
+        CALLOC(v->regexp->pattern->str,
                strlen(arg->regexp->pattern->str) + 4);
-        char repchar;
-        if (rep->quant == Q_STAR) {
-            repchar = '*';
-        } else if (rep->quant == Q_PLUS) {
-            repchar = '+';
-        } else if (rep->quant == Q_MAYBE) {
-            repchar = '?';
-        } else {
-            assert(0);
-        }
         sprintf((char *) v->regexp->pattern->str, "(%s)%c",
                 arg->regexp->pattern->str, repchar);
     } else if (rep->type->tag == T_LENS) {
-        v = make_value(V_LENS, ref(rep->info));
         if (rep->quant == Q_STAR) {
-            v->lens = lns_make_star(ref(rep->info), ref(arg->lens));
+            v = lns_make_star(ref(rep->info), ref(arg->lens));
         } else if (rep->quant == Q_PLUS) {
-            v->lens = lns_make_plus(ref(rep->info), ref(arg->lens));
+            v = lns_make_plus(ref(rep->info), ref(arg->lens));
         } else if (rep->quant == Q_MAYBE) {
-            v->lens = lns_make_maybe(ref(rep->info), ref(arg->lens));
+            v = lns_make_maybe(ref(rep->info), ref(arg->lens));
         } else {
             assert(0);
         }
@@ -1486,6 +1514,8 @@ static int compile_decl(struct term *term, struct ctx *ctx) {
         else {
             syntax_error(term->info, "Failed to compile %s",
                          term->bname);
+            print_value(v);
+            printf("\n");
         }
         return v != NULL;
     } else if (term->tag == A_TEST) {

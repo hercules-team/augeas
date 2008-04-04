@@ -370,6 +370,23 @@ struct term *make_app_term(struct term *func, struct term *arg,
                            struct info *info);
 struct term *make_app_ident(const char *id, struct term *func,
                             struct info *info);
+
+/* Make an EXN value
+ * Receive ownership of INFO
+ *
+ * FORMAT and following arguments are printed to a new string. Caller must
+ * clean those up.
+ */
+struct value *make_exn_value(struct info *info, const char *format, ...)
+    ATTRIBUTE_FORMAT(printf, 2, 3);
+
+/* Add NLINES lines (passed as const char *) to EXN, which must be a
+ * value with tag V_EXN, created by MAKE_EXN_VALUE.
+ *
+ * The strings belong to EXN * after the call.
+ */
+void exn_add_lines(struct value *exn, int nlines, ...);
+
 /* Do not call these directly, use UNREF instead */
 void free_info(struct info *info);
 void free_string(struct string *string);

@@ -64,15 +64,18 @@ struct lens {
 
 /* Constructors for various lens types. Constructor assumes ownership of
  * arguments without incrementing. Caller owns returned lenses.
+ *
+ * The return type is VALUE instead of LENS so that we can return an
+ * exception iftypechecking fails.
  */
 struct lens *lns_make_prim(enum lens_tag tag, struct info *info,
                            struct regexp *regexp, struct string *string);
-struct lens *lns_make_union(struct info *, struct lens *, struct lens *);
-struct lens *lns_make_concat(struct info *, struct lens *, struct lens *);
-struct lens *lns_make_subtree(struct info *, struct lens *);
-struct lens *lns_make_star(struct info *, struct lens *);
-struct lens *lns_make_plus(struct info *, struct lens *);
-struct lens *lns_make_maybe(struct info *, struct lens *);
+struct value *lns_make_union(struct info *, struct lens *, struct lens *);
+struct value *lns_make_concat(struct info *, struct lens *, struct lens *);
+struct value *lns_make_subtree(struct info *, struct lens *);
+struct value *lns_make_star(struct info *, struct lens *);
+struct value *lns_make_plus(struct info *, struct lens *);
+struct value *lns_make_maybe(struct info *, struct lens *);
 
 /* Flags to control debug printing during parsing */
 enum parse_debug_flags {
