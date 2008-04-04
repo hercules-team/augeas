@@ -20,5 +20,4 @@ TAGS$
 \.(aux|dvi|log|pdf)$
 
 # Some local stuff
-lenses/
 misc/
