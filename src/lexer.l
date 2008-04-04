@@ -47,6 +47,14 @@ static int to_int(const char *str) {
   return v;
 }
 
+static void loc_update(YYLTYPE *yylloc, const char *s, int len) {
+  for (int i=0; i < len; i++) {
+    if (s[i] == '\n') {
+      LOCATION_LINES(*yylloc, 1);
+    }
+    LOCATION_STEP(*yylloc);
+  }
+}
 %}
 
 DIGIT [0-9]
@@ -71,11 +79,13 @@ ARROW  ->
 <INITIAL>
 {
   \"([^\"]|\\\")*\"   {
+               loc_update(yylloc, yytext, yyleng);
                yylval->string = unescape(yytext+1, yyleng-2);
                return DQUOTED;
   }
 
   \/([^/]|\\\/)+\/ {
+               loc_update(yylloc, yytext, yyleng);
                yylval->string = unescape(yytext+1, yyleng-2);
                return REGEXP;
   }
