@@ -29,7 +29,7 @@ static int typecheck_concat(struct info *, struct lens *l1, struct lens *l2);
 static int typecheck_iter(struct info *info, struct lens *l);
 static int typecheck_maybe(struct info *info, struct lens *l);
 
-static struct regexp *lns_key_regexp(struct lens *l);
+static struct regexp *lns_key_regexp(struct lens *l, struct value **exn);
 static struct regexp *make_key_regexp(struct info *info, const char *pat);
 
 static struct lens *make_lens(enum lens_tag tag, struct info *info) {
@@ -90,9 +90,17 @@ struct value *lns_make_concat(struct info *info,
 }
 
 struct value *lns_make_subtree(struct info *info, struct lens *l) {
-    struct lens *lens = make_lens_unop(L_SUBTREE, info, l);
+    struct lens *lens;
+    struct value *exn;
+    struct regexp *atype;
+
+    atype = lns_key_regexp(l, &exn);
+    if (exn != NULL)
+        return exn;
+
+    lens = make_lens_unop(L_SUBTREE, info, l);
     lens->ctype = ref(l->ctype);
-    lens->atype = lns_key_regexp(l);
+    lens->atype = atype;
     if (lens->atype == NULL)
         lens->atype = make_key_regexp(info, "");
     return make_lens_value(lens);
@@ -299,7 +307,8 @@ static struct regexp *make_key_regexp(struct info *info, const char *pat) {
     return regexp;
 }
 
-static struct regexp *lns_key_regexp(struct lens *l) {
+static struct regexp *lns_key_regexp(struct lens *l, struct value **exn) {
+    *exn = NULL;
     switch(l->tag) {
     case L_DEL:
     case L_STORE:
@@ -318,16 +327,46 @@ static struct regexp *lns_key_regexp(struct lens *l) {
     case L_LABEL:
         return make_key_regexp(l->info, l->string->str);
     case L_CONCAT:
+        {
+            struct regexp *k = NULL;
+            for (int i=0; i < l->nchildren; i++) {
+                struct regexp *r = lns_key_regexp(l->children[i], exn);
+                if (*exn != NULL) {
+                    free_regexp(k);
+                    return NULL;
+                }
+                if (r != NULL) {
+                    if (k != NULL) {
+                        *exn = make_exn_value(ref(l->info),
+                                              "More than one key");
+                        unref(r, regexp);
+                        unref(k, regexp);
+                        return NULL;
+                    } else {
+                        k = r;
+                    }
+                }
+            }
+            return k;
+        }
+        break;
     case L_UNION:
         {
             struct regexp *k = NULL;
             for (int i=0; i < l->nchildren; i++) {
-                struct regexp *r = lns_key_regexp(l->children[i]);
-                if (r != NULL) {
-                    if (k != NULL)
-                        syntax_error(l->info, "More than one key");
-                    else
-                        k = r;
+                struct regexp *r = lns_key_regexp(l->children[i], exn);
+                if (*exn != NULL)
+                    return NULL;
+                if (r == NULL) {
+                    r = make_key_regexp(l->info, "");
+                }
+                if (k == NULL) {
+                    k = r;
+                } else {
+                    struct regexp *u = regexp_union(l->info, k, r);
+                    unref(k, regexp);
+                    unref(r, regexp);
+                    k = u;
                 }
             }
             return k;
@@ -339,7 +378,7 @@ static struct regexp *lns_key_regexp(struct lens *l) {
     case L_STAR:
     case L_PLUS:
     case L_MAYBE:
-        return lns_key_regexp(l->child);
+        return lns_key_regexp(l->child, exn);
     default:
         assert(0);
     }
