@@ -42,7 +42,7 @@ static struct value *lns_del(struct info *info,
     assert(dflt->tag == V_STRING);
     struct value *v = make_value(V_LENS, ref(info));
     v->lens = lns_make_prim(L_DEL, ref(info),
-                            ref(rxp->regexp), ref(rxp->string));
+                            ref(rxp->regexp), ref(dflt->string));
     return v;
 }
 
