@@ -1391,25 +1391,20 @@ static struct value *compile_rep(struct term *rep, struct ctx *ctx) {
     if (EXN(arg))
         return arg;
 
-    char repchar;
-    if (rep->quant == Q_STAR) {
-        repchar = '*';
-    } else if (rep->quant == Q_PLUS) {
-        repchar = '+';
-    } else if (rep->quant == Q_MAYBE) {
-        repchar = '?';
-    } else {
-        assert(0);
-    }
-
     arg = coerce(arg, rep->type);
     if (rep->type->tag == T_REGEXP) {
+        int min, max;
+        if (rep->quant == Q_STAR) {
+            min = 0; max = -1;
+        } else if (rep->quant == Q_PLUS) {
+            min = 1; max = -1;
+        } else if (rep->quant == Q_MAYBE) {
+            min = 0; max = 1;
+        } else {
+            assert(0);
+        }
         v = make_value(V_REGEXP, ref(rep->info));
-        make_ref(v->regexp);
-        CALLOC(v->regexp->pattern->str,
-               strlen(arg->regexp->pattern->str) + 4);
-        sprintf((char *) v->regexp->pattern->str, "(%s)%c",
-                arg->regexp->pattern->str, repchar);
+        v->regexp = regexp_iter(rep->info, arg->regexp, min, max);
     } else if (rep->type->tag == T_LENS) {
         if (rep->quant == Q_STAR) {
             v = lns_make_star(ref(rep->info), ref(arg->lens));
