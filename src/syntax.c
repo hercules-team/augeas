@@ -1722,6 +1722,8 @@ int interpreter_init(struct augeas *aug) {
         p = strrchr(globbuf.gl_pathv[i], SEP);
         if (p == NULL)
             p = globbuf.gl_pathv[i];
+        else
+            p += 1;
         q = strchr(p, '.');
         name = strndup(p, q - p);
         name[0] = toupper(name[0]);
