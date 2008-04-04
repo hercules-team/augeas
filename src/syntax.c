@@ -1513,15 +1513,15 @@ static int compile_test(struct term *term, struct ctx *ctx) {
 static int compile_decl(struct term *term, struct ctx *ctx) {
     if (term->tag == A_BIND) {
         struct value *v = compile_exp(term->info, term->exp, ctx);
+        bind(&ctx->local, term->bname, term->type, v);
         if (!EXN(v))
-            bind(&ctx->local, term->bname, term->type, v);
-        else {
-            syntax_error(term->info, "Failed to compile %s",
-                         term->bname);
-            print_value(v);
-            printf("\n");
-        }
-        return v != NULL;
+            return 1;
+
+        syntax_error(term->info, "Failed to compile %s",
+                     term->bname);
+        print_value(v);
+        printf("\n");
+        return 1;
     } else if (term->tag == A_TEST) {
         return compile_test(term, ctx);
     } else {
