@@ -13,7 +13,7 @@ module Test_hosts =
           { "canonical" = "foo" }
           { "aliases" } }
 
-  test Hosts.top get two_entries =
+  test Hosts.lns get two_entries =
    { "0" { "ipaddr" = "127.0.0.1" } 
           { "canonical" = "foo" }
           { "aliases" }
@@ -29,13 +29,17 @@ module Test_hosts =
       set "0/canonical" "bar" 
   = "127.0.0.1 bar"
 
-  test Hosts.top put two_entries after 
+  test Hosts.lns put two_entries after 
     set "1/aliases/10" "piggy" ;
     rm "1/aliases/1" 
   = "127.0.0.1 foo
 # comment
 192.168.0.1 pigiron.example.com pigiron piggy
 "
+
+  test Hosts.lns put two_entries after
+      rm "1/aliases"
+    = *
 
 (* Local Variables: *)
 (* mode: caml *)

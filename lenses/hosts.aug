@@ -18,7 +18,7 @@ module Hosts =
                               ] .
                  eol ]
 
-  let top = ( comment | record ) *
+  let lns = ( comment | record ) *
 
   (* let files = transform top (incl "/etc/hosts") "/system/config/hosts" *)
 
