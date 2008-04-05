@@ -174,7 +174,7 @@ static void free_term(struct term *term) {
     switch(term->tag) {
     case A_MODULE:
         free((char *) term->mname);
-        list_unref(term->decls, term);
+        unref(term->decls, term);
         break;
     case A_BIND:
         free((char *) term->bname);
@@ -211,6 +211,7 @@ static void free_term(struct term *term) {
         assert(0);
         break;
     }
+    unref(term->next, term);
     unref(term->info, info);
     unref(term->type, type);
     free(term);
@@ -220,6 +221,7 @@ static void free_binding(struct binding *binding) {
     if (binding == NULL)
         return;
     assert(binding->ref == 0);
+    unref(binding->next, binding);
     unref(binding->ident, string);
     unref(binding->type, type);
     unref(binding->value, value);
@@ -232,7 +234,7 @@ static void free_module(struct module *module) {
         return;
     assert(module->ref == 0);
     free((char *) module->name);
-    list_unref(module->bindings, binding);
+    unref(module->bindings, binding);
     free(module);
 }
 
@@ -500,6 +502,7 @@ static struct binding *bind_type(struct binding **bnds,
     make_ref(binding->ident);
     binding->ident->str = strdup(name);
     binding->type = ref(type);
+    ref(*bnds);
     list_cons(*bnds, binding);
 
     return binding;
@@ -513,6 +516,7 @@ static void bind_param(struct binding **bnds, struct param *param,
     b->ident = ref(param->name);
     b->type  = ref(param->type);
     b->value = ref(v);
+    ref(*bnds);
     list_cons(*bnds, b);
 }
 
@@ -822,7 +826,7 @@ static struct type *value_type(struct value *v) {
 
 /* Coerce V to the type T. Currently, only T_STRING can be coerced to
  * T_REGEXP. Returns a value that is owned by the caller. Trying to perform
- * an impossible coercion is a fatal error.
+ * an impossible coercion is a fatal error. Receives ownership of V.
  */
 static struct value *coerce(struct value *v, struct type *t) {
     struct type *vt = value_type(v);
@@ -1217,7 +1221,7 @@ static int typecheck(struct term *term, struct augeas *augeas) {
     list_for_each(dcl, term->decls) {
         ok &= check_decl(dcl, &ctx);
     }
-    list_unref(ctx.local, binding);
+    unref(ctx.local, binding);
     return ok;
 }
 
@@ -1251,7 +1255,6 @@ static struct value *compile_union(struct term *exp, struct ctx *ctx) {
                     type_name(exp->left->type), type_name(exp->right->type),
                     type_name(t));
     }
-    unref(t, type);
     unref(v1, value);
     unref(v2, value);
     return v;
@@ -1342,6 +1345,9 @@ static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
 
 static struct value *apply(struct term *app, struct ctx *ctx) {
     struct value *f = compile_exp(app->info, app->left, ctx);
+    struct value *result = NULL;
+    struct ctx lctx;
+
     if (EXN(f))
         return f;
 
@@ -1352,24 +1358,23 @@ static struct value *apply(struct term *app, struct ctx *ctx) {
     }
 
     assert(f->tag == V_CLOS);
-    struct value *result;
-    struct ctx lctx;
 
     lctx.augeas = ctx->augeas;
     lctx.local = ref(f->bindings);
 
     arg = coerce(arg, f->func->param->type);
-    if (arg == NULL) {
-        unref(lctx.local, binding);
-        return NULL;
-    }
+    if (arg == NULL)
+        goto done;
 
     bind_param(&lctx.local, f->func->param, arg);
     result = compile_exp(app->info, f->func->body, &lctx);
+    unref(result->info, info);
+    result->info = ref(app->info);
     unbind_param(&lctx.local, f->func->param);
 
+ done:
     unref(lctx.local, binding);
-
+    unref(f, value);
     return result;
 }
 
@@ -1379,6 +1384,7 @@ static struct value *compile_bracket(struct term *exp, struct ctx *ctx) {
         return arg;
     assert(arg->tag == V_LENS);
 
+    // FIXME: unref(arg)
     return lns_make_subtree(ref(exp->info), ref(arg->lens));
 }
 
@@ -1417,6 +1423,7 @@ static struct value *compile_rep(struct term *rep, struct ctx *ctx) {
         fatal_error(rep->info, "Tried to repeat a %s to yield a %s",
                     type_name(rep->rexp->type), type_name(rep->type));
     }
+    // FIXME: unref(rep)
     return v;
 }
 
@@ -1445,7 +1452,7 @@ static struct value *compile_exp(struct info *info,
         }
         break;
     case A_IDENT:
-        v = ctx_lookup(exp->info, ctx, exp->ident);
+        v = ref(ctx_lookup(exp->info, ctx, exp->ident));
         break;
     case A_BRACKET:
         v = compile_bracket(exp, ctx);
@@ -1670,6 +1677,8 @@ int __aug_load_module_file(struct augeas *aug, const char *filename) {
     list_append(aug->modules, module);
     result = 0;
  error:
+    // FIXME: This leads to a bad free of a string used in a del lens
+    // To reproduce run lenses/tests/test_yum.aug
     unref(term, term);
     return result;
 }

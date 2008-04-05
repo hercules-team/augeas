@@ -39,15 +39,18 @@
  * own the reference.
  */
 // FIXME: This is not threadsafe; incr/decr ref needs to be protected
+
+#define REF_MAX UINT_MAX
+
 #define make_ref(var)                                                   \
     do {                                                                \
         CALLOC(var, 1);                                                 \
         var->ref = 1;                                                   \
     } while(0)
-#define ref(s) (((s) == NULL || (s)->ref == UINT_MAX) ? (s) : ((s)->ref++, (s)))
+#define ref(s) (((s) == NULL || (s)->ref == REF_MAX) ? (s) : ((s)->ref++, (s)))
 #define unref(s, t)                                                     \
     do {                                                                \
-        if ((s) != NULL && (s)->ref != UINT_MAX) {                      \
+        if ((s) != NULL && (s)->ref != REF_MAX) {                      \
             assert((s)->ref > 0);                                       \
             if (--(s)->ref == 0) {                                      \
                 /*memset(s, 255, sizeof(*s));*/                         \
@@ -57,14 +60,8 @@
         }                                                               \
     } while(0)
 
-#define list_unref(list, type)                                          \
-    do {                                                                \
-        while ((list) != NULL && (list)->ref == 1) {                    \
-            typeof(list) _del = (list);                                 \
-            (list) = (list)->next;                                      \
-            unref(_del, type);                                          \
-        }                                                               \
-    } while(0)
+/* Make VAR uncollectable and pin it in memory for eternity */
+#define ref_pin(var)   (var)->ref = REF_MAX
 
 struct info {
     unsigned int ref;
