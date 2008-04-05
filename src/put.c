@@ -674,10 +674,10 @@ void lns_put(FILE *out, struct lens *lens, struct tree *tree,
     struct state state;
     struct lns_error *err1;
 
-    if (tree == NULL)
-        return;
     if (err != NULL)
         *err = NULL;
+    if (tree == NULL)
+        return;
 
     MEMZERO(&state, 1);
     state.path = strdup("");
