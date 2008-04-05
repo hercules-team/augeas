@@ -45,6 +45,7 @@ struct state {
     FILE             *log;
     struct seq       *seqs;
     const char       *key;
+    int               leaf : 1;  /* Used by get_subtree */
     struct lns_error *error;
 };
 
@@ -576,11 +577,12 @@ static struct tree *get_subtree(struct lens *lens, struct state *state) {
     struct tree *tree = NULL;
 
     state->key = NULL;
+    state->leaf = 1;
     tree = get_lens(lens->child, state);
     if (tree == NULL) {
         tree = make_tree(NULL, NULL);
     }
-    if (tree->label == NULL) {
+    if (state->leaf) {
         tree->label = state->key;
     } else {
         struct tree *t = make_tree(state->key, NULL);
@@ -588,6 +590,7 @@ static struct tree *get_subtree(struct lens *lens, struct state *state) {
         tree = t;
     }
     state->key = key;
+    state->leaf = 0;
     return tree;
 }
 
@@ -740,6 +743,7 @@ struct skel *lns_parse(struct lens *lens, const char *text, struct dict **dict,
     state.text = text;
     state.pos = text;
     state.flags = PF_NONE;
+    state.leaf  = 1;
 
     *dict = NULL;
     skel = parse_lens(lens, &state, dict);
