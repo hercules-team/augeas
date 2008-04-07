@@ -186,8 +186,20 @@ static struct value *tree_rm_glue(struct info *info,
     return tree;
 }
 
+static struct value *gensym(struct info *info, struct value *prefix) {
+    assert(prefix->tag == V_STRING);
+    static unsigned int count = 0;
+    struct value *v = make_value(V_STRING, ref(info));
+    char *s;
+
+    asprintf(&s, "%s%u", prefix->string->str, count);
+    v->string = make_string(s);
+    return v;
+}
+
 struct module *builtin_init(void) {
     struct module *modl = module_create("Builtin");
+    define_native(modl, "gensym", 1, gensym, T_STRING, T_STRING);
     /* Primitive lenses */
     define_native(modl, "del",     2, lns_del, T_REGEXP, T_STRING, T_LENS);
     define_native(modl, "store",   1, lns_store, T_REGEXP, T_LENS);
