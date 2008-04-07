@@ -966,15 +966,17 @@ static struct type *require_exp_type(struct term *term, struct ctx *ctx,
     struct type *allowed[ntypes];
     int r = 1;
 
-    r = check_exp(term, ctx);
-    if (! r)
-        return NULL;
+    if (term->type == NULL) {
+        r = check_exp(term, ctx);
+        if (! r)
+            return NULL;
+    }
 
     va_start(ap, ntypes);
     for (int i=0; i < ntypes; i++)
         allowed[i] = va_arg(ap, struct type *);
     va_end(ap);
-    
+
     return expect_types_arr(term->info, term->type, ntypes, allowed);
 }
 
@@ -1043,6 +1045,10 @@ static int check_value(struct value *v) {
 /* Return 1 if TERM passes, 0 otherwise */
 static int check_exp(struct term *term, struct ctx *ctx) {
     int result = 1;
+    assert(term->type == NULL || term->tag == A_VALUE || term->ref > 1);
+    if (term->type != NULL)
+        return 1;
+
     switch (term->tag) {
     case A_UNION:
         {
@@ -1261,34 +1267,31 @@ static struct value *compile_union(struct term *exp, struct ctx *ctx) {
 }
 
 static struct value *compile_compose(struct term *exp, struct ctx *ctx) {
-    struct value *v1 = compile_exp(exp->info, exp->left, ctx);
-    if (EXN(v1))
-        return v1;
-    struct value *v2 = compile_exp(exp->info, exp->right, ctx);
-    if (EXN(v2)) {
-        unref(v1, value);
-        return v2;
-    }
-
     struct type *t = exp->type;
     struct info *info = exp->info;
     struct value *v;
 
-    v1 = coerce(v1, t);
-    v2 = coerce(v2, t);
     if (t->tag == T_ARROW) {
+        // FIXME: This is really crufty, and should be desugared in the
+        // parser so that we don't have to do all this manual type
+        // computation. Should we write function compostion as
+        // concatenation instead of using a separate syntax ?
+
         /* Build lambda x: exp->right (exp->left x) as a closure */
         char *var = strdup("@0");
         struct term *param = make_param(var, ref(exp->left->type->dom),
                                         ref(info));
+        param->type = ref(exp->left->type);
         struct term *ident = make_term(A_IDENT, ref(info));
         ident->ident = ref(param->param->name);
+        ident->type = ref(param->type);
         struct term *app = make_app_term(ref(exp->left), ident, ref(info));
+        app->type = ref(app->left->type->img);
         app = make_app_term(ref(exp->right), app, ref(info));
+        app->type = ref(app->left->type->img);
+
         struct term *func = build_func(param, app);
 
-        if (! check_exp(func, ctx))
-            fatal_error(info, "Func for concat failed typecheck");
         assert(type_equal(func->type, exp->type));
         v = make_closure(func, ctx->local);
     } else {
@@ -1296,8 +1299,6 @@ static struct value *compile_compose(struct term *exp, struct ctx *ctx) {
                     type_name(exp->left->type), type_name(exp->right->type),
                     type_name(t));
     }
-    unref(v1, value);
-    unref(v2, value);
     return v;
 }
 
