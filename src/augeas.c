@@ -649,8 +649,10 @@ void aug_close(struct augeas *aug) {
     if (aug == NULL)
         return;
     free_tree(aug->tree);
-    // FIXME: Free modules, transforms and modpathz
+    // FIXME: Free transforms
+    unref(aug->modules, module);
     free((void *) aug->root);
+    free(aug->modpathz);
     free(aug);
 }
 

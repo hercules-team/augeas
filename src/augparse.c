@@ -90,6 +90,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Loading from %s failed\n", argv[optind]);
         exit(EXIT_FAILURE);
     }
+    aug_close(augeas);
     //if (optind + 1 < argc) {
         //const char *text = aug_read_file(argv[optind+1]);
         // Run text through some sort of lens

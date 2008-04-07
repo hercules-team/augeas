@@ -228,12 +228,12 @@ static void free_binding(struct binding *binding) {
     free(binding);
 }
 
-ATTRIBUTE_UNUSED
-static void free_module(struct module *module) {
+void free_module(struct module *module) {
     if (module == NULL)
         return;
     assert(module->ref == 0);
     free((char *) module->name);
+    unref(module->next, module);
     unref(module->bindings, binding);
     free(module);
 }
@@ -1384,8 +1384,10 @@ static struct value *compile_bracket(struct term *exp, struct ctx *ctx) {
         return arg;
     assert(arg->tag == V_LENS);
 
-    // FIXME: unref(arg)
-    return lns_make_subtree(ref(exp->info), ref(arg->lens));
+    struct value *v = lns_make_subtree(ref(exp->info), ref(arg->lens));
+    unref(arg, value);
+        
+    return v;
 }
 
 static struct value *compile_rep(struct term *rep, struct ctx *ctx) {
@@ -1423,7 +1425,6 @@ static struct value *compile_rep(struct term *rep, struct ctx *ctx) {
         fatal_error(rep->info, "Tried to repeat a %s to yield a %s",
                     type_name(rep->rexp->type), type_name(rep->type));
     }
-    // FIXME: unref(rep)
     return v;
 }
 
