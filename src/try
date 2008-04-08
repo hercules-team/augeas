@@ -1,7 +1,7 @@
 #! /bin/bash
 
 topdir=$(cd $(dirname $0)/.. && pwd)
-export AUGEAS_LENS_LIB=${topdir}/spec/
+export AUGEAS_LENS_LIB=${topdir}/lenses
 export AUGEAS_ROOT=${topdir}/build/try
 
 AUGCMDS=/tmp/augcmds.txt
