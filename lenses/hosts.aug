@@ -1,6 +1,7 @@
 (* Parsing /etc/hosts *)
 
 module Hosts =
+  autoload xfm
 
   let sep = del /[ \t]+/
   let sep_tab = sep "\t"

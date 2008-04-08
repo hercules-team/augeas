@@ -1,5 +1,6 @@
 (* Parse mail aliases in /etc/aliases *)
 module Aliases =
+   autoload xfm
 
    let word = /[^, \t\n]+/
    let name = /([^ \t\n#:@]+|"[^"\n]*")/ (* " make emacs calm down *)
@@ -20,7 +21,8 @@ module Aliases =
                 ] . eol
 
   let lns = (comment | alias)*
-  (* def files = apply lens (include "/etc/aliases" "/system/config/aliases") *)
+
+  let xfm = transform lns (incl "/etc/aliases")
 
 (* Local Variables: *)
 (* mode: caml *)
