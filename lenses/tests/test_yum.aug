@@ -3,7 +3,7 @@ module Test_yum =
   let yum_simple = "[sec1]
 # comment
 key=value
-[sec2]
+[sec-two]
 key1=value1
 # comment
 key2=value2
@@ -25,38 +25,39 @@ installonly_limit=100
 # PUT YOUR REPOS HERE OR IN separate files named file.repo
 # in /etc/yum.repos.d
 "
-(*
-  test Yum.lns get yum_simple = 
+
+  let cont = "[main]\nbaseurl=url1\n   url2\n"
+
+  test Yum.lns get yum_simple =
     { "sec1" {} { "key" = "value" } }
-    { "sec2" { "key1" = "value1" } {} { "key2" = "value2" } }
+    { "sec-two" { "key1" = "value1" } {} { "key2" = "value2" } }
 
   test Yum.lns put yum_conf after
       rm "main" 
     = ""
-*)  
 
   test Yum.lns put yum_simple after
-      set "sec1/key1" "value1"
-  = ? (* "[sec2]\nkey1=value1\n# comment\nkey2=value2\n" *)
-  
-(*
-  test Yum.lns put yum_simple after
-      rm "sec1" ;
-      rm "sec2/key1"
-  = "[sec2]\n# comment\nkey2=value2\n"
+      set "sec1/key" "othervalue"
+    = "[sec1]\n# comment\nkey=othervalue\n[sec-two]\nkey1=value1\n# comment\nkey2=value2\n"
   
   test Yum.lns put yum_simple after
       rm "sec1" ;
-      rm "sec2/key1" ;
-      set "sec2/newkey" "newvalue"
-  = "[sec2]\n# comment\nkey2=value2\nnewkey=newvalue\n"
+      rm "sec-two/key1"
+  = "[sec-two]\n# comment\nkey2=value2\n"
   
   test Yum.lns put yum_simple after
       rm "sec1" ;
-      set "sec2/key1" "newvalue"
-  = "[sec2]\nkey1=newvalue\n# comment\nkey2=value2\n"
+      rm "sec-two/key1" ;
+      set "sec-two/newkey" "newvalue"
+  = "[sec-two]\n# comment\nkey2=value2\nnewkey=newvalue\n"
   
-*)
+  test Yum.lns put yum_simple after
+      rm "sec1" ;
+      set "sec-two/key1" "newvalue"
+   = "[sec-two]\nkey1=newvalue\n# comment\nkey2=value2\n"
+
+  test Yum.lns get cont =
+    { "main" { "baseurl" = "url1\n   url2" } }
 
 (* Local Variables: *)
 (* mode: caml       *)

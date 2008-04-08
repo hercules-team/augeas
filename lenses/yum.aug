@@ -4,23 +4,27 @@ module Yum =
 
   let eol = Util.del_str "\n"
 
-  let key_re = /[A-Za-z0-9_-]+/
-  let eq = del /[ \t]*=[ \t]*/ "="
-  let secname = /[A-Za-z0-9]+/
-  let value = /[^ \t][^\n]*/
+  let key_re = /([^#;:= \t\n[\/])+/
+  let eq = del /[ \t]*[:=][ \t]*/ "="
+  let secname = /[^]\/]+/
+  (* This sucks continuation lines into one big value. We should really      *)
+  (* split those into an array; that would require though that we sometimes  *)
+  (* make values a single entry, and at other times an array                 *)
+  let value = /[^ \t][^\n]*(\n[ \t]+[^ \t\n]+)*/
 
   (* We really need to allow comments starting with REM and rem but that     *)
   (* leads to ambiguities with keys 'rem=' and 'REM=' The regular expression *)
   (* to do that cleanly is somewhat annoying to craft by hand; we'd need to  *)
-  (* define KEY as /[A-Za-z0-9]+/ - "REM" - "rem"                            *)
-  let comment = [ del /[ \t]*(#.*)?\n/ "# \n" ]
+  (* define KEY_RE as /[A-Za-z0-9]+/ - "REM" - "rem"                         *)
+  let comment = [ del /([;#].*)?[ \t]*\n/ "# \n" ]
 
   let kv = [ key key_re . eq . store value . eol ]
 
-  let section = [ 
-                  Util.del_str "[" . key secname . Util.del_str "]" . eol .
-                  ( comment | kv ) *
-                ]
+  let sechead = Util.del_str "[" . key secname . Util.del_str "]" 
+      . del /[ \t]*[;#]?.*/ ""
+      . eol
+
+  let section = [ sechead . ( comment | kv ) * ]
 
   let lns = (comment) * . (section) *
 
