@@ -419,8 +419,10 @@ int main(int argc, char **argv) {
 
     while (1) {
         line = readline("augtool> ");
-        if (line == NULL)
+        if (line == NULL) {
+            printf("\n");
             return 0;
+        }
 
         cmd = parseline(line, args, 3);
         if (strlen(cmd) > 0) {
