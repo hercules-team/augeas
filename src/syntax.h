@@ -273,6 +273,7 @@ int transform_save(struct augeas *aug, struct transform *transform,
 /* An exception in the interpreter */
 struct exn {
     struct info *info;
+    unsigned int seen : 1;      /* Whether the user has seen this EXN */
     const char  *message;
     size_t       nlines;
     char       **lines;

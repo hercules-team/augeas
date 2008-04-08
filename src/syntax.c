@@ -1574,10 +1574,13 @@ static int compile_decl(struct term *term, struct ctx *ctx) {
         if (!EXN(v))
             return 1;
 
-        syntax_error(term->info, "Failed to compile %s",
-                     term->bname);
-        print_value(stdout, v);
-        printf("\n");
+        if (! v->exn->seen) {
+            syntax_error(term->info, "Failed to compile %s",
+                         term->bname);
+            print_value(stdout, v);
+            printf("\n");
+            v->exn->seen = 1;
+        }
         return 0;
     } else if (term->tag == A_TEST) {
         return compile_test(term, ctx);
