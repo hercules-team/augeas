@@ -72,7 +72,7 @@ static void cmd_match(char *args[]) {
     int cnt;
     const char *pattern = cleanpath(args[0]);
     const char **matches;
-    int filter = (strlen(args[1]) > 0);
+    int filter = (args[1] != NULL) && (strlen(args[1]) > 0);
 
     cnt = aug_match(augeas, pattern, NULL, 0);
     if (cnt == 0) {
