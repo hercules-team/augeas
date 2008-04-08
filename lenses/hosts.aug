@@ -12,8 +12,8 @@ module Hosts =
   let word = /[^# \n\t]+/
   let record = [ seq "line" . [ label "ipaddr" . store  word ] . sep_tab .
                               [ label "canonical" . store word ] .
-                              [ label "aliases" . 
-                                ( [ seq "aliases" . sep_spc . store word] ) * 
+                              [ label "aliases" .
+                                Util.split (store word) sep_spc
                               ] .
                  eol ]
 

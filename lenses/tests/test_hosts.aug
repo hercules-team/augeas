@@ -2,7 +2,7 @@
 
 module Test_hosts =
 
-  let two_entries = "127.0.0.1 foo
+  let two_entries = "127.0.0.1 foo foo.example.com
 # comment
 192.168.0.1 pigiron.example.com pigiron pigiron.example
 "
@@ -15,7 +15,7 @@ module Test_hosts =
   test Hosts.lns get two_entries =
    { "0" { "ipaddr" = "127.0.0.1" } 
           { "canonical" = "foo" }
-          { "aliases" }
+          { "aliases" { "0" = "foo.example.com" } }
     }
     { }
     { "1" { "ipaddr" = "192.168.0.1" } 
@@ -30,6 +30,7 @@ module Test_hosts =
 
   test Hosts.lns put two_entries after 
     set "1/aliases/10" "piggy" ;
+    rm "0/aliases/0" ;
     rm "1/aliases/1" 
   = "127.0.0.1 foo
 # comment
