@@ -260,7 +260,7 @@ void free_value(struct value *v) {
 
     switch(v->tag) {
     case V_STRING:
-        free((void *) v->string);
+        unref(v->string, string);
         break;
     case V_REGEXP:
         unref(v->regexp, regexp);
