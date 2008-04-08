@@ -206,6 +206,13 @@ struct augeas *aug_init(const char *root, const char *loadpath,
 
     if (interpreter_init(result) == -1)
         goto error;
+
+    list_for_each(modl, result->modules) {
+        struct transform *xform = modl->autoload;
+        if (xform == NULL)
+            continue;
+        transform_load(result, xform);
+    }
     return result;
 
  error:
@@ -536,7 +543,10 @@ static int tree_save(struct augeas *aug, struct tree *tree, const char *path) {
             char *tpath;
             struct transform *transform = NULL;
             asprintf(&tpath, "%s/%s", path, t->label);
-            list_for_each(xform, aug->transforms) {
+            list_for_each(modl, aug->modules) {
+                struct transform *xform = modl->autoload;
+                if (xform == NULL)
+                    continue;
                 if (transform_applies(xform, tpath)) {
                     if (transform == NULL || transform == xform) {
                         transform = xform;
@@ -649,7 +659,6 @@ void aug_close(struct augeas *aug) {
     if (aug == NULL)
         return;
     free_tree(aug->tree);
-    // FIXME: Free transforms
     unref(aug->modules, module);
     free((void *) aug->root);
     free(aug->modpathz);

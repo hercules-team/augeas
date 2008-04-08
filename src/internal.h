@@ -197,7 +197,6 @@ struct augeas {
     struct tree      *tree;
     const char       *root;       /* Filesystem root for all files */
     unsigned int      flags;      /* Flags passed to AUG_INIT */
-    struct transform *transforms; /* Transforms to run */
     struct module    *modules;    /* Loaded modules */
     size_t            nmodpath;
     char             *modpathz;   /* The search path for modules as a

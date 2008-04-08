@@ -238,6 +238,7 @@ void free_module(struct module *module) {
     free((char *) module->name);
     unref(module->next, module);
     unref(module->bindings, binding);
+    unref(module->autoload, transform);
     free(module);
 }
 
@@ -1587,6 +1588,7 @@ static int compile_decl(struct term *term, struct ctx *ctx) {
 
 static struct module *compile(struct term *term, struct augeas *augeas) {
     struct ctx ctx;
+    struct transform *autoload = NULL;
     int ok = 1;
     assert(term->tag == A_MODULE);
 
@@ -1595,14 +1597,27 @@ static struct module *compile(struct term *term, struct augeas *augeas) {
     list_for_each(dcl, term->decls) {
         ok &= compile_decl(dcl, &ctx);
     }
-    if (!ok) {
-        unref(ctx.local, binding);
-        return NULL;
+    if (!ok)
+        goto error;
+    
+    if (term->autoload != NULL) {
+        struct binding *bnd = bnd_lookup(ctx.local, term->autoload);
+        if (bnd == NULL) {
+            syntax_error(term->info, "Undefined transform in autoload %s",
+                         term->autoload);
+            goto error;
+        }
+        if (expect_types(term->info, bnd->type, 1, t_transform) == NULL)
+            goto error;
+        autoload = bnd->value->transform;
     }
-
     struct module *module = module_create(term->mname);
     module->bindings = ctx.local;
+    module->autoload = ref(autoload);
     return module;
+ error:
+    unref(ctx.local, binding);
+    return NULL;
 }
 
 /*

@@ -123,6 +123,7 @@ struct term {
     union {
         struct {                       /* A_MODULE */
             const char    *mname;
+            const char    *autoload;
             struct term   *decls;
         };
         struct {                       /* A_BIND */
@@ -244,7 +245,6 @@ int filter_matches(struct filter *filter, const char *path);
 
 /* Transformers that actually run lenses on contents of files */
 struct transform {
-    struct transform *next;
     unsigned int      ref;
     struct lens      *lens;
     struct filter    *filter;
@@ -351,6 +351,7 @@ struct binding {
 struct module {
     unsigned int       ref;
     struct module     *next;     /* Only used for the global list of modules */
+    struct transform  *autoload;
     const char        *name;
     struct binding    *bindings;
 };

@@ -98,6 +98,8 @@ ARROW  ->
   regexp        return KW_REGEXP;
   lens          return KW_LENS;
   in            return KW_IN;
+  autoload      return KW_AUTOLOAD;
+
   /* tests */
   test          return KW_TEST;
   get           return KW_GET;

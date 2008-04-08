@@ -1,5 +1,7 @@
 (* Parsing yum's config files *)
 module Yum =
+  autoload xfm
+
   let eol = Util.del_str "\n"
 
   let key_re = /[A-Za-z0-9_-]+/

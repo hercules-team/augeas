@@ -106,7 +106,7 @@ void filter_generate(struct filter *filter, int *nmatches, char ***matches) {
             const char *path = pathv[i];
             if (strchr(e->glob->str, SEP) == NULL)
                 path = pathbase(path);
-            if (fnmatch(e->glob->str, path, fnm_flags)) {
+            if (fnmatch(e->glob->str, path, fnm_flags) == 0) {
                 pathc -= 1;
                 if (i < pathc) {
                     pathv[i] = pathv[pathc];

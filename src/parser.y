@@ -47,6 +47,7 @@ typedef struct info YYLTYPE;
 
 /* Keywords */
 %token          KW_MODULE
+%token          KW_AUTOLOAD
 %token          KW_LET KW_IN
 %token          KW_STRING
 %token          KW_REGEXP
@@ -69,7 +70,7 @@ typedef struct info YYLTYPE;
 %type<term>   start decls
 %type<term>   exp composeexp unionexp catexp appexp rexp aexp
 %type<term>   param param_list
-%type<string> qid id
+%type<string> qid id autoload
 %type<type>  type atype
 %type<quant> rep
 %type<term>  test_exp
@@ -92,8 +93,9 @@ static void augl_error(struct info *locp, struct term **term,
 
 /* TERM construction */
  static struct info *clone_info(struct info *locp);
- static struct term *make_module(const char *ident, struct term *decls,
-                                struct info *locp);
+ static struct term *make_module(const char *ident, const char *autoload,
+                                 struct term *decls,
+                                 struct info *locp);
 
  static struct term *make_bind(const char *ident, struct term *params,
                              struct term *exp, struct term *decls,
@@ -137,8 +139,13 @@ static void augl_error(struct info *locp, struct term **term,
 
 %%
 
-start: KW_MODULE UIDENT '=' decls
- { (*term) = make_module($2, $4, &@1); }
+start: KW_MODULE UIDENT '=' autoload decls
+       { (*term) = make_module($2, $4, $5, &@1); }
+
+autoload: KW_AUTOLOAD LIDENT
+          { $$ = $2; }
+        | /* empty */
+          { $$ = NULL; }
 
 decls: KW_LET LIDENT param_list '=' exp decls
        {
@@ -333,10 +340,12 @@ static struct term *make_term_locp(enum term_tag tag, struct info *locp) {
   return make_term(tag, info);
 }
 
-static struct term *make_module(const char *ident, struct term *decls,
-                               struct info *locp) {
+static struct term *make_module(const char *ident, const char *autoload,
+                                struct term *decls,
+                                struct info *locp) {
   struct term *term = make_term_locp(A_MODULE, locp);
   term->mname = ident;
+  term->autoload = autoload;
   term->decls = decls;
   return term;
 }
