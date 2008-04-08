@@ -240,8 +240,6 @@ struct filter {
 
 struct filter *make_filter(struct string *glob, unsigned int include);
 void free_filter(struct filter *filter);
-void filter_generate(struct filter *filter, int *nmatches, char ***matches);
-int filter_matches(struct filter *filter, const char *path);
 
 /* Transformers that actually run lenses on contents of files */
 struct transform {
@@ -258,7 +256,7 @@ void free_transform(struct transform *xform);
  * resulting tree under "/files" + filename. Also stores some information
  * about filename underneath "/augeas/files" + filename
  */
-void transform_load(struct augeas *aug, struct transform *transform);
+int transform_load(struct augeas *aug, struct transform *transform);
 
 /* Return 1 if TRANSFORM applies to PATH, 0 otherwise. The TRANSFORM
  * applies to PATH if (1) PATH starts with "/files/" and (2) the rest of

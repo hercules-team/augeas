@@ -74,22 +74,25 @@ static const char *pathbase(const char *path) {
     return (p == NULL) ? path : p + 1;
 }
 
-void filter_generate(struct filter *filter, int *nmatches, char ***matches) {
+static int filter_generate(struct filter *filter, const char *root,
+                           int *nmatches, char ***matches) {
     glob_t globbuf;
     int gl_flags = glob_flags;
     int r;
+    int ret = 0;
 
     list_for_each(f, filter) {
+        char *globpat = NULL;
         if (! f->include)
             continue;
-        // FIXME: Use this to support changing the root dir:
-        //  ret = asprintf(&globpat, "%s%s", aug->root,
-        //                   filter->glob);
-        //    if (ret == -1)
-        //        goto exit;
-        r = glob(f->glob->str, gl_flags, NULL, &globbuf);
-        if (r != 0 && r != GLOB_NOMATCH)
-            FIXME("Report error");
+        pathjoin(&globpat, 2, root, f->glob->str);
+        r = glob(globpat, gl_flags, NULL, &globbuf);
+        free(globpat);
+
+        if (r != 0 && r != GLOB_NOMATCH) {
+            ret = -1;
+            goto done;
+        }
         gl_flags |= GLOB_APPEND;
     }
 
@@ -97,7 +100,6 @@ void filter_generate(struct filter *filter, int *nmatches, char ***matches) {
     int pathc = globbuf.gl_pathc;
     globbuf.gl_pathv = NULL;
     globbuf.gl_pathc = 0;
-    globfree(&globbuf);
 
     list_for_each(e, filter) {
         if (e->include)
@@ -119,9 +121,12 @@ void filter_generate(struct filter *filter, int *nmatches, char ***matches) {
     REALLOC(pathv, pathc);
     *matches = pathv;
     *nmatches = pathc;
+ done:
+    globfree(&globbuf);
+    return ret;
 }
 
-int filter_matches(struct filter *filter, const char *path) {
+static int filter_matches(struct filter *filter, const char *path) {
     int found = 0;
     list_for_each(f, filter) {
         if (f->include)
@@ -168,7 +173,7 @@ static char *add_load_info(struct augeas *aug, const char *filename,
 
     char *result = NULL;
     int end = 0;
-    pathjoin(&result, 2, AUGEAS_META_FILES, filename + strlen(aug->root));
+    pathjoin(&result, 2, AUGEAS_META_FILES, filename + strlen(aug->root) - 1);
     end = strlen(result);
 
     pathjoin(&result, 1, path_node);
@@ -201,7 +206,7 @@ static int load_file(struct augeas *aug, struct lens *lens,
     char *path = NULL;
     struct lns_error *err;
 
-    pathjoin(&path, 2, AUGEAS_FILES_TREE, filename);
+    pathjoin(&path, 2, AUGEAS_FILES_TREE, filename + strlen(aug->root) - 1);
 
     errpath = add_load_info(aug, filename, path, lens);
     if (errpath == NULL)
@@ -239,16 +244,20 @@ static int load_file(struct augeas *aug, struct lens *lens,
     return -1;
 }
 
-void transform_load(struct augeas *aug, struct transform *xform) {
+int transform_load(struct augeas *aug, struct transform *xform) {
     int nmatches;
     char **matches;
+    int r;
 
-    filter_generate(xform->filter, &nmatches, &matches);
+    r = filter_generate(xform->filter, aug->root, &nmatches, &matches);
+    if (r == -1)
+        return -1;
     for (int i=0; i < nmatches; i++) {
         load_file(aug, xform->lens, matches[i]);
         free(matches[i]);
     }
     free(matches);
+    return 0;
 }
 
 int transform_applies(struct transform *xform, const char *path) {
@@ -267,7 +276,7 @@ int transform_save(struct augeas *aug, struct transform *xform,
     const char *err_status = NULL;
     struct lns_error *err;
 
-    asprintf(&augnew, "%s" EXT_AUGNEW, filename);
+    asprintf(&augnew, "%s%s" EXT_AUGNEW, aug->root, filename);
 
     text = aug_read_file(filename);
     if (text == NULL) {
@@ -289,7 +298,7 @@ int transform_save(struct augeas *aug, struct transform *xform,
     if (!(aug->flags & AUG_SAVE_NEWFILE)) {
         if (aug->flags & AUG_SAVE_BACKUP) {
             char *augsave = NULL;
-            asprintf(&augsave, "%s" EXT_AUGSAVE, filename);
+            asprintf(&augsave, "%s%s" EXT_AUGSAVE, aug->root, filename);
             if (rename(filename, augsave) != 0) {
                 err_status = "rename_augsave";
                 goto error;

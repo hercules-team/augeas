@@ -141,6 +141,21 @@ static void aug_tree_free(struct tree *tree) {
     }
 }
 
+static const char *init_root(const char *root0) {
+    char *root;
+
+    if (root0 == NULL)
+        root0 = getenv(AUGEAS_ROOT_ENV);
+    if (root0 == NULL)
+        root0 = "/";
+    root = strdup(root0);
+    if (root[strlen(root)-1] != SEP) {
+        REALLOC(root, strlen(root) + 1);
+        strcat(root, "/");
+    }
+    return root;
+}
+
 struct augeas *aug_init(const char *root, const char *loadpath,
                         unsigned int flags) {
     struct augeas *result;
@@ -150,11 +165,7 @@ struct augeas *aug_init(const char *root, const char *loadpath,
 
     result->flags = flags;
 
-    if (root == NULL)
-        root = getenv(AUGEAS_ROOT_ENV);
-    if (root == NULL)
-        root = "/";
-    result->root = strdup(root);
+    result->root = init_root(root);
 
     result->tree->label = strdup(P_ROOT);
 

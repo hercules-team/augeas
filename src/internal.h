@@ -196,6 +196,7 @@ const char* aug_read_file(const char *path);
 struct augeas {
     struct tree      *tree;
     const char       *root;       /* Filesystem root for all files */
+                                  /* always ends with '/' */
     unsigned int      flags;      /* Flags passed to AUG_INIT */
     struct module    *modules;    /* Loaded modules */
     size_t            nmodpath;
