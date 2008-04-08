@@ -39,6 +39,17 @@ static const char *const tags[] = {
     "subtree", "star", "maybe"
 };
 
+static fa_t regexp_to_fa(struct regexp *regexp) {
+    fa_t fa;
+    int error = fa_compile(regexp->pattern->str, &fa);
+    if (error != REG_NOERROR) {
+        syntax_error(regexp->info,
+                     "unexpected error from fa_compile %d", error);
+        return NULL;
+    }
+    return fa;
+}
+
 static struct lens *make_lens(enum lens_tag tag, struct info *info) {
     struct lens *lens;
     make_ref(lens);
@@ -159,9 +170,49 @@ struct value *lns_make_maybe(struct info *info, struct lens *l) {
 /*
  * Lens primitives
  */
-struct lens *lns_make_prim(enum lens_tag tag, struct info *info,
-                           struct regexp *regexp, struct string *string) {
-    struct lens *lens = make_lens(tag, info);
+struct value *lns_make_prim(enum lens_tag tag, struct info *info,
+                            struct regexp *regexp, struct string *string) {
+    struct lens *lens = NULL;
+    struct value *exn = NULL;
+    fa_t fa_slash = NULL;
+    fa_t fa_key = NULL;
+    fa_t fa_isect = NULL;
+
+    /* Typecheck */
+    if (tag == L_KEY) {
+        int error = fa_compile("(.|\n)*/(.|\n)*", &fa_slash);
+        if (error != REG_NOERROR) {
+            exn = make_exn_value(info,
+                                 "unexpected error from fa_compile %d", error);
+            goto error;
+        }
+        fa_key = regexp_to_fa(regexp);
+        if (fa_key == NULL) {
+            exn = make_exn_value(info, "fa_compile of key failed");
+            goto error;
+        }
+        fa_isect = fa_intersect(fa_slash, fa_key);
+        if (! fa_is_basic(fa_isect, FA_EMPTY)) {
+            exn = make_exn_value(info,
+                                 "The key regexp /%s/ matches a '/'",
+                                 regexp->pattern->str);
+            goto error;
+        }
+        fa_free(fa_isect);
+        fa_free(fa_key);
+        fa_free(fa_slash);
+        fa_isect = fa_key = fa_slash = NULL;
+    } else if (tag == L_LABEL) {
+        if (strchr(string->str, SEP) != NULL) {
+            exn = make_exn_value(info,
+                                 "The label string \"%s\" contains a '/'",
+                                 string->str);
+            goto error;
+        }
+    }
+
+    /* Build the actual lens */
+    lens = make_lens(tag, info);
     lens->regexp = regexp;
     lens->string = string;
     switch(tag) {
@@ -180,23 +231,17 @@ struct lens *lns_make_prim(enum lens_tag tag, struct info *info,
     default:
         fatal_error(info, "Illegal primitive tag %d", tag);
     }
-    return lens;
+    return make_lens_value(lens);
+ error:
+    fa_free(fa_isect);
+    fa_free(fa_key);
+    fa_free(fa_slash);
+    return exn;
 }
 
 /*
  * Typechecking of lenses
  */
-static fa_t regexp_to_fa(struct regexp *regexp) {
-    fa_t fa;
-    int error = fa_compile(regexp->pattern->str, &fa);
-    if (error != REG_NOERROR) {
-        syntax_error(regexp->info,
-                     "unexpected error from fa_compile %d", error);
-        return NULL;
-    }
-    return fa;
-}
-
 static int typecheck_union(struct info *info,
                            struct lens *l1, struct lens *l2) {
     fa_t fa1 = regexp_to_fa(l1->ctype);

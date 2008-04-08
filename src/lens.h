@@ -67,8 +67,8 @@ struct lens {
  * The return type is VALUE instead of LENS so that we can return an
  * exception iftypechecking fails.
  */
-struct lens *lns_make_prim(enum lens_tag tag, struct info *info,
-                           struct regexp *regexp, struct string *string);
+struct value *lns_make_prim(enum lens_tag tag, struct info *info,
+                            struct regexp *regexp, struct string *string);
 struct value *lns_make_union(struct info *, struct lens *, struct lens *);
 struct value *lns_make_concat(struct info *, struct lens *, struct lens *);
 struct value *lns_make_subtree(struct info *, struct lens *);

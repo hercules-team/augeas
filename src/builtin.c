@@ -40,50 +40,38 @@ static struct value *lns_del(struct info *info,
                              struct value *rxp, struct value *dflt) {
     assert(rxp->tag == V_REGEXP);
     assert(dflt->tag == V_STRING);
-    struct value *v = make_value(V_LENS, ref(info));
-    v->lens = lns_make_prim(L_DEL, ref(info),
-                            ref(rxp->regexp), ref(dflt->string));
-    return v;
+    return lns_make_prim(L_DEL, ref(info),
+                         ref(rxp->regexp), ref(dflt->string));
 }
 
 /* V_REGEXP -> V_LENS */
 static struct value *lns_store(struct info *info, struct value *rxp) {
     assert(rxp->tag == V_REGEXP);
-    struct value *v = make_value(V_LENS, ref(info));
-    v->lens = lns_make_prim(L_STORE, ref(info), ref(rxp->regexp), NULL);
-    return v;
+    return lns_make_prim(L_STORE, ref(info), ref(rxp->regexp), NULL);
 }
 
 /* V_REGEXP -> V_LENS */
 static struct value *lns_key(struct info *info, struct value *rxp) {
     assert(rxp->tag == V_REGEXP);
-    struct value *v = make_value(V_LENS, ref(info));
-    v->lens = lns_make_prim(L_KEY, ref(info), ref(rxp->regexp), NULL);
-    return v;
+    return lns_make_prim(L_KEY, ref(info), ref(rxp->regexp), NULL);
 }
 
 /* V_STRING -> V_LENS */
 static struct value *lns_label(struct info *info, struct value *str) {
     assert(str->tag == V_STRING);
-    struct value *v = make_value(V_LENS, ref(info));
-    v->lens = lns_make_prim(L_LABEL, ref(info), NULL, ref(str->string));
-    return v;
+    return lns_make_prim(L_LABEL, ref(info), NULL, ref(str->string));
 }
 
 /* V_STRING -> V_LENS */
 static struct value *lns_seq(struct info *info, struct value *str) {
     assert(str->tag == V_STRING);
-    struct value *v = make_value(V_LENS, ref(info));
-    v->lens = lns_make_prim(L_SEQ, ref(info), NULL, ref(str->string));
-    return v;
+    return lns_make_prim(L_SEQ, ref(info), NULL, ref(str->string));
 }
 
 /* V_STRING -> V_LENS */
 static struct value *lns_counter(struct info *info, struct value *str) {
     assert(str->tag == V_STRING);
-    struct value *v = make_value(V_LENS, ref(info));
-    v->lens = lns_make_prim(L_COUNTER, ref(info), NULL, ref(str->string));
-    return v;
+    return lns_make_prim(L_COUNTER, ref(info), NULL, ref(str->string));
 }
 
 static struct value *make_exn_lns_error(struct info *info,
