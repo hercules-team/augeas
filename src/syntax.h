@@ -229,15 +229,16 @@ struct native {
  * functions are in transform.c
  */
 
-/* Filters for globbing files. Include filters always come before exclude
-   filters on the list */
+/* Filters for globbing files */
 struct filter {
     unsigned int   ref;
     struct filter *next;
-    const char    *glob;
+    struct string *glob;
     unsigned int   include : 1;
 };
 
+struct filter *make_filter(struct string *glob, unsigned int include);
+void free_filter(struct filter *filter);
 void filter_generate(struct filter *filter, int *nmatches, char ***matches);
 int filter_matches(struct filter *filter, const char *path);
 
@@ -248,6 +249,9 @@ struct transform {
     struct lens      *lens;
     struct filter    *filter;
 };
+
+struct transform *make_transform(struct lens *lens, struct filter *filter);
+void free_transform(struct transform *xform);
 
 /* Load all files matching the TRANSFORM's filter into the tree in AUG by
  * applying the TRANSFORM's lens to their contents and putting the

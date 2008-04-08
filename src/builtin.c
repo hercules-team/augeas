@@ -186,6 +186,7 @@ static struct value *tree_rm_glue(struct info *info,
     return tree;
 }
 
+/* V_STRING -> V_STRING */
 static struct value *gensym(struct info *info, struct value *prefix) {
     assert(prefix->tag == V_STRING);
     static unsigned int count = 0;
@@ -194,6 +195,32 @@ static struct value *gensym(struct info *info, struct value *prefix) {
 
     asprintf(&s, "%s%u", prefix->string->str, count);
     v->string = make_string(s);
+    return v;
+}
+
+/* V_STRING -> V_FILTER */
+static struct value *xform_incl(struct info *info, struct value *s) {
+    assert(s->tag == V_STRING);
+    struct value *v = make_value(V_FILTER, ref(info));
+    v->filter = make_filter(ref(s->string), 1);
+    return v;
+}
+
+/* V_STRING -> V_FILTER */
+static struct value *xform_excl(struct info *info, struct value *s) {
+    assert(s->tag == V_STRING);
+    struct value *v = make_value(V_FILTER, ref(info));
+    v->filter = make_filter(ref(s->string), 0);
+    return v;
+}
+
+/* V_LENS -> V_FILTER -> V_TRANSFORM */
+static struct value *xform_transform(struct info *info, struct value *l,
+                                     struct value *f) {
+    assert(l->tag == V_LENS);
+    assert(f->tag == V_FILTER);
+    struct value *v = make_value(V_TRANSFORM, ref(info));
+    v->transform = make_transform(ref(l->lens), ref(f->filter));
     return v;
 }
 
@@ -212,12 +239,16 @@ struct module *builtin_init(void) {
     define_native(modl, "put",     3, lens_put, T_LENS, T_TREE, T_STRING,
                                                T_STRING);
     /* Tree manipulation used by the PUT tests */
-    define_native(modl, "set", 3, tree_set_glue, T_STRING, T_STRING, T_TREE, T_TREE);
+    define_native(modl, "set", 3, tree_set_glue, T_STRING, T_STRING, T_TREE,
+                                                 T_TREE);
     define_native(modl, "rm", 2, tree_rm_glue, T_STRING, T_TREE, T_TREE);
-
+    /* Transforms and filters */
+    define_native(modl, "incl", 1, xform_incl, T_STRING, T_FILTER);
+    define_native(modl, "excl", 1, xform_excl, T_STRING, T_FILTER);
+    define_native(modl, "transform", 2, xform_transform, T_LENS, T_FILTER,
+                                                         T_TRANSFORM);
     return modl;
 }
-
 
 /*
  * Local variables:

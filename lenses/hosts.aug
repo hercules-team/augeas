@@ -19,7 +19,7 @@ module Hosts =
 
   let lns = ( comment | record ) *
 
-  (* let files = transform top (incl "/etc/hosts") "/system/config/hosts" *)
+  let xfm = transform lns (incl "/etc/hosts")
 
 (* Local Variables: *)
 (* mode: caml *)

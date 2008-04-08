@@ -51,7 +51,7 @@ const struct type *const t_regexp    = &regexp_type;
 const struct type *const t_lens      = &lens_type;
 const struct type *const t_tree      = &tree_type;
 const struct type *const t_filter    = &filter_type;
-const struct type *const t_transfrom = &transform_type;
+const struct type *const t_transform = &transform_type;
 
 static const char *const type_names[] = {
     "string", "regexp", "lens", "tree", "filter",
@@ -272,10 +272,10 @@ void free_value(struct value *v) {
         free_tree(v->tree);
         break;
     case V_FILTER:
-        FIXME("Free filter");
+        unref(v->filter, filter);
         break;
     case V_TRANSFORM:
-        FIXME("Free transform");
+        unref(v->transform, transform);
         break;
     case V_NATIVE:
         unref(v->native->type, type);
@@ -602,7 +602,7 @@ static void print_value(FILE *out, struct value *v) {
     case V_FILTER:
         fprintf(out, "<filter:");
         list_for_each(f, v->filter) {
-            fprintf(out, "%c%s%c", f->include ? '+' : '-', f->glob,
+            fprintf(out, "%c%s%c", f->include ? '+' : '-', f->glob->str,
                    (f->next != NULL) ? ':' : '>');
         }
         break;
@@ -694,6 +694,10 @@ struct type *make_base_type(enum type_tag tag) {
         return (struct type *) t_lens;
     else if (tag == T_TREE)
         return (struct type *) t_tree;
+    else if (tag == T_FILTER)
+        return (struct type *) t_filter;
+    else if (tag == T_TRANSFORM)
+        return (struct type *) t_transform;
     else
         assert(0);
 }
@@ -1025,9 +1029,9 @@ static int check_concat(struct term *term, struct ctx *ctx) {
     tl = term->left->type;
 
     tl = require_exp_type(term->left, ctx, 
-                          3, t_string, t_regexp, t_lens);
+                          4, t_string, t_regexp, t_lens, t_filter);
     tr = require_exp_type(term->right, ctx, 
-                          3, t_string, t_regexp, t_lens);
+                          4, t_string, t_regexp, t_lens, t_filter);
     if ((tl == NULL) || (tr == NULL))
         return 0;
     term->type = type_join(tl, tr);
@@ -1354,6 +1358,25 @@ static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
     } else if (t->tag == T_REGEXP) {
         v = make_value(V_REGEXP, ref(info));
         v->regexp = regexp_concat(info, v1->regexp, v2->regexp);
+    } else if (t->tag == T_FILTER) {
+        struct filter *f1 = v1->filter;
+        struct filter *f2 = v2->filter;
+        v = make_value(V_FILTER, ref(info));
+        if (f2->ref == 1) {
+            list_append(f2, ref(f1));
+            v->filter = ref(f2);
+        } else if (f1->ref == 1) {
+            list_append(f1, ref(f2));
+            v->filter = ref(f1);
+        } else {
+            struct filter *cf1, *cf2;
+            cf1 = make_filter(ref(f1->glob), f1->include);
+            cf2 = make_filter(ref(f2->glob), f2->include);
+            cf1->next = ref(f1->next);
+            cf2->next = ref(f2->next);
+            list_append(cf1, cf2);
+            v->filter = cf1;
+        }
     } else if (t->tag == T_LENS) {
         struct lens *l1 = v1->lens;
         struct lens *l2 = v2->lens;

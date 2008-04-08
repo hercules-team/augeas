@@ -2,7 +2,7 @@
 module Aliases =
 
    let word = /[^, \t\n]+/
-   let name = /([^ \t\n#:@]+|"[^"\n]*")/
+   let name = /([^ \t\n#:@]+|"[^"\n]*")/ (* " make emacs calm down *)
 
    let colon = del /:[ \t]+/ ":\t"
    let eol = del /[ \t]*\n/ "\n"

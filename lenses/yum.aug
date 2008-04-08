@@ -22,6 +22,11 @@ module Yum =
 
   let lns = (comment) * . (section) *
 
+  let filter = (incl "/etc/yum.conf") . (incl "/etc/yum.repos.d/*") 
+      . Util.stdexcl
+
+  let xfm = transform lns filter
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

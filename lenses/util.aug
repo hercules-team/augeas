@@ -9,6 +9,9 @@ module Util =
     let sym = gensym "split" in
     counter sym . ( [ seq sym . sep . elt ] ) *
 
+  (* Exclusion for files that are commonly not wanted/needed              *)
+  let stdexcl = excl "*~"
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

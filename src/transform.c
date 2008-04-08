@@ -52,20 +52,42 @@ static const char *const err_node = "/error";
 /*
  * Filters
  */
+struct filter *make_filter(struct string *glb, unsigned int include) {
+    struct filter *f;
+    make_ref(f);
+    f->glob = glb;
+    f->include = include;
+    return f;
+}
+
+void free_filter(struct filter *f) {
+    if (f == NULL)
+        return;
+    assert(f->ref == 0);
+    unref(f->next, filter);
+    unref(f->glob, string);
+    free(f);
+}
+
+static const char *pathbase(const char *path) {
+    const char *p = strrchr(path, SEP);
+    return (p == NULL) ? path : p + 1;
+}
+
 void filter_generate(struct filter *filter, int *nmatches, char ***matches) {
-    struct filter *excl, *incl;
     glob_t globbuf;
     int gl_flags = glob_flags;
     int r;
 
-    for (excl = filter; excl != NULL && excl->include; excl = excl->next);
-    for (incl = filter; incl != NULL && incl->include; incl = incl->next) {
+    list_for_each(f, filter) {
+        if (! f->include)
+            continue;
         // FIXME: Use this to support changing the root dir:
         //  ret = asprintf(&globpat, "%s%s", aug->root,
         //                   filter->glob);
         //    if (ret == -1)
         //        goto exit;
-        r = glob(filter->glob, gl_flags, NULL, &globbuf);
+        r = glob(f->glob->str, gl_flags, NULL, &globbuf);
         if (r != 0 && r != GLOB_NOMATCH)
             FIXME("Report error");
         gl_flags |= GLOB_APPEND;
@@ -77,9 +99,14 @@ void filter_generate(struct filter *filter, int *nmatches, char ***matches) {
     globbuf.gl_pathc = 0;
     globfree(&globbuf);
 
-    list_for_each(e, excl) {
+    list_for_each(e, filter) {
+        if (e->include)
+            continue;
         for (int i=0; i < pathc;) {
-            if (fnmatch(e->glob, pathv[i], fnm_flags)) {
+            const char *path = pathv[i];
+            if (strchr(e->glob->str, SEP) == NULL)
+                path = pathbase(path);
+            if (fnmatch(e->glob->str, path, fnm_flags)) {
                 pathc -= 1;
                 if (i < pathc) {
                     pathv[i] = pathv[pathc];
@@ -96,13 +123,14 @@ void filter_generate(struct filter *filter, int *nmatches, char ***matches) {
 
 int filter_matches(struct filter *filter, const char *path) {
     int found = 0;
-    struct filter *f;
-    for (f = filter; f != NULL && f->include; f = f->next)
-        found |= fnmatch(f->glob, path, fnm_flags);
+    list_for_each(f, filter) {
+        if (f->include)
+            found |= fnmatch(f->glob->str, path, fnm_flags);
+    }
     if (! found)
         return 0;
-    for (; f != NULL; f = f->next) {
-        if (fnmatch(f->glob, path, fnm_flags))
+    list_for_each(f, filter) {
+        if (!f->include && fnmatch(f->glob->str, path, fnm_flags))
             return 0;
     }
     return 1;
@@ -111,6 +139,23 @@ int filter_matches(struct filter *filter, const char *path) {
 /*
  * Transformers
  */
+struct transform *make_transform(struct lens *lens, struct filter *filter) {
+    struct transform *xform;
+    make_ref(xform);
+    xform->lens = lens;
+    xform->filter = filter;
+    return xform;
+}
+
+void free_transform(struct transform *xform) {
+    if (xform == NULL)
+        return;
+    assert(xform->ref == 0);
+    unref(xform->lens, lens);
+    unref(xform->filter, filter);
+    free(xform);
+}
+
 static const char *err_path(const char *filename) {
     char *result = NULL;
     pathjoin(&result, 3, AUGEAS_META_FILES, filename, err_node);
