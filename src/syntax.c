@@ -58,6 +58,8 @@ static const char *const type_names[] = {
     "transform", "function", NULL
 };
 
+static void print_value(FILE *out, struct value *v);
+
 /* The evaluation context with all loaded modules and the bindings for the
  * module we are working on in LOCAL 
  */
@@ -184,6 +186,7 @@ static void free_term(struct term *term) {
     case A_UNION:
     case A_CONCAT:
     case A_APP:
+    case A_LET:
         unref(term->left, term);
         unref(term->right, term);
         break;
@@ -539,13 +542,15 @@ static void bind(struct binding **bnds,
  * Some debug printing
  */
 
-static const char *type_string(struct type *t);
+static char *type_string(struct type *t);
 
 static void dump_bindings(struct binding *bnds) {
     list_for_each(b, bnds) {
         const char *st = type_string(b->type);
         fprintf(stderr, "    %s: %s", b->ident->str, st);
-        fprintf(stderr, "%s\n", b->value == NULL ? " n" : " v");
+        fprintf(stderr, " = ");
+        print_value(stderr, b->value);
+        fputc('\n', stderr);
         free((char *) st);
     }
 }
@@ -571,23 +576,23 @@ static void dump_ctx(struct ctx *ctx) {
 /*
  * Values
  */
-static void print_value(struct value *v) {
+static void print_value(FILE *out, struct value *v) {
     if (v == NULL) {
-        printf("<null>");
+        fprintf(out, "<null>");
         return;
     }
 
     switch(v->tag) {
     case V_STRING:
-        printf("\"%s\"", v->string->str);
+        fprintf(out, "\"%s\"", v->string->str);
         break;
     case V_REGEXP:
-        printf("/%s/", v->regexp->pattern->str);
+        fprintf(out, "/%s/", v->regexp->pattern->str);
         break;
     case V_LENS:
-        printf("<lens:");
+        fprintf(out, "<lens:");
         print_info(stdout, v->lens->info);
-        printf(">");
+        fprintf(out, ">");
         break;
     case V_TREE:
         list_for_each(t, v->tree) {
@@ -595,32 +600,32 @@ static void print_value(struct value *v) {
         }
         break;
     case V_FILTER:
-        printf("<filter:");
+        fprintf(out, "<filter:");
         list_for_each(f, v->filter) {
-            printf("%c%s%c", f->include ? '+' : '-', f->glob,
+            fprintf(out, "%c%s%c", f->include ? '+' : '-', f->glob,
                    (f->next != NULL) ? ':' : '>');
         }
         break;
     case V_TRANSFORM:
-        printf("<transform:");
+        fprintf(out, "<transform:");
         print_info(stdout, v->transform->lens->info);
-        printf(">");
+        fprintf(out, ">");
         break;
     case V_NATIVE:
-        printf("<native:");
+        fprintf(out, "<native:");
         print_info(stdout, v->info);
-        printf(">");
+        fprintf(out, ">");
         break;
     case V_CLOS:
-        printf("<closure:");
+        fprintf(out, "<closure:");
         print_info(stdout, v->func->info);
-        printf(">");
+        fprintf(out, ">");
         break;
     case V_EXN:
         print_info(stdout, v->exn->info);
-        printf("exception: %s\n", v->exn->message);
+        fprintf(out, "exception: %s\n", v->exn->message);
         for (int i=0; i < v->exn->nlines; i++) {
-            printf("    %s\n", v->exn->lines[i]);
+            fprintf(out, "    %s\n", v->exn->lines[i]);
         }
         break;
     default:
@@ -700,7 +705,7 @@ static const char *type_name(struct type *t) {
     assert(0);
 }
 
-static const char *type_string(struct type *t) {
+static char *type_string(struct type *t) {
     if (t->tag == T_ARROW) {
         char *s = NULL;
         const char *sd = type_string(t->dom);
@@ -871,8 +876,10 @@ static struct type *expect_types_arr(struct info *info,
                 strcat(allowed_names, (i == ntypes - 1) ? ", or " : ", ");
             strcat(allowed_names, type_name(allowed[i]));
         }
+        char *act_str = type_string(act);
         syntax_error(info, "type error: expected %s but found %s",
-                     allowed_names, type_name(act));
+                     allowed_names, act_str);
+        free(act_str);
         free(allowed_names);
     }
     return result;
@@ -1073,6 +1080,23 @@ static int check_exp(struct term *term, struct ctx *ctx) {
         break;
     case A_CONCAT:
         result = check_concat(term, ctx);
+        break;
+    case A_LET:
+        {
+            result = check_exp(term->right, ctx);
+            if (result) {
+                struct term *func = term->left;
+                assert(func->tag == A_FUNC);
+                assert(func->param->type == NULL);
+                func->param->type = ref(term->right->type);
+
+                result = check_exp(func, ctx);
+                if (result) {
+                    term->tag = A_APP;
+                    term->type = ref(func->type->img);
+                }
+            }
+        }
         break;
     case A_APP:
         result = check_exp(term->left, ctx) & check_exp(term->right, ctx);
@@ -1481,13 +1505,13 @@ static int compile_test(struct term *term, struct ctx *ctx) {
     if (term->tr_tag == TR_EXN) {
         if (!EXN(actual)) {
             printf("Test run should have produced exception, but produced\n");
-            print_value(actual);
+            print_value(stdout, actual);
             printf("\n");
         }
     } else {
         if (EXN(actual)) {
             printf("Test run encountered exception:\n");
-            print_value(actual);
+            print_value(stdout, actual);
             printf("\n");
             ret = 0;
         } else if (term->tr_tag == TR_CHECK) {
@@ -1499,17 +1523,17 @@ static int compile_test(struct term *term, struct ctx *ctx) {
                 print_info(stdout, term->info);
                 printf("\n");
                 printf(" Expected:\n");
-                print_value(expect);
+                print_value(stdout, expect);
                 printf("\n");
                 printf(" Actual:\n");
-                print_value(actual);
+                print_value(stdout, actual);
                 printf("\n");
             }
         } else {
             printf("Test result: ");
             print_info(stdout, term->info);
             printf("\n");
-            print_value(actual);
+            print_value(stdout, actual);
             printf("\n");
         }
     }
@@ -1528,7 +1552,7 @@ static int compile_decl(struct term *term, struct ctx *ctx) {
 
         syntax_error(term->info, "Failed to compile %s",
                      term->bname);
-        print_value(v);
+        print_value(stdout, v);
         printf("\n");
         return 0;
     } else if (term->tag == A_TEST) {

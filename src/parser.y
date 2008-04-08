@@ -47,13 +47,14 @@ typedef struct info YYLTYPE;
 
 /* Keywords */
 %token          KW_MODULE
-%token          KW_LET
+%token          KW_LET KW_IN
 %token          KW_STRING
 %token          KW_REGEXP
 %token          KW_LENS
 %token          KW_TEST KW_GET KW_PUT KW_AFTER
 
-%expect 0
+/* Conflicts caused by the binding let decl vs the let expression */
+%expect 3
 
 %union {
   struct term     *term;
@@ -66,7 +67,7 @@ typedef struct info YYLTYPE;
 }
 
 %type<term>   start decls
-%type<term>   exp unionexp catexp appexp rexp aexp
+%type<term>   exp composeexp unionexp catexp appexp rexp aexp
 %type<term>   param param_list
 %type<string> qid id
 %type<type>  type atype
@@ -97,6 +98,9 @@ static void augl_error(struct info *locp, struct term **term,
  static struct term *make_bind(const char *ident, struct term *params,
                              struct term *exp, struct term *decls,
                              struct info *locp);
+ static struct term *make_let(const char *ident, struct term *params,
+                              struct term *exp, struct term *body,
+                              struct info *locp);
  static struct term *make_binop(enum term_tag tag,
                                struct term *left, struct term *right,
                                struct info *locp);
@@ -167,7 +171,14 @@ test_special_res: '?'
                   { $$ = TR_EXN; }
 
 /* General expressions */
-exp: exp ';' unionexp
+exp: KW_LET LIDENT param_list '=' exp KW_IN  exp
+     { 
+       LOC_MERGE(@1, @1, @6);
+       $$ = make_let($2, $3, $5, $7, &@1); 
+     }
+   | composeexp
+
+composeexp: composeexp ';' unionexp
      { $$ = make_binop(A_COMPOSE, $1, $3, &@$); }
    | unionexp
      { $$ = $1; }
@@ -341,6 +352,24 @@ static struct term *make_bind(const char *ident, struct term *params,
   term->exp = exp;
   list_cons(decls, term);
   return decls;
+}
+
+static struct term *make_let(const char *ident, struct term *params,
+                             struct term *exp, struct term *body,
+                             struct info *locp) {
+  /* let f (x:string) = "f " . x in
+     f "a" . f "b" */
+  /* (lambda f: f "a" . f "b") (lambda x: "f " . x) */
+  /* (lambda IDENT: BODY) (lambda PARAMS: EXP) */
+  /* Desugar as (lambda IDENT: BODY) (lambda PARAMS: EXP) */
+  struct term *term = make_term_locp(A_LET, locp);
+  struct term *p = make_param(ident, NULL, ref(term->info));
+  term->left = build_func(p, body);
+  if (params != NULL)
+    term->right = build_func(params, exp);
+  else
+    term->right = exp;
+  return term;
 }
 
 static struct term *make_binop(enum term_tag tag,

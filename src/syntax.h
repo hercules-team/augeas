@@ -88,7 +88,8 @@ void assert_error_at(const char *srcfile, int srclineno, struct info *info,
 
 enum term_tag {
     A_MODULE,
-    A_BIND,
+    A_BIND,              /* Module scope binding of a name */
+    A_LET,               /* local LET .. IN binding */
     A_COMPOSE,
     A_UNION,
     A_CONCAT,
@@ -128,7 +129,7 @@ struct term {
             const char    *bname;
             struct term   *exp;
         };
-        struct {                   /* A_COMPOSE, A_UNION, A_CONCAT, A_APP */
+        struct {              /* A_COMPOSE, A_UNION, A_CONCAT, A_APP, A_LET */
             struct term *left;
             struct term *right;
         };

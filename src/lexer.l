@@ -97,6 +97,7 @@ ARROW  ->
   string        return KW_STRING;
   regexp        return KW_REGEXP;
   lens          return KW_LENS;
+  in            return KW_IN;
   /* tests */
   test          return KW_TEST;
   get           return KW_GET;

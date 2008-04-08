@@ -10,6 +10,8 @@ module Pass_subtree_growth =
   (* The improper result is { "outer" = "a" } *)
   test lns get "a" = { "outer" { = "a" } }
 
+  test lns put "a" after set "outer" "b" = "b"
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
