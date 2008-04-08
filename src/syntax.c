@@ -1363,10 +1363,10 @@ static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
         struct filter *f1 = v1->filter;
         struct filter *f2 = v2->filter;
         v = make_value(V_FILTER, ref(info));
-        if (f2->ref == 1) {
+        if (v2->ref == 1 && f2->ref == 1) {
             list_append(f2, ref(f1));
             v->filter = ref(f2);
-        } else if (f1->ref == 1) {
+        } else if (v1->ref == 1 && f1->ref == 1) {
             list_append(f1, ref(f2));
             v->filter = ref(f1);
         } else {
