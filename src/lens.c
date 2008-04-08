@@ -313,7 +313,14 @@ static struct value *typecheck_concat(struct info *info,
     }
 
     result = ambig_check(info, fa1, fa2, "ambiguous concatenation");
-
+    if (result != NULL) {
+        char *fi = format_info(l1->info);
+        exn_printf_line(result, "First lens: %s", fi);
+        free(fi);
+        fi = format_info(l2->info);
+        exn_printf_line(result, "Second lens: %s", fi);
+        free(fi);        
+    }
     fa_free(fa1);
     fa_free(fa2);
     return result;
@@ -327,7 +334,11 @@ static struct value *typecheck_iter(struct info *info, struct lens *l) {
     fas = fa_iter(fa, 0, -1);
 
     result = ambig_check(info, fa, fas, "ambiguous iteration");
-
+    if (result != NULL) {
+        char *fi = format_info(l->info);
+        exn_printf_line(result, "Iterated lens: %s", fi);
+        free(fi);        
+    }
     fa_free(fa);
     fa_free(fas);
     return result;
