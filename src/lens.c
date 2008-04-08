@@ -424,9 +424,41 @@ static struct regexp *lns_key_regexp(struct lens *l, struct value **exn) {
 void free_lens(struct lens *lens) {
     if (lens == NULL)
         return;
-    //assert(lens->ref == 0);
-
-    FIXME("Free lens");
+    assert(lens->ref == 0);
+    
+    unref(lens->info, info);
+    unref(lens->ctype, regexp);
+    unref(lens->atype, regexp);
+    switch (lens->tag) {
+    case L_DEL:
+        unref(lens->regexp, regexp);
+        unref(lens->string, string);
+        break;
+    case L_STORE:
+    case L_KEY:
+        unref(lens->regexp, regexp);
+        break;
+    case L_LABEL:
+    case L_SEQ:
+    case L_COUNTER:
+        unref(lens->string, string);
+        break;
+    case L_SUBTREE:
+    case L_STAR:
+    case L_MAYBE:
+        unref(lens->child, lens);
+        break;
+    case L_CONCAT:
+    case L_UNION:
+        for (int i=0; i < lens->nchildren; i++)
+            unref(lens->children[i], lens);
+        free(lens->children);
+        break;
+    default:
+        assert(0);
+        break;
+    }
+    free(lens);
 }
 
 /*
