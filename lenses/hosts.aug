@@ -3,9 +3,8 @@
 module Hosts =
   autoload xfm
 
-  let sep = del /[ \t]+/
-  let sep_tab = sep "\t"
-  let sep_spc = sep " "
+  let sep_tab = Util.del_ws_tab
+  let sep_spc = Util.del_ws_spc
 
   let eol = Util.del_str "\n"
 
