@@ -32,9 +32,12 @@
 
 #include "syntax.h"
 #include "config.h"
+#include "augeas.h"
 
 /* Extension of source files */
 #define AUG_EXT ".aug"
+
+#define LNS_TYPE_CHECK(ctx) ((ctx)->augeas->flags & AUG_TYPE_CHECK)
 
 static const char *const builtin_module = "Builtin";
 
@@ -1302,7 +1305,7 @@ static struct value *compile_union(struct term *exp, struct ctx *ctx) {
     } else if (t->tag == T_LENS) {
         struct lens *l1 = v1->lens;
         struct lens *l2 = v2->lens;
-        v = lns_make_union(ref(info), ref(l1), ref(l2));
+        v = lns_make_union(ref(info), ref(l1), ref(l2), LNS_TYPE_CHECK(ctx));
     } else {
         fatal_error(info, "Tried to union a %s and a %s to yield a %s",
                     type_name(exp->left->type), type_name(exp->right->type),
@@ -1399,7 +1402,7 @@ static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
     } else if (t->tag == T_LENS) {
         struct lens *l1 = v1->lens;
         struct lens *l2 = v2->lens;
-        v = lns_make_concat(ref(info), ref(l1), ref(l2));
+        v = lns_make_concat(ref(info), ref(l1), ref(l2), LNS_TYPE_CHECK(ctx));
     } else {
         fatal_error(info, "Tried to concat a %s and a %s to yield a %s",
                     type_name(exp->left->type), type_name(exp->right->type),
@@ -1480,12 +1483,13 @@ static struct value *compile_rep(struct term *rep, struct ctx *ctx) {
         v = make_value(V_REGEXP, ref(rep->info));
         v->regexp = regexp_iter(rep->info, arg->regexp, min, max);
     } else if (rep->type->tag == T_LENS) {
+        int c = LNS_TYPE_CHECK(ctx);
         if (rep->quant == Q_STAR) {
-            v = lns_make_star(ref(rep->info), ref(arg->lens));
+            v = lns_make_star(ref(rep->info), ref(arg->lens), c);
         } else if (rep->quant == Q_PLUS) {
-            v = lns_make_plus(ref(rep->info), ref(arg->lens));
+            v = lns_make_plus(ref(rep->info), ref(arg->lens), c);
         } else if (rep->quant == Q_MAYBE) {
-            v = lns_make_maybe(ref(rep->info), ref(arg->lens));
+            v = lns_make_maybe(ref(rep->info), ref(arg->lens), c);
         } else {
             assert(0);
         }
