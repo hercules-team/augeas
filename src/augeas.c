@@ -587,7 +587,7 @@ static int tree_save(struct augeas *aug, struct tree *tree, const char *path) {
 }
 
 int aug_save(struct augeas *aug) {
-    int ret;
+    int ret = 0;
     struct tree *files;
 
     list_for_each(t, aug->tree) {
@@ -596,8 +596,12 @@ int aug_save(struct augeas *aug) {
     files = tree_find(aug->tree, AUGEAS_FILES_TREE);
     if (files == NULL)
         return -1;
-    list_for_each(t, files->children) {
-        ret = tree_save(aug, t, AUGEAS_FILES_TREE);
+
+    if (files->dirty) {
+        list_for_each(t, files->children) {
+            if (tree_save(aug, t, AUGEAS_FILES_TREE) == -1)
+                ret = -1;
+        }
     }
     tree_clean(aug->tree);
     return ret;
