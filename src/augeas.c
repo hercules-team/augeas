@@ -596,7 +596,9 @@ int aug_save(struct augeas *aug) {
     files = tree_find(aug->tree, AUGEAS_FILES_TREE);
     if (files == NULL)
         return -1;
-    ret = tree_save(aug, files, AUGEAS_FILES_TREE);
+    list_for_each(t, files->children) {
+        ret = tree_save(aug, t, AUGEAS_FILES_TREE);
+    }
     tree_clean(aug->tree);
     return ret;
 }

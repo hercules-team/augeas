@@ -130,12 +130,12 @@ static int filter_matches(struct filter *filter, const char *path) {
     int found = 0;
     list_for_each(f, filter) {
         if (f->include)
-            found |= fnmatch(f->glob->str, path, fnm_flags);
+            found |= (fnmatch(f->glob->str, path, fnm_flags) == 0);
     }
     if (! found)
         return 0;
     list_for_each(f, filter) {
-        if (!f->include && fnmatch(f->glob->str, path, fnm_flags))
+        if (!f->include && (fnmatch(f->glob->str, path, fnm_flags) == 0))
             return 0;
     }
     return 1;
@@ -293,7 +293,7 @@ int transform_save(struct augeas *aug, struct transform *xform,
         goto error;
 
     if (tree != NULL)
-        lns_put(fp, xform->lens, tree, text, &err);
+        lns_put(fp, xform->lens, tree->children, text, &err);
     // FIXME: Delete file if tree == NULL
 
     if (fclose(fp) != 0)
