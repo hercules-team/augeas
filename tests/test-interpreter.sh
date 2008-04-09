@@ -10,6 +10,8 @@ DATADIR=${top_srcdir-${TOPDIR}}/tests
 MODULES=${DATADIR}/modules
 AUGPARSE=${top_builddir-${DATADIR}/..}/src/augparse
 
+set -e
+
 VERBOSE=n
 if [[ "x$1" == "x-v" ]]; then
     VERBOSE=y
@@ -28,8 +30,10 @@ function run_tests {
             exit 19
         fi
         printf "$action %-30s ... " $(basename $g .aug)
+        set +e
         errs=$(${AUGPARSE} -I ${MODULES} $g 2>&1 > /dev/null)
         ret=$?
+        set -e
         if [[ $ret -eq $ret_fail ]]; then
             echo FAIL
             result=1
@@ -52,7 +56,7 @@ if [ ! -x $AUGPARSE ] ; then
 fi
 
 echo "--------------------------------"
-echo "Checking grammars"
+echo "Running interpreter tests"
 echo
 
 result=0

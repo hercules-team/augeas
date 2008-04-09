@@ -1,5 +1,7 @@
 #! /bin/bash
 
+set -e
+
 VERBOSE=n
 if [[ "x$1" == "x-v" ]]; then
     VERBOSE=y
