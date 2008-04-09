@@ -577,7 +577,7 @@ static int tree_save(struct augeas *aug, struct tree *tree, const char *path) {
             if (transform != NULL) {
                 transform_save(aug, transform, tpath, t);
             } else {
-                if (tree_save(aug, tree->children, tpath) == -1)
+                if (tree_save(aug, t->children, tpath) == -1)
                     result = -1;
             }
             free(tpath);
