@@ -37,8 +37,9 @@
 \newcommand{\cstar}[1]{\ensmath{#1^*}}
 \newcommand{\uastar}[1]{\ensmath{#1^{!*}}}
 \newcommand{\Trees}{\ensmath{\mathcal T}}
-\newcommand{\Words}{\ensmath{\Sigma^*}}
+\newcommand{\Words}{\ensmath{\Sigma^*_{\rhd}}}
 \newcommand{\tmap}[2]{\ensmath{#1\mapsto #2}}
+\newcommand{\tmapv}[3]{\ensmath{#1 = #2\mapsto #3}}
 \newcommand{\tmaptt}[2]{\ensmath{{\mathtt #1}\mapsto {\mathtt #2}}}
 \newcommand{\dom}[1]{\ensmath{\mathrm{dom}(#1)}}
 \newcommand{\List}[1]{\ensmath{\mathtt{List(#1)}}}
@@ -66,8 +67,12 @@ structure, strings, is ordered, and to support some properties of lenses
 that seem sensible intuitively, the trees differ from garden-variety trees
 in a number of ways:
 \begin{itemize}
+  \item a tree node consists of three pieces of data: a \emph{label}, a
+    \emph{value} and an ordered list of \emph{children}, each of them a
+    tree by themselves.
   \item the labels for tree nodes are either words not containing a slash
-    {\tt /} or the special symbol $\rhd$. The latter is used to indicate
+    {\tt /} or the special symbol $\rhd$; in the implementation $\rhd$
+    corresponds to {\tt NULL}. The latter is used to indicate
     that an entry in the tree corresponds to text that was deleted.
   \item the children of a tree node form a list of subtrees, i.e. are
     ordered. In addition, several subtrees in such a list may use the same
@@ -77,7 +82,9 @@ in a number of ways:
       sshd\_config}.
 \end{itemize}
 
-I have a suspicion that our lenses are really bijective.
+We write $\tmapv{k}{v}{t}$ for a tree node with label $k$, value $v$ and
+children $t$. If it is clear from the context, or unimportant, $v$ will
+often be omitted.
 
 \subsection{Tree labels}
 We take the tree labels from the set of \emph{path components} $\Keys =
@@ -102,12 +109,13 @@ the \nput direction.
 The set of \emph{ordered trees} \Trees over $\Words$ is recursively 
 defined as
 \begin{itemize}
-\item For any word $v\in\Words$, $\tree{v}$ is in \Trees
-\item For any word $k\in\Keys$ and any tree $t\in\Trees$,
-  $\tree{\tmap{k}{t}}$ is in \Trees
-\item For any $n$ and trees $\tree{\tmap{k_i}{t_i}} \in Trees$ with, the
-  list $[\tmap{k_1}{t_1};\tmap{k_2}{t_2};\ldots;\tmap{k_n}{t_n}]$ is in
-  \Trees
+\item The empty tree $\rhd$
+\item For any words $k\in\Keys$, $v\in\Words$ and any tree $t\in\Trees$,
+  $\tree{\tmapv{k}{v}{t}}$ is in \Trees
+\item For any $n$ and trees $\tree{\tmapv{k_i}{v_i}{t_i}} \in Trees$,
+  the list
+  $[\tmapv{k_1}{v_1}{t_1};\tmapv{k_2}{v_2}{t_2};\ldots;\tmapv{k_n}{v_n}{t_n}]$
+  is in \Trees
 \end{itemize}
 
 Note that this allows the same key to be used multiple times in a tree; for
@@ -119,22 +127,23 @@ element of $\List{\Keys}$; for a tree $t =
 \tree{\tmap{k_1}{t_1};\ldots;\tmap{k_n}{t_n}}$, $\dom{t} =
      [k_1;\ldots;k_n].$
 
-A tree $t$ can also be viewed as a total map from \Words to
-$\List{\Trees\cup\Words}$, defined as
-\begin{equation*}
-  t(k) = 
-  \begin{cases}
-    v & \text{for } t = \tree{v}\\
-    [t_1] :: t_2(k) & \text{for } t = t' :: t_2 
-                      \text{ and } t' = \tree{\tmap{k}{t_1}}\\
-    t_2(k) & \text{for } t = t' :: t_2 
-             \text{ and } t' = \tree{\tmap{k'}{t_1}} \text{with } k\neq k'
-  \end{cases}
-\end{equation*}
-
-Note that this definition implies that for a tree $t = \tree{\tmap{k}{v}}$
-with $k,v\in\Words$, $t(k)=[v].$ For the tree $t_{\mathtt{aa}} = [\tmaptt{a}{x};
-  \tmaptt{a}{x}]$, $t_{\mathtt{aa}}(\mathtt a) = [\mathtt x; \mathtt x]$.
+%% Why ?
+%A tree $t$ can also be viewed as a total map from \Words to
+%$\List{\Trees\cup\Words}$, defined as
+%\begin{equation*}
+%  t(k) = 
+%  \begin{cases}
+%    v & \text{for } t = \tree{v}\\
+%    [t_1] :: t_2(k) & \text{for } t = t' :: t_2 
+%                      \text{ and } t' = \tree{\tmap{k}{t_1}}\\
+%    t_2(k) & \text{for } t = t' :: t_2 
+%             \text{ and } t' = \tree{\tmap{k'}{t_1}} \text{with } k\neq k'
+%  \end{cases}
+%\end{equation*}
+%
+%Note that this definition implies that for a tree $t = \tree{\tmap{k}{v}}$
+%with $k,v\in\Words$, $t(k)=[v].$ For the tree $t_{\mathtt{aa}} = [\tmaptt{a}{x};
+%  \tmaptt{a}{x}]$, $t_{\mathtt{aa}}(\mathtt a) = [\mathtt x; \mathtt x]$.
 
 The concatenation of trees $\conc{t_1}{t_2}$ is simply list concatenation.
 
@@ -147,7 +156,7 @@ For a tree $t\in \Trees$, we define its underlying \emph{key language}
 $\key{t}$ by
 \begin{equation*}
   \key{t} = \begin{cases}
-    {\tt /} & \text{if } t = \tree{v}\\
+    {\tt /} & \text{if } t = \rhd \text{ or } t = \tree{\tmap{\rhd}{t_1}}\\
     k \cdot {\mathtt /} & \text{if } t = \tree{\tmap{k}{t_1}}\\
     k\cdot {\mathtt /}\cdot \key{t_2} & \text{for } t = \tree{\tmap{k}{t_1};t_2}
   \end{cases}
