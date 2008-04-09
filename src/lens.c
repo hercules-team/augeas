@@ -246,18 +246,34 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
 /*
  * Typechecking of lenses
  */
-static struct value *typecheck_union(struct info *info,
-                                     struct lens *l1, struct lens *l2) {
-    fa_t fa1 = regexp_to_fa(l1->ctype);
-    fa_t fa2 = regexp_to_fa(l2->ctype);
+static struct value *useless_union(struct info *info, const char *msg,
+                                   struct regexp *r1, struct regexp *r2) {
+    fa_t fa1 = regexp_to_fa(r1);
+    fa_t fa2 = regexp_to_fa(r2);
     struct value *exn = NULL;
 
     if (fa1 == NULL || fa2 == NULL) {
         fa_free(fa1);
         fa_free(fa2);
         return make_exn_value(ref(info), 
-              "internal error: compile in union failed");
+              "internal error: compile in useless_union failed");
     }
+
+    fa_t minus = fa_minus(fa2, fa1);
+    if (fa_is_basic(minus, FA_EMPTY)) {
+        exn = make_exn_value(ref(info), 
+             "%s: the first lens completely shadows the second lens", msg);
+    }
+    fa_free(minus);
+    fa_free(fa1);
+    fa_free(fa2);
+    return exn;
+
+}
+
+static struct value *typecheck_union(struct info *info,
+                                     struct lens *l1, struct lens *l2) {
+    struct value *exn = NULL;
 
     /* Boomerang checks unions by requiring that FA1 and FA2 are disjoint. This
        is a pain in Augeas, since it usually requires that the user specifiy
@@ -271,12 +287,12 @@ static struct value *typecheck_union(struct info *info,
        useless in the union L1 | L2, by making sure L2 is not completely
        shadowed by L1. It's weaker than disjointness, but usually what the
        user has in mind, anyway */
-    
-    fa_t minus = fa_minus(fa2, fa1);
-    if (fa_is_basic(minus, FA_EMPTY)) {
-        exn = make_exn_value(ref(info), 
-          "useless union: the first lens completely shadows the second lens");
-        
+
+    exn = useless_union(info, "useless union", l1->ctype, l2->ctype);
+    if (exn == NULL) {
+        exn = useless_union(info, "useless tree union", l1->atype, l2->atype);
+    }
+    if (exn != NULL) {
         char *fi = format_info(l1->info);
         exn_printf_line(exn, "First lens: %s", fi);
         free(fi);
@@ -285,9 +301,6 @@ static struct value *typecheck_union(struct info *info,
         exn_printf_line(exn, "Second lens: %s", fi);
         free(fi);        
     }
-    fa_free(minus);
-    fa_free(fa1);
-    fa_free(fa2);
     return exn;
 }
 
