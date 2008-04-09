@@ -64,6 +64,7 @@ static void print_value(FILE *out, struct value *v);
  * module we are working on in LOCAL 
  */
 struct ctx {
+    const char     *name;     /* The module we are working on */
     struct augeas  *augeas;
     struct binding *local;
 };
@@ -452,7 +453,13 @@ static struct binding *bnd_lookup(struct binding *bindings, const char *name) {
 
 static struct binding *ctx_lookup_bnd(struct info *info,
                                       struct ctx *ctx, const char *name) {
-    struct binding *b = bnd_lookup(ctx->local, name);
+    struct binding *b = NULL;
+    int nlen = strlen(ctx->name);
+
+    if (STREQLEN(ctx->name, name, nlen) && name[nlen] == '.')
+        name += nlen + 1;
+    
+    b = bnd_lookup(ctx->local, name);
     if (b != NULL)
         return b;
 
@@ -467,6 +474,10 @@ static struct binding *ctx_lookup_bnd(struct info *info,
             }
             /* Try to load the module */
             char *modname = strndup(name, dot - name);
+            if (STREQ(modname, ctx->name)) {
+                free(modname);
+                return NULL;
+            }
             int loaded = load_module(ctx->augeas, modname) == 0;
             if (loaded) {
                 free(modname);
@@ -566,7 +577,7 @@ static void dump_module(struct module *module) {
 
 ATTRIBUTE_UNUSED
 static void dump_ctx(struct ctx *ctx) {
-    fprintf(stderr, "Context:\n");
+    fprintf(stderr, "Context: %s\n", ctx->name);
     dump_bindings(ctx->local);
     if (ctx->augeas != NULL) {
         list_for_each(m, ctx->augeas->modules)
@@ -1253,6 +1264,7 @@ static int typecheck(struct term *term, struct augeas *augeas) {
 
     ctx.augeas = augeas;
     ctx.local = NULL;
+    ctx.name = term->mname;
     list_for_each(dcl, term->decls) {
         ok &= check_decl(dcl, &ctx);
     }
@@ -1410,6 +1422,7 @@ static struct value *apply(struct term *app, struct ctx *ctx) {
 
     lctx.augeas = ctx->augeas;
     lctx.local = ref(f->bindings);
+    lctx.name = ctx->name;
 
     arg = coerce(arg, f->func->param->type);
     if (arg == NULL)
@@ -1597,6 +1610,7 @@ static struct module *compile(struct term *term, struct augeas *augeas) {
 
     ctx.augeas = augeas;
     ctx.local = NULL;
+    ctx.name = term->mname;
     list_for_each(dcl, term->decls) {
         ok &= compile_decl(dcl, &ctx);
     }
@@ -1682,6 +1696,7 @@ void define_native_intl(const char *file, int line,
     struct ctx ctx;
     ctx.augeas = NULL;
     ctx.local = ref(module->bindings);
+    ctx.name = module->name;
     if (! check_exp(func, &ctx)) {
         fatal_error(info, "Typechecking native %s failed",
                     name);

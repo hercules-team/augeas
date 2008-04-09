@@ -28,7 +28,7 @@ function run_tests {
             exit 19
         fi
         printf "$action %-30s ... " $(basename $g .aug)
-        errs=$(${AUGPARSE} $g 2>&1 > /dev/null)
+        errs=$(${AUGPARSE} -I ${MODULES} $g 2>&1 > /dev/null)
         ret=$?
         if [[ $ret -eq $ret_fail ]]; then
             echo FAIL
