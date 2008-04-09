@@ -1,21 +1,17 @@
-  This is an experiment, and the code is extremely experimental (and
-  definitely untested)
-
 Introduction
 ------------
 
   Augeas is a library and command line tool that focuses on the most basic
   problem in handling Linux configurations programmatically: editing actual
-  configuration files in a controlled manner. If you are curious what that
-  means in detail, the file docs/example.txt has some pseudo-code examples.
+  configuration files in a controlled manner.
 
   To that end, Augeas exposes a tree of all configuration settings (well,
-  all the ones it knows about ;) and a simple local API for manipulating
-  the tree. Augeas then modifies underlying configuration files according
-  to the changes that have been made to the tree; it does as little
-  modeling of configurations as possible, and focuses exclusivley on
-  transforming the tree-oriented syntax of its public API to the myriad
-  syntaxes of individual configuration files.
+  all the ones it knows about) and a simple local API for manipulating the
+  tree. Augeas then modifies underlying configuration files according to
+  the changes that have been made to the tree; it does as little modeling
+  of configurations as possible, and focuses exclusivley on transforming
+  the tree-oriented syntax of its public API to the myriad syntaxes of
+  individual configuration files.
 
   This focus on editing sets Augeas apart from any other configuration tool
   I know of. Hopefully, Augeas will form a more solid foundation on which
@@ -23,44 +19,17 @@ Introduction
   be able to focus more on their core concerns and less on the mechanics
   of running sed, grep, awk, etc. to tweak a config file.
 
-  What makes automated editing of config files so daunting is that there
-  are so darn many formats. At least, that's what everybody says, though
-  the situation is not quite as desperate as it sounds:
-
-    * For programmatic editing of config files, it is not necessary to
-      parse the config files in much detail. In fact, a fairly simplistic
-      scanner/tokenizer is enough for most config files. Because of that,
-      it's not necessary to base such a scanner on the parser that is
-      ultimately used to consume the config file. That would also not be
-      helpful, since such a parser discards many things that need to be
-      preserved by an editor (comments, indentation, etc.)
-   
-    * Even though there are a lot of configuration file formats, they fall
-      into a number of buckets, where each bucket can be served by one 
-      codebase fairly well, with appropriate parametrization (e.g., regexps
-      for breaking record-oriented files apart) The big buckets are
-
-        o Record-oriented files, usually with one record per line and
-          spaces or other characters as separators. A large number of files
-          fall into this bucket, e.g. /etc/inittab, /etc/hosts,
-          /etc/pam.d/*, /etc/fstab, /etc/aliases, ...
-
-        o Key/value files, such as sshd_config, /etc/sysconfig/* (or any
-          pseudo shell script file)
-
-        o Inistyle files, such as yum.conf, or libuser.conf; a slight
-          variation is the 'Inistyle with subsections' used by krb5.conf
-
-        o Crazy custom formats, everybody's favorite example is Apache, but
-          bind and xinetd also fall into that category
-
-  I hope that the first three buckets can be controlled by one code base
-  for each bucket, with variations between the file formats in each bucket
-  (e.g. /etc/hosts vs. /etc/inittab) described by metadata. That will make
-  it very quick to adapt the scanner for one file to another file in the
-  same category - ultimately, that should not require any programming, only
-  editing of a descriptive file. As an example, it took about 10 minutes to
-  change the scanner for /etc/hosts to one for /etc/inittab
+  If all you need is a tool to edit configuration files, you only need to
+  concern yourself with the handful of public API calls that Augeas exposes
+  (or their equivalent language bindings). However, to teach Augeas about a
+  new file format, you need to describe that file format in Augeas's domain
+  specific language (a very small subset of ML) Documentation for that
+  language can be found on the Augeas website at http://augeas.net/ If you
+  do that, please contribute the description if at all possible, or include
+  it in the distribution of your software - all you need to do for that is
+  add a couple of text files, there is no need to change existing
+  code. Ultimately, Augeas should describe all config files commonly found
+  on a Linux system.
 
 Non-goals
 ---------
@@ -95,56 +64,11 @@ Building
     make && make install
   should be all that is needed.
 
-  You need to have readline-devel and pcre-devel installed
+  You need to have readline-devel installed
 
-Implementation basics
----------------------
-
-  The public API for augeas is defined in src/augeas.h; the command
-  'augtool' can be used to interact with the tree from the command 
-  line.
-
-  Augeas manipulates two basic data structures: the tree that the public
-  API exposes and streams of tokens for each config file. The hard work is
-  all done by scanners, who are responsible for turning a config file into
-  a stream of token and into entries in the tree, and conversely for
-  turning a (modified tree) into a stream of token and writing that to
-  disk.
-
-Current state
+Documentation
 -------------
 
-One scanner has been implemented to handle record-based config files. That
-scanner can be adapted to various file formats through very simple code
-that specifies things like regexps for splitting lines into fields, and
-default field separators. The adaptation has been done to handle
-/etc/pam.d/*, /etc/hosts, and /etc/inittab.
-
-Be warned that the current implementation looks for files only in /tmp/aug,
-not in the root filesystem. This seemed wise given the maturity of the
-code. Currently, files are also not overwritten. Instead, new files are
-created with a .augnew extension.
-
-For playing around, 'mkdir /tmp/aug && cp -pr src/root/* /tmp/aug' and run
-augtool or look at tests/*.rb
-
-Plan
-----
-
-Here are the next things that need to be done, roughly in order of
-importance:
-
-  - at least one more simple scanner (e.g. for key/value or inistyle files)
-  - scanner for some complex file format, like Apache
-  - file mapping rules (e.g., pull in /etc/pam.d/*, various weird ways in
-    which one config file can shadow another)
-  - understand and process includes
-  - file format for describing scanners in metadata so that, e.g. another
-    instance of the record scanner can be defined without any code
-  - bindings for popular scripting languages (python and ruby at a minimum)
-  - lots of code improvements: error reporting, more efficient data
-    structures
-  - plugin infrastructure so that what providers are loaded can be
-    configured (no point in loading the /etc/exports provider if NFS isn't
-    installed)
-  - export API over dbus
+Documentation can be found on Augeas' website http://augeas.net/ The site
+also contains information on how to get in touch, what you can do to help
+etc.
