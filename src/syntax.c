@@ -72,6 +72,7 @@ struct ctx {
 char *format_info(struct info *info) {
     const char *fname;
     char *result;
+    int r = 0;
     int fl = info->first_line, ll = info->last_line;
     int fc = info->first_column, lc = info->last_column;
     fname = (info->filename != NULL) ? info->filename->str : "(unknown file)";
@@ -79,15 +80,15 @@ char *format_info(struct info *info) {
     if (fl > 0) {
         if (fl == ll) {
             if (fc == lc) {
-                asprintf(&result, "%s:%d.%d", fname, fl, fc);
+                r = asprintf(&result, "%s:%d.%d", fname, fl, fc);
             } else {
-                asprintf(&result, "%s:%d.%d-.%d", fname, fl, fc, lc);
+                r = asprintf(&result, "%s:%d.%d-.%d", fname, fl, fc, lc);
             }
         } else {
-            asprintf(&result, "%s:%d.%d-%d.%d", fname, fl, fc, ll, lc);
+            r = asprintf(&result, "%s:%d.%d-%d.%d", fname, fl, fc, ll, lc);
         }
     }
-    return result;
+    return (r == -1) ? NULL : result;
 }
 
 void print_info(FILE *out, struct info *info) {
@@ -382,12 +383,15 @@ static struct value *make_closure(struct term *func, struct binding *bnds) {
 struct value *make_exn_value(struct info *info,
                              const char *format, ...) {
     va_list ap;
+    int r;
     struct value *v;
     char *message;
 
     va_start(ap, format);
-    vasprintf(&message, format, ap);
+    r = vasprintf(&message, format, ap);
     va_end(ap);
+    if (r == -1)
+        return NULL;
 
     v = make_value(V_EXN, ref(info));
     CALLOC(v->exn, 1);
@@ -413,13 +417,14 @@ void exn_add_lines(struct value *v, int nlines, ...) {
 
 void exn_printf_line(struct value *exn, const char *format, ...) {
     va_list ap;
+    int r;
     char *line;
 
     va_start(ap, format);
-    vasprintf(&line, format, ap);
+    r = vasprintf(&line, format, ap);
     va_end(ap);
-
-    exn_add_lines(exn, 1, line);
+    if (r >= 0)
+        exn_add_lines(exn, 1, line);
 }
 
 /*
@@ -724,15 +729,16 @@ static const char *type_name(struct type *t) {
 static char *type_string(struct type *t) {
     if (t->tag == T_ARROW) {
         char *s = NULL;
+        int r;
         const char *sd = type_string(t->dom);
         const char *si = type_string(t->img);
         if (t->dom->tag == T_ARROW)
-            asprintf(&s, "(%s) -> %s", sd, si);
+            r = asprintf(&s, "(%s) -> %s", sd, si);
         else
-            asprintf(&s, "%s -> %s", sd, si);
+            r = asprintf(&s, "%s -> %s", sd, si);
         free((char *) sd);
         free((char *) si);
-        return s;
+        return (r == -1) ? NULL : s;
     } else {
         return strdup(type_name(t));
     }
@@ -1715,7 +1721,8 @@ int augl_parse_file(const char *name, struct term **term);
 static char *module_basename(const char *modname) {
     char *fname;
 
-    asprintf(&fname, "%s" AUG_EXT, modname);
+    if (asprintf(&fname, "%s" AUG_EXT, modname) == -1)
+        return NULL;
     for (int i=0; i < strlen(modname); i++)
         fname[i] = tolower(fname[i]);
     return fname;
@@ -1800,7 +1807,9 @@ int interpreter_init(struct augeas *aug) {
 
     while ((dir = argz_next(aug->modpathz, aug->nmodpath, dir)) != NULL) {
         char *globpat;
-        asprintf(&globpat, "%s/*.aug", dir);
+        r = asprintf(&globpat, "%s/*.aug", dir);
+        if (r == -1)
+            return -1;
         r = glob(globpat, gl_flags, NULL, &globbuf);
         if (r != 0 && r != GLOB_NOMATCH)
             FIXME("glob failure for %s", globpat);

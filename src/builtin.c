@@ -78,16 +78,20 @@ static struct value *make_exn_lns_error(struct info *info,
                                         struct lns_error *err,
                                         const char *text) {
     struct value *v;
+    int r;
     char *here = NULL;
 
     v = make_exn_value(ref(info), err->message);
     if (err->pos >= 0) {
-        asprintf(&here, "Error encountered here (%d characters into string)",
-                 err->pos);
-        exn_add_lines(v, 2, here, format_pos(text, err->pos));
+        r = asprintf(&here,
+                     "Error encountered here (%d characters into string)",
+                     err->pos);
+        if (r != -1)
+            exn_add_lines(v, 2, here, format_pos(text, err->pos));
     } else {
-        asprintf(&here, "Error encountered at path %s", err->path);
-        exn_add_lines(v, 1, here);
+        r = asprintf(&here, "Error encountered at path %s", err->path);
+        if (r != -1)
+            exn_add_lines(v, 1, here);
     }
 
     return v;
@@ -178,10 +182,14 @@ static struct value *tree_rm_glue(struct info *info,
 static struct value *gensym(struct info *info, struct value *prefix) {
     assert(prefix->tag == V_STRING);
     static unsigned int count = 0;
-    struct value *v = make_value(V_STRING, ref(info));
+    struct value *v;
     char *s;
+    int r;
 
-    asprintf(&s, "%s%u", prefix->string->str, count);
+    r = asprintf(&s, "%s%u", prefix->string->str, count);
+    if (r == -1)
+        return NULL;
+    v = make_value(V_STRING, ref(info));
     v->string = make_string(s);
     return v;
 }

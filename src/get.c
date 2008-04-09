@@ -66,6 +66,7 @@ static void get_error(struct state *state, struct lens *lens,
                       const char *format, ...)
 {
     va_list ap;
+    int r;
 
     if (state->error != NULL)
         return;
@@ -73,8 +74,10 @@ static void get_error(struct state *state, struct lens *lens,
     state->error->lens = ref(lens);
     state->error->pos  = state->pos - state->text;
     va_start(ap, format);
-    vasprintf(&state->error->message, format, ap);
+    r = vasprintf(&state->error->message, format, ap);
     va_end(ap);
+    if (r == -1)
+        state->error->message = NULL;
 }
 
 static struct tree *make_tree(const char *label, const char *value) {
@@ -347,7 +350,10 @@ static struct tree *get_seq(struct lens *lens, struct state *state) {
     assert(lens->tag == L_SEQ);
     struct seq *seq = find_seq(lens->string->str, state);
 
-    asprintf((char **) &(state->key), "%d", seq->value);
+    if (asprintf((char **) &(state->key), "%d", seq->value) == -1) {
+        // FIXME: We are out of memory .. find a way to report that
+        abort();
+    }
     seq->value += 1;
     return NULL;
 }

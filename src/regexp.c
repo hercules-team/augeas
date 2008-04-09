@@ -86,7 +86,8 @@ regexp_union(struct info *info, struct regexp *r1, struct regexp *r2) {
     const char *p2 = r2->pattern->str;
     char *s;
 
-    asprintf(&s, "(%s)|(%s)", p1, p2);
+    if (asprintf(&s, "(%s)|(%s)", p1, p2) == -1)
+        return NULL;
     return make_regexp(info, s);
 }
 
@@ -96,7 +97,8 @@ regexp_concat(struct info *info, struct regexp *r1, struct regexp *r2) {
     const char *p2 = r2->pattern->str;
     char *s;
 
-    asprintf(&s, "(%s)(%s)", p1, p2);
+    if (asprintf(&s, "(%s)(%s)", p1, p2) == -1)
+        return NULL;
     return make_regexp(info, s);
 }
 
@@ -104,25 +106,27 @@ struct regexp *
 regexp_iter(struct info *info, struct regexp *r, int min, int max) {
     const char *p = r->pattern->str;
     char *s;
+    int ret = 0;
 
     if ((min == 0 || min == 1) && max == -1) {
         char q = (min == 0) ? '*' : '+';
-        asprintf(&s, "(%s)%c", p, q);
+        ret = asprintf(&s, "(%s)%c", p, q);
     } else if (min == max) {
-        asprintf(&s, "(%s){%d}", p, min);
+        ret = asprintf(&s, "(%s){%d}", p, min);
     } else {
-        asprintf(&s, "(%s){%d,%d}", p, min, max);
+        ret = asprintf(&s, "(%s){%d,%d}", p, min, max);
     }
-    return make_regexp(info, s);
+    return (ret == -1) ? NULL : make_regexp(info, s);
 }
 
 struct regexp *
 regexp_maybe(struct info *info, struct regexp *r) {
     const char *p = r->pattern->str;
     char *s;
+    int ret;
 
-    asprintf(&s, "(%s)?", p);
-    return make_regexp(info, s);
+    ret = asprintf(&s, "(%s)?", p);
+    return (ret == -1) ? NULL : make_regexp(info, s);
 }
 
 struct regexp *regexp_make_empty(struct info *info) {

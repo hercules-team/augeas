@@ -170,9 +170,10 @@ static const char *err_path(const char *filename) {
 static char *add_load_info(struct augeas *aug, const char *filename,
                            const char *node, struct lens *lens) {
     char *tmp;
-
+    int r;
     char *result = NULL;
     int end = 0;
+
     pathjoin(&result, 2, AUGEAS_META_FILES, filename + strlen(aug->root) - 1);
     end = strlen(result);
 
@@ -187,9 +188,11 @@ static char *add_load_info(struct augeas *aug, const char *filename,
     result[end] = '\0';
 
     pathjoin(&result, 1, id_node);
-    asprintf(&tmp, "%p", lens);
-    aug_set(aug, result, tmp);
-    free(tmp);
+    r = asprintf(&tmp, "%p", lens);
+    if (r >= 0) {
+        aug_set(aug, result, tmp);
+        free(tmp);
+    }
     result[end] = '\0';
 
     pathjoin(&result, 1, err_node);
@@ -269,14 +272,15 @@ int transform_applies(struct transform *xform, const char *path) {
 
 int transform_save(struct augeas *aug, struct transform *xform,
                    const char *path, struct tree *tree) {
-    FILE *fp;
+    FILE *fp = NULL;
     char *augnew = NULL;
     const char *text = NULL;
     const char *filename = path + strlen(AUGEAS_FILES_TREE);
     const char *err_status = NULL;
     struct lns_error *err;
 
-    asprintf(&augnew, "%s%s" EXT_AUGNEW, aug->root, filename);
+    if (asprintf(&augnew, "%s%s" EXT_AUGNEW, aug->root, filename) == -1)
+        return -1;
 
     text = aug_read_file(filename);
     if (text == NULL) {
@@ -298,7 +302,10 @@ int transform_save(struct augeas *aug, struct transform *xform,
     if (!(aug->flags & AUG_SAVE_NEWFILE)) {
         if (aug->flags & AUG_SAVE_BACKUP) {
             char *augsave = NULL;
-            asprintf(&augsave, "%s%s" EXT_AUGSAVE, aug->root, filename);
+            int r;
+            r = asprintf(&augsave, "%s%s" EXT_AUGSAVE, aug->root, filename);
+            if (r == -1)
+                goto error;
             if (rename(filename, augsave) != 0) {
                 err_status = "rename_augsave";
                 goto error;

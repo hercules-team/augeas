@@ -553,7 +553,10 @@ static int tree_save(struct augeas *aug, struct tree *tree, const char *path) {
         if (t->dirty) {
             char *tpath;
             struct transform *transform = NULL;
-            asprintf(&tpath, "%s/%s", path, t->label);
+            if (asprintf(&tpath, "%s/%s", path, t->label) == -1) {
+                result = -1;
+                continue;
+            }
             list_for_each(modl, aug->modules) {
                 struct transform *xform = modl->autoload;
                 if (xform == NULL)

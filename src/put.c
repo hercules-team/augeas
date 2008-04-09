@@ -82,17 +82,21 @@ static void put_error(struct state *state, struct lens *lens,
                       const char *format, ...)
 {
     va_list ap;
+    int r;
 
     if (state->error != NULL)
         return;
+
     CALLOC(state->error, 1);
     state->error->lens = ref(lens);
     state->error->pos  = -1;
     state->error->path = strdup(state->path);
 
     va_start(ap, format);
-    vasprintf(&state->error->message, format, ap);
+    r = vasprintf(&state->error->message, format, ap);
     va_end(ap);
+    if (r == -1)
+        state->error->message = NULL;
 }
 
 static struct split *make_split(struct tree *tree) {
