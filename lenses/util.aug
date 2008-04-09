@@ -14,7 +14,7 @@ module Util =
     counter sym . ( [ seq sym . sep . elt ] ) *
 
   (* Exclusion for files that are commonly not wanted/needed              *)
-  let stdexcl = excl "*~"
+  let stdexcl = (excl "*~") . (excl "*.rpmnew") . (excl "*.rpmsave")
 
 (* Local Variables: *)
 (* mode: caml       *)
