@@ -141,6 +141,23 @@ static void aug_tree_free(struct tree *tree) {
     }
 }
 
+/* Propagate dirty flags towards the root */
+static int tree_propagate_dirty(struct tree *tree) {
+    if (tree->dirty)
+        return 1;
+    list_for_each(c, tree->children) {
+        tree->dirty |= tree_propagate_dirty(c);
+    }
+    return tree->dirty;
+}
+
+/* Clear the dirty flag in the whole TREE */
+static void tree_clean(struct tree *tree) {
+    tree->dirty = 0;
+    list_for_each(c, tree->children)
+        tree_clean(c);
+}
+
 static const char *init_root(const char *root0) {
     char *root;
 
@@ -223,6 +240,9 @@ struct augeas *aug_init(const char *root, const char *loadpath,
         if (xform == NULL)
             continue;
         transform_load(result, xform);
+    }
+    list_for_each(tree, result->tree) {
+        tree_clean(tree);
     }
     return result;
 
@@ -530,22 +550,6 @@ int aug_match(struct augeas *aug, const char *pattern,
     return n;
 }
 
-/* Propagate dirty flags towards the root */
-static int tree_propagate_dirty(struct tree *tree) {
-    if (tree->dirty)
-        return 1;
-    list_for_each(c, tree->children) {
-        tree->dirty |= tree_propagate_dirty(c);
-    }
-    return tree->dirty;
-}
-
-static void tree_clean(struct tree *tree) {
-    tree->dirty = 0;
-    list_for_each(c, tree->children)
-        tree_clean(c);
-}
-
 static int tree_save(struct augeas *aug, struct tree *tree, const char *path) {
     int result = 0;
     // FIXME: We need to detect subtrees that aren't saved by anything
@@ -586,7 +590,9 @@ int aug_save(struct augeas *aug) {
     int ret;
     struct tree *files;
 
-    tree_propagate_dirty(aug->tree);
+    list_for_each(t, aug->tree) {
+        tree_propagate_dirty(t);
+    }
     files = tree_find(aug->tree, AUGEAS_FILES_TREE);
     if (files == NULL)
         return -1;
