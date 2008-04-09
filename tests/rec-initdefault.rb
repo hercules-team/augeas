@@ -7,8 +7,8 @@
 
 # Query for the record that holds the initdefault
 record=""
-`#{AUGTOOL} match '/system/config/inittab/*/action' initdefault`.each do |l|
-    if l =~ %r{^(/system/config/inittab/[0-9]+)}
+`#{AUGTOOL} match '/files/etc/inittab/*/action' initdefault`.each do |l|
+    if l =~ %r{^(/files/etc/inittab/[0-9]+)}
         record = $1
     end
 end

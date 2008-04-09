@@ -1,5 +1,5 @@
 commands="
-rm /system/config/yum/main/keepcache
+rm /files/etc/yum.conf/main/keepcache
 save
 "
 

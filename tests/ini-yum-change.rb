@@ -1,5 +1,5 @@
 commands="
-set /system/config/yum/main/debuglevel 99
+set /files/etc/yum.conf/main/debuglevel 99
 save
 "
 

@@ -1,10 +1,10 @@
 # Note that aliases must be set (to NULL here), otherwise the tree
 # is not syntactically correct and can not be saved
 commands="
-ins /system/config/hosts/10000 /system/config/hosts/1
-set /system/config/hosts/10000/ipaddr 192.168.0.1
-set /system/config/hosts/10000/canonical pigiron.example.com
-clear /system/config/hosts/10000/aliases
+ins /files/etc/hosts/10000 /files/etc/hosts/1
+set /files/etc/hosts/10000/ipaddr 192.168.0.1
+set /files/etc/hosts/10000/canonical pigiron.example.com
+clear /files/etc/hosts/10000/aliases
 print
 save
 "

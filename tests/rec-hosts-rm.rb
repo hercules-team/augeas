@@ -1,6 +1,7 @@
 # This will leave /etc/hosts completely empty
+skip=true
 commands="
-rm /system/config/hosts
+rm /files/etc/hosts
 save
 "
 

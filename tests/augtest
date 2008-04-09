@@ -25,20 +25,21 @@ TEST_DIR=File::join(TOP_SRCDIR, "tests")
 
 AUGTOOL="#{TOP_BUILDDIR}/src/augtool -n"
 AUGEAS_ROOT=File::join(TOP_BUILDDIR, "build", "augtest")
-AUGEAS_LENS_LIB=File::join(TOP_SRCDIR, "spec")
+AUGEAS_LENS_LIB=File::join(TOP_SRCDIR, "lenses")
 
 ENV["AUGEAS_ROOT"] = AUGEAS_ROOT
 ENV["AUGEAS_LENS_LIB"] = AUGEAS_LENS_LIB
 
 args=ARGV
 if args.size == 0
-    args = Dir::glob("#{TEST_DIR}/*.rb")
+    args = Dir::glob("#{TEST_DIR}/*.rb").sort
 end
 
 WIDTH = args.inject(0) do |max, arg|
   s = File::basename(arg, ".rb").size
   (s > max) ? s : max
 end
+status = 0
 
 args.each do |test|
     if File::directory?(AUGEAS_ROOT)
@@ -55,47 +56,55 @@ args.each do |test|
     diff = {}
     echo=false
     refresh=false
+    skip=false
 
     eval(IO::read(test))
     redir = echo ? "" : "> /dev/null"
     printf("Test %-#{WIDTH}s ... ", File::basename(test, ".rb"))
-    IO.popen("#{AUGTOOL} #{redir}", "w") do |io|
-        io.print(commands)
-        io.puts("\nquit")
-    end
-    success=$?.success?
-    msgs = []
-    diff.each do |file, exp|
-        file = File::join(AUGEAS_ROOT, file)
-        if ! File::exist?("#{file}.augnew")
-            msgs << "Expected file #{file}.augnew"
-            success=false
-        else
-            act=`diff -u #{file} #{file}.augnew`
-            act.gsub!(/^(--- #{file}).*$/, '\1')
-            act.gsub!(/^(\+\+\+ #{file}\.augnew).*$/, '\1')
-            act.gsub!(/^(---|\+\+\+) (#{AUGEAS_ROOT})/, '\1 ');
-            if ! exp.nil? && act != exp
+    unless skip
+        IO.popen("#{AUGTOOL} #{redir}", "w") do |io|
+            io.print(commands)
+            io.puts("\nquit")
+        end
+        success=$?.success?
+        msgs = []
+        diff.each do |file, exp|
+            file = File::join(AUGEAS_ROOT, file)
+            if ! File::exist?("#{file}.augnew")
+                msgs << "Expected file #{file}.augnew"
                 success=false
-                if ! refresh
-                    msgs << act
-                else
-                    msgs << act.gsub(/\t/, '\\t')
+            else
+                act=`diff -u #{file} #{file}.augnew`
+                act.gsub!(/^(--- #{file}).*$/, '\1')
+                act.gsub!(/^(\+\+\+ #{file}\.augnew).*$/, '\1')
+                act.gsub!(/^(---|\+\+\+) (#{AUGEAS_ROOT})/, '\1 ');
+                if ! exp.nil? && act != exp
+                    success=false
+                    if ! refresh
+                        msgs << act
+                    else
+                        msgs << act.gsub(/\t/, '\\t')
+                    end
                 end
             end
         end
-    end
-    files = diff.keys.collect { |f| File::join(AUGEAS_ROOT, "#{f}.augnew") }
-    Find.find(AUGEAS_ROOT) do |path|
-        if augnew?(path) && ! files.include?(path)
-            success=false
-            msgs << "Unexpected file #{path}"
+        files = diff.keys.collect { |f| File::join(AUGEAS_ROOT, "#{f}.augnew") }
+        Find.find(AUGEAS_ROOT) do |path|
+            if augnew?(path) && ! files.include?(path)
+                success=false
+                msgs << "Unexpected file #{path}"
+            end
         end
     end
-    if success
+    if skip
+        puts "SKIPPED"
+    elsif success
         puts "OK"
     else
         puts "FAIL"
+        status = 1
         msgs.each { |m| puts m }
     end
 end
+
+exit(status)

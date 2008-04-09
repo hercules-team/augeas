@@ -1,5 +1,5 @@
 commands="
-set /system/config/aliases/2/values/1 ruth
+set /files/etc/aliases/2/values/1 ruth
 save
 "
 diff["/etc/aliases"] = <<TXT

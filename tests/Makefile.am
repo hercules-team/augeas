@@ -17,8 +17,7 @@ check_PROGRAMS = fatest
 TESTS_ENVIRONMENT = top_builddir=$(abs_top_builddir) \
                     top_srcdir=$(abs_top_srcdir)
 
-# We should also run augtest, but that doesn't work yet
-TESTS = $(check_SCRIPTS) $(check_PROGRAMS)
+TESTS = $(check_SCRIPTS) $(check_PROGRAMS) augtest
 
 INCLUDES = -I$(top_srcdir)/src
 

@@ -1,5 +1,5 @@
 commands="
-set /system/config/yum/other/newparam newval
+set /files/etc/yum.conf/other/newparam newval
 save
 "
 

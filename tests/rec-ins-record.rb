@@ -1,8 +1,8 @@
 commands="
-ins /system/config/pam/newrole/10000 /system/config/pam/newrole/2
-set /system/config/pam/newrole/10000/type test
-set /system/config/pam/newrole/10000/control include
-set /system/config/pam/newrole/10000/module system-auth
+ins /files/etc/pam.d/newrole/10000 /files/etc/pam.d/newrole/2
+set /files/etc/pam.d/newrole/10000/type test
+set /files/etc/pam.d/newrole/10000/control include
+set /files/etc/pam.d/newrole/10000/module system-auth
 save
 "
  

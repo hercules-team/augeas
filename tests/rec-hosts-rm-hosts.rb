@@ -1,12 +1,12 @@
 # This will leave /etc/hosts with nothing but comments and whitespace
 refresh=true
 # We really need a Ruby API instead of this screen scraping.
-# Remove all the /system/config/hosts/* entries
+# Remove all the /files/etc/hosts/* entries
 commands = ""
-`#{AUGTOOL} ls /system/config/hosts`.each do |l|
+`#{AUGTOOL} ls /files/etc/hosts`.each do |l|
     f = l.split(' ')
     if f[0] =~ %r{^/[0-9]+}
-        commands += "rm /system/config/hosts#{f[0]}\n"
+        commands += "rm /files/etc/hosts#{f[0]}\n"
     end
 end
 commands +="
