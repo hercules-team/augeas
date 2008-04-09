@@ -1,12 +1,12 @@
 SUBDIRS=src tests
 
-AUGFILES=$(wildcard spec/*.aug)
+AUGFILES=$(wildcard lenses/*.aug) $(wildcard lenses/tests/*.aug)
 
 lensdir=$(datadir)/augeas/lenses
 
 dist_lens_DATA=$(AUGFILES)
 
-EXTRA_DIST=doc/lenses.tex augeas.spec
+EXTRA_DIST=augeas.spec
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = augeas.pc
