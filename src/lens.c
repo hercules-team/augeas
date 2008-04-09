@@ -331,10 +331,10 @@ static struct value *ambig_check(struct info *info, fa_t fa1, fa_t fa2,
     return exn;
 }
 
-static struct value *typecheck_concat(struct info *info,
-                                      struct lens *l1, struct lens *l2) {
-    fa_t fa1 = regexp_to_fa(l1->ctype);
-    fa_t fa2 = regexp_to_fa(l2->ctype);
+static struct value *ambig_concat_check(struct info *info, const char *msg,
+                                        struct regexp *r1, struct regexp *r2) {
+    fa_t fa1 = regexp_to_fa(r1);
+    fa_t fa2 = regexp_to_fa(r2);
     struct value *result = NULL;
 
     if (fa1 == NULL || fa2 == NULL) {
@@ -343,7 +343,22 @@ static struct value *typecheck_concat(struct info *info,
         return make_exn_value(ref(info), "Internal error: regexp_to_fa failed");
     }
 
-    result = ambig_check(info, fa1, fa2, "ambiguous concatenation");
+    result = ambig_check(info, fa1, fa2, msg);
+    fa_free(fa1);
+    fa_free(fa2);
+    return result;
+}
+
+static struct value *typecheck_concat(struct info *info,
+                                      struct lens *l1, struct lens *l2) {
+    struct value *result = NULL;
+
+    result = ambig_concat_check(info, "ambiguous concatenation",
+                                l1->ctype, l2->ctype);
+    if (result == NULL) {
+        result = ambig_concat_check(info, "ambiguous tree concatenation",
+                                    l1->atype, l2->atype);
+    }
     if (result != NULL) {
         char *fi = format_info(l1->info);
         exn_printf_line(result, "First lens: %s", fi);
@@ -352,26 +367,36 @@ static struct value *typecheck_concat(struct info *info,
         exn_printf_line(result, "Second lens: %s", fi);
         free(fi);        
     }
-    fa_free(fa1);
-    fa_free(fa2);
+    return result;
+}
+
+static struct value *ambig_iter_check(struct info *info, const char *msg,
+                                      struct regexp *r) {
+    fa_t fas, fa;
+    struct value *result = NULL;
+
+    fa = regexp_to_fa(r);
+    fas = fa_iter(fa, 0, -1);
+
+    result = ambig_check(info, fa, fas, msg);
+
+    fa_free(fa);
+    fa_free(fas);
     return result;
 }
 
 static struct value *typecheck_iter(struct info *info, struct lens *l) {
-    fa_t fas, fa;
     struct value *result = NULL;
 
-    fa = regexp_to_fa(l->ctype);
-    fas = fa_iter(fa, 0, -1);
-
-    result = ambig_check(info, fa, fas, "ambiguous iteration");
+    result = ambig_iter_check(info, "ambiguous iteration", l->ctype);
+    if (result == NULL) {
+        result = ambig_iter_check(info, "ambiguous tree iteration", l->atype);
+    }
     if (result != NULL) {
         char *fi = format_info(l->info);
         exn_printf_line(result, "Iterated lens: %s", fi);
         free(fi);        
     }
-    fa_free(fa);
-    fa_free(fas);
     return result;
 }
 
