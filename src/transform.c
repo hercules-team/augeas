@@ -273,59 +273,67 @@ int transform_applies(struct transform *xform, const char *path) {
 int transform_save(struct augeas *aug, struct transform *xform,
                    const char *path, struct tree *tree) {
     FILE *fp = NULL;
-    char *augnew = NULL;
+    char *augnew = NULL, *augorig = NULL, *augsave = NULL;
     const char *text = NULL;
-    const char *filename = path + strlen(AUGEAS_FILES_TREE);
+    const char *filename = path + strlen(AUGEAS_FILES_TREE) + 1;
     const char *err_status = NULL;
     struct lns_error *err;
+    int result = -1;
+
+    if (asprintf(&augorig, "%s%s", aug->root, filename) == -1)
+        goto done;
 
     if (asprintf(&augnew, "%s%s" EXT_AUGNEW, aug->root, filename) == -1)
-        return -1;
+        goto done;
 
-    text = aug_read_file(filename);
+    text = aug_read_file(augorig);
     if (text == NULL) {
         err_status = "put_read";
-        goto error;
+        goto done;
     }
 
     fp = fopen(augnew, "w");
     if (fp == NULL)
-        goto error;
+        goto done;
 
     if (tree != NULL)
         lns_put(fp, xform->lens, tree->children, text, &err);
     // FIXME: Delete file if tree == NULL
 
     if (fclose(fp) != 0)
-        goto error;
+        goto done;
+    fp = NULL;
 
     if (!(aug->flags & AUG_SAVE_NEWFILE)) {
         if (aug->flags & AUG_SAVE_BACKUP) {
-            char *augsave = NULL;
             int r;
             r = asprintf(&augsave, "%s%s" EXT_AUGSAVE, aug->root, filename);
             if (r == -1)
-                goto error;
-            if (rename(filename, augsave) != 0) {
+                goto done;
+            if (rename(augorig, augsave) != 0) {
                 err_status = "rename_augsave";
-                goto error;
+                goto done;
             }
-            if (rename(augnew, filename) != 0) {
+            if (rename(augnew, augorig) != 0) {
                 err_status = "rename_augnew";
-                goto error;
+                goto done;
             }
         }
     }
-    return 0;
+    result = 0;
 
- error:
+ done:
+    free(augnew);
+    free(augorig);
+    free(augsave);
     if (err_status != NULL) {
         const char *ep = err_path(filename);
         aug_set(aug, ep, err_status);
         free((char *) ep);
     }
-    fclose(fp);
-    return -1;
+    if (fp != NULL)
+        fclose(fp);
+    return result;
 }
 
 /*
