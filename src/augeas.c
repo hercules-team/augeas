@@ -167,7 +167,7 @@ static const char *init_root(const char *root0) {
         root0 = "/";
     root = strdup(root0);
     if (root[strlen(root)-1] != SEP) {
-        REALLOC(root, strlen(root) + 1);
+        REALLOC(root, strlen(root) + 2);
         strcat(root, "/");
     }
     return root;
