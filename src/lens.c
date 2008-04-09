@@ -24,7 +24,8 @@
 
 static struct regexp *regexp_digits = NULL;
 
-static int typecheck_union(struct info *, struct lens *l1, struct lens *l2);
+static struct value * typecheck_union(struct info *,
+                                      struct lens *l1, struct lens *l2);
 static struct value *typecheck_concat(struct info *,
                                       struct lens *l1, struct lens *l2);
 static struct value *typecheck_iter(struct info *info, struct lens *l);
@@ -86,9 +87,12 @@ static struct value *make_lens_value(struct lens *lens) {
 struct value *lns_make_union(struct info *info,
                              struct lens *l1, struct lens *l2) {
     struct lens *lens = NULL;
-    if (typecheck_union(info, l1, l2) == -1) {
-        return make_exn_value(info, "Lens union failed");
-    }
+    struct value *exn = NULL;
+
+    exn = typecheck_union(info, l1, l2);
+    if (exn != NULL)
+        return exn;
+
     lens = make_lens_binop(L_UNION, info, l1, l2);
     lens->ctype = regexp_union(info, l1->ctype, l2->ctype);
     lens->atype = regexp_union(info, l1->atype, l2->atype);
@@ -242,35 +246,49 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
 /*
  * Typechecking of lenses
  */
-static int typecheck_union(struct info *info,
-                           struct lens *l1, struct lens *l2) {
+static struct value *typecheck_union(struct info *info,
+                                     struct lens *l1, struct lens *l2) {
     fa_t fa1 = regexp_to_fa(l1->ctype);
     fa_t fa2 = regexp_to_fa(l2->ctype);
+    struct value *exn = NULL;
 
     if (fa1 == NULL || fa2 == NULL) {
         fa_free(fa1);
         fa_free(fa2);
-        return -1;
+        return make_exn_value(ref(info), 
+              "internal error: compile in union failed");
     }
 
-    fa_t isect = fa_intersect(fa1, fa2);
-    if (! fa_is_basic(isect, FA_EMPTY)) {
-        char *xmpl = fa_example(isect);
-        char *esc = escape(xmpl, -1);
-        syntax_error(info,
-         "warning: nonempty intersection in union: '%s' matched by both\n",
-                     esc);
-        free(xmpl);
-        free(esc);
-        /* FIXME: We leave it with a warning since fixing this
-           error with the curent language is a huge pain and it is
-           fairly harmless as we always use the first match in a
-           union, so it's predictable to the user what happens */
+    /* Boomerang checks unions by requiring that FA1 and FA2 are disjoint. This
+       is a pain in Augeas, since it usually requires that the user specifiy
+       a regexp in the second part of the union that is essentially FA2\FA1.
+       We can't support that, since that would require that we either use
+       libfa for regexp matching instead of the much much more optimized
+       GNU regexp, or that we support set minus in the language; that in turn
+       requires that we are able to turn an automaton back into a regexp.
+
+       As a compromise/stopgap, we just check that L2 isn't entirely
+       useless in the union L1 | L2, by making sure L2 is not completely
+       shadowed by L1. It's weaker than disjointness, but usually what the
+       user has in mind, anyway */
+    
+    fa_t minus = fa_minus(fa2, fa1);
+    if (fa_is_basic(minus, FA_EMPTY)) {
+        exn = make_exn_value(ref(info), 
+          "useless union: the first lens completely shadows the second lens");
+        
+        char *fi = format_info(l1->info);
+        exn_printf_line(exn, "First lens: %s", fi);
+        free(fi);
+        
+        fi = format_info(l2->info);
+        exn_printf_line(exn, "Second lens: %s", fi);
+        free(fi);        
     }
-    fa_free(isect);
+    fa_free(minus);
     fa_free(fa1);
     fa_free(fa2);
-    return 0;
+    return exn;
 }
 
 static struct value *ambig_check(struct info *info, fa_t fa1, fa_t fa2,
