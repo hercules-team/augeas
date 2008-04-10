@@ -682,13 +682,13 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
     if (! state.applied || *state.pos != '\0') {
         get_error(&state, lens, "get did not process entire input");
     }
-    if (state.error != NULL) {
-        free_tree(tree);
-        tree = NULL;
-    }
     if (err != NULL) {
         *err = state.error;
     } else {
+        if (state.error != NULL) {
+            free_tree(tree);
+            tree = NULL;
+        }
         free_lns_error(state.error);
     }
     return tree;

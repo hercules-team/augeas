@@ -227,8 +227,9 @@ static int load_file(struct augeas *aug, struct lens *lens,
     info->filename->str = filename;
     info->first_line = 1;
     tree = lns_get(info, lens, text, stdout, PF_NONE, &err);
-    if (tree == NULL) {
+    if (err != NULL) {
         err_status = "parse_failed";
+        free_tree(tree);
         goto error;
     }
     free((void *) text);

@@ -116,7 +116,7 @@ struct dict {
 };
 
 struct lns_error {
-    struct lens * lens;
+    struct lens  *lens;
     int           pos;        /* Errors from get/parse */
     char         *path;       /* Errors from put, pos will be -1 */
     char         *message;

@@ -78,23 +78,29 @@ static struct value *make_exn_lns_error(struct info *info,
                                         struct lns_error *err,
                                         const char *text) {
     struct value *v;
-    int r;
-    char *here = NULL;
 
     v = make_exn_value(ref(info), err->message);
     if (err->pos >= 0) {
-        r = asprintf(&here,
-                     "Error encountered here (%d characters into string)",
-                     err->pos);
-        if (r != -1)
-            exn_add_lines(v, 2, here, format_pos(text, err->pos));
+        exn_printf_line(v,
+                        "Error encountered here (%d characters into string)",
+                        err->pos);
+        exn_printf_line(v, format_pos(text, err->pos));
     } else {
-        r = asprintf(&here, "Error encountered at path %s", err->path);
-        if (r != -1)
-            exn_add_lines(v, 1, here);
+        exn_printf_line(v, "Error encountered at path %s", err->path);
     }
 
     return v;
+}
+
+static void exn_print_tree(struct value *exn, struct tree *tree) {
+    FILE *stream;
+    char *buf;
+    size_t size;
+
+    stream = open_memstream(&buf, &size);
+    print_tree(tree, stream, NULL, 1);
+    fclose (stream);
+    exn_printf_line(exn, buf);
 }
 
 /* V_LENS -> V_STRING -> V_TREE */
@@ -112,6 +118,9 @@ static struct value *lens_get(struct info *info, struct value *l,
         v->tree = tree;
     } else {
         v = make_exn_lns_error(info, err, text);
+        exn_printf_line(v, "Tree generated so far:");
+        exn_print_tree(v, tree);
+        free_tree(tree);
         free_lns_error(err);
     }
     return v;
