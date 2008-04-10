@@ -64,6 +64,8 @@ static struct lens *make_lens_unop(enum lens_tag tag, struct info *info,
                                   struct lens *child) {
     struct lens *lens = make_lens(tag, info);
     lens->child = child;
+    lens->value = child->value;
+    lens->key = child->key;
     return lens;
 }
 
@@ -74,6 +76,8 @@ static struct lens *make_lens_binop(enum lens_tag tag, struct info *info,
     lens->nchildren = 2;
     lens->children[0] = l1;
     lens->children[1] = l2;
+    lens->value = l1->value || l2->value;
+    lens->key = l1->key || l2->key;
     return lens;
 }
 
@@ -93,6 +97,12 @@ struct value *lns_make_union(struct info *info,
         if (exn != NULL)
             return exn;
     }
+    if (l1->value && l2->value) {
+        return make_exn_value(info, "Multiple stores in union");
+    }
+    if (l1->key && l2->key) {
+        return make_exn_value(info, "Multiple keys/labels in union");
+    }
 
     lens = make_lens_binop(L_UNION, info, l1, l2);
     lens->ctype = regexp_union(info, l1->ctype, l2->ctype);
@@ -110,6 +120,13 @@ struct value *lns_make_concat(struct info *info,
             return exn;
         }
     }
+    if (l1->value && l2->value) {
+        return make_exn_value(info, "Multiple stores in concat");
+    }
+    if (l1->key && l2->key) {
+        return make_exn_value(info, "Multiple keys/labels in concat");
+    }
+
     lens = make_lens_binop(L_CONCAT, info, l1, l2);
     lens->ctype = regexp_concat(info, l1->ctype, l2->ctype);
     lens->atype = regexp_concat(info, l1->atype, l2->atype);
@@ -128,6 +145,7 @@ struct value *lns_make_subtree(struct info *info, struct lens *l) {
     lens = make_lens_unop(L_SUBTREE, info, l);
     lens->ctype = ref(l->ctype);
     lens->atype = atype;
+    lens->value = lens->key = 0;
     if (lens->atype == NULL)
         lens->atype = make_key_regexp(info, "");
     return make_lens_value(lens);
@@ -142,6 +160,13 @@ struct value *lns_make_star(struct info *info, struct lens *l, int check) {
             return exn;
         }
     }
+    if (l->value) {
+        return make_exn_value(info, "Multiple stores in iteration");
+    }
+    if (l->key) {
+        return make_exn_value(info, "Multiple keys/labels in iteration");
+    }
+
     lens = make_lens_unop(L_STAR, info, l);
     lens->ctype = regexp_iter(info, l->ctype, 0, -1);
     lens->atype = regexp_iter(info, l->atype, 0, -1);
@@ -172,6 +197,8 @@ struct value *lns_make_maybe(struct info *info, struct lens *l, int check) {
     lens = make_lens_unop(L_MAYBE, info, l);
     lens->ctype = regexp_maybe(info, l->ctype);
     lens->atype = regexp_maybe(info, l->atype);
+    lens->value = l->value;
+    lens->key = l->key;
     return make_lens_value(lens);
 }
 
@@ -223,21 +250,15 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
     lens = make_lens(tag, info);
     lens->regexp = regexp;
     lens->string = string;
-    switch(tag) {
-    case L_DEL:
-    case L_STORE:
-    case L_KEY:
+    lens->key = (tag == L_KEY || tag == L_LABEL || tag == L_SEQ);
+    lens->value = (tag == L_STORE);
+    lens->atype = regexp_make_empty(info);
+    if (tag == L_DEL || tag == L_STORE || tag == L_KEY) {
         lens->ctype = ref(regexp);
-        lens->atype = regexp_make_empty(info);
-        break;
-    case L_LABEL:
-    case L_SEQ:
-    case L_COUNTER:
+    } else if (tag == L_LABEL || tag == L_SEQ || tag == L_COUNTER) {
         lens->ctype = regexp_make_empty(info);
-        lens->atype = regexp_make_empty(info);
-        break;
-    default:
-        fatal_error(info, "Illegal primitive tag %d", tag);
+    } else {
+        assert(0);
     }
     return make_lens_value(lens);
  error:

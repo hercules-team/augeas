@@ -52,7 +52,7 @@ struct state {
     FILE             *out;
     struct split     *split;
     const char       *key;
-    int               leaf;
+    const char       *value;
     struct dict      *dict;
     struct skel      *skel;
     char             *path;   /* Position in the tree, for errors */
@@ -383,18 +383,11 @@ static void put_subtree(struct lens *lens, struct state *state) {
     struct tree *tree = state->split->tree;
     struct dict_entry *entry = dict_lookup(tree->label, state->dict);
     state->key = tree->label;
+    state->value = tree->value;
     pathjoin(&state->path, 1, state->key);
 
-    if (tree->children != NULL) {
-        state->split = make_split(tree->children);
-    } else {
-        // FIXME: state->leaf == 1 means the tree is too flat
-        assert(! state->leaf);
-        state->leaf = 1;
-        state->split->labels = "";
-        state->split->start = 0;
-        state->split->end = 1;
-    }
+    state->split = make_split(tree->children);
+
     if (entry == NULL) {
         state->skel = NULL;
         state->dict = NULL;
@@ -405,10 +398,11 @@ static void put_subtree(struct lens *lens, struct state *state) {
         put_lens(lens->child, state);
     }
 
-    if (state->split != NULL && tree->children != NULL) {
+    if (state->error == NULL) {
         assert(state->split->next == NULL);
         free_split(state->split);
     }
+
     oldstate.error = state->error;
     oldstate.path = state->path;
     *state = oldstate;
@@ -514,7 +508,7 @@ static void put_lens(struct lens *lens, struct state *state) {
         put_del(lens, state);
         break;
     case L_STORE:
-        fprintf(state->out, state->split->tree->value);
+        fprintf(state->out, state->value);
         break;
     case L_KEY:
         fprintf(state->out, state->key);
@@ -629,7 +623,7 @@ static void create_lens(struct lens *lens, struct state *state) {
         create_del(lens, state);
         break;
     case L_STORE:
-        fprintf(state->out, state->split->tree->value);
+        fprintf(state->out, state->value);
         break;
     case L_KEY:
         fprintf(state->out, state->key);
@@ -696,7 +690,6 @@ void lns_put(FILE *out, struct lens *lens, struct tree *tree,
     }
     state.out = out;
     state.split = make_split(tree);
-    state.leaf = 0;
     state.key = tree->label;
     put_lens(lens, &state);
 

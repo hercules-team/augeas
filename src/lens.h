@@ -46,6 +46,8 @@ struct lens {
     struct info              *info;
     struct regexp            *ctype;
     struct regexp            *atype;
+    unsigned int              value : 1;
+    unsigned int              key : 1;
     union {
         /* Primitive lenses */
         struct {                   /* L_DEL uses both */
@@ -126,10 +128,14 @@ void free_skel(struct skel *skel);
 void free_dict(struct dict *dict);
 void free_lns_error(struct lns_error *err);
 
-/* Parse text TEXT according to GRAMMAR. FILENAME indicates what file TEXT
- * was read from.
- * LOG is used to print logging messages. FLAGS controls what is printed
- * and should be a set of flags from enum parse_flags
+/* Parse text TEXT with LENS. INFO indicats where TEXT was read from.
+ *
+ * If ERR is non-NULL, *ERR is set to NULL on success, and to an error
+ * message on failure; the constructed tree is always returned. If ERR is
+ * NULL, return the tree on success, and NULL on failure.
+ *
+ * FLAGS controls what is printed and should be a set of flags from enum
+ * parse_flags
  */
 struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
                      FILE *log, int flags, struct lns_error **err);

@@ -45,7 +45,7 @@ struct state {
     FILE             *log;
     struct seq       *seqs;
     const char       *key;
-    int               leaf : 1;  /* Used by get_subtree */
+    const char       *value;     /* GET_STORE leaves a value here */
     struct lns_error *error;
 };
 
@@ -402,8 +402,14 @@ static struct tree *get_store(struct lens *lens, struct state *state) {
 
     if (match(lens, state, &token) < 0)
         get_expected_error(state, lens);
-    else
-        tree = make_tree(NULL, token);
+    else {
+        assert(state->value == NULL);
+        if (state->value != NULL) {
+            get_error(state, lens, "More than one store in a subtree");
+        } else {
+            state->value = token;
+        }
+    }
     return tree;
 }
 
@@ -580,23 +586,18 @@ static struct skel *parse_quant_maybe(struct lens *lens, struct state *state,
 
 static struct tree *get_subtree(struct lens *lens, struct state *state) {
     const char *key = state->key;
-    struct tree *tree = NULL;
+    const char *value = state->value;
+    struct tree *tree = NULL, *children;
 
     state->key = NULL;
-    state->leaf = 1;
-    tree = get_lens(lens->child, state);
-    if (tree == NULL) {
-        tree = make_tree(NULL, NULL);
-    }
-    if (state->leaf) {
-        tree->label = state->key;
-    } else {
-        struct tree *t = make_tree(state->key, NULL);
-        t->children = tree;
-        tree = t;
-    }
+    state->value = NULL;
+    children = get_lens(lens->child, state);
+    
+    tree = make_tree(state->key, state->value);
+    tree->children = children;
+
     state->key = key;
-    state->leaf = 0;
+    state->value = value;
     return tree;
 }
 
@@ -682,6 +683,14 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
     if (! state.applied || *state.pos != '\0') {
         get_error(&state, lens, "get did not process entire input");
     }
+    if (state.key != NULL) {
+        get_error(&state, lens, "get left unused key %s", state.key);
+        free((char *) state.key);
+    }
+    if (state.value != NULL) {
+        get_error(&state, lens, "get left unused value %s", state.value);
+        free((char *) state.value);
+    }
     if (err != NULL) {
         *err = state.error;
     } else {
@@ -749,7 +758,6 @@ struct skel *lns_parse(struct lens *lens, const char *text, struct dict **dict,
     state.text = text;
     state.pos = text;
     state.flags = PF_NONE;
-    state.leaf  = 1;
 
     *dict = NULL;
     skel = parse_lens(lens, &state, dict);
