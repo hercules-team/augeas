@@ -224,6 +224,11 @@ static struct value *xform_transform(struct info *info, struct value *l,
                                      struct value *f) {
     assert(l->tag == V_LENS);
     assert(f->tag == V_FILTER);
+    if (l->lens->value || l->lens->key) {
+        return make_exn_value(ref(info), "Can not build a transform "
+                              "from a lens that leaves a %s behind",
+                              l->lens->key ? "key" : "value");
+    }
     struct value *v = make_value(V_TRANSFORM, ref(info));
     v->transform = make_transform(ref(l->lens), ref(f->filter));
     return v;
