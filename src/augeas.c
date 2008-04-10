@@ -633,8 +633,11 @@ static int print_one(FILE *out, struct tree *tree, char **path,
     }
 
     fprintf(out, *path);
-    if (tree->value != NULL)
-        fprintf(out, " = %s", tree->value);
+    if (tree->value != NULL) {
+        char *val = escape(tree->value, -1);
+        fprintf(out, " = \"%s\"", val);
+        free(val);
+    }
     fputc('\n', out);
 
     (*path)[end] = '\0';
