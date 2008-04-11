@@ -22,8 +22,10 @@ trap "rm $LOG" EXIT
 for t in $TESTS
 do
   printf "%-30s ... " $(basename $t .aug)
+  set +e
   ${AUGPARSE} -I $LENS_DIR $t > $LOG 2>&1
   ret=$?
+  set -e
   if [[ ! $ret -eq 0 ]]; then
     echo FAIL
     result=1
