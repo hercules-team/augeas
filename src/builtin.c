@@ -163,7 +163,7 @@ static struct value *tree_set_glue(struct info *info, struct value *path,
     assert(path->tag == V_STRING);
     assert(val->tag == V_STRING);
     assert(tree->tag == V_TREE);
-    if (tree_set(tree->tree, path->string->str, val->string->str) == -1) {
+    if (tree_set(tree->tree, path->string->str, val->string->str) == NULL) {
         return make_exn_value(ref(info),
                               "Tree set of %s to '%s' failed",
                               path->string->str, val->string->str);

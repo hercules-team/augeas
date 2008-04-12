@@ -31,114 +31,395 @@
 /* We always have a toplevel entry for P_ROOT */
 #define P_ROOT   "augeas"
 
-struct tree *tree_find(struct tree *tree, const char *path) {
-    if (path == NULL)
-        return NULL;
-    if (*path == SEP)
-        path += 1;
+#define L_BRACK '['
+#define R_BRACK ']'
 
-    while (tree != NULL) {
-        if (tree->label != NULL) {
-            if (STREQ(tree->label, path))
-                return tree;
-            if (tree->children != NULL && pathprefix(tree->label, path)) {
-                struct tree *t =
-                    tree_find(tree->children, pathstrip(path));
-                if (t != NULL)
-                    return t;
+static const char *const last_func = "[last()]";
+
+#define TREE_HIDDEN(tree) ((tree)->label == NULL)
+
+/* Internal representation of a path in the tree */
+struct segment {
+    int          index;
+    unsigned int fixed : 1; /* Match only one index (either INDEX or LAST) */
+    unsigned int last  : 1; /* Match the last node with LABEL */
+    unsigned int any   : 1; /* Match any node with any label, implies !FIXED */
+    char        *label;
+    struct tree *tree;
+};
+
+struct path {
+    size_t      nsegments;
+    struct segment *segments;
+    struct tree    *root;
+};
+
+#define for_each_segment(seg, path)                                 \
+    for (typeof(path->segments) (seg) = (path)->segments;           \
+         (seg) < (path)->segments + (path)->nsegments;              \
+         (seg)++)
+
+#define last_segment(path) (path->segments + path->nsegments - 1)
+
+static int xstrtoul(const char *nptr, char **endptr, int base) {
+    unsigned long val;
+    char *end;
+    int result;
+
+    errno = 0;
+    val = strtoul(nptr, &end, base);
+    if (errno || (!endptr && *end) || end == nptr || (int) val != val) {
+        result = -1;
+    } else {
+        result = val;
+    }
+    if (endptr)
+        *endptr = end;
+    return result;
+}
+
+static int sibling_index(struct tree *siblings, struct tree *tree) {
+    int indx = 0;
+    list_for_each(t, siblings) {
+        if (streqv(t->label, tree->label))
+            indx += 1;
+        if (t == tree)
+            return indx;
+    }
+    return indx;
+}
+
+static void free_path(struct path *path) {
+    if (path == NULL)
+        return;
+
+    if (path->segments != NULL) {
+        for (int i=0; i < path->nsegments; i++) {
+            free(path->segments[i].label);
+        }
+        free(path->segments);
+    }
+    free(path);
+}
+
+/* Return the start of the list of siblings of SEG->TREE */
+static struct tree *seg_siblings(struct path *path, struct segment *seg) {
+    return (seg == path->segments) ? path->root : (seg-1)->tree->children;
+}
+
+/* Return the parent of SEG->TREE or NULL if SEG->TREE is on the toplevel */
+static struct tree *seg_parent(struct path *path, struct segment *seg) {
+    return (seg == path->segments) ? NULL : (seg-1)->tree;
+}
+
+/* Take a path expression PATH and turn it into a path structure usable for
+ * search. The TREE components of the PATH segments will be NULL. Call
+ * PATH_FIRST to initialize them to the first match.
+ *
+ * A path expression follows the grammar
+ * PATH = '/' ? SEGMENT ( '/' SEGMENT )* '/' ?
+ * SEGMENT = STRING ('[' N ']') ? | '*'
+ * where STRING is any string not containing '/' and N is a positive number
+ */
+static struct path *make_path(struct tree *root, const char *path) {
+    struct path *result;
+
+    CALLOC(result, 1);
+    if (result == NULL)
+        return NULL;
+    result->root = root;
+
+    if (*path != SEP)
+        result->nsegments = 1;
+    for (const char *p = path; *p != '\0'; p++) {
+        if (*p == SEP) {
+            while (*p == SEP) p++;
+            if (*p) result->nsegments++;
+        }
+    }
+    if (result->nsegments == 0)
+        goto error;
+
+    CALLOC(result->segments, result->nsegments);
+    if (result->segments == NULL)
+        goto error;
+
+    for_each_segment(seg, result) {
+        const char *next, *brack;
+
+        while (*path == SEP)
+            path += 1;
+        assert(*path);
+
+        brack = strchr(path, L_BRACK);
+        next = strchr(path, SEP);
+        if (next == NULL)
+            next = path + strlen(path);
+
+        if (path[0] == '*') {
+            seg->any = 1;
+        } else if (brack == NULL || brack >= next) {
+            seg->index = 0;
+            seg->label = strndup(path, next - path);
+        } else {
+            seg->label = strndup(path, brack - path);
+            if (STREQLEN(brack, last_func, strlen(last_func))) {
+                seg->last = 1;
+                seg->fixed = 1;
+            } else {
+                char *end;
+                seg->index = xstrtoul(brack + 1, &end, 10);
+                seg->fixed = 1;
+                if (seg->index <= 0)
+                    goto error;
+                if (*end != R_BRACK)
+                    goto error;
             }
         }
-        tree = tree->next;
+        path = next;
+        while (*path == SEP) path += 1;
+    }
+    return result;
+
+ error:
+    free_path(result);
+    return NULL;
+}
+
+static int complete_path(struct path *path, int segnr, struct tree *tree) {
+    if (segnr == path->nsegments)
+        return 1;
+
+    if (tree == NULL)
+        return 0;
+
+    int cur = segnr;
+    path->segments[cur].tree = tree;
+
+    while (1) {
+        struct segment *seg = path->segments + cur;
+        int found = 0;
+        struct tree *siblings = seg_siblings(path, seg);
+        list_for_each(t, seg->tree) {
+            if (seg->any || streqv(t->label, seg->label)) {
+                int indx = sibling_index(siblings, t);
+                if (!seg->fixed || seg->last || indx == seg->index) {
+                    found = 1;
+                    seg->tree = t;
+                    seg->index = indx;
+                    if (!seg->last)
+                        break;
+                }
+            }
+        }
+        if (found) {
+            cur += 1;
+            if (cur == path->nsegments)
+                break;
+            path->segments[cur].tree = seg->tree->children;
+        } else {
+            cur -= 1;
+            if (cur < segnr)
+                break;
+            path->segments[cur].tree = path->segments[cur].tree->next;
+        }
+    }
+    return (cur == path->nsegments);
+}
+
+static struct tree *path_next(struct path *path) {
+    for (int i = path->nsegments-1; i >= 0; i--) {
+        struct segment *seg = path->segments + i;
+        struct tree *siblings = seg_siblings(path, seg);
+        if (! seg->fixed) {
+            list_for_each(t, seg->tree->next) {
+                if (seg->any || streqv(t->label, seg->label)) {
+                    seg->index += 1;
+                    if (complete_path(path, i+1, t->children)) {
+                        seg->tree = t;
+                        if (seg->any)
+                            seg->index = sibling_index(siblings, t);
+                        return last_segment(path)->tree;
+                    }
+                }
+            }
+        }
     }
     return NULL;
 }
 
-/* Return a list of tree nodes matching PATH. The list contains the
- * matching nodes in the CHILDREN pointers and must be freed by the caller
+/* Find the first node in TREE matching PATH. Fill in the TREE pointers along
+ * the way
  */
-static struct tree *tree_find_all(struct tree *tree, const char *path) {
-    struct tree *result = NULL;
+static struct tree *path_first(struct path *path) {
+    struct tree *tree = path->root;
+    struct segment *seg = path->segments;
+    int indx = 0;
+    int found = 0;
 
-    if (path == NULL)
-        return NULL;
-    if (*path == SEP)
-        path += 1;
-
-    while (tree != NULL) {
-        if (tree->label != NULL) {
-            if (STREQ(tree->label, path)) {
-                struct tree *cons;
-                CALLOC(cons, 1);
-                cons->children = tree;
-                list_append(result, cons);
-            }
-            if (tree->children != NULL && pathprefix(tree->label, path)) {
-                struct tree *cdr =
-                    tree_find_all(tree->children, pathstrip(path));
-                list_append(result, cdr);
+    seg->tree = NULL;
+    list_for_each(t, tree) {
+        if (seg->any || streqv(t->label, seg->label)) {
+            indx += 1;
+            if (seg->any || !seg->fixed || indx == seg->index) {
+                seg->tree = t;
+                seg->index = indx;
+                if (seg->any)
+                    seg->index = sibling_index(tree, t);
+                if (!seg->last && complete_path(path, 1, t->children)) {
+                    found = 1;
+                    break;
+                }
             }
         }
-        tree = tree->next;
+    }
+    if (seg->last && complete_path(path, 1, seg->tree->children))
+        found = 1;
+    return found ? last_segment(path)->tree : NULL;
+}
+
+/* Fill the TREE pointer in PATH with a longest prefix that matches in the
+ * tree. PATH can not contain any wildcards, or other constructs that would
+ * allow more than one path in the tree to match.
+ *
+ * Return 1 if a node was found that exactly matches PATH, 0 if an incomplete
+ * prefix matches, and -1 if more than one node in the tree match
+ */
+static int path_find_one(struct path *path) {
+    struct tree *tree = path->root;
+
+    for_each_segment(seg, path) {
+        int indx = 0;
+        if (seg->any)
+            return -1;
+        
+        seg->tree = NULL;
+        list_for_each(t, tree) {
+            if (streqv(t->label, seg->label)) {
+                indx += 1;
+                if (!seg->fixed && seg->tree != NULL)
+                    return -1;
+
+                if (!seg->fixed || seg->last || indx == seg->index) {
+                    seg->tree = t;
+                    seg->index = indx;
+                }
+            }
+        }
+        if (seg->tree == NULL)
+            return 0;
+        tree = seg->tree->children;
+    }
+    return 1;
+}
+
+static const char *seg_label(struct segment *seg) {
+    if (seg->label != NULL)
+        return seg->label;
+    if (seg->tree != NULL && seg->tree->label != NULL)
+        return seg->tree->label;
+    return "(none)";
+}
+
+static int seg_needs_qual(struct path *path, struct segment *seg) {
+    struct tree *siblings;
+    const char *label;
+
+    if (seg->index > 1)
+        return 1;
+    siblings = (seg == path->segments) ? path->root : (seg-1)->tree->children;
+    label = seg_label(seg);
+    list_for_each(t, siblings) {
+        if (t != seg->tree && streqv(t->label, label))
+            return 1;
+    }
+    return 0;
+}
+
+static char *format_path(struct path *path) {
+    size_t size = 0, used = 0;
+    char *result;
+
+    for_each_segment(seg, path) {
+        const char *label = seg_label(seg);
+        if (seg_needs_qual(path, seg)) {
+            size += snprintf(NULL, 0, "/%s[%d]", label, seg->index);
+        } else {
+            size += strlen(label) + 1;
+        }
+    }
+    size += 1;
+
+    CALLOC(result, size);
+    if (result == NULL)
+        return NULL;
+    for_each_segment(seg, path) {
+        const char *label = seg_label(seg);
+        if (seg_needs_qual(path, seg)) {
+            used += snprintf(result + used, size-used,
+                             "/%s[%d]", label, seg->index);
+        } else {
+            used += snprintf(result + used, size-used, "/%s", label);
+        }
     }
     return result;
 }
 
-static struct tree *aug_tree_create(const char *path) {
-    struct tree *tree;
+static char *path_expand(struct tree *tree, struct tree *start,
+                         const char *ppath) {
+    char *path;
+    const char *label;
+    int cnt = 0, ind = 0, inc = 1, r;
 
-    CALLOC(tree, 1);
-
-    const char *end = pathstrip(path);
-    if (end == NULL) {
-        tree->label = strdup(path);
-        char *l = (char *) tree->label + strlen(path) - 1;
-        if (*l == SEP)
-            *l = '\0';
-    } else {
-        tree->label = strndup(path, end - path - 1);
-        tree->children = aug_tree_create(end);
-    }
-
-    return tree;
-}
-
-static struct tree *tree_find_or_create(const char *path,
-                                            struct tree *tree) {
-    struct tree *next = NULL;
-
-    if (*path == SEP) path += 1;
-
-    list_for_each(t, tree) {
-        if (streqv(t->label, path))
-            return t;
-        if (pathprefix(t->label, path)) {
-            next = t;
+    list_for_each(t, start) {
+        if (streqv(t->label, tree->label)) {
+            cnt += 1;
+            ind += inc;
+            if (t == tree)
+                inc = 0;
         }
     }
+    if (cnt == 1)
+        ind = 0;
 
-    if (next != NULL) {
-        if (next->children == NULL) {
-            next->children = aug_tree_create(pathstrip(path));
-            while (next->children != NULL)
-                next = next->children;
-            return next;
-        } else {
-            return tree_find_or_create(pathstrip(path), next->children);
-        }
+    label = (tree->label == NULL) ? "()" : tree->label;
+    if (ind > 0) {
+        r = asprintf(&path, "%s/%s[%d]", ppath, label, ind);
     } else {
-        struct tree *new = aug_tree_create(path);
-        list_append(tree, new);
-        while (new->children != NULL)
-            new = new->children;
-        return new;
+        r = asprintf(&path, "%s/%s", ppath, label);
     }
+    if (r == -1)
+        return NULL;
+    return path;
 }
 
-static void aug_tree_free(struct tree *tree) {
-    if (tree != NULL) {
-        free((void *) tree->label);
-        free(tree);
+static struct segment *aug_tree_create(struct path *path) {
+    struct segment *s, *seg;
+
+    for (seg = path->segments;
+         seg->tree != NULL && seg <= last_segment(path);
+         seg++);
+    if (seg->tree != NULL)
+        return NULL;
+
+    for (s = seg ; s <= last_segment(path); s++) {
+        CALLOC(s->tree, 1);
+        if (s->tree == NULL)
+            goto error;
+        s->tree->label = strdup(s->label);
     }
+    for (s = seg ; s < last_segment(path); s++) {
+        s->tree->children = (s+1)->tree;
+    }
+
+    return seg;
+
+ error:
+    for (s = seg; s->tree != NULL && s <= last_segment(path); s++) {
+        free_tree(s->tree);
+        s->tree = NULL;
+    }
+    return NULL;
 }
 
 /* Propagate dirty flags towards the root */
@@ -252,24 +533,43 @@ struct augeas *aug_init(const char *root, const char *loadpath,
 }
 
 const char *aug_get(struct augeas *aug, const char *path) {
-    struct tree *tree;
+    struct path *p = make_path(aug->tree, path);
+    const char *result = NULL;
+    int r;
 
-    tree = tree_find(aug->tree, path);
-    if (tree != NULL)
-        return tree->value;
+    r = path_find_one(p);
+    if (r == 1)
+        result = last_segment(p)->tree->value;
+    free_path(p);
 
-    return NULL;
+    return result;
 }
 
-int tree_set(struct tree *root, const char *path, const char *value) {
+struct tree *tree_set(struct tree *root, const char *path, const char *value) {
     struct tree *tree;
+    struct path *p = make_path(root, path);
+    int r;
 
-    tree = tree_find(root, path);
-    if (tree == NULL) {
-        tree = tree_find_or_create(path, root);
+    if (p == NULL)
+        goto error;
+
+    r = path_find_one(p);
+    if (r == -1)
+        goto error;
+
+    if (r == 0) {
+        struct segment *seg = aug_tree_create(p);
+        if (seg == NULL)
+            goto error;
+        tree = seg_parent(p, seg);
         if (tree == NULL)
-            return -1;
+            list_append(root, seg->tree);
+        else
+            list_append(tree->children, seg->tree);
     }
+    tree = last_segment(p)->tree;
+    free_path(p);
+
     if (tree->value != NULL) {
         free((char *) tree->value);
         tree->value = NULL;
@@ -277,71 +577,80 @@ int tree_set(struct tree *root, const char *path, const char *value) {
     if (value != NULL) {
         tree->value = strdup(value);
         if (tree->value == NULL)
-            return -1;
+            goto error;
     }
     tree->dirty = 1;
-    return 0;
+    return tree;
+ error:
+    free_path(p);
+    return NULL;
 }
 
 int aug_set(struct augeas *aug, const char *path, const char *value) {
-    return tree_set(aug->tree, path, value);
+    return tree_set(aug->tree, path, value) == NULL ? -1 : 0;
 }
 
 int aug_exists(struct augeas *aug, const char *path) {
-    return (tree_find(aug->tree, path) != NULL);
+    struct path *p = make_path(aug->tree, path);
+    int result;
+
+    result = path_find_one(p);
+    free_path(p);
+
+    return result;
 }
 
-int aug_insert(struct augeas *aug, const char *path, const char *sibling) {
-    struct tree *parent, *prev = NULL, *new = NULL;
-    char *pathdup = NULL, *label;
+int aug_insert(struct augeas *aug, const char *path, const char *label,
+               int before) {
+    struct path *p = NULL;
+    struct tree *new = NULL;
 
-    if (path == NULL || sibling == NULL || STREQ(path, sibling))
-        goto error;
-
-    pathdup = strdup(path);
-    if (pathdup == NULL)
-        goto error;
-
-    label = strrchr(pathdup, SEP);
-    if (label == NULL)
-        goto error;
-    *label = '\0';
-
-    if (STRNEQLEN(pathdup, sibling, strlen(pathdup)))
-        goto error;
-    sibling = sibling + strlen(pathdup) + 1;
-
-    parent = tree_find(aug->tree, pathdup);
-    *label = SEP;
-
-    if (parent == NULL)
-        goto error;
-
-    label += 1;
-    list_for_each(t, parent->children) {
-        if (streqv(t->label, label))
-            goto error;
-        if (t->next != NULL && streqv(t->next->label, sibling))
-            prev = t;
-    }
-
-    if (prev == NULL)
+    if (strchr(label, SEP) != NULL)
         return -1;
 
-    CALLOC(new, 1);
-    new->label = strdup(label);
-    new->next = prev->next;
-    prev->next = new;
-    parent->dirty = 1;
+    p = make_path(aug->tree, path);
+    if (p == NULL)
+        goto error;
 
-    free(pathdup);
+    if (path_find_one(p) != 1)
+        goto error;
+
+    CALLOC(new, 1);
+    if (new == NULL)
+        goto error;
+    new->label = strdup(label);
+    if (new->label == NULL)
+        goto error;
+
+    struct segment *seg = last_segment(p);
+    if (before) {
+        struct tree *siblings = seg_siblings(p, seg);
+        if (siblings == aug->tree) {
+            list_insert_before(new, seg->tree, aug->tree);
+        } else {
+            list_insert_before(new, seg->tree, siblings);
+        }
+    } else {
+        new->next = seg->tree->next;
+        seg->tree->next = new;
+    }
     return 0;
  error:
-    free(pathdup);
-    free(new);
+    free_tree(new);
+    free_path(p);
     return -1;
 }
 
+/* Free one tree node */
+static void free_tree_node(struct tree *tree) {
+    if (tree == NULL)
+        return;
+
+    free((char *) tree->label);
+    free(tree);
+}
+
+/* Recursively free the whole tree TREE and all its siblings */
 int free_tree(struct tree *tree) {
     int cnt = 0;
 
@@ -349,80 +658,46 @@ int free_tree(struct tree *tree) {
         struct tree *del = tree;
         tree = del->next;
         cnt += free_tree(del->children);
-        aug_tree_free(del);
+        free_tree_node(del);
         cnt += 1;
     }
 
     return cnt;
 }
 
-char *pathsplit(const char *path) {
-    char *ppath = strdup(path);
-    char *pend = strrchr(ppath, SEP);
-
-    if (pend == NULL || pend == ppath) {
-        free(ppath);
-        return NULL;
-    }
-    *pend = '\0';
-    return ppath;
-}
-
 int tree_rm(struct tree **htree, const char *path) {
-    const char *ppath = pathsplit(path);
-    struct tree *tree = *htree;
-    struct tree *del = NULL;
-    const char *label;
+    struct path *p = NULL;
+    struct tree *tree;
     int cnt = 0;
 
-    if (ppath == NULL) {
-        /* Delete one of TREE's siblings */
-        if (streqv(path, tree->label)) {
-            del = tree;
-            *htree = tree->next;
-            /* This is not quite right: TREE's parent should be marked
-               dirty, but we don't have that. Mark one of its siblings as
-               dirty and hope for the best. */
-            if (tree != NULL)
-                tree->dirty = 1;
-        } else {
-            label = path;
-        }
-    } else {
-        struct tree *parent = tree_find(tree, ppath);
-        label = ppath + strlen(ppath) + 1;
-        if (parent == NULL || parent->children == NULL) {
-            free((void *) ppath);
-            return 0;
-        }
-        if (streqv(label, parent->children->label)) {
-            del = parent->children;
-            parent->children = del->next;
-        } else {
-            tree = parent->children;
-        }
-        parent->dirty = 1;
-    }
-    
-    if (del == NULL) {
-        /* Delete one of TREE's siblings, never TREE itself */
-        struct tree *prev;
-        for (prev = tree;
-             prev->next != NULL && !streqv(label, prev->next->label);
-             prev = prev->next);
-        if (prev->next != NULL) {
-            del = prev->next;
-            prev->next = del->next;
-        }
-    }
+    p = make_path(*htree, path);
+    if (p == NULL)
+        return -1;
 
-    if (del != NULL) {
-        cnt = free_tree(del->children);
-        aug_tree_free(del);
-    }
+    struct segment *seg = last_segment(p);
+    while (1) {
+        for (tree = path_first(p);
+             tree != NULL && TREE_HIDDEN(tree);
+             tree = path_next(p));
+        if (tree == NULL)
+            break;
 
-    free((void *) ppath);
-    return cnt + 1;
+        struct tree *parent = seg_parent(p, seg);
+        if (parent == NULL) {
+            list_remove(seg->tree, p->root);
+            if (p->root)
+                p->root->dirty = 1;
+        } else {
+            list_remove(seg->tree, parent->children);
+            parent->dirty = 1;
+        }
+        
+        cnt += free_tree(seg->tree->children) + 1;
+        free_tree_node(seg->tree);
+    }
+    *htree = p->root;
+    free_path(p);
+    return cnt;
 }
 
 int aug_rm(struct augeas *aug, const char *path) {
@@ -436,7 +711,8 @@ int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub) {
     r = aug_rm(aug, path);
     if (r == -1)
         goto error;
-    parent = tree_find_or_create(path, aug->tree);
+
+    parent = tree_set(aug->tree, path, NULL);
     if (parent == NULL)
         goto error;
 
@@ -446,108 +722,57 @@ int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub) {
     return -1;
 }
 
-int aug_ls(struct augeas *aug, const char *path, const char ***children) {
-    struct tree *tl = NULL;
+int aug_match(struct augeas *aug, const char *pathin, char ***matches) {
+    struct path *p = NULL;
+    struct tree *tree;
     int cnt = 0;
 
-    // FIXME: Treating / special is a huge kludge
-    if (STREQ(path, "/")) {
-        CALLOC(tl, 1);
-        CALLOC(tl->children, 1);
-        tl->children->children = aug->tree;
-        path = "";
-    } else {
-        tl = tree_find_all(aug->tree, path);
+    if (matches != NULL)
+        *matches = NULL;
+
+    if (STREQ(pathin, "/")) {
+        pathin = "/*";
     }
 
-    list_for_each(l, tl) {
-        list_for_each(t, l->children->children) {
-            cnt += (t->label != NULL);
-        }
-    }
-
-    if (children == NULL)
-        goto done;
-
-    *children = calloc(cnt, sizeof(char *));
-    if (*children == NULL) {
-        cnt = -1;
-        goto done;
-    }
-
-    int i = 0;
-    list_for_each(l, tl) {
-        list_for_each(t, l->children->children) {
-            while (t != NULL && t->label == NULL) t = t->next;
-            if (t == NULL) break;
-            int exists = 0;
-            for (int j=0; j < i; j++) {
-                if (pathendswith((*children)[j], t->label)) {
-                    exists = 1;
-                    break;
-                }
-            }
-            if (! exists) {
-                int len = strlen(path) + 1 + strlen(t->label) + 1;
-                char *p = malloc(len);
-                snprintf(p, len, "%s/%s", path, t->label);
-                (*children)[i++] = p;
-            }
-        }
-    }
-    /* Because we skip duplicate nodes, we may actually have fewer than CNT
-       elements in CHILDREN */
-    if (i < cnt) {
-        cnt = i;
-        *children = realloc(*children, sizeof(char *)*cnt);
-    }
- done:
-    /* Listing "/" is special */
-    if (strlen(path) == 0) {
-        free(tl->children);
-    }
-    list_free(tl);
-    return cnt;
-}
-
-static int match_rec(struct tree *tree, const char *pattern,
-                     char **path,
-                     const char **matches, int size) {
-
-    int cnt = 0;
-    int end = strlen(*path);
-
-    for(;tree != NULL; tree = tree->next) {
-        if (tree->label == NULL)
-            continue;
-        *path = realloc(*path, end + 1 + strlen(tree->label) + 1);
-        (*path)[end] = SEP;
-        strcpy(*path + end + 1, tree->label);
-
-        if (fnmatch(pattern, *path, FNM_NOESCAPE) == 0) {
-            if (size > 0) {
-                *matches = strdup(*path);
-                matches += 1;
-                size -= 1;
-            }
+    p = make_path(aug->tree, pathin);
+    for (tree = path_first(p); tree != NULL; tree = path_next(p)) {
+        if (! TREE_HIDDEN(tree))
             cnt += 1;
-        }
-        int n = match_rec(tree->children, pattern, path, matches, size);
-        cnt += n;
-        matches += n;
-        size -= n;
     }
+    free_path(p);
+    p = NULL;
 
-    (*path)[end] = '\0';
+    if (matches == NULL)
+        return cnt;
+
+    CALLOC(*matches, cnt);
+    if (*matches == NULL)
+        goto error;
+
+    p = make_path(aug->tree, pathin);
+    int i = 0;
+    for (tree = path_first(p); tree != NULL; tree = path_next(p)) {
+        if (TREE_HIDDEN(tree))
+            continue;
+        (*matches)[i] = format_path(p);
+        if ((*matches)[i] == NULL) {
+            goto error;
+        }
+        i += 1;
+    }
+    free_path(p);
     return cnt;
-}
 
-int aug_match(struct augeas *aug, const char *pattern,
-              const char **matches, int size) {
-    char *path = calloc(10, 1);
-    int n = match_rec(aug->tree, pattern, &path, matches, size);
-    free(path);
-    return n;
+ error:
+    if (matches != NULL) {
+        if (*matches != NULL) {
+            for (i=0; i < cnt; i++)
+                free((*matches)[i]);
+            free(*matches);
+        }
+    }
+    free_path(p);
+    return -1;
 }
 
 static int tree_save(struct augeas *aug, struct tree *tree, const char *path) {
@@ -589,14 +814,18 @@ static int tree_save(struct augeas *aug, struct tree *tree, const char *path) {
 int aug_save(struct augeas *aug) {
     int ret = 0;
     struct tree *files;
+    struct path *p = make_path(aug->tree, AUGEAS_FILES_TREE);
+
+    if (p == NULL || path_find_one(p) != 1) {
+        free_path(p);
+        return -1;
+    }
+    files = last_segment(p)->tree;
+    free_path(p);
 
     list_for_each(t, aug->tree) {
         tree_propagate_dirty(t);
     }
-    files = tree_find(aug->tree, AUGEAS_FILES_TREE);
-    if (files == NULL)
-        return -1;
-
     if (files->dirty) {
         list_for_each(t, files->children) {
             if (tree_save(aug, t, AUGEAS_FILES_TREE) == -1)
@@ -607,81 +836,61 @@ int aug_save(struct augeas *aug) {
     return ret;
 }
 
-/* FIXME: The usage of PATH is inconsistent between calls from PRINT_REC
- * and PRINT_TREE. In the former case, PATH does not include the label for
- * TREE yet, in the latter it does
- */
-static int print_one(FILE *out, struct tree *tree, char **path,
-                     int pr_hidden) {
-    int end = strlen(*path);
-    const char *label;
-
-    if (tree->label == NULL) {
-        if (! pr_hidden)
-            return -1;
-        label = "()";
-    } else {
-        label = tree->label;
-    }
-
-    *path = realloc(*path, strlen(*path) + 1 + strlen(label) + 1);
-    if (end > 0) {
-        (*path)[end] = SEP;
-        strcpy(*path + end + 1, label);
-    } else {
-        strcpy(*path, label);
-    }
-
-    fprintf(out, *path);
-    if (tree->value != NULL) {
-        char *val = escape(tree->value, -1);
+static void print_one(FILE *out, const char *path, const char *value) {
+    fprintf(out, path);
+    if (value != NULL) {
+        char *val = escape(value, -1);
         fprintf(out, " = \"%s\"", val);
         free(val);
     }
     fputc('\n', out);
-
-    (*path)[end] = '\0';
-    return end;
 }
 
-static void print_rec(FILE *out, struct tree *tree, char **path,
+/* PATH is the path up to TREE's parent */
+static void print_rec(FILE *out, struct tree *start, const char *ppath,
                       int pr_hidden) {
-    for (;tree != NULL; tree = tree->next) {
-        int end = print_one(out, tree, path, pr_hidden);
-        if (end == -1)
+    list_for_each(tree, start) {
+        char *path;
+
+        if (TREE_HIDDEN(tree) && ! pr_hidden)
             continue;
-        /* We completely rely on how print_one does its thing here.
-           TREE's label is still on *path, but print_one removed it
-           by overwriting the / with a 0 */
-        (*path)[end] = SEP;
+
+        path = path_expand(tree, start, ppath);
+        if (path == NULL)
+            return;
+
+        print_one(out, path, tree->value);
         print_rec(out, tree->children, path, pr_hidden);
-        (*path)[end] = '\0';
+        free(path);
     }
 }
 
-void print_tree(struct tree *tree, FILE *out, const char *path,
+void print_tree(struct tree *start, FILE *out, const char *pathin,
                 int pr_hidden) {
-    if (path == NULL)
-        path = "";
-    char *pbuf = strdup(path);
-    while (tree != NULL) {
-        if (tree->children != NULL) {
-            print_rec(out, tree->children, &pbuf, pr_hidden);
-        } else {
-            print_one(out, tree, &pbuf, pr_hidden);
-        }
-        for (tree = tree->next; tree != NULL; tree = tree->next) {
-            if (pathendswith(path, tree->label))
-                break;
-        }
+
+    struct path *p = make_path(start, pathin);
+    struct tree *tree;
+
+    if (p == NULL)
+        return;
+
+    for (tree = path_first(p); tree != NULL; tree = path_next(p)) {
+        if (TREE_HIDDEN(tree) && ! pr_hidden)
+            continue;
+
+        char *path = format_path(p);
+        print_one(out, path, tree->value);
+        print_rec(out, tree->children, path, pr_hidden);
+        free(path);
     }
-    free(pbuf);
+    free_path(p);
 }
 
-void aug_print(struct augeas *aug, FILE *out, const char *path) {
-    struct tree *tree = tree_find(aug->tree, path);
-    if (tree != NULL)
-        print_tree(tree, out, path, 0);
+void aug_print(struct augeas *aug, FILE *out, const char *pathin) {
+    if (pathin == NULL || strlen(pathin) == 0) {
+        pathin = "/*";
+    }
+    print_tree(aug->tree, out, pathin, 0);
 }
 
 void aug_close(struct augeas *aug) {

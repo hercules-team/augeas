@@ -1,7 +1,7 @@
 # Note that aliases must be set (to NULL here), otherwise the tree
 # is not syntactically correct and can not be saved
 commands="
-set /files/etc/ssh/sshd_config/AcceptEnv/10000 FOO
+set /files/etc/ssh/sshd_config/AcceptEnv[3]/10000 FOO
 save
 "
 

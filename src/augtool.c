@@ -51,18 +51,68 @@ static char *cleanpath(char *path) {
     return path;
 }
 
+/*
+ * Dup PATH and split it into a directory and basename. The returned value
+ * points to the copy of PATH. Adding strlen(PATH)+1 to it gives the
+ * basename.
+ *
+ * If PATH can not be split, returns NULL
+ */
+ATTRIBUTE_UNUSED
+static char *pathsplit(const char *path) {
+    char *ppath = strdup(path);
+    char *pend = strrchr(ppath, SEP);
+
+    if (pend == NULL || pend == ppath) {
+        free(ppath);
+        return NULL;
+    }
+    *pend = '\0';
+    return ppath;
+}
+
+static char *ls_pattern(const char *path) {
+    char *q;
+    int r;
+
+    if (path[strlen(path)-1] == SEP)
+        r = asprintf(&q, "%s*", path);
+    else
+        r = asprintf(&q, "%s/*", path);
+    if (r == -1)
+        return NULL;
+    return q;
+}
+
+static int child_count(const char *path) {
+    char *q = ls_pattern(path);
+    int cnt;
+
+    if (q == NULL)
+        return 0;
+    cnt = aug_match(augeas, q, NULL);
+    free(q);
+    return cnt;
+}
+
 static void cmd_ls(char *args[]) {
     int cnt;
-    const char *path = cleanpath(args[0]);
-    const char **paths;
+    char *path = cleanpath(args[0]);
+    char **paths;
 
-    cnt = aug_ls(augeas, path, &paths);
+    path = ls_pattern(path);
+    if (path == NULL)
+        return;
+    cnt = aug_match(augeas, path, &paths);
     for (int i=0; i < cnt; i++) {
         const char *val = aug_get(augeas, paths[i]);
+        const char *basnam = strrchr(paths[i], SEP);
+        int dir = child_count(paths[i]);
+        basnam = (basnam == NULL) ? paths[i] : basnam + 1;
         if (val == NULL)
             val = "(none)";
-        printf("%s = %s\n", paths[i] + strlen(path), val);
-        free((void *) paths[i]);
+        printf("%s%s= %s\n", basnam, dir ? "/ " : " ", val);
+        free(paths[i]);
     }
     if (cnt > 0)
         free(paths);
@@ -71,17 +121,19 @@ static void cmd_ls(char *args[]) {
 static void cmd_match(char *args[]) {
     int cnt;
     const char *pattern = cleanpath(args[0]);
-    const char **matches;
+    char **matches;
     int filter = (args[1] != NULL) && (strlen(args[1]) > 0);
 
-    cnt = aug_match(augeas, pattern, NULL, 0);
+    cnt = aug_match(augeas, pattern, &matches);
+    if (cnt == -1) {
+        printf("  (error matching %s)\n", pattern);
+        return;
+    }
     if (cnt == 0) {
         printf("  (no matches)\n");
         return;
     }
 
-    matches = calloc(cnt, sizeof(char *));
-    cnt = aug_match(augeas, pattern, matches, cnt);
     for (int i=0; i < cnt; i++) {
         const char *val = aug_get(augeas, matches[i]);
         if (val == NULL)
@@ -156,7 +208,7 @@ static void cmd_ins(char *args[]) {
     const char *sibling = cleanpath(args[1]);
     int r;
 
-    r = aug_insert(augeas, path, sibling);
+    r = aug_insert(augeas, path, sibling, 1);
     if (r == -1)
         printf ("Failed\n");
 }
@@ -281,28 +333,34 @@ static int run_command(char *cmd, char **args) {
 
 static char *readline_path_generator(const char *text, int state) {
     static int current = 0;
-    static const char **children = NULL;
+    static char **children = NULL;
     static int nchildren = 0;
 
     if (state == 0) {
-        char *path = pathsplit(text);
-        if (path == NULL) {
-            path = strdup("/");
+        char *end = strrchr(text, SEP);
+        char *path;
+        if (end == NULL)
+            path = strdup("/*");
+        else {
+            end += 1;
+            CALLOC(path, end - text + 2);
+            strncpy(path, text, end - text);
+            strcat(path, "*");
         }
 
         for (;current < nchildren; current++)
             free((void *) children[current]);
         free((void *) children);
-        nchildren = aug_ls(augeas, path, &children);
+        nchildren = aug_match(augeas, path, &children);
         current = 0;
         free(path);
     }
 
     while (current < nchildren) {
-        char *child = (char *) children[current];
+        char *child = children[current];
         current += 1;
         if (STREQLEN(child, text, strlen(text))) {
-            if (aug_ls(augeas, child, NULL) > 0) {
+            if (child_count(child) > 0) {
                 child = realloc(child, strlen(child)+2);
                 strcat(child, "/");
             }

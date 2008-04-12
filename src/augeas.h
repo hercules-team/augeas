@@ -58,41 +58,69 @@ enum aug_flags {
  */
 augeas_t aug_init(const char *root, const char *loadpath, unsigned int flags);
 
-/* Lookup the value associated with PATH */
+/* Lookup the value associated with PATH. Return NULL if PATH does not
+ * exist, or if it matches more than one node, or if that is the value
+ * associated with the single node matched by PATH.
+ *
+ * See AUG_EXISTS on how to tell these cases apart.
+ */
 const char *aug_get(augeas_t aug, const char *path);
 
 /* Set the value associated with PATH to VALUE. VALUE is copied into the
-   internal data structure. Intermediate entries are created if they don't
-   exist. Return -1 on error, 0 on success */
+ * internal data structure. Intermediate entries are created if they don't
+ * exist. Return 0 on success, -1 on error. It is an error if more than one
+ * node matches PATH.
+ */
 int aug_set(augeas_t aug, const char *path, const char *value);
 
-/* Return 1 if there is an entry for this path, 0 otherwise */
+/* Return 1 if there is exactly one node matching PATH, 0 if there is none,
+ * and -1 if there is more than one node matching PATH. You should only
+ * call AUG_GET for paths for which AUG_EXISTS returns 1, and AUG_SET for
+ * paths for which AUG_EXISTS returns 0 or 1.
+ */
 int aug_exists(augeas_t aug, const char *path);
 
-/* Make PATH a SIBLING of PATH by inserting it directly before SIBLING. */
-int aug_insert(augeas_t aug, const char *path, const char *sibling);
+/* Create a new sibling LABEL for PATH by inserting into the tree just
+ * before PATH if BEFORE == 1 or just after PATH if BEFORE == 0.
+ *
+ * PATH must match exactly one existing node in the tree, and LABEL must be
+ * a label, i.e. not contain a '/', '*' or end with a bracketed index
+ * '[N]'.
+ *
+ * Return 0 on success, and -1 if the insertion fails.
+ */
+int aug_insert(augeas_t aug, const char *path, const char *label, int before);
 
-/* Remove path and all its children. Returns the number of entries removed */
+/* Remove path and all its children. Returns the number of entries removed.
+ * All nodes that match PATH, and their descendants, are removed.
+ */
 int aug_rm(augeas_t aug, const char *path);
 
-/* Return a list of the direct children of PATH in CHILDREN, which is
-   allocated and must be freed by the caller, including the strings it
-   contains. If CHILDREN is NULL, nothing is allocated and only the number
-   of children is returned. Returns -1 on error, or the total number of
-   children of PATH.
-*/
-int aug_ls(augeas_t aug, const char *path, const char ***children);
-
-/* Return the first SIZE paths that match PATTERN in MATCHES, which must be
- * preallocated to hold at least SIZE entries. The return value is the total
- * number of matches. Any strings returned in MATCHES must be freed by the
- * caller.
+/* Return the number of matches of the path expression PATH in AUG. If
+ * MATCHES is non-NULL, an array with the returned number of elements will
+ * be allocated and filled with the paths of the matches. The caller must
+ * free both the array and the entries in it. The returned paths are
+ * sufficiently qualified to make sure that they match exactly one node in
+ * the current tree.
  *
- * The PATTERN is passed to fnmatch(3) verbatim, and FNM_FILE_NAME is not set,
- * so that '*' does not match a '/'
+ * If MATCHES is NULL, nothing is allocated and only the number
+ * of matches is returned.
+ *
+ * Returns -1 on error, or the total number of matches (which might be 0).
+ *
+ * Path expressions use a very simple subset of XPath: the path PATH
+ * consists of a number of segments, separated by '/'; each segment can
+ * either be a '*', matching any tree node, or a string, optionally
+ * followed by an index in brackets, matching tree nodes labelled with
+ * exactly that string. If no index is specified, the expression matches
+ * all nodes with that label; the index can be a positive number N, which
+ * matches exactly the Nth node with that label (counting from 1), or the
+ * special expression 'last()' which matches the last node with the given
+ * label. All matches are done in fixed positions in the tree, and nothing
+ * matches more than one path segment.
+ *
  */
-int aug_match(augeas_t aug, const char *pattern,
-              const char **matches, int size);
+int aug_match(augeas_t aug, const char *path, char ***matches);
 
 /* Write all pending changes to disk. Return -1 if an error is encountered,
  * 0 on success. Only files that had any changes made to them are written.
@@ -108,7 +136,7 @@ int aug_match(augeas_t aug, const char *pattern,
  */
 int aug_save(augeas_t aug);
 
-/* Print the subtree starting at PATH to OUT */
+/* Print each node matching PATH and its descendants to OUT */
 void aug_print(augeas_t aug, FILE *out, const char *path);
 
 /* Close this Augeas instance and free any storage associated with

@@ -615,9 +615,7 @@ static void print_value(FILE *out, struct value *v) {
         fprintf(out, ">");
         break;
     case V_TREE:
-        list_for_each(t, v->tree) {
-            print_tree(t, stdout, (t->children == NULL) ? NULL : t->label, 1);
-        }
+        print_tree(v->tree, stdout, "/*" , 1);
         break;
     case V_FILTER:
         fprintf(out, "<filter:");

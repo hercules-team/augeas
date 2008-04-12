@@ -80,37 +80,12 @@ static inline int pathprefix(const char *p1, const char *p2) {
     return STREQLEN(p1, p2, l1) && (p2[l1] == '\0' || p2[l1] == SEP);
 }
 
-/* Strip the first component from P and return the part of P after the
-   first SEP. If P contains no SEP, or the next occurence of SEP in P is at
-   the end of P, return NULL
-*/
-__attribute__((pure))
-static inline const char *pathstrip(const char *p) {
-    const char *c = strchr(p, SEP);
-    if (c != NULL) {
-        c += 1;
-        return (*c == '\0') ? NULL : c;
-    } else {
-        return NULL;
-    }
-}
-
 static inline int pathendswith(const char *path, const char *basenam) {
     const char *p = strrchr(path, SEP);
     if (p == NULL)
         return 0;
     return streqv(p+1, basenam);
 }
-
-/* augeas.c */
-/*
- * Dup PATH and split it into a directory and basename. The returned value
- * points to the copy of PATH. Adding strlen(PATH)+1 to it gives the
- * basename.
- *
- * If PATH can not be split, returns NULL
- */
-char *pathsplit(const char *path);
 
 /* Join NSEG path components (passed as const char *) into one PATH.
    Allocate as needed. Return 0 on success, -1 on failure */
@@ -218,8 +193,7 @@ struct tree {
 int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub);
 
 int tree_rm(struct tree **tree, const char *path);
-int tree_set(struct tree *tree, const char *path, const char *value);
-struct tree *tree_find(struct tree *tree, const char *path);
+struct tree *tree_set(struct tree *tree, const char *path, const char *value);
 int free_tree(struct tree *tree);
 void print_tree(struct tree *tree, FILE *out, const char *path, int pr_hidden);
 int tree_equal(struct tree *t1, struct tree *t2);
