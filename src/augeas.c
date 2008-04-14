@@ -261,7 +261,7 @@ static struct tree *path_first(struct path *path) {
     list_for_each(t, tree) {
         if (seg->any || streqv(t->label, seg->label)) {
             indx += 1;
-            if (seg->any || !seg->fixed || indx == seg->index) {
+            if (seg->last || !seg->fixed || indx == seg->index) {
                 seg->tree = t;
                 seg->index = indx;
                 if (seg->any)
@@ -273,7 +273,7 @@ static struct tree *path_first(struct path *path) {
             }
         }
     }
-    if (seg->last && complete_path(path, 1, seg->tree->children))
+    if (seg->last && seg->tree && complete_path(path, 1, seg->tree->children))
         found = 1;
     return found ? last_segment(path)->tree : NULL;
 }
@@ -680,6 +680,9 @@ int tree_rm(struct tree **htree, const char *path) {
         if (! TREE_HIDDEN(tree))
             ndel += 1;
     }
+    
+    if (ndel == 0)
+        return 0;
 
     CALLOC(del, ndel);
     CALLOC(parents, ndel);
