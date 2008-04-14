@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
     argz_stringify(loadpath, loadpathlen, PATH_SEP_CHAR);
     augeas = aug_init(NULL, loadpath, AUG_TYPE_CHECK|AUG_NO_DEFAULT_LOAD);
     if (__aug_load_module_file(augeas, argv[optind]) == -1) {
-        fprintf(stderr, "Loading from %s failed\n", argv[optind]);
+        fprintf(stderr, "%s: error: Loading failed\n", argv[optind]);
         exit(EXIT_FAILURE);
     }
     aug_close(augeas);

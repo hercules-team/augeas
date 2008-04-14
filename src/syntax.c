@@ -1552,6 +1552,7 @@ static int compile_test(struct term *term, struct ctx *ctx) {
             printf("Test run should have produced exception, but produced\n");
             print_value(stdout, actual);
             printf("\n");
+            ret = 0;
         }
     } else {
         if (EXN(actual)) {
@@ -1573,6 +1574,7 @@ static int compile_test(struct term *term, struct ctx *ctx) {
                 printf(" Actual:\n");
                 print_value(stdout, actual);
                 printf("\n");
+                ret = 0;
             }
         } else {
             printf("Test result: ");
