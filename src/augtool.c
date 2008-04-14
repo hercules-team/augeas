@@ -204,11 +204,22 @@ static void cmd_save(ATTRIBUTE_UNUSED char *args[]) {
 }
 
 static void cmd_ins(char *args[]) {
-    const char *path = cleanpath(args[0]);
-    const char *sibling = cleanpath(args[1]);
+    const char *label = args[0];
+    const char *where = args[1];
+    const char *path = cleanpath(args[2]);
+    int before;
     int r;
 
-    r = aug_insert(augeas, path, sibling, 1);
+    if (STREQ(where, "after"))
+        before = 0;
+    else if (STREQ(where, "before"))
+        before = 1;
+    else {
+        printf("The <WHERE> argument must be either 'before' or 'after'.");
+        return;
+    }
+
+    r = aug_insert(augeas, path, label, before);
     if (r == -1)
         printf ("Failed\n");
 }
@@ -294,8 +305,9 @@ static struct command commands[] = {
       "Print entries in the tree. If PATH is given, printing starts there,\n"
       "        otherwise the whole tree is printed"
     },
-    { "ins", 2, cmd_ins, "ins <PATH> <SIBLING>",
-      "Insert PATH right before SIBLING into the tree."
+    { "ins", 3, cmd_ins, "ins <LABEL> <WHERE> <PATH>",
+      "Insert a new node with label LABEL right before or after PATH into\n"
+     "        the tree. WHERE must be either 'before' or 'after'."
     },
     { "save", 0, cmd_save, "save",
       "Save all pending changes to disk. For now, files are not overwritten.\n"

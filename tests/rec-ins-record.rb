@@ -1,5 +1,5 @@
 commands="
-ins /files/etc/pam.d/newrole/2 10000
+ins 10000 before /files/etc/pam.d/newrole/2
 set /files/etc/pam.d/newrole/10000/type test
 set /files/etc/pam.d/newrole/10000/control include
 set /files/etc/pam.d/newrole/10000/module system-auth
