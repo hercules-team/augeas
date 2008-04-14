@@ -10,7 +10,10 @@ module Pass_subtree_growth =
   (* The improper result is { "outer" = "a" } *)
   test lns get "a" = { "outer" { = "a" } }
 
-  test lns put "a" after set "outer" "b" = "b"
+  (* This produces a tree { "outer" = "b" { = "a" } }         *)
+  (* but the value for "outer" is never used in put           *)
+  (* (That should probably be flagged as an error separately) *)
+  test lns put "a" after set "outer" "b" = "a"
 
 (* Local Variables: *)
 (* mode: caml       *)
