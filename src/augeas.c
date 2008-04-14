@@ -667,36 +667,52 @@ int free_tree(struct tree *tree) {
 
 int tree_rm(struct tree **htree, const char *path) {
     struct path *p = NULL;
-    struct tree *tree;
-    int cnt = 0;
+    struct tree *tree, **del, **parents;
+    int cnt = 0, ndel = 0, i;
 
     p = make_path(*htree, path);
     if (p == NULL)
         return -1;
 
     struct segment *seg = last_segment(p);
-    while (1) {
-        for (tree = path_first(p);
-             tree != NULL && TREE_HIDDEN(tree);
-             tree = path_next(p));
-        if (tree == NULL)
-            break;
 
-        struct tree *parent = seg_parent(p, seg);
-        if (parent == NULL) {
-            list_remove(seg->tree, p->root);
-            if (p->root)
-                p->root->dirty = 1;
-        } else {
-            list_remove(seg->tree, parent->children);
-            parent->dirty = 1;
-        }
-        
-        cnt += free_tree(seg->tree->children) + 1;
-        free_tree_node(seg->tree);
+    for (tree = path_first(p); tree != NULL; tree = path_next(p)) {
+        if (! TREE_HIDDEN(tree))
+            ndel += 1;
     }
-    *htree = p->root;
+
+    CALLOC(del, ndel);
+    CALLOC(parents, ndel);
+    if (del == NULL || parents == NULL) {
+        free(del);
+        free(parents);
+        return -1;
+    }
+
+    for (i = 0, tree = path_first(p); tree != NULL; tree = path_next(p)) {
+        if (TREE_HIDDEN(tree))
+            continue;
+        parents[i] = seg_parent(p, seg);
+        del[i] = seg->tree;
+        i += 1;
+    }
     free_path(p);
+
+    for (i = 0; i < ndel; i++) {
+        if (parents[i] == NULL) {
+            list_remove(del[i], *htree);
+            if (*htree)
+                (*htree)->dirty = 1;
+        } else {
+            list_remove(del[i], parents[i]->children);
+            parents[i]->dirty = 1;
+        }
+        cnt += free_tree(del[i]->children) + 1;
+        free_tree_node(del[i]);
+    }
+    free(del);
+    free(parents);
+
     return cnt;
 }
 
