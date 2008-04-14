@@ -403,10 +403,9 @@ static struct segment *aug_tree_create(struct path *path) {
         return NULL;
 
     for (s = seg ; s <= last_segment(path); s++) {
-        CALLOC(s->tree, 1);
-        if (s->tree == NULL)
+        s->tree = make_tree(strdup(s->label), NULL, NULL);
+        if (s->tree == NULL || s->tree->label == NULL)
             goto error;
-        s->tree->label = strdup(s->label);
     }
     for (s = seg ; s < last_segment(path); s++) {
         s->tree->children = (s+1)->tree;
@@ -459,7 +458,7 @@ struct augeas *aug_init(const char *root, const char *loadpath,
     struct augeas *result;
 
     CALLOC(result, 1);
-    CALLOC(result->tree, 1);
+    result->tree = make_tree(NULL, NULL, NULL);
 
     result->flags = flags;
 
@@ -615,11 +614,8 @@ int aug_insert(struct augeas *aug, const char *path, const char *label,
     if (path_find_one(p) != 1)
         goto error;
 
-    CALLOC(new, 1);
-    if (new == NULL)
-        goto error;
-    new->label = strdup(label);
-    if (new->label == NULL)
+    new = make_tree(strdup(label), NULL, NULL);
+    if (new == NULL || new->label == NULL)
         goto error;
 
     struct segment *seg = last_segment(p);
@@ -639,6 +635,20 @@ int aug_insert(struct augeas *aug, const char *path, const char *label,
     free_tree(new);
     free_path(p);
     return -1;
+}
+
+struct tree *make_tree(const char *label, const char *value,
+                       struct tree *children) {
+    struct tree *tree;
+    CALLOC(tree, 1);
+    if (tree == NULL)
+        return NULL;
+
+    tree->label = label;
+    tree->value = value;
+    tree->children = children;
+    tree->dirty = 1;
+    return tree;
 }
 
 /* Free one tree node */

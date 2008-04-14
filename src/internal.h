@@ -190,6 +190,12 @@ struct tree {
     int          dirty;
 };
 
+/* Allocate a new tree node with the given LABEL, VALUE, and CHILDREN,
+ * which are not copied. The new tree is marked as dirty
+ */
+struct tree *make_tree(const char *label, const char *value,
+                       struct tree *children);
+
 int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub);
 
 int tree_rm(struct tree **tree, const char *path);

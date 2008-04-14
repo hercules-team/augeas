@@ -123,8 +123,6 @@ static void augl_error(struct info *locp, struct term **term,
                                struct term *decls, struct info *locp);
  static struct term *make_tree_value(struct tree *, struct info*);
  static struct tree *tree_concat(struct tree *, struct tree *);
- static struct tree *make_tree(const char *label, const char *value,
-                               struct tree *children);
 
 #define LOC_MERGE(a, b, c)                                              \
  do {                                                                   \
@@ -472,16 +470,6 @@ static struct term *make_tree_value(struct tree *tree, struct info *locp) {
 static struct tree *tree_concat(struct tree *t1, struct tree *t2) {
   list_append(t1, t2);
   return t1;
-}
-
-static struct tree *make_tree(const char *label, const char *value,
-                              struct tree *children) {
-  struct tree *tree;
-  CALLOC(tree, 1);
-  tree->label = label;
-  tree->value = value;
-  tree->children = children;
-  return tree;
 }
 
 void augl_error(struct info *locp,

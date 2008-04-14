@@ -80,14 +80,6 @@ static void get_error(struct state *state, struct lens *lens,
         state->error->message = NULL;
 }
 
-static struct tree *make_tree(const char *label, const char *value) {
-    struct tree *tree;
-    CALLOC(tree, 1);
-    tree->label = label;
-    tree->value = value;
-    return tree;
-}
-
 static struct skel *make_skel(struct lens *lens) {
     struct skel *skel;
     enum lens_tag tag = lens->tag;
@@ -592,9 +584,8 @@ static struct tree *get_subtree(struct lens *lens, struct state *state) {
     state->key = NULL;
     state->value = NULL;
     children = get_lens(lens->child, state);
-    
-    tree = make_tree(state->key, state->value);
-    tree->children = children;
+
+    tree = make_tree(state->key, state->value, children);
 
     state->key = key;
     state->value = value;
