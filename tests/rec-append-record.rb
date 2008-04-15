@@ -1,10 +1,13 @@
+# Convenience to save some typing
+entry_last = "/files/etc/pam.d/newrole/10000"
 commands="
-set /files/etc/pam.d/newrole/10000/type test
-set /files/etc/pam.d/newrole/10000/control include
-set /files/etc/pam.d/newrole/10000/module system-auth
+ins entry after #{entry_last}
+set #{entry_last}/type test
+set #{entry_last}/control include
+set #{entry_last}/module system-auth
 save
 "
- 
+
 diff["/etc/pam.d/newrole"] = <<TXT
 --- /etc/pam.d/newrole
 +++ /etc/pam.d/newrole.augnew

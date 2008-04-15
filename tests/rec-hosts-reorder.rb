@@ -5,9 +5,9 @@ commands="
 rm /files/etc/hosts/1
 set /files/etc/hosts/1/ipaddr 127.0.0.1
 set /files/etc/hosts/1/canonical localhost.localdomain
-set /files/etc/hosts/1/aliases/1 localhost
-set /files/etc/hosts/1/aliases/2 galia.watzmann.net
-set /files/etc/hosts/1/aliases/3 galia
+set /files/etc/hosts/1/alias[1] localhost
+set /files/etc/hosts/1/alias[2] galia.watzmann.net
+set /files/etc/hosts/1/alias[3] galia
 save
 "
 

@@ -8,7 +8,7 @@ clear /files/etc/hosts/10000/aliases
 print
 save
 "
-
+refresh=true
 diff["/etc/hosts"] = <<TXT
 --- /etc/hosts
 +++ /etc/hosts.augnew

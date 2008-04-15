@@ -1,5 +1,6 @@
 commands="
-set /files/etc/aliases/1/values/10000 barbar
+ins value after /files/etc/aliases/1/value[last()]
+set /files/etc/aliases/1/value[last()] barbar
 save
 "
 

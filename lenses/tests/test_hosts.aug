@@ -9,38 +9,36 @@ module Test_hosts =
 
   test Hosts.record get "127.0.0.1 foo" =
     { "1" { "ipaddr" = "127.0.0.1" } 
-          { "canonical" = "foo" }
-          { "aliases" } }
+          { "canonical" = "foo" } }
 
   test Hosts.lns get two_entries =
    { "1" { "ipaddr" = "127.0.0.1" } 
           { "canonical" = "foo" }
-          { "aliases" { "1" = "foo.example.com" } }
+          { "alias" = "foo.example.com" }
     }
     { }
     { "2" { "ipaddr" = "192.168.0.1" } 
           { "canonical" = "pigiron.example.com" }
-          { "aliases"
-             { "1" = "pigiron" }
-             { "2" = "pigiron.example" }  }  }
+          { "alias" = "pigiron" }
+          { "alias" = "pigiron.example" }  }
 
   test Hosts.record put "127.0.0.1 foo" after
       set "1/canonical" "bar" 
   = "127.0.0.1 bar"
 
   test Hosts.lns put two_entries after 
-    set "2/aliases/10" "piggy" ;
-    rm "1/aliases/1" ;
-    rm "2/aliases/2" 
+    set "2/alias[10]" "piggy" ;
+    rm "1/alias[1]" ;
+    rm "2/alias[2]" 
   = "127.0.0.1 foo
 # comment
 192.168.0.1 pigiron.example.com pigiron piggy
 "
 
-  (* Deleting the 'aliases' node violates the schema; each host entry *)
-  (* must have one, even if it has no aliases                         *)
+  (* Deleting the 'canonical' node violates the schema; each host entry *)
+  (* must have one                                                      *)
   test Hosts.lns put two_entries after
-      rm "1/aliases"
+      rm "1/canonical"
     = *
 
 (* Local Variables: *)

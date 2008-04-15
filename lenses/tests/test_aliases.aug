@@ -16,22 +16,22 @@ adm:		root
   test Aliases.lns get file = 
     {} {} {} {} {}                           (* The comments *)
     { "1" { "name" = "mailer-daemon" }
-          { "values" { "1" = "postmaster" } } }
+          { "value" = "postmaster" } }
     { "2" { "name" = "postmaster" }
-          { "values" { "1" = "root" } } }
+          { "value" = "root" } }
     {} {}
     { "3" { "name" = "bin" }
-          { "values" { "1" = "root" }
-                     { "2" = "adm" } } }
+          { "value" = "root" }
+          { "value" = "adm" } }
     { "4" { "name" = "daemon" }
-          { "values" { "1" = "root" } } }
+          { "value" = "root" } }
     { "5" { "name" = "adm" }
-          { "values" { "1" = "root" } } }
+          { "value" = "root" } }
 
   test Aliases.lns put file after
       rm "4" ; rm "5" ; 
-      set "1/values/10000" "barbar" ;
-      set "3/values/2" "ruth"
+      set "1/value[2]" "barbar" ;
+      set "3/value[2]" "ruth"
     = "#
 #  Aliases in this file will NOT be expanded in the header from
 #  Mail, but WILL be visible over networks or from /bin/mail.

@@ -13,11 +13,8 @@ module Aliases =
    let comma = del /,[ \t]+(\n[ \t]+)?/ ", "
    let alias =  [ seq "alias" .
                     [ label "name" . store name ] . colon .
-                    counter "values" .
-                    [ label "values" .
-                        [ seq "values" . store word ] .
-                        ([comma . seq "values" . store word])*
-                    ]
+                    [ label "value" . store word ] .
+                        ([comma . label "value" . store word])*
                 ] . eol
 
   let lns = (comment | alias)*

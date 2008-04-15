@@ -10,11 +10,11 @@ module Inittab =
    let comment = [ del /[ \t]*(#.*)?\n/ "# \n" ]
 
    let field (name:string) = [ label name . store value ]
-   let record = [ seq "record" . 
+   let record = [ seq "record" .
                     field("id") . sep .
                     field("runlevels") . sep .
                     field("action") . sep .
-                    field("process") . 
+                    field("process") .
                     eol
                 ]
 
