@@ -1,6 +1,6 @@
 # -*- ruby -*-
 commands="
-rm /files/etc/pam.d/newrole/3/opts
+rm /files/etc/pam.d/newrole/4/opts
 save
 "
 refresh = 1

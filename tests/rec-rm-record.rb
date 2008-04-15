@@ -1,6 +1,6 @@
 # -*- ruby -*-
 commands="
-rm /files/etc/pam.d/newrole/0
+rm /files/etc/pam.d/newrole/1
 save
 "
 

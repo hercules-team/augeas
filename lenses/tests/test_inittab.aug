@@ -11,28 +11,28 @@ l0:0:wait:/etc/rc.d/rc 0
 "
 
  test Inittab.lns get inittab = 
-    { "0" { "id" = "id" }
+    { "1" { "id" = "id" }
           { "runlevels" = "5" }
           { "action" = "initdefault" }
           { "process" = "" } }
     {}
-    { "1" { "id" = "si" }
+    { "2" { "id" = "si" }
           { "runlevels" = "" }
           { "action" = "sysinit" }
           { "process" = "/etc/rc.d/rc.sysinit" } }
     {}
-    { "2" { "id" = "ca" }
+    { "3" { "id" = "ca" }
           { "runlevels" = "" }
           { "action" = "ctrlaltdel" }
           { "process" = "/sbin/shutdown -t3 -r now" } }
-    { "3" { "id" = "l0" }
+    { "4" { "id" = "l0" }
           { "runlevels" = "0" }
           { "action" = "wait" }
           { "process" = "/etc/rc.d/rc 0" } }
 
-  test Inittab.lns put simple after rm "0/process" = *
+  test Inittab.lns put simple after rm "1/process" = *
 
-  test Inittab.lns put simple after set "0/runlevels" "3" =
+  test Inittab.lns put simple after set "1/runlevels" "3" =
     "id:3:initdefault:\n"
 
 (* Local Variables: *)

@@ -2,12 +2,12 @@
 # Because of how nodes are ordered, this should be equivalent to
 # moving the corresponding line to the end of the file
 commands="
-rm /files/etc/hosts/0
-set /files/etc/hosts/0/ipaddr 127.0.0.1
-set /files/etc/hosts/0/canonical localhost.localdomain
-set /files/etc/hosts/0/aliases/0 localhost
-set /files/etc/hosts/0/aliases/1 galia.watzmann.net
-set /files/etc/hosts/0/aliases/2 galia
+rm /files/etc/hosts/1
+set /files/etc/hosts/1/ipaddr 127.0.0.1
+set /files/etc/hosts/1/canonical localhost.localdomain
+set /files/etc/hosts/1/aliases/1 localhost
+set /files/etc/hosts/1/aliases/2 galia.watzmann.net
+set /files/etc/hosts/1/aliases/3 galia
 save
 "
 

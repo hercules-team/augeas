@@ -15,23 +15,23 @@ adm:		root
 "
   test Aliases.lns get file = 
     {} {} {} {} {}                           (* The comments *)
-    { "0" { "name" = "mailer-daemon" }
-          { "values" { "0" = "postmaster" } } }
-    { "1" { "name" = "postmaster" }
-          { "values" { "0" = "root" } } }
+    { "1" { "name" = "mailer-daemon" }
+          { "values" { "1" = "postmaster" } } }
+    { "2" { "name" = "postmaster" }
+          { "values" { "1" = "root" } } }
     {} {}
-    { "2" { "name" = "bin" }
-          { "values" { "0" = "root" }
-                     { "1" = "adm" } } }
-    { "3" { "name" = "daemon" }
-          { "values" { "0" = "root" } } }
-    { "4" { "name" = "adm" }
-          { "values" { "0" = "root" } } }
+    { "3" { "name" = "bin" }
+          { "values" { "1" = "root" }
+                     { "2" = "adm" } } }
+    { "4" { "name" = "daemon" }
+          { "values" { "1" = "root" } } }
+    { "5" { "name" = "adm" }
+          { "values" { "1" = "root" } } }
 
   test Aliases.lns put file after
-      rm "3" ; rm "4" ; 
-      set "0/values/10000" "barbar" ;
-      set "2/values/1" "ruth"
+      rm "4" ; rm "5" ; 
+      set "1/values/10000" "barbar" ;
+      set "3/values/2" "ruth"
     = "#
 #  Aliases in this file will NOT be expanded in the header from
 #  Mail, but WILL be visible over networks or from /bin/mail.
@@ -44,10 +44,10 @@ postmaster:	root
 bin:		root, ruth
 "
 
-  (* Schema violation, no 2/name *)
+  (* Schema violation, no 3/name *)
   test Aliases.lns put file after
-      rm "2" ;
-      set "2/values/1" "ruth"
+      rm "3" ;
+      set "3/values/2" "ruth"
     = *
 
 (* Local Variables: *)

@@ -4,14 +4,14 @@ module Test_sshd =
   test Sshd.lns get accept_env =
     { "Protocol" = "2" }
     { "AcceptEnv"
-        { "0" = "LC_PAPER" }
-        { "1" = "LC_NAME" }
-        { "2" = "LC_ADDRESS" }
-        { "3" = "LC_TELEPHONE" }
-        { "4" = "LC_MEASUREMENT" } }
+        { "1" = "LC_PAPER" }
+        { "2" = "LC_NAME" }
+        { "3" = "LC_ADDRESS" }
+        { "4" = "LC_TELEPHONE" }
+        { "5" = "LC_MEASUREMENT" } }
      { "AcceptEnv"
-        { "5" = "LC_IDENTIFICATION" }
-        { "6" = "LC_ALL" } }
+        { "6" = "LC_IDENTIFICATION" }
+        { "7" = "LC_ALL" } }
 
   test Sshd.lns put accept_env after 
       rm "AcceptEnv"; 

@@ -1,5 +1,5 @@
 commands="
-set /files/etc/aliases/0/values/10000 barbar
+set /files/etc/aliases/1/values/10000 barbar
 save
 "
 

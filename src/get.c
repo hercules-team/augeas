@@ -332,6 +332,7 @@ static struct seq *find_seq(const char *name, struct state *state) {
     if (seq == NULL) {
         CALLOC(seq, 1);
         seq->name = name;
+        seq->value = 1;
         list_append(state->seqs, seq);
     }
 
@@ -358,7 +359,7 @@ static struct skel *parse_seq(struct lens *lens, struct state *state) {
 static struct tree *get_counter(struct lens *lens, struct state *state) {
     assert(lens->tag == L_COUNTER);
     struct seq *seq = find_seq(lens->string->str, state);
-    seq->value = 0;
+    seq->value = 1;
     return NULL;
 }
 

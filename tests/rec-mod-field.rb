@@ -1,9 +1,9 @@
 commands="
-set /files/etc/pam.d/newrole/2/module other_module
-set /files/etc/pam.d/newrole/2/opts other_module_opts
+set /files/etc/pam.d/newrole/3/module other_module
+set /files/etc/pam.d/newrole/3/opts other_module_opts
 save
 "
-    
+
 diff["/etc/pam.d/newrole"] = <<TXT
 --- /etc/pam.d/newrole
 +++ /etc/pam.d/newrole.augnew
