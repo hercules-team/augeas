@@ -38,20 +38,20 @@ title Fedora (2.6.24.3-34.fc8)
      { "timeout" = "5" }
      { "splashimage" = "(hd0,0)/grub/splash.xpm.gz" }
      { "hiddenmenu" }
-     { "boot" = "Fedora (2.6.24.4-64.fc8)"
+     { "title" = "Fedora (2.6.24.4-64.fc8)"
              { "root" = "(hd0,0)" }
              { "kernel" = "/vmlinuz-2.6.24.4-64.fc8 ro root=/dev/vg00/lv00" }
              { "initrd" = "/initrd-2.6.24.4-64.fc8.img" } }
-     { "boot" = "Fedora (2.6.24.3-50.fc8)"
+     { "title" = "Fedora (2.6.24.3-50.fc8)"
              { "root" = "(hd0,0)" }
              { "kernel" = "/vmlinuz-2.6.24.3-50.fc8 ro root=/dev/vg00/lv00" }
              { "initrd" = "/initrd-2.6.24.3-50.fc8.img" } }
-     { "boot" = "Fedora (2.6.21.7-3.fc8xen)"
+     { "title" = "Fedora (2.6.21.7-3.fc8xen)"
              { "root" = "(hd0,0)" }
              { "kernel" = "/xen.gz-2.6.21.7-3.fc8" }
              { "modules" = "/vmlinuz-2.6.21.7-3.fc8xen ro root=/dev/vg00/lv00" }
              { "modules" = "/initrd-2.6.21.7-3.fc8xen.img" } }
-     { "boot" = "Fedora (2.6.24.3-34.fc8)"
+     { "title" = "Fedora (2.6.24.3-34.fc8)"
              { "root" = "(hd0,0)" }
              { "kernel" = "/vmlinuz-2.6.24.3-34.fc8 ro root=/dev/vg00/lv00" }
              { "initrd" = "/initrd-2.6.24.3-34.fc8.img" } }

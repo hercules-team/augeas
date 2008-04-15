@@ -1,6 +1,6 @@
 refresh=true
 commands="
-rm /files/etc/grub.conf/boot[2]
+rm /files/etc/grub.conf/title[2]
 save
 "
 

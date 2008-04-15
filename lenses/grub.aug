@@ -37,7 +37,7 @@ module Grub =
                      | kw_boot_arg "initrd"
                      | module_lines
 
-    let boot = [ label "boot" . title . boot_setting* ]
+    let boot = [ label "title" . title . boot_setting* ]
 
     let comment = [ del /#.*\n/ "# " ]
 
