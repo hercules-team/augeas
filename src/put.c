@@ -658,15 +658,6 @@ static void create_lens(struct lens *lens, struct state *state) {
     }
 }
 
-static void dict_revert(struct dict *dict) {
-    if (dict == NULL)
-        return;
-    dict->entry = dict->mark;
-    list_for_each(e, dict->entry) {
-        dict_revert(e->dict);
-    }
-}
-
 void lns_put(FILE *out, struct lens *lens, struct tree *tree,
              const char *text, struct lns_error **err) {
     struct state state;
