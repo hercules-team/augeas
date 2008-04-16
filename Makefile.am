@@ -1,10 +1,10 @@
 SUBDIRS=src tests
 
-AUGFILES=$(wildcard lenses/*.aug) $(wildcard lenses/tests/*.aug)
-
 lensdir=$(datadir)/augeas/lenses
+lenstestdir=$(datadir)/augeas/lenses/tests
 
-dist_lens_DATA=$(AUGFILES)
+dist_lens_DATA=$(wildcard lenses/*.aug)
+dist_lenstest_DATA=$(wildcard lenses/tests/*.aug)
 
 EXTRA_DIST=augeas.spec
 
