@@ -98,7 +98,7 @@ static void exn_print_tree(struct value *exn, struct tree *tree) {
     size_t size;
 
     stream = open_memstream(&buf, &size);
-    print_tree(tree, stream, NULL, 1);
+    print_tree(tree, stream, "", 1);
     fclose (stream);
     exn_printf_line(exn, buf);
 }
@@ -118,9 +118,11 @@ static struct value *lens_get(struct info *info, struct value *l,
         v->tree = tree;
     } else {
         v = make_exn_lns_error(info, err, text);
-        exn_printf_line(v, "Tree generated so far:");
-        exn_print_tree(v, tree);
-        free_tree(tree);
+        if (tree != NULL) {
+            exn_printf_line(v, "Tree generated so far:");
+            exn_print_tree(v, tree);
+            free_tree(tree);
+        }
         free_lns_error(err);
     }
     return v;
