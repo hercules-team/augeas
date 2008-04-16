@@ -98,7 +98,7 @@ static void exn_print_tree(struct value *exn, struct tree *tree) {
     size_t size;
 
     stream = open_memstream(&buf, &size);
-    print_tree(tree, stream, "", 1);
+    print_tree(tree, stream, "/*", 1);
     fclose (stream);
     exn_printf_line(exn, buf);
 }
