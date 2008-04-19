@@ -410,7 +410,7 @@ static void put_subtree(struct lens *lens, struct state *state) {
     state->path[oldpathlen] = '\0';
 }
 
-static void put_del(struct lens *lens, struct state *state) {
+static void put_del(ATTRIBUTE_UNUSED struct lens *lens, struct state *state) {
     assert(lens->tag == L_DEL);
     assert(state->skel != NULL);
     assert(state->skel->tag == L_DEL);

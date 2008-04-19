@@ -543,7 +543,7 @@ static void bind_param(struct binding **bnds, struct param *param,
     list_cons(*bnds, b);
 }
 
-static void unbind_param(struct binding **bnds, struct param *param) {
+static void unbind_param(struct binding **bnds, ATTRIBUTE_UNUSED struct param *param) {
     struct binding *b = *bnds;
     assert(b->ident == param->name);
     assert(b->next != *bnds);
@@ -687,6 +687,7 @@ static int value_equal(struct value *v1, struct value *v2) {
         break;
     default:
         assert(0);
+        abort();
         break;
     }
 }
@@ -716,8 +717,8 @@ struct type *make_base_type(enum type_tag tag) {
         return (struct type *) t_filter;
     else if (tag == T_TRANSFORM)
         return (struct type *) t_transform;
-    else
-        assert(0);
+    assert(0);
+    abort();
 }
 
 static const char *type_name(struct type *t) {
@@ -725,6 +726,7 @@ static const char *type_name(struct type *t) {
         if (i == t->tag)
             return type_names[i];
     assert(0);
+    abort();
 }
 
 static char *type_string(struct type *t) {
@@ -849,6 +851,7 @@ static struct type *value_type(struct value *v) {
     case V_EXN:   /* Fail on exceptions */
     default:
         assert(0);
+        abort();
     }
 }
 
@@ -965,6 +968,7 @@ static struct value *native_call(struct info *info,
         break;
     default:
         assert(0);
+        abort();
         break;
     }
 
@@ -1461,7 +1465,7 @@ static struct value *compile_bracket(struct term *exp, struct ctx *ctx) {
 
 static struct value *compile_rep(struct term *rep, struct ctx *ctx) {
     struct value *arg = compile_exp(rep->info, rep->rexp, ctx);
-    struct value *v;
+    struct value *v = NULL;
 
     if (EXN(arg))
         return arg;
@@ -1477,6 +1481,7 @@ static struct value *compile_rep(struct term *rep, struct ctx *ctx) {
             min = 0; max = 1;
         } else {
             assert(0);
+            abort();
         }
         v = make_value(V_REGEXP, ref(rep->info));
         v->regexp = regexp_iter(rep->info, arg->regexp, min, max);
@@ -1607,9 +1612,9 @@ static int compile_decl(struct term *term, struct ctx *ctx) {
         return 0;
     } else if (term->tag == A_TEST) {
         return compile_test(term, ctx);
-    } else {
-        assert(0);
     }
+    assert(0);
+    abort();
 }
 
 static struct module *compile(struct term *term, struct augeas *augeas) {
