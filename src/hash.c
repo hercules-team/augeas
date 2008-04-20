@@ -16,6 +16,10 @@
  *
  * $Id: hash.c,v 1.36.2.11 2000/11/13 01:36:45 kaz Exp $
  * $Name: kazlib_1_20 $
+ *
+ * 2008-04-17 Small modifications to build with stricter warnings
+ *            David Lutterkort <dlutter@redhat.com>
+ *
  */
 
 #include <stdlib.h>
@@ -23,13 +27,14 @@
 #include <assert.h>
 #include <string.h>
 #define HASH_IMPLEMENTATION
+#include "internal.h"
 #include "hash.h"
 
 #ifdef KAZLIB_RCSID
 static const char rcsid[] = "$Id: hash.c,v 1.36.2.11 2000/11/13 01:36:45 kaz Exp $";
 #endif
 
-#define INIT_BITS	6
+#define INIT_BITS	4
 #define INIT_SIZE	(1UL << (INIT_BITS))	/* must be power of two		*/
 #define INIT_MASK	((INIT_SIZE) - 1)
 
@@ -331,7 +336,6 @@ void hash_set_allocator(hash_t *hash, hnode_alloc_t al,
 	hnode_free_t fr, void *context)
 {
     assert (hash_count(hash) == 0);
-    assert ((al == 0 && fr == 0) || (al != 0 && fr != 0));
 
     hash->allocnode = al ? al : hnode_alloc;
     hash->freenode = fr ? fr : hnode_free;
@@ -739,12 +743,12 @@ int hash_isempty(hash_t *hash)
     return hash->nodecount == 0;
 }
 
-static hnode_t *hnode_alloc(void *context)
+static hnode_t *hnode_alloc(ATTRIBUTE_UNUSED void *context)
 {
     return malloc(sizeof *hnode_alloc(NULL));
 }
 
-static void hnode_free(hnode_t *node, void *context)
+static void hnode_free(hnode_t *node, ATTRIBUTE_UNUSED void *context)
 {
     free(node);
 }

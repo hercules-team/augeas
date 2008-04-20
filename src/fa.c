@@ -31,9 +31,9 @@
 
 #include <limits.h>
 #include <ctype.h>
-#include <glib.h>
 
 #include "internal.h"
+#include "hash.h"
 #include "fa.h"
 
 /* Which algorithm to use in FA_MINIMIZE */
@@ -133,7 +133,7 @@ struct re {
 };
 
 /* A map from a set of states to a state. */
-typedef GHashTable state_set_hash;
+typedef hash_t state_set_hash;
 
 static const int array_initial_size = 4;
 static const int array_max_expansion   = 128;
@@ -584,8 +584,8 @@ static int state_pair_find(struct state_set *set, struct state *fst,
 }
 
 /* Jenkins' hash for void* */
-static guint ptr_hash(void *p) {
-    guint hash = 0;
+static hash_val_t ptr_hash(const void *p) {
+    hash_val_t hash = 0;
     char *c = (char *) &p;
     for (int i=0; i < sizeof(p); i++) {
         hash += c[i];
@@ -598,27 +598,34 @@ static guint ptr_hash(void *p) {
     return hash;
 }
 
-typedef GHashTable state_triple_hash;
+typedef hash_t state_triple_hash;
 
-static guint pair_hash(gconstpointer key) {
+static hash_val_t pair_hash(const void *key) {
     struct state *const *pair = key;
     return ptr_hash(pair[0]) + ptr_hash(pair[1]);
 }
 
-static gboolean pair_equal(gconstpointer key1, gconstpointer key2) {
+static int pair_cmp(const void *key1, const void *key2) {
     struct state *const *pair1 = key1;
     struct state *const *pair2 = key2;
 
-    return (pair1[0] == pair2[0] && pair1[1] == pair2[1]);
+    if (pair1[0] < pair2[0] ||
+        (pair1[0] == pair2[0] && pair1[1] < pair2[1]))
+        return -1;
+    return pair1[1] == pair2[1] ? 0 : 1;
 }
 
-static void pair_destroy(gpointer key) {
-    free(key);
+static void state_triple_node_free(hnode_t *node, ATTRIBUTE_UNUSED void *ctx) {
+    free((void *) hnode_getkey(node));
+    free(node);
 }
 
 static state_triple_hash *state_triple_init(void) {
-    return g_hash_table_new_full(pair_hash, pair_equal,
-                                 pair_destroy, NULL);
+    state_triple_hash *hash;
+
+    hash = hash_create(HASHCOUNT_T_MAX, pair_cmp, pair_hash);
+    hash_set_allocator(hash, NULL, state_triple_node_free, NULL);
+    return hash;
 }
 
 static void state_triple_push(state_triple_hash *hash,
@@ -629,20 +636,25 @@ static void state_triple_push(state_triple_hash *hash,
     CALLOC(pair, 2);
     pair[0] = s1;
     pair[1] = s2;
-    g_hash_table_insert(hash, pair, s3);
+    hash_alloc_insert(hash, pair, s3);
 }
 
 static struct state * state_triple_thd(state_triple_hash *hash,
                                        struct state *s1,
                                        struct state *s2) {
     struct state *pair[2];
+    hnode_t *node;
     pair[0] = s1;
     pair[1] = s2;
-    return (struct state *) g_hash_table_lookup(hash, pair);
+    node = hash_lookup(hash, pair);
+    return (node == NULL) ? NULL : (struct state *) hnode_get(node);
 }
 
 static void state_triple_free(state_triple_hash *hash) {
-    g_hash_table_destroy(hash);
+    if (hash != NULL) {
+        hash_free_nodes(hash);
+        hash_destroy(hash);
+    }
 }
 
 /*
@@ -815,7 +827,7 @@ static char* start_points(struct fa *fa, int *npoints) {
  */
 static int state_set_hash_contains(state_set_hash *smap,
                                struct state_set *set) {
-    return g_hash_table_lookup(smap, set) != NULL;
+    return hash_lookup(smap, set) != NULL;
 }
 
 /*
@@ -825,22 +837,22 @@ static int state_set_hash_contains(state_set_hash *smap,
  */
 static struct state_set *state_set_hash_uniq(state_set_hash *smap,
                                              struct state_set *set) {
-    gpointer o;
-    g_hash_table_lookup_extended(smap, set, &o, NULL);
-    struct state_set *orig_set = o;
+    hnode_t *node = hash_lookup(smap, set);
+    const struct state_set *orig_set = hnode_getkey(node);
     if (orig_set != set) {
         state_set_free(set);
     }
-    return orig_set;
- }
+    return (struct state_set *) orig_set;
+}
 
 static struct state *state_set_hash_get_state(state_set_hash *smap,
                                              struct state_set *set) {
-    return (struct state *) g_hash_table_lookup(smap, set);
+    hnode_t *node = hash_lookup(smap, set);
+    return (struct state *) hnode_get(node);
 }
 
-static guint set_hash(gconstpointer key) {
-    guint hash = 0;
+static hash_val_t set_hash(const void *key) {
+    hash_val_t hash = 0;
     const struct state_set *set = key;
 
     for (int i = 0; i < set->used; i++) {
@@ -849,15 +861,15 @@ static guint set_hash(gconstpointer key) {
     return hash;
 }
 
-static gboolean set_equal(gconstpointer key1, gconstpointer key2) {
+static int set_cmp(const void *key1, const void *key2) {
     const struct state_set *set1 = key1;
     const struct state_set *set2 = key2;
 
-    return state_set_equal(set1, set2) ? TRUE : FALSE;
+    return state_set_equal(set1, set2) ? 0 : 1;
 }
 
-static void set_destroy(gpointer key) {
-    struct state_set *set = key;
+static void set_destroy(hnode_t *node, ATTRIBUTE_UNUSED void *ctx) {
+    struct state_set *set = (struct state_set *) hnode_getkey(node);
     state_set_free(set);
 }
 
@@ -865,18 +877,23 @@ static state_set_hash *state_set_hash_add(state_set_hash *smap,
                                   struct state_set *set,
                                   struct fa *fa) {
     if (smap == NULL) {
-        smap = g_hash_table_new_full(set_hash, set_equal,
-                                     set_destroy, NULL);
+        smap = hash_create(HASHCOUNT_T_MAX, set_cmp, set_hash);
+        hash_set_allocator(smap, NULL, set_destroy, NULL);
     }
-    g_hash_table_insert(smap, set, add_state(fa, 0));
+    hash_alloc_insert(smap, set, add_state(fa, 0));
     return smap;
 }
 
 static void state_set_hash_free(state_set_hash *smap,
-                            struct state_set *protect) {
-    if (protect != NULL)
-        g_hash_table_steal(smap, protect);
-    g_hash_table_destroy(smap);
+                                struct state_set *protect) {
+    if (protect != NULL) {
+        hnode_t *node = hash_lookup(smap, protect);
+        hash_delete(smap, node);
+        hnode_getkey(node) = NULL;
+        set_destroy(node, NULL);
+    }
+    hash_free_nodes(smap);
+    hash_destroy(smap);
 }
 
 static struct state_set_list *state_set_list_add(struct state_set_list *list,

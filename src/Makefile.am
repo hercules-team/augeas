@@ -1,5 +1,5 @@
 
-AM_CFLAGS = @AUGEAS_CFLAGS@ @WARN_CFLAGS@ @GLIB_CFLAGS@
+AM_CFLAGS = @AUGEAS_CFLAGS@ @WARN_CFLAGS@
 
 AM_YFLAGS=-d -p spec_
 
@@ -25,8 +25,7 @@ augtool_LDADD = libaugeas.la $(READLINE_LIBS)
 augparse_SOURCES = augparse.c
 augparse_LDADD = libaugeas.la
 
-libfa_la_SOURCES = fa.c fa.h
-libfa_la_LDFLAGS = @GLIB_LIBS@
+libfa_la_SOURCES = fa.c fa.h hash.c hash.h
 
 liblexer_la_SOURCES = lexer.l
 liblexer_la_CFLAGS = $(AM_CFLAGS) -Wno-error
