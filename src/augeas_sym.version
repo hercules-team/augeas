@@ -13,8 +13,5 @@
       aug_print;
       /* Symbols with __ are private */
       __aug_load_module_file;
-      /* These symbols are not part of the public API; they are used by
-         augtool/augparse. They need to be cleaned up some */
-      pathsplit;
     local: *;
 };
