@@ -136,8 +136,10 @@ int aug_match(const augeas *aug, const char *path, char ***matches);
  */
 int aug_save(augeas *aug);
 
-/* Print each node matching PATH and its descendants to OUT */
-void aug_print(const augeas *aug, FILE *out, const char *path);
+/* Print each node matching PATH and its descendants to OUT.
+ * Return 0 on success, or a negative value on failure
+ */
+int aug_print(const augeas *aug, FILE *out, const char *path);
 
 /* Close this Augeas instance and free any storage associated with
  * it. After running AUG_CLOSE, AUG is invalid and can not be used for any

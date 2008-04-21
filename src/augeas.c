@@ -865,61 +865,93 @@ int aug_save(struct augeas *aug) {
     return ret;
 }
 
-static void print_one(FILE *out, const char *path, const char *value) {
-    fprintf(out, path);
+static int print_one(FILE *out, const char *path, const char *value) {
+    int r;
+
+    r = fprintf(out, path);
+    if (r < 0)
+        return -1;
     if (value != NULL) {
         char *val = escape(value, -1);
-        fprintf(out, " = \"%s\"", val);
+        r = fprintf(out, " = \"%s\"", val);
         free(val);
+        if (r < 0)
+            return -1;
     }
-    fputc('\n', out);
+    r = fputc('\n', out);
+    if (r == EOF)
+        return -1;
+    return 0;
 }
 
 /* PATH is the path up to TREE's parent */
-static void print_rec(FILE *out, struct tree *start, const char *ppath,
-                      int pr_hidden) {
-    list_for_each(tree, start) {
-        char *path;
+static int print_rec(FILE *out, struct tree *start, const char *ppath,
+                     int pr_hidden) {
+    int r;
+    char *path = NULL;
 
+    list_for_each(tree, start) {
         if (TREE_HIDDEN(tree) && ! pr_hidden)
             continue;
 
         path = path_expand(tree, start, ppath);
         if (path == NULL)
-            return;
+            goto error;
 
-        print_one(out, path, tree->value);
-        print_rec(out, tree->children, path, pr_hidden);
+        r = print_one(out, path, tree->value);
+        if (r < 0)
+            goto error;
+        r = print_rec(out, tree->children, path, pr_hidden);
         free(path);
+        path = NULL;
+        if (r < 0)
+            goto error;
     }
+    return 0;
+ error:
+    free(path);
+    return -1;
 }
 
-void print_tree(struct tree *start, FILE *out, const char *pathin,
+int print_tree(struct tree *start, FILE *out, const char *pathin,
                 int pr_hidden) {
 
     struct path *p = make_path(start, pathin);
+    char *path = NULL;
     struct tree *tree;
+    int r;
 
     if (p == NULL)
-        return;
+        return -1;
 
     for (tree = path_first(p); tree != NULL; tree = path_next(p)) {
         if (TREE_HIDDEN(tree) && ! pr_hidden)
             continue;
 
-        char *path = format_path(p);
-        print_one(out, path, tree->value);
-        print_rec(out, tree->children, path, pr_hidden);
+        path = format_path(p);
+        if (path == NULL)
+            goto error;
+        r = print_one(out, path, tree->value);
+        if (r < 0)
+            goto error;
+        r = print_rec(out, tree->children, path, pr_hidden);
+        if (r < 0)
+            goto error;
         free(path);
+        path = NULL;
     }
     free_path(p);
+    return 0;
+ error:
+    free(path);
+    return -1;
 }
 
-void aug_print(const struct augeas *aug, FILE *out, const char *pathin) {
+int aug_print(const struct augeas *aug, FILE *out, const char *pathin) {
     if (pathin == NULL || strlen(pathin) == 0) {
         pathin = "/*";
     }
-    print_tree(aug->tree, out, pathin, 0);
+    return print_tree(aug->tree, out, pathin, 0);
 }
 
 void aug_close(struct augeas *aug) {
