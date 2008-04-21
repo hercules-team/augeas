@@ -20,8 +20,8 @@
  * Author: David Lutterkort <dlutter@redhat.com>
  */
 
-#ifndef __FA_H
-#define __FA_H
+#ifndef FA_H_
+#define FA_H_
 
 #include <stdio.h>
 #include <regex.h>

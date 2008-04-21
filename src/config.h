@@ -21,8 +21,8 @@
  * Author: David Lutterkort <dlutter@redhat.com>
  */
 
-#ifndef __CONFIG_H
-#define __CONFIG_H
+#ifndef CONFIG_H_
+#define CONFIG_H_
 
 /* The env var that points to the chroot holding files we may modify.
    Mostly useful for testing */

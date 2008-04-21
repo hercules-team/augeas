@@ -20,8 +20,8 @@
  * Author: David Lutterkort <dlutter@redhat.com>
  */
 
-#ifndef __SYNTAX_H
-#define __SYNTAX_H
+#ifndef SYNTAX_H_
+#define SYNTAX_H_
 
 #include <regex.h>
 #include <limits.h>

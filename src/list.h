@@ -20,8 +20,8 @@
  * Author: David Lutterkort <dlutter@redhat.com>
  */
 
-#ifndef __LIST_H
-#define __LIST_H
+#ifndef LIST_H_
+#define LIST_H_
 
 #define list_append(head, tail)                                         \
     do {                                                                \

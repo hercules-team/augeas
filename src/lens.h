@@ -20,8 +20,8 @@
  * Author: David Lutterkort <dlutter@redhat.com>
  */
 
-#ifndef __LENS_H
-#define __LENS_H
+#ifndef LENS_H_
+#define LENS_H_
 
 #include "syntax.h"
 #include "fa.h"

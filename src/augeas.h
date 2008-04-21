@@ -22,8 +22,8 @@
 
 #include <stdio.h>
 
-#ifndef __AUGEAS_H
-#define __AUGEAS_H
+#ifndef AUGEAS_H_
+#define AUGEAS_H_
 
 typedef struct augeas *augeas_t;
 

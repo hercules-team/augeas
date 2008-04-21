@@ -20,8 +20,8 @@
  * Author: David Lutterkort <dlutter@redhat.com>
  */
 
-#ifndef __INTERNAL_H
-#define __INTERNAL_H
+#ifndef INTERNAL_H_
+#define INTERNAL_H_
 
 #define DEBUG
 
