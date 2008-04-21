@@ -38,7 +38,7 @@ struct command {
 
 static struct command commands[];
 
-static augeas_t augeas = NULL;
+static augeas *aug = NULL;
 static const char *const progname = "augtool";
 static unsigned int flags = AUG_NONE;
 const char *root = NULL;
@@ -90,7 +90,7 @@ static int child_count(const char *path) {
 
     if (q == NULL)
         return 0;
-    cnt = aug_match(augeas, q, NULL);
+    cnt = aug_match(aug, q, NULL);
     free(q);
     return cnt;
 }
@@ -103,9 +103,9 @@ static void cmd_ls(char *args[]) {
     path = ls_pattern(path);
     if (path == NULL)
         return;
-    cnt = aug_match(augeas, path, &paths);
+    cnt = aug_match(aug, path, &paths);
     for (int i=0; i < cnt; i++) {
-        const char *val = aug_get(augeas, paths[i]);
+        const char *val = aug_get(aug, paths[i]);
         const char *basnam = strrchr(paths[i], SEP);
         int dir = child_count(paths[i]);
         basnam = (basnam == NULL) ? paths[i] : basnam + 1;
@@ -124,7 +124,7 @@ static void cmd_match(char *args[]) {
     char **matches;
     int filter = (args[1] != NULL) && (strlen(args[1]) > 0);
 
-    cnt = aug_match(augeas, pattern, &matches);
+    cnt = aug_match(aug, pattern, &matches);
     if (cnt == -1) {
         printf("  (error matching %s)\n", pattern);
         return;
@@ -135,7 +135,7 @@ static void cmd_match(char *args[]) {
     }
 
     for (int i=0; i < cnt; i++) {
-        const char *val = aug_get(augeas, matches[i]);
+        const char *val = aug_get(aug, matches[i]);
         if (val == NULL)
             val = "(none)";
         if (filter) {
@@ -153,7 +153,7 @@ static void cmd_rm(char *args[]) {
     int cnt;
     const char *path = cleanpath(args[0]);
     printf("rm : %s", path);
-    cnt = aug_rm(augeas, path);
+    cnt = aug_rm(aug, path);
     printf(" %d\n", cnt);
 }
 
@@ -162,7 +162,7 @@ static void cmd_set(char *args[]) {
     const char *val = args[1];
     int r;
 
-    r = aug_set(augeas, path, val);
+    r = aug_set(aug, path, val);
     if (r == -1)
         printf ("Failed\n");
 }
@@ -171,7 +171,7 @@ static void cmd_clear(char *args[]) {
     const char *path = cleanpath(args[0]);
     int r;
 
-    r = aug_set(augeas, path, NULL);
+    r = aug_set(aug, path, NULL);
     if (r == -1)
         printf ("Failed\n");
 }
@@ -181,23 +181,23 @@ static void cmd_get(char *args[]) {
     const char *val;
 
     printf("%s", path);
-    if (! aug_exists(augeas, path)) {
+    if (! aug_exists(aug, path)) {
         printf(" (o)\n");
         return;
     }
-    val = aug_get(augeas, path);
+    val = aug_get(aug, path);
     if (val == NULL)
         val = "(none)";
     printf(" = %s\n", val);
 }
 
 static void cmd_print(char *args[]) {
-    aug_print(augeas, stdout, cleanpath(args[0]));
+    aug_print(aug, stdout, cleanpath(args[0]));
 }
 
 static void cmd_save(ATTRIBUTE_UNUSED char *args[]) {
     int r;
-    r = aug_save(augeas);
+    r = aug_save(aug);
     if (r == -1) {
         printf("Saving failed\n");
     }
@@ -219,7 +219,7 @@ static void cmd_ins(char *args[]) {
         return;
     }
 
-    r = aug_insert(augeas, path, label, before);
+    r = aug_insert(aug, path, label, before);
     if (r == -1)
         printf ("Failed\n");
 }
@@ -363,7 +363,7 @@ static char *readline_path_generator(const char *text, int state) {
         for (;current < nchildren; current++)
             free((void *) children[current]);
         free((void *) children);
-        nchildren = aug_match(augeas, path, &children);
+        nchildren = aug_match(aug, path, &children);
         current = 0;
         free(path);
     }
@@ -475,8 +475,8 @@ int main(int argc, char **argv) {
 
     parse_opts(argc, argv);
 
-    augeas = aug_init(root, loadpath, flags);
-    if (augeas == NULL) {
+    aug = aug_init(root, loadpath, flags);
+    if (aug == NULL) {
         fprintf(stderr, "Failed to initialize Augeas\n");
         exit(EXIT_FAILURE);
     }

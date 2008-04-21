@@ -37,7 +37,7 @@
 /* Extension of source files */
 #define AUG_EXT ".aug"
 
-#define LNS_TYPE_CHECK(ctx) ((ctx)->augeas->flags & AUG_TYPE_CHECK)
+#define LNS_TYPE_CHECK(ctx) ((ctx)->aug->flags & AUG_TYPE_CHECK)
 
 static const char *const builtin_module = "Builtin";
 
@@ -68,7 +68,7 @@ static void print_value(FILE *out, struct value *v);
  */
 struct ctx {
     const char     *name;     /* The module we are working on */
-    struct augeas  *augeas;
+    struct augeas  *aug;
     struct binding *local;
 };
 
@@ -471,11 +471,11 @@ static struct binding *ctx_lookup_bnd(struct info *info,
     if (b != NULL)
         return b;
 
-    if (ctx->augeas != NULL) {
+    if (ctx->aug != NULL) {
         char *dot = strchr(name, '.');
         if (dot != NULL) {
         qual_lookup:
-            list_for_each(module, ctx->augeas->modules) {
+            list_for_each(module, ctx->aug->modules) {
                 if (STREQLEN(module->name, name, strlen(module->name))
                     && dot - name == strlen(module->name))
                     return bnd_lookup(module->bindings, dot + 1);
@@ -486,7 +486,7 @@ static struct binding *ctx_lookup_bnd(struct info *info,
                 free(modname);
                 return NULL;
             }
-            int loaded = load_module(ctx->augeas, modname) == 0;
+            int loaded = load_module(ctx->aug, modname) == 0;
             if (loaded) {
                 free(modname);
                 goto qual_lookup;
@@ -497,7 +497,7 @@ static struct binding *ctx_lookup_bnd(struct info *info,
             }
         } else {
             struct module *builtin = 
-                module_find(ctx->augeas->modules, builtin_module);
+                module_find(ctx->aug->modules, builtin_module);
             assert(builtin != NULL);
             return bnd_lookup(builtin->bindings, name);
         }
@@ -587,8 +587,8 @@ ATTRIBUTE_UNUSED
 static void dump_ctx(struct ctx *ctx) {
     fprintf(stderr, "Context: %s\n", ctx->name);
     dump_bindings(ctx->local);
-    if (ctx->augeas != NULL) {
-        list_for_each(m, ctx->augeas->modules)
+    if (ctx->aug != NULL) {
+        list_for_each(m, ctx->aug->modules)
             dump_module(m);
     }
 }
@@ -1248,7 +1248,7 @@ static int check_decl(struct term *term, struct ctx *ctx) {
     return 1;
 }
 
-static int typecheck(struct term *term, struct augeas *augeas) {
+static int typecheck(struct term *term, struct augeas *aug) {
     int ok = 1;
     struct ctx ctx;
     char *fname;
@@ -1273,7 +1273,7 @@ static int typecheck(struct term *term, struct augeas *augeas) {
     }
     free(fname);
 
-    ctx.augeas = augeas;
+    ctx.aug = aug;
     ctx.local = NULL;
     ctx.name = term->mname;
     list_for_each(dcl, term->decls) {
@@ -1431,7 +1431,7 @@ static struct value *apply(struct term *app, struct ctx *ctx) {
 
     assert(f->tag == V_CLOS);
 
-    lctx.augeas = ctx->augeas;
+    lctx.aug = ctx->aug;
     lctx.local = ref(f->bindings);
     lctx.name = ctx->name;
 
@@ -1617,13 +1617,13 @@ static int compile_decl(struct term *term, struct ctx *ctx) {
     abort();
 }
 
-static struct module *compile(struct term *term, struct augeas *augeas) {
+static struct module *compile(struct term *term, struct augeas *aug) {
     struct ctx ctx;
     struct transform *autoload = NULL;
     int ok = 1;
     assert(term->tag == A_MODULE);
 
-    ctx.augeas = augeas;
+    ctx.aug = aug;
     ctx.local = NULL;
     ctx.name = term->mname;
     list_for_each(dcl, term->decls) {
@@ -1709,7 +1709,7 @@ void define_native_intl(const char *file, int line,
 
     struct term *func = build_func(params, body);
     struct ctx ctx;
-    ctx.augeas = NULL;
+    ctx.aug = NULL;
     ctx.local = ref(module->bindings);
     ctx.name = module->name;
     if (! check_exp(func, &ctx)) {

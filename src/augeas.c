@@ -121,13 +121,13 @@ static struct tree *seg_parent(struct path *path, struct segment *seg) {
  * SEGMENT = STRING ('[' N ']') ? | '*'
  * where STRING is any string not containing '/' and N is a positive number
  */
-static struct path *make_path(struct tree *root, const char *path) {
+static struct path *make_path(const struct tree *root, const char *path) {
     struct path *result;
 
     CALLOC(result, 1);
     if (result == NULL)
         return NULL;
-    result->root = root;
+    result->root = (struct tree *) root;
 
     if (*path != SEP)
         result->nsegments = 1;
@@ -531,7 +531,7 @@ struct augeas *aug_init(const char *root, const char *loadpath,
     return NULL;
 }
 
-const char *aug_get(struct augeas *aug, const char *path) {
+const char *aug_get(const struct augeas *aug, const char *path) {
     struct path *p = make_path(aug->tree, path);
     const char *result = NULL;
     int r;
@@ -589,7 +589,7 @@ int aug_set(struct augeas *aug, const char *path, const char *value) {
     return tree_set(aug->tree, path, value) == NULL ? -1 : 0;
 }
 
-int aug_exists(struct augeas *aug, const char *path) {
+int aug_exists(const struct augeas *aug, const char *path) {
     struct path *p = make_path(aug->tree, path);
     int result;
 
@@ -751,7 +751,7 @@ int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub) {
     return -1;
 }
 
-int aug_match(struct augeas *aug, const char *pathin, char ***matches) {
+int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
     struct path *p = NULL;
     struct tree *tree;
     int cnt = 0;
@@ -915,7 +915,7 @@ void print_tree(struct tree *start, FILE *out, const char *pathin,
     free_path(p);
 }
 
-void aug_print(struct augeas *aug, FILE *out, const char *pathin) {
+void aug_print(const struct augeas *aug, FILE *out, const char *pathin) {
     if (pathin == NULL || strlen(pathin) == 0) {
         pathin = "/*";
     }
@@ -932,7 +932,7 @@ void aug_close(struct augeas *aug) {
     free(aug);
 }
 
-int tree_equal(struct tree *t1, struct tree *t2) {
+int tree_equal(const struct tree *t1, const struct tree *t2) {
     while (t1 != NULL && t2 != NULL) {
         if (!streqv(t1->label, t2->label))
             return 0;

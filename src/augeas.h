@@ -25,7 +25,7 @@
 #ifndef AUGEAS_H_
 #define AUGEAS_H_
 
-typedef struct augeas *augeas_t;
+typedef struct augeas augeas;
 
 /* Flags to influence the behavior of Augeas. Pass a bitmask of these flags
  * to AUG_INIT.
@@ -56,7 +56,7 @@ enum aug_flags {
  * Return a handle to the Augeas tree upon success. If initialization
  * fails, returns NULL.
  */
-augeas_t aug_init(const char *root, const char *loadpath, unsigned int flags);
+augeas *aug_init(const char *root, const char *loadpath, unsigned int flags);
 
 /* Lookup the value associated with PATH. Return NULL if PATH does not
  * exist, or if it matches more than one node, or if that is the value
@@ -64,21 +64,21 @@ augeas_t aug_init(const char *root, const char *loadpath, unsigned int flags);
  *
  * See AUG_EXISTS on how to tell these cases apart.
  */
-const char *aug_get(augeas_t aug, const char *path);
+const char *aug_get(const augeas *aug, const char *path);
 
 /* Set the value associated with PATH to VALUE. VALUE is copied into the
  * internal data structure. Intermediate entries are created if they don't
  * exist. Return 0 on success, -1 on error. It is an error if more than one
  * node matches PATH.
  */
-int aug_set(augeas_t aug, const char *path, const char *value);
+int aug_set(augeas *aug, const char *path, const char *value);
 
 /* Return 1 if there is exactly one node matching PATH, 0 if there is none,
  * and -1 if there is more than one node matching PATH. You should only
  * call AUG_GET for paths for which AUG_EXISTS returns 1, and AUG_SET for
  * paths for which AUG_EXISTS returns 0 or 1.
  */
-int aug_exists(augeas_t aug, const char *path);
+int aug_exists(const augeas *aug, const char *path);
 
 /* Create a new sibling LABEL for PATH by inserting into the tree just
  * before PATH if BEFORE == 1 or just after PATH if BEFORE == 0.
@@ -89,12 +89,12 @@ int aug_exists(augeas_t aug, const char *path);
  *
  * Return 0 on success, and -1 if the insertion fails.
  */
-int aug_insert(augeas_t aug, const char *path, const char *label, int before);
+int aug_insert(augeas *aug, const char *path, const char *label, int before);
 
 /* Remove path and all its children. Returns the number of entries removed.
  * All nodes that match PATH, and their descendants, are removed.
  */
-int aug_rm(augeas_t aug, const char *path);
+int aug_rm(augeas *aug, const char *path);
 
 /* Return the number of matches of the path expression PATH in AUG. If
  * MATCHES is non-NULL, an array with the returned number of elements will
@@ -120,7 +120,7 @@ int aug_rm(augeas_t aug, const char *path);
  * matches more than one path segment.
  *
  */
-int aug_match(augeas_t aug, const char *path, char ***matches);
+int aug_match(const augeas *aug, const char *path, char ***matches);
 
 /* Write all pending changes to disk. Return -1 if an error is encountered,
  * 0 on success. Only files that had any changes made to them are written.
@@ -134,16 +134,16 @@ int aug_match(augeas_t aug, const char *path, char ***matches);
  *
  * If neither of these flags is set, overwrite the original file.
  */
-int aug_save(augeas_t aug);
+int aug_save(augeas *aug);
 
 /* Print each node matching PATH and its descendants to OUT */
-void aug_print(augeas_t aug, FILE *out, const char *path);
+void aug_print(const augeas *aug, FILE *out, const char *path);
 
 /* Close this Augeas instance and free any storage associated with
  * it. After running AUG_CLOSE, AUG is invalid and can not be used for any
  * more operations.
  */
-void aug_close(augeas_t aug);
+void aug_close(augeas *aug);
 
 #endif
 

@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     int opt;
     int print_skels = 0;
     int parse_flags = PF_NONE;
-    struct augeas *augeas;
+    struct augeas *aug;
     char *loadpath = NULL;
     size_t loadpathlen = 0;
 
@@ -85,12 +85,12 @@ int main(int argc, char **argv) {
     }
 
     argz_stringify(loadpath, loadpathlen, PATH_SEP_CHAR);
-    augeas = aug_init(NULL, loadpath, AUG_TYPE_CHECK|AUG_NO_DEFAULT_LOAD);
-    if (__aug_load_module_file(augeas, argv[optind]) == -1) {
+    aug = aug_init(NULL, loadpath, AUG_TYPE_CHECK|AUG_NO_DEFAULT_LOAD);
+    if (__aug_load_module_file(aug, argv[optind]) == -1) {
         fprintf(stderr, "%s: error: Loading failed\n", argv[optind]);
         exit(EXIT_FAILURE);
     }
-    aug_close(augeas);
+    aug_close(aug);
     //if (optind + 1 < argc) {
         //const char *text = aug_read_file(argv[optind+1]);
         // Run text through some sort of lens
