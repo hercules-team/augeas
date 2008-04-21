@@ -121,7 +121,7 @@ static struct tree *seg_parent(struct path *path, struct segment *seg) {
  * SEGMENT = STRING ('[' N ']') ? | '*'
  * where STRING is any string not containing '/' and N is a positive number
  */
-static struct path *make_path(const struct tree *root, const char *path) {
+static struct path *make_path(struct tree *root, const char *path) {
     struct path *result;
 
     CALLOC(result, 1);
