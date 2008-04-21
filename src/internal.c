@@ -57,36 +57,37 @@ int pathjoin(char **path, int nseg, ...) {
     return 0;
 }
 
-const char* aug_read_file(const char *path) {
+const char* read_file(const char *path) {
     FILE *fp = fopen(path, "r");
     struct stat st;
-    char *result;
+    char *result = NULL;
 
     if (!fp)
         return NULL;
 
-    if (fstat(fileno(fp), &st) < 0) {
-        fclose(fp);
-        return NULL;
-    }
+    if (fstat(fileno(fp), &st) < 0)
+        goto error;
+
+    if (S_ISDIR(st.st_mode))
+        goto error;
 
     CALLOC(result, st.st_size + 1);
-    if (result == NULL) {
-        fclose(fp);
-        return NULL;
-    }
+    if (result == NULL)
+        goto error;
 
     if (st.st_size) {
-        if (fread(result, st.st_size, 1, fp) != 1) {
-            fclose(fp);
-            free(result);
-            return NULL;
-        }
+        if (fread(result, st.st_size, 1, fp) != 1)
+            goto error;
     }
     result[st.st_size] = '\0';
 
     fclose(fp);
     return result;
+ error:
+    if (fp)
+        fclose(fp);
+    free(result);
+    return NULL;
 }
 
 /*

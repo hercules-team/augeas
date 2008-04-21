@@ -215,7 +215,7 @@ static int load_file(struct augeas *aug, struct lens *lens,
     if (errpath == NULL)
         goto error;
 
-    text = aug_read_file(filename);
+    text = read_file(filename);
     if (text == NULL) {
         err_status = "read_failed";
         goto error;
@@ -287,7 +287,7 @@ int transform_save(struct augeas *aug, struct transform *xform,
     if (asprintf(&augnew, "%s%s" EXT_AUGNEW, aug->root, filename) == -1)
         goto done;
 
-    text = aug_read_file(augorig);
+    text = read_file(augorig);
     if (text == NULL) {
         err_status = "put_read";
         goto done;
