@@ -28,6 +28,9 @@
 
 #include "internal.h"
 
+/* Cap file reads somwhat arbitrarily at 32 MB */
+#define MAX_READ_LEN (32*1024*1024)
+
 int pathjoin(char **path, int nseg, ...) {
     va_list ap;
 
@@ -66,6 +69,9 @@ const char* read_file(const char *path) {
         return NULL;
 
     if (fstat(fileno(fp), &st) < 0)
+        goto error;
+
+    if (st.st_size > MAX_READ_LEN)
         goto error;
 
     if (S_ISDIR(st.st_mode))
