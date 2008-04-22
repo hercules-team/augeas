@@ -121,7 +121,7 @@ static struct tree *seg_parent(struct path *path, struct segment *seg) {
  * SEGMENT = STRING ('[' N ']') ? | '*'
  * where STRING is any string not containing '/' and N is a positive number
  */
-static struct path *make_path(struct tree *root, const char *path) {
+static struct path *make_path(const struct tree *root, const char *path) {
     struct path *result;
 
     CALLOC(result, 1);
@@ -906,8 +906,8 @@ static int print_rec(FILE *out, struct tree *start, const char *ppath,
     return -1;
 }
 
-int print_tree(struct tree *start, FILE *out, const char *pathin,
-                int pr_hidden) {
+int print_tree(const struct tree *start, FILE *out, const char *pathin,
+               int pr_hidden) {
 
     struct path *p = make_path(start, pathin);
     char *path = NULL;

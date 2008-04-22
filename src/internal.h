@@ -201,7 +201,8 @@ int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub);
 int tree_rm(struct tree **tree, const char *path);
 struct tree *tree_set(struct tree *tree, const char *path, const char *value);
 int free_tree(struct tree *tree);
-int print_tree(struct tree *tree, FILE *out, const char *path, int pr_hidden);
+int print_tree(const struct tree *tree, FILE *out, const char *path,
+               int pr_hidden);
 int tree_equal(const struct tree *t1, const struct tree *t2);
 
 #endif

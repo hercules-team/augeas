@@ -52,7 +52,8 @@ int pathjoin(char **path, int nseg, ...) {
                 seg += 1;
             strcat(*path, seg);
         } else {
-            *path = malloc(len);
+            if ((*path = malloc(len)) == NULL)
+                return -1;
             strcpy(*path, seg);
         }
     }
