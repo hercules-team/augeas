@@ -1,3 +1,19 @@
+0.1.0 - ????-??-??
+  - Various changes to public API:
+    * Remove aug_exists from public API, and merge functionality into aug_get
+    * Do not hide pointer behind typedef; instead Augeas 'handle' type is now
+      struct augeas, typedef'd to augeas (Jim Meyering)
+    * Const-correctness of public API, return error indication
+      from aug_print (Jim Meyering)
+    * Make buildable on Debian Etch (remove -fstack-protector from compiler
+      switches)
+  - Public API is now stable, and existing calls will be supported without
+    further changes
+  - Schema for /etc/sysconfig/network-scripts/ifcfg-* (Alan Pevec)
+
+0.0.8 - 2008-04-16
+  - Complete rewrite of the language for schema descriptions
+
 0.0.7 - 2008-03-14
   - Typecheck lenses; in particular, discover and complain about ambiguous
     concatenation and iteration
