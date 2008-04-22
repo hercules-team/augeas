@@ -20,13 +20,14 @@
  * Author: David Lutterkort <dlutter@redhat.com>
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <ctype.h>
 #include <stdarg.h>
 
 #include "internal.h"
+
+#ifndef MIN
+# define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
 
 /* Cap file reads somwhat arbitrarily at 32 MB */
 #define MAX_READ_LEN (32*1024*1024)
@@ -61,34 +62,77 @@ int pathjoin(char **path, int nseg, ...) {
     return 0;
 }
 
-const char* read_file(const char *path) {
+/* Like gnulib's fread_file, but read no more than the specified maximum
+   number of bytes.  If the length of the input is <= max_len, and
+   upon error while reading that data, it works just like fread_file.
+   
+   Taken verbatim from libvirt's util.c
+*/
+
+static char *
+fread_file_lim (FILE *stream, size_t max_len, size_t *length)
+{
+    char *buf = NULL;
+    size_t alloc = 0;
+    size_t size = 0;
+    int save_errno;
+
+    for (;;) {
+        size_t count;
+        size_t requested;
+
+        if (size + BUFSIZ + 1 > alloc) {
+            char *new_buf;
+
+            alloc += alloc / 2;
+            if (alloc < size + BUFSIZ + 1)
+                alloc = size + BUFSIZ + 1;
+
+            new_buf = realloc (buf, alloc);
+            if (!new_buf) {
+                save_errno = errno;
+                break;
+            }
+
+            buf = new_buf;
+        }
+
+        /* Ensure that (size + requested <= max_len); */
+        requested = MIN (size < max_len ? max_len - size : 0,
+                         alloc - size - 1);
+        count = fread (buf + size, 1, requested, stream);
+        size += count;
+
+        if (count != requested || requested == 0) {
+            save_errno = errno;
+            if (ferror (stream))
+                break;
+            buf[size] = '\0';
+            *length = size;
+            return buf;
+        }
+    }
+
+    free (buf);
+    errno = save_errno;
+    return NULL;
+}
+
+char* read_file(const char *path) {
     FILE *fp = fopen(path, "r");
-    struct stat st;
     char *result = NULL;
+    size_t len;
 
     if (!fp)
         return NULL;
 
-    if (fstat(fileno(fp), &st) < 0)
-        goto error;
-
-    if (st.st_size > MAX_READ_LEN)
-        goto error;
-
-    if (S_ISDIR(st.st_mode))
-        goto error;
-
-    CALLOC(result, st.st_size + 1);
+    result = fread_file_lim(fp, MAX_READ_LEN, &len);
     if (result == NULL)
         goto error;
 
-    if (st.st_size) {
-        if (fread(result, st.st_size, 1, fp) != 1)
-            goto error;
-    }
-    result[st.st_size] = '\0';
+    if (len > MAX_READ_LEN || (int) len != len)
+        goto error;
 
-    fclose(fp);
     return result;
  error:
     if (fp)

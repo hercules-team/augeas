@@ -161,7 +161,7 @@ char *format_pos(const char *text, int pos);
 /* Read the contents of file PATH and return them as one long string. The
  * caller must free the result. Return NULL if any error occurs.
  */
-const char* read_file(const char *path);
+char* read_file(const char *path);
 
 /* A hidden flag used by augparse to suppress loading of all the modules
    on the path */
