@@ -414,7 +414,7 @@ static void put_del(ATTRIBUTE_UNUSED struct lens *lens, struct state *state) {
     assert(lens->tag == L_DEL);
     assert(state->skel != NULL);
     assert(state->skel->tag == L_DEL);
-    fprintf(state->out, state->skel->text);
+    fprintf(state->out, "%s", state->skel->text);
 }
 
 static void put_union(struct lens *lens, struct state *state) {
@@ -508,10 +508,10 @@ static void put_lens(struct lens *lens, struct state *state) {
         put_del(lens, state);
         break;
     case L_STORE:
-        fprintf(state->out, state->value);
+        fprintf(state->out, "%s", state->value);
         break;
     case L_KEY:
-        fprintf(state->out, state->key);
+        fprintf(state->out, "%s", state->key);
         break;
     case L_LABEL:
         /* Nothing to do */
@@ -623,10 +623,10 @@ static void create_lens(struct lens *lens, struct state *state) {
         create_del(lens, state);
         break;
     case L_STORE:
-        fprintf(state->out, state->value);
+        fprintf(state->out, "%s", state->value);
         break;
     case L_KEY:
-        fprintf(state->out, state->key);
+        fprintf(state->out, "%s", state->key);
         break;
     case L_LABEL:
         /* Nothing to do */

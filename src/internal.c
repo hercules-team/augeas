@@ -175,7 +175,7 @@ int print_chars(FILE *out, const char *text, int cnt) {
     esc = escape(text, cnt);
     total = strlen(esc);
     if (out != NULL)
-        fprintf(out, esc);
+        fprintf(out, "%s", esc);
     free(esc);
 
     return total;

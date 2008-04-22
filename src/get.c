@@ -135,13 +135,13 @@ void free_dict(struct dict *dict) {
 static void print_skel(struct skel *skel);
 static void print_skel_list(struct skel *skels, const char *beg,
                             const char *sep, const char *end) {
-    printf(beg);
+    printf("%s", beg);
     list_for_each(s, skels) {
         print_skel(s);
         if (s->next != NULL)
-            printf(sep);
+            printf("%s", sep);
     }
-    printf(end);
+    printf("%s", end);
 }
 
 static void print_skel(struct skel *skel) {

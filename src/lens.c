@@ -341,7 +341,7 @@ static struct value *ambig_check(struct info *info, fa_t fa1, fa_t fa2,
         char *e_upv = escape(upv, -1);
         char *e_pv = escape(pv, -1);
         char *e_v = escape(v, -1);
-        exn = make_exn_value(ref(info), msg);
+        exn = make_exn_value(ref(info), "%s", msg);
         exn_printf_line(exn, "  '%s' can be split into", e_upv);
         exn_printf_line(exn, "  '%s|=|%s'\n", e_u, e_pv);
         exn_printf_line(exn, " and");

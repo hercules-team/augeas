@@ -868,7 +868,7 @@ int aug_save(struct augeas *aug) {
 static int print_one(FILE *out, const char *path, const char *value) {
     int r;
 
-    r = fprintf(out, path);
+    r = fprintf(out, "%s", path);
     if (r < 0)
         return -1;
     if (value != NULL) {

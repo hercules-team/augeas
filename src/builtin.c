@@ -79,12 +79,12 @@ static struct value *make_exn_lns_error(struct info *info,
                                         const char *text) {
     struct value *v;
 
-    v = make_exn_value(ref(info), err->message);
+    v = make_exn_value(ref(info), "%s", err->message);
     if (err->pos >= 0) {
         exn_printf_line(v,
                         "Error encountered here (%d characters into string)",
                         err->pos);
-        exn_printf_line(v, format_pos(text, err->pos));
+        exn_printf_line(v, "%s", format_pos(text, err->pos));
     } else {
         exn_printf_line(v, "Error encountered at path %s", err->path);
     }
@@ -100,7 +100,7 @@ static void exn_print_tree(struct value *exn, struct tree *tree) {
     stream = open_memstream(&buf, &size);
     print_tree(tree, stream, "/*", 1);
     fclose (stream);
-    exn_printf_line(exn, buf);
+    exn_printf_line(exn, "%s", buf);
 }
 
 /* V_LENS -> V_STRING -> V_TREE */
