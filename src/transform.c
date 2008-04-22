@@ -287,12 +287,20 @@ int transform_save(struct augeas *aug, struct transform *xform,
     if (asprintf(&augnew, "%s%s" EXT_AUGNEW, aug->root, filename) == -1)
         goto done;
 
-    text = read_file(augorig);
+    if (access(augorig, R_OK) == 0) {
+        text = read_file(augorig);
+    } else {
+        text = strdup("");
+    }
+
     if (text == NULL) {
         err_status = "put_read";
         goto done;
     }
 
+    // FIXME: We might have to create intermediary directories
+    // to be able to write augnew, but we have no idea what permissions
+    // etc. they should get. Just the process default ?
     fp = fopen(augnew, "w");
     if (fp == NULL)
         goto done;
@@ -315,10 +323,10 @@ int transform_save(struct augeas *aug, struct transform *xform,
                 err_status = "rename_augsave";
                 goto done;
             }
-            if (rename(augnew, augorig) != 0) {
-                err_status = "rename_augnew";
-                goto done;
-            }
+        }
+        if (rename(augnew, augorig) != 0) {
+            err_status = "rename_augnew";
+            goto done;
         }
     }
     result = 0;
