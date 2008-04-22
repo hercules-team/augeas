@@ -624,6 +624,8 @@ static state_triple_hash *state_triple_init(void) {
     state_triple_hash *hash;
 
     hash = hash_create(HASHCOUNT_T_MAX, pair_cmp, pair_hash);
+    if (hash == NULL)
+        return NULL;
     hash_set_allocator(hash, NULL, state_triple_node_free, NULL);
     return hash;
 }
@@ -878,6 +880,8 @@ static state_set_hash *state_set_hash_add(state_set_hash *smap,
                                   struct fa *fa) {
     if (smap == NULL) {
         smap = hash_create(HASHCOUNT_T_MAX, set_cmp, set_hash);
+        if (smap == NULL)
+            return NULL;
         hash_set_allocator(smap, NULL, set_destroy, NULL);
     }
     hash_alloc_insert(smap, set, add_state(fa, 0));
