@@ -58,13 +58,16 @@ enum aug_flags {
  */
 augeas *aug_init(const char *root, const char *loadpath, unsigned int flags);
 
-/* Lookup the value associated with PATH. Return NULL if PATH does not
- * exist, or if it matches more than one node, or if that is the value
- * associated with the single node matched by PATH.
+/* Lookup the value associated with PATH. VALUE can be NULL, in which case
+ * it is ignored. If VALUE is not NULL, it is used to return a pointer to
+ * the value associated with PATH if PATH matches exactly one node. If PATH
+ * matches no nodes or more than one node, *VALUE is set to NULL.
  *
- * See AUG_EXISTS on how to tell these cases apart.
+ * Return 1 if there is exactly one node matching PATH, 0 if there is none,
+ * and a negative value if there is more than one node matching PATH, or if
+ * PATH is not a legal path expression.
  */
-const char *aug_get(const augeas *aug, const char *path);
+int aug_get(const augeas *aug, const char *path, const char **value);
 
 /* Set the value associated with PATH to VALUE. VALUE is copied into the
  * internal data structure. Intermediate entries are created if they don't
@@ -72,13 +75,6 @@ const char *aug_get(const augeas *aug, const char *path);
  * node matches PATH.
  */
 int aug_set(augeas *aug, const char *path, const char *value);
-
-/* Return 1 if there is exactly one node matching PATH, 0 if there is none,
- * and -1 if there is more than one node matching PATH. You should only
- * call AUG_GET for paths for which AUG_EXISTS returns 1, and AUG_SET for
- * paths for which AUG_EXISTS returns 0 or 1.
- */
-int aug_exists(const augeas *aug, const char *path);
 
 /* Create a new sibling LABEL for PATH by inserting into the tree just
  * before PATH if BEFORE == 1 or just after PATH if BEFORE == 0.

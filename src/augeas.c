@@ -531,17 +531,19 @@ struct augeas *aug_init(const char *root, const char *loadpath,
     return NULL;
 }
 
-const char *aug_get(const struct augeas *aug, const char *path) {
+int aug_get(const struct augeas *aug, const char *path, const char **value) {
     struct path *p = make_path(aug->tree, path);
-    const char *result = NULL;
     int r;
 
+    if (value != NULL)
+        *value = NULL;
+
     r = path_find_one(p);
-    if (r == 1)
-        result = last_segment(p)->tree->value;
+    if (r == 1 && value != NULL)
+        *value = last_segment(p)->tree->value;
     free_path(p);
 
-    return result;
+    return r;
 }
 
 struct tree *tree_set(struct tree *root, const char *path, const char *value) {
@@ -587,16 +589,6 @@ struct tree *tree_set(struct tree *root, const char *path, const char *value) {
 
 int aug_set(struct augeas *aug, const char *path, const char *value) {
     return tree_set(aug->tree, path, value) == NULL ? -1 : 0;
-}
-
-int aug_exists(const struct augeas *aug, const char *path) {
-    struct path *p = make_path(aug->tree, path);
-    int result;
-
-    result = path_find_one(p);
-    free_path(p);
-
-    return result;
 }
 
 int aug_insert(struct augeas *aug, const char *path, const char *label,

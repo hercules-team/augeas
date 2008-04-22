@@ -105,9 +105,10 @@ static void cmd_ls(char *args[]) {
         return;
     cnt = aug_match(aug, path, &paths);
     for (int i=0; i < cnt; i++) {
-        const char *val = aug_get(aug, paths[i]);
+        const char *val;
         const char *basnam = strrchr(paths[i], SEP);
         int dir = child_count(paths[i]);
+        aug_get(aug, paths[i], &val);
         basnam = (basnam == NULL) ? paths[i] : basnam + 1;
         if (val == NULL)
             val = "(none)";
@@ -135,7 +136,8 @@ static void cmd_match(char *args[]) {
     }
 
     for (int i=0; i < cnt; i++) {
-        const char *val = aug_get(aug, matches[i]);
+        const char *val;
+        aug_get(aug, matches[i], &val);
         if (val == NULL)
             val = "(none)";
         if (filter) {
@@ -181,14 +183,14 @@ static void cmd_get(char *args[]) {
     const char *val;
 
     printf("%s", path);
-    if (! aug_exists(aug, path)) {
+    if (aug_get(aug, path, &val) != 1) {
         printf(" (o)\n");
         return;
-    }
-    val = aug_get(aug, path);
-    if (val == NULL)
+    } else if (val == NULL) {
         val = "(none)";
-    printf(" = %s\n", val);
+    } else {
+        printf(" = %s\n", val);
+    }
 }
 
 static void cmd_print(char *args[]) {
