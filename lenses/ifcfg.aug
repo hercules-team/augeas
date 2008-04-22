@@ -4,9 +4,9 @@ module Ifcfg =
 
   let eol = Util.del_str "\n"
 
-  let key_re = /([A-Z])+/
-  let eq = del /[ \t]*=[ \t]*/ "="
-  let value = /[^ \t][^\n]*(\n[ \t]+[^ \t\n]+)*/
+  let key_re = /[][A-Z0-9_]+/
+  let eq = Util.del_str "="
+  let value = /[^\n]*/
 
   let comment = [ del /(#.*)?[ \t]*\n/ "# \n" ]
 
