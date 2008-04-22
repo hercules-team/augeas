@@ -181,6 +181,7 @@ static void free_term(struct term *term) {
     switch(term->tag) {
     case A_MODULE:
         free((char *) term->mname);
+        free((char *) term->autoload);
         unref(term->decls, term);
         break;
     case A_BIND:
@@ -1500,6 +1501,7 @@ static struct value *compile_rep(struct term *rep, struct ctx *ctx) {
         fatal_error(rep->info, "Tried to repeat a %s to yield a %s",
                     type_name(rep->rexp->type), type_name(rep->type));
     }
+    unref(arg, value);
     return v;
 }
 
