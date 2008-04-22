@@ -99,8 +99,8 @@ const char* read_file(const char *path) {
 /*
  * Escape/unescape of string literals
  */
-static const char *const escape_chars    = "\a\b\t\n\v\f\r\\";
-static const char *const escape_names = "abtnvfr\\";
+static const char *const escape_chars    = "\"\a\b\t\n\v\f\r\\";
+static const char *const escape_names = "\"abtnvfr\\";
 
 char *unescape(const char *s, int len) {
     size_t size;
