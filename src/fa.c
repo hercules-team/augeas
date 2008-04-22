@@ -873,6 +873,7 @@ static int set_cmp(const void *key1, const void *key2) {
 static void set_destroy(hnode_t *node, ATTRIBUTE_UNUSED void *ctx) {
     struct state_set *set = (struct state_set *) hnode_getkey(node);
     state_set_free(set);
+    free(node);
 }
 
 static state_set_hash *state_set_hash_add(state_set_hash *smap,
