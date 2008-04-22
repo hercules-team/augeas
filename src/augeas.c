@@ -682,9 +682,11 @@ int tree_rm(struct tree **htree, const char *path) {
         if (! TREE_HIDDEN(tree))
             ndel += 1;
     }
-    
-    if (ndel == 0)
+
+    if (ndel == 0) {
+        free_path(p);
         return 0;
+    }
 
     CALLOC(del, ndel);
     CALLOC(parents, ndel);

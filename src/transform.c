@@ -109,6 +109,7 @@ static int filter_generate(struct filter *filter, const char *root,
             if (strchr(e->glob->str, SEP) == NULL)
                 path = pathbase(path);
             if (fnmatch(e->glob->str, path, fnm_flags) == 0) {
+                free(pathv[i]);
                 pathc -= 1;
                 if (i < pathc) {
                     pathv[i] = pathv[pathc];
@@ -205,7 +206,7 @@ static int load_file(struct augeas *aug, struct lens *lens,
     char *errpath = NULL;
     const char *err_status = NULL;
     struct aug_file *file = NULL;
-    struct tree *tree;
+    struct tree *tree = NULL;
     char *path = NULL;
     struct lns_error *err;
     int result = -1;
@@ -227,7 +228,12 @@ static int load_file(struct augeas *aug, struct lens *lens,
     make_ref(info->filename);
     info->filename->str = filename;
     info->first_line = 1;
+
     tree = lns_get(info, lens, text, stdout, PF_NONE, &err);
+
+    info->filename->str = NULL;
+    unref(info, info);
+
     if (err != NULL) {
         err_status = "parse_failed";
         goto done;
@@ -240,6 +246,7 @@ static int load_file(struct augeas *aug, struct lens *lens,
  done:
     if (errpath != NULL)
         aug_set(aug, errpath, err_status);
+    free(path);
     free_tree(tree);
     free(errpath);
     free(file);
