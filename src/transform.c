@@ -201,24 +201,25 @@ static char *add_load_info(struct augeas *aug, const char *filename,
 
 static int load_file(struct augeas *aug, struct lens *lens,
                      const char *filename) {
-    const char *text = NULL;
+    char *text = NULL;
     char *errpath = NULL;
     const char *err_status = NULL;
     struct aug_file *file = NULL;
     struct tree *tree;
     char *path = NULL;
     struct lns_error *err;
+    int result = -1;
 
     pathjoin(&path, 2, AUGEAS_FILES_TREE, filename + strlen(aug->root) - 1);
 
     errpath = add_load_info(aug, filename, path, lens);
     if (errpath == NULL)
-        goto error;
+        goto done;
 
     text = read_file(filename);
     if (text == NULL) {
         err_status = "read_failed";
-        goto error;
+        goto done;
     }
 
     struct info *info;
@@ -229,23 +230,21 @@ static int load_file(struct augeas *aug, struct lens *lens,
     tree = lns_get(info, lens, text, stdout, PF_NONE, &err);
     if (err != NULL) {
         err_status = "parse_failed";
-        free_tree(tree);
-        goto error;
+        goto done;
     }
-    free((void *) text);
 
     aug_tree_replace(aug, path, tree);
+    tree = NULL;
 
-    aug_set(aug, errpath, NULL);
-    free(errpath);
-    return 0;
- error:
+    result = 0;
+ done:
     if (errpath != NULL)
         aug_set(aug, errpath, err_status);
+    free_tree(tree);
     free(errpath);
     free(file);
-    free((void *) text);
-    return -1;
+    free(text);
+    return result;
 }
 
 int transform_load(struct augeas *aug, struct transform *xform) {
@@ -275,7 +274,7 @@ int transform_save(struct augeas *aug, struct transform *xform,
                    const char *path, struct tree *tree) {
     FILE *fp = NULL;
     char *augnew = NULL, *augorig = NULL, *augsave = NULL;
-    const char *text = NULL;
+    char *text = NULL;
     const char *filename = path + strlen(AUGEAS_FILES_TREE) + 1;
     const char *err_status = NULL;
     struct lns_error *err;
@@ -332,6 +331,7 @@ int transform_save(struct augeas *aug, struct transform *xform,
     result = 0;
 
  done:
+    free(text);
     free(augnew);
     free(augorig);
     free(augsave);
