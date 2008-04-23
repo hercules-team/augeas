@@ -282,10 +282,9 @@ static struct command commands[] = {
     { "ls",  1, cmd_ls, "ls <PATH>",
       "List the direct children of PATH"
     },
-    { "match",  1, cmd_match, "match <PATTERN> [<VALUE>]",
-      "Find all paths that match PATTERN (according to fnmatch(3)). If\n"
-      "        VALUE is given, only the matching paths whose value equals VALUE\n"
-      "        are printed"
+    { "match",  1, cmd_match, "match <PATH> [<VALUE>]",
+      "Find all paths that match the path expression PATH. If VALUE is given,\n"
+      "        only the matching paths whose value equals VALUE are printed"
     },
     { "rm",  1, cmd_rm, "rm <PATH>",
       "Delete PATH and all its children from the tree"
@@ -433,7 +432,8 @@ static void usage(void) {
                     "                with extension '.augsave'\n");
     fprintf(stderr, "  -n            Save changes in files with extension '.augnew', do not modify\n"
                     "                the original files\n");
-    fprintf(stderr, "  -r ROOT       Use directory ROOT as the root of the filesystem\n");
+    fprintf(stderr, "  -r ROOT       Use directory ROOT as the root of the filesystem.  Takes precedence\n"
+                    "                over a root set with the AUGEAS_ROOT environment variable.\n");
     fprintf(stderr, "  -I DIR        Add DIR to the module loadpath. Can be given multiple times.\n");
     exit(EXIT_FAILURE);
 }
