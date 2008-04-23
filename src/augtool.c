@@ -30,7 +30,8 @@
 
 struct command {
     const char *name;
-    int nargs;
+    int minargs;
+    int maxargs;
     void(*handler) (char *args[]);
     const char *synopsis;
     const char *help;
@@ -240,16 +241,16 @@ static void cmd_help(ATTRIBUTE_UNUSED char *args[]) {
         defaults to " AUGEAS_LENS_DIR "\n\n");
 }
 
-static int chk_args(const char *cmd, int argc, int maxargs, char *args[]) {
-    for (int i=0; i<argc; i++) {
+static int chk_args(const struct command *cmd, int maxargs, char *args[]) {
+    for (int i=0; i < cmd->minargs; i++) {
         if (strlen(args[i]) == 0) {
-            fprintf(stderr, "Not enough arguments for %s\n", cmd);
+            fprintf(stderr, "Not enough arguments for %s\n", cmd->name);
             return -1;
         }
     }
-    for (int i=argc; i < maxargs; i++) {
+    for (int i = cmd->maxargs; i < maxargs; i++) {
         if (strlen(args[i]) > 0) {
-            fprintf(stderr, "Too many arguments for %s\n", cmd);
+            fprintf(stderr, "Too many arguments for %s\n", cmd->name);
             return -1;
         }
     }
@@ -295,45 +296,45 @@ static char *parseline(char *line, int maxargs, char *args[]) {
 }
 
 static struct command commands[] = {
-    { "ls",  1, cmd_ls, "ls <PATH>",
+    { "ls",  1, 1, cmd_ls, "ls <PATH>",
       "List the direct children of PATH"
     },
-    { "match",  1, cmd_match, "match <PATH> [<VALUE>]",
+    { "match",  1, 2, cmd_match, "match <PATH> [<VALUE>]",
       "Find all paths that match the path expression PATH. If VALUE is given,\n"
       "        only the matching paths whose value equals VALUE are printed"
     },
-    { "rm",  1, cmd_rm, "rm <PATH>",
+    { "rm",  1, 1, cmd_rm, "rm <PATH>",
       "Delete PATH and all its children from the tree"
     },
-    { "set", 2, cmd_set, "set <PATH> <VALUE>",
+    { "set", 2, 2, cmd_set, "set <PATH> <VALUE>",
       "Associate VALUE with PATH. If PATH is not in the tree yet,\n"
       "        it and all its ancestors will be created. These new tree entries\n"
       "        will appear last amongst their siblings"
     },
-    { "clear", 1, cmd_clear, "clear <PATH>",
+    { "clear", 1, 1, cmd_clear, "clear <PATH>",
       "Set the value for PATH to NULL. If PATH is not in the tree yet,\n"
       "        it and all its ancestors will be created. These new tree entries\n"
       "        will appear last amongst their siblings"
     },
-    { "get", 1, cmd_get, "get <PATH>",
+    { "get", 1, 1, cmd_get, "get <PATH>",
       "Print the value associated with PATH"
     },
-    { "print", 0, cmd_print, "print [<PATH>]",
+    { "print", 0, 1, cmd_print, "print [<PATH>]",
       "Print entries in the tree. If PATH is given, printing starts there,\n"
       "        otherwise the whole tree is printed"
     },
-    { "ins", 3, cmd_ins, "ins <LABEL> <WHERE> <PATH>",
+    { "ins", 3, 3, cmd_ins, "ins <LABEL> <WHERE> <PATH>",
       "Insert a new node with label LABEL right before or after PATH into\n"
      "        the tree. WHERE must be either 'before' or 'after'."
     },
-    { "save", 0, cmd_save, "save",
+    { "save", 0, 0, cmd_save, "save",
       "Save all pending changes to disk. For now, files are not overwritten.\n"
       "        Instead, new files with extension .augnew are created"
     },
-    { "help", 0, cmd_help, "help",
+    { "help", 0, 0, cmd_help, "help",
       "Print this help text"
     },
-    { NULL, -1, NULL, NULL, NULL }
+    { NULL, -1, -1, NULL, NULL, NULL }
 };
 
 static int run_command(char *cmd, int maxargs, char **args) {
@@ -348,7 +349,7 @@ static int run_command(char *cmd, int maxargs, char **args) {
             break;
     }
     if (c->name) {
-        r = chk_args(cmd, c->nargs, maxargs, args);
+        r = chk_args(c, maxargs, args);
         if (r == 0) {
             (*c->handler)(args);
         }
