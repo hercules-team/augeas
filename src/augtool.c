@@ -243,13 +243,13 @@ static void cmd_help(ATTRIBUTE_UNUSED char *args[]) {
 
 static int chk_args(const struct command *cmd, int maxargs, char *args[]) {
     for (int i=0; i < cmd->minargs; i++) {
-        if (strlen(args[i]) == 0) {
+        if (args[i] == NULL || strlen(args[i]) == 0) {
             fprintf(stderr, "Not enough arguments for %s\n", cmd->name);
             return -1;
         }
     }
     for (int i = cmd->maxargs; i < maxargs; i++) {
-        if (strlen(args[i]) > 0) {
+        if (args[i] != NULL && strlen(args[i]) > 0) {
             fprintf(stderr, "Too many arguments for %s\n", cmd->name);
             return -1;
         }
@@ -283,6 +283,7 @@ static char *nexttoken(char **line) {
 static char *parseline(char *line, int maxargs, char *args[]) {
     char *cmd;
 
+    MEMZERO(args, maxargs);
     cmd = nexttoken(&line);
 
     for (int argc=0; argc < maxargs; argc++) {
