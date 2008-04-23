@@ -11,6 +11,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  readline-devel
 Requires:       readline
+Requires:       %{name}-libs = %{version}-%{release}
 
 %description
 A library for programmatically editing configuration files. Augeas parses
@@ -30,6 +31,14 @@ Requires:       %{name} = %{version}-%{release}
 %description    devel
 The %{name}-devel package contains libraries and header files for
 developing applications that use %{name}.
+
+
+%package        libs
+Summary:        Libraries for %{name}
+Group:          System Environment/Libraries
+
+%description    libs
+The libraries for %{name}.
 
 
 %prep
@@ -55,10 +64,12 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %{_bindir}/augtool
 %{_bindir}/augparse
-%{_libdir}/*.so.*
-%{_datadir}/augeas
-%doc AUTHORS COPYING NEWS
 %doc %{_mandir}/man1/*
+
+%files libs
+%{_datadir}/augeas
+%{_libdir}/*.so.*
+%doc AUTHORS COPYING NEWS
 
 %files devel
 %defattr(-,root,root,-)
