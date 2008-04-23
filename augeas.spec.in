@@ -58,6 +58,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/*.so.*
 %{_datadir}/augeas
 %doc AUTHORS COPYING NEWS
+%doc %{_mandir}/man1/*
 
 %files devel
 %defattr(-,root,root,-)
