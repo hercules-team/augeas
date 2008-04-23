@@ -1,4 +1,4 @@
-SUBDIRS=src tests
+SUBDIRS=src tests man
 
 lensdir=$(datadir)/augeas/lenses
 lenstestdir=$(datadir)/augeas/lenses/tests

@@ -1,0 +1,175 @@
+=head1 NAME
+
+augtool - inspect and modify configuration files
+
+=head1 SYNOPSIS
+
+augtool [OPTIONS] [COMMAND]
+
+=head1 DESCRIPTION
+
+Augeas is a configuration editing tool. It parses configuration files
+in their native formats and transforms them into a tree. Configuration
+changes are made by manipulating this tree and saving it back into
+native config files.
+
+augtool provides a command line interface to the generated tree. COMMAND
+can be a single command as described under L</COMMANDS>. When called with
+no COMMAND, it reads commands from standard input until an end-of-file is
+encountered.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-c>
+
+Typecheck lenses. This can be very slow, and is therefore not done by
+default, but is highly recommended during development.
+
+=item B<-b>
+
+When files are changed, preserve the originals in a file with extension
+'.augsave'
+
+=item B<-n>
+
+Save changes in files with extension '.augnew', do not modify the original
+files
+
+=item B<-r> I<ROOT>
+
+Use directory ROOT as the root of the filesystem. Takes precedence over a
+root set with the AUGEAS_ROOT environment variable.
+
+=item B<-I> I<DIR>
+
+Add DIR to the module loadpath. Can be given multiple times. The
+directories set here are searched before any directories specified in the
+AUGEAS_LENS_LIB environment variable, and before the default directory
+F</usr/share/augeas/lenses>.
+
+=back
+
+=head1 COMMANDS
+
+In interactive mode, commands and paths can be completed by pressing C<TAB>.
+
+The paths accepted as arguments by commands use a small subset of XPath
+path expressions. A path expression consists of a number of segments,
+separated by C</>. In each segment, the character C<*> can be used to match
+every node regardless of its label. Sibling nodes with identical labels can
+be distinguished by appending C<[N]> to their label to match the N-th
+sibling with such a label. The last sibling with a specific label can be
+reached as C<[last()]>. See L</EXAMPLES> for some examples of this.
+
+=over 4
+
+=item B<exit>, B<quit>
+
+Exit the program
+
+=item B<ls> E<lt>PATHE<gt>
+
+List the direct children of PATH
+
+=item B<match> E<lt>PATTERNE<gt> [E<lt>VALUEE<gt>]
+
+Find all paths that match PATTERN. If VALUE is given, only the matching
+paths whose value equals VALUE are printed
+
+=item B<rm> E<lt>PATHE<gt>
+
+Delete PATH and all its children from the tree
+
+=item B<set> E<lt>PATHE<gt> E<lt>VALUEE<gt>
+
+Associate VALUE with PATH. If PATH is not in the tree yet,
+it and all its ancestors will be created.
+
+=item B<clear> E<lt>PATHE<gt>
+
+Set the value for PATH to NULL. If PATH is not in the tree yet, it and all
+its ancestors will be created.
+
+=item B<get> E<lt>PATHE<gt>
+
+Print the value associated with PATH
+
+=item B<print> I<[E<lt>PATHE<gt>]>
+
+Print entries in the tree. If PATH is given, printing starts there,
+otherwise the whole tree is printed
+
+=item B<ins> I<E<lt>LABELE<gt>> I<E<lt>WHEREE<gt>> I<E<lt>PATHE<gt>>
+
+Insert a new node with label LABEL right before or after PATH into the
+tree. WHERE must be either 'before' or 'after'.
+
+=item B<save>
+
+Save all pending changes to disk. Unless either the B<-b> or B<-n>
+command line options are given, files are changed in place.
+
+=item B<help>
+
+Print this help text
+
+=back
+
+=head1 ENVIRONMENT VARIABLES
+
+=over 4
+
+=item B<AUGEAS_ROOT>
+
+The file system root, defaults to '/'. Can be overridden with
+the B<-r> command line option
+
+=item B<AUGEAS_LENS_LIB>
+
+Colon separated list of directories with lenses. Directories specified here
+are searched after any directories set with the B<-I> command line option,
+but before the default directory F</usr/share/augeas/lenses>
+
+=back
+
+=head1 EXAMPLES
+
+  # command line mode
+  augtool print /files/etc/hosts/
+
+  # interactive mode
+  augtool
+  augtool> help
+  augtool> print /files/etc/hosts/
+
+  # Print the third entry from the second AcceptEnv line
+  augtool print '/files/etc/ssh/sshd_config/AcceptEnv[2]/3'
+
+  # Find the entry in inittab with action 'initdefault'
+  augtool> match /files/etc/inittab/*/action initdefault
+
+  # Print the last alias for each entry in /etc/hosts
+  augtool> print /files/etc/hosts/*/alias[last()]
+
+=head1 FILES
+
+Lenses and schema definitions in F</usr/share/augeas/lenses>
+
+=head1 AUTHOR
+
+  David Lutterkort <dlutter@redhat.com>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2007, 2008 Red Hat Inc.
+
+Augeas (and augtool) are distributed under the GNU Lesser General Public
+License (LGPL)
+
+=head1 SEE ALSO
+
+B<Augeas> project homepage L<http://www.augeas.net/>
+
+L<augparse>
