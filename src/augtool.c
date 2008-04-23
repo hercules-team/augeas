@@ -240,10 +240,16 @@ static void cmd_help(ATTRIBUTE_UNUSED char *args[]) {
         defaults to " AUGEAS_LENS_DIR "\n\n");
 }
 
-static int chk_args(const char *cmd, int n, char *args[]) {
-    for (int i=0; i<n; i++) {
+static int chk_args(const char *cmd, int argc, int maxargs, char *args[]) {
+    for (int i=0; i<argc; i++) {
         if (strlen(args[i]) == 0) {
             fprintf(stderr, "Not enough arguments for %s\n", cmd);
+            return -1;
+        }
+    }
+    for (int i=argc; i < maxargs; i++) {
+        if (strlen(args[i]) > 0) {
+            fprintf(stderr, "Too many arguments for %s\n", cmd);
             return -1;
         }
     }
@@ -252,29 +258,39 @@ static int chk_args(const char *cmd, int n, char *args[]) {
 
 static char *nexttoken(char **line) {
     char *r, *s;
+    char quot = '\0';
 
     s = *line;
 
     while (*s && isblank(*s)) s+= 1;
+    if (*s == '\'' || *s == '"') {
+        quot = *s;
+        s += 1;
+    }
     r = s;
-    while (*s && !isblank(*s)) s+= 1;
+    while (*s) {
+        if ((quot && *s == quot) || (!quot && isblank(*s)))
+            break;
+        s += 1;
+    }
     if (*s)
         *s++ = '\0';
     *line = s;
     return r;
 }
 
-static char *parseline(char *line, char *args[], int argc) {
+static char *parseline(char *line, int maxargs, char *args[]) {
     char *cmd;
-
-    line = strdup(line);
 
     cmd = nexttoken(&line);
 
-    for (int i=0; i < argc; i++) {
-        args[i] = nexttoken(&line);
+    for (int argc=0; argc < maxargs; argc++) {
+        args[argc] = nexttoken(&line);
     }
 
+    if (*line) {
+        fprintf(stderr, "Too many arguments: '%s' not used\n", line);
+    }
     return cmd;
 }
 
@@ -320,19 +336,19 @@ static struct command commands[] = {
     { NULL, -1, NULL, NULL, NULL }
 };
 
-static int run_command(char *cmd, char **args) {
+static int run_command(char *cmd, int maxargs, char **args) {
     int r = 0;
     struct command *c;
 
     if (STREQ("exit", cmd) || STREQ("quit", cmd)) {
-        exit(0);
+        exit(EXIT_SUCCESS);
     }
     for (c = commands; c->name; c++) {
         if (STREQ(cmd, c->name))
             break;
     }
     if (c->name) {
-        r = chk_args(cmd, c->nargs, args);
+        r = chk_args(cmd, c->nargs, maxargs, args);
         if (r == 0) {
             (*c->handler)(args);
         }
@@ -470,9 +486,36 @@ static void parse_opts(int argc, char **argv) {
     argz_stringify(loadpath, loadpathlen, PATH_SEP_CHAR);
 }
 
-int main(int argc, char **argv) {
+static int main_loop(void) {
+    static const int maxargs = 3;
     char *line;
-    char *cmd, *args[3];
+    char *cmd, *args[maxargs];
+
+    while(1) {
+        char *dup_line;
+
+        line = readline("augtool> ");
+        if (line == NULL) {
+            printf("\n");
+            return EXIT_SUCCESS;
+        }
+        
+        dup_line = strdup(line);
+        if (dup_line == NULL) {
+            fprintf(stderr, "Out of memory\n");
+            return EXIT_FAILURE;
+        }
+
+        cmd = parseline(dup_line, maxargs, args);
+        if (cmd != NULL && strlen(cmd) > 0) {
+            run_command(cmd, maxargs, args);
+            add_history(line);
+        }
+        free(dup_line);
+    }
+}
+
+int main(int argc, char **argv) {
     int r;
 
     parse_opts(argc, argv);
@@ -485,23 +528,11 @@ int main(int argc, char **argv) {
     readline_init();
     if (optind < argc) {
         // Accept one command from the command line
-        r = run_command(argv[optind], argv+optind+1);
-        return r;
+        r = run_command(argv[optind], argc - optind, argv+optind+1);
+        return r == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
     }
 
-    while (1) {
-        line = readline("augtool> ");
-        if (line == NULL) {
-            printf("\n");
-            return 0;
-        }
-
-        cmd = parseline(line, args, 3);
-        if (strlen(cmd) > 0) {
-            run_command(cmd, args);
-            add_history(line);
-        }
-    }
+    return main_loop();
 }
 
 
