@@ -4,7 +4,6 @@
       aug_close;
       aug_get;
       aug_set;
-      aug_exists;
       aug_insert;
       aug_rm;
       aug_ls;
