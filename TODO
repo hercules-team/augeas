@@ -1,0 +1,30 @@
+- better error message for "short split in concat"
+
+- this needs to make aug_save fail:
+
+  set /files/etc/apt/sources.list.d/bar/type deb
+  set /files/etc/apt/sources.list.d/bar/uri http://server.com/
+  set /files/etc/apt/sources.list.d/bar/distribution etch
+  save
+
+  The paths are missing a 1/ after the bar/ and do not conform to the schema
+
+- completion of paths with spaces in augtool needs to be smarter about quoting
+  spaces
+
+- permutation operator: often, options for commands can be permuted in any
+  order. Using '*' for that is a bit of a kludge since it allows giving the
+  same option many times.
+
+- sshd.aug is wrong: it does not express that Match must come at the end of
+  the file and that anything after a match only applies to that
+  block. That's specifically a problem if a new entry is added to the tree;
+  that will show up in a Match block, when it should show up _before_ the
+  first Match block
+
+- Better POSIX compliance for fa_compile: in particular, support named
+  character classes and allow /|a/ to mean 'epsilon or a'
+
+- Sprinkle the words 'get' and 'put' into error messages from the lens
+  typechecks to make it clearer which direction (and regexps) they are
+  talking about
