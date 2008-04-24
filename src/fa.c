@@ -1990,10 +1990,13 @@ static char *string_extend(char *dst, const char *src, char c) {
         || *dst == '\0'
         || str_score(src) + chr_score(c) < str_score(dst)) {
         int slen = strlen(src);
-        dst = realloc(dst, slen + 2);
-        strncpy(dst, src, slen);
-        dst[slen] = c;
-        dst[slen + 1] = '\0';
+        char *new_dst = realloc(dst, slen + 2);
+        if (new_dst) {
+            dst = new_dst;
+            strncpy(dst, src, slen);
+            dst[slen] = c;
+            dst[slen + 1] = '\0';
+        }
     }
     return dst;
 }
