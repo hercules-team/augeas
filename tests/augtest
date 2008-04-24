@@ -76,7 +76,7 @@ args.each do |test|
                 msgs << "Expected file #{file}.augnew"
                 success=false
             else
-                act=`diff -u #{file} #{file}.augnew`
+                act=`diff -u #{file} #{file}.augnew | sed -e 's/^ $//'`
                 act.gsub!(/^(--- #{file}).*$/, '\1')
                 act.gsub!(/^(\+\+\+ #{file}\.augnew).*$/, '\1')
                 act.gsub!(/^(---|\+\+\+) (#{AUGEAS_ROOT})/, '\1 ');

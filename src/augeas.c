@@ -292,7 +292,7 @@ static int path_find_one(struct path *path) {
         int indx = 0;
         if (seg->any)
             return -1;
-        
+
         seg->tree = NULL;
         list_for_each(t, tree) {
             if (streqv(t->label, seg->label)) {
@@ -469,7 +469,7 @@ struct augeas *aug_init(const char *root, const char *loadpath,
     result->modpathz = NULL;
     result->nmodpath = 0;
     if (loadpath != NULL) {
-        argz_add_sep(&result->modpathz, &result->nmodpath, 
+        argz_add_sep(&result->modpathz, &result->nmodpath,
                      loadpath, PATH_SEP_CHAR);
     }
     char *env = getenv(AUGEAS_LENS_ENV);

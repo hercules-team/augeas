@@ -7,17 +7,17 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%
-%%% This package supports two styles of rules: named and unnamed.  
+%%% This package supports two styles of rules: named and unnamed.
 %%% Unnamed rules are centered on the page.  Named rules are set so
 %%% that a series of them will have the rules centered in a vertical
 %%% column taking most of the page and the labels right-justified.
-%%% When a label would overlap its rule, the label is moved down.  
-%%% 
+%%% When a label would overlap its rule, the label is moved down.
+%%%
 %%% The width of the column of labels can be varied using a command of the
-%%% form 
-%%% 
+%%% form
+%%%
 %%%   \typicallabel{T-Arrow-I}
-%%% 
+%%%
 %%% The default setting is:
 %%%
 %%%   \typicallabel{}
@@ -28,50 +28,50 @@
 %%%
 %%% The minimum distance between a rule and its label can be altered by a
 %%% command of the form
-%%% 
+%%%
 %%%   \setlength{\labelminsep}{0.5em}
-%%% 
+%%%
 %%% (This is the default value.)
-%%% 
+%%%
 %%% Examples:
-%%% 
+%%%
 %%% An axiom with a label in the right-hand column:
-%%% 
+%%%
 %%%   \infax[The name]{x - x = 0}
-%%% 
+%%%
 %%% An inference rule with a name:
-%%% 
+%%%
 %%%   \infrule[Another name]
 %%%     {\mbox{false}}
 %%%     {x - x = 1}
-%%% 
+%%%
 %%% A rule with multiple premises on the same line:
-%%% 
+%%%
 %%%   \infrule[Wide premises]
 %%%     {x > 0  \andalso y > 0  \andalso z > 0}
 %%%     {x + y + z > 0}
-%%%   
+%%%
 %%% A rule with several lines of premises:
-%%% 
+%%%
 %%%   \infrule[Long premises]
 %%%     {x > 0  \\ y > 0  \\ z > 0}
 %%%     {x + y + z > 0}
-%%%   
+%%%
 %%% A rule without a name, but centered on the same vertical line as rules
 %%% and axioms with names:
-%%% 
+%%%
 %%%   \infrule[]
 %%%     {x - y = 5}
 %%%     {y - x = -5}
-%%% 
+%%%
 %%% A rule without a name, centered on the page:
-%%% 
+%%%
 %%%   \infrule
 %%%     {x = 5}
 %%%     {x - 1 > 0}
 %%%
 %%%
-%%% Setting the flag \indexrulestrue causes an index entry to be 
+%%% Setting the flag \indexrulestrue causes an index entry to be
 %%% generated for each named rule.
 %%%
 %%% Setting the flag \suppressrulenamestrue causes the names of all rules
@@ -86,7 +86,7 @@
 
 %%% The font for setting inference rule names
 \newcommand{\rn}[1]{%
-  \ifmmode 
+  \ifmmode
     \mathchoice
       {\mbox{\choosernsize{\small}{}\sc #1}}
       {\mbox{\choosernsize{\small}{}\sc #1}}
@@ -96,7 +96,7 @@
     \hbox{\choosernsize{\small}{}\sc #1}%
   \fi}
 
-\newif\ifsuppressrulenames  
+\newif\ifsuppressrulenames
 \suppressrulenamesfalse
 
 \newif\ifbcprulessavespace
@@ -229,7 +229,7 @@
    \@tempdima \linewidth
    \advance \@tempdima -\labelcolwidth
    \hbox to \@tempdima{%
-      \hfil 
+      \hfil
       \box\rulebox
       \hfil}%
 
@@ -253,7 +253,7 @@
 
 %%% Select low-level layout driver based on \bcprulessavespace flag
 \newcommand{\layoutrule}[2]{%
-      \ifbcprulessavespace 
+      \ifbcprulessavespace
         \layoutruleterse{#1}{#2}
       \else
         \layoutruleverbose{#1}{#2}

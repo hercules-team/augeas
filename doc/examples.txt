@@ -43,7 +43,7 @@ For now, they are more a guide in writing the public API and augtool.
    move entries from p + "/dev.sda1/foo" to p + "/dev.sda1/exports.foo"
    set(p + "/dev.sda1/exports.foo/mountpoint", "/foo")
 
-   [same as above] 
+   [same as above]
 
 6) Change gateway on all static interfaces
    for p in find("/system/config/sysconfig/interfaces/**/gateway", "192.168.0.1")

@@ -13,8 +13,8 @@ module Test_sshd =
         { "6" = "LC_IDENTIFICATION" }
         { "7" = "LC_ALL" } }
 
-  test Sshd.lns put accept_env after 
-      rm "AcceptEnv"; 
+  test Sshd.lns put accept_env after
+      rm "AcceptEnv";
       rm "AcceptEnv";
       set "Protocol" "1.5";
       set "X11Forwarding" "yes"

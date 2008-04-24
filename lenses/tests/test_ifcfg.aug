@@ -40,10 +40,10 @@ HWADDR=ab:cd:ef:12:34:56
 #DHCP_HOSTNAME=host.example.com
 ONBOOT=yes
 "
-  test Ifcfg.lns get empty_val = 
+  test Ifcfg.lns get empty_val =
     { "EMPTY" = "" } { "DEVICE" = "eth0" }
 
-  test Ifcfg.lns get key_brack = 
+  test Ifcfg.lns get key_brack =
     { "SOME_KEY[1]" = "" } { "DEVICE" = "eth0" }
 
 (* Local Variables: *)

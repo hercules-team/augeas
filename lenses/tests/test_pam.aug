@@ -5,7 +5,7 @@ auth [user_unknown=ignore success=ok ignore=ignore default=bad] pam_securetty.so
 session    optional     pam_keyinit.so force revoke
 "
 
-  test Pam.lns get example = 
+  test Pam.lns get example =
     {}
     { "1" { "type" = "auth" }
           { "control" = "[user_unknown=ignore success=ok ignore=ignore default=bad]" }

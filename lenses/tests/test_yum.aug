@@ -33,24 +33,24 @@ installonly_limit=100
     { "sec-two" { "key1" = "value1" } {} { "key2" = "value2" } }
 
   test Yum.lns put yum_conf after
-      rm "main" 
+      rm "main"
     = ""
 
   test Yum.lns put yum_simple after
       set "sec1/key" "othervalue"
     = "[sec1]\n# comment\nkey=othervalue\n[sec-two]\nkey1=value1\n# comment\nkey2=value2\n"
-  
+
   test Yum.lns put yum_simple after
       rm "sec1" ;
       rm "sec-two/key1"
   = "[sec-two]\n# comment\nkey2=value2\n"
-  
+
   test Yum.lns put yum_simple after
       rm "sec1" ;
       rm "sec-two/key1" ;
       set "sec-two/newkey" "newvalue"
   = "[sec-two]\n# comment\nkey2=value2\nnewkey=newvalue\n"
-  
+
   test Yum.lns put yum_simple after
       rm "sec1" ;
       set "sec-two/key1" "newvalue"

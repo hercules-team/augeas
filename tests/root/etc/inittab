@@ -14,7 +14,7 @@
 #   4 - unused
 #   5 - X11
 #   6 - reboot (Do NOT set initdefault to this)
-# 
+#
 id:5:initdefault:
 
 # System initialization.
@@ -34,7 +34,7 @@ ca::ctrlaltdel:/sbin/shutdown -t3 -r now
 # When our UPS tells us power has failed, assume we have a few minutes
 # of power left.  Schedule a shutdown for 2 minutes from now.
 # This does, of course, assume you have powerd installed and your
-# UPS connected and working correctly.  
+# UPS connected and working correctly.
 pf::powerfail:/sbin/shutdown -f -h +2 "Power Failure; System Shutting Down"
 
 # If power was restored before the shutdown kicked in, cancel it.

@@ -5,7 +5,7 @@ set /files/etc/pam.d/newrole/10000/control include
 set /files/etc/pam.d/newrole/10000/module system-auth
 save
 "
- 
+
 diff["/etc/pam.d/newrole"] = <<TXT
 --- /etc/pam.d/newrole
 +++ /etc/pam.d/newrole.augnew

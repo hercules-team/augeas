@@ -1,5 +1,5 @@
 /*
- * syntax.c: 
+ * syntax.c:
  *
  * Copyright (C) 2007, 2008 Red Hat Inc.
  *
@@ -64,7 +64,7 @@ static const char *const type_names[] = {
 static void print_value(FILE *out, struct value *v);
 
 /* The evaluation context with all loaded modules and the bindings for the
- * module we are working on in LOCAL 
+ * module we are working on in LOCAL
  */
 struct ctx {
     const char     *name;     /* The module we are working on */
@@ -141,7 +141,7 @@ void assert_error_at(const char *srcfile, int srclineno, struct info *info,
 
     fprintf(stderr, "%s:%d:(", srcfile, srclineno);
     print_info(stderr, info);
-    fprintf(stderr,"):Internal error:"); 
+    fprintf(stderr,"):Internal error:");
 	va_start(ap, format);
     vfprintf(stderr, format, ap);
     va_end(ap);
@@ -467,7 +467,7 @@ static struct binding *ctx_lookup_bnd(struct info *info,
 
     if (STREQLEN(ctx->name, name, nlen) && name[nlen] == '.')
         name += nlen + 1;
-    
+
     b = bnd_lookup(ctx->local, name);
     if (b != NULL)
         return b;
@@ -497,7 +497,7 @@ static struct binding *ctx_lookup_bnd(struct info *info,
                 free(modname);
             }
         } else {
-            struct module *builtin = 
+            struct module *builtin =
                 module_find(ctx->aug->modules, builtin_module);
             assert(builtin != NULL);
             return bnd_lookup(builtin->bindings, name);
@@ -750,7 +750,7 @@ static char *type_string(struct type *t) {
 
 /* Decide whether T1 is a subtype of T2. The only subtype relations are
  * T_STRING <: T_REGEXP and the usual subtyping of functions based on
- * comparing domains/images 
+ * comparing domains/images
  *
  * Return 1 if T1 is a subtype of T2, 0 otherwise
  */
@@ -766,7 +766,7 @@ static int subtype(struct type *t1, struct type *t2) {
     if (t1->tag == T_LENS)
         return t2->tag == T_LENS;
     if (t1->tag == T_ARROW && t2->tag == T_ARROW) {
-        return subtype(t2->dom, t1->dom) 
+        return subtype(t2->dom, t1->dom)
             && subtype(t1->img, t2->img);
     }
     return 0;
@@ -880,7 +880,7 @@ static struct value *coerce(struct value *v, struct type *t) {
 /* Return one of the expected types (passed as ...).
    Does not give ownership of the returned type */
 static struct type *expect_types_arr(struct info *info,
-                                     struct type *act, 
+                                     struct type *act,
                                      int ntypes, struct type *allowed[]) {
     struct type *result = NULL;
 
@@ -983,7 +983,7 @@ static void type_error1(struct info *info, const char *msg, struct type *type) {
     free((char *) s);
 }
 
-static void type_error2(struct info *info, const char *msg, 
+static void type_error2(struct info *info, const char *msg,
                         struct type *type1, struct type *type2) {
     const char *s1 = type_string(type1);
     const char *s2 = type_string(type2);
@@ -995,7 +995,7 @@ static void type_error2(struct info *info, const char *msg,
 
 static int check_exp(struct term *term, struct ctx *ctx);
 
-static struct type *require_exp_type(struct term *term, struct ctx *ctx, 
+static struct type *require_exp_type(struct term *term, struct ctx *ctx,
                                      int ntypes, ...) {
     va_list ap;
     struct type *allowed[ntypes];
@@ -1052,9 +1052,9 @@ static int check_concat(struct term *term, struct ctx *ctx) {
         return 0;
     tl = term->left->type;
 
-    tl = require_exp_type(term->left, ctx, 
+    tl = require_exp_type(term->left, ctx,
                           4, t_string, t_regexp, t_lens, t_filter);
-    tr = require_exp_type(term->right, ctx, 
+    tr = require_exp_type(term->right, ctx,
                           4, t_string, t_regexp, t_lens, t_filter);
     if ((tl == NULL) || (tr == NULL))
         return 0;
@@ -1087,15 +1087,15 @@ static int check_exp(struct term *term, struct ctx *ctx) {
     switch (term->tag) {
     case A_UNION:
         {
-            struct type *tl = require_exp_type(term->left, ctx, 
+            struct type *tl = require_exp_type(term->left, ctx,
                                                2, t_regexp, t_lens);
-            struct type *tr = require_exp_type(term->right, ctx, 
+            struct type *tr = require_exp_type(term->right, ctx,
                                                2, t_regexp, t_lens);
             result = (tl != NULL) && (tr != NULL);
             if (result) {
                 term->type = type_join(tl, tr);
                 if (term->type == NULL) {
-                    type_error2(term->info, 
+                    type_error2(term->info,
                                 "union of %s and %s is not possible",
                                 term->left->type, term->right->type);
                     result = 0;
@@ -1130,8 +1130,8 @@ static int check_exp(struct term *term, struct ctx *ctx) {
         result = check_exp(term->left, ctx) & check_exp(term->right, ctx);
         if (result) {
             if (term->left->type->tag != T_ARROW) {
-                type_error1(term->info, 
-                            "expected function in application but found %s", 
+                type_error1(term->info,
+                            "expected function in application but found %s",
                             term->left->type);
                 result = 0;
             };
@@ -1141,7 +1141,7 @@ static int check_exp(struct term *term, struct ctx *ctx) {
                                   term->right->type,
                                   1, term->left->type->dom) != NULL;
             if (! result) {
-                type_error2(term->info, 
+                type_error2(term->info,
                             "application of %s to %s is not possible",
                             term->left->type, term->right->type);
                 result = 0;
@@ -1171,8 +1171,8 @@ static int check_exp(struct term *term, struct ctx *ctx) {
             term->type = ref(expect_types(term->info, term->brexp->type,
                                           1, t_lens));
             if (term->type == NULL) {
-                type_error1(term->info, 
-                             "[..] is only defined for lenses, not for %s", 
+                type_error1(term->info,
+                             "[..] is only defined for lenses, not for %s",
                             term->brexp->type);
                 result = 0;
             }
@@ -1195,9 +1195,9 @@ static int check_exp(struct term *term, struct ctx *ctx) {
             term->type = ref(expect_types(term->info, term->exp->type, 2,
                                           t_regexp, t_lens));
             if (term->type == NULL) {
-                type_error1(term->info, 
+                type_error1(term->info,
                             "Incompatible types: repetition is only defined"
-                            " for regexp and lens, not for %s", 
+                            " for regexp and lens, not for %s",
                             term->exp->type);
                 result = 0;
             }
@@ -1232,7 +1232,7 @@ static int check_decl(struct term *term, struct ctx *ctx) {
             if (!check_exp(term->result, ctx))
                 return 0;
             if (! type_equal(term->test->type, term->result->type)) {
-                type_error2(term->info, 
+                type_error2(term->info,
                             "expected test result of type %s but got %s",
                             term->result->type, term->test->type);
                 return 0;
@@ -1266,7 +1266,7 @@ static int typecheck(struct term *term, struct augeas *aug) {
     else
         basenam += 1;
     if (STRNEQ(fname, basenam)) {
-        syntax_error(term->info, 
+        syntax_error(term->info,
                      "The module %s must be in a file named %s",
                      term->mname, fname);
         free(fname);
@@ -1460,7 +1460,7 @@ static struct value *compile_bracket(struct term *exp, struct ctx *ctx) {
 
     struct value *v = lns_make_subtree(ref(exp->info), ref(arg->lens));
     unref(arg, value);
-        
+
     return v;
 }
 
@@ -1633,7 +1633,7 @@ static struct module *compile(struct term *term, struct augeas *aug) {
     }
     if (!ok)
         goto error;
-    
+
     if (term->autoload != NULL) {
         struct binding *bnd = bnd_lookup(ctx.local, term->autoload);
         if (bnd == NULL) {
@@ -1743,7 +1743,7 @@ static char *module_filename(struct augeas *aug, const char *modname) {
     char *dir = NULL;
     char *filename = NULL;
     char *name = module_basename(modname);
-    
+
     while ((dir = argz_next(aug->modpathz, aug->nmodpath, dir)) != NULL) {
         int len = strlen(name) + strlen(dir) + 2;
         struct stat st;
@@ -1827,7 +1827,7 @@ int interpreter_init(struct augeas *aug) {
         gl_flags |= GLOB_APPEND;
         free(globpat);
     }
-    
+
     for (int i=0; i < globbuf.gl_pathc; i++) {
         char *name, *p, *q;
         p = strrchr(globbuf.gl_pathv[i], SEP);

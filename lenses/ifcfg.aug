@@ -14,7 +14,7 @@ module Ifcfg =
 
   let lns = (comment | kv) *
 
-  let filter = (incl "/etc/sysconfig/network-scripts/ifcfg-*") 
+  let filter = (incl "/etc/sysconfig/network-scripts/ifcfg-*")
       . Util.stdexcl
 
   let xfm = transform lns filter

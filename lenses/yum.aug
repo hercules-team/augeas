@@ -20,7 +20,7 @@ module Yum =
 
   let kv = [ key key_re . eq . store value . eol ]
 
-  let sechead = Util.del_str "[" . key secname . Util.del_str "]" 
+  let sechead = Util.del_str "[" . key secname . Util.del_str "]"
       . del /[ \t]*[;#]?.*/ ""
       . eol
 
@@ -28,7 +28,7 @@ module Yum =
 
   let lns = (comment) * . (section) *
 
-  let filter = (incl "/etc/yum.conf") . (incl "/etc/yum.repos.d/*") 
+  let filter = (incl "/etc/yum.conf") . (incl "/etc/yum.repos.d/*")
       . Util.stdexcl
 
   let xfm = transform lns filter

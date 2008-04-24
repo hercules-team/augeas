@@ -177,9 +177,9 @@ test_special_res: '?'
 
 /* General expressions */
 exp: KW_LET LIDENT param_list '=' exp KW_IN  exp
-     { 
+     {
        LOC_MERGE(@1, @1, @6);
-       $$ = make_let($2, $3, $5, $7, &@1); 
+       $$ = make_let($2, $3, $5, $7, &@1);
      }
    | composeexp
 

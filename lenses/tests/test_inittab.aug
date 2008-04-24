@@ -10,7 +10,7 @@ ca::ctrlaltdel:/sbin/shutdown -t3 -r now
 l0:0:wait:/etc/rc.d/rc 0
 "
 
- test Inittab.lns get inittab = 
+ test Inittab.lns get inittab =
     { "1" { "id" = "id" }
           { "runlevels" = "5" }
           { "action" = "initdefault" }

@@ -1,5 +1,5 @@
 /*
- * fatest.c: 
+ * fatest.c:
  *
  * Copyright (C) 2007 Red Hat Inc.
  *

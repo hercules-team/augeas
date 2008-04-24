@@ -1,5 +1,5 @@
 /*
- * put.c: 
+ * put.c:
  *
  * Copyright (C) 2007, 2008 Red Hat Inc.
  *
@@ -160,7 +160,7 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
         FIXME("Match failed - produce better error");
         abort();
     } else if (count == -1) {
-        char *labels = strndup(outer->labels + outer->start, 
+        char *labels = strndup(outer->labels + outer->start,
                                outer->end - outer->start);
         put_error(state, lens,
                   "Failed to match /%s/ with %s",
@@ -701,10 +701,10 @@ void lns_put(FILE *out, struct lens *lens, struct tree *tree,
   (interactive)
   (insert "// BEGIN\n")
   (let
-      ((types '("ACTION" "SUBTREE" "LITERAL" "NAME" "ALTERNATIVE" 
-                "SEQUENCE" "RULE_REF" "ABBREV_REF" 
+      ((types '("ACTION" "SUBTREE" "LITERAL" "NAME" "ALTERNATIVE"
+                "SEQUENCE" "RULE_REF" "ABBREV_REF"
                 "QUANT_PLUS" "QUANT_STAR" "QUANT_MAYBE")))
-    (mapcar 
+    (mapcar
      (lambda (type)
        (insert "static void put_" (downcase type) "(struct match *match, struct state *state) {
     assert(match->type == " type ");
@@ -712,11 +712,11 @@ void lns_put(FILE *out, struct lens *lens, struct tree *tree,
 
 "))
           types)
-    (mapcar 
+    (mapcar
      (lambda (type)
        (insert "static void create_" (downcase type) "(struct match *match, struct state *state) {
     assert(match->type == " type ");
-    
+
 }
 
 "))

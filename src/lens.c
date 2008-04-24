@@ -1,5 +1,5 @@
 /*
- * lens.c: 
+ * lens.c:
  *
  * Copyright (C) 2007, 2008 Red Hat Inc.
  *
@@ -280,13 +280,13 @@ static struct value *useless_union(struct info *info, const char *msg,
     if (fa1 == NULL || fa2 == NULL) {
         fa_free(fa1);
         fa_free(fa2);
-        return make_exn_value(ref(info), 
+        return make_exn_value(ref(info),
               "internal error: compile in useless_union failed");
     }
 
     fa_t minus = fa_minus(fa2, fa1);
     if (fa_is_basic(minus, FA_EMPTY)) {
-        exn = make_exn_value(ref(info), 
+        exn = make_exn_value(ref(info),
              "%s: the first lens completely shadows the second lens", msg);
     }
     fa_free(minus);
@@ -321,10 +321,10 @@ static struct value *typecheck_union(struct info *info,
         char *fi = format_info(l1->info);
         exn_printf_line(exn, "First lens: %s", fi);
         free(fi);
-        
+
         fi = format_info(l2->info);
         exn_printf_line(exn, "Second lens: %s", fi);
-        free(fi);        
+        free(fi);
     }
     return exn;
 }
@@ -390,7 +390,7 @@ static struct value *typecheck_concat(struct info *info,
         free(fi);
         fi = format_info(l2->info);
         exn_printf_line(result, "Second lens: %s", fi);
-        free(fi);        
+        free(fi);
     }
     return result;
 }
@@ -420,7 +420,7 @@ static struct value *typecheck_iter(struct info *info, struct lens *l) {
     if (result != NULL) {
         char *fi = format_info(l->info);
         exn_printf_line(result, "Iterated lens: %s", fi);
-        free(fi);        
+        free(fi);
     }
     return result;
 }
@@ -562,7 +562,7 @@ void free_lens(struct lens *lens) {
     if (lens == NULL)
         return;
     assert(lens->ref == 0);
-    
+
     unref(lens->info, info);
     unref(lens->ctype, regexp);
     unref(lens->atype, regexp);

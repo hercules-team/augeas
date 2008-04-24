@@ -8,28 +8,28 @@ module Test_hosts =
 "
 
   test Hosts.record get "127.0.0.1 foo" =
-    { "1" { "ipaddr" = "127.0.0.1" } 
+    { "1" { "ipaddr" = "127.0.0.1" }
           { "canonical" = "foo" } }
 
   test Hosts.lns get two_entries =
-   { "1" { "ipaddr" = "127.0.0.1" } 
+   { "1" { "ipaddr" = "127.0.0.1" }
           { "canonical" = "foo" }
           { "alias" = "foo.example.com" }
     }
     { }
-    { "2" { "ipaddr" = "192.168.0.1" } 
+    { "2" { "ipaddr" = "192.168.0.1" }
           { "canonical" = "pigiron.example.com" }
           { "alias" = "pigiron" }
           { "alias" = "pigiron.example" }  }
 
   test Hosts.record put "127.0.0.1 foo" after
-      set "1/canonical" "bar" 
+      set "1/canonical" "bar"
   = "127.0.0.1 bar"
 
-  test Hosts.lns put two_entries after 
+  test Hosts.lns put two_entries after
     set "2/alias[10]" "piggy" ;
     rm "1/alias[1]" ;
-    rm "2/alias[2]" 
+    rm "2/alias[2]"
   = "127.0.0.1 foo
 # comment
 192.168.0.1 pigiron.example.com pigiron piggy

@@ -27,7 +27,7 @@
 
 0.0.6 - 2008-03-05
   - Make it possible to overwrite files when saving with and without
-    backups 
+    backups
   - Take the filesystem root as an optional argument to aug_init
   - Expose these two things as command line options in augtool
 
@@ -54,8 +54,8 @@
     structure of the files (basically a LL(1) grammar)
 
 0.0.1 - 2007-12-01:
-  - First release. 
-  - Public API and basic tree data structure. 
-  - Record scanning works. 
+  - First release.
+  - Public API and basic tree data structure.
+  - Record scanning works.
   - Providers for pam.d, inittab and /etc/hosts
   - Simple tests and test driver

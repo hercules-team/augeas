@@ -32,7 +32,7 @@ title Fedora (2.6.24.3-34.fc8)
         initrd /initrd-2.6.24.3-34.fc8.img
 "
 
-  test Grub.lns get conf = 
+  test Grub.lns get conf =
      {} {} {} {} {} {} {} {} {}
      { "default" = "0" }
      { "timeout" = "5" }
@@ -57,7 +57,7 @@ title Fedora (2.6.24.3-34.fc8)
              { "initrd" = "/initrd-2.6.24.3-34.fc8.img" } }
 
   test Grub.lns put conf after set "default" "0" = conf
-         
+
 
 (* Local Variables: *)
 (* mode: caml       *)

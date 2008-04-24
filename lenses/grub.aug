@@ -10,8 +10,8 @@ module Grub =
     let del_to_eol = del /[^\n]*/ ""
     let value_sep (dflt:string) = del /[ \t]*[ \t=][ \t]*/ dflt
 
-    let kw_arg (kw:string) (indent:string) (dflt_sep:string) = 
-      [ Util.del_opt_ws indent . key kw . value_sep dflt_sep 
+    let kw_arg (kw:string) (indent:string) (dflt_sep:string) =
+      [ Util.del_opt_ws indent . key kw . value_sep dflt_sep
           . value_to_eol . eol ]
 
     let kw_boot_arg (kw:string) = kw_arg kw "\t" " "
@@ -27,7 +27,7 @@ module Grub =
 
     let title = del /title[ \t]+/ "title " . value_to_eol . eol
 
-    let module_lines = [ label "modules" . 
+    let module_lines = [ label "modules" .
                             Util.del_ws "\t" .
                              Util.del_str "module" . Util.del_ws_spc
                              . value_to_eol . eol ]

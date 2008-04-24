@@ -65,7 +65,7 @@ struct state {
     struct trans *trans;
 };
 
-/* A transition. If the input has a character in the inclusive 
+/* A transition. If the input has a character in the inclusive
  * range [MIN, MAX], move to TO
  */
 struct trans {
@@ -1785,11 +1785,11 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
         for (int n1 = 0, b2 = 0; n1 < p1->tused; n1++) {
             while (b2 < p2->tused && t2[b2].max < t1[n1].min)
                 b2++;
-            for (int n2 = b2; 
+            for (int n2 = b2;
                  n2 < p2->tused && t1[n1].max >= t2[n2].min;
                  n2++) {
                 if (t2[n2].max >= t1[n1].min) {
-                    struct state *r = state_triple_thd(newstates, 
+                    struct state *r = state_triple_thd(newstates,
                                                        t1[n1].to, t2[n2].to);
                     if (r == NULL) {
                         r = add_state(fa, 0);
@@ -1798,9 +1798,9 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
                         state_set_push(worklist, r);
                         state_triple_push(newstates, t1[n1].to, t2[n2].to, r);
                     }
-                    char min = t1[n1].min > t2[n2].min 
+                    char min = t1[n1].min > t2[n2].min
                         ? t1[n1].min : t2[n2].min;
-                    char max = t1[n1].max < t2[n2].max 
+                    char max = t1[n1].max < t2[n2].max
                         ? t1[n1].max : t2[n2].max;
                     add_new_trans(s, r, min, max);
                 }
@@ -1843,8 +1843,8 @@ int fa_contains(fa_t fa1, fa_t fa2) {
             while (b2 < p2->tused && t2[b2].max < t1[n1].min)
                 b2++;
             int min1 = t1[n1].min, max1 = t1[n1].max;
-            for (int n2 = b2; 
-                 n2 < p2->tused && t1[n1].max >= t2[n2].min; 
+            for (int n2 = b2;
+                 n2 < p2->tused && t1[n1].max >= t2[n2].min;
                  n2++) {
                 if (t2[n2].min > min1)
                     goto done;
@@ -2069,7 +2069,7 @@ char *fa_example(fa_t fa) {
  *
  * The returned automaton is a copy of FA, FA is not modified.
  */
-static struct fa *expand_alphabet(struct fa *fa, int add_marker, 
+static struct fa *expand_alphabet(struct fa *fa, int add_marker,
                                   char X, char Y) {
     fa = fa_clone(fa);
 
@@ -2526,7 +2526,7 @@ void fa_dot(FILE *out, struct fa *fa) {
             fprintf(out, "\"%p\" [shape=circle];\n", s);
         }
     }
-    fprintf(out, "%s -> \"%p\";\n", fa->deterministic ? "dfa" : "nfa", 
+    fprintf(out, "%s -> \"%p\";\n", fa->deterministic ? "dfa" : "nfa",
             fa->initial);
 
     list_for_each(s, fa->initial) {

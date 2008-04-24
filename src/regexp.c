@@ -1,5 +1,5 @@
 /*
- * regexp.c: 
+ * regexp.c:
  *
  * Copyright (C) 2007, 2008 Red Hat Inc.
  *

@@ -54,7 +54,7 @@
 
 \newtheorem{theorem}{Theorem}
 \newtheorem{lemma}[theorem]{Lemma}
-{\theoremstyle{definition} 
+{\theoremstyle{definition}
   \newtheorem{defn}{Definition}
   \newtheorem*{remark}{Remark}
   \newtheorem*{example}{Example}}
@@ -106,7 +106,7 @@ in the concrete text and (2) avoids any pain in splitting tree labels in
 the \nput direction.
 
 \subsection{Trees}
-The set of \emph{ordered trees} \Trees over $\Words$ is recursively 
+The set of \emph{ordered trees} \Trees over $\Words$ is recursively
 defined as
 \begin{itemize}
 \item The empty tree $\rhd$
@@ -131,12 +131,12 @@ element of $\List{\Keys}$; for a tree $t =
 %A tree $t$ can also be viewed as a total map from \Words to
 %$\List{\Trees\cup\Words}$, defined as
 %\begin{equation*}
-%  t(k) = 
+%  t(k) =
 %  \begin{cases}
 %    v & \text{for } t = \tree{v}\\
-%    [t_1] :: t_2(k) & \text{for } t = t' :: t_2 
+%    [t_1] :: t_2(k) & \text{for } t = t' :: t_2
 %                      \text{ and } t' = \tree{\tmap{k}{t_1}}\\
-%    t_2(k) & \text{for } t = t' :: t_2 
+%    t_2(k) & \text{for } t = t' :: t_2
 %             \text{ and } t' = \tree{\tmap{k'}{t_1}} \text{with } k\neq k'
 %  \end{cases}
 %\end{equation*}
@@ -320,7 +320,7 @@ key $k$.
 
 The concat combinator $\conc{l_1}{l_2}$ joins two trees.
 
-\infrule{l_1\in\lenstype[K_1,S_1,L]{C_1}{T_1} 
+\infrule{l_1\in\lenstype[K_1,S_1,L]{C_1}{T_1}
          \andalso l_2\in\lenstype[K_2,S_2,L]{C_2}{T_2}
          \andalso \uaconc{C_1}{C_2}
          \andalso \uaconc{\key{T_1}}{\key{T_2}}}
@@ -328,7 +328,7 @@ The concat combinator $\conc{l_1}{l_2}$ joins two trees.
 
 \begin{align*}
   \lget{(\conc{c_1}{c_2})} &= \conc{(l_1.\lget{c_1})}{(l_2.\lget{c_2})}\\
-  \lparse{\conc{c_1}{c_2}} &= \xconc{k_1}{k_2}, (s_1,s_2), \dconc{d_1}{d_2} \\ 
+  \lparse{\conc{c_1}{c_2}} &= \xconc{k_1}{k_2}, (s_1,s_2), \dconc{d_1}{d_2} \\
   \lput{\conc{t_1}{t_2}}{k, (s_1,s_2), d_1} &= \conc{c_1}{c_2}, d_3 \\
   & \text{where } c_i, d_{i+1} = l_i.\lput{t_i}{k, s_i, d_i} \\
   \lcreate{\conc{t_1}{t_2}}{k, d_1} &= \conc{c_1}{c_2}, d_3\\
@@ -346,19 +346,19 @@ The union combinator $\alt{l_1}{l_2}$ chooses.
   {\alt{l_1}{l_2}\in\lenstype[K_1\cup K_2, S_1\cup S_2, L]{C_1 \cup C_2}{T_1 \cup T_2}}
 
 \begin{align*}
-  \lget{c} &= 
+  \lget{c} &=
      \begin{cases}
        l_1.\lget{c} & \text{if } c \in C_1\\
        l_2.\lget{c} & \text{if } c \in C_2\\
      \end{cases}
   \\
-  \lparse{c} &= 
+  \lparse{c} &=
      \begin{cases}
        l_1.\lparse{c} & \text{if } c \in C_1\\
        l_2.\lparse{c} & \text{if } c \in C_2\\
      \end{cases}
   \\
-  \lput{t}{k, s, d} &= 
+  \lput{t}{k, s, d} &=
      \begin{cases}
        l_1.\lput{t}{k, s, d} & \text{if } t, s \in T_1 \times S_1 \\
        l_2.\lput{t}{k, s, d} & \text{if } t, s \in T_2 \times S_2 \\
@@ -367,7 +367,7 @@ The union combinator $\alt{l_1}{l_2}$ chooses.
        l_2.\lcreate{t}{k, d} & \text{if } t, s \in (T_2\setminus T_1)
        \times S_1
      \end{cases}\\
-  \lcreate{t}{k, d} &= 
+  \lcreate{t}{k, d} &=
      \begin{cases}
        l_1.\lcreate{t}{k, d} & \text{if } t\in T_1\\
        l_2.\lcreate{t}{k, d} & \text{if } t\in T_2\setminus T_1

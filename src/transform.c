@@ -37,7 +37,7 @@ static const int glob_flags = GLOB_NOSORT;
 #define EXT_AUGSAVE ".augsave"
 
 /* Loaded files are tracked underneath METATREE. When a file with name
- * FNAME is loaded, certain entries are made under METATREE / FNAME: 
+ * FNAME is loaded, certain entries are made under METATREE / FNAME:
  *   path      : path where tree for FNAME is put
  *   lens/info : information about where the applied lens was loaded from
  *   lens/id   : unique hexadecimal id of the lens

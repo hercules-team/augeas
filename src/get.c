@@ -50,7 +50,7 @@ struct state {
 };
 
 static void get_error(struct state *state, struct lens *lens,
-                      const char *format, ...) 
+                      const char *format, ...)
     ATTRIBUTE_FORMAT(printf, 3, 4);
 
 void free_lns_error(struct lns_error *err) {
@@ -326,7 +326,7 @@ static struct seq *find_seq(const char *name, struct state *state) {
     struct seq *seq;
 
     for (seq=state->seqs;
-         seq != NULL && STRNEQ(seq->name, name); 
+         seq != NULL && STRNEQ(seq->name, name);
          seq = seq->next);
 
     if (seq == NULL) {
@@ -534,7 +534,7 @@ static struct tree *get_quant_star(struct lens *lens, struct state *state) {
     return tree;
 }
 
-static struct skel *parse_quant_star(struct lens *lens, struct state *state, 
+static struct skel *parse_quant_star(struct lens *lens, struct state *state,
                                      struct dict **dict) {
     assert(lens->tag == L_STAR);
 
@@ -695,7 +695,7 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
     return tree;
 }
 
-static struct skel *parse_lens(struct lens *lens, struct state *state, 
+static struct skel *parse_lens(struct lens *lens, struct state *state,
                                struct dict **dict) {
     struct skel *skel = NULL;
 

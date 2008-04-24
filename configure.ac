@@ -16,7 +16,7 @@ AC_SUBST(AUGEAS_CFLAGS)
 
 AUGEAS_CHECK_READLINE
 
-AC_OUTPUT(Makefile 
+AC_OUTPUT(Makefile
           src/Makefile
           man/Makefile
           tests/Makefile

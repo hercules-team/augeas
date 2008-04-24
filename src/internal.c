@@ -65,7 +65,7 @@ int pathjoin(char **path, int nseg, ...) {
 /* Like gnulib's fread_file, but read no more than the specified maximum
    number of bytes.  If the length of the input is <= max_len, and
    upon error while reading that data, it works just like fread_file.
-   
+
    Taken verbatim from libvirt's util.c
 */
 

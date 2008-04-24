@@ -13,7 +13,7 @@ bin:		root, adm
 daemon:		root
 adm:		root
 "
-  test Aliases.lns get file = 
+  test Aliases.lns get file =
     {} {} {} {} {}                           (* The comments *)
     { "1" { "name" = "mailer-daemon" }
           { "value" = "postmaster" } }
@@ -29,7 +29,7 @@ adm:		root
           { "value" = "root" } }
 
   test Aliases.lns put file after
-      rm "4" ; rm "5" ; 
+      rm "4" ; rm "5" ;
       set "1/value[2]" "barbar" ;
       set "3/value[2]" "ruth"
     = "#

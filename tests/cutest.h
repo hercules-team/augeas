@@ -6,7 +6,7 @@
  * LICENSE
  *
  * Copyright (c) 2003 Asim Jalis
- * 
+ *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
  * arising from the use of this software.
@@ -56,20 +56,20 @@ void CuTestRun(CuTest* tc, TestFunction setup, TestFunction teardown);
 /* Internal versions of assert functions -- use the public versions */
 void CuFail_Line(CuTest* tc, const char* file, int line, const char* message2, const char* message);
 void CuAssert_Line(CuTest* tc, const char* file, int line, const char* message, int condition);
-void CuAssertStrEquals_LineMsg(CuTest* tc, 
-	const char* file, int line, const char* message, 
+void CuAssertStrEquals_LineMsg(CuTest* tc,
+	const char* file, int line, const char* message,
 	const char* expected, const char* actual);
-void CuAssertIntEquals_LineMsg(CuTest* tc, 
-	const char* file, int line, const char* message, 
+void CuAssertIntEquals_LineMsg(CuTest* tc,
+	const char* file, int line, const char* message,
 	int expected, int actual);
-void CuAssertDblEquals_LineMsg(CuTest* tc, 
-	const char* file, int line, const char* message, 
+void CuAssertDblEquals_LineMsg(CuTest* tc,
+	const char* file, int line, const char* message,
 	double expected, double actual, double delta);
-void CuAssertPtrEquals_LineMsg(CuTest* tc, 
-	const char* file, int line, const char* message, 
+void CuAssertPtrEquals_LineMsg(CuTest* tc,
+	const char* file, int line, const char* message,
 	const void* expected, const void* actual);
-void CuAssertPtrNotEqual_LineMsg(CuTest* tc, 
-	const char* file, int line, const char* message, 
+void CuAssertPtrNotEqual_LineMsg(CuTest* tc,
+	const char* file, int line, const char* message,
 	const void* expected, const void* actual);
 
 /* public assert functions */
@@ -110,7 +110,7 @@ typedef struct
 
 void CuSuiteInit(CuSuite* testSuite);
 CuSuite* CuSuiteNew(void);
-void CuSuiteSetup(CuSuite *testSuite, 
+void CuSuiteSetup(CuSuite *testSuite,
                   TestFunction setup, TestFunction teardown);
 void CuSuiteAdd(CuSuite* testSuite, CuTest *testCase);
 void CuSuiteAddSuite(CuSuite* testSuite, CuSuite* testSuite2);

@@ -58,7 +58,7 @@ Non-goals
 
 Building
 --------
-  
+
   See the generic instructions in INSTALL. Generally,
     ./configure
     make && make install

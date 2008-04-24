@@ -6,7 +6,7 @@
  * LICENSE
  *
  * Copyright (c) 2003 Asim Jalis
- * 
+ *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
  * arising from the use of this software.
@@ -80,7 +80,7 @@ void CuTestRun(CuTest* tc, TestFunction setup, TestFunction teardown) {
 	tc->jumpBuf = 0;
 }
 
-static void CuFailInternal(CuTest* tc, const char* file, int line, 
+static void CuFailInternal(CuTest* tc, const char* file, int line,
                            const char *string) {
 	char *buf = NULL;
 
@@ -91,7 +91,7 @@ static void CuFailInternal(CuTest* tc, const char* file, int line,
 	if (tc->jumpBuf != 0) longjmp(*(tc->jumpBuf), 0);
 }
 
-void CuFail_Line(CuTest* tc, const char* file, int line, 
+void CuFail_Line(CuTest* tc, const char* file, int line,
                  const char* message2, const char* message) {
     char *string = NULL;
 
@@ -103,14 +103,14 @@ void CuFail_Line(CuTest* tc, const char* file, int line,
 	CuFailInternal(tc, file, line, string);
 }
 
-void CuAssert_Line(CuTest* tc, const char* file, int line, 
+void CuAssert_Line(CuTest* tc, const char* file, int line,
                    const char* message, int condition) {
 	if (condition) return;
 	CuFail_Line(tc, file, line, NULL, message);
 }
 
-void CuAssertStrEquals_LineMsg(CuTest* tc, const char* file, int line, 
-                               const char* message, 
+void CuAssertStrEquals_LineMsg(CuTest* tc, const char* file, int line,
+                               const char* message,
                                const char* expected, const char* actual) {
 	char *string = NULL;
 
@@ -130,8 +130,8 @@ void CuAssertStrEquals_LineMsg(CuTest* tc, const char* file, int line,
 	CuFailInternal(tc, file, line, string);
 }
 
-void CuAssertIntEquals_LineMsg(CuTest* tc, const char* file, int line, 
-                               const char* message, 
+void CuAssertIntEquals_LineMsg(CuTest* tc, const char* file, int line,
+                               const char* message,
                                int expected, int actual) {
 	char buf[STRING_MAX];
 	if (expected == actual) return;
@@ -140,7 +140,7 @@ void CuAssertIntEquals_LineMsg(CuTest* tc, const char* file, int line,
 }
 
 void CuAssertDblEquals_LineMsg(CuTest* tc, const char* file, int line,
-                               const char* message, 
+                               const char* message,
                                double expected, double actual, double delta) {
 	char buf[STRING_MAX];
 	if (fabs(expected - actual) <= delta) return;
@@ -148,8 +148,8 @@ void CuAssertDblEquals_LineMsg(CuTest* tc, const char* file, int line,
 	CuFail_Line(tc, file, line, message, buf);
 }
 
-void CuAssertPtrEquals_LineMsg(CuTest* tc, const char* file, int line, 
-                               const char* message, 
+void CuAssertPtrEquals_LineMsg(CuTest* tc, const char* file, int line,
+                               const char* message,
                                const void* expected, const void* actual) {
 	char buf[STRING_MAX];
 	if (expected == actual) return;
@@ -157,12 +157,12 @@ void CuAssertPtrEquals_LineMsg(CuTest* tc, const char* file, int line,
 	CuFail_Line(tc, file, line, message, buf);
 }
 
-void CuAssertPtrNotEqual_LineMsg(CuTest* tc, const char* file, int line, 
-                                 const char* message, 
+void CuAssertPtrNotEqual_LineMsg(CuTest* tc, const char* file, int line,
+                                 const char* message,
                                  const void* expected, const void* actual) {
 	char buf[STRING_MAX];
 	if (expected != actual) return;
-	sprintf(buf, "expected pointer <0x%p> to be different from <0x%p>", 
+	sprintf(buf, "expected pointer <0x%p> to be different from <0x%p>",
             expected, actual);
 	CuFail_Line(tc, file, line, message, buf);
 }
@@ -183,7 +183,7 @@ CuSuite* CuSuiteNew(void) {
 	return testSuite;
 }
 
-void CuSuiteSetup(CuSuite *testSuite, 
+void CuSuiteSetup(CuSuite *testSuite,
                   TestFunction setup, TestFunction teardown) {
     testSuite->setup = setup;
     testSuite->teardown = teardown;
@@ -271,12 +271,12 @@ void CuSuiteDetails(CuSuite* testSuite, char **details) {
 		asprintf_or_die(&s, "Runs: %d ",   testSuite->count);
         string_append(details, s);
         free(s);
-		
-        asprintf_or_die(&s, "Passes: %d ", 
+
+        asprintf_or_die(&s, "Passes: %d ",
                         testSuite->count - testSuite->failCount);
         string_append(details, s);
         free(s);
-		
+
 		asprintf_or_die(&s, "Fails: %d\n",  testSuite->failCount);
         string_append(details, s);
         free(s);

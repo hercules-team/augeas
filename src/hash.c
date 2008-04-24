@@ -107,7 +107,7 @@ static int is_power_of_two(hash_val_t arg)
 }
 
 /*
- * Compute a shift amount from a given table size 
+ * Compute a shift amount from a given table size
  */
 
 static hash_val_t compute_mask(hashcount_t size)
@@ -212,7 +212,7 @@ static void grow_table(hash_t *hash)
  *     hash->shift is equal to hash_val_t_bit, an illegal shift value.
  *     Also, other things could go wrong, such as hash->lowmark becoming zero.
  * 2.  Looping over each pair of sister chains, the low_chain is set to
- *     point to the head node of the chain in the lower half of the table, 
+ *     point to the head node of the chain in the lower half of the table,
  *     and high_chain points to the head node of the sister in the upper half.
  * 3.  The intent here is to compute a pointer to the last node of the
  *     lower chain into the low_tail variable. If this chain is empty,
@@ -321,7 +321,7 @@ hash_t *hash_create(hashcount_t maxcount, hash_comp_t compfun,
 	    clear_table(hash);			/* 8 */
 	    assert (hash_verify(hash));
 	    return hash;
-	} 
+	}
 	free(hash);
     }
 
@@ -394,7 +394,7 @@ void hash_destroy(hash_t *hash)
  * 2. The user supplied array of pointers hopefully contains nchains nodes.
  * 3. See note 7. in hash_create().
  * 4. We must dynamically compute the mask from the given power of two table
- *    size. 
+ *    size.
  * 5. The user supplied table can't be assumed to contain null pointers,
  *    so we reset it here.
  */
@@ -425,7 +425,7 @@ hash_t *hash_init(hash_t *hash, hashcount_t maxcount,
 
 /*
  * Reset the hash scanner so that the next element retrieved by
- * hash_scan_next() shall be the first element on the first non-empty chain. 
+ * hash_scan_next() shall be the first element on the first non-empty chain.
  * Notes:
  * 1. Locate the first non empty chain.
  * 2. If an empty chain is found, remember which one it is and set the next
@@ -456,7 +456,7 @@ void hash_scan_begin(hscan_t *scan, hash_t *hash)
 
 /*
  * Retrieve the next node from the hash table, and update the pointer
- * for the next invocation of hash_scan_next(). 
+ * for the next invocation of hash_scan_next().
  * Notes:
  * 1. Remember the next pointer in a temporary value so that it can be
  *    returned.
@@ -516,7 +516,7 @@ hnode_t *hash_scan_next(hscan_t *scan)
  * 3. If the table is dynamic and the load factor is already at >= 2,
  *    grow the table.
  * 4. We take the bottom N bits of the hash value to derive the chain index,
- *    where N is the base 2 logarithm of the size of the hash table. 
+ *    where N is the base 2 logarithm of the size of the hash table.
  */
 
 void hash_insert(hash_t *hash, hnode_t *node, const void *key)
@@ -548,7 +548,7 @@ void hash_insert(hash_t *hash, hnode_t *node, const void *key)
  * Notes:
  * 1. We hash the key and keep the entire hash value. As an optimization, when
  *    we descend down the chain, we can compare hash values first and only if
- *    hash values match do we perform a full key comparison. 
+ *    hash values match do we perform a full key comparison.
  * 2. To locate the chain from among 2^N chains, we look at the lower N bits of
  *    the hash value by anding them with the current mask.
  * 3. Looping through the chain, we compare the stored hash value inside each
@@ -581,7 +581,7 @@ hnode_t *hash_lookup(hash_t *hash, const void *key)
  * 1. The node must belong to this hash table, and its key must not have
  *    been tampered with.
  * 2. If this deletion will take the node count below the low mark, we
- *    shrink the table now. 
+ *    shrink the table now.
  * 3. Determine which chain the node belongs to, and fetch the pointer
  *    to the first node in this chain.
  * 4. If the node being deleted is the first node in the chain, then
@@ -616,7 +616,7 @@ hnode_t *hash_delete(hash_t *hash, hnode_t *node)
 	assert (hptr->next == node);
 	hptr->next = node->next;
     }
-	
+
     hash->nodecount--;
     assert (hash_verify(hash));
 
@@ -661,11 +661,11 @@ hnode_t *hash_scan_delete(hash_t *hash, hnode_t *node)
     if (hptr == node) {
 	hash->table[chain] = node->next;
     } else {
-	while (hptr->next != node) 
+	while (hptr->next != node)
 	    hptr = hptr->next;
 	hptr->next = node->next;
     }
-	
+
     hash->nodecount--;
     assert (hash_verify(hash));
     node->next = NULL;
@@ -769,7 +769,7 @@ hnode_t *hnode_create(void *data)
 }
 
 /*
- * Initialize a client-supplied node 
+ * Initialize a client-supplied node
  */
 
 hnode_t *hnode_init(hnode_t *hnode, void *data)
@@ -856,7 +856,7 @@ typedef char input_t[256];
 
 static int tokenize(char *string, ...)
 {
-    char **tokptr; 
+    char **tokptr;
     va_list arglist;
     int tokcount = 0;
 

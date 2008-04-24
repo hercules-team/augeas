@@ -1,7 +1,7 @@
 /etc/
 |-- DIR_COLORS
 |-- DIR_COLORS.xterm
-    records: line, 
+    records: line,
     format: kw ' '+ \value, fixed kw + user extensions
     comments: #.*$
 |-- acpi
@@ -54,7 +54,7 @@
 |-- default
     sysconfig
 |-- depmod.d/*
-    records: line, 
+    records: line,
     format: kw ' '+ \value, fixed kw + user extensions
     comments: #.*$
 |-- dev.d
@@ -160,7 +160,7 @@
 |-- makedev.d
     ???
 |-- man.config
-    records: line, 
+    records: line,
     format: kw ' '+ \value, fixed kw + user extensions
     comments: #.*$
 |-- mime.types

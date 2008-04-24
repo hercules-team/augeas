@@ -1,5 +1,5 @@
 /*
- * augtool.c: 
+ * augtool.c:
  *
  * Copyright (C) 2007, 2008 Red Hat Inc.
  *
@@ -501,7 +501,7 @@ static int main_loop(void) {
             printf("\n");
             return EXIT_SUCCESS;
         }
-        
+
         dup_line = strdup(line);
         if (dup_line == NULL) {
             fprintf(stderr, "Out of memory\n");
