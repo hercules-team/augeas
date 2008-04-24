@@ -9,7 +9,10 @@
       switches)
   - Public API is now stable, and existing calls will be supported without
     further changes
-  - Schema for /etc/sysconfig/network-scripts/ifcfg-* (Alan Pevec)
+  - New schema:
+    * /etc/sysconfig/network-scripts/ifcfg-* (Alan Pevec)
+    * /etc/apt/sources.list and /etc/apt/sources.list.d/* (Dean Wilson)
+  - Man page for augtool (Dean Wilson)
 
 0.0.8 - 2008-04-16
   - Complete rewrite of the language for schema descriptions
