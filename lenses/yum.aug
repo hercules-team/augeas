@@ -4,19 +4,28 @@ module Yum =
 
   let eol = Util.del_str "\n"
 
-  let key_re = /([^#;:= \t\n[\/])+/
+  (* Very painful: the regular expression is /[^#;:= \t\n[\/]/ - "baseurl" *)
+  (* Clearly, we need support for forming the setminus of regular          *)
+  (* languages.                                                            *)
+  let key_re = /([^b#;:= \t\n[\/]|b[^a#;:= \t\n[\/]|ba[^s#;:= \t\n[\/]|bas[^e#;:= \t\n[\/]|base[^u#;:= \t\n[\/]|baseu[^r#;:= \t\n[\/]|baseur[^l#;:= \t\n[\/]|baseurl[^#;:= \t\n[\/])[^#;:= \t\n[\/]*/
+
   let eq = del /[ \t]*[:=][ \t]*/ "="
   let secname = /[^]\/]+/
-  (* This sucks continuation lines into one big value. We should really      *)
-  (* split those into an array; that would require though that we sometimes  *)
-  (* make values a single entry, and at other times an array                 *)
-  let value = /[^ \t][^\n]*(\n[ \t]+[^ \t\n]+)*/
+
+  let value = /[^ \t\n][^\n]*/
 
   (* We really need to allow comments starting with REM and rem but that     *)
   (* leads to ambiguities with keys 'rem=' and 'REM=' The regular expression *)
   (* to do that cleanly is somewhat annoying to craft by hand; we'd need to  *)
   (* define KEY_RE as /[A-Za-z0-9]+/ - "REM" - "rem"                         *)
-  let comment = [ del /([;#].*)?[ \t]*\n/ "# \n" ]
+  let comment = [ del /([;#].*)?[ \t]*\n/ "\n" ]
+
+  let list_sep = del /[ \t]*(,[ \t]*|\n[ \t]+)/ "\n\t"
+  let list_value = store /[^ \t\n,]+/
+
+  let kv_list(s:string) =
+    [ key s . eq . list_value ] .
+      [ list_sep . label s . list_value ]* . eol
 
   let kv = [ key key_re . eq . store value . eol ]
 
@@ -24,7 +33,15 @@ module Yum =
       . del /[ \t]*[;#]?.*/ ""
       . eol
 
-  let section = [ sechead . ( comment | kv ) * ]
+  let entry = comment | kv
+
+  (* A section is a section head, followed by any number of key value    *)
+  (* entries, with comments and blank lines freely interspersed. The     *)
+  (* continuation lines allowed for baseurl entries make this a little   *)
+  (* more interesting: there can be at most one baseurl entry in each    *)
+  (* section (more precisely, yum will only obey one of them, but we act *)
+  (* as if yum would actually barf)                                      *)
+  let section = [ sechead . (entry* | entry* . (kv_list "baseurl") . entry*)]
 
   let lns = (comment) * . (section) *
 

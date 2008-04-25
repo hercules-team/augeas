@@ -1,3 +1,7 @@
+- Fix typechecking of union; as Nate Foster points out, the way it is done
+  now is plain wrong (well, too weak) To make checking of disjoint union
+  not annoy the hell out of people, need to support setminus for regexps
+
 - better error message for "short split in concat"
 
 - this needs to make aug_save fail:

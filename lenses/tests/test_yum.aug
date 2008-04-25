@@ -26,7 +26,7 @@ installonly_limit=100
 # in /etc/yum.repos.d
 "
 
-  let cont = "[main]\nbaseurl=url1\n   url2\n"
+  let cont = "[main]\nbaseurl=url1\n   url2 , url3\n   \n"
 
   test Yum.lns get yum_simple =
     { "sec1" {} { "key" = "value" } }
@@ -57,7 +57,23 @@ installonly_limit=100
    = "[sec-two]\nkey1=newvalue\n# comment\nkey2=value2\n"
 
   test Yum.lns get cont =
-    { "main" { "baseurl" = "url1\n   url2" } }
+    { "main"
+        { "baseurl" = "url1" }
+        { "baseurl" = "url2" }
+        { "baseurl" = "url3" }
+        {}
+    }
+
+  test Yum.lns put cont after
+      set "main/gpgcheck" "1"
+  =
+    cont . "gpgcheck=1\n"
+
+  (* We are actually stricter than yum in checking syntax. The yum.conf *)
+  (* man page mentions that it is illegal to have multiple baseurl keys *)
+  (* in the same section, but yum will just carry on, usually with      *)
+  (* results that surpise the unsuspecting user                         *)
+  test Yum.lns get "[repo]\nbaseurl=url1\nbaseurl=url2\n" = *
 
 (* Local Variables: *)
 (* mode: caml       *)
