@@ -535,6 +535,9 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
     struct path *p = make_path(aug->tree, path);
     int r;
 
+    if (p == NULL)
+        return -1;
+
     if (value != NULL)
         *value = NULL;
 
@@ -758,6 +761,9 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
     }
 
     p = make_path(aug->tree, pathin);
+    if (p == NULL)
+        return -1;
+
     for (tree = path_first(p); tree != NULL; tree = path_next(p)) {
         if (! TREE_HIDDEN(tree))
             cnt += 1;
