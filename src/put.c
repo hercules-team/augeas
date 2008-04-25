@@ -245,7 +245,7 @@ static int applies(struct lens *lens, struct split *split) {
         FIXME("Match failed - produce better error");
         abort();
     }
-    return (count > -1);
+    return (count == split->end - split->start);
 }
 
 static struct dict_entry *dict_lookup(const char *key, struct dict *dict) {
