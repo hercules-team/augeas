@@ -180,7 +180,7 @@ struct value *lns_make_plus(struct info *info, struct lens *l, int check) {
     if (EXN(star))
         return star;
 
-    conc = lns_make_concat(ref(info), l, star->lens, check);
+    conc = lns_make_concat(ref(info), ref(l), ref(star->lens), check);
     unref(star, value);
     return conc;
 }

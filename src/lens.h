@@ -27,7 +27,7 @@
 #include "fa.h"
 
 enum lens_tag {
-    L_DEL,
+    L_DEL = 42,    /* Shift tag values so we fail fast(er) on bad pointers */
     L_STORE,
     L_KEY,
     L_LABEL,
