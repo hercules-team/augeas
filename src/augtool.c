@@ -118,6 +118,7 @@ static void cmd_ls(char *args[]) {
     }
     if (cnt > 0)
         free(paths);
+    free(path);
 }
 
 static void cmd_match(char *args[]) {
