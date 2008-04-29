@@ -652,6 +652,7 @@ static void free_tree_node(struct tree *tree) {
         return;
 
     free((char *) tree->label);
+    free((char *) tree->value);
     free(tree);
 }
 
