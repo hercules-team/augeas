@@ -1,5 +1,6 @@
-(* Test for Ifcfg module *)
-module Test_ifcfg =
+(* Test for shell lens *)
+module Test_shellvars =
+
   let eth_static = "# Intel Corporation PRO/100 VE Network Connection
 DEVICE=eth0
 BOOTPROTO=static
@@ -15,7 +16,7 @@ ONBOOT=yes
 
   let key_brack = "SOME_KEY[1]=\nDEVICE=eth0\n"
 
-  test Ifcfg.lns get eth_static =
+  test Shellvars.lns get eth_static =
     { }
     { "DEVICE" = "eth0" }
     { "BOOTPROTO" = "static" }
@@ -27,7 +28,7 @@ ONBOOT=yes
     { "NETWORK" = "172.31.0.0" }
     { "ONBOOT" = "yes" }
 
-  test Ifcfg.lns put eth_static after
+  test Shellvars.lns put eth_static after
       set "BOOTPROTO" "dhcp" ;
       rm "IPADDR" ;
       rm "BROADCAST" ;
@@ -40,10 +41,10 @@ HWADDR=ab:cd:ef:12:34:56
 #DHCP_HOSTNAME=host.example.com
 ONBOOT=yes
 "
-  test Ifcfg.lns get empty_val =
+  test Shellvars.lns get empty_val =
     { "EMPTY" = "" } { "DEVICE" = "eth0" }
 
-  test Ifcfg.lns get key_brack =
+  test Shellvars.lns get key_brack =
     { "SOME_KEY[1]" = "" } { "DEVICE" = "eth0" }
 
 (* Local Variables: *)
