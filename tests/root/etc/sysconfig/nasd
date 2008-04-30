@@ -1,0 +1,10 @@
+# Options to nasd
+# See nasd(1) for more details
+# -aa		allow any client to connect
+# -local	allow local clients only
+# -b		detach and run in background
+# -v		enable verbose messages
+# -d		<num>	enable debug messages at level <num>
+# -pn		partial networking enabled
+# -nopn		partial networking disabled [default]
+NASD_OPTIONS="-b -local"

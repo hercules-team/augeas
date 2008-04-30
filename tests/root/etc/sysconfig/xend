@@ -1,0 +1,16 @@
+
+#XENSTORED_PID="/var/run/xenstore.pid"
+#XENSTORED_ARGS=
+
+# Log all hypervisor messages (cf xm dmesg)
+#XENCONSOLED_LOG_HYPERVISOR=no
+
+# Log all guest console output (cf xm console)
+#XENCONSOLED_LOG_GUESTS=no
+
+# Location to store guest & hypervisor logs
+#XENCONSOLED_LOG_DIR=/var/log/xen/console
+
+#XENCONSOLED_ARGS=
+
+#BLKTAPCTRL_ARGS=

@@ -1,0 +1,672 @@
+-
+class: OTHER
+bus: PCI
+detached: 0
+desc: "Intel Corporation Mobile 945GM/PM/GMS, 943/940GML and 945GT Express Memory Controller Hub"
+vendorId: 8086
+deviceId: 27a0
+subVendorId: 17aa
+subDeviceId: 2017
+pciType: 1
+pcidom:    0
+pcibus:  0
+pcidev:  0
+pcifn:  0
+-
+class: OTHER
+bus: PCI
+detached: 0
+driver: shpchp
+desc: "Intel Corporation 82801G (ICH7 Family) PCI Express Port 1"
+vendorId: 8086
+deviceId: 27d0
+subVendorId: 0000
+subDeviceId: 0000
+pciType: 1
+pcidom:    0
+pcibus:  0
+pcidev: 1c
+pcifn:  0
+-
+class: OTHER
+bus: PCI
+detached: 0
+driver: shpchp
+desc: "Intel Corporation 82801G (ICH7 Family) PCI Express Port 2"
+vendorId: 8086
+deviceId: 27d2
+subVendorId: 0000
+subDeviceId: 0000
+pciType: 1
+pcidom:    0
+pcibus:  0
+pcidev: 1c
+pcifn:  1
+-
+class: OTHER
+bus: PCI
+detached: 0
+driver: shpchp
+desc: "Intel Corporation 82801G (ICH7 Family) PCI Express Port 3"
+vendorId: 8086
+deviceId: 27d4
+subVendorId: 0000
+subDeviceId: 0000
+pciType: 1
+pcidom:    0
+pcibus:  0
+pcidev: 1c
+pcifn:  2
+-
+class: OTHER
+bus: PCI
+detached: 0
+driver: shpchp
+desc: "Intel Corporation 82801G (ICH7 Family) PCI Express Port 4"
+vendorId: 8086
+deviceId: 27d6
+subVendorId: 0000
+subDeviceId: 0000
+pciType: 1
+pcidom:    0
+pcibus:  0
+pcidev: 1c
+pcifn:  3
+-
+class: OTHER
+bus: PCI
+detached: 0
+desc: "Intel Corporation 82801 Mobile PCI Bridge"
+vendorId: 8086
+deviceId: 2448
+subVendorId: 0000
+subDeviceId: 0000
+pciType: 1
+pcidom:    0
+pcibus:  0
+pcidev: 1e
+pcifn:  0
+-
+class: OTHER
+bus: PCI
+detached: 0
+driver: intel-rng
+desc: "Intel Corporation 82801GBM (ICH7-M) LPC Interface Bridge"
+vendorId: 8086
+deviceId: 27b9
+subVendorId: 17aa
+subDeviceId: 2009
+pciType: 1
+pcidom:    0
+pcibus:  0
+pcidev: 1f
+pcifn:  0
+-
+class: OTHER
+bus: PCI
+detached: 0
+driver: i2c-i801
+desc: "Intel Corporation 82801G (ICH7 Family) SMBus Controller"
+vendorId: 8086
+deviceId: 27da
+subVendorId: 17aa
+subDeviceId: 200f
+pciType: 1
+pcidom:    0
+pcibus:  0
+pcidev: 1f
+pcifn:  3
+-
+class: OTHER
+bus: ISAPNP
+detached: 0
+desc: "ATM1200"
+deviceId: ATM1200
+compat: PNP0c31
+-
+class: OTHER
+bus: USB
+detached: 0
+driver: hci_usb
+desc: "Broadcom Corp BCM2045B"
+usbclass: 254
+usbsubclass: 1
+usbprotocol: 0
+usbbus: 5
+usblevel: 1
+usbport: 0
+usbdev: 2
+vendorId: 0a5c
+deviceId: 2110
+usbmfr: Broadcom Corp
+usbprod: BCM2045B
+-
+class: OTHER
+bus: USB
+detached: 0
+driver: hci_usb
+desc: "Broadcom Corp BCM2045B"
+usbclass: 255
+usbsubclass: 255
+usbprotocol: 255
+usbbus: 5
+usblevel: 1
+usbport: 0
+usbdev: 2
+vendorId: 0a5c
+deviceId: 2110
+usbmfr: Broadcom Corp
+usbprod: BCM2045B
+-
+class: OTHER
+bus: USB
+detached: 0
+driver: hci_usb
+desc: "Broadcom Corp BCM2045B"
+usbclass: 224
+usbsubclass: 1
+usbprotocol: 1
+usbbus: 5
+usblevel: 1
+usbport: 0
+usbdev: 2
+vendorId: 0a5c
+deviceId: 2110
+usbmfr: Broadcom Corp
+usbprod: BCM2045B
+-
+class: OTHER
+bus: ISAPNP
+detached: 0
+desc: "IBM0057"
+deviceId: IBM0057
+compat: PNP0f13
+-
+class: OTHER
+bus: ISAPNP
+detached: 0
+driver: nsc-ircc
+desc: "IBM0071"
+deviceId: IBM0071
+compat: PNP0511
+-
+class: OTHER
+bus: PSAUX
+detached: 0
+desc: "Lid Switch"
+-
+class: OTHER
+bus: USB
+detached: 0
+desc: "Linux 2.6.24.4-64.fc8 ehci_hcd EHCI Host Controller"
+usbclass: 9
+usbsubclass: 0
+usbprotocol: 0
+usbbus: 1
+usblevel: 0
+usbport: 0
+usbdev: 1
+vendorId: 0000
+deviceId: 0000
+usbmfr: Linux 2.6.24.4-64.fc8 ehci_hcd
+usbprod: EHCI Host Controller
+-
+class: OTHER
+bus: USB
+detached: 0
+desc: "Linux 2.6.24.4-64.fc8 uhci_hcd UHCI Host Controller"
+usbclass: 9
+usbsubclass: 0
+usbprotocol: 0
+usbbus: 5
+usblevel: 0
+usbport: 0
+usbdev: 1
+vendorId: 0000
+deviceId: 0000
+usbmfr: Linux 2.6.24.4-64.fc8 uhci_hcd
+usbprod: UHCI Host Controller
+-
+class: OTHER
+bus: USB
+detached: 0
+desc: "Linux 2.6.24.4-64.fc8 uhci_hcd UHCI Host Controller"
+usbclass: 9
+usbsubclass: 0
+usbprotocol: 0
+usbbus: 4
+usblevel: 0
+usbport: 0
+usbdev: 1
+vendorId: 0000
+deviceId: 0000
+usbmfr: Linux 2.6.24.4-64.fc8 uhci_hcd
+usbprod: UHCI Host Controller
+-
+class: OTHER
+bus: USB
+detached: 0
+desc: "Linux 2.6.24.4-64.fc8 uhci_hcd UHCI Host Controller"
+usbclass: 9
+usbsubclass: 0
+usbprotocol: 0
+usbbus: 3
+usblevel: 0
+usbport: 0
+usbdev: 1
+vendorId: 0000
+deviceId: 0000
+usbmfr: Linux 2.6.24.4-64.fc8 uhci_hcd
+usbprod: UHCI Host Controller
+-
+class: OTHER
+bus: USB
+detached: 0
+desc: "Linux 2.6.24.4-64.fc8 uhci_hcd UHCI Host Controller"
+usbclass: 9
+usbsubclass: 0
+usbprotocol: 0
+usbbus: 2
+usblevel: 0
+usbport: 0
+usbdev: 1
+vendorId: 0000
+deviceId: 0000
+usbmfr: Linux 2.6.24.4-64.fc8 uhci_hcd
+usbprod: UHCI Host Controller
+-
+class: OTHER
+bus: PSAUX
+detached: 0
+driver: pcspkr
+desc: "PC Speaker"
+-
+class: OTHER
+bus: ISAPNP
+detached: 0
+desc: "PNP0103"
+deviceId: PNP0103
+-
+class: OTHER
+bus: ISAPNP
+detached: 0
+desc: "PNP0200"
+deviceId: PNP0200
+-
+class: OTHER
+bus: ISAPNP
+detached: 0
+desc: "PNP0303"
+deviceId: PNP0303
+-
+class: OTHER
+bus: ISAPNP
+detached: 0
+desc: "PNP0800"
+deviceId: PNP0800
+-
+class: OTHER
+bus: ISAPNP
+detached: 0
+desc: "PNP0a08"
+deviceId: PNP0a08
+compat: PNP0a03
+-
+class: OTHER
+bus: ISAPNP
+detached: 0
+desc: "PNP0b00"
+deviceId: PNP0b00
+-
+class: OTHER
+bus: ISAPNP
+detached: 0
+desc: "PNP0c01"
+deviceId: PNP0c01
+-
+class: OTHER
+bus: ISAPNP
+detached: 0
+desc: "PNP0c02"
+deviceId: PNP0c02
+-
+class: OTHER
+bus: ISAPNP
+detached: 0
+desc: "PNP0c04"
+deviceId: PNP0c04
+-
+class: OTHER
+bus: PSAUX
+detached: 0
+desc: "Power Button (FF)"
+-
+class: OTHER
+bus: USB
+detached: 0
+desc: "STMicroelectronics Biometric Coprocessor"
+usbclass: 255
+usbsubclass: 0
+usbprotocol: 0
+usbbus: 5
+usblevel: 1
+usbport: 1
+usbdev: 3
+vendorId: 0483
+deviceId: 2016
+usbmfr: STMicroelectronics
+usbprod: Biometric Coprocessor
+-
+class: OTHER
+bus: PSAUX
+detached: 0
+desc: "Sleep Button (CM)"
+-
+class: OTHER
+bus: PSAUX
+detached: 0
+desc: "TPPS/2 IBM TrackPoint"
+-
+class: OTHER
+bus: USB
+detached: 0
+desc: "Unknown USB device 0x451:0x2046"
+usbclass: 9
+usbsubclass: 0
+usbprotocol: 0
+usbbus: 1
+usblevel: 2
+usbport: 0
+usbdev: 5
+vendorId: 0451
+deviceId: 2046
+-
+class: OTHER
+bus: PSAUX
+detached: 0
+desc: "Video Bus"
+-
+class: OTHER
+bus: PSAUX
+detached: 0
+desc: "Video Bus"
+-
+class: NETWORK
+bus: PCI
+detached: 0
+device: eth0
+driver: e1000
+desc: "Intel Corporation 82573L Gigabit Ethernet Controller"
+network.hwaddr: 00:15:58:81:5b:0e
+vendorId: 8086
+deviceId: 109a
+subVendorId: 17aa
+subDeviceId: 2001
+pciType: 1
+pcidom:    0
+pcibus:  2
+pcidev:  0
+pcifn:  0
+-
+class: NETWORK
+bus: PCI
+detached: 0
+device: wlan0
+driver: iwl3945
+desc: "Intel Corporation PRO/Wireless 3945ABG Network Connection"
+network.hwaddr: 00:19:d2:9f:88:96
+vendorId: 8086
+deviceId: 4227
+subVendorId: 8086
+subDeviceId: 1010
+pciType: 1
+pcidom:    0
+pcibus:  3
+pcidev:  0
+pcifn:  0
+-
+class: MOUSE
+bus: USB
+detached: 0
+device: input/mice
+driver: genericwheelusb
+desc: "ATEN 4 Port USB KVM B V1.80"
+usbclass: 3
+usbsubclass: 1
+usbprotocol: 2
+usbbus: 1
+usblevel: 3
+usbport: 0
+usbdev: 6
+vendorId: 0557
+deviceId: 2205
+usbmfr: ATEN
+usbprod: 4 Port USB KVM B V1.80
+-
+class: MOUSE
+bus: PSAUX
+detached: 0
+device: input/mice
+driver: generic3ps/2
+desc: "Macintosh mouse button emulation"
+-
+class: MOUSE
+bus: PSAUX
+detached: 0
+device: input/mice
+driver: synaptics
+desc: "SynPS/2 Synaptics TouchPad"
+-
+class: MOUSE
+bus: PSAUX
+detached: 0
+device: input/mice
+driver: generic3ps/2
+desc: "ThinkPad Extra Buttons"
+-
+class: AUDIO
+bus: PCI
+detached: 0
+driver: snd-hda-intel
+desc: "Intel Corporation 82801G (ICH7 Family) High Definition Audio Controller"
+vendorId: 8086
+deviceId: 27d8
+subVendorId: 17aa
+subDeviceId: 2010
+pciType: 1
+pcidom:    0
+pcibus:  0
+pcidev: 1b
+pcifn:  0
+-
+class: CDROM
+bus: SCSI
+detached: 0
+device: scd0
+desc: "MATSHITA DVD-RAM UJ-842"
+host: 4
+id: 0
+channel: 0
+lun: 0
+-
+class: VIDEO
+bus: PCI
+detached: 0
+driver: intelfb
+desc: "Intel Corporation Mobile 945GM/GMS, 943/940GML Express Integrated Graphics Controller"
+video.xdriver: intel
+vendorId: 8086
+deviceId: 27a2
+subVendorId: 17aa
+subDeviceId: 201a
+pciType: 1
+pcidom:    0
+pcibus:  0
+pcidev:  2
+pcifn:  0
+-
+class: VIDEO
+bus: PCI
+detached: 0
+desc: "Intel Corporation Mobile 945GM/GMS/GME, 943/940GML Express Integrated Graphics Controller"
+vendorId: 8086
+deviceId: 27a6
+subVendorId: 17aa
+subDeviceId: 201a
+pciType: 1
+pcidom:    0
+pcibus:  0
+pcidev:  2
+pcifn:  1
+-
+class: HD
+bus: SCSI
+detached: 0
+device: sda
+desc: "ATA HTS721010G9SA00"
+host: 0
+id: 0
+channel: 0
+lun: 0
+-
+class: KEYBOARD
+bus: PSAUX
+detached: 0
+desc: "AT Translated Set 2 keyboard"
+-
+class: KEYBOARD
+bus: USB
+detached: 0
+driver: keybdev
+desc: "ATEN 4 Port USB KVM B V1.80"
+usbclass: 3
+usbsubclass: 1
+usbprotocol: 1
+usbbus: 1
+usblevel: 3
+usbport: 0
+usbdev: 6
+vendorId: 0557
+deviceId: 2205
+usbmfr: ATEN
+usbprod: 4 Port USB KVM B V1.80
+-
+class: USB
+bus: PCI
+detached: 0
+driver: uhci-hcd
+desc: "Intel Corporation 82801G (ICH7 Family) USB UHCI Controller #1"
+vendorId: 8086
+deviceId: 27c8
+subVendorId: 17aa
+subDeviceId: 200a
+pciType: 1
+pcidom:    0
+pcibus:  0
+pcidev: 1d
+pcifn:  0
+-
+class: USB
+bus: PCI
+detached: 0
+driver: uhci-hcd
+desc: "Intel Corporation 82801G (ICH7 Family) USB UHCI Controller #2"
+vendorId: 8086
+deviceId: 27c9
+subVendorId: 17aa
+subDeviceId: 200a
+pciType: 1
+pcidom:    0
+pcibus:  0
+pcidev: 1d
+pcifn:  1
+-
+class: USB
+bus: PCI
+detached: 0
+driver: uhci-hcd
+desc: "Intel Corporation 82801G (ICH7 Family) USB UHCI Controller #3"
+vendorId: 8086
+deviceId: 27ca
+subVendorId: 17aa
+subDeviceId: 200a
+pciType: 1
+pcidom:    0
+pcibus:  0
+pcidev: 1d
+pcifn:  2
+-
+class: USB
+bus: PCI
+detached: 0
+driver: uhci-hcd
+desc: "Intel Corporation 82801G (ICH7 Family) USB UHCI Controller #4"
+vendorId: 8086
+deviceId: 27cb
+subVendorId: 17aa
+subDeviceId: 200a
+pciType: 1
+pcidom:    0
+pcibus:  0
+pcidev: 1d
+pcifn:  3
+-
+class: USB
+bus: PCI
+detached: 0
+driver: ehci-hcd
+desc: "Intel Corporation 82801G (ICH7 Family) USB2 EHCI Controller"
+vendorId: 8086
+deviceId: 27cc
+subVendorId: 17aa
+subDeviceId: 200b
+pciType: 1
+pcidom:    0
+pcibus:  0
+pcidev: 1d
+pcifn:  7
+-
+class: SOCKET
+bus: PCI
+detached: 0
+driver: yenta_socket
+desc: "Texas Instruments PCI1510 PC card Cardbus Controller"
+vendorId: 104c
+deviceId: ac56
+subVendorId: 17aa
+subDeviceId: 2012
+pciType: 1
+pcidom:    0
+pcibus: 15
+pcidev:  0
+pcifn:  0
+-
+class: IDE
+bus: PCI
+detached: 0
+driver: ata_piix
+desc: "Intel Corporation 82801G (ICH7 Family) IDE Controller"
+vendorId: 8086
+deviceId: 27df
+subVendorId: 17aa
+subDeviceId: 200c
+pciType: 1
+pcidom:    0
+pcibus:  0
+pcidev: 1f
+pcifn:  1
+-
+class: SATA
+bus: PCI
+detached: 0
+driver: ahci
+desc: "Intel Corporation 82801GBM/GHM (ICH7 Family) SATA AHCI Controller"
+vendorId: 8086
+deviceId: 27c5
+subVendorId: 17aa
+subDeviceId: 200d
+pciType: 1
+pcidom:    0
+pcibus:  0
+pcidev: 1f
+pcifn:  2

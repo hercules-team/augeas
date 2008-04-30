@@ -1,0 +1,17 @@
+# Set to 'yes' to mount the system filesystems read-only.
+READONLY=no
+# Set to 'yes' to mount various temporary state as either tmpfs
+# or on the block device labelled RW_LABEL. Implied by READONLY
+TEMPORARY_STATE=no
+# Place to put a tmpfs for temporary scratch writable space
+RW_MOUNT=/var/lib/stateless/writable
+# Label on local filesystem which can be used for temporary scratch space
+RW_LABEL=stateless-rw
+# Options to use for temporary mount
+RW_OPTIONS=
+# Label for partition with persistent data
+STATE_LABEL=stateless-state
+# Where to mount to the persistent data
+STATE_MOUNT=/var/lib/stateless/state
+# Options to use for peristent mount
+STATE_OPTIONS=

@@ -1,0 +1,6 @@
+# Set to anything other than 'no' to force a 'safe' probe on startup.
+# 'safe' probe disables:
+# - serial port probing
+# - DDC monitor probing
+# - PS/2 probing
+SAFE=no

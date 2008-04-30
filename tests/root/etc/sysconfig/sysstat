@@ -1,0 +1,2 @@
+# How long to keep log files (days), maximum is a month
+HISTORY=7

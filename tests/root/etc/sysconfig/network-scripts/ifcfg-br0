@@ -1,0 +1,5 @@
+# Intel Corporation 82573L Gigabit Ethernet Controller
+DEVICE=br0
+ONBOOT=yes
+BOOTPROTO=dhcp
+TYPE=Bridge

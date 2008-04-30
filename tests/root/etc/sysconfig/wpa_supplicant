@@ -1,0 +1,6 @@
+# wlan0 and wifi0
+# INTERFACES="-iwlan0 -iwifi0"
+INTERFACES="-iwlan0"
+# ndiswrapper and prism
+# DRIVERS="-Dndiswrapper -Dprism"
+DRIVERS="-Dwext"

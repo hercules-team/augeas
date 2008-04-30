@@ -1,0 +1,6 @@
+# Possible values are 1, 2, ... or nothing
+# Delay is determined using the hostname and the variable (Delay) from this configuration file.
+# Bigger value means shorter delay.
+# This delay could be switched off, but then you can have problems with network overload 
+# (for example yum updates in cron.daily run on all your computers etc.)
+DELAY=1

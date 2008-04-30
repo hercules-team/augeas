@@ -1,0 +1,5 @@
+# Configuration file for system-config-securitylevel
+
+--enabled
+--port=22:tcp
+--port=2049:tcp

@@ -1,0 +1,5 @@
+# The ZONE parameter is only evaluated by system-config-date.
+# The timezone of the system is defined by the contents of /etc/localtime.
+ZONE="America/Los Angeles"
+UTC=true
+ARC=false

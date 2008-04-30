@@ -1,0 +1,2 @@
+boot=/dev/sda
+forcelba=0

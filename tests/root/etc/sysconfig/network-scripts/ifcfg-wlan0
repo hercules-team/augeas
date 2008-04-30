@@ -1,0 +1,5 @@
+# Intel Corporation PRO/Wireless 3945ABG Network Connection
+DEVICE=wlan0
+BOOTPROTO=dhcp
+ONBOOT=no
+HWADDR=XX:XX:XX:9f:88:96

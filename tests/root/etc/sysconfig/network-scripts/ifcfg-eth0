@@ -1,0 +1,7 @@
+# Intel Corporation 82573L Gigabit Ethernet Controller
+DEVICE=eth0
+#BOOTPROTO=dhcp
+HWADDR=XX:YY:ZZ:81:5B:0E
+ONBOOT=yes
+#DHCP_HOSTNAME=dhcp.example.com
+BRIDGE=br0

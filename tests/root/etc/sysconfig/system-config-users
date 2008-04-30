@@ -1,0 +1,10 @@
+# Configuration file for system-config-users
+
+# Filter out system users
+FILTER=true
+# Automatically assign highest UID for new users
+ASSIGN_HIGHEST_UID=true
+# Automatically assign highest GID for new groups
+ASSIGN_HIGHEST_GID=true
+# Prefer to have same UID and GID for new users
+PREFER_SAME_UID_GID=true

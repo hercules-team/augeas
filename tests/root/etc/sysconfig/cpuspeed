@@ -1,0 +1,72 @@
+# /etc/sysconfig/cpuspeed
+#
+# This configuration file controls the behavior of both the
+# cpuspeed daemon and various cpufreq modules.
+# For the vast majority of users, there shouldn't be any need to
+# alter the contents of this file at all. By and large, frequency
+# scaling should Just Work(tm) with the defaults.
+
+### DRIVER ###
+# Your CPUFreq driver module
+# Note that many drivers are now built-in, rather than built as modules,
+# so its usually best not to specify one. The most commonly-needed driver
+# module these days is 'p4-clockmod', however, in most cases, it is not
+# recommended for use. See: http://lkml.org/lkml/2006/2/25/84
+# default value: empty (try to auto-detect/use built-in)
+DRIVER=
+
+### GOVERNOR ###
+# Which scaling governor to use
+# Details on scaling governors for your cpu(s) can be found in
+# cpu-freq/governors.txt, part of the kernel-doc package
+# NOTES:
+# - The GOVERNOR parameter is only valid on centrino, powernow-k8 (amd64)
+#   and p4-clockmod platforms, other platforms that support frequency
+#   scaling always use the 'userspace' governor.
+# - Using the 'userspace' governor will trigger the cpuspeed daemon to run,
+#   which provides said user-space frequency scaling.
+# default value: empty (defaults to ondemand on centrino, powernow-k8,
+#                       and p4-clockmod systems, userspace on others)
+GOVERNOR=
+
+### FREQUENCIES ###
+# NOTE: valid max/min frequencies for your cpu(s) can be found in
+# /sys/devices/system/cpu/cpu*/cpufreq/scaling_available_frequencies
+# on systems that support frequency scaling (though only after the
+# appropriate drivers have been loaded via the cpuspeed initscript).
+# maximum speed to scale up to
+# default value: empty (use cpu reported maximum)
+MAX_SPEED=
+# minimum speed to scale down to
+# default value: empty (use cpu reported minimum)
+MIN_SPEED=
+
+### SCALING THRESHOLDS ###
+# Busy percentage threshold over which to scale up to max frequency
+# default value: empty (use governor default)
+UP_THRESHOLD=
+# Busy percentage threshold under which to scale frequency down
+# default value: empty (use governor default)
+DOWN_THRESHOLD=
+
+### NICE PROCESS HANDLING ###
+# Let background (nice) processes speed up the cpu
+# default value: 0 (background process usage can speed up cpu)
+# alternate value: 1 (background processes will be ignored)
+IGNORE_NICE=0
+
+
+#####################################################
+########## HISTORICAL CPUSPEED CONFIG BITS ##########
+#####################################################
+VMAJOR=1
+VMINOR=1
+
+# Add your favorite options here
+#OPTS="$OPTS -s 0 -i 10 -r"
+
+# uncomment and modify this to check the state of the AC adapter
+#OPTS="$OPTS -a /proc/acpi/ac_adapter/*/state"
+
+# uncomment and modify this to check the system temperature
+#OPTS="$OPTS -t /proc/acpi/thermal_zone/*/temperature 75"
