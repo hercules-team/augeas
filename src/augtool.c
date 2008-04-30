@@ -371,11 +371,14 @@ static char *readline_path_generator(const char *text, int state) {
     if (state == 0) {
         char *end = strrchr(text, SEP);
         char *path;
-        if (end == NULL)
-            path = strdup("/*");
-        else {
+        if (end == NULL) {
+            if ((path = strdup("/*")) == NULL)
+                return NULL;
+        } else {
             end += 1;
             CALLOC(path, end - text + 2);
+            if (path == NULL)
+                return NULL;
             strncpy(path, text, end - text);
             strcat(path, "*");
         }
@@ -393,7 +396,10 @@ static char *readline_path_generator(const char *text, int state) {
         current += 1;
         if (STREQLEN(child, text, strlen(text))) {
             if (child_count(child) > 0) {
-                child = realloc(child, strlen(child)+2);
+                char *c = realloc(child, strlen(child)+2);
+                if (c == NULL)
+                    return NULL;
+                child = c;
                 strcat(child, "/");
             }
             rl_filename_completion_desired = 1;
