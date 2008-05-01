@@ -238,7 +238,7 @@ struct filter {
     unsigned int   include : 1;
 };
 
-struct filter *make_filter(struct string *glob, unsigned int include);
+struct filter *make_filter(struct string *glb, unsigned int include);
 void free_filter(struct filter *filter);
 
 /* Transformers that actually run lenses on contents of files */
