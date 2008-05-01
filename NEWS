@@ -1,4 +1,4 @@
-0.1.0 - ????-??-??
+0.1.0 - 2008-05-01
   - Various changes to public API:
     * Remove aug_exists from public API, and merge functionality into aug_get
     * Do not hide pointer behind typedef; instead Augeas 'handle' type is now
@@ -11,6 +11,8 @@
     further changes
   - New schema:
     * /etc/sysconfig/network-scripts/ifcfg-* (Alan Pevec)
+    * Assorted other files from /etc/sysconfig (the ones that just set
+      shell variables)
     * /etc/apt/sources.list and /etc/apt/sources.list.d/* (Dean Wilson)
   - Man page for augtool (Dean Wilson)
 
