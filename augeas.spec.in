@@ -1,6 +1,6 @@
 Name:           augeas
 Version:        @VERSION@
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        A library for changing configuration files
 
 Group:          System Environment/Libraries
@@ -26,7 +26,8 @@ format and the transformation into a tree.
 %package        devel
 Summary:        Development files for %{name}
 Group:          Development/Libraries
-Requires:       %{name} = %{version}-%{release}
+Requires:       %{name}-libs = %{version}-%{release}
+Requires:       pkgconfig
 
 %description    devel
 The %{name}-devel package contains libraries and header files for
@@ -79,6 +80,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/pkgconfig/augeas.pc
 
 %changelog
+* Fri May  2 2008 David Lutterkort <dlutter@redhat.com> - 0.1.0-2
+- Fixes according to Fedora review
+
 * Thu May  1 2008 David Lutterkort <dlutter@redhat.com> - 0.1.0-1
 - New version
 
