@@ -45,7 +45,8 @@ static fa_t regexp_to_fa(struct regexp *regexp) {
     int error = fa_compile(regexp->pattern->str, &fa);
     if (error != REG_NOERROR) {
         syntax_error(regexp->info,
-                     "unexpected error from fa_compile %d", error);
+                     "unexpected error from fa_compile %d compiling %s",
+                     error, regexp->pattern->str);
         return NULL;
     }
     return fa;
@@ -445,13 +446,13 @@ static struct value *typecheck_maybe(struct info *info, struct lens *l) {
 
 static struct regexp *make_key_regexp(struct info *info, const char *pat) {
     struct regexp *regexp;
-    size_t len = strlen(pat) + 2;
+    size_t len = strlen(pat) + 4;
 
     make_ref(regexp);
     make_ref(regexp->pattern);
     regexp->info = ref(info);
     CALLOC(regexp->pattern->str, len);
-    snprintf((char *) regexp->pattern->str, len, "%s/", pat);
+    snprintf((char *) regexp->pattern->str, len, "(%s)/", pat);
     return regexp;
 }
 
