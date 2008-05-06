@@ -330,14 +330,12 @@ static const char *seg_label(struct segment *seg) {
 
 static int seg_needs_qual(struct path *path, struct segment *seg) {
     struct tree *siblings;
-    const char *label;
 
     if (seg->index > 1)
         return 1;
     siblings = (seg == path->segments) ? path->root : (seg-1)->tree->children;
-    label = seg_label(seg);
     list_for_each(t, siblings) {
-        if (t != seg->tree && streqv(t->label, label))
+        if (t != seg->tree && streqv(t->label, seg->tree->label))
             return 1;
     }
     return 0;
