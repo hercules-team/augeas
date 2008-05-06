@@ -10,7 +10,6 @@ Source0:        http://augeas.net/download/augeas-@VERSION@.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  readline-devel
-Requires:       readline
 Requires:       %{name}-libs = %{version}-%{release}
 
 %description
@@ -68,6 +67,7 @@ rm -rf $RPM_BUILD_ROOT
 %doc %{_mandir}/man1/*
 
 %files libs
+%defattr(-,root,root,-)
 %{_datadir}/augeas
 %{_libdir}/*.so.*
 %doc AUTHORS COPYING NEWS
