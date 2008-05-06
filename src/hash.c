@@ -199,7 +199,9 @@ static void grow_table(hash_t *hash)
 	hash->lowmark *= 2;
 	hash->highmark *= 2;
     }
+#ifdef HASH_DEBUG_VERIFY
     assert (hash_verify(hash));
+#endif
 }
 
 /*
@@ -260,7 +262,9 @@ static void shrink_table(hash_t *hash)
     hash->nchains = nchains;
     hash->lowmark /= 2;
     hash->highmark /= 2;
+#ifdef HASH_DEBUG_VERIFY
     assert (hash_verify(hash));
+#endif
 }
 
 
@@ -319,7 +323,9 @@ hash_t *hash_create(hashcount_t maxcount, hash_comp_t compfun,
 	    hash->mask = INIT_MASK;
 	    hash->dynamic = 1;			/* 7 */
 	    clear_table(hash);			/* 8 */
+#ifdef HASH_DEBUG_VERIFY
 	    assert (hash_verify(hash));
+#endif
 	    return hash;
 	}
 	free(hash);
@@ -418,8 +424,9 @@ hash_t *hash_init(hash_t *hash, hashcount_t maxcount,
     hash->mask = compute_mask(nchains);	/* 4 */
     clear_table(hash);		/* 5 */
 
+#ifdef HASH_DEBUG_VERIFY
     assert (hash_verify(hash));
-
+#endif
     return hash;
 }
 
@@ -540,7 +547,9 @@ void hash_insert(hash_t *hash, hnode_t *node, const void *key)
     hash->table[chain] = node;
     hash->nodecount++;
 
+#ifdef HASH_DEBUG_VERIFY
     assert (hash_verify(hash));
+#endif
 }
 
 /*
@@ -618,7 +627,9 @@ hnode_t *hash_delete(hash_t *hash, hnode_t *node)
     }
 
     hash->nodecount--;
+#ifdef HASH_DEBUG_VERIFY
     assert (hash_verify(hash));
+#endif
 
     node->next = NULL;					/* 6 */
     return node;
@@ -667,7 +678,9 @@ hnode_t *hash_scan_delete(hash_t *hash, hnode_t *node)
     }
 
     hash->nodecount--;
+#ifdef HASH_DEBUG_VERIFY
     assert (hash_verify(hash));
+#endif
     node->next = NULL;
 
     return node;
