@@ -313,12 +313,19 @@ static int path_find_one(struct path *path) {
     return 1;
 }
 
+static const char *pretty_label(const struct tree *tree) {
+    if (tree == NULL)
+        return "(no_tree)";
+    else if (tree->label == NULL)
+        return "(none)";
+    else
+        return tree->label;
+}
+
 static const char *seg_label(struct segment *seg) {
     if (seg->label != NULL)
         return seg->label;
-    if (seg->tree != NULL && seg->tree->label != NULL)
-        return seg->tree->label;
-    return "(none)";
+    return pretty_label(seg->tree);
 }
 
 static int seg_needs_qual(struct path *path, struct segment *seg) {
@@ -382,7 +389,7 @@ static char *path_expand(struct tree *tree, struct tree *start,
     if (cnt == 1)
         ind = 0;
 
-    label = (tree->label == NULL) ? "()" : tree->label;
+    label = pretty_label(tree);
     if (ind > 0) {
         r = asprintf(&path, "%s/%s[%d]", ppath, label, ind);
     } else {
