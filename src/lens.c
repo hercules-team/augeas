@@ -284,12 +284,10 @@ static struct value *useless_union(struct info *info, const char *msg,
               "internal error: compile in useless_union failed");
     }
 
-    fa_t minus = fa_minus(fa2, fa1);
-    if (fa_is_basic(minus, FA_EMPTY)) {
+    if (fa_contains(fa2, fa1)) {
         exn = make_exn_value(ref(info),
              "%s: the first lens completely shadows the second lens", msg);
     }
-    fa_free(minus);
     fa_free(fa1);
     fa_free(fa2);
     return exn;
