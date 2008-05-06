@@ -1936,6 +1936,7 @@ struct fa *fa_overlap(struct fa *fa1, struct fa *fa2) {
     fa1 = fa_clone(fa1);
     fa2 = fa_clone(fa2);
 
+    determinize(fa1, NULL);
     accept_to_accept(fa1);
 
     map = fa_reverse(fa2);
@@ -2242,9 +2243,7 @@ int fa_compile(const char *regexp, struct fa **fa) {
     *fa = fa_from_re(re);
     re_free(re);
 
-    // FIXME: it should be enough to clean up here, but that makes
-    // various tests fail
-    fa_minimize(*fa);
+    collect(*fa);
     return ret;
 }
 
