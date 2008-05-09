@@ -76,8 +76,13 @@ struct state {
  */
 struct trans {
     struct state *to;
-    uchar         min;
-    uchar         max;
+    union {
+        struct {
+            uchar         min;
+            uchar         max;
+        };
+        struct re *re;
+    };
 };
 
 
@@ -303,6 +308,8 @@ static struct state *add_state(struct fa *fa, int accept) {
     }
     return s;
 }
+
+#define last_trans(s)  ((s)->trans + (s)->tused - 1)
 
 #define for_each_trans(t, s)                                            \
     for (struct trans *t = (s)->trans;                                  \
@@ -2684,6 +2691,557 @@ static struct re *parse_regexp(const char **regexp, int *error) {
  error:
     re_unref(re);
     return NULL;
+}
+
+/*
+ * Convert a STRUCT RE to a string. Code is complicated by the fact that
+ * we try to be clever and avoid unneeded parens and concatenation with
+ * epsilon etc.
+ */
+static char *re_as_string(const struct re *re);
+
+static int re_binop_count(enum re_type type, const struct re *re) {
+    assert(type == CONCAT || type == UNION);
+    if (re->type == type) {
+        return re_binop_count(type, re->exp1) + re_binop_count(type, re->exp2);
+    } else {
+        return 1;
+    }
+}
+
+static int re_binop_store(enum re_type type, const struct re *re,
+                          const struct re **list) {
+    int pos = 0;
+    if (type == re->type) {
+        pos = re_binop_store(type, re->exp1, list);
+        pos += re_binop_store(type, re->exp2, list + pos);
+    } else {
+        list[0] = re;
+        pos = 1;
+    }
+    return pos;
+}
+
+static char *re_union_as_string(const struct re *re) {
+    assert(re->type == UNION);
+
+    const struct re **res = NULL;
+    char **strings = NULL;
+    int nre = 0, r;
+    char *result = NULL;
+
+    nre = re_binop_count(re->type, re);
+    r = ALLOC_N(res, nre);
+    if (r < 0)
+        goto done;
+
+    re_binop_store(re->type, re, res);
+
+    r = ALLOC_N(strings, nre);
+    if (r < 0)
+        goto done;
+
+    int len = 0;
+    for (int i=0; i < nre; i++) {
+        strings[i] = re_as_string(res[i]);
+        len += strlen(strings[i]);
+    }
+    len += (nre-1) + 1;
+
+    r = ALLOC_N(result, len);
+    if (r < 0)
+        goto done;
+
+    char *p = result;
+    for (int i=0; i < nre; i++) {
+        if (i>0)
+            *p++ = '|';
+        p = stpcpy(p, strings[i]);
+    }
+
+ done:
+    free(res);
+    if (strings != NULL) {
+        for (int i=0; i < nre; i++)
+            free(strings[i]);
+    }
+    free(strings);
+    return result;
+}
+
+ATTRIBUTE_PURE
+static int re_needs_parens_in_concat(const struct re *re) {
+    if (re->type == ITER)
+        re = re->exp;
+
+    return (re->type != CHAR && re->type != CSET);
+}
+
+static char *re_concat_as_string(const struct re *re) {
+    assert(re->type == CONCAT);
+
+    const struct re **res = NULL;
+    char **strings = NULL;
+    int nre = 0, r;
+    char *result = NULL;
+
+    nre = re_binop_count(re->type, re);
+    r = ALLOC_N(res, nre);
+    if (r < 0)
+        goto done;
+    re_binop_store(re->type, re, res);
+
+    r = ALLOC_N(strings, nre);
+    if (r < 0)
+        goto done;
+
+    int len = 0;
+    for (int i=0; i < nre; i++) {
+        if (res[i]->type == EPSILON)
+            continue;
+        strings[i] = re_as_string(res[i]);
+        len += strlen(strings[i]);
+        if (re_needs_parens_in_concat(res[i]))
+            len += 2;
+    }
+    len += 1;
+
+    r = ALLOC_N(result, len);
+    if (r < 0)
+        goto done;
+
+    char *p = result;
+    for (int i=0; i < nre; i++) {
+        if (res[i]->type == EPSILON)
+            continue;
+        if (re_needs_parens_in_concat(res[i]))
+            *p++ = '(';
+        p = stpcpy(p, strings[i]);
+        if (re_needs_parens_in_concat(res[i]))
+            *p++ = ')';
+    }
+
+ done:
+    free(res);
+    if (strings != NULL) {
+        for (int i=0; i < nre; i++)
+            free(strings[i]);
+    }
+    free(strings);
+    return result;
+}
+
+static char *re_cset_as_string(const struct re *re) {
+    const uchar rbrack = ']';
+    const uchar dash = '-';
+    static const char *const empty_set = "[]";
+    static const char *const empty_nset = "[^]";
+    static const char *const total_set = "(.|\n)";
+
+    char *result = NULL, *s;
+    int from, to, negate;
+    size_t set_len, nset_len, len;
+    int set_rbrack, set_dash, nset_rbrack, nset_dash;
+    int r;
+
+    set_len = strlen(empty_set);
+    nset_len = strlen(empty_nset);
+
+    /* See if ']' and '-' will be explicitly included in the character set
+       (SET_RBRACK, SET_DASH) or in the negated character set (NSET_RBRACK,
+       NSET_DASH) As we loop over the character set, we reset these flags
+       if they are in the set/negated set, but not mentioned explicitly
+    */
+    set_rbrack = re->cset[rbrack];
+    set_dash = re->cset[dash];
+    nset_rbrack = !set_rbrack;
+    nset_dash = !set_dash;
+
+    for (from = UCHAR_MIN; from <= UCHAR_MAX; from = to+1) {
+        int include = re->cset[from];
+        for (to = from;
+             to < UCHAR_MAX && (re->cset[to+1] == include);
+             to++);
+
+        if (to == from && (from == rbrack || from == dash))
+            continue;
+        if (from == rbrack || from == dash)
+            from += 1;
+        if (to == rbrack || to == dash)
+            to -= 1;
+
+        len = (to == from) ? 1 : ((to == from + 1) ? 2 : 3);
+        if (include) {
+            if (from < rbrack && rbrack < to)
+                set_rbrack = 0;
+            if (from < dash && dash < to)
+                set_dash = 0;
+            set_len += len;
+        } else {
+            if (from < rbrack && rbrack < to)
+                nset_rbrack = 0;
+            if (from < dash && dash < to)
+                nset_dash = 0;
+            nset_len += len;
+        }
+    }
+    set_len += set_rbrack + set_dash;
+    nset_len += nset_rbrack + nset_dash;
+
+    if (nset_len == strlen(empty_nset)) {
+        /* Special case: the set matches every character */
+        return strdup(total_set);
+    }
+
+    if (set_len < nset_len) {
+        negate = 0;
+        r = ALLOC_N(result, set_len + 1);
+    } else {
+        negate = 1;
+        r = ALLOC_N(result, nset_len + 1);
+    }
+    if (r < 0)
+        return NULL;
+
+    s = result;
+    *s++ = '[';
+    if (negate)
+        *s++ = '^';
+    if ((negate && nset_rbrack) || (!negate && set_rbrack))
+        *s++ = rbrack;
+
+    for (from = UCHAR_MIN; from <= UCHAR_MAX; from = to+1) {
+        while (from <= UCHAR_MAX && re->cset[from] == negate)
+            from += 1;
+        if (from > UCHAR_MAX)
+            break;
+        for (to = from;
+             to < UCHAR_MAX && (re->cset[to+1] == ! negate);
+             to++);
+
+        if (to == from && (from == rbrack || from == dash))
+            continue;
+        if (from == rbrack || from == dash)
+            from += 1;
+        if (to == rbrack || to == dash)
+            to -= 1;
+
+        if (to == from) {
+            *s++ = from;
+        } else if (to == from + 1) {
+            *s++ = from;
+            *s++ = to;
+        } else {
+            *s++ = from;
+            *s++ = '-';
+            *s++ = to;
+        }
+    }
+    if (negate) {
+        if (nset_dash)
+            *s++ = dash;
+    } else {
+        if (set_dash)
+            *s++ = dash;
+    }
+    *s = ']';
+
+    return result;
+}
+
+static char *re_iter_as_string(const struct re *re) {
+    const char *quant = NULL;
+    char *result, *exp;
+    int r;
+
+    exp = re_as_string(re->exp);
+    if (exp == NULL)
+        return NULL;
+
+    if (re->min == 0 && re->max == -1) {
+        quant = "*";
+    } else if (re->min == 1 && re->max == -1) {
+        quant = "+";
+    } else if (re->min == 0 && re->max == 1) {
+        quant = "?";
+    }
+
+    if (re->exp->type == CHAR || re->exp->type == CSET) {
+        if (quant == NULL) {
+            r = asprintf(&result, "%s{%d,%d}", exp, re->min, re->max);
+        } else {
+            r = asprintf(&result, "%s%s", exp, quant);
+        }
+    } else {
+        if (quant == NULL) {
+            r = asprintf(&result, "(%s){%d,%d}", exp, re->min, re->max);
+        } else {
+            r = asprintf(&result, "(%s)%s", exp, quant);
+        }
+    }
+    FREE(exp);
+
+    return (r < 0) ? NULL : result;
+}
+
+static char *re_as_string(const struct re *re) {
+    char *result = NULL;
+    switch(re->type) {
+    case UNION:
+        result = re_union_as_string(re);
+        break;
+    case CONCAT:
+        result = re_concat_as_string(re);
+        break;
+    case CSET:
+        result = re_cset_as_string(re);
+        break;
+    case CHAR:
+        if (re->c != '\\' && strchr(special_chars, re->c) == NULL) {
+            if (ALLOC_N(result, 2) == 0) {
+                result[0] = re->c;
+            }
+        } else {
+            if (ALLOC_N(result, 3) == 0) {
+                result[0] = '\\';
+                result[1] = re->c;
+            }
+        }
+        break;
+    case ITER:
+        result = re_iter_as_string(re);
+        break;
+    case EPSILON:
+        if (ALLOC_N(result, 3) == 0) {
+            strcpy(result, "()");
+        }
+        break;
+    default:
+        assert(0);
+        abort();
+        break;
+    }
+    return result;
+}
+
+static int convert_trans_to_re(struct state *s) {
+    struct re *re = NULL;
+    size_t nto = 1;
+    struct trans *trans = NULL;
+    int r;
+
+    if (s->tused == 0)
+        return 0;
+
+    qsort(s->trans, s->tused, sizeof(*s->trans), trans_to_cmp);
+    for (int i = 0; i < s->tused - 1; i++) {
+        if (s->trans[i].to != s->trans[i+1].to)
+            nto += 1;
+    }
+    r = ALLOC_N(trans, nto);
+    if (r < 0)
+        goto error;
+
+    struct state *to = s->trans[0].to;
+    int tind = 0;
+    for_each_trans(t, s) {
+        if (t->to != to) {
+            trans[tind].to = to;
+            trans[tind].re = re;
+            tind += 1;
+            re = NULL;
+            to = t->to;
+        }
+        if (re == NULL) {
+            re = make_re_char_set(0);
+            if (re == NULL)
+                goto error;
+        }
+        add_re_char(re, t->min, t->max);
+    }
+    assert(nto == tind + 1);
+    trans[tind].to = to;
+    trans[tind].re = re;
+
+    /* Simplify CSETs with a single char to a CHAR */
+    for (int t=0; t < nto; t++) {
+        int cnt = 0;
+        uchar chr = UCHAR_MIN;
+        for (int c = 0; c < UCHAR_NUM; c++) {
+            if (trans[t].re->cset[c]) {
+                cnt += 1;
+                chr = c;
+            }
+        }
+        if (cnt == 1) {
+            re_unref(trans[t].re);
+            trans[t].re = make_re_char(chr);
+        }
+    }
+    free_trans(s);
+    s->trans = trans;
+    s->tused = s->tsize = nto;
+    return 0;
+
+ error:
+    for (int i=0; i < nto; i++)
+        free_re(trans[i].re);
+    free(trans);
+    return -1;
+}
+
+static int add_new_re_trans(struct state *s1, struct state *s2, struct re *re) {
+    int r;
+    r = add_new_trans(s1, s2, 0, 0);
+    if (r < 0)
+        return -1;
+    last_trans(s1)->re = re;
+    return 0;
+}
+
+/* Add the regular expression R1 . LOOP* . R2 to the transition
+   from S1 to S2. */
+static int re_collapse_trans(struct state *s1, struct state *s2,
+                             struct re *r1, struct re *loop, struct re *r2) {
+    struct re *re = NULL;
+
+    if (loop->type != EPSILON) {
+        loop = make_re_rep(ref(loop), 0, -1);
+    }
+
+    if (r1->type == EPSILON) {
+        if (loop->type == EPSILON) {
+            re = ref(r2);
+        } else {
+            re = make_re_binop(CONCAT, loop, ref(r2));
+        }
+    } else {
+        if (loop->type == EPSILON) {
+            if (r2->type == EPSILON) {
+                re = ref(r1);
+            } else {
+                re = make_re_binop(CONCAT, ref(r1), ref(r2));
+            }
+        } else {
+            re = make_re_binop(CONCAT, ref(r1), loop);
+            if (re != NULL && r2->type != EPSILON) {
+                re = make_re_binop(CONCAT, re, ref(r2));
+            }
+        }
+    }
+    if (re == NULL)
+        return -1;
+
+    struct trans *t = NULL;
+    for (t = s1->trans; t <= last_trans(s1) && t->to != s2; t += 1);
+    if (t > last_trans(s1)) {
+        add_new_re_trans(s1, s2, re);
+    } else {
+        if (t->re == NULL) {
+            t->re = re;
+        } else {
+            t->re = make_re_binop(UNION, re, t->re);
+        }
+    }
+    return 0;
+}
+
+/* Convert an FA to a regular expression.
+ * The strategy is the following:
+ * (1) For all states S1 and S2, convert the transitions between them
+ *     into one transition whose regexp is a CSET
+ * (2) Add a new initial state INI and a new final state FIN to the automaton,
+ *     a transition from INI to the old initial state of FA, and a transition
+ *     from all accepting states of FA to FIN; the regexp on those transitions
+ *     matches only the empty word
+ * (3) Eliminate states S (except for INI and FIN) one by one:
+ *     Let LOOP the regexp for the transition S -> S if it exists, epsilon
+ *     otherwise.
+ *     For all S1, S2 different from S with S1 -> S -> S2
+ *       Let R1 the regexp of S1 -> S
+ *           R2 the regexp of S -> S2
+ *           R3 the regexp S1 -> S2 (or epsilon if no such transition)
+ *        set the regexp on the transition S1 -> S2 to
+ *          R1 . (LOOP)* . R2 | R3
+ * (4) The regexp for the whole FA can now be found as the regexp of
+ *     the transition INI -> FIN
+ * (5) Convert that STRUCT RE to a string with RE_AS_STRING
+ */
+int fa_as_regexp(struct fa *fa, char **regexp) {
+    int r;
+    struct state *fin = NULL, *ini = NULL;
+    struct re *eps = make_re(EPSILON);
+
+    *regexp = NULL;
+    fa = fa_clone(fa);
+
+    fin = add_state(fa,1);
+    if (fin == NULL)
+        goto error;
+
+    list_for_each(s, fa->initial) {
+        r = convert_trans_to_re(s);
+        if (r < 0)
+            goto error;
+        if (s->accept) {
+            add_new_re_trans(s, fin, ref(eps));
+        }
+    }
+
+    ini = add_state(fa, 0);
+    if (ini == NULL)
+        goto error;
+
+    add_new_re_trans(ini, fa->initial, ref(eps));
+    set_initial(fa, ini);
+
+    list_for_each(s, fa->initial->next) {
+        if (s == fin)
+            continue;
+        /* Eliminate S */
+        struct re *loop = eps;
+        for_each_trans(t, s) {
+            if (t->to == s)
+                loop = t->re;
+        }
+        list_for_each(s1, fa->initial) {
+            if (s == s1)
+                continue;
+            for (int t1 = 0; t1 < s1->tused; t1++) {
+                if (s1->trans[t1].to == s) {
+                    for (int t = 0; t < s->tused; t++) {
+                        if (s->trans[t].to == s)
+                            continue;
+                        re_collapse_trans(s1, s->trans[t].to,
+                                          s1->trans[t1].re,
+                                          loop,
+                                          s->trans[t].re);
+                    }
+                }
+            }
+        }
+    }
+
+    re_unref(eps);
+
+    for_each_trans(t, fa->initial) {
+        if (t->to == fin) {
+            *regexp = re_as_string(t->re);
+        }
+    }
+
+    list_for_each(s, fa->initial) {
+        for_each_trans(t, s) {
+            unref(t->re, re);
+        }
+    }
+    fa_free(fa);
+
+    return 0;
+ error:
+    fa_free(fa);
+    re_unref(eps);
+    return -1;
 }
 
 static void print_char(FILE *out, uchar c) {

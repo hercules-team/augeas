@@ -67,6 +67,30 @@ static fa_t mark(fa_t fa) {
     return fa;
 }
 
+static void assertAsRegexp(CuTest *tc, fa_t fa) {
+    char *re;
+    fa_t fa1, fa2;
+    fa_t empty = mark(fa_make_basic(FA_EPSILON));
+    int r;
+
+    /* Jump through some hoops to make FA1 a copy of FA */
+    fa1 = mark(fa_concat(fa, empty));
+    /* Minimize FA1, otherwise the regexp returned is enormous for the */
+    /* monster (~ 2MB) and fa_compile becomes incredibly slow          */
+    fa_minimize(fa1);
+
+    r = fa_as_regexp(fa1, &re);
+    CuAssertIntEquals(tc, 0, r);
+
+    r = fa_compile(re, &fa2);
+    CuAssertIntEquals(tc, REG_NOERROR, r);
+
+    CuAssertTrue(tc, fa_equals(fa, fa2));
+
+    fa_free(fa2);
+    free(re);
+}
+
 static fa_t make_fa(CuTest *tc, const char *regexp, int exp_err) {
     fa_t fa;
     int r;
@@ -78,6 +102,7 @@ static fa_t make_fa(CuTest *tc, const char *regexp, int exp_err) {
             print_regerror(r, regexp);
         CuAssertPtrNotNull(tc, fa);
         mark(fa);
+        assertAsRegexp(tc, fa);
     } else {
         CuAssertPtrEquals(tc, NULL, fa);
     }
@@ -345,6 +370,48 @@ static void testAmbig(CuTest *tc) {
     assertNotAmbig(tc, "(a|b|c|d|abcd)", "(a|b|c|d|abcd)");
 }
 
+static void assertFaAsRegexp(CuTest *tc, const char *regexp) {
+    char *re;
+    fa_t fa1 = make_good_fa(tc, regexp);
+    fa_t fa2;
+    int r;
+
+    r = fa_as_regexp(fa1, &re);
+    CuAssertIntEquals(tc, 0, r);
+
+    r = fa_compile(re, &fa2);
+    CuAssertIntEquals(tc, REG_NOERROR, r);
+
+    CuAssert(tc, regexp, fa_equals(fa1, fa2));
+
+    fa_free(fa2);
+    free(re);
+}
+
+static void testAsRegexp(CuTest *tc) {
+    assertFaAsRegexp(tc, "a*");
+    assertFaAsRegexp(tc, "abcd");
+    assertFaAsRegexp(tc, "ab|cd");
+    assertFaAsRegexp(tc, "[a-z]+");
+    assertFaAsRegexp(tc, "[]a]+");
+}
+
+static void testAsRegexpMinus(CuTest *tc) {
+    fa_t fa1 = make_good_fa(tc, "[a-z]+");
+    fa_t fa2 = make_good_fa(tc, "baseurl");
+    fa_t fa = mark(fa_minus(fa1, fa2));
+    char *re;
+    int r;
+
+    r = fa_as_regexp(fa, &re);
+    CuAssertIntEquals(tc, 0, r);
+
+    fa_t far = make_good_fa(tc, re);
+    CuAssertTrue(tc, fa_equals(fa, far));
+
+    free(re);
+}
+
 int main(int argc, char **argv) {
     if (argc == 1) {
         char *output = NULL;
@@ -361,6 +428,8 @@ int main(int argc, char **argv) {
         SUITE_ADD_TEST(suite, testOverlap);
         SUITE_ADD_TEST(suite, testExample);
         SUITE_ADD_TEST(suite, testAmbig);
+        SUITE_ADD_TEST(suite, testAsRegexp);
+        SUITE_ADD_TEST(suite, testAsRegexpMinus);
 
         CuSuiteRun(suite);
         CuSuiteSummary(suite, &output);
@@ -377,7 +446,17 @@ int main(int argc, char **argv) {
             print_regerror(r, argv[i]);
         } else {
             dot(fa);
-            printf("Example for %s: %s\n", argv[i], fa_example(fa));
+            char *s = fa_example(fa);
+            printf("Example for %s: %s\n", argv[i], s);
+            free(s);
+            char *re;
+            r = fa_as_regexp(fa, &re);
+            if (r == 0) {
+                printf("/%s/ = /%s/\n", argv[i], re);
+                free(re);
+            } else {
+                printf("/%s/ = ***\n", argv[i]);
+            }
             fa_free(fa);
         }
     }

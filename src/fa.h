@@ -170,6 +170,18 @@ char *fa_example(fa_t fa);
  */
 char *fa_ambig_example(fa_t fa1, fa_t fa2, char **pv, char **v);
 
+/* Convert the finite automaton FA into a regular expression and set REGEXP
+ * to point to that. When REGEXP is compiled into another automaton, it is
+ * guaranteed that that automaton and FA accept the same language.
+ *
+ * The code tries to be semi-clever about keeping the generated regular
+ * expression short; to guarantee reasonably short regexps, the automaton
+ * should be minimized before passing it to this routine.
+ *
+ * Return 0 on success, and a negative number on failure. The only reason
+ * to fail for FA_AS_REGEXP is running out of memory.
+ */
+int fa_as_regexp(fa_t fa, char **regexp);
 #endif
 
 
