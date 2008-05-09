@@ -24,6 +24,7 @@
 #include <stdarg.h>
 
 #include "internal.h"
+#include "memory.h"
 
 #ifndef MIN
 # define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -44,9 +45,10 @@ int pathjoin(char **path, int nseg, ...) {
 
         if (*path != NULL) {
             len += strlen(*path) + 1;
-            REALLOC(*path, len);
-            if (*path == NULL)
+            if (REALLOC_N(*path, len) == -1) {
+                FREE(*path);
                 return -1;
+            }
             if (strlen(*path) == 0 || (*path)[strlen(*path)-1] != SEP)
                 strcat(*path, "/");
             if (seg[0] == SEP)

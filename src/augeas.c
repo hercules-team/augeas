@@ -22,6 +22,7 @@
 
 #include "augeas.h"
 #include "internal.h"
+#include "memory.h"
 #include "config.h"
 #include "syntax.h"
 
@@ -452,7 +453,10 @@ static const char *init_root(const char *root0) {
         root0 = "/";
     root = strdup(root0);
     if (root[strlen(root)-1] != SEP) {
-        REALLOC(root, strlen(root) + 2);
+        if (REALLOC_N(root, strlen(root) + 2) == -1) {
+            FREE(root);
+            return NULL;
+        }
         strcat(root, "/");
     }
     return root;

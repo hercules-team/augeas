@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "memory.h"
 #include "syntax.h"
 #include "config.h"
 #include "augeas.h"
@@ -409,7 +410,8 @@ void exn_add_lines(struct value *v, int nlines, ...) {
     assert(v->tag == V_EXN);
 
     va_list ap;
-    REALLOC(v->exn->lines, v->exn->nlines + nlines);
+    if (REALLOC_N(v->exn->lines, v->exn->nlines + nlines) == -1)
+        return;
     va_start(ap, nlines);
     for (int i=0; i < nlines; i++) {
         char *line = va_arg(ap, char *);
@@ -1748,13 +1750,14 @@ static char *module_filename(struct augeas *aug, const char *modname) {
         int len = strlen(name) + strlen(dir) + 2;
         struct stat st;
 
-        REALLOC(filename, len);
+        if (REALLOC_N(filename, len) == -1)
+            goto error;
         sprintf(filename, "%s/%s", dir, name);
         if (stat(filename, &st) == 0)
             goto done;
     }
-    free(filename);
-    filename = NULL;
+ error:
+    FREE(filename);
  done:
     free(name);
     return filename;

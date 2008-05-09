@@ -24,6 +24,7 @@
 #include <glob.h>
 
 #include "internal.h"
+#include "memory.h"
 #include "augeas.h"
 #include "syntax.h"
 #include "config.h"
@@ -119,7 +120,11 @@ static int filter_generate(struct filter *filter, const char *root,
             }
         }
     }
-    REALLOC(pathv, pathc);
+    if (REALLOC_N(pathv, pathc) == -1) {
+        FREE(pathv);
+        pathc = 0;
+        ret = -1;
+    }
     *matches = pathv;
     *nmatches = pathc;
  done:

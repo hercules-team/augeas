@@ -133,10 +133,6 @@ int pathjoin(char **path, int nseg, ...);
 /* Call calloc to allocate an array of N instances of *VAR */
 #define CALLOC(Var,N) do { (Var) = calloc ((N), sizeof (*(Var))); } while (0)
 
-#define REALLOC(var, n) do {                                            \
-        (var) = realloc((var), (n) * sizeof (*(var)));                  \
-    } while (0)
-
 #define MEMZERO(ptr, n) memset((ptr), 0, (n) * sizeof(*(ptr)));
 
 /**

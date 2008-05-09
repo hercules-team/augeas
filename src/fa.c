@@ -33,6 +33,7 @@
 #include <ctype.h>
 
 #include "internal.h"
+#include "memory.h"
 #include "hash.h"
 #include "fa.h"
 
@@ -169,7 +170,7 @@ static struct re *parse_regexp(const char **regexp, int *error);
  */
 static struct fa *collect(struct fa *fa);
 
-static void totalize(struct fa *fa);
+static int totalize(struct fa *fa);
 
 /* Print an FA into a (fairly) fixed file if the environment variable
  * FA_DOT_DIR is set. This code is only used for debugging
@@ -301,29 +302,39 @@ static struct state *add_state(struct fa *fa, int accept) {
          (t - (s)->trans) < (s)->tused;                                 \
          t++)
 
-static void add_new_trans(struct state *from, struct state *to,
-                          uchar min, uchar max) {
+ATTRIBUTE_RETURN_CHECK
+static int add_new_trans(struct state *from, struct state *to,
+                         uchar min, uchar max) {
     if (from->tused == from->tsize) {
-        if (from->tsize == 0)
-            from->tsize = array_initial_size;
+        size_t tsize = from->tsize;
+        if (tsize == 0)
+            tsize = array_initial_size;
         else if (from->tsize > array_max_expansion)
-            from->tsize += array_max_expansion;
+            tsize += array_max_expansion;
         else
-            from->tsize *= 2;
-        REALLOC(from->trans, from->tsize);
+            tsize *= 2;
+        if (REALLOC_N(from->trans, tsize) == -1)
+            return -1;
+        from->tsize = tsize;
     }
     from->trans[from->tused].to  = to;
     from->trans[from->tused].min = min;
     from->trans[from->tused].max = max;
     from->tused += 1;
+    return 0;
 }
 
-static void add_epsilon_trans(struct state *from,
-                              struct state *to) {
+ATTRIBUTE_RETURN_CHECK
+static int add_epsilon_trans(struct state *from,
+                             struct state *to) {
+    int r;
     from->accept |= to->accept;
     for_each_trans(t, to) {
-        add_new_trans(from, t->to, t->min, t->max);
+        r = add_new_trans(from, t->to, t->min, t->max);
+        if (r < 0)
+            return -1;
     }
+    return 0;
 }
 
 static void set_initial(struct fa *fa, struct state *s) {
@@ -751,6 +762,7 @@ static void mark_live(struct fa *fa) {
 static struct state_set *fa_reverse(struct fa *fa) {
     struct state_set *all;
     struct state_set *accept;
+    int r;
 
     all = fa_states(fa);
     accept = fa_accept_states(fa);
@@ -772,7 +784,9 @@ static struct state_set *fa_reverse(struct fa *fa) {
         struct trans *t = all->data[i];
         s->accept = 0;
         for (int j=0; j < tused[i]; j++) {
-            add_new_trans(t[j].to, s, t[j].min, t[j].max);
+            r = add_new_trans(t[j].to, s, t[j].min, t[j].max);
+            if (r < 0)
+                goto error;
         }
         free(t);
     }
@@ -783,13 +797,19 @@ static struct state_set *fa_reverse(struct fa *fa) {
     fa->initial->accept = 1;
     set_initial(fa, s);
     for (int i=0; i < accept->used; i++) {
-        add_epsilon_trans(s, accept->states[i]);
+        r = add_epsilon_trans(s, accept->states[i]);
+        if (r < 0)
+            goto error;
     }
 
     fa->deterministic = 0;
     fa->minimal = 0;
     state_set_free(all);
     return accept;
+ error:
+    state_set_free(all);
+    state_set_free(accept);
+    return NULL;
 }
 
 /*
@@ -985,8 +1005,10 @@ static void reduce(struct fa *fa) {
         s->tused = i+1;
         /* Shrink if we use less than half the allocated size */
         if (s->tsize > array_initial_size && 2*s->tused < s->tsize) {
-            s->tsize = s->tused;
-            REALLOC(s->trans, s->tsize);
+            int r;
+            r = REALLOC_N(s->trans, s->tsize);
+            if (r == 0)
+                s->tsize = s->tused;
         }
     }
 }
@@ -1058,15 +1080,16 @@ static void swap_initial(struct fa *fa) {
  * states with the subset construction. This also eliminates dead states
  * and transitions and reduces and orders the transitions for each state
  */
-static void determinize(struct fa *fa, struct state_set *ini) {
+static int determinize(struct fa *fa, struct state_set *ini) {
     int npoints;
     int make_ini = (ini == NULL);
     const uchar *points = NULL;
     state_set_hash *newstate;
     struct state_set_list *worklist;
+    int ret = 0;
 
     if (fa->deterministic)
-        return;
+        return 0;
 
     points = start_points(fa, &npoints);
     if (make_ini) {
@@ -1104,14 +1127,19 @@ static void determinize(struct fa *fa, struct state_set *ini) {
             uchar max = UCHAR_MAX;
             if (n+1 < npoints)
                 max = points[n+1] - 1;
-            add_new_trans(r, q, min, max);
+            if (add_new_trans(r, q, min, max) < 0) {
+                ret = -1;
+                goto done;
+            }
         }
     }
     fa->deterministic = 1;
 
+ done:
     state_set_hash_free(newstate, make_ini ? NULL : ini);
     free((void *) points);
     collect(fa);
+    return ret;
 }
 
 /*
@@ -1383,7 +1411,10 @@ static void minimize_hopcroft(struct fa *fa) {
                     int ak = active[INDEX(k, c)]->size;
                     if (npending + 1 > spending) {
                         spending *= 2;
-                        REALLOC(pending, 2 * spending);
+                        if (REALLOC_N(pending, 2 * spending) == -1) {
+                            FIXME("Handle allocation failure");
+                            abort();
+                        }
                     }
                     pending[2*npending + 1] = c;
                     if (!bitset_get(pending2, INDEX(j, c))
@@ -1436,7 +1467,10 @@ static void minimize_hopcroft(struct fa *fa) {
         for_each_trans(t, states->states[nsnum[n]]) {
             int toind = state_set_index(states, t->to);
             struct state *nto = newstates->states[nsind[toind]];
-            add_new_trans(s, nto, t->min, t->max);
+            if (add_new_trans(s, nto, t->min, t->max) < 0) {
+                FIXME("Handle failure");
+                abort();
+            }
         }
     }
     free(nsind);
@@ -1536,21 +1570,32 @@ static struct fa *fa_make_char(uchar c) {
     struct fa *fa = fa_make_empty();
     struct state *s = fa->initial;
     struct state *t = add_state(fa, 1);
+    int r;
 
-    add_new_trans(s, t, c, c);
+    r = add_new_trans(s, t, c, c);
+    if (r < 0) {
+        fa_free(fa);
+        return NULL;
+    }
     fa->deterministic = 1;
     fa->minimal = 1;
     return fa;
 }
 
 struct fa *fa_make_basic(unsigned int basic) {
+    int r;
+
     if (basic == FA_EMPTY) {
         return fa_make_empty();
     } else if (basic == FA_EPSILON) {
         return fa_make_epsilon();
     } else if (basic == FA_TOTAL) {
         struct fa *fa = fa_make_epsilon();
-        add_new_trans(fa->initial, fa->initial, UCHAR_MIN, UCHAR_MAX);
+        r = add_new_trans(fa->initial, fa->initial, UCHAR_MIN, UCHAR_MAX);
+        if (r < 0) {
+            fa_free(fa);
+            fa = NULL;
+        }
         return fa;
     }
     return NULL;
@@ -1574,6 +1619,7 @@ int fa_is_basic(struct fa *fa, unsigned int basic) {
 static struct fa *fa_clone(struct fa *fa) {
     struct fa *result = NULL;
     struct state_set *set = state_set_init(-1, S_DATA|S_SORTED);
+    int r;
 
     CALLOC(result, 1);
     result->deterministic = fa->deterministic;
@@ -1592,20 +1638,31 @@ static struct fa *fa_clone(struct fa *fa) {
             int to = state_set_index(set, t->to);
             assert(to >= 0);
             struct state *toc = set->data[to];
-            add_new_trans(sc, toc, t->min, t->max);
+            r = add_new_trans(sc, toc, t->min, t->max);
+            if (r < 0)
+                goto error;
         }
     }
     state_set_free(set);
     return result;
+ error:
+    state_set_free(set);
+    fa_free(result);
+    return NULL;
 }
 
 /* Compute FA1|FA2 and set FA1 to that automaton. FA2 is freed */
-static void union_in_place(struct fa *fa1, struct fa *fa2) {
+static int union_in_place(struct fa *fa1, struct fa *fa2) {
     struct state *s;
+    int r;
 
     s = add_state(fa1, 0);
-    add_epsilon_trans(s, fa1->initial);
-    add_epsilon_trans(s, fa2->initial);
+    r = add_epsilon_trans(s, fa1->initial);
+    if (r < 0)
+        return -1;
+    r = add_epsilon_trans(s, fa2->initial);
+    if (r < 0)
+        return -1;
 
     fa1->deterministic = 0;
     fa1->minimal = 0;
@@ -1614,6 +1671,7 @@ static void union_in_place(struct fa *fa1, struct fa *fa2) {
     set_initial(fa1, s);
 
     collect(fa1);
+    return 0;
 }
 
 struct fa *fa_union(struct fa *fa1, struct fa *fa2) {
@@ -1626,11 +1684,15 @@ struct fa *fa_union(struct fa *fa1, struct fa *fa2) {
 }
 
 /* Concat FA2 onto FA1; frees FA2 and changes FA1 to FA1.FA2 */
-static void concat_in_place(struct fa *fa1, struct fa *fa2) {
+static int concat_in_place(struct fa *fa1, struct fa *fa2) {
+    int r;
+
     list_for_each(s, fa1->initial) {
         if (s->accept) {
             s->accept = 0;
-            add_epsilon_trans(s, fa2->initial);
+            r = add_epsilon_trans(s, fa2->initial);
+            if (r < 0)
+                return -1;
         }
     }
 
@@ -1639,6 +1701,7 @@ static void concat_in_place(struct fa *fa1, struct fa *fa2) {
     fa_merge(fa1, fa2);
 
     collect(fa1);
+    return 0;
 }
 
 struct fa *fa_concat(struct fa *fa1, struct fa *fa2) {
@@ -1653,6 +1716,7 @@ static struct fa *fa_make_char_set(uchar *cset, int negate) {
     struct state *s = fa->initial;
     struct state *t = add_state(fa, 1);
     int from = 0;
+    int r;
 
     while (from <= UCHAR_MAX) {
         while (from <= UCHAR_MAX && cset[from] == negate)
@@ -1662,31 +1726,53 @@ static struct fa *fa_make_char_set(uchar *cset, int negate) {
         int to = from;
         while (to < UCHAR_MAX && (cset[to + 1] == !negate))
             to += 1;
-        add_new_trans(s, t, from, to);
+        r = add_new_trans(s, t, from, to);
+        if (r < 0)
+            goto error;
         from = to + 1;
     }
 
     fa->deterministic = 1;
     fa->minimal = 1;
     return fa;
+
+ error:
+    fa_free(fa);
+    return NULL;
 }
 
 static struct fa *fa_star(struct fa *fa) {
     struct state *s;
+    int r;
 
     fa = fa_clone(fa);
+    if (fa == NULL)
+        return NULL;
 
     s = add_state(fa, 1);
-    add_epsilon_trans(s, fa->initial);
+    if (s == NULL)
+        goto error;
+
+    r = add_epsilon_trans(s, fa->initial);
+    if (r < 0)
+        goto error;
+
     set_initial(fa, s);
     list_for_each(p, fa->initial->next) {
-        if (p->accept)
-            add_epsilon_trans(p, s);
+        if (p->accept) {
+            r = add_epsilon_trans(p, s);
+            if (r < 0)
+                goto error;
+        }
     }
     fa->deterministic = 0;
     fa->minimal = 0;
 
     return collect(fa);
+
+ error:
+    fa_free(fa);
+    return NULL;
 }
 
 /* Form the automaton (FA){N}; FA is not modified */
@@ -1697,8 +1783,14 @@ static struct fa *repeat(struct fa *fa, int n) {
         return fa_clone(fa);
     } else {
         struct fa *cfa = fa_clone(fa);
+        if (cfa == NULL)
+            return NULL;
         while (n > 1) {
             struct fa *tfa = fa_clone(fa);
+            if (tfa == NULL) {
+                fa_free(cfa);
+                return NULL;
+            }
             concat_in_place(cfa, tfa);
             n -= 1;
         }
@@ -1707,6 +1799,8 @@ static struct fa *repeat(struct fa *fa, int n) {
 }
 
 struct fa *fa_iter(struct fa *fa, int min, int max) {
+    int r;
+
     if (min < 0)
         min = 0;
 
@@ -1725,13 +1819,21 @@ struct fa *fa_iter(struct fa *fa, int min, int max) {
 
         max -= min;
         cfa = repeat(fa, min);
+        if (cfa == NULL)
+            return NULL;
         if (max > 0) {
             struct fa *cfa2 = fa_clone(fa);
             while (max > 1) {
                 struct fa *cfa3 = fa_clone(fa);
                 list_for_each(s, cfa3->initial) {
                     if (s->accept) {
-                        add_epsilon_trans(s, cfa2->initial);
+                        r = add_epsilon_trans(s, cfa2->initial);
+                        if (r < 0) {
+                            fa_free(cfa);
+                            fa_free(cfa2);
+                            fa_free(cfa3);
+                            return NULL;
+                        }
                     }
                 }
                 fa_merge(cfa3, cfa2);
@@ -1740,7 +1842,12 @@ struct fa *fa_iter(struct fa *fa, int min, int max) {
             }
             list_for_each(s, cfa->initial) {
                 if (s->accept) {
-                    add_epsilon_trans(s, cfa2->initial);
+                    r = add_epsilon_trans(s, cfa2->initial);
+                    if (r < 0) {
+                        fa_free(cfa);
+                        fa_free(cfa2);
+                        return NULL;
+                    }
                 }
             }
             fa_merge(cfa, cfa2);
@@ -1758,6 +1865,8 @@ static void sort_transition_intervals(struct fa *fa) {
 }
 
 struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
+    int ret;
+
     if (fa1 == fa2)
         return fa_clone(fa1);
 
@@ -1803,16 +1912,23 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
                         ? t1[n1].min : t2[n2].min;
                     char max = t1[n1].max < t2[n2].max
                         ? t1[n1].max : t2[n2].max;
-                    add_new_trans(s, r, min, max);
+                    ret = add_new_trans(s, r, min, max);
+                    if (ret < 0)
+                        goto error;
                 }
             }
         }
     }
+ done:
     state_set_free(worklist);
     state_triple_free(newstates);
     collect(fa);
 
     return fa;
+ error:
+    fa_free(fa);
+    fa = NULL;
+    goto done;
 }
 
 int fa_contains(fa_t fa1, fa_t fa2) {
@@ -1872,26 +1988,37 @@ int fa_contains(fa_t fa1, fa_t fa2) {
     return result;
 }
 
-static void totalize(struct fa *fa) {
+static int totalize(struct fa *fa) {
+    int r;
     struct state *crash = add_state(fa, 0);
 
     mark_reachable(fa);
     sort_transition_intervals(fa);
 
-    add_new_trans(crash, crash, UCHAR_MIN, UCHAR_MAX);
+    r = add_new_trans(crash, crash, UCHAR_MIN, UCHAR_MAX);
+    if (r < 0)
+        return -1;
+
     list_for_each(s, fa->initial) {
         int next = UCHAR_MIN;
         int tused = s->tused;
         for (int i=0; i < tused; i++) {
             uchar min = s->trans[i].min, max = s->trans[i].max;
-            if (min > next)
-                add_new_trans(s, crash, next, min - 1);
+            if (min > next) {
+                r = add_new_trans(s, crash, next, min - 1);
+                if (r < 0)
+                    return -1;
+            }
             if (max + 1 > next)
                 next = max + 1;
         }
-        if (next <= UCHAR_MAX)
-            add_new_trans(s, crash, next, UCHAR_MAX);
+        if (next <= UCHAR_MAX) {
+            r = add_new_trans(s, crash, next, UCHAR_MAX);
+            if (r < 0)
+                return -1;
+        }
     }
+    return 0;
 }
 
 struct fa *fa_complement(struct fa *fa) {
@@ -1917,17 +2044,24 @@ struct fa *fa_minus(struct fa *fa1, struct fa *fa2) {
     return result;
 }
 
-static void accept_to_accept(struct fa *fa) {
+static int accept_to_accept(struct fa *fa) {
+    int r;
     struct state *s = add_state(fa, 0);
+    if (s == NULL)
+        return -1;
 
     mark_reachable(fa);
     list_for_each(a, fa->initial) {
-        if (a->accept && a->reachable)
-            add_epsilon_trans(s, a);
+        if (a->accept && a->reachable) {
+            r = add_epsilon_trans(s, a);
+            if (r < 0)
+                return -1;
+        }
     }
 
     set_initial(fa, s);
     fa->deterministic = fa->minimal = 0;
+    return 0;
 }
 
 struct fa *fa_overlap(struct fa *fa1, struct fa *fa2) {
@@ -2076,7 +2210,11 @@ char *fa_example(fa_t fa) {
  */
 static struct fa *expand_alphabet(struct fa *fa, int add_marker,
                                   char X, char Y) {
+    int ret;
+
     fa = fa_clone(fa);
+    if (fa == NULL)
+        return NULL;
 
     mark_reachable(fa);
     list_for_each(p, fa->initial) {
@@ -2089,14 +2227,23 @@ static struct fa *expand_alphabet(struct fa *fa, int add_marker,
         r->tsize = p->tsize;
         p->trans = NULL;
         p->tused = p->tsize = 0;
-        add_new_trans(p, r, X, X);
+        ret = add_new_trans(p, r, X, X);
+        if (ret < 0)
+            goto error;
         if (add_marker) {
             struct state *q = add_state(fa, 0);
-            add_new_trans(p, q, Y, Y);
-            add_new_trans(q, p, X, X);
+            ret = add_new_trans(p, q, Y, Y);
+            if (ret < 0)
+                goto error;
+            ret = add_new_trans(q, p, X, X);
+            if (ret < 0)
+                goto error;
         }
     }
     return fa;
+ error:
+    fa_free(fa);
+    return NULL;
 }
 
 /* This algorithm is due to Anders Moeller, and can be found in class
