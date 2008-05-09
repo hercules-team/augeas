@@ -90,7 +90,7 @@ ARROW  ->
                return REGEXP;
   }
 
-  [|*?+()=:;\.\[\]{}]     return yytext[0];
+  [|*?+()=:;\.\[\]{}-]    return yytext[0];
 
   module        return KW_MODULE;
   let           return KW_LET;

@@ -133,6 +133,7 @@ regexp_minus(struct info *info, struct regexp *r1, struct regexp *r2) {
     }
 
     result = make_regexp(info, s);
+    s = NULL;
 
  done:
     fa_free(fa);

@@ -59,6 +59,7 @@ enum term_tag {
     A_LET,               /* local LET .. IN binding */
     A_COMPOSE,
     A_UNION,
+    A_MINUS,
     A_CONCAT,
     A_APP,
     A_VALUE,

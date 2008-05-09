@@ -191,6 +191,7 @@ static void free_term(struct term *term) {
         break;
     case A_COMPOSE:
     case A_UNION:
+    case A_MINUS:
     case A_CONCAT:
     case A_APP:
     case A_LET:
@@ -1096,6 +1097,9 @@ static int check_exp(struct term *term, struct ctx *ctx) {
     case A_UNION:
         result = check_binop("union", term, ctx, 2, t_regexp, t_lens);
         break;
+    case A_MINUS:
+        result = check_binop("minus", term, ctx, 1, t_regexp);
+        break;
     case A_COMPOSE:
         result = check_compose(term, ctx);
         break;
@@ -1312,6 +1316,45 @@ static struct value *compile_union(struct term *exp, struct ctx *ctx) {
     return v;
 }
 
+static struct value *compile_minus(struct term *exp, struct ctx *ctx) {
+    struct value *v1 = compile_exp(exp->info, exp->left, ctx);
+    if (EXN(v1))
+        return v1;
+    struct value *v2 = compile_exp(exp->info, exp->right, ctx);
+    if (EXN(v2)) {
+        unref(v1, value);
+        return v2;
+    }
+
+    struct type *t = exp->type;
+    struct info *info = exp->info;
+    struct value *v;
+
+    v1 = coerce(v1, t);
+    v2 = coerce(v2, t);
+    if (t->tag == T_REGEXP) {
+        struct regexp *re1 = v1->regexp;
+        struct regexp *re2 = v2->regexp;
+        struct regexp *re = regexp_minus(info, re1, re2);
+        if (re == NULL) {
+            v = make_exn_value(info,
+                   "Regular expression subtraction 'r1 - r2' failed");
+            exn_printf_line(v, "r1: /%s/", re1->pattern->str);
+            exn_printf_line(v, "r2: /%s/", re2->pattern->str);
+        } else {
+            v = make_value(V_REGEXP, ref(info));
+            v->regexp = re;
+        }
+    } else {
+        fatal_error(info, "Tried to subtract a %s and a %s to yield a %s",
+                    type_name(exp->left->type), type_name(exp->right->type),
+                    type_name(t));
+    }
+    unref(v1, value);
+    unref(v2, value);
+    return v;
+}
+
 static struct value *compile_compose(struct term *exp, struct ctx *ctx) {
     struct type *t = exp->type;
     struct info *info = exp->info;
@@ -1508,6 +1551,9 @@ static struct value *compile_exp(struct info *info,
         break;
     case A_UNION:
         v = compile_union(exp, ctx);
+        break;
+    case A_MINUS:
+        v = compile_minus(exp, ctx);
         break;
     case A_CONCAT:
         v = compile_concat(exp, ctx);

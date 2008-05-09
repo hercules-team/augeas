@@ -68,7 +68,7 @@ typedef struct info YYLTYPE;
 }
 
 %type<term>   start decls
-%type<term>   exp composeexp unionexp catexp appexp rexp aexp
+%type<term>   exp composeexp unionexp minusexp catexp appexp rexp aexp
 %type<term>   param param_list
 %type<string> qid id autoload
 %type<type>  type atype
@@ -188,12 +188,17 @@ composeexp: composeexp ';' unionexp
    | unionexp
      { $$ = $1; }
 
-unionexp: unionexp '|' catexp
+unionexp: unionexp '|' minusexp
      { $$ = make_binop(A_UNION, $1, $3, &@$); }
-   | catexp
+   | minusexp
      { $$ = $1; }
    | tree_const
      { $$ = make_tree_value($1, &@1); }
+
+minusexp: minusexp '-' catexp
+     { $$ = make_binop(A_MINUS, $1, $3, &@$); }
+   | catexp
+     { $$ = $1; }
 
 catexp: catexp '.' appexp
 { $$ = make_binop(A_CONCAT, $1, $3, &@$); }
@@ -383,7 +388,7 @@ static struct term *make_binop(enum term_tag tag,
                               struct term *left, struct term *right,
                               struct info *locp) {
   assert(tag == A_COMPOSE || tag == A_CONCAT
-         || tag == A_UNION || tag == A_APP);
+         || tag == A_UNION || tag == A_APP || tag == A_MINUS);
   struct term *term = make_term_locp(tag, locp);
   term->left = left;
   term->right = right;
