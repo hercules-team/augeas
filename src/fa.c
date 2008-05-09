@@ -36,6 +36,10 @@
 #include "hash.h"
 #include "fa.h"
 
+#define UCHAR_NUM (UCHAR_MAX+1)
+#define UCHAR_MIN 0
+typedef unsigned char uchar;
+
 /* Which algorithm to use in FA_MINIMIZE */
 int fa_minimization_algorithm = FA_MIN_HOPCROFT;
 
@@ -70,13 +74,10 @@ struct state {
  */
 struct trans {
     struct state *to;
-    char          min;
-    char          max;
+    uchar         min;
+    uchar         max;
 };
 
-
-#define CHAR_NUM (CHAR_MAX-CHAR_MIN+1)
-#define CHAR_IND(i) ((i)-CHAR_MIN)
 
 /*
  * Representation of a parsed regular expression. The regular expression is
@@ -118,11 +119,11 @@ struct re {
             struct re *exp2;
         };
         struct {                  /* CSET */
-            int negate;
-            char *cset;
+            int    negate;
+            uchar *cset;
         };
         struct {                  /* CHAR */
-            char c;
+            uchar c;
         };
         struct {                  /* ITER */
             struct re *exp;
@@ -203,13 +204,13 @@ static void print_char_set(struct re *set) {
         printf("[^");
     else
         printf("[");
-    for (from = CHAR_MIN; from <= CHAR_MAX; from = to+1) {
-        while (set->cset[CHAR_IND(from)] == set->negate)
+    for (from = UCHAR_MIN; from <= UCHAR_MAX; from = to+1) {
+        while (set->cset[from] == set->negate)
             from += 1;
-        if (from > CHAR_MAX)
+        if (from > UCHAR_MAX)
             break;
         for (to = from;
-             to < CHAR_MAX && (set->cset[CHAR_IND(to+1)] == ! set->negate);
+             to < UCHAR_MAX && (set->cset[to+1] == ! set->negate);
              to++);
         if (to == from) {
             printf("%c", from);
@@ -301,7 +302,7 @@ static struct state *add_state(struct fa *fa, int accept) {
          t++)
 
 static void add_new_trans(struct state *from, struct state *to,
-                          char min, char max) {
+                          uchar min, uchar max) {
     if (from->tused == from->tsize) {
         if (from->tsize == 0)
             from->tsize = array_initial_size;
@@ -795,30 +796,30 @@ static struct state_set *fa_reverse(struct fa *fa) {
  * Return a sorted array of all interval start points in FA. The returned
  * array is a string (null terminated)
  */
-static char* start_points(struct fa *fa, int *npoints) {
-    char pointset[CHAR_NUM];
+static uchar* start_points(struct fa *fa, int *npoints) {
+    char pointset[UCHAR_NUM];
 
     mark_reachable(fa);
-    memset(pointset, 0, CHAR_NUM * sizeof(char));
+    MEMZERO(pointset, UCHAR_NUM);
     list_for_each(s, fa->initial) {
         if (! s->reachable)
             continue;
-        pointset[CHAR_IND(CHAR_MIN)] = 1;
+        pointset[0] = 1;
         for_each_trans(t, s) {
-            pointset[CHAR_IND(t->min)] = 1;
-            if (t->max < CHAR_MAX)
-                pointset[CHAR_IND(t->max+1)] = 1;
+            pointset[t->min] = 1;
+            if (t->max < UCHAR_MAX)
+                pointset[t->max+1] = 1;
         }
     }
 
     *npoints = 0;
-    for(int i=0; i < CHAR_NUM; *npoints += pointset[i], i++);
+    for(int i=0; i < UCHAR_NUM; *npoints += pointset[i], i++);
 
-    char *points;
+    uchar *points;
     CALLOC(points, *npoints+1);
-    for (int i=0, n=0; i < CHAR_NUM; i++) {
+    for (int i=0, n=0; i < UCHAR_NUM; i++) {
         if (pointset[i])
-            points[n++] = (char) (i + CHAR_MIN);
+            points[n++] = (uchar) i;
     }
 
     return points;
@@ -1060,7 +1061,7 @@ static void swap_initial(struct fa *fa) {
 static void determinize(struct fa *fa, struct state_set *ini) {
     int npoints;
     int make_ini = (ini == NULL);
-    const char *points = NULL;
+    const uchar *points = NULL;
     state_set_hash *newstate;
     struct state_set_list *worklist;
 
@@ -1099,8 +1100,8 @@ static void determinize(struct fa *fa, struct state_set *ini) {
             pset = state_set_hash_uniq(newstate, pset);
 
             struct state *q = state_set_hash_get_state(newstate, pset);
-            char min = points[n];
-            char max = CHAR_MAX;
+            uchar min = points[n];
+            uchar max = UCHAR_MAX;
             if (n+1 < npoints)
                 max = points[n+1] - 1;
             add_new_trans(r, q, min, max);
@@ -1118,7 +1119,7 @@ static void determinize(struct fa *fa, struct state_set *ini) {
  * reduced and ordered.
  */
 
-static struct state *step(struct state *s, char c) {
+static struct state *step(struct state *s, uchar c) {
     for_each_trans(t, s) {
         if (t->min <= c && c <= t->max)
             return t->to;
@@ -1218,8 +1219,8 @@ static void minimize_hopcroft(struct fa *fa) {
     /* Total automaton, nothing to do */
     if (fa->initial->tused == 1
         && fa->initial->trans[0].to == fa->initial
-        && fa->initial->trans[0].min == CHAR_MIN
-        && fa->initial->trans[0].max == CHAR_MAX)
+        && fa->initial->trans[0].min == UCHAR_MIN
+        && fa->initial->trans[0].max == UCHAR_MAX)
         return;
 
     totalize(fa);
@@ -1232,7 +1233,7 @@ static void minimize_hopcroft(struct fa *fa) {
     unsigned int nstates = states->used;
 
     int nsigma;
-    char *sigma = start_points(fa, &nsigma);
+    uchar *sigma = start_points(fa, &nsigma);
 
     /* initialize data structures */
 
@@ -1291,7 +1292,7 @@ static void minimize_hopcroft(struct fa *fa) {
         state_set_push(partition[j], qq);
         block[q] = j;
         for (int x = 0; x < nsigma; x++) {
-            char y = sigma[x];
+            uchar y = sigma[x];
             struct state *p = step(qq, y);
             int pn = state_set_index(states, p);
             state_set_push(reverse[INDEX(pn, x)], qq);
@@ -1531,7 +1532,7 @@ static struct fa *fa_make_epsilon(void) {
     return fa;
 }
 
-static struct fa *fa_make_char(char c) {
+static struct fa *fa_make_char(uchar c) {
     struct fa *fa = fa_make_empty();
     struct state *s = fa->initial;
     struct state *t = add_state(fa, 1);
@@ -1549,7 +1550,7 @@ struct fa *fa_make_basic(unsigned int basic) {
         return fa_make_epsilon();
     } else if (basic == FA_TOTAL) {
         struct fa *fa = fa_make_epsilon();
-        add_new_trans(fa->initial, fa->initial, CHAR_MIN, CHAR_MAX);
+        add_new_trans(fa->initial, fa->initial, UCHAR_MIN, UCHAR_MAX);
         return fa;
     }
     return NULL;
@@ -1565,7 +1566,7 @@ int fa_is_basic(struct fa *fa, unsigned int basic) {
             return 0;
         struct trans *t = fa->initial->trans;
         return t->to == fa->initial &&
-            t->min == CHAR_MIN && t->max == CHAR_MAX;
+            t->min == UCHAR_MIN && t->max == UCHAR_MAX;
     }
     return 0;
 }
@@ -1647,19 +1648,19 @@ struct fa *fa_concat(struct fa *fa1, struct fa *fa2) {
     return fa1;
 }
 
-static struct fa *fa_make_char_set(char *cset, int negate) {
+static struct fa *fa_make_char_set(uchar *cset, int negate) {
     struct fa *fa = fa_make_empty();
     struct state *s = fa->initial;
     struct state *t = add_state(fa, 1);
-    int from = CHAR_MIN;
+    int from = 0;
 
-    while (from <= CHAR_MAX) {
-        while (from <= CHAR_MAX && cset[CHAR_IND(from)] == negate)
+    while (from <= UCHAR_MAX) {
+        while (from <= UCHAR_MAX && cset[from] == negate)
             from += 1;
-        if (from > CHAR_MAX)
+        if (from > UCHAR_MAX)
             break;
         int to = from;
-        while (to < CHAR_MAX && (cset[CHAR_IND(to + 1)] == !negate))
+        while (to < UCHAR_MAX && (cset[to + 1] == !negate))
             to += 1;
         add_new_trans(s, t, from, to);
         from = to + 1;
@@ -1851,8 +1852,8 @@ int fa_contains(fa_t fa1, fa_t fa2) {
                 if (t2[n2].max < CHAR_MAX)
                     min1 = t2[n2].max + 1;
                 else {
-                    min1 = CHAR_MAX;
-                    max1 = CHAR_MIN;
+                    min1 = UCHAR_MAX;
+                    max1 = UCHAR_MIN;
                 }
                 if (state_pair_find(visited, t1[n1].to, t2[n2].to) == -1) {
                     worklist = state_pair_push(worklist, t1[n1].to, t2[n2].to);
@@ -1877,19 +1878,19 @@ static void totalize(struct fa *fa) {
     mark_reachable(fa);
     sort_transition_intervals(fa);
 
-    add_new_trans(crash, crash, CHAR_MIN, CHAR_MAX);
+    add_new_trans(crash, crash, UCHAR_MIN, UCHAR_MAX);
     list_for_each(s, fa->initial) {
-        int next = CHAR_MIN;
+        int next = UCHAR_MIN;
         int tused = s->tused;
         for (int i=0; i < tused; i++) {
-            char min = s->trans[i].min, max = s->trans[i].max;
+            uchar min = s->trans[i].min, max = s->trans[i].max;
             if (min > next)
                 add_new_trans(s, crash, next, min - 1);
             if (max + 1 > next)
                 next = max + 1;
         }
-        if (next <= CHAR_MAX)
-            add_new_trans(s, crash, next, CHAR_MAX);
+        if (next <= UCHAR_MAX)
+            add_new_trans(s, crash, next, UCHAR_MAX);
     }
 }
 
@@ -2003,11 +2004,11 @@ static char *string_extend(char *dst, const char *src, char c) {
 }
 
 static char pick_char(struct trans *t) {
-    for (char c = t->min; c <= t->max; c++)
+    for (int c = t->min; c <= t->max; c++)
         if (isalpha(c)) return c;
-    for (char c = t->min; c <= t->max; c++)
+    for (int c = t->min; c <= t->max; c++)
         if (isalnum(c)) return c;
-    for (char c = t->min; c <= t->max; c++)
+    for (int c = t->min; c <= t->max; c++)
         if (isprint(c)) return c;
     return t->min;
 }
@@ -2274,7 +2275,7 @@ static struct re *make_re_binop(enum re_type type, struct re *exp1,
     return re;
 }
 
-static struct re *make_re_char(char c) {
+static struct re *make_re_char(uchar c) {
     struct re *re = make_re(CHAR);
     re->c = c;
     return re;
@@ -2283,7 +2284,7 @@ static struct re *make_re_char(char c) {
 static struct re *make_re_char_set(int negate) {
     struct re *re = make_re(CSET);
     re->negate = negate;
-    CALLOC(re->cset, CHAR_NUM);
+    CALLOC(re->cset, UCHAR_NUM);
     return re;
 }
 
@@ -2333,10 +2334,10 @@ static char parse_char(const char **regexp, const char *special) {
     }
 }
 
-static void add_re_char(struct re *re, char from, char to) {
+static void add_re_char(struct re *re, uchar from, uchar to) {
     assert(re->type == CSET);
-    for (char c = from; c <= to; c++)
-        re->cset[CHAR_IND(c)] = 1;
+    for (int c = from; c <= to; c++)
+        re->cset[c] = 1;
 }
 
 static void parse_char_class(const char **regexp, struct re *re,
@@ -2501,11 +2502,11 @@ static struct re *parse_regexp(const char **regexp, int *error) {
     return NULL;
 }
 
-static void print_char(FILE *out, char c) {
+static void print_char(FILE *out, uchar c) {
     /* We escape '/' as '\\/' since dot chokes on bare slashes in labels;
        Also, a space ' ' is shown as '\s' */
-    static const char *const escape_from = " \n\t\v\b\r\f\a/";
-    static const char *const escape_to = "sntvbrfa/";
+    static const char *const escape_from = " \n\t\v\b\r\f\a/\0";
+    static const char *const escape_to = "sntvbrfa/0";
     char *p = strchr(escape_from, c);
     if (p != NULL) {
         int i = p - escape_from;
