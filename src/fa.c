@@ -85,6 +85,37 @@ struct trans {
     };
 };
 
+/*
+ * Bitsets
+ */
+#define UINT_BIT (sizeof(unsigned int) * CHAR_BIT)
+
+typedef unsigned int bitset;
+
+static bitset *bitset_init(size_t nbits) {
+    bitset *bs;
+    if (ALLOC_N(bs, (nbits + UINT_BIT) / UINT_BIT) == -1)
+        return NULL;
+    return bs;
+}
+
+static inline void bitset_clr(bitset *bs, unsigned int bit) {
+    bs[bit/UINT_BIT] &= ~(1 << (bit % UINT_BIT));
+}
+
+static inline void bitset_set(bitset *bs, unsigned int bit) {
+    bs[bit/UINT_BIT] |= 1 << (bit % UINT_BIT);
+}
+
+ATTRIBUTE_PURE
+static inline int bitset_get(const bitset * const bs, unsigned int bit) {
+    return (bs[bit/UINT_BIT] >> bit % UINT_BIT) & 1;
+}
+
+static void bitset_free(bitset *bs) {
+    free(bs);
+}
+
 
 /*
  * Representation of a parsed regular expression. The regular expression is
@@ -129,8 +160,8 @@ struct re {
             struct re *exp2;
         };
         struct {                  /* CSET */
-            int    negate;
-            uchar *cset;
+            int       negate;
+            bitset *cset;
         };
         struct {                  /* CHAR */
             uchar c;
@@ -215,12 +246,12 @@ static void print_char_set(struct re *set) {
     else
         printf("[");
     for (from = UCHAR_MIN; from <= UCHAR_MAX; from = to+1) {
-        while (set->cset[from] == set->negate)
+        while (bitset_get(set->cset, from) == set->negate)
             from += 1;
         if (from > UCHAR_MAX)
             break;
         for (to = from;
-             to < UCHAR_MAX && (set->cset[to+1] == ! set->negate);
+             to < UCHAR_MAX && (bitset_get(set->cset, to+1) == !set->negate);
              to++);
         if (to == from) {
             printf("%c", from);
@@ -1169,32 +1200,6 @@ static struct state *step(struct state *s, uchar c) {
     return NULL;
 }
 
-#define UINT_BIT (sizeof(unsigned int) * CHAR_BIT)
-
-typedef unsigned int *bitset_t;
-
-static bitset_t bitset_init(size_t nbits) {
-    bitset_t bs;
-    CALLOC(bs, (nbits + UINT_BIT) / UINT_BIT);
-    return bs;
-}
-
-static void bitset_clr(bitset_t bs, unsigned int bit) {
-    bs[bit/UINT_BIT] &= ~(1 << (bit % UINT_BIT));
-}
-
-static void bitset_set(bitset_t bs, unsigned int bit) {
-    bs[bit/UINT_BIT] |= 1 << (bit % UINT_BIT);
-}
-
-static int bitset_get(bitset_t bs, unsigned int bit) {
-    return bs[bit/UINT_BIT] & (1 << (bit % UINT_BIT));
-}
-
-static void bitset_free(bitset_t bs) {
-    free(bs);
-}
-
 struct state_list {
     struct state_list_node *first;
     struct state_list_node *last;
@@ -1292,7 +1297,7 @@ static void minimize_hopcroft(struct fa *fa) {
     /* An ss->used x nsigma matrix of lists of states */
     struct state_set **reverse;
     CALLOC(reverse, nstates * nsigma);
-    bitset_t reverse_nonempty = bitset_init(nstates * nsigma);
+    bitset *reverse_nonempty = bitset_init(nstates * nsigma);
 
     struct state_set **partition;
     CALLOC(partition, nstates);
@@ -1312,14 +1317,14 @@ static void minimize_hopcroft(struct fa *fa) {
      */
     int *pending = NULL;
     size_t npending = 0, spending = 0;
-    bitset_t pending2 = bitset_init(nstates * nsigma);
+    bitset *pending2 = bitset_init(nstates * nsigma);
 
     struct state_set *split = state_set_init(-1, S_NONE);
-    bitset_t split2 = bitset_init(nstates);
+    bitset *split2 = bitset_init(nstates);
 
     int *refine;
     CALLOC(refine, nstates);
-    bitset_t refine2 = bitset_init(nstates);
+    bitset *refine2 = bitset_init(nstates);
 
     struct state_set **splitblock;
     CALLOC(splitblock, nstates);
@@ -1736,7 +1741,7 @@ struct fa *fa_concat(struct fa *fa1, struct fa *fa2) {
     return fa1;
 }
 
-static struct fa *fa_make_char_set(uchar *cset, int negate) {
+static struct fa *fa_make_char_set(bitset *cset, int negate) {
     struct fa *fa = fa_make_empty();
     struct state *s = fa->initial;
     struct state *t = add_state(fa, 1);
@@ -1744,12 +1749,12 @@ static struct fa *fa_make_char_set(uchar *cset, int negate) {
     int r;
 
     while (from <= UCHAR_MAX) {
-        while (from <= UCHAR_MAX && cset[from] == negate)
+        while (from <= UCHAR_MAX && bitset_get(cset, from) == negate)
             from += 1;
         if (from > UCHAR_MAX)
             break;
         int to = from;
-        while (to < UCHAR_MAX && (cset[to + 1] == !negate))
+        while (to < UCHAR_MAX && (bitset_get(cset, to + 1) == !negate))
             to += 1;
         r = add_new_trans(s, t, from, to);
         if (r < 0)
@@ -2400,7 +2405,7 @@ static void free_re(struct re *re) {
     } else if (re->type == ITER) {
         re_unref(re->exp);
     } else if (re->type == CSET) {
-        free(re->cset);
+        bitset_free(re->cset);
     }
     free(re);
 }
@@ -2470,7 +2475,7 @@ static struct re *make_re_char_set(int negate) {
     struct re *re = make_re(CSET);
     if (re) {
         re->negate = negate;
-        CALLOC(re->cset, UCHAR_NUM);
+        re->cset = bitset_init(UCHAR_NUM);
         if (re->cset == NULL)
             re_unref(re);
     }
@@ -2525,8 +2530,8 @@ static char parse_char(const char **regexp, const char *special) {
 
 static void add_re_char(struct re *re, uchar from, uchar to) {
     assert(re->type == CSET);
-    for (int c = from; c <= to; c++)
-        re->cset[c] = 1;
+    for (unsigned int c = from; c <= to; c++)
+        bitset_set(re->cset, c);
 }
 
 static void parse_char_class(const char **regexp, struct re *re,
@@ -2852,15 +2857,15 @@ static char *re_cset_as_string(const struct re *re) {
        NSET_DASH) As we loop over the character set, we reset these flags
        if they are in the set/negated set, but not mentioned explicitly
     */
-    set_rbrack = re->cset[rbrack];
-    set_dash = re->cset[dash];
+    set_rbrack = bitset_get(re->cset, rbrack);
+    set_dash = bitset_get(re->cset, dash);
     nset_rbrack = !set_rbrack;
     nset_dash = !set_dash;
 
     for (from = UCHAR_MIN; from <= UCHAR_MAX; from = to+1) {
-        int include = re->cset[from];
+        int include = bitset_get(re->cset, from);
         for (to = from;
-             to < UCHAR_MAX && (re->cset[to+1] == include);
+             to < UCHAR_MAX && (bitset_get(re->cset, to+1) == include);
              to++);
 
         if (to == from && (from == rbrack || from == dash))
@@ -2911,12 +2916,12 @@ static char *re_cset_as_string(const struct re *re) {
         *s++ = rbrack;
 
     for (from = UCHAR_MIN; from <= UCHAR_MAX; from = to+1) {
-        while (from <= UCHAR_MAX && re->cset[from] == negate)
+        while (from <= UCHAR_MAX && bitset_get(re->cset, from) == negate)
             from += 1;
         if (from > UCHAR_MAX)
             break;
         for (to = from;
-             to < UCHAR_MAX && (re->cset[to+1] == ! negate);
+             to < UCHAR_MAX && (bitset_get(re->cset, to+1) == ! negate);
              to++);
 
         if (to == from && (from == rbrack || from == dash))
@@ -3068,7 +3073,7 @@ static int convert_trans_to_re(struct state *s) {
         int cnt = 0;
         uchar chr = UCHAR_MIN;
         for (int c = 0; c < UCHAR_NUM; c++) {
-            if (trans[t].re->cset[c]) {
+            if (bitset_get(trans[t].re->cset, c)) {
                 cnt += 1;
                 chr = c;
             }
