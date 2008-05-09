@@ -40,18 +40,6 @@ static const char *const tags[] = {
     "subtree", "star", "maybe"
 };
 
-static fa_t regexp_to_fa(struct regexp *regexp) {
-    fa_t fa;
-    int error = fa_compile(regexp->pattern->str, &fa);
-    if (error != REG_NOERROR) {
-        syntax_error(regexp->info,
-                     "unexpected error from fa_compile %d compiling %s",
-                     error, regexp->pattern->str);
-        return NULL;
-    }
-    return fa;
-}
-
 static struct lens *make_lens(enum lens_tag tag, struct info *info) {
     struct lens *lens;
     make_ref(lens);

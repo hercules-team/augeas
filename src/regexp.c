@@ -103,6 +103,50 @@ regexp_concat(struct info *info, struct regexp *r1, struct regexp *r2) {
 }
 
 struct regexp *
+regexp_minus(struct info *info, struct regexp *r1, struct regexp *r2) {
+    const char *p1 = r1->pattern->str;
+    const char *p2 = r2->pattern->str;
+    struct regexp *result = NULL;
+    fa_t fa = NULL, fa1 = NULL, fa2 = NULL;
+    int r;
+    char *s = NULL;
+
+    r = fa_compile(p1, &fa1);
+    if (r != REG_NOERROR)
+        goto error;
+
+    r = fa_compile(p2, &fa2);
+    if (r != REG_NOERROR)
+        goto error;
+
+    fa = fa_minus(fa1, fa2);
+    if (fa == NULL)
+        goto error;
+
+    r = fa_as_regexp(fa, &s);
+    if (r < 0)
+        goto error;
+
+    if (s == NULL) {
+        /* FA is the empty set, which we can't represent as a regexp */
+        goto error;
+    }
+
+    result = make_regexp(info, s);
+
+ done:
+    fa_free(fa);
+    fa_free(fa1);
+    fa_free(fa2);
+    free(s);
+    return result;
+ error:
+    unref(result, regexp);
+    goto done;
+}
+
+
+struct regexp *
 regexp_iter(struct info *info, struct regexp *r, int min, int max) {
     const char *p = r->pattern->str;
     char *s;
@@ -175,6 +219,18 @@ int regexp_nsub(struct regexp *r) {
         if (regexp_compile(r) == -1)
             return -1;
     return r->re->re_nsub;
+}
+
+fa_t regexp_to_fa(struct regexp *regexp) {
+    fa_t fa;
+    int error = fa_compile(regexp->pattern->str, &fa);
+    if (error != REG_NOERROR) {
+        syntax_error(regexp->info,
+                     "unexpected error from fa_compile %d compiling %s",
+                     error, regexp->pattern->str);
+        return NULL;
+    }
+    return fa;
 }
 
 /*

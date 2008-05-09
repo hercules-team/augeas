@@ -28,6 +28,7 @@
 #include "internal.h"
 #include "lens.h"
 #include "ref.h"
+#include "fa.h"
 
 struct info {
     unsigned int ref;
@@ -180,10 +181,23 @@ regexp_concat(struct info *, struct regexp *r1, struct regexp *r2);
 struct regexp *
 regexp_iter(struct info *info, struct regexp *r, int min, int max);
 
+/* Return a new REGEXP that matches all the words matched by R1 but
+ * not by R2
+ */
+struct regexp *
+regexp_minus(struct info *info, struct regexp *r1, struct regexp *r2);
+
 struct regexp *
 regexp_maybe(struct info *info, struct regexp *r);
 
 struct regexp *regexp_make_empty(struct info *);
+
+/* Construct a finite automaton from REGEXP. The pattern for REGEXP
+ * must be known to be syntactically correct.
+ *
+ * Return a new automaton, or NULL if the REGEXP has a syntax error
+ */
+fa_t regexp_to_fa(struct regexp *regexp);
 
 struct native {
     unsigned int argc;
