@@ -286,17 +286,20 @@ void fa_free(struct fa *fa) {
 
 static struct state *make_state(void) {
     struct state *s;
-    CALLOC(s, 1);
+    if (ALLOC(s) == -1)
+        return NULL;
     return s;
 }
 
 static struct state *add_state(struct fa *fa, int accept) {
     struct state *s = make_state();
-    s->accept = accept;
-    if (fa->initial == NULL) {
-        fa->initial = s;
-    } else {
-        list_cons(fa->initial->next, s);
+    if (s) {
+        s->accept = accept;
+        if (fa->initial == NULL) {
+            fa->initial = s;
+        } else {
+            list_cons(fa->initial->next, s);
+        }
     }
     return s;
 }
@@ -1245,6 +1248,16 @@ static void state_list_free(struct state_list *sl) {
 /* The linear index of element (q,c) in an NSTATES * NSIGMA matrix */
 #define INDEX(q, c) (q * nsigma + c)
 
+/* This macro is a terrible kludge; we use it to abort when allocation     */
+/* fails during Hopcroft minimization. Bailing out of that routine         */
+/* needs some serious thought to make sure we do not leave dangling memory */
+/* behind. So, for now, we abort                                           */
+#define ABORT_ALLOC_FAILURE                     \
+    do {                                        \
+        FIXME("Handle allocation failure");     \
+        abort();                                \
+    } while(0)
+
 static void minimize_hopcroft(struct fa *fa) {
     determinize(fa, NULL);
 
@@ -1416,8 +1429,7 @@ static void minimize_hopcroft(struct fa *fa) {
                     if (npending + 1 > spending) {
                         spending *= 2;
                         if (REALLOC_N(pending, 2 * spending) == -1) {
-                            FIXME("Handle allocation failure");
-                            abort();
+                            ABORT_ALLOC_FAILURE;
                         }
                     }
                     pending[2*npending + 1] = c;
@@ -1452,6 +1464,9 @@ static void minimize_hopcroft(struct fa *fa) {
 
     for (int n = 0; n < k; n++) {
         struct state *s = make_state();
+        if (s == NULL) {
+            ABORT_ALLOC_FAILURE;
+        }
         newstates->states[n] = s;
         struct state_set *partn = partition[n];
         for (int q=0; q < partn->used; q++) {
@@ -1472,8 +1487,7 @@ static void minimize_hopcroft(struct fa *fa) {
             int toind = state_set_index(states, t->to);
             struct state *nto = newstates->states[nsind[toind]];
             if (add_new_trans(s, nto, t->min, t->max) < 0) {
-                FIXME("Handle failure");
-                abort();
+                ABORT_ALLOC_FAILURE;
             }
         }
     }
@@ -2408,36 +2422,51 @@ int fa_compile(const char *regexp, struct fa **fa) {
 static struct re *make_re(enum re_type type) {
     struct re *re;
     make_ref(re);
-    re->type = type;
+    if (re)
+        re->type = type;
     return re;
 }
 
 static struct re *make_re_rep(struct re *exp, int min, int max) {
     struct re *re = make_re(ITER);
-    re->exp = exp;
-    re->min = min;
-    re->max = max;
+    if (re) {
+        re->exp = exp;
+        re->min = min;
+        re->max = max;
+    } else {
+        re_unref(exp);
+    }
     return re;
 }
 
 static struct re *make_re_binop(enum re_type type, struct re *exp1,
                                 struct re *exp2) {
     struct re *re = make_re(type);
-    re->exp1 = exp1;
-    re->exp2 = exp2;
+    if (re) {
+        re->exp1 = exp1;
+        re->exp2 = exp2;
+    } else {
+        re_unref(exp1);
+        re_unref(exp2);
+    }
     return re;
 }
 
 static struct re *make_re_char(uchar c) {
     struct re *re = make_re(CHAR);
-    re->c = c;
+    if (re)
+        re->c = c;
     return re;
 }
 
 static struct re *make_re_char_set(int negate) {
     struct re *re = make_re(CSET);
-    re->negate = negate;
-    CALLOC(re->cset, UCHAR_NUM);
+    if (re) {
+        re->negate = negate;
+        CALLOC(re->cset, UCHAR_NUM);
+        if (re->cset == NULL)
+            re_unref(re);
+    }
     return re;
 }
 
@@ -2552,6 +2581,8 @@ static struct re *parse_simple_exp(const char **regexp, int *error) {
         }
     } else if (match(regexp, '.')) {
         re = make_re_char_set(1);
+        if (re == NULL)
+            goto error;
         add_re_char(re, '\n', '\n');
     } else {
         if (more(regexp)) {
