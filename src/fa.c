@@ -34,6 +34,7 @@
 
 #include "internal.h"
 #include "memory.h"
+#include "ref.h"
 #include "hash.h"
 #include "fa.h"
 
@@ -112,7 +113,10 @@ enum re_type {
     EPSILON
 };
 
+#define re_unref(r) unref(r, re)
+
 struct re {
+    ref_t        ref;
     enum re_type type;
     union {
         struct {                  /* UNION, CONCAT */
@@ -2364,14 +2368,16 @@ static struct fa *fa_from_re(struct re *re) {
     return result;
 }
 
-static void re_free(struct re *re) {
+static void free_re(struct re *re) {
     if (re == NULL)
         return;
+    assert(re->ref == 0);
+
     if (re->type == UNION || re->type == CONCAT) {
-        re_free(re->exp1);
-        re_free(re->exp2);
+        re_unref(re->exp1);
+        re_unref(re->exp2);
     } else if (re->type == ITER) {
-        re_free(re->exp);
+        re_unref(re->exp);
     } else if (re->type == CSET) {
         free(re->cset);
     }
@@ -2389,7 +2395,7 @@ int fa_compile(const char *regexp, struct fa **fa) {
     //printf("\n");
 
     *fa = fa_from_re(re);
-    re_free(re);
+    re_unref(re);
 
     collect(*fa);
     return ret;
@@ -2401,7 +2407,7 @@ int fa_compile(const char *regexp, struct fa **fa) {
 
 static struct re *make_re(enum re_type type) {
     struct re *re;
-    CALLOC(re, 1);
+    make_ref(re);
     re->type = type;
     return re;
 }
@@ -2555,7 +2561,7 @@ static struct re *parse_simple_exp(const char **regexp, int *error) {
     }
     return re;
  error:
-    re_free(re);
+    re_unref(re);
     return NULL;
 }
 
@@ -2609,7 +2615,7 @@ static struct re *parse_repeated_exp(const char **regexp, int *error) {
     }
     return re;
  error:
-    re_free(re);
+    re_unref(re);
     return NULL;
 }
 
@@ -2627,7 +2633,7 @@ static struct re *parse_concat_exp(const char **regexp, int *error) {
     return re;
 
  error:
-    re_free(re);
+    re_unref(re);
     return NULL;
 }
 
@@ -2645,7 +2651,7 @@ static struct re *parse_regexp(const char **regexp, int *error) {
     return re;
 
  error:
-    re_free(re);
+    re_unref(re);
     return NULL;
 }
 
