@@ -36,9 +36,35 @@
 #include <assert.h>
 
 #ifdef __GNUC__
-#ifdef HAVE_ANSIDECL_H
-#include <ansidecl.h>
+
+/**
+ * ATTRIBUTE_UNUSED:
+ *
+ * Macro to flag conciously unused parameters to functions
+ */
+#ifndef ATTRIBUTE_UNUSED
+#define ATTRIBUTE_UNUSED __attribute__((__unused__))
 #endif
+
+/**
+ * ATTRIBUTE_FORMAT
+ *
+ * Macro used to check printf/scanf-like functions, if compiling
+ * with gcc.
+ */
+#ifndef ATTRIBUTE_FORMAT
+#define ATTRIBUTE_FORMAT(args...) __attribute__((__format__ (args)))
+#endif
+
+#ifndef ATTRIBUTE_PURE
+#define ATTRIBUTE_PURE __attribute__((pure))
+#endif
+
+#else
+#define ATTRIBUTE_UNUSED
+#define ATTRIBUTE_FORMAT(...)
+#define ATTRIBUTE_PURE
+#endif                                   /* __GNUC__ */
 
 /* String equality tests, suggested by Jim Meyering. */
 #define STREQ(a,b) (strcmp((a),(b)) == 0)
@@ -48,7 +74,7 @@
 #define STREQLEN(a,b,n) (strncmp((a),(b),(n)) == 0)
 #define STRNEQLEN(a,b,n) (strncmp((a),(b),(n)) != 0)
 
-__attribute__((pure))
+ATTRIBUTE_PURE
 static inline int streqv(const char *a, const char *b) {
     if (a == NULL || b == NULL)
         return a == b;
@@ -60,7 +86,7 @@ static inline int streqv(const char *a, const char *b) {
 #define SEP '/'
 
 /* Length of PATH without any trailing '/' */
-__attribute__((pure))
+ATTRIBUTE_PURE
 static inline int pathlen(const char *path) {
     int len = strlen(path);
 
@@ -71,7 +97,7 @@ static inline int pathlen(const char *path) {
 }
 
 /* Return 1 if P1 is a prefix of P2. P1 as a string must have length <= P2 */
-__attribute__((pure))
+ATTRIBUTE_PURE
 static inline int pathprefix(const char *p1, const char *p2) {
     if (p1 == NULL || p2 == NULL)
         return 0;
@@ -99,30 +125,6 @@ int pathjoin(char **path, int nseg, ...);
     } while (0)
 
 #define MEMZERO(ptr, n) memset((ptr), 0, (n) * sizeof(*(ptr)));
-
-/**
- * ATTRIBUTE_UNUSED:
- *
- * Macro to flag conciously unused parameters to functions
- */
-#ifndef ATTRIBUTE_UNUSED
-#define ATTRIBUTE_UNUSED __attribute__((__unused__))
-#endif
-
-/**
- * ATTRIBUTE_FORMAT
- *
- * Macro used to check printf/scanf-like functions, if compiling
- * with gcc.
- */
-#ifndef ATTRIBUTE_FORMAT
-#define ATTRIBUTE_FORMAT(args...) __attribute__((__format__ (args)))
-#endif
-
-#else
-#define ATTRIBUTE_UNUSED
-#define ATTRIBUTE_FORMAT(...)
-#endif
 
 /**
  * TODO:
