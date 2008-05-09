@@ -14,6 +14,7 @@ include_HEADERS = augeas.h fa.h
 
 libaugeas_la_SOURCES = augeas.h augeas.c config.h \
 	internal.h internal.c \
+	memory.h memory.c \
         syntax.c syntax.h parser.y builtin.c lens.c lens.h regexp.c \
 	transform.c get.c put.c list.h
 libaugeas_la_LDFLAGS = -Wl,--version-script=$(srcdir)/augeas_sym.version
@@ -25,7 +26,7 @@ augtool_LDADD = libaugeas.la $(READLINE_LIBS)
 augparse_SOURCES = augparse.c
 augparse_LDADD = libaugeas.la
 
-libfa_la_SOURCES = fa.c fa.h hash.c hash.h
+libfa_la_SOURCES = fa.c fa.h hash.c hash.h memory.c memory.h
 
 liblexer_la_SOURCES = lexer.l
 liblexer_la_CFLAGS = $(AM_CFLAGS) -Wno-error

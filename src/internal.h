@@ -37,6 +37,10 @@
 
 #ifdef __GNUC__
 
+#ifndef __GNUC_PREREQ
+#define __GNUC_PREREQ(maj,min) 0
+#endif
+
 /**
  * ATTRIBUTE_UNUSED:
  *
@@ -60,10 +64,19 @@
 #define ATTRIBUTE_PURE __attribute__((pure))
 #endif
 
+#ifndef ATTRIBUTE_RETURN_CHECK
+#if __GNUC_PREREQ (3, 4)
+#define ATTRIBUTE_RETURN_CHECK __attribute__((__warn_unused_result__))
+#else
+#define ATTRIBUTE_RETURN_CHECK
+#endif
+#endif
+
 #else
 #define ATTRIBUTE_UNUSED
 #define ATTRIBUTE_FORMAT(...)
 #define ATTRIBUTE_PURE
+#define ATTRIBUTE_RETURN_CHECK
 #endif                                   /* __GNUC__ */
 
 /* String equality tests, suggested by Jim Meyering. */
