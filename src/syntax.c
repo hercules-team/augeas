@@ -995,12 +995,20 @@ static void type_error2(struct info *info, const char *msg,
     free((char *) s2);
 }
 
+static void type_error_binop(struct info *info, const char *opname,
+                             struct type *type1, struct type *type2) {
+    const char *s1 = type_string(type1);
+    const char *s2 = type_string(type2);
+    syntax_error(info, "Type error: ");
+    syntax_error(info, "%s of %s and %s is not possible", opname, s1, s2);
+    free((char *) s1);
+    free((char *) s2);
+}
+
 static int check_exp(struct term *term, struct ctx *ctx);
 
 static struct type *require_exp_type(struct term *term, struct ctx *ctx,
-                                     int ntypes, ...) {
-    va_list ap;
-    struct type *allowed[ntypes];
+                                     int ntypes, struct type *allowed[]) {
     int r = 1;
 
     if (term->type == NULL) {
@@ -1008,11 +1016,6 @@ static struct type *require_exp_type(struct term *term, struct ctx *ctx,
         if (! r)
             return NULL;
     }
-
-    va_start(ap, ntypes);
-    for (int i=0; i < ntypes; i++)
-        allowed[i] = va_arg(ap, struct type *);
-    va_end(ap);
 
     return expect_types_arr(term->info, term->type, ntypes, allowed);
 }
@@ -1041,33 +1044,36 @@ static int check_compose(struct term *term, struct ctx *ctx) {
     }
     return 1;
  print_error:
-    type_error2(term->info,
-                "composition of %s and %s is not possible",
-                term->left->type, term->right->type);
+    type_error_binop(term->info,
+                     "composition", term->left->type, term->right->type);
     return 0;
 }
 
-static int check_concat(struct term *term, struct ctx *ctx) {
+static int check_binop(const char *opname, struct term *term,
+                       struct ctx *ctx, int ntypes, ...) {
+    va_list ap;
+    struct type *allowed[ntypes];
     struct type *tl = NULL, *tr = NULL;
 
-    if (! check_exp(term->left, ctx))
-        return 0;
-    tl = term->left->type;
+    va_start(ap, ntypes);
+    for (int i=0; i < ntypes; i++)
+        allowed[i] = va_arg(ap, struct type *);
+    va_end(ap);
 
-    tl = require_exp_type(term->left, ctx,
-                          4, t_string, t_regexp, t_lens, t_filter);
-    tr = require_exp_type(term->right, ctx,
-                          4, t_string, t_regexp, t_lens, t_filter);
-    if ((tl == NULL) || (tr == NULL))
+    tl = require_exp_type(term->left, ctx, ntypes, allowed);
+    if (tl == NULL)
         return 0;
+
+    tr = require_exp_type(term->right, ctx, ntypes, allowed);
+    if (tr == NULL)
+        return 0;
+
     term->type = type_join(tl, tr);
     if (term->type == NULL)
         goto print_error;
     return 1;
  print_error:
-    type_error2(term->info,
-                "concatenation of %s and %s is not possible",
-                term->left->type, term->right->type);
+    type_error_binop(term->info, opname, term->left->type, term->right->type);
     return 0;
 }
 
@@ -1088,28 +1094,14 @@ static int check_exp(struct term *term, struct ctx *ctx) {
 
     switch (term->tag) {
     case A_UNION:
-        {
-            struct type *tl = require_exp_type(term->left, ctx,
-                                               2, t_regexp, t_lens);
-            struct type *tr = require_exp_type(term->right, ctx,
-                                               2, t_regexp, t_lens);
-            result = (tl != NULL) && (tr != NULL);
-            if (result) {
-                term->type = type_join(tl, tr);
-                if (term->type == NULL) {
-                    type_error2(term->info,
-                                "union of %s and %s is not possible",
-                                term->left->type, term->right->type);
-                    result = 0;
-                }
-            }
-        }
+        result = check_binop("union", term, ctx, 2, t_regexp, t_lens);
         break;
     case A_COMPOSE:
         result = check_compose(term, ctx);
         break;
     case A_CONCAT:
-        result = check_concat(term, ctx);
+        result = check_binop("concatenation", term, ctx,
+                             4, t_string, t_regexp, t_lens, t_filter);
         break;
     case A_LET:
         {
@@ -1143,9 +1135,8 @@ static int check_exp(struct term *term, struct ctx *ctx) {
                                   term->right->type,
                                   1, term->left->type->dom) != NULL;
             if (! result) {
-                type_error2(term->info,
-                            "application of %s to %s is not possible",
-                            term->left->type, term->right->type);
+                type_error_binop(term->info, "application",
+                                 term->left->type, term->right->type);
                 result = 0;
             }
         }
