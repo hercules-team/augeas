@@ -4,10 +4,7 @@ module Yum =
 
   let eol = Util.del_str "\n"
 
-  (* Very painful: the regular expression is /[^#;:= \t\n[\/]/ - "baseurl" *)
-  (* Clearly, we need support for forming the setminus of regular          *)
-  (* languages.                                                            *)
-  let key_re = /([^b#;:= \t\n[\/]|b[^a#;:= \t\n[\/]|ba[^s#;:= \t\n[\/]|bas[^e#;:= \t\n[\/]|base[^u#;:= \t\n[\/]|baseu[^r#;:= \t\n[\/]|baseur[^l#;:= \t\n[\/]|baseurl[^#;:= \t\n[\/])[^#;:= \t\n[\/]*/
+  let key_re = /[^#;:= \t\n[\/]+/ - "baseurl"
 
   let eq = del /[ \t]*[:=][ \t]*/ "="
   let secname = /[^]\/]+/
