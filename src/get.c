@@ -256,7 +256,7 @@ static void advance(struct state *state, int cnt) {
         return;
 
     for (int i=0; i<cnt; i++) {
-        assert(state->pos != '\0');
+        assert(state->pos[i] != '\0');
         if (state->pos[i] == '\n')
             state->info.first_line++;
         state->info.last_line = state->info.first_line;
@@ -389,7 +389,7 @@ static struct skel *parse_del(struct lens *lens, struct state *state) {
 }
 
 static struct tree *get_store(struct lens *lens, struct state *state) {
-    assert(lens->tag = L_STORE);
+    assert(lens->tag == L_STORE);
     const char *token = NULL;
     struct tree *tree = NULL;
 
@@ -407,14 +407,14 @@ static struct tree *get_store(struct lens *lens, struct state *state) {
 }
 
 static struct skel *parse_store(struct lens *lens, struct state *state) {
-    assert(lens->tag = L_STORE);
+    assert(lens->tag == L_STORE);
     if (match(lens, state, NULL) < 0)
         get_expected_error(state, lens);
     return make_skel(lens);
 }
 
 static struct tree *get_key(struct lens *lens, struct state *state) {
-    assert(lens->tag = L_KEY);
+    assert(lens->tag == L_KEY);
     const char *token = NULL;
     if (match(lens, state, &token) < 0)
         get_expected_error(state, lens);
@@ -429,7 +429,7 @@ static struct skel *parse_key(struct lens *lens, struct state *state) {
 }
 
 static struct tree *get_label(struct lens *lens, struct state *state) {
-    assert(lens->tag = L_LABEL);
+    assert(lens->tag == L_LABEL);
     state->key = strdup(lens->string->str);
     return NULL;
 }
