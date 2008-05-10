@@ -96,14 +96,15 @@ static fa_t make_fa(CuTest *tc, const char *regexp, int exp_err) {
     int r;
 
     r = fa_compile(regexp, &fa);
-    CuAssertIntEquals(tc, exp_err, r);
     if (exp_err == REG_NOERROR) {
         if (r != REG_NOERROR)
             print_regerror(r, regexp);
+        CuAssertIntEquals(tc, REG_NOERROR, r);
         CuAssertPtrNotNull(tc, fa);
         mark(fa);
         assertAsRegexp(tc, fa);
     } else {
+        CuAssertIntEquals(tc, exp_err, r);
         CuAssertPtrEquals(tc, NULL, fa);
     }
     return fa;
@@ -393,12 +394,13 @@ static void testAsRegexp(CuTest *tc) {
     assertFaAsRegexp(tc, "abcd");
     assertFaAsRegexp(tc, "ab|cd");
     assertFaAsRegexp(tc, "[a-z]+");
-    assertFaAsRegexp(tc, "[]a]+");
+    assertFaAsRegexp(tc, "[]a-]+");
+    assertFaAsRegexp(tc, "[A-CE-GI-LN-QS-Z]");
 }
 
 static void testAsRegexpMinus(CuTest *tc) {
-    fa_t fa1 = make_good_fa(tc, "[a-z]+");
-    fa_t fa2 = make_good_fa(tc, "baseurl");
+    fa_t fa1 = make_good_fa(tc, "[A-Za-z]+");
+    fa_t fa2 = make_good_fa(tc, "Deny(Users|Groups|Other)");
     fa_t fa = mark(fa_minus(fa1, fa2));
     char *re;
     int r;
