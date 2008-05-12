@@ -6,7 +6,8 @@ module Sshd =
 
    let sep = Util.del_ws_spc
 
-   let key_re = /[A-Za-z0-9]+/
+   let key_re = /[A-Za-z0-9]+/ 
+         - /MACs|Match|AcceptEnv|(Allow|Deny)(Groups|Users)/
 
    let comment = [ del /(#.*|[ \t]*)\n/ "\n" ]
 

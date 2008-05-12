@@ -260,49 +260,44 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
 /*
  * Typechecking of lenses
  */
-static struct value *useless_union(struct info *info, const char *msg,
-                                   struct regexp *r1, struct regexp *r2) {
+static struct value *disjoint_check(struct info *info, const char *msg,
+                                    struct regexp *r1, struct regexp *r2) {
     fa_t fa1 = regexp_to_fa(r1);
     fa_t fa2 = regexp_to_fa(r2);
+    fa_t fa = NULL;
     struct value *exn = NULL;
 
     if (fa1 == NULL || fa2 == NULL) {
         fa_free(fa1);
         fa_free(fa2);
         return make_exn_value(ref(info),
-              "internal error: compile in useless_union failed");
+              "internal error: compile in disjoint_check failed");
     }
 
-    if (fa_contains(fa2, fa1)) {
+    fa = fa_intersect(fa1, fa2);
+    if (! fa_is_basic(fa, FA_EMPTY)) {
+        char *xmpl = fa_example(fa);
         exn = make_exn_value(ref(info),
-             "%s: the first lens completely shadows the second lens", msg);
+                             "overlapping lenses in %s", msg);
+
+        exn_printf_line(exn, "Example matched by both: '%s'", xmpl);
+        free(xmpl);
     }
+
+    fa_free(fa);
     fa_free(fa1);
     fa_free(fa2);
-    return exn;
 
+    return exn;
 }
 
 static struct value *typecheck_union(struct info *info,
                                      struct lens *l1, struct lens *l2) {
     struct value *exn = NULL;
 
-    /* Boomerang checks unions by requiring that FA1 and FA2 are disjoint. This
-       is a pain in Augeas, since it usually requires that the user specifiy
-       a regexp in the second part of the union that is essentially FA2\FA1.
-       We can't support that, since that would require that we either use
-       libfa for regexp matching instead of the much much more optimized
-       GNU regexp, or that we support set minus in the language; that in turn
-       requires that we are able to turn an automaton back into a regexp.
-
-       As a compromise/stopgap, we just check that L2 isn't entirely
-       useless in the union L1 | L2, by making sure L2 is not completely
-       shadowed by L1. It's weaker than disjointness, but usually what the
-       user has in mind, anyway */
-
-    exn = useless_union(info, "useless union", l1->ctype, l2->ctype);
+    exn = disjoint_check(info, "union.get", l1->ctype, l2->ctype);
     if (exn == NULL) {
-        exn = useless_union(info, "useless tree union", l1->atype, l2->atype);
+        exn = disjoint_check(info, "tree union.put", l1->atype, l2->atype);
     }
     if (exn != NULL) {
         char *fi = format_info(l1->info);
