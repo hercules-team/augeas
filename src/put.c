@@ -310,25 +310,30 @@ static void print_escaped_chars(FILE *out, const char *text) {
 /*
  * Check whether SKEL has the skeleton type required by LENS
  */
+
 static int skel_instance_of(struct lens *lens, struct skel *skel) {
     if (skel == NULL)
         return 0;
 
     switch (lens->tag) {
     case L_DEL:
-        // FIXME: skel->text must match lens->regexp
-        return skel->tag == L_DEL;
+        if (skel->tag != L_DEL)
+            return 0;
+        return regexp_match(lens->regexp, skel->text, strlen(skel->text),
+                            0, NULL);
     case L_STORE:
-        // FIXME: skel->text must match lens->regexp
-        return skel->tag == L_STORE;
+        if (skel->tag != L_STORE)
+            return 0;
+        return regexp_match(lens->regexp, skel->text, strlen(skel->text),
+                            0, NULL);
     case L_KEY:
-        return 0;
+        return skel->tag == L_KEY;
     case L_LABEL:
-        return 0;
+        return skel->tag == L_LABEL;
     case L_SEQ:
-        return 0;
+        return skel->tag == L_SEQ;
     case L_COUNTER:
-        return 0;
+        return skel->tag == L_COUNTER;
     case L_CONCAT:
         {
             struct skel *s = skel->skels;
