@@ -502,6 +502,17 @@ static void put_quant_maybe(struct lens *lens, struct state *state) {
     }
 }
 
+static void put_store(struct lens *lens, struct state *state) {
+    if (regexp_match(lens->regexp, state->value, strlen(state->value),
+                     0, NULL) != strlen(state->value)) {
+        put_error(state, lens,
+                  "Value '%s' does not match regexp /%s/ in store lens",
+                  state->value, lens->regexp->pattern->str);
+    } else {
+        fprintf(state->out, "%s", state->value);
+    }
+}
+
 static void put_lens(struct lens *lens, struct state *state) {
     debug("put_lens: %s:%d %s\n", _t(lens), lens->info->first_line,
           _l(state->tree));
@@ -513,7 +524,7 @@ static void put_lens(struct lens *lens, struct state *state) {
         put_del(lens, state);
         break;
     case L_STORE:
-        fprintf(state->out, "%s", state->value);
+        put_store(lens, state);
         break;
     case L_KEY:
         fprintf(state->out, "%s", state->key);
@@ -625,7 +636,7 @@ static void create_lens(struct lens *lens, struct state *state) {
         create_del(lens, state);
         break;
     case L_STORE:
-        fprintf(state->out, "%s", state->value);
+        put_store(lens, state);
         break;
     case L_KEY:
         fprintf(state->out, "%s", state->key);
