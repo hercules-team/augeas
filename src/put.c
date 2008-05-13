@@ -572,7 +572,6 @@ static void create_union(struct lens *lens, struct state *state) {
 
 static void create_concat(struct lens *lens, struct state *state) {
     assert(lens->tag == L_CONCAT);
-    assert(state->skel == NULL);
     struct split *oldsplit = state->split;
 
     struct split *split = split_concat(state, lens);
@@ -593,7 +592,6 @@ static void create_concat(struct lens *lens, struct state *state) {
 
 static void create_quant_star(struct lens *lens, struct state *state) {
     assert(lens->tag == L_STAR);
-    assert(state->skel == NULL);
     struct split *oldsplit = state->split;
 
     struct split *split = split_iter(lens, state->split);
@@ -611,7 +609,6 @@ static void create_quant_star(struct lens *lens, struct state *state) {
 
 static void create_quant_maybe(struct lens *lens, struct state *state) {
     assert(lens->tag == L_MAYBE);
-    assert(state->skel == NULL);
 
     if (applies(lens->child, state->split)) {
         create_lens(lens->child, state);
