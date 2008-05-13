@@ -1065,8 +1065,41 @@ static void reduce(struct fa *fa) {
  *
  * Returns the same FA as a convenience
  */
-static struct fa *collect(struct fa *fa) {
 
+static void collect_trans(struct fa *fa) {
+    list_for_each(s, fa->initial) {
+        if (! s->live) {
+            free_trans(s);
+        } else {
+            int i=0;
+            while (i < s->tused) {
+                if (! s->trans[i].to->live) {
+                    s->tused -= 1;
+                    memmove(s->trans + i, s->trans + s->tused,
+                            sizeof(*s->trans));
+                } else {
+                    i += 1;
+                }
+            }
+        }
+    }
+}
+
+static void collect_dead_states(struct fa *fa) {
+    /* Remove all dead states and free their storage */
+    for (struct state *s = fa->initial; s->next != NULL; ) {
+        if (! s->next->live) {
+            struct state *del = s->next;
+            s->next = del->next;
+            free_trans(del);
+            free(del);
+        } else {
+            s = s->next;
+        }
+    }
+}
+
+static struct fa *collect(struct fa *fa) {
     mark_live(fa);
 
     if (! fa->initial->live) {
@@ -1079,33 +1112,8 @@ static struct fa *collect(struct fa *fa) {
         list_free(fa->initial->next);
         fa->deterministic = 1;
     } else {
-        list_for_each(s, fa->initial) {
-            if (! s->live) {
-                free_trans(s);
-            } else {
-                int i=0;
-                while (i < s->tused) {
-                    if (! s->trans[i].to->live) {
-                        s->tused -= 1;
-                        memmove(s->trans + i, s->trans + s->tused,
-                                sizeof(*s->trans));
-                    } else {
-                        i += 1;
-                    }
-                }
-            }
-        }
-        /* Remove all dead states and free their storage */
-        for (struct state *s = fa->initial; s->next != NULL; ) {
-           if (! s->next->live) {
-               struct state *del = s->next;
-               s->next = del->next;
-               free_trans(del);
-               free(del);
-           } else {
-               s = s->next;
-           }
-       }
+        collect_trans(fa);
+        collect_dead_states(fa);
     }
     reduce(fa);
     return fa;
@@ -1700,7 +1708,6 @@ static int union_in_place(struct fa *fa1, struct fa *fa2) {
 
     set_initial(fa1, s);
 
-    collect(fa1);
     return 0;
 }
 
@@ -1730,7 +1737,6 @@ static int concat_in_place(struct fa *fa1, struct fa *fa2) {
     fa1->minimal = 0;
     fa_merge(fa1, fa2);
 
-    collect(fa1);
     return 0;
 }
 
@@ -1738,7 +1744,8 @@ struct fa *fa_concat(struct fa *fa1, struct fa *fa2) {
     fa1 = fa_clone(fa1);
     fa2 = fa_clone(fa2);
     concat_in_place(fa1, fa2);
-    return fa1;
+
+    return collect(fa1);
 }
 
 static struct fa *fa_make_char_set(bitset *cset, int negate) {
@@ -1798,7 +1805,7 @@ static struct fa *fa_star(struct fa *fa) {
     fa->deterministic = 0;
     fa->minimal = 0;
 
-    return collect(fa);
+    return fa;
 
  error:
     fa_free(fa);
