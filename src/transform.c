@@ -324,6 +324,12 @@ int transform_save(struct augeas *aug, struct transform *xform,
         goto done;
     fp = NULL;
 
+    if (err != NULL) {
+        err_status = "put_failed";
+        unlink(augnew);
+        goto done;
+    }
+
     if (!(aug->flags & AUG_SAVE_NEWFILE)) {
         if (aug->flags & AUG_SAVE_BACKUP) {
             int r;
