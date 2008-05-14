@@ -44,11 +44,19 @@ static const int glob_flags = GLOB_NOSORT;
  *   lens/id   : unique hexadecimal id of the lens
  *   error     : indication of errors during processing FNAME, or NULL
  *               if processing succeeded
+ *   error/pos : position in file where error occured (for get errors)
+ *   error/path: path to tree node where error occurred (for put errors)
+ *   error/message : human-readable error message
  */
 static const char *const path_node = "/path";
 static const char *const info_node = "/lens/info";
 static const char *const id_node = "/lens/id";
+
 static const char *const err_node = "/error";
+/* These are all put underneath "/error" */
+static const char *const err_pos_node = "/pos";
+static const char *const err_path_node = "/path";
+static const char *const err_msg_node = "/message";
 
 /*
  * Filters
@@ -167,59 +175,146 @@ void free_transform(struct transform *xform) {
     free(xform);
 }
 
-static const char *err_path(const char *filename) {
+static char *err_path(const char *filename) {
     char *result = NULL;
     pathjoin(&result, 3, AUGEAS_META_FILES, filename, err_node);
     return result;
 }
 
-static char *add_load_info(struct augeas *aug, const char *filename,
-                           const char *node, struct lens *lens) {
-    char *tmp;
+/* Record an error in the tree. The error will show up underneath
+ * /augeas/FILENAME/error. PATH is the path to the toplevel node in the
+ * tree where the lens application happened. When STATUS is NULL, just
+ * clear any error associated with FILENAME in the tree.
+ */
+static int store_error(struct augeas *aug,
+                       const char *filename, const char *path,
+                       const char *status, const struct lns_error *err) {
+    char *ep = err_path(filename);
+    size_t ep_len;
     int r;
-    char *result = NULL;
+    int result = -1;
+
+    if (ep == NULL)
+        return -1;
+    ep_len = strlen(ep);
+
+    aug_rm(aug, ep);
+    if (status != NULL) {
+        r = aug_set(aug, ep, status);
+        if (r < 0)
+            goto done;
+
+        if (err != NULL) {
+            if (err->pos > 0) {
+                char *pos;
+
+                r = pathjoin(&ep, 1, err_pos_node);
+                if (r < 0)
+                    goto done;
+                r = asprintf(&pos, "%d", err->pos);
+                if (r < 0)
+                    goto done;
+                r = aug_set(aug, ep, pos);
+                FREE(pos);
+                if (r < 0)
+                    goto done;
+            } else {
+                char *p;
+
+                r = pathjoin(&ep, 1, err_path_node);
+                if (r < 0)
+                    goto done;
+                r = asprintf(&p, "%s%s", path, err->path);
+                if (r < 0)
+                    goto done;
+                r = aug_set(aug, ep, p);
+                FREE(p);
+                if (r < 0)
+                    goto done;
+            }
+            ep[ep_len] = '\0';
+            r = pathjoin(&ep, 1, err_msg_node);
+            if (r < 0)
+                goto done;
+            r = aug_set(aug, ep, err->message);
+            if (r < 0)
+                goto done;
+        }
+    }
+
+    result = 0;
+ done:
+    free(ep);
+    return result;
+}
+
+static int add_load_info(struct augeas *aug, const char *filename,
+                         const char *node, struct lens *lens) {
+    char *tmp = NULL;
+    int r;
+    char *p = NULL;
     int end = 0;
+    int result = -1;
 
-    pathjoin(&result, 2, AUGEAS_META_FILES, filename + strlen(aug->root) - 1);
-    end = strlen(result);
+    r = pathjoin(&p, 2, AUGEAS_META_FILES, filename + strlen(aug->root) - 1);
+    if (r < 0)
+        goto done;
+    end = strlen(p);
 
-    pathjoin(&result, 1, path_node);
-    aug_set(aug, result, node);
-    result[end] = '\0';
+    r = pathjoin(&p, 1, path_node);
+    if (r < 0)
+        goto done;
 
-    pathjoin(&result, 1, info_node);
+    r = aug_set(aug, p, node);
+    if (r < 0)
+        goto done;
+    p[end] = '\0';
+
+    r = pathjoin(&p, 1, info_node);
+    if (r < 0)
+        goto done;
+
     tmp = format_info(lens->info);
-    aug_set(aug, result, tmp);
-    free(tmp);
-    result[end] = '\0';
+    if (tmp == NULL)
+        goto done;
+    r = aug_set(aug, p, tmp);
+    FREE(tmp);
+    if (r < 0)
+        goto done;
+    p[end] = '\0';
 
-    pathjoin(&result, 1, id_node);
+    r = pathjoin(&p, 1, id_node);
+    if (r < 0)
+        goto done;
+
     r = asprintf(&tmp, "%p", lens);
     if (r >= 0) {
-        aug_set(aug, result, tmp);
-        free(tmp);
+        r = aug_set(aug, p, tmp);
+        FREE(tmp);
+        if (r < 0)
+            goto done;
     }
-    result[end] = '\0';
 
-    pathjoin(&result, 1, err_node);
+    result = 0;
+ done:
+    free(p);
     return result;
 }
 
 static int load_file(struct augeas *aug, struct lens *lens,
                      const char *filename) {
     char *text = NULL;
-    char *errpath = NULL;
     const char *err_status = NULL;
     struct aug_file *file = NULL;
     struct tree *tree = NULL;
     char *path = NULL;
-    struct lns_error *err;
-    int result = -1;
+    struct lns_error *err = NULL;
+    int result = -1, r;
 
     pathjoin(&path, 2, AUGEAS_FILES_TREE, filename + strlen(aug->root) - 1);
 
-    errpath = add_load_info(aug, filename, path, lens);
-    if (errpath == NULL)
+    r = add_load_info(aug, filename, path, lens);
+    if (r < 0)
         goto done;
 
     text = read_file(filename);
@@ -249,11 +344,10 @@ static int load_file(struct augeas *aug, struct lens *lens,
 
     result = 0;
  done:
-    if (errpath != NULL)
-        aug_set(aug, errpath, err_status);
+    store_error(aug, filename + strlen(aug->root) - 1, path, err_status, err);
+    free_lns_error(err);
     free(path);
     free_tree(tree);
-    free(errpath);
     free(file);
     free(text);
     return result;
@@ -353,11 +447,9 @@ int transform_save(struct augeas *aug, struct transform *xform,
     free(augnew);
     free(augorig);
     free(augsave);
-    if (err_status != NULL) {
-        const char *ep = err_path(filename);
-        aug_set(aug, ep, err_status);
-        free((char *) ep);
-    }
+    store_error(aug, filename, path, err_status, err);
+    free_lns_error(err);
+
     if (fp != NULL)
         fclose(fp);
     return result;
