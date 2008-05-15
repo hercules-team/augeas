@@ -22,7 +22,11 @@
 
 #include "syntax.h"
 
-static struct string *empty_pattern = NULL;
+static const struct string empty_pattern_string = {
+    .ref = REF_MAX, .str = "()"
+};
+
+static const struct string *const empty_pattern = &empty_pattern_string;
 
 void print_regexp(FILE *out, struct regexp *r) {
     if (r == NULL) {
@@ -55,7 +59,10 @@ void free_regexp(struct regexp *regexp) {
     assert(regexp->ref == 0);
     unref(regexp->info, info);
     unref(regexp->pattern, string);
-    free(regexp->re);
+    if (regexp->re != NULL) {
+        regfree(regexp->re);
+        free(regexp->re);
+    }
     free(regexp);
 }
 
@@ -177,13 +184,12 @@ regexp_maybe(struct info *info, struct regexp *r) {
 struct regexp *regexp_make_empty(struct info *info) {
     struct regexp *regexp;
 
-    if (empty_pattern == NULL) {
-        regexp = make_regexp(info, strdup("()"));
-        empty_pattern = ref(regexp->pattern);
-    } else {
-        make_ref(regexp);
+    make_ref(regexp);
+    if (regexp != NULL) {
         regexp->info = ref(info);
-        regexp->pattern = ref(empty_pattern);
+        /* Casting away the CONST for EMPTY_PATTERN is ok since it
+           is protected against changes because REF == REF_MAX */
+        regexp->pattern = (struct string *) empty_pattern;
     }
     return regexp;
 }
