@@ -765,6 +765,14 @@ struct skel *lns_parse(struct lens *lens, const char *text, struct dict **dict,
         free_dict(*dict);
         *dict = NULL;
     }
+    if (state.key != NULL) {
+        get_error(&state, lens, "parse left unused key %s", state.key);
+        free((char *) state.key);
+    }
+    if (state.value != NULL) {
+        get_error(&state, lens, "parse left unused value %s", state.value);
+        free((char *) state.value);
+    }
     if (err != NULL) {
         *err = state.error;
     } else {
