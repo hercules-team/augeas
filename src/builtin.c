@@ -170,7 +170,7 @@ static struct value *tree_set_glue(struct info *info, struct value *path,
                               "Tree set of %s to '%s' failed",
                               path->string->str, val->string->str);
     }
-    return tree;
+    return ref(tree);
 }
 
 /* V_STRING -> V_TREE -> V_TREE */
@@ -186,7 +186,7 @@ static struct value *tree_rm_glue(struct info *info,
         return make_exn_value(ref(info), "Tree rm of %s failed",
                               path->string->str);
     }
-    return tree;
+    return ref(tree);
 }
 
 /* V_STRING -> V_STRING */
