@@ -634,6 +634,7 @@ int aug_insert(struct augeas *aug, const char *path, const char *label,
         new->next = seg->tree->next;
         seg->tree->next = new;
     }
+    free_path(p);
     return 0;
  error:
     free_tree(new);
