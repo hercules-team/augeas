@@ -151,6 +151,7 @@ static struct value *lens_put(struct info *info, struct value *l,
         v->string = make_string(buf);
     } else {
         v = make_exn_lns_error(info, err, str->string->str);
+        free_lns_error(err);
         free(buf);
     }
     return v;
