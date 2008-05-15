@@ -91,10 +91,7 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
     aug_close(aug);
-    //if (optind + 1 < argc) {
-        //const char *text = aug_read_file(argv[optind+1]);
-        // Run text through some sort of lens
-    //}
+    free(loadpath);
 }
 
 /*
