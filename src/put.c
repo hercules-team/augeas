@@ -387,11 +387,13 @@ static void put_subtree(struct lens *lens, struct state *state) {
 
     struct tree *tree = state->split->tree;
     struct dict_entry *entry = dict_lookup(tree->label, state->dict);
+    struct split *split = NULL;
+
     state->key = tree->label;
     state->value = tree->value;
     pathjoin(&state->path, 1, state->key);
 
-    state->split = make_split(tree->children);
+    state->split = split = make_split(tree->children);
 
     if (entry == NULL) {
         state->skel = NULL;
@@ -402,16 +404,13 @@ static void put_subtree(struct lens *lens, struct state *state) {
         state->dict = entry->dict;
         put_lens(lens->child, state);
     }
-
-    if (state->error == NULL) {
-        assert(state->split->next == NULL);
-        free_split(state->split);
-    }
+    assert(state->error != NULL || state->split->next == NULL);
 
     oldstate.error = state->error;
     oldstate.path = state->path;
     *state = oldstate;
     *state->split= oldsplit;
+    free_split(split);
     state->path[oldpathlen] = '\0';
 }
 
