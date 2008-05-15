@@ -293,8 +293,9 @@ tree_label: DQUOTED
 
 int augl_parse_file(const char *name, struct term **term) {
   yyscan_t       scanner;
-  struct string  *sname;
+  struct string  *sname = NULL;
   struct info    info;
+  int result = -1;
   int r;
 
   *term = NULL;
@@ -306,7 +307,7 @@ int augl_parse_file(const char *name, struct term **term) {
   info.filename = sname;
   if (augl_init_lexer(sname, &scanner) != 0) {
     augl_error(&info, term, NULL, "file not found");
-    goto error;
+    goto done;
   }
 
   yydebug = getenv("YYDEBUG") != NULL;
@@ -314,16 +315,17 @@ int augl_parse_file(const char *name, struct term **term) {
   augl_lex_destroy(scanner);
   if (r == 1) {
     augl_error(&info, term, NULL, "syntax error");
-    goto error;
+    goto done;
   } else if (r == 2) {
     augl_error(&info, term, NULL, "parser ran out of memory");
-    goto error;
+    goto done;
   }
-  return 0;
+  result = 0;
 
- error:
+ done:
+  unref(sname, string);
   // free TERM
-  return -1;
+  return result;
 }
 
 // FIXME: Nothing here checks for alloc errors.
