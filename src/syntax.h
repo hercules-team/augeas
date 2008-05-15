@@ -255,7 +255,7 @@ int transform_save(struct augeas *aug, struct transform *transform,
 struct exn {
     struct info *info;
     unsigned int seen : 1;      /* Whether the user has seen this EXN */
-    const char  *message;
+    char        *message;
     size_t       nlines;
     char       **lines;
 };

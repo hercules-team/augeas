@@ -262,6 +262,19 @@ void free_type(struct type *type) {
     free(type);
 }
 
+static void free_exn(struct exn *exn) {
+    if (exn == NULL)
+        return;
+
+    unref(exn->info, info);
+    free(exn->message);
+    for (int i=0; i < exn->nlines; i++) {
+        free(exn->lines[i]);
+    }
+    free(exn->lines);
+    free(exn);
+}
+
 void free_value(struct value *v) {
     if (v == NULL)
         return;
@@ -295,12 +308,7 @@ void free_value(struct value *v) {
         unref(v->bindings, binding);
         break;
     case V_EXN:
-        unref(v->exn->info, info);
-        free((char *) v->exn->message);
-        for (int i=0; i < v->exn->nlines; i++) {
-            free(v->exn->lines[i]);
-        }
-        free(v->exn->lines);
+        free_exn(v->exn);
         break;
     default:
         assert(0);
