@@ -537,7 +537,6 @@ static struct binding *bind_type(struct binding **bnds,
     make_ref(binding->ident);
     binding->ident->str = strdup(name);
     binding->type = ref(type);
-    ref(*bnds);
     list_cons(*bnds, binding);
 
     return binding;
@@ -1391,6 +1390,7 @@ static struct value *compile_compose(struct term *exp, struct ctx *ctx) {
 
         assert(type_equal(func->type, exp->type));
         v = make_closure(func, ctx->local);
+        unref(func, term);
     } else {
         fatal_error(info, "Tried to compose a %s and a %s to yield a %s",
                     type_name(exp->left->type), type_name(exp->right->type),
@@ -1492,6 +1492,7 @@ static struct value *apply(struct term *app, struct ctx *ctx) {
 
  done:
     unref(lctx.local, binding);
+    unref(arg, value);
     unref(f, value);
     return result;
 }
@@ -1646,19 +1647,21 @@ static int compile_test(struct term *term, struct ctx *ctx) {
 
 static int compile_decl(struct term *term, struct ctx *ctx) {
     if (term->tag == A_BIND) {
+        int result;
+
         struct value *v = compile_exp(term->info, term->exp, ctx);
         bind(&ctx->local, term->bname, term->type, v);
-        if (!EXN(v))
-            return 1;
 
-        if (! v->exn->seen) {
+        if (EXN(v) && !v->exn->seen) {
             syntax_error(term->info, "Failed to compile %s",
                          term->bname);
             print_value(stdout, v);
             printf("\n");
             v->exn->seen = 1;
         }
-        return 0;
+        result = ! EXN(v);
+        unref(v, value);
+        return result;
     } else if (term->tag == A_TEST) {
         return compile_test(term, ctx);
     }
@@ -1768,6 +1771,9 @@ void define_native_intl(const char *file, int line,
     }
     v = make_closure(func, ctx.local);
     bind(&ctx.local, name, func->type, v);
+    unref(v, value);
+    unref(func, term);
+    unref(module->bindings, binding);
 
     module->bindings = ctx.local;
 }
