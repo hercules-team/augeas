@@ -223,6 +223,7 @@ static void dict_append(struct dict **dict, struct dict *d2) {
             struct dict *del = e2;
             list_append(e1->entry, e2->entry);
             e2 = e2->next;
+            free((char *) del->key);
             free(del);
         }
     }
