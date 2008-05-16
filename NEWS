@@ -1,3 +1,20 @@
+0.1.1 - 2008-05-16
+  - Add subtraction of regexps to the language, for example
+      let re = /[a-z]+/ - /(Allow|Deny)Users/
+  - Report errors during get/put in the tree; added subnodes to
+    /augeas/files/PATH/error for that purpose
+  - Many many bugfixes:
+    * plugged all known memory leaks
+    * fixed typecheck for lens union (l1 | l2) which was plain wrong
+    * reduce overall memory usage by releasing unused compiled regexps
+    * further performance improvements in libfa
+    * check that values match the regexps in STORE when saving
+  - libfa can now convert an automaton back to a regular expression
+    (FA_AS_REGEXP)
+  - New lenses
+    * /etc/fstab
+    * /etc/xinetd.conf and /etc/xinetd.d/*
+
 0.1.0 - 2008-05-01
   - Various changes to public API:
     * Remove aug_exists from public API, and merge functionality into aug_get
