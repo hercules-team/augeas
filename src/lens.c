@@ -580,6 +580,24 @@ void free_lens(struct lens *lens) {
     free(lens);
 }
 
+void lens_release(struct lens *lens) {
+    regexp_release(lens->ctype);
+    regexp_release(lens->atype);
+    if (lens->tag == L_KEY || lens->tag == L_STORE)
+        regexp_release(lens->regexp);
+
+    if (lens->tag == L_SUBTREE || lens->tag == L_STAR
+        || lens->tag == L_MAYBE) {
+        lens_release(lens->child);
+    }
+
+    if (lens->tag == L_UNION || lens->tag == L_CONCAT) {
+        for (int i=0; i < lens->nchildren; i++) {
+            lens_release(lens->children[i]);
+        }
+    }
+}
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil

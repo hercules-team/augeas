@@ -193,6 +193,10 @@ regexp_maybe(struct info *info, struct regexp *r);
 
 struct regexp *regexp_make_empty(struct info *);
 
+/* Free up temporary data structures, most importantly compiled
+   regular expressions */
+void regexp_release(struct regexp *regexp);
+
 /* Construct a finite automaton from REGEXP. The pattern for REGEXP
  * must be known to be syntactically correct.
  *

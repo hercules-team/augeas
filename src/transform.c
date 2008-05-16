@@ -365,6 +365,7 @@ int transform_load(struct augeas *aug, struct transform *xform) {
         load_file(aug, xform->lens, matches[i]);
         free(matches[i]);
     }
+    lens_release(xform->lens);
     free(matches);
     return 0;
 }
@@ -443,6 +444,7 @@ int transform_save(struct augeas *aug, struct transform *xform,
     result = 0;
 
  done:
+    lens_release(xform->lens);
     free(text);
     free(augnew);
     free(augorig);

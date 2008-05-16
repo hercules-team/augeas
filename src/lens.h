@@ -144,6 +144,9 @@ struct skel *lns_parse(struct lens *lens, const char *text,
 void lns_put(FILE *out, struct lens *lens, struct tree *tree,
              const char *text, struct lns_error **err);
 
+/* Free up temporary data structures, most importantly compiled
+   regular expressions */
+void lens_release(struct lens *lens);
 void free_lens(struct lens *lens);
 #endif
 

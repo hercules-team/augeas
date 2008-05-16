@@ -21,6 +21,7 @@
  */
 
 #include "syntax.h"
+#include "memory.h"
 
 static const struct string empty_pattern_string = {
     .ref = REF_MAX, .str = "()"
@@ -238,6 +239,13 @@ fa_t regexp_to_fa(struct regexp *regexp) {
         return NULL;
     }
     return fa;
+}
+
+void regexp_release(struct regexp *regexp) {
+    if (regexp->re != NULL) {
+        regfree(regexp->re);
+        FREE(regexp->re);
+    }
 }
 
 /*
