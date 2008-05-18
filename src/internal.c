@@ -122,23 +122,20 @@ fread_file_lim (FILE *stream, size_t max_len, size_t *length)
 
 char* read_file(const char *path) {
     FILE *fp = fopen(path, "r");
-    char *result = NULL;
+    char *result;
     size_t len;
 
     if (!fp)
         return NULL;
 
     result = fread_file_lim(fp, MAX_READ_LEN, &len);
-    if (result == NULL)
-        goto error;
+    fclose (fp);
 
-    if (len > MAX_READ_LEN || (int) len != len)
-        goto error;
+    if (result != NULL
+        && len <= MAX_READ_LEN
+        && (int) len == len)
+        return result;
 
-    return result;
- error:
-    if (fp)
-        fclose(fp);
     free(result);
     return NULL;
 }
