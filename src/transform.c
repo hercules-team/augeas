@@ -415,7 +415,7 @@ int transform_save(struct augeas *aug, struct transform *xform,
         lns_put(fp, xform->lens, tree->children, text, &err);
     // FIXME: Delete file if tree == NULL
 
-    if (fclose(fp) != 0)
+    if (ferror (fp) || fclose(fp) != 0)
         goto done;
     fp = NULL;
 
