@@ -387,12 +387,16 @@ int transform_save(struct augeas *aug, struct transform *xform,
     struct lns_error *err;
     int result = -1;
 
-    if (asprintf(&augorig, "%s%s", aug->root, filename) == -1)
+    if (asprintf(&augorig, "%s%s", aug->root, filename) == -1) {
+        augorig = NULL;
         goto done;
-
-    if (asprintf(&augnew, "%s%s" EXT_AUGNEW, aug->root, filename) == -1)
+    }
+    
+    if (asprintf(&augnew, "%s%s" EXT_AUGNEW, aug->root, filename) == -1) {
+        augnew = NULL;
         goto done;
-
+    }
+    
     if (access(augorig, R_OK) == 0) {
         text = read_file(augorig);
     } else {
@@ -429,8 +433,11 @@ int transform_save(struct augeas *aug, struct transform *xform,
         if (aug->flags & AUG_SAVE_BACKUP) {
             int r;
             r = asprintf(&augsave, "%s%s" EXT_AUGSAVE, aug->root, filename);
-            if (r == -1)
+            if (r == -1) {
+                augsave = NULL;
                 goto done;
+            }
+            
             if (rename(augorig, augsave) != 0) {
                 err_status = "rename_augsave";
                 goto done;
