@@ -37,7 +37,7 @@ struct command {
     const char *help;
 };
 
-static struct command commands[];
+static const struct command const commands[];
 
 static augeas *aug = NULL;
 static const char *const progname = "augtool";
@@ -231,7 +231,7 @@ static void cmd_ins(char *args[]) {
 }
 
 static void cmd_help(ATTRIBUTE_UNUSED char *args[]) {
-    struct command *c;
+    const struct command *c;
 
     printf("Commands:\n\n");
     printf("    exit, quit\n        Exit the program\n\n");
@@ -299,7 +299,7 @@ static char *parseline(char *line, int maxargs, char *args[]) {
     return cmd;
 }
 
-static struct command commands[] = {
+static const struct command const commands[] = {
     { "ls",  1, 1, cmd_ls, "ls <PATH>",
       "List the direct children of PATH"
     },
@@ -343,7 +343,7 @@ static struct command commands[] = {
 
 static int run_command(char *cmd, int maxargs, char **args) {
     int r = 0;
-    struct command *c;
+    const struct command *c;
 
     if (STREQ("exit", cmd) || STREQ("quit", cmd)) {
         exit(EXIT_SUCCESS);
