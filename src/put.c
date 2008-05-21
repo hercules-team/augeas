@@ -110,14 +110,15 @@ static struct split *make_split(struct tree *tree) {
             split->end += strlen(t->label);
         split->end += 1;
     }
-    char *l;
-    CALLOC(l, split->end + 1);
+    char *labels;
+    CALLOC(labels, split->end + 1);
+    char *l = labels;
     for (struct tree *t = tree; t != NULL; t = t->next) {
         if (t->label != NULL)
-            strcat(l, t->label);
-        strcat(l, "/");
+            l = stpcpy(l, t->label);
+        l = stpcpy(l, "/");
     }
-    split->labels = l;
+    split->labels = labels;
     return split;
 }
 
