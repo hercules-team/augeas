@@ -8,6 +8,13 @@ test -z "$srcdir" && srcdir=.
 THEDIR=`pwd`
 cd $srcdir
 
+#Check for OSX
+case `uname -s` in
+Darwin) LIBTOOLIZE=glibtoolize;;
+*) LIBTOOLIZE=libtoolize;;
+esac
+
+
 DIE=0
 
 (autoconf --version) < /dev/null > /dev/null 2>&1 || {
@@ -37,7 +44,7 @@ if test -z "$*"; then
 fi
 
 aclocal
-libtoolize --force
+$LIBTOOLIZE --force
 automake --add-missing
 autoconf
 
