@@ -152,7 +152,7 @@ char *unescape(const char *s, int len) {
     char *result, *t;
     int i;
 
-    if (len > strlen(s))
+    if (len < 0 || len > strlen(s))
         len = strlen(s);
 
     size = 0;
@@ -182,7 +182,7 @@ char *escape(const char *text, int cnt) {
         cnt = strlen(text);
 
     for (int i=0; i < cnt; i++) {
-        if (strchr(escape_chars, text[i]) != NULL)
+        if (text[i] && (strchr(escape_chars, text[i]) != NULL))
             len += 2;  /* Escaped as '\x' */
         else if (! isprint(text[i]))
             len += 4;  /* Escaped as '\ooo' */
@@ -193,11 +193,12 @@ char *escape(const char *text, int cnt) {
     e = esc;
     for (int i=0; i < cnt; i++) {
         char *p;
-        if ((p = strchr(escape_chars, text[i])) != NULL) {
+        if (text[i] && ((p = strchr(escape_chars, text[i])) != NULL)) {
             *e++ = '\\';
             *e++ = escape_names[p - escape_chars];
         } else if (! isprint(text[i])) {
             sprintf(e, "\\%03o", text[i]);
+            e += 4;
         } else {
             *e++ = text[i];
         }
