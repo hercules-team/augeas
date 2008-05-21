@@ -75,7 +75,7 @@ struct regexp *make_regexp_literal(struct info *info, const char *text) {
     CALLOC(pattern, 2*strlen(text)+1);
     p = pattern;
     for (const char *t = text; *t != '\0'; t++) {
-        if (*t == '\\') {
+        if ((*t == '\\') && t[1]) {
             *p++ = *t++;
             *p++ = *t;
         } else if (strchr(".{}[]()+*?", *t) != NULL) {
