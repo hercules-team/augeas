@@ -47,6 +47,9 @@ ONBOOT=yes
   test Shellvars.lns get key_brack =
     { "SOME_KEY[1]" = "" } { "DEVICE" = "eth0" }
 
+  test Shellvars.lns get "smartd_opts=\"-q never\"\n" = 
+    { "smartd_opts" = "\"-q never\"" }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

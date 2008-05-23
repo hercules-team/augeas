@@ -4,7 +4,7 @@ module Shellvars =
 
   let eol = Util.del_str "\n"
 
-  let key_re = /[][A-Z0-9_]+/
+  let key_re = /[][A-Za-z0-9_]+/
   let eq = Util.del_str "="
   let value = /[^\n]*/
 
