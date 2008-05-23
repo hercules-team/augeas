@@ -21,6 +21,7 @@
  */
 
 #include "lens.h"
+#include "memory.h"
 
 static struct regexp *regexp_digits = NULL;
 
@@ -477,7 +478,17 @@ static struct regexp *lns_key_regexp(struct lens *l, struct value **exn) {
     case L_KEY:
         return make_key_regexp(l->info, l->regexp->pattern->str);
     case L_LABEL:
-        return make_key_regexp(l->info, l->string->str);
+        {
+            struct regexp *r = make_regexp_literal(l->info, l->string->str);
+            if (r == NULL)
+                return NULL;
+            if (REALLOC_N(r->pattern->str, strlen(r->pattern->str) + 2) == -1) {
+                unref(r, regexp);
+                return NULL;
+            }
+            strcat((char *) r->pattern->str, "/");
+            return r;
+        }
     case L_CONCAT:
         {
             struct regexp *k = NULL;
