@@ -78,7 +78,7 @@ struct regexp *make_regexp_literal(struct info *info, const char *text) {
         if ((*t == '\\') && t[1]) {
             *p++ = *t++;
             *p++ = *t;
-        } else if (strchr(".{}[]()+*?", *t) != NULL) {
+        } else if (strchr(".|{}[]()+*?", *t) != NULL) {
             *p++ = '\\';
             *p++ = *t;
         } else {
