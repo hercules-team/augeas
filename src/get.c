@@ -795,7 +795,7 @@ struct skel *lns_parse(struct lens *lens, const char *text, struct dict **dict,
                        struct lns_error **err) {
     struct state state;
     struct split split;
-    struct skel *skel;
+    struct skel *skel = NULL;
 
     MEMZERO(&state, 1);
     MEMZERO(&split, 1);
