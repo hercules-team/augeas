@@ -12,7 +12,13 @@ module Shellvars =
 
   let kv = [ key key_re . eq . store value . eol ]
 
-  let lns = (comment | kv) *
+  let source = 
+    [ 
+      del /\.|source/ "." . label ".source" . 
+      Util.del_ws_spc . store /[^= \t\n]+/ . eol 
+    ]
+
+  let lns = (comment | source | kv) *
 
 (* Local Variables: *)
 (* mode: caml       *)

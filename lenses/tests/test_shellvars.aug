@@ -50,6 +50,9 @@ ONBOOT=yes
   test Shellvars.lns get "smartd_opts=\"-q never\"\n" = 
     { "smartd_opts" = "\"-q never\"" }
 
+  test Shellvars.lns get ". /etc/java/java.conf\n" = 
+    { ".source" = "/etc/java/java.conf" }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
