@@ -26,9 +26,19 @@
 #include "syntax.h"
 #include "list.h"
 #include "internal.h"
+#include "memory.h"
 
 #define assert_error(state, format, args ...) \
     assert_error_at(__FILE__, __LINE__, &(state->info), format, ## args)
+
+/* A substring in the overall string we are matching. A lens is supposed
+   to process the whole string from start[0] ... start[size]
+*/
+struct split {
+    struct split *next;
+    const char   *start;    /* The start of the text to process */
+    int           size;
+};
 
 struct seq {
     struct seq *next;
@@ -38,11 +48,8 @@ struct seq {
 
 struct state {
     struct info       info;
+    struct split     *split;
     const char       *text;
-    const char       *pos;
-    int               applied;
-    int               flags;     /* set of parse_flags */
-    FILE             *log;
     struct seq       *seqs;
     const char       *key;
     const char       *value;     /* GET_STORE leaves a value here */
@@ -72,7 +79,7 @@ static void get_error(struct state *state, struct lens *lens,
         return;
     CALLOC(state->error, 1);
     state->error->lens = ref(lens);
-    state->error->pos  = state->pos - state->text;
+    state->error->pos  = state->split->start - state->text;
     va_start(ap, format);
     r = vasprintf(&state->error->message, format, ap);
     va_end(ap);
@@ -239,7 +246,7 @@ static void get_expected_error(struct state *state, struct lens *l) {
     char *word, *p, *pat;
 
     word = alloca(11);
-    strncpy(word, state->pos, 10);
+    strncpy(word, state->split->start, 10);
     word[10] = '\0';
     for (p = word; *p != '\0' && *p != '\n'; p++);
     *p = '\0';
@@ -250,67 +257,104 @@ static void get_expected_error(struct state *state, struct lens *l) {
 }
 
 /*
- * Parsing/construction of the AST
+ * Splitting of the input text
  */
-static void advance(struct state *state, int cnt) {
-    if (cnt == 0)
-        return;
 
-    for (int i=0; i<cnt; i++) {
-        assert(state->pos[i] != '\0');
-        if (state->pos[i] == '\n')
-            state->info.first_line++;
-        state->info.last_line = state->info.first_line;
-    }
-    state->pos += cnt;
-    if (state->flags & PF_ADVANCE) {
-        fprintf(state->log, "A %3d ", cnt);
-        print_pos(state->log, state->text, state->pos - state->text);
+static char *token_from_split(struct split *split) {
+    return strndup(split->start, split->size);
+}
+
+static void split_append(struct split **split,
+                         const char *text, int start, int end) {
+    struct split *sp;
+    if (ALLOC(sp) >= 0) {
+        sp->start = text + start;
+        sp->size = end - start;
+        list_append(*split, sp);
     }
 }
 
-static int lex(struct lens *lens, struct regexp *regexp, struct state *state) {
-    int count;
-    int offset = state->pos - state->text;
-    count = regexp_match(regexp, state->text, strlen(state->text),
-                         offset, NULL);
-    if (state->flags & PF_MATCH) {
-        fprintf(state->log, "M %d ", offset);
-        print_regexp(state->log, regexp);
-        fprintf(state->log, " %d..%d\n", offset, offset+count);
-    }
+/* Refine a tree split OUTER according to the L_CONCAT lens LENS */
+static struct split *split_concat(struct state *state, struct lens *lens) {
+    assert(lens->tag == L_CONCAT);
 
+    int count = 0;
+    struct split *outer = state->split;
+    struct re_registers regs;
+    struct split *split = NULL;
+    struct regexp *ctype = lens->ctype;
+
+    if (ctype->re != NULL)
+        ctype->re->regs_allocated = REGS_UNALLOCATED;
+    count = regexp_match(ctype, outer->start, outer->size, 0, &regs);
     if (count == -2) {
-        get_error(state, lens, "Match failed for /%s/ at %d",
-                  regexp->pattern->str, offset);
-        return -1;
+        FIXME("Match failed - produce better error");
+        abort();
     } else if (count == -1) {
-        return 0;
-    } else {
-        return count;
+        char *text = strndup(outer->start, outer->size);
+        get_error(state, lens,
+                  "Failed to match /%s/ with %s", ctype->pattern->str, text);
+        free(text);
+        return NULL;
     }
+
+    int reg = 1;
+    for (int i=0; i < lens->nchildren; i++) {
+        assert(reg < regs.num_regs);
+        assert(regs.start[reg] != -1);
+        split_append(&split, outer->start, regs.start[reg], regs.end[reg]);
+        reg += 1 + regexp_nsub(lens->children[i]->ctype);
+    }
+    assert(reg < regs.num_regs);
+    free(regs.start);
+    free(regs.end);
+    return split;
 }
 
-static int match(struct lens *lens, struct state *state,
-                 const char **token) {
-    assert(lens->tag == L_DEL || lens->tag == L_STORE || lens->tag == L_KEY);
+static struct split *split_iter(struct lens *lens, struct split *outer) {
+    assert(lens->tag == L_STAR);
 
-    int len = lex(lens, lens->regexp, state);
-    if (len < 0)
-        return -1;
-    if (token != NULL)
-        *token = strndup(state->pos, len);
+    int count = 0;
+    struct re_registers regs;
+    struct split *split = NULL;
+    struct regexp *ctype = lens->child->ctype;
 
-    if ((state->log != NULL) && (state->flags & PF_TOKEN)) {
-        fprintf(state->log, "T ");
-        print_regexp(state->log, lens->regexp);
-        fprintf(state->log, " = <");
-        print_chars(state->log, state->pos, len);
-        fprintf(state->log, ">\n");
+    if (ctype->re != NULL)
+        ctype->re->regs_allocated = REGS_UNALLOCATED;
+    count = regexp_match(ctype, outer->start, outer->size, 0, &regs);
+    if (count == -2) {
+        FIXME("Match failed - produce better error");
+        abort();
+    } else if (count == -1) {
+        return NULL;
     }
 
-    advance(state, len);
-    return len;
+    const int reg = 0;
+    int pos = 0;
+    while (pos < outer->size) {
+        count = regexp_match(ctype, outer->start, outer->size, pos, &regs);
+        if (count == -2) {
+            FIXME("Match failed - produce better error");
+            abort();
+        } else if (count == -1) {
+            break;
+        }
+        split_append(&split, outer->start, regs.start[reg], regs.end[reg]);
+        pos = regs.end[reg];
+    }
+    free(regs.start);
+    free(regs.end);
+    return split;
+}
+
+static int applies(struct lens *lens, struct split *split) {
+    int count;
+    count = regexp_match(lens->ctype, split->start, split->size, 0, NULL);
+    if (count == -2) {
+        FIXME("Match failed - produce better error");
+        abort();
+    }
+    return (count == split->size);
 }
 
 static struct tree *get_lens(struct lens *lens, struct state *state);
@@ -369,58 +413,44 @@ static struct skel *parse_counter(struct lens *lens, struct state *state) {
     return make_skel(lens);
 }
 
-static struct tree *get_del(struct lens *lens, struct state *state) {
+static struct tree *get_del(struct lens *lens,
+                            ATTRIBUTE_UNUSED struct state *state) {
     assert(lens->tag == L_DEL);
 
-    state->applied = match(lens, state, NULL) >= 0;
     return NULL;
 }
 
 static struct skel *parse_del(struct lens *lens, struct state *state) {
     assert(lens->tag == L_DEL);
-    const char *token = NULL;
     struct skel *skel = NULL;
 
-    state->applied = match(lens, state, &token) >= 0;
-    if (state->applied) {
-        skel = make_skel(lens);
-        skel->text = token;
-    }
+    skel = make_skel(lens);
+    skel->text = token_from_split(state->split);
     return skel;
 }
 
 static struct tree *get_store(struct lens *lens, struct state *state) {
     assert(lens->tag == L_STORE);
-    const char *token = NULL;
     struct tree *tree = NULL;
 
-    if (match(lens, state, &token) < 0)
-        get_expected_error(state, lens);
-    else {
-        assert(state->value == NULL);
-        if (state->value != NULL) {
-            get_error(state, lens, "More than one store in a subtree");
-        } else {
-            state->value = token;
-        }
+    assert(state->value == NULL);
+    if (state->value != NULL) {
+        get_error(state, lens, "More than one store in a subtree");
+    } else {
+        state->value = token_from_split(state->split);
     }
     return tree;
 }
 
-static struct skel *parse_store(struct lens *lens, struct state *state) {
+static struct skel *parse_store(struct lens *lens,
+                                ATTRIBUTE_UNUSED struct state *state) {
     assert(lens->tag == L_STORE);
-    if (match(lens, state, NULL) < 0)
-        get_expected_error(state, lens);
     return make_skel(lens);
 }
 
 static struct tree *get_key(struct lens *lens, struct state *state) {
     assert(lens->tag == L_KEY);
-    const char *token = NULL;
-    if (match(lens, state, &token) < 0)
-        get_expected_error(state, lens);
-    else
-        state->key = token;
+    state->key = token_from_split(state->split);
     return NULL;
 }
 
@@ -440,24 +470,20 @@ static struct skel *parse_label(struct lens *lens, struct state *state) {
     return make_skel(lens);
 }
 
-static int applies(struct lens *lens, struct state *state) {
-    return lex(lens, lens->ctype, state) > 0;
-}
-
 static struct tree *get_union(struct lens *lens, struct state *state) {
     assert(lens->tag == L_UNION);
     struct tree *tree = NULL;
+    int applied = 0;
 
-    state->applied = 0;
     for (int i=0; i < lens->nchildren; i++) {
         struct lens *l = lens->children[i];
-        if (applies(l, state)) {
+        if (applies(l, state->split)) {
             tree = get_lens(l, state);
-            state->applied = 1;
+            applied = 1;
             break;
         }
     }
-    if (! state->applied)
+    if (!applied)
         get_expected_error(state, lens);
     return tree;
 }
@@ -466,17 +492,17 @@ static struct skel *parse_union(struct lens *lens, struct state *state,
                                 struct dict **dict) {
     assert(lens->tag == L_UNION);
     struct skel *skel = NULL;
+    int applied = 0;
 
-    state->applied = 0;
     for (int i=0; i < lens->nchildren; i++) {
         struct lens *l = lens->children[i];
-        if (applies(l, state)) {
+        if (applies(l, state->split)) {
             skel = parse_lens(l, state, dict);
-            state->applied = 1;
+            applied = 1;
             break;
         }
     }
-    if (! state->applied)
+    if (! applied)
         get_expected_error(state, lens);
 
     return skel;
@@ -484,20 +510,28 @@ static struct skel *parse_union(struct lens *lens, struct state *state,
 
 static struct tree *get_concat(struct lens *lens, struct state *state) {
     assert(lens->tag == L_CONCAT);
-
     struct tree *tree = NULL;
+    struct split *oldsplit = state->split;
+    struct split *split = split_concat(state, lens);
 
-    state->applied = 1;
+    state->split = split;
     for (int i=0; i < lens->nchildren; i++) {
         struct tree *t = NULL;
-        t = get_lens(lens->children[i], state);
-        if (! state->applied) {
-            get_expected_error(state, lens->children[i]);
-            break;
+        if (state->split == NULL) {
+            get_error(state, lens->children[i],
+                      "Not enough components in concat");
+            list_free(split);
+            free_tree(tree);
+            return NULL;
         }
+
+        t = get_lens(lens->children[i], state);
         list_append(tree, t);
+        state->split = state->split->next;
     }
 
+    state->split = oldsplit;
+    list_free(split);
     return tree;
 }
 
@@ -505,51 +539,69 @@ static struct skel *parse_concat(struct lens *lens, struct state *state,
                                  struct dict **dict) {
     assert(lens->tag == L_CONCAT);
     struct skel *skel = make_skel(lens);
+    struct split *oldsplit = state->split;
+    struct split *split = split_concat(state, lens);
 
-    state->applied = 1;
+    state->split = split;
     for (int i=0; i < lens->nchildren; i++) {
         struct skel *sk = NULL;
         struct dict *di = NULL;
+        if (state->split == NULL) {
+            get_error(state, lens->children[i],
+                      "Not enough components in concat");
+            list_free(split);
+            free_skel(skel);
+            return NULL;
+        }
 
         sk = parse_lens(lens->children[i], state, &di);
-        if (! state->applied) {
-            get_expected_error(state, lens->children[i]);
-            break;
-        }
         list_append(skel->skels, sk);
         dict_append(dict, di);
+        state->split = state->split->next;
     }
+
+    state->split = oldsplit;
+    list_free(split);
     return skel;
 }
 
 static struct tree *get_quant_star(struct lens *lens, struct state *state) {
     assert(lens->tag == L_STAR);
-
     struct tree *tree = NULL;
-    while (applies(lens->child, state)) {
+    struct split *oldsplit = state->split;
+    struct split *split = split_iter(lens, state->split);
+
+    state->split = split;
+    while (state->split != NULL) {
         struct tree *t = NULL;
         t = get_lens(lens->child, state);
         list_append(tree, t);
+        state->split = state->split->next;
     }
-    state->applied = 1;
+    state->split = oldsplit;
+    list_free(split);
     return tree;
 }
 
 static struct skel *parse_quant_star(struct lens *lens, struct state *state,
                                      struct dict **dict) {
     assert(lens->tag == L_STAR);
-
+    struct split *oldsplit = state->split;
+    struct split *split = split_iter(lens, state->split);
     struct skel *skel = make_skel(lens);
+
     *dict = NULL;
-    while (applies(lens->child, state)) {
+    state->split = split;
+    while (state->split != NULL) {
         struct skel *sk;
         struct dict *di = NULL;
         sk = parse_lens(lens->child, state, &di);
         list_append(skel->skels, sk);
         dict_append(dict, di);
+        state->split = state->split->next;
     }
-    state->applied = 1;
-
+    state->split = oldsplit;
+    list_free(split);
     return skel;
 }
 
@@ -557,10 +609,9 @@ static struct tree *get_quant_maybe(struct lens *lens, struct state *state) {
     assert(lens->tag == L_MAYBE);
     struct tree *tree = NULL;
 
-    if (applies(lens->child, state)) {
+    if (applies(lens->child, state->split)) {
         tree = get_lens(lens->child, state);
     }
-    state->applied = 1;
     return tree;
 }
 
@@ -569,12 +620,11 @@ static struct skel *parse_quant_maybe(struct lens *lens, struct state *state,
     assert(lens->tag == L_MAYBE);
 
     struct skel *skel = make_skel(lens);
-    if (applies(lens->child, state)) {
+    if (applies(lens->child, state->split)) {
         struct skel *sk;
         sk = parse_lens(lens->child, state, dict);
         list_append(skel->skels, sk);
     }
-    state->applied = 1;
     return skel;
 }
 
@@ -652,38 +702,38 @@ static struct tree *get_lens(struct lens *lens, struct state *state) {
 }
 
 struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
-                     FILE *log, int flags, struct lns_error **err) {
+                     struct lns_error **err) {
     struct state state;
-    struct tree *tree;
+    struct split split;
+    struct tree *tree = NULL;
 
     MEMZERO(&state, 1);
+    MEMZERO(&split, 1);
     state.info = *info;
     state.info.ref = UINT_MAX;
 
+    split.start = text;
+    split.size = strlen(text);
+
+    state.split = &split;
     state.text = text;
-    state.pos = text;
-    if (flags != PF_NONE && log != NULL) {
-        state.flags = flags;
-        state.log = log;
+
+    if (applies(lens, &split)) {
+        tree = get_lens(lens, &state);
+
+        free_seqs(state.seqs);
+        if (state.key != NULL) {
+            get_error(&state, lens, "get left unused key %s", state.key);
+            free((char *) state.key);
+        }
+        if (state.value != NULL) {
+            get_error(&state, lens, "get left unused value %s", state.value);
+            free((char *) state.value);
+        }
     } else {
-        state.flags = PF_NONE;
-        state.log = stdout;
+        get_error(&state, lens, "get can not process entire input");
     }
 
-    tree = get_lens(lens, &state);
-
-    free_seqs(state.seqs);
-    if (! state.applied || *state.pos != '\0') {
-        get_error(&state, lens, "get did not process entire input");
-    }
-    if (state.key != NULL) {
-        get_error(&state, lens, "get left unused key %s", state.key);
-        free((char *) state.key);
-    }
-    if (state.value != NULL) {
-        get_error(&state, lens, "get left unused value %s", state.value);
-        free((char *) state.value);
-    }
     if (err != NULL) {
         *err = state.error;
     } else {
@@ -744,36 +794,44 @@ static struct skel *parse_lens(struct lens *lens, struct state *state,
 struct skel *lns_parse(struct lens *lens, const char *text, struct dict **dict,
                        struct lns_error **err) {
     struct state state;
+    struct split split;
     struct skel *skel;
 
     MEMZERO(&state, 1);
+    MEMZERO(&split, 1);
     state.info.ref = UINT_MAX;
     state.text = text;
-    state.pos = text;
-    state.flags = PF_NONE;
 
-    *dict = NULL;
-    skel = parse_lens(lens, &state, dict);
+    split.start = text;
+    split.size = strlen(text);
 
-    free_seqs(state.seqs);
-    if (! state.applied || *state.pos != '\0') {
-        // This should never happen during lns_parse
-        get_error(&state, lens, "parse did not process entire input");
-    }
-    if (state.error != NULL) {
-        free_skel(skel);
-        skel = NULL;
-        free_dict(*dict);
+    state.split = &split;
+    state.text = text;
+
+    if (applies(lens, &split)) {
         *dict = NULL;
+        skel = parse_lens(lens, &state, dict);
+
+        free_seqs(state.seqs);
+        if (state.error != NULL) {
+            free_skel(skel);
+            skel = NULL;
+            free_dict(*dict);
+            *dict = NULL;
+        }
+        if (state.key != NULL) {
+            get_error(&state, lens, "parse left unused key %s", state.key);
+            free((char *) state.key);
+        }
+        if (state.value != NULL) {
+            get_error(&state, lens, "parse left unused value %s", state.value);
+            free((char *) state.value);
+        }
+    } else {
+        // This should never happen during lns_parse
+        get_error(&state, lens, "parse can not process entire input");
     }
-    if (state.key != NULL) {
-        get_error(&state, lens, "parse left unused key %s", state.key);
-        free((char *) state.key);
-    }
-    if (state.value != NULL) {
-        get_error(&state, lens, "parse left unused value %s", state.value);
-        free((char *) state.value);
-    }
+
     if (err != NULL) {
         *err = state.error;
     } else {

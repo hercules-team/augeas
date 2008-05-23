@@ -329,7 +329,7 @@ static int load_file(struct augeas *aug, struct lens *lens,
     info->filename->str = filename;
     info->first_line = 1;
 
-    tree = lns_get(info, lens, text, stdout, PF_NONE, &err);
+    tree = lns_get(info, lens, text, &err);
 
     info->filename->str = NULL;
     unref(info, info);

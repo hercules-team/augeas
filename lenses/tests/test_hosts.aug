@@ -7,7 +7,7 @@ module Test_hosts =
 192.168.0.1 pigiron.example.com pigiron pigiron.example
 "
 
-  test Hosts.record get "127.0.0.1 foo" =
+  test Hosts.record get "127.0.0.1 foo\n" =
     { "1" { "ipaddr" = "127.0.0.1" }
           { "canonical" = "foo" } }
 
@@ -22,9 +22,9 @@ module Test_hosts =
           { "alias" = "pigiron" }
           { "alias" = "pigiron.example" }  }
 
-  test Hosts.record put "127.0.0.1 foo" after
+  test Hosts.record put "127.0.0.1 foo\n" after
       set "1/canonical" "bar"
-  = "127.0.0.1 bar"
+  = "127.0.0.1 bar\n"
 
   test Hosts.lns put two_entries after
     set "2/alias[10]" "piggy" ;

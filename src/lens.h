@@ -83,14 +83,6 @@ struct value *lns_make_plus(struct info *, struct lens *,
 struct value *lns_make_maybe(struct info *, struct lens *,
                              int check);
 
-/* Flags to control debug printing during parsing */
-enum parse_debug_flags {
-    PF_NONE    = 0,
-    PF_ADVANCE = (1 << 0),  /* Show how the lexer advances through the input */
-    PF_MATCH   = (1 << 1),  /* Show regex matches */
-    PF_TOKEN   = (1 << 2)   /* Show tokenization */
-};
-
 /* Auxiliary data structures used during get/put/create */
 struct skel {
     struct skel *next;
@@ -138,7 +130,7 @@ void free_lns_error(struct lns_error *err);
  * parse_flags
  */
 struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
-                     FILE *log, int flags, struct lns_error **err);
+                     struct lns_error **err);
 struct skel *lns_parse(struct lens *lens, const char *text,
                        struct dict **dict, struct lns_error **err);
 void lns_put(FILE *out, struct lens *lens, struct tree *tree,

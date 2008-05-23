@@ -31,42 +31,23 @@ const char *progname;
 
 __attribute__((noreturn))
 static void usage(void) {
-    fprintf(stderr, "Usage: %s [OPTIONS] GRAMMAR [FILE]\n", progname);
-    fprintf(stderr, "Load GRAMMAR and parse FILE according to it.\n");
-    fprintf(stderr, "If FILE is omitted, the GRAMMAR is read and printed\n");
+    fprintf(stderr, "Usage: %s [OPTIONS] MODULE\n", progname);
+    fprintf(stderr, "Evaluate MODULE. Generally, MODULE should contain unit tests.\n");
     fprintf(stderr, "\nOptions:\n\n");
-    fprintf(stderr, "  -P WHAT       Show details of how FILE is parsed. Possible values for WHAT\n"
-                    "                are 'advance', 'match', 'tokens', and 'skel'\n");
     fprintf(stderr, "  -I DIR        Add DIR to the module loadpath. Can be given multiple times.\n");
     exit(EXIT_FAILURE);
 }
 
 int main(int argc, char **argv) {
     int opt;
-    int print_skels = 0;
-    int parse_flags = PF_NONE;
     struct augeas *aug;
     char *loadpath = NULL;
     size_t loadpathlen = 0;
 
     progname = argv[0];
 
-    while ((opt = getopt(argc, argv, "hP:I:")) != -1) {
+    while ((opt = getopt(argc, argv, "hI:")) != -1) {
         switch(opt) {
-        case 'P':
-            if (STREQ(optarg, "advance"))
-                parse_flags |= PF_ADVANCE;
-            else if (STREQ(optarg, "match"))
-                parse_flags |= PF_MATCH;
-            else if (STREQ(optarg, "tokens"))
-                parse_flags |= PF_TOKEN;
-            else if (STREQ(optarg, "skel"))
-                print_skels = 1;
-            else {
-                fprintf(stderr, "Illegal argument '%s' for -%c\n", optarg, opt);
-                usage();
-            }
-            break;
         case 'I':
             argz_add(&loadpath, &loadpathlen, optarg);
             break;

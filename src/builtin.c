@@ -112,7 +112,7 @@ static struct value *lens_get(struct info *info, struct value *l,
     struct value *v;
     const char *text = str->string->str;
 
-    struct tree *tree = lns_get(info, l->lens, text, NULL, 0, &err);
+    struct tree *tree = lns_get(info, l->lens, text, &err);
     if (err == NULL) {
         v = make_value(V_TREE, ref(info));
         v->tree = tree;
