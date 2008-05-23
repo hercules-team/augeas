@@ -135,7 +135,9 @@ static struct path *make_path(const struct tree *root, const char *path) {
     for (const char *p = path; *p != '\0'; p++) {
         if (*p == SEP) {
             while (*p == SEP) p++;
-            if (*p) result->nsegments++;
+            if (*p == '\0')
+                break;
+            result->nsegments++;
         }
     }
     if (result->nsegments == 0)
