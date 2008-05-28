@@ -5,7 +5,7 @@ AM_CFLAGS = @AUGEAS_CFLAGS@ @WARN_CFLAGS@
 valgrind: fatest
 	libtool --mode=execute valgrind --quiet --leak-check=full ./fatest
 
-check_SCRIPTS=test-lenses.sh test-interpreter.sh
+check_SCRIPTS=test-lenses.sh test-interpreter.sh test-get.sh
 
 EXTRA_DIST=augtest $(AUGTESTS) root \
 	   $(check_SCRIPTS) modules
