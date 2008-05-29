@@ -23,7 +23,6 @@ TOP_SRCDIR=ENV["top_srcdir"] || TOP_DIR
 
 TEST_DIR=File::join(TOP_SRCDIR, "tests")
 
-AUGTOOL="#{TOP_BUILDDIR}/src/augtool -n"
 AUGEAS_ROOT=File::join(TOP_BUILDDIR, "build", "augtest")
 AUGEAS_LENS_LIB=File::join(TOP_SRCDIR, "lenses")
 
@@ -63,7 +62,7 @@ args.each do |test|
     redir = echo ? "" : "> /dev/null"
     printf("Test %-#{WIDTH}s ... ", File::basename(test, ".rb"))
     unless skip
-        IO.popen("#{AUGTOOL} #{augtool_check} #{redir}", "w") do |io|
+        IO.popen("augtool -n #{augtool_check} #{redir}", "w") do |io|
             io.print(commands)
             io.puts("\nquit")
         end

@@ -31,7 +31,7 @@ function run_tests {
         fi
         printf "$action %-30s ... " $(basename $g .aug)
         set +e
-        errs=$(${AUGPARSE} -I ${MODULES} $g 2>&1 > /dev/null)
+        errs=$(augparse -I ${MODULES} $g 2>&1 > /dev/null)
         ret=$?
         set -e
         if [[ $ret -eq $ret_fail ]]; then

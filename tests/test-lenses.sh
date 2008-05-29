@@ -12,7 +12,6 @@ TOPDIR=$(cd $(dirname $0)/.. && pwd)
 [[ -n "$top_srcdir" ]] || top_srcdir=$TOPDIR
 
 
-AUGPARSE=${top_builddir}/src/augparse
 LENS_DIR=${top_srcdir}/lenses
 TESTS=$LENS_DIR/tests/test_*.aug
 
@@ -23,7 +22,7 @@ for t in $TESTS
 do
   printf "%-30s ... " $(basename $t .aug)
   set +e
-  ${AUGPARSE} -I $LENS_DIR $t > $LOG 2>&1
+  augparse -I $LENS_DIR $t > $LOG 2>&1
   ret=$?
   set -e
   if [[ ! $ret -eq 0 ]]; then

@@ -14,8 +14,8 @@ noinst_SCRIPTS = $(check_SCRIPTS)
 
 check_PROGRAMS = fatest
 
-TESTS_ENVIRONMENT = top_builddir=$(abs_top_builddir) \
-                    top_srcdir=$(abs_top_srcdir)
+TESTS_ENVIRONMENT = \
+  PATH='$(abs_top_builddir)/src$(PATH_SEPARATOR)'"$$PATH"
 
 TESTS = $(check_SCRIPTS) $(check_PROGRAMS) augtest
 
