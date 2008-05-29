@@ -7,9 +7,8 @@ TOPDIR=$(cd $(dirname $0)/.. && pwd)
 [[ -n "$top_builddir" ]] || top_builddir=$TOPDIR
 [[ -n "$top_srcdir" ]] || top_srcdir=$TOPDIR
 
-AUGTOOL=${top_builddir}/src/augtool
 export AUGEAS_LENS_LIB=${top_srcdir}/lenses
 export AUGEAS_ROOT=${top_srcdir}/tests/root
 
-$AUGTOOL print '/augeas/files' | grep -q /error && ret=1 || ret=0
+augtool print '/augeas/files' | grep -q /error && ret=1 || ret=0
 exit $ret
