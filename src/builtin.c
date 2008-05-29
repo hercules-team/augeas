@@ -81,10 +81,13 @@ static struct value *make_exn_lns_error(struct info *info,
 
     v = make_exn_value(ref(info), "%s", err->message);
     if (err->pos >= 0) {
+        char *pos = format_pos(text, err->pos);
         exn_printf_line(v,
                         "Error encountered here (%d characters into string)",
                         err->pos);
-        exn_printf_line(v, "%s", format_pos(text, err->pos));
+        if (pos != NULL)
+            exn_printf_line(v, "%s", pos);
+        free(pos);
     } else {
         exn_printf_line(v, "Error encountered at path %s", err->path);
     }
