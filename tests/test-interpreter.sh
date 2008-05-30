@@ -6,9 +6,9 @@
 # If run with option '-v', error output from each augparse run is printed
 
 TOPDIR=$(cd $(dirname $0)/.. && pwd)
-DATADIR=${top_srcdir-${TOPDIR}}/tests
+DATADIR=${abs_top_srcdir-${TOPDIR}}/tests
 MODULES=${DATADIR}/modules
-AUGPARSE=${top_builddir-${DATADIR}/..}/src/augparse
+AUGPARSE=${abs_top_builddir-${DATADIR}/..}/src/augparse
 
 set -e
 

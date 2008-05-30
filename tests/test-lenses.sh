@@ -8,21 +8,20 @@ if [[ "x$1" == "x-v" ]]; then
 fi
 
 TOPDIR=$(cd $(dirname $0)/.. && pwd)
-[[ -n "$top_builddir" ]] || top_builddir=$TOPDIR
-[[ -n "$top_srcdir" ]] || top_srcdir=$TOPDIR
+[[ -n "$abs_top_srcdir" ]] || top_srcdir=$TOPDIR
 
 
-LENS_DIR=${top_srcdir}/lenses
+LENS_DIR=$abs_top_srcdir/lenses
 TESTS=$LENS_DIR/tests/test_*.aug
 
 LOG=$(mktemp)
-trap "rm $LOG" EXIT
+trap 'rm "$LOG"' EXIT
 
 for t in $TESTS
 do
   printf "%-30s ... " $(basename $t .aug)
   set +e
-  augparse -I $LENS_DIR $t > $LOG 2>&1
+  augparse -I $LENS_DIR $t > "$LOG" 2>&1
   ret=$?
   set -e
   if [[ ! $ret -eq 0 ]]; then
@@ -32,6 +31,6 @@ do
     echo PASS
   fi
   if [[ "$VERBOSE" == "y" ]] ; then
-     cat $LOG
+     cat "$LOG"
   fi
 done

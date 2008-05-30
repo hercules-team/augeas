@@ -18,8 +18,8 @@ def augnew?(path)
 end
 
 TOP_DIR=File::join(File::dirname(__FILE__), "..")
-TOP_BUILDDIR=ENV["top_builddir"] || TOP_DIR
-TOP_SRCDIR=ENV["top_srcdir"] || TOP_DIR
+TOP_BUILDDIR=ENV["abs_top_builddir"] || TOP_DIR
+TOP_SRCDIR=ENV["abs_top_srcdir"] || TOP_DIR
 
 TEST_DIR=File::join(TOP_SRCDIR, "tests")
 
