@@ -41,6 +41,17 @@ module Test_hosts =
       rm "1/canonical"
     = *
 
+  (* Make sure blank lines get through *)
+  test Hosts.lns get "127.0.0.1\tlocalhost\n \n\n
+127.0.1.1\tetch.example.com\tetch\n" = 
+    { "1" { "ipaddr" = "127.0.0.1" }
+          { "canonical" = "localhost" } }
+    {} {} {}
+    { "2" { "ipaddr" = "127.0.1.1" }
+          { "canonical" = "etch.example.com" } 
+          { "alias" = "etch" } }
+
+
 (* Local Variables: *)
 (* mode: caml *)
 (* End: *)

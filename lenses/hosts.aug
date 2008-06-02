@@ -8,7 +8,7 @@ module Hosts =
 
   let eol = Util.del_str "\n"
 
-  let comment = [ del /#.*\n/ "# " ]
+  let comment = [ del /(#.*|[ \t]*)\n/ "\n" ]
   let word = /[^# \n\t]+/
   let record = [ seq "host" . [ label "ipaddr" . store  word ] . sep_tab .
                               [ label "canonical" . store word ] .
