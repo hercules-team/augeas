@@ -1,6 +1,8 @@
 #!/bin/sh
 # Run this to generate all the initial makefiles, etc.
 
+BUILD_AUX=build/aux
+
 set -e
 srcdir=`dirname $0`
 test -z "$srcdir" && srcdir=.
@@ -43,13 +45,20 @@ if test -z "$*"; then
         echo "the $0 command line."
 fi
 
+mkdir -p $BUILD_AUX
+
+$LIBTOOLIZE --copy --force
 aclocal
-$LIBTOOLIZE --force
 autoheader
 automake --add-missing
 autoconf
 
 cd $THEDIR
+
+if test x$OBJ_DIR != x; then
+    mkdir -p "$OBJ_DIR"
+    cd "$OBJ_DIR"
+fi
 
 $srcdir/configure --enable-warnings "$@" && {
     echo
