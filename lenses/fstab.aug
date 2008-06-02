@@ -10,12 +10,13 @@ module Fstab =
 
   let comment = [ del /#.*\n/ "# " ]
   let word = /[^,# \n\t]+/
+  let comma_sep_list (l:string) =
+    [ label l . store word ] . ([comma . label l . store word])*
   let record = [ seq "mntent" . 
                    [ label "spec" . store  word ] . sep_tab .
                    [ label "file" . store word ] . sep_tab .
-                   [ label "vfstype" . store word ] . sep_tab .
-                   [ label "opt" . store word ] .
-                     ([comma . label "opt" . store word])* .
+                   comma_sep_list "vfstype" . sep_tab .
+                   comma_sep_list "opt" .
                    (sep_tab . [ label "dump" . store /[0-9]+/ ] .
                     ( sep_spc . [ label "passno" . store /[0-9]+/ ])? )?
                  . eol ]

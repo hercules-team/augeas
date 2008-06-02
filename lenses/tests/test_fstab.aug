@@ -58,6 +58,18 @@ module Test_fstab =
 
   test Fstab.lns get multi_opts = multi_opts_tree
 
+  test Fstab.lns get "/dev/hdc        /media/cdrom0   udf,iso9660 user,noauto\t0\t0\n" =
+    { "1"
+        { "spec" = "/dev/hdc" }
+        { "file" = "/media/cdrom0" }
+        { "vfstype" = "udf" }
+        { "vfstype" = "iso9660" }
+        { "opt" = "user" }
+        { "opt" = "noauto" }
+        { "dump" = "0" }
+        { "passno" = "0" } }
+
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
