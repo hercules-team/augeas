@@ -1,5 +1,5 @@
 commands="
-rm /files/etc/pam.d/newrole/4/opts
+rm /files/etc/pam.d/newrole/4/argument
 save
 "
 

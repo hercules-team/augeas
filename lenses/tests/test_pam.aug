@@ -13,7 +13,8 @@ session    optional     pam_keyinit.so force revoke
     { "2" { "type" = "session" }
           { "control" = "optional" }
           { "module" = "pam_keyinit.so" }
-          { "opts" = "force revoke" } }
+          { "argument" = "force" } 
+          { "argument" = "revoke" } }
 
   test Pam.lns put example after
     set "1/control" "requisite"
@@ -21,6 +22,13 @@ session    optional     pam_keyinit.so force revoke
 auth requisite pam_securetty.so
 session    optional     pam_keyinit.so force revoke
 "
+
+  (* Check that trailing whitespace is handled & preserved *)
+  let trailing_ws = "auth\trequired\tpam_unix.so \n"
+
+  test Pam.lns put trailing_ws after
+    set "1/type" "auth"
+  = trailing_ws
 
 (* Local Variables: *)
 (* mode: caml       *)

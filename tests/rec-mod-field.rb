@@ -1,6 +1,6 @@
 commands="
 set /files/etc/pam.d/newrole/3/module other_module
-set /files/etc/pam.d/newrole/3/opts other_module_opts
+set /files/etc/pam.d/newrole/3/argument other_module_opts
 save
 "
 
