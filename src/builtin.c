@@ -20,6 +20,7 @@
  * Author: David Lutterkort <dlutter@redhat.com>
  */
 
+#include <config.h>
 #include <stdio.h>
 #include <stdarg.h>
 

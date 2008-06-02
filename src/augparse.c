@@ -20,6 +20,7 @@
  * Author: David Lutterkort <dlutter@redhat.com>
  */
 
+#include <config.h>
 #include <argz.h>
 
 #include "list.h"

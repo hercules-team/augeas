@@ -20,6 +20,8 @@
  * Author: David Lutterkort <dlutter@redhat.com>
  */
 
+#include <config.h>
+
 #include "lens.h"
 #include "memory.h"
 

@@ -20,6 +20,7 @@
  * Author: David Lutterkort <dlutter@redhat.com>
  */
 
+#include <config.h>
 #include "augeas.h"
 #include "internal.h"
 #include "memory.h"

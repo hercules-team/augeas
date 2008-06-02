@@ -20,6 +20,8 @@
  * Author: David Lutterkort <dlutter@redhat.com>
  */
 
+#include <config.h>
+
 #include "fa.h"
 #include "cutest.h"
 #include "internal.h"

@@ -1,4 +1,6 @@
 AC_INIT(augeas, 0.1.1)
+AC_CONFIG_SRCDIR([src/augeas.c])
+AM_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE([-Wno-portability])
 
 AC_GNU_SOURCE

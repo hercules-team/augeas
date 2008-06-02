@@ -45,6 +45,7 @@ fi
 
 aclocal
 $LIBTOOLIZE --force
+autoheader
 automake --add-missing
 autoconf
 

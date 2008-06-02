@@ -29,6 +29,7 @@
  * subset of what Automaton provides is implemented here.
  */
 
+#include <config.h>
 #include <limits.h>
 #include <ctype.h>
 

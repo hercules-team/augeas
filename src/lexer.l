@@ -6,6 +6,8 @@
 %option outfile="lex.yy.c" prefix="augl_"
 
 %{
+#include <config.h>
+
 #include "syntax.h"
 
 typedef struct info YYLTYPE;

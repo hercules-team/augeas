@@ -1,5 +1,7 @@
 %{
 
+#include <config.h>
+
 #include "internal.h"
 #include "syntax.h"
 #include "list.h"
