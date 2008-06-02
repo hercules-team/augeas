@@ -1344,7 +1344,7 @@ static struct value *compile_minus(struct term *exp, struct ctx *ctx) {
         struct regexp *re2 = v2->regexp;
         struct regexp *re = regexp_minus(info, re1, re2);
         if (re == NULL) {
-            v = make_exn_value(info,
+            v = make_exn_value(ref(info),
                    "Regular expression subtraction 'r1 - r2' failed");
             exn_printf_line(v, "r1: /%s/", re1->pattern->str);
             exn_printf_line(v, "r2: /%s/", re2->pattern->str);
