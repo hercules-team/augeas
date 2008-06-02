@@ -30,6 +30,9 @@ session    optional     pam_keyinit.so force revoke
     set "1/type" "auth"
   = trailing_ws
 
+  test Pam.lns get "@include common-password\n" = 
+    { "include" = "common-password" }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
