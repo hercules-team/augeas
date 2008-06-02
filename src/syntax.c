@@ -32,7 +32,6 @@
 
 #include "memory.h"
 #include "syntax.h"
-#include "config.h"
 #include "augeas.h"
 
 /* Extension of source files */

@@ -25,7 +25,6 @@
 #include "list.h"
 #include "syntax.h"
 #include "augeas.h"
-#include "config.h"
 
 const char *progname;
 

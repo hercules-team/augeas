@@ -27,7 +27,6 @@
 #include "memory.h"
 #include "augeas.h"
 #include "syntax.h"
-#include "config.h"
 
 static const int fnm_flags = FNM_FILE_NAME;
 static const int glob_flags = GLOB_NOSORT;

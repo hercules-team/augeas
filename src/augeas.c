@@ -23,7 +23,6 @@
 #include "augeas.h"
 #include "internal.h"
 #include "memory.h"
-#include "config.h"
 #include "syntax.h"
 
 #include <fnmatch.h>

@@ -12,7 +12,7 @@ bin_PROGRAMS = augtool augparse
 
 include_HEADERS = augeas.h fa.h
 
-libaugeas_la_SOURCES = augeas.h augeas.c config.h \
+libaugeas_la_SOURCES = augeas.h augeas.c \
 	internal.h internal.c \
 	memory.h memory.c ref.h \
         syntax.c syntax.h parser.y builtin.c lens.c lens.h regexp.c \

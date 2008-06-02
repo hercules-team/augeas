@@ -35,6 +35,46 @@
 #include <errno.h>
 #include <assert.h>
 
+/*
+ * Various parameters about env vars, special tree nodes etc.
+ * Some of them should be turned into buildtime configurables
+ *
+ */
+
+/* The env var that points to the chroot holding files we may modify.
+   Mostly useful for testing */
+#define AUGEAS_ROOT_ENV "AUGEAS_ROOT"
+
+/* The root for actual file contents */
+#define AUGEAS_FILES_TREE "/files"
+
+/* Augeas reports some information in this subtree */
+#define AUGEAS_META_TREE "/augeas"
+
+/* Information about files */
+#define AUGEAS_META_FILES AUGEAS_META_TREE AUGEAS_FILES_TREE
+
+/* The root directory */
+#define AUGEAS_META_ROOT AUGEAS_META_TREE "/root"
+
+/* How we save files. One of 'backup', 'overwrite' or 'newfile' */
+#define AUGEAS_META_SAVE_MODE AUGEAS_META_TREE "/save"
+
+/* Where the default spec files live. */
+#define AUGEAS_LENS_DIR "/usr/share/augeas/lenses"
+
+/* Name of env var that contains list of paths to search for additional
+   spec files */
+#define AUGEAS_LENS_ENV "AUGEAS_LENS_LIB"
+
+/* Fairly arbitrary bound on the length of the path we
+   accept from AUGEAS_SPEC_ENV */
+#define MAX_ENV_SIZE 4096
+
+/* Character separating paths in a list of paths */
+#define PATH_SEP_CHAR ':'
+
+
 #ifdef __GNUC__
 
 #ifndef __GNUC_PREREQ

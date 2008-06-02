@@ -22,7 +22,6 @@
 
 #include "augeas.h"
 #include "internal.h"
-#include "config.h"
 
 #include <readline/readline.h>
 #include <readline/history.h>
