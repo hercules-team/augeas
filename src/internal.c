@@ -227,27 +227,77 @@ int print_chars(FILE *out, const char *text, int cnt) {
 }
 
 char *format_pos(const char *text, int pos) {
-    char *buf;
-    size_t size;
-    FILE *stream = open_memstream(&buf, &size);
-    print_pos(stream, text, pos);
-    fclose(stream);
+    static const int window = 28;
+    char *buf = NULL, *left = NULL, *right = NULL;
+    int before = pos;
+    int llen, rlen;
+    int r;
+
+    if (before > window)
+        before = window;
+    left = escape(text + pos - before, before);
+    if (left == NULL)
+        goto done;
+    right = escape(text + pos, window);
+    if (right == NULL)
+        goto done;
+
+    llen = strlen(left);
+    rlen = strlen(right);
+    if (llen < window && rlen < window) {
+        r = asprintf(&buf, "%*s%s|=|%s%-*s\n", window - llen, "<", left,
+                     right, window - rlen, ">");
+    } else if (strlen(left) < window) {
+        r = asprintf(&buf, "%*s%s|=|%s>\n", window - llen, "<", left, right);
+    } else if (strlen(right) < window) {
+        r = asprintf(&buf, "<%s|=|%s%-*s\n", left, right, window - rlen, ">");
+    } else {
+        r = asprintf(&buf, "<%s|=|%s>\n", left, right);
+    }
+    if (r < 0) {
+        buf = NULL;
+    }
+
+ done:
+    free(left);
+    free(right);
     return buf;
 }
 
 void print_pos(FILE *out, const char *text, int pos) {
-    static const int window = 28;
-    int before = pos;
-    int total;
-    if (before > window)
-        before = window;
-    total = print_chars(NULL, text + pos - before, before);
-    if (total < window)
-        fprintf(out, "%*s", window - total, "<");
-    print_chars(out, text + pos - before, before);
-    fprintf(out, "|=|");
-    total = print_chars(out, text + pos, window);
-    fprintf(out, "%*s\n", window - total, ">");
+    char *format = format_pos(text, pos);
+
+    if (format != NULL) {
+        fputs(format, out);
+        FREE(format);
+    }
+}
+
+int init_memstream(struct memstream *ms) {
+    MEMZERO(ms, 1);
+#if HAVE_OPEN_MEMSTREAM
+    ms->stream = open_memstream(&(ms->buf), &(ms->size));
+    return ms->stream == NULL ? -1 : 0;
+#else
+    ms->stream = tmpfile();
+    if (ms->stream == NULL) {
+        return -1;
+    }
+    return 0;
+#endif
+}
+
+int close_memstream(struct memstream *ms) {
+#if !HAVE_OPEN_MEMSTREAM
+    rewind(ms->stream);
+    ms->buf = fread_file_lim(ms->stream, MAX_READ_LEN, &(ms->size));
+#endif
+    if (fclose(ms->stream) == EOF) {
+        FREE(ms->buf);
+        ms->size = 0;
+        return -1;
+    }
+    return 0;
 }
 
 

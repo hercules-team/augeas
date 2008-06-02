@@ -256,6 +256,33 @@ int print_tree(const struct tree *tree, FILE *out, const char *path,
                int pr_hidden);
 int tree_equal(const struct tree *t1, const struct tree *t2);
 
+/* Wrappers to simulate OPEN_MEMSTREAM where that's not available. The
+ * STREAM member is opened by INIT_MEMSTREAM and closed by
+ * CLOSE_MEMSTREAM. The BUF is allocated automatically, but can not be used
+ * until after CLOSE_MEMSTREAM has been called. It is the callers
+ * responsibility to free up BUF.
+ */
+struct memstream {
+    FILE   *stream;
+    char   *buf;
+    size_t size;
+};
+
+/* Initialize a memstream. On systems that have OPEN_MEMSTREAM, it is used
+ * to open MS->STREAM. On systems without OPEN_MEMSTREAM, MS->STREAM is
+ * backed by a temporary file.
+ *
+ * MS must be allocated in advance; INIT_MEMSTREAM initializes it.
+ */
+int init_memstream(struct memstream *ms);
+
+/* Close a memstream. After calling this, MS->STREAM can not be used
+ * anymore and a string representing whatever was written to it is
+ * available in MS->BUF. The caller must free MS->BUF.
+ *
+ * The caller must free the MEMSTREAM structure.
+ */
+int close_memstream(struct memstream *ms);
 #endif
 
 

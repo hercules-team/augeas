@@ -24,6 +24,7 @@
 #include <stdarg.h>
 
 #include "syntax.h"
+#include "memory.h"
 
 #define UNIMPL_BODY(name)                       \
     {                                           \
@@ -96,14 +97,13 @@ static struct value *make_exn_lns_error(struct info *info,
 }
 
 static void exn_print_tree(struct value *exn, struct tree *tree) {
-    FILE *stream;
-    char *buf;
-    size_t size;
+    struct memstream ms;
 
-    stream = open_memstream(&buf, &size);
-    print_tree(tree, stream, "/*", 1);
-    fclose (stream);
-    exn_printf_line(exn, "%s", buf);
+    init_memstream(&ms);
+    print_tree(tree, ms.stream, "/*", 1);
+    close_memstream(&ms);
+    exn_printf_line(exn, "%s", ms.buf);
+    FREE(ms.buf);
 }
 
 /* V_LENS -> V_STRING -> V_TREE */
@@ -139,23 +139,21 @@ static struct value *lens_put(struct info *info, struct value *l,
     assert(tree->tag == V_TREE);
     assert(str->tag == V_STRING);
 
-    FILE *stream;
-    char *buf;
-    size_t size;
+    struct memstream ms;
     struct value *v;
     struct lns_error *err;
 
-    stream = open_memstream(&buf, &size);
-    lns_put(stream, l->lens, tree->tree, str->string->str, &err);
-    fclose (stream);
+    init_memstream(&ms);
+    lns_put(ms.stream, l->lens, tree->tree, str->string->str, &err);
+    close_memstream(&ms);
 
     if (err == NULL) {
         v = make_value(V_STRING, ref(info));
-        v->string = make_string(buf);
+        v->string = make_string(ms.buf);
     } else {
         v = make_exn_lns_error(info, err, str->string->str);
         free_lns_error(err);
-        free(buf);
+        FREE(ms.buf);
     }
     return v;
 }

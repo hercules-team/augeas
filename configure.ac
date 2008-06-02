@@ -15,6 +15,7 @@ AUGEAS_CFLAGS=-std=gnu99
 AC_SUBST(AUGEAS_CFLAGS)
 
 AUGEAS_CHECK_READLINE
+AC_CHECK_FUNCS([open_memstream])
 
 AC_OUTPUT(Makefile
           src/Makefile
