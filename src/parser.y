@@ -7,6 +7,15 @@
 #include "list.h"
 #include <stdio.h>
 
+/* Work around a problem on FreeBSD where Bison looks for _STDLIB_H
+ * to see if stdlib.h has been included, but the system includes
+ * use _STDLIB_H_
+ */
+#if HAVE_STDLIB_H && ! defined _STDLIB_H
+#  include <stdlib.h>
+#  define _STDLIB_H 1
+#endif
+
 #define YYDEBUG 1
 
 int augl_parse_file(const char *name, struct term **term);
