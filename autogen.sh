@@ -1,7 +1,27 @@
-#!/bin/sh
+#!/bin/bash
 # Run this to generate all the initial makefiles, etc.
 
+usage() {
+  echo >&2 "\
+Usage: $0 [OPTION]...
+Generate makefiles and other infrastructure needed for building
+
+
+Options:
+ --gnulib-srcdir=DIRNAME  Specify the local directory where gnulib
+                          sources reside.  Use this if you already
+                          have gnulib sources on your machine, and
+                          do not want to waste your bandwidth downloading
+                          them again.
+ --help                   Print this message
+ any other option         Pass to the 'configure' script verbatim
+
+Running without arguments will suffice in most cases.
+"
+}
+
 BUILD_AUX=build/aux
+GNULIB_DIR=gnulib
 
 set -e
 srcdir=`dirname $0`
@@ -9,6 +29,21 @@ test -z "$srcdir" && srcdir=.
 
 THEDIR=`pwd`
 cd $srcdir
+
+# Split out options for bootstrap and for configure
+declare -a CF_ARGS
+for option
+do
+  case $option in
+  --help)
+    usage
+    exit;;
+  --gnulib-srcdir=*)
+    GNULIB_SRCDIR=$option;;
+  *)
+    CF_ARGS[${#CF_ARGS[@]}]=$option;;
+  esac
+done
 
 #Check for OSX
 case `uname -s` in
@@ -39,7 +74,7 @@ if test "$DIE" -eq 1; then
 	exit 1
 fi
 
-if test -z "$*"; then
+if test -z "${CF_ARGS[*]}"; then
 	echo "I am going to run ./configure with --enable-warnings - if you "
         echo "wish to pass any extra arguments to it, please specify them on "
         echo "the $0 command line."
@@ -48,7 +83,8 @@ fi
 mkdir -p $BUILD_AUX
 
 $LIBTOOLIZE --copy --force
-aclocal
+./bootstrap $GNULIB_SRCDIR
+aclocal -I gnulib/m4
 autoheader
 automake --add-missing
 autoconf
@@ -60,7 +96,7 @@ if test x$OBJ_DIR != x; then
     cd "$OBJ_DIR"
 fi
 
-$srcdir/configure --enable-warnings "$@" && {
+$srcdir/configure --enable-warnings "${CF_ARGS[@]}" && {
     echo
     echo "Now type 'make' to compile augeas."
 }

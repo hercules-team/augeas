@@ -28,6 +28,7 @@
 
 #include <fnmatch.h>
 #include <argz.h>
+#include <string.h>
 
 /* We always have a toplevel entry for P_ROOT */
 #define P_ROOT   "augeas"

@@ -1,6 +1,9 @@
 AUGTESTS=$(wildcard *.rb)
 
-AM_CFLAGS = $(AUGEAS_CFLAGS) $(WARN_CFLAGS)
+GNULIB= ../gnulib/lib/libgnu.la
+GNULIB_CFLAGS= -I $(top_srcdir)/gnulib/lib
+
+AM_CFLAGS = $(AUGEAS_CFLAGS) $(WARN_CFLAGS) $(GNULIB_CFLAGS)
 
 valgrind: fatest
 	libtool --mode=execute valgrind --quiet --leak-check=full ./fatest
@@ -24,4 +27,4 @@ TESTS = $(check_SCRIPTS) $(check_PROGRAMS) augtest
 INCLUDES = -I$(top_srcdir)/src
 
 fatest_SOURCES = fatest.c cutest.c cutest.h
-fatest_LDADD = $(top_builddir)/src/libaugeas.la
+fatest_LDADD = $(top_builddir)/src/libaugeas.la $(GNULIB)

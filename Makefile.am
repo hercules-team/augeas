@@ -1,4 +1,6 @@
-SUBDIRS=src tests man
+SUBDIRS=gnulib/lib src gnulib/tests tests man
+
+ACLOCAL_AMFLAGS = -I gnulib/m4
 
 lensdir=$(datadir)/augeas/lenses
 lenstestdir=$(datadir)/augeas/lenses/tests
@@ -13,5 +15,3 @@ pkgconfig_DATA = augeas.pc
 
 distclean-local:
 	-rm -rf $(top_builddir)/build
-
-
