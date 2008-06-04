@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /bin/sh
 
 # Run test modules that make sure the interpreter fails/succeeds in
 # various hairy situations.
@@ -13,11 +13,12 @@ AUGPARSE=${abs_top_builddir-${DATADIR}/..}/src/augparse
 set -e
 
 VERBOSE=n
-if [[ "x$1" == "x-v" ]]; then
+if [ "x$1" = "x-v" ]; then
     VERBOSE=y
 fi
 
-function run_tests {
+run_tests ()
+{
     ret_succ=$1
     ret_fail=$(( 1 - $ret_succ ))
     action=$2
@@ -25,7 +26,7 @@ function run_tests {
     shift
 
     for g in $*; do
-        if [[ ! -r "$g" ]]; then
+        if [ ! -r "$g" ]; then
             echo "Grammar file $g is not readable"
             exit 19
         fi
@@ -34,16 +35,16 @@ function run_tests {
         errs=$(augparse -I ${MODULES} $g 2>&1 > /dev/null)
         ret=$?
         set -e
-        if [[ $ret -eq $ret_fail ]]; then
+        if [ $ret -eq $ret_fail ]; then
             echo FAIL
             result=1
-        elif [[ $ret -eq $ret_succ ]]; then
+        elif [ $ret -eq $ret_succ ]; then
             echo PASS
         else
             echo ERROR
             result=19
         fi
-        if [[ "$VERBOSE" == "y" ]] ; then
+        if [ "$VERBOSE" = "y" ] ; then
             echo $errs
         fi
     done

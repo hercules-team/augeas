@@ -1,4 +1,4 @@
-#! /usr/bin/ruby
+#! /usr/bin/env ruby
 
 # Read a file with a test description, run augtool against it and
 # look at the diff between the original file and the .augnew file
