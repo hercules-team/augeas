@@ -1,3 +1,13 @@
+0.2.0 - 2008-06-05
+  - Augeas is now much more portable
+    * Pull in gnulib on non-glibc systems
+    * Augeas now builds and runs on FreeBSD (possibly others, too)
+  - Various fixes for memory corruption and the like
+    (Jim Meyering, James Antill)
+  - New lenses
+    * vsftpd.conf
+    * various bugfixes in existing lenses
+
 0.1.1 - 2008-05-16
   - Add subtraction of regexps to the language, for example
       let re = /[a-z]+/ - /(Allow|Deny)Users/
