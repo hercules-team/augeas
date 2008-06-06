@@ -91,6 +91,9 @@ static int filter_generate(struct filter *filter, const char *root,
     int r;
     int ret = 0;
 
+    *nmatches = 0;
+    *matches = NULL;
+
     list_for_each(f, filter) {
         char *globpat = NULL;
         if (! f->include)
