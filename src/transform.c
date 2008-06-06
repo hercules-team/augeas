@@ -302,8 +302,7 @@ static int add_load_info(struct augeas *aug, const char *filename,
     return result;
 }
 
-static int load_file(struct augeas *aug, struct lens *lens,
-                     const char *filename) {
+static int load_file(struct augeas *aug, struct lens *lens, char *filename) {
     char *text = NULL;
     const char *err_status = NULL;
     struct aug_file *file = NULL;

@@ -45,7 +45,7 @@ struct split {
     struct split *next;
     struct tree  *tree;
     struct tree  *follow;
-    const char   *labels;
+    char         *labels;
     size_t        start;
     size_t        end;
 };
@@ -128,13 +128,13 @@ static void free_split(struct split *split) {
     if (split == NULL)
         return;
 
-    free((char *) split->labels);
+    free(split->labels);
     free(split);
 }
 
 static void split_append(struct split **split,
                          struct tree *tree, struct tree *follow,
-                         const char *labels, size_t start, size_t end) {
+                         char *labels, size_t start, size_t end) {
     struct split *sp;
     CALLOC(sp, 1);
     sp->tree = tree;

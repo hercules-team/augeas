@@ -154,7 +154,7 @@ void free_string(struct string *string) {
     if (string == NULL)
         return;
     assert(string->ref == 0);
-    free((char *) string->str);
+    free(string->str);
     free(string);
 }
 
@@ -182,12 +182,12 @@ static void free_term(struct term *term) {
     assert(term->ref == 0);
     switch(term->tag) {
     case A_MODULE:
-        free((char *) term->mname);
-        free((char *) term->autoload);
+        free(term->mname);
+        free(term->autoload);
         unref(term->decls, term);
         break;
     case A_BIND:
-        free((char *) term->bname);
+        free(term->bname);
         unref(term->exp, term);
         break;
     case A_COMPOSE:
@@ -244,7 +244,7 @@ void free_module(struct module *module) {
     if (module == NULL)
         return;
     assert(module->ref == 0);
-    free((char *) module->name);
+    free(module->name);
     unref(module->next, module);
     unref(module->bindings, binding);
     unref(module->autoload, transform);
@@ -333,8 +333,7 @@ struct term *make_term(enum term_tag tag, struct info *info) {
   return term;
 }
 
-struct term *make_param(const char *name, struct type *type,
-                        struct info *info) {
+struct term *make_param(char *name, struct type *type, struct info *info) {
   struct term *term = make_term(A_FUNC, info);
   make_ref(term->param);
   term->param->info = ref(term->info);
@@ -352,7 +351,7 @@ struct value *make_value(enum value_tag tag, struct info *info) {
     return value;
 }
 
-struct string *make_string(const char *str) {
+struct string *make_string(char *str) {
     struct string *string;
     make_ref(string);
     string->str = str;
@@ -367,8 +366,7 @@ struct term *make_app_term(struct term *lambda, struct term *arg,
   return app;
 }
 
-struct term *make_app_ident(const char *id, struct term *arg,
-                            struct info *info) {
+struct term *make_app_ident(char *id, struct term *arg, struct info *info) {
     struct term *ident = make_term(A_IDENT, ref(info));
     ident->ident = make_string(id);
     return make_app_term(ident, arg, info);
@@ -578,12 +576,12 @@ static char *type_string(struct type *t);
 
 static void dump_bindings(struct binding *bnds) {
     list_for_each(b, bnds) {
-        const char *st = type_string(b->type);
+        char *st = type_string(b->type);
         fprintf(stderr, "    %s: %s", b->ident->str, st);
         fprintf(stderr, " = ");
         print_value(stderr, b->value);
         fputc('\n', stderr);
-        free((char *) st);
+        free(st);
     }
 }
 
@@ -745,14 +743,14 @@ static char *type_string(struct type *t) {
     if (t->tag == T_ARROW) {
         char *s = NULL;
         int r;
-        const char *sd = type_string(t->dom);
-        const char *si = type_string(t->img);
+        char *sd = type_string(t->dom);
+        char *si = type_string(t->img);
         if (t->dom->tag == T_ARROW)
             r = asprintf(&s, "(%s) -> %s", sd, si);
         else
             r = asprintf(&s, "%s -> %s", sd, si);
-        free((char *) sd);
-        free((char *) si);
+        free(sd);
+        free(si);
         return (r == -1) ? NULL : s;
     } else {
         return strdup(type_name(t));
@@ -988,30 +986,30 @@ static struct value *native_call(struct info *info,
 }
 
 static void type_error1(struct info *info, const char *msg, struct type *type) {
-    const char *s = type_string(type);
+    char *s = type_string(type);
     syntax_error(info, "Type error: ");
     syntax_error(info, msg, s);
-    free((char *) s);
+    free(s);
 }
 
 static void type_error2(struct info *info, const char *msg,
                         struct type *type1, struct type *type2) {
-    const char *s1 = type_string(type1);
-    const char *s2 = type_string(type2);
+    char *s1 = type_string(type1);
+    char *s2 = type_string(type2);
     syntax_error(info, "Type error: ");
     syntax_error(info, msg, s1, s2);
-    free((char *) s1);
-    free((char *) s2);
+    free(s1);
+    free(s2);
 }
 
 static void type_error_binop(struct info *info, const char *opname,
                              struct type *type1, struct type *type2) {
-    const char *s1 = type_string(type1);
-    const char *s2 = type_string(type2);
+    char *s1 = type_string(type1);
+    char *s2 = type_string(type2);
     syntax_error(info, "Type error: ");
     syntax_error(info, "%s of %s and %s is not possible", opname, s1, s2);
-    free((char *) s1);
-    free((char *) s2);
+    free(s1);
+    free(s2);
 }
 
 static int check_exp(struct term *term, struct ctx *ctx);
@@ -1422,7 +1420,7 @@ static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
         v = make_value(V_STRING, ref(info));
         make_ref(v->string);
         CALLOC(v->string->str, strlen(s1) + strlen(s2) + 1);
-        char *s = (char *) v->string->str;
+        char *s = v->string->str;
         strcpy(s, s1);
         strcat(s, s2);
     } else if (t->tag == T_REGEXP) {

@@ -90,12 +90,12 @@ struct term {
     enum term_tag tag;
     union {
         struct {                       /* A_MODULE */
-            const char    *mname;
-            const char    *autoload;
+            char          *mname;
+            char          *autoload;
             struct term   *decls;
         };
         struct {                       /* A_BIND */
-            const char    *bname;
+            char          *bname;
             struct term   *exp;
         };
         struct {              /* A_COMPOSE, A_UNION, A_CONCAT, A_APP, A_LET */
@@ -130,7 +130,7 @@ struct param {
 
 struct string {
     unsigned int   ref;
-    const char    *str;
+    char          *str;
 };
 
 struct regexp {
@@ -147,7 +147,7 @@ void print_regexp(FILE *out, struct regexp *regexp);
 /* Make a regexp with pattern PAT, which is not copied. Ownership
  * of INFO is taken.
  */
-struct regexp *make_regexp(struct info *info, const char *pat);
+struct regexp *make_regexp(struct info *info, char *pat);
 
 /* Make a regexp that matches TEXT literally; the string TEXT
  * is not used by the returned rgexp and must be freed by the caller
@@ -336,7 +336,7 @@ struct module {
     unsigned int       ref;
     struct module     *next;     /* Only used for the global list of modules */
     struct transform  *autoload;
-    const char        *name;
+    char              *name;
     struct binding    *bindings;
 };
 
@@ -349,14 +349,12 @@ void free_type(struct type *type);
  * arguments without incrementing. Caller owns returned objects.
  */
 struct term *make_term(enum term_tag tag, struct info *info);
-struct term *make_param(const char *name, struct type *type,
-                        struct info *info);
+struct term *make_param(char *name, struct type *type, struct info *info);
 struct value *make_value(enum value_tag tag, struct info *info);
-struct string *make_string(const char *str);
+struct string *make_string(char *str);
 struct term *make_app_term(struct term *func, struct term *arg,
                            struct info *info);
-struct term *make_app_ident(const char *id, struct term *func,
-                            struct info *info);
+struct term *make_app_ident(char *id, struct term *func, struct info *info);
 
 /* Make an EXN value
  * Receive ownership of INFO

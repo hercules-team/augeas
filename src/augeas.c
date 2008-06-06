@@ -587,7 +587,7 @@ struct tree *tree_set(struct tree *root, const char *path, const char *value) {
     free_path(p);
 
     if (tree->value != NULL) {
-        free((char *) tree->value);
+        free(tree->value);
         tree->value = NULL;
     }
     if (value != NULL) {
@@ -645,8 +645,7 @@ int aug_insert(struct augeas *aug, const char *path, const char *label,
     return -1;
 }
 
-struct tree *make_tree(const char *label, const char *value,
-                       struct tree *children) {
+struct tree *make_tree(char *label, char *value, struct tree *children) {
     struct tree *tree;
     CALLOC(tree, 1);
     if (tree == NULL)
@@ -664,8 +663,8 @@ static void free_tree_node(struct tree *tree) {
     if (tree == NULL)
         return;
 
-    free((char *) tree->label);
-    free((char *) tree->value);
+    free(tree->label);
+    free(tree->value);
     free(tree);
 }
 

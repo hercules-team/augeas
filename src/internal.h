@@ -235,17 +235,16 @@ struct augeas {
  */
 struct tree {
     struct tree *next;
-    const char  *label;      /* Last component of PATH */
+    char        *label;      /* Last component of PATH */
     struct tree *children;   /* List of children through NEXT */
-    const char  *value;
+    char        *value;
     int          dirty;
 };
 
 /* Allocate a new tree node with the given LABEL, VALUE, and CHILDREN,
  * which are not copied. The new tree is marked as dirty
  */
-struct tree *make_tree(const char *label, const char *value,
-                       struct tree *children);
+struct tree *make_tree(char *label, char *value, struct tree *children);
 
 int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub);
 

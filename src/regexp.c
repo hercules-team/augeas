@@ -26,7 +26,7 @@
 #include "memory.h"
 
 static const struct string empty_pattern_string = {
-    .ref = REF_MAX, .str = "()"
+    .ref = REF_MAX, .str = (char *) "()"
 };
 
 static const struct string *const empty_pattern = &empty_pattern_string;
@@ -45,7 +45,7 @@ void print_regexp(FILE *out, struct regexp *r) {
     fputc('/', out);
 }
 
-struct regexp *make_regexp(struct info *info, const char *pat) {
+struct regexp *make_regexp(struct info *info, char *pat) {
     struct regexp *regexp;
 
     make_ref(regexp);

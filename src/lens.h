@@ -89,7 +89,7 @@ struct skel {
     struct lens *lens;
     enum lens_tag tag;
     union {
-        const char *text;    /* L_DEL */
+        char        *text;    /* L_DEL */
         struct skel *skels;  /* L_CONCAT, L_STAR, L_MAYBE */
     };
     /* Also tag == L_SUBTREE, with no data in the union */
@@ -104,7 +104,7 @@ struct dict_entry {
 
 struct dict {
     struct dict *next;
-    const char *key;
+    char        *key;
     struct dict_entry *entry; /* This will change as entries are looked up */
     struct dict_entry *mark;  /* Pointer to initial entry, will never change */
 };

@@ -438,7 +438,7 @@ static struct regexp *make_key_regexp(struct info *info, const char *pat) {
     make_ref(regexp->pattern);
     regexp->info = ref(info);
     CALLOC(regexp->pattern->str, len);
-    snprintf((char *) regexp->pattern->str, len, "(%s)/", pat);
+    snprintf(regexp->pattern->str, len, "(%s)/", pat);
     return regexp;
 }
 
@@ -452,7 +452,7 @@ static struct regexp *make_key_regexp(struct info *info, const char *pat) {
  */
 static struct regexp *lns_key_regexp(struct lens *l, struct value **exn) {
     static const struct string leaf_key_string = {
-        .ref = UINT_MAX, .str = "/"
+        .ref = UINT_MAX, .str = (char *) "/"
     };
     static const struct string *const leaf_key_pat = &leaf_key_string;
 
@@ -488,7 +488,7 @@ static struct regexp *lns_key_regexp(struct lens *l, struct value **exn) {
                 unref(r, regexp);
                 return NULL;
             }
-            strcat((char *) r->pattern->str, "/");
+            strcat(r->pattern->str, "/");
             return r;
         }
     case L_CONCAT:

@@ -53,8 +53,8 @@ struct state {
     struct split     *split;
     const char       *text;
     struct seq       *seqs;
-    const char       *key;
-    const char       *value;     /* GET_STORE leaves a value here */
+    char             *key;
+    char             *value;     /* GET_STORE leaves a value here */
     struct lns_error *error;
 };
 
@@ -108,12 +108,12 @@ void free_skel(struct skel *skel) {
             free_skel(del);
         }
     } else if (skel->tag == L_DEL) {
-        free((char *) skel->text);
+        free(skel->text);
     }
     free(skel);
 }
 
-static struct dict *make_dict(const char *key,
+static struct dict *make_dict(char *key,
                               struct skel *skel, struct dict *subdict) {
     struct dict *dict;
     CALLOC(dict, 1);
@@ -135,7 +135,7 @@ void free_dict(struct dict *dict) {
             free_dict(del->dict);
             free(del);
         }
-        free((char *) dict->key);
+        free(dict->key);
         free(dict);
         dict = next;
     }
@@ -232,7 +232,7 @@ static void dict_append(struct dict **dict, struct dict *d2) {
             struct dict *del = e2;
             list_append(e1->entry, e2->entry);
             e2 = e2->next;
-            free((char *) del->key);
+            free(del->key);
             free(del);
         }
     }
@@ -631,8 +631,8 @@ static struct skel *parse_quant_maybe(struct lens *lens, struct state *state,
 }
 
 static struct tree *get_subtree(struct lens *lens, struct state *state) {
-    const char *key = state->key;
-    const char *value = state->value;
+    char *key = state->key;
+    char *value = state->value;
     struct tree *tree = NULL, *children;
 
     state->key = NULL;
@@ -648,7 +648,7 @@ static struct tree *get_subtree(struct lens *lens, struct state *state) {
 
 static struct skel *parse_subtree(struct lens *lens, struct state *state,
                                   struct dict **dict) {
-    const char *key = state->key;
+    char *key = state->key;
     struct skel *skel;
     struct dict *di = NULL;
 
@@ -726,11 +726,11 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
         free_seqs(state.seqs);
         if (state.key != NULL) {
             get_error(&state, lens, "get left unused key %s", state.key);
-            free((char *) state.key);
+            free(state.key);
         }
         if (state.value != NULL) {
             get_error(&state, lens, "get left unused value %s", state.value);
-            free((char *) state.value);
+            free(state.value);
         }
     } else {
         get_error(&state, lens, "get can not process entire input");
@@ -823,11 +823,11 @@ struct skel *lns_parse(struct lens *lens, const char *text, struct dict **dict,
         }
         if (state.key != NULL) {
             get_error(&state, lens, "parse left unused key %s", state.key);
-            free((char *) state.key);
+            free(state.key);
         }
         if (state.value != NULL) {
             get_error(&state, lens, "parse left unused value %s", state.value);
-            free((char *) state.value);
+            free(state.value);
         }
     } else {
         // This should never happen during lns_parse

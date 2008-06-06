@@ -104,14 +104,14 @@ static void augl_error(struct info *locp, struct term **term,
 
 /* TERM construction */
  static struct info *clone_info(struct info *locp);
- static struct term *make_module(const char *ident, const char *autoload,
+ static struct term *make_module(char *ident, char *autoload,
                                  struct term *decls,
                                  struct info *locp);
 
- static struct term *make_bind(const char *ident, struct term *params,
+ static struct term *make_bind(char *ident, struct term *params,
                              struct term *exp, struct term *decls,
                              struct info *locp);
- static struct term *make_let(const char *ident, struct term *params,
+ static struct term *make_let(char *ident, struct term *params,
                               struct term *exp, struct term *body,
                               struct info *locp);
  static struct term *make_binop(enum term_tag tag,
@@ -119,9 +119,9 @@ static void augl_error(struct info *locp, struct term **term,
                                struct info *locp);
  static struct term *make_unop(enum term_tag tag,
                               struct term *exp, struct info *locp);
- static struct term *make_ident(const char *qname, struct info *locp);
- static struct term *make_value_term(enum value_tag tag, const char *value,
-                               struct info *locp);
+ static struct term *make_ident(char *qname, struct info *locp);
+ static struct term *make_value_term(enum value_tag tag, char *value,
+                                     struct info *locp);
  static struct term *make_rep(struct term *exp, enum quant_tag quant,
                              struct info *locp);
 
@@ -356,7 +356,7 @@ static struct term *make_term_locp(enum term_tag tag, struct info *locp) {
   return make_term(tag, info);
 }
 
-static struct term *make_module(const char *ident, const char *autoload,
+static struct term *make_module(char *ident, char *autoload,
                                 struct term *decls,
                                 struct info *locp) {
   struct term *term = make_term_locp(A_MODULE, locp);
@@ -366,7 +366,7 @@ static struct term *make_module(const char *ident, const char *autoload,
   return term;
 }
 
-static struct term *make_bind(const char *ident, struct term *params,
+static struct term *make_bind(char *ident, struct term *params,
                               struct term *exp, struct term *decls,
                               struct info *locp) {
   struct term *term = make_term_locp(A_BIND, locp);
@@ -379,7 +379,7 @@ static struct term *make_bind(const char *ident, struct term *params,
   return decls;
 }
 
-static struct term *make_let(const char *ident, struct term *params,
+static struct term *make_let(char *ident, struct term *params,
                              struct term *exp, struct term *body,
                              struct info *locp) {
   /* let f (x:string) = "f " . x in
@@ -416,13 +416,13 @@ static struct term *make_unop(enum term_tag tag, struct term *exp,
   return term;
 }
 
-static struct term *make_ident(const char *qname, struct info *locp) {
+static struct term *make_ident(char *qname, struct info *locp) {
   struct term *term = make_term_locp(A_IDENT, locp);
   term->ident = make_string(qname);
   return term;
 }
 
-static struct term *make_value_term(enum value_tag tag, const char *value,
+static struct term *make_value_term(enum value_tag tag, char *value,
                                     struct info *locp) {
   assert(tag == V_STRING || tag == V_REGEXP);
   struct term *term = make_term_locp(A_VALUE, locp);
