@@ -37,6 +37,7 @@ module Sysconfig =
       sc_incl "rsyslog" .
       sc_incl "samba" .
       sc_incl "saslauthd" .
+      sc_incl "selinux" .
       sc_incl "smartmontools" .
       sc_incl "spamassassin" .
       sc_incl "sysstat" .
