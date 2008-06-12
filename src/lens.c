@@ -25,8 +25,6 @@
 #include "lens.h"
 #include "memory.h"
 
-static struct regexp *regexp_digits = NULL;
-
 static struct value * typecheck_union(struct info *,
                                       struct lens *l1, struct lens *l2);
 static struct value *typecheck_concat(struct info *,
@@ -442,6 +440,17 @@ static struct regexp *make_key_regexp(struct info *info, const char *pat) {
     return regexp;
 }
 
+static struct regexp *make_regexp_from_string(struct info *info,
+                                              struct string *string) {
+    struct regexp *r;
+    make_ref(r);
+    if (r != NULL) {
+        r->info = ref(info);
+        r->pattern = ref(string);
+    }
+    return r;
+}
+
 /* Calculate the regexp that matches the labels if the trees that L can
    generate.
 
@@ -452,31 +461,24 @@ static struct regexp *make_key_regexp(struct info *info, const char *pat) {
  */
 static struct regexp *lns_key_regexp(struct lens *l, struct value **exn) {
     static const struct string leaf_key_string = {
-        .ref = UINT_MAX, .str = (char *) "/"
+        .ref = REF_MAX, .str = (char *) "/"
     };
     static const struct string *const leaf_key_pat = &leaf_key_string;
+
+    static const struct string digits_string = {
+        .ref = REF_MAX, .str = (char *) "[0-9]+/"
+    };
+    static const struct string *const digits_pat = &digits_string;
 
     *exn = NULL;
     switch(l->tag) {
     case L_STORE:
-        {
-            struct regexp *r;
-            make_ref(r);
-            r->info = ref(l->info);
-            r->pattern = (struct string *) leaf_key_pat;
-            return r;
-        }
+        return make_regexp_from_string(l->info, (struct string *) leaf_key_pat);
     case L_DEL:
     case L_COUNTER:
         return NULL;
     case L_SEQ:
-        if (regexp_digits == NULL) {
-            regexp_digits = make_regexp(l->info, strdup("[0-9]+/"));
-            return regexp_digits;
-        } else {
-            return ref(regexp_digits);
-        }
-        break;
+        return make_regexp_from_string(l->info, (struct string *) digits_pat);
     case L_KEY:
         return make_key_regexp(l->info, l->regexp->pattern->str);
     case L_LABEL:
