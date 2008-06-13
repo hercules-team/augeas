@@ -52,6 +52,7 @@ struct state {
     struct info       info;
     struct split     *split;
     const char       *text;
+    const char       *pos;
     struct seq       *seqs;
     char             *key;
     char             *value;     /* GET_STORE leaves a value here */
@@ -81,7 +82,7 @@ static void get_error(struct state *state, struct lens *lens,
         return;
     CALLOC(state->error, 1);
     state->error->lens = ref(lens);
-    state->error->pos  = state->split->start - state->text;
+    state->error->pos  = state->pos - state->text;
     va_start(ap, format);
     r = vasprintf(&state->error->message, format, ap);
     va_end(ap);
@@ -274,6 +275,22 @@ static void split_append(struct split **split,
         sp->size = end - start;
         list_append(*split, sp);
     }
+}
+
+static struct split *next_split(struct state *state) {
+    if (state->split != NULL) {
+        state->split = state->split->next;
+        if (state->split != NULL)
+            state->pos = state->split->start + state->split->size;
+    }
+    return state->split;
+}
+
+static struct split *set_split(struct state *state, struct split *split) {
+    state->split = split;
+    if (split != NULL)
+        state->pos = split->start + split->size;
+    return split;
 }
 
 /* Refine a tree split OUTER according to the L_CONCAT lens LENS */
@@ -516,7 +533,7 @@ static struct tree *get_concat(struct lens *lens, struct state *state) {
     struct split *oldsplit = state->split;
     struct split *split = split_concat(state, lens);
 
-    state->split = split;
+    set_split(state, split);
     for (int i=0; i < lens->nchildren; i++) {
         struct tree *t = NULL;
         if (state->split == NULL) {
@@ -529,10 +546,10 @@ static struct tree *get_concat(struct lens *lens, struct state *state) {
 
         t = get_lens(lens->children[i], state);
         list_append(tree, t);
-        state->split = state->split->next;
+        next_split(state);
     }
 
-    state->split = oldsplit;
+    set_split(state, oldsplit);
     list_free(split);
     return tree;
 }
@@ -544,7 +561,7 @@ static struct skel *parse_concat(struct lens *lens, struct state *state,
     struct split *oldsplit = state->split;
     struct split *split = split_concat(state, lens);
 
-    state->split = split;
+    set_split(state, split);
     for (int i=0; i < lens->nchildren; i++) {
         struct skel *sk = NULL;
         struct dict *di = NULL;
@@ -559,10 +576,10 @@ static struct skel *parse_concat(struct lens *lens, struct state *state,
         sk = parse_lens(lens->children[i], state, &di);
         list_append(skel->skels, sk);
         dict_append(dict, di);
-        state->split = state->split->next;
+        next_split(state);
     }
 
-    state->split = oldsplit;
+    set_split(state, oldsplit);
     list_free(split);
     return skel;
 }
@@ -573,14 +590,17 @@ static struct tree *get_quant_star(struct lens *lens, struct state *state) {
     struct split *oldsplit = state->split;
     struct split *split = split_iter(lens, state->split);
 
-    state->split = split;
+    set_split(state, split);
     while (state->split != NULL) {
         struct tree *t = NULL;
         t = get_lens(lens->child, state);
         list_append(tree, t);
-        state->split = state->split->next;
+        next_split(state);
     }
-    state->split = oldsplit;
+    if (state->pos != oldsplit->start + oldsplit->size) {
+        get_error(state, lens, "Short iteration");
+    }
+    set_split(state, oldsplit);
     list_free(split);
     return tree;
 }
@@ -593,16 +613,19 @@ static struct skel *parse_quant_star(struct lens *lens, struct state *state,
     struct skel *skel = make_skel(lens);
 
     *dict = NULL;
-    state->split = split;
+    set_split(state, split);
     while (state->split != NULL) {
         struct skel *sk;
         struct dict *di = NULL;
         sk = parse_lens(lens->child, state, &di);
         list_append(skel->skels, sk);
         dict_append(dict, di);
-        state->split = state->split->next;
+        next_split(state);
     }
-    state->split = oldsplit;
+    if (state->pos != oldsplit->start + oldsplit->size) {
+        get_error(state, lens, "Short iteration");
+    }
+    set_split(state, oldsplit);
     list_free(split);
     return skel;
 }
@@ -708,11 +731,13 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
     struct state state;
     struct split split;
     struct tree *tree = NULL;
+    int partial = 1;
 
     MEMZERO(&state, 1);
     MEMZERO(&split, 1);
     state.info = *info;
     state.info.ref = UINT_MAX;
+    state.pos = text;
 
     split.start = text;
     split.size = strlen(text);
@@ -720,20 +745,27 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
     state.split = &split;
     state.text = text;
 
-    if (applies(lens, &split)) {
-        tree = get_lens(lens, &state);
+    /* We are probably being overly cautious here: if the lens can't process
+     * all of TEXT, we should really fail somewhere in one of the sublenses.
+     * But to be safe, we check that we can process everythign anyway, then
+     * try to process, hoping we'll get a more specific error, and if that
+     * fails, we throw our arms in the air and say 'something wnet wrong'
+     */
+    partial = !applies(lens, &split);
 
-        free_seqs(state.seqs);
-        if (state.key != NULL) {
-            get_error(&state, lens, "get left unused key %s", state.key);
-            free(state.key);
-        }
-        if (state.value != NULL) {
-            get_error(&state, lens, "get left unused value %s", state.value);
-            free(state.value);
-        }
-    } else {
-        get_error(&state, lens, "get can not process entire input");
+    tree = get_lens(lens, &state);
+
+    free_seqs(state.seqs);
+    if (state.key != NULL) {
+        get_error(&state, lens, "get left unused key %s", state.key);
+        free(state.key);
+    }
+    if (state.value != NULL) {
+        get_error(&state, lens, "get left unused value %s", state.value);
+        free(state.value);
+    }
+    if (partial && state.error == NULL) {
+        get_error(&state, lens, "Get did not match entire input");
     }
 
     if (err != NULL) {
