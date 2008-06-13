@@ -35,11 +35,12 @@ module Grub =
     let boot_setting = kw_boot_arg "root"
                      | kw_boot_arg "kernel"
                      | kw_boot_arg "initrd"
+                     | kw_pres "quiet"  (* Seems to be a Ubuntu extension *)
                      | module_lines
 
     let boot = [ label "title" . title . boot_setting* ]
 
-    let comment = [ del /#.*\n/ "# " ]
+    let comment = [ del /(#.*|[ \t]*)\n/ "# " ]
 
     let lns = (comment | menu_setting | boot)*
     let xfm = transform lns (incl "/etc/grub.conf")

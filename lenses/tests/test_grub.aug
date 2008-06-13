@@ -58,6 +58,9 @@ title Fedora (2.6.24.3-34.fc8)
 
   test Grub.lns put conf after set "default" "0" = conf
 
+  test Grub.lns get "# menu.lst - See: grub(8), info grub, update-grub(8)
+
+## default num\n" = {} {} {}
 
 (* Local Variables: *)
 (* mode: caml       *)
