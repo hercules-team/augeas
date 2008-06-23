@@ -15,3 +15,11 @@ pkgconfig_DATA = augeas.pc
 
 distclean-local:
 	-rm -rf $(top_builddir)/build
+
+ChangeLog:
+	@if test -d $(top_srcdir)/.hg; then \
+		hg log --style changelog > $@; \
+	 fi
+dist: ChangeLog
+
+.PHONY: ChangeLog

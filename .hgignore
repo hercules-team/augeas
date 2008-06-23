@@ -12,6 +12,7 @@ Makefile(\.in)?$
 ^install-sh$
 ^ltmain.sh$
 ^missing$
+^ChangeLog$
 /\.(deps|libs)/
 \.l?[oa]$
 \.loT$
