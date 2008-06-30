@@ -1,0 +1,80 @@
+=head1 NAME
+
+augparse - execute an Augeas module
+
+=head1 SYNOPSIS
+
+augparse [OPTIONS] MODULE
+
+=head1 DESCRIPTION
+
+Execute an Augeas module, most commonly to evaluate the tests it contains.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-I> I<DIR>
+
+Add DIR to the module loadpath. Can be given multiple times. The
+directories set here are searched before any directories specified in the
+AUGEAS_LENS_LIB environment variable, and before the default directory
+F</usr/share/augeas/lenses>.
+
+=item B<-h>
+
+Display this help and exit
+
+=back
+
+=head1 EXAMPLES
+
+To run the tests in F<lenses/tests/test_foo.aug> and use modules from the
+directory F<lenses>, run
+
+=over 4
+
+augparse -I lenses lenses/tests/test_foo.aug
+
+=back
+
+=head1 TESTS
+
+Tests can appear as top-level forms anywhere in a module. Generally, the
+tests for a module F<lenses/foo.aug> are kept in a separate file, usually
+in F<lenses/tests/test_foo.aug>.
+
+There are two different kinds of tests that Augeas can run: B<get> and
+B<put> tests. The syntax for B<get> tests is
+
+=over 4
+
+test LENS get STRING = RESULT
+
+=back
+
+which applies the I<get> direction of the lens LENS to STRING and compares
+it with the given RESULT. RESULT can either be a tree literal, the symbol
+B<?> to print the result of applying LENS to STRING, or the symbol B<*> to
+indicate that the test should produce an exception.
+
+The syntax for B<put> tests is
+
+=over 4
+
+test LENS put STRING after COMMANDS = RESULT
+
+=back
+
+which first applies the I<get> direction of the lens LENS to STRING, then
+applies the given COMMANDS to the resulting tree, and finally transforms
+the modified tree back to a string using the I<put> direction of LENS. The
+resulting string is then compared to RESULT, which can be a string, the
+symbol B<?> to print the result of applying LENS to STRING, or the symbol
+B<*> to indicate that the test should produce an exception.
+
+=head1 SEE ALSO
+
+B<Augeas> project homepage L<http://www.augeas.net/>
+
+L<augtool>
