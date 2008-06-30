@@ -60,9 +60,6 @@
 /* How we save files. One of 'backup', 'overwrite' or 'newfile' */
 #define AUGEAS_META_SAVE_MODE AUGEAS_META_TREE "/save"
 
-/* Where the default spec files live. */
-#define AUGEAS_LENS_DIR "/usr/share/augeas/lenses"
-
 /* Name of env var that contains list of paths to search for additional
    spec files */
 #define AUGEAS_LENS_ENV "AUGEAS_LENS_LIB"
