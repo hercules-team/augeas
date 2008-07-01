@@ -14,7 +14,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = augeas.pc
 
 distclean-local:
-	-rm -rf $(top_builddir)/build
+	-find $(top_builddir)/build/* -maxdepth 0 -not -name aux | xargs rm -rf
 
 ChangeLog:
 	@if test -d $(top_srcdir)/.hg; then \
