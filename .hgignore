@@ -21,6 +21,7 @@ TAGS$
 ^ylwrap$
 ^src/(parser|lexer)\.[ch]$
 \.(aux|dvi|log|pdf)$
+man/.*\.1$
 
 # Some local stuff
 misc/
