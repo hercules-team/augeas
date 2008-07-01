@@ -1,3 +1,11 @@
+0.2.1 - 2008-07-01
+  - Address some compilation issues found on Ubuntu/Debian unstable
+  - Fix segfault when aug_init/close are called multiple times
+  - Man page for augparse
+  - New lenses
+    * /etc/sysconfig/selinux
+    * Bugfixes for grub.conf
+
 0.2.0 - 2008-06-05
   - Augeas is now much more portable
     * Pull in gnulib on non-glibc systems
