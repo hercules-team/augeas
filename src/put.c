@@ -505,8 +505,11 @@ static void put_quant_maybe(struct lens *lens, struct state *state) {
 }
 
 static void put_store(struct lens *lens, struct state *state) {
-    if (regexp_match(lens->regexp, state->value, strlen(state->value),
-                     0, NULL) != strlen(state->value)) {
+    if (state->value == NULL) {
+        put_error(state, lens,
+                  "Can not store a nonexistent (NULL) value");
+    } else if (regexp_match(lens->regexp, state->value, strlen(state->value),
+                            0, NULL) != strlen(state->value)) {
         put_error(state, lens,
                   "Value '%s' does not match regexp /%s/ in store lens",
                   state->value, lens->regexp->pattern->str);
