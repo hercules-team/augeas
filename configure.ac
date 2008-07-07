@@ -32,13 +32,6 @@ AC_CHECK_FUNCS([open_memstream])
 
 gl_INIT
 
-dnl This is a pretty hackish way to expand all the variable references
-dnl in DATADIR. In the end, we want a full absolute path
-eval aug_lens_dir=$datadir/augeas/lenses
-eval aug_lens_dir=$aug_lens_dir
-AC_DEFINE_UNQUOTED([AUGEAS_LENS_DIR], "$aug_lens_dir",
-                   "The default location for lens definitions")
-
 AC_OUTPUT(Makefile \
           gnulib/lib/Makefile \
           gnulib/tests/Makefile \

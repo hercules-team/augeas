@@ -8,6 +8,10 @@ AM_YFLAGS=-d -p spec_
 
 EXTRA_DIST=try augeas_sym.version
 
+BUILT_SOURCES = datadir.h
+
+DISTCLEANFILES = datadir.h
+
 lib_LTLIBRARIES = libfa.la libaugeas.la
 noinst_LTLIBRARIES = liblexer.la
 
@@ -33,3 +37,13 @@ libfa_la_SOURCES = fa.c fa.h hash.c hash.h memory.c memory.h ref.h
 
 liblexer_la_SOURCES = lexer.l
 liblexer_la_CFLAGS = $(AM_CFLAGS) -Wno-error
+
+# Generate datadir.h. AUGEAS_LENS_DIR in internal.h depends on
+# the value of DATADIR
+internal.h: datadir.h
+
+.FORCE-datadir.h: Makefile
+	echo '#define DATADIR "$(abspath $(datadir))"' > datadir.h1
+	$(top_srcdir)/build/aux/move-if-change datadir.h1 datadir.h
+
+datadir.h: .FORCE-datadir.h

@@ -26,6 +26,7 @@
 #define DEBUG
 
 #include "list.h"
+#include "datadir.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -37,9 +38,10 @@
 
 /*
  * Various parameters about env vars, special tree nodes etc.
- * Some of them should be turned into buildtime configurables
- *
  */
+
+/* The default location for lens definitions */
+#define AUGEAS_LENS_DIR DATADIR "/augeas/lenses"
 
 /* The env var that points to the chroot holding files we may modify.
    Mostly useful for testing */
