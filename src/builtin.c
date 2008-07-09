@@ -168,11 +168,24 @@ static struct value *tree_set_glue(struct info *info, struct value *path,
     assert(path->tag == V_STRING);
     assert(val->tag == V_STRING);
     assert(tree->tag == V_TREE);
+
+    struct tree *fake = NULL;
+
+    if (tree->tree == NULL) {
+        fake = make_tree(NULL, NULL, NULL);
+        tree->tree = fake;
+    }
+
     if (tree_set(tree->tree, path->string->str, val->string->str) == NULL) {
         return make_exn_value(ref(info),
                               "Tree set of %s to '%s' failed",
                               path->string->str, val->string->str);
     }
+    if (fake != NULL) {
+        list_remove(fake, tree->tree);
+        free_tree(fake);
+    }
+
     return ref(tree);
 }
 
