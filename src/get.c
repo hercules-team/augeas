@@ -744,6 +744,7 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
 
     state.split = &split;
     state.text = text;
+    state.pos = text;
 
     /* We are probably being overly cautious here: if the lens can't process
      * all of TEXT, we should really fail somewhere in one of the sublenses.
@@ -841,6 +842,7 @@ struct skel *lns_parse(struct lens *lens, const char *text, struct dict **dict,
 
     state.split = &split;
     state.text = text;
+    state.pos = text;
 
     if (applies(lens, &split)) {
         *dict = NULL;
