@@ -249,6 +249,8 @@ int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub);
 
 int tree_rm(struct tree **tree, const char *path);
 struct tree *tree_set(struct tree *tree, const char *path, const char *value);
+int tree_insert(struct tree **tree, const char *path, const char *label,
+                int before);
 int free_tree(struct tree *tree);
 int print_tree(const struct tree *tree, FILE *out, const char *path,
                int pr_hidden);

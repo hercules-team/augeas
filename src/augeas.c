@@ -606,15 +606,15 @@ int aug_set(struct augeas *aug, const char *path, const char *value) {
     return tree_set(aug->tree, path, value) == NULL ? -1 : 0;
 }
 
-int aug_insert(struct augeas *aug, const char *path, const char *label,
-               int before) {
+int tree_insert(struct tree **tree, const char *path, const char *label,
+                int before) {
     struct path *p = NULL;
     struct tree *new = NULL;
 
     if (strchr(label, SEP) != NULL)
         return -1;
 
-    p = make_path(aug->tree, path);
+    p = make_path(*tree, path);
     if (p == NULL)
         goto error;
 
@@ -628,8 +628,8 @@ int aug_insert(struct augeas *aug, const char *path, const char *label,
     struct segment *seg = last_segment(p);
     if (before) {
         struct tree *siblings = seg_siblings(p, seg);
-        if (siblings == aug->tree) {
-            list_insert_before(new, seg->tree, aug->tree);
+        if (siblings == *tree) {
+            list_insert_before(new, seg->tree, *tree);
         } else {
             list_insert_before(new, seg->tree, siblings);
         }
@@ -643,6 +643,11 @@ int aug_insert(struct augeas *aug, const char *path, const char *label,
     free_tree(new);
     free_path(p);
     return -1;
+}
+
+int aug_insert(struct augeas *aug, const char *path, const char *label,
+               int before) {
+    return tree_insert(&(aug->tree), path, label, before);
 }
 
 struct tree *make_tree(char *label, char *value, struct tree *children) {

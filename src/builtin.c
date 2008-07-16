@@ -189,6 +189,42 @@ static struct value *tree_set_glue(struct info *info, struct value *path,
     return ref(tree);
 }
 
+static struct value *tree_insert_glue(struct info *info, struct value *label,
+                                      struct value *path, struct value *tree,
+                                      int before) {
+    // FIXME: This only works if TREE is not referenced more than once;
+    // otherwise we'll have some pretty weird semantics, and would really
+    // need to copy TREE first
+    assert(label->tag == V_STRING);
+    assert(path->tag == V_STRING);
+    assert(tree->tag == V_TREE);
+
+    int r;
+    r = tree_insert(&(tree->tree), path->string->str,
+                    label->string->str, before);
+    if (r != 0) {
+        return make_exn_value(ref(info),
+                              "Tree insert of %s at %s failed",
+                              label->string->str, path->string->str);
+    }
+
+    return ref(tree);
+}
+
+/* Insert after */
+/* V_STRING -> V_STRING -> V_TREE -> V_TREE */
+static struct value *tree_insa_glue(struct info *info, struct value *label,
+                                    struct value *path, struct value *tree) {
+    return tree_insert_glue(info, label, path, tree, 0);
+}
+
+/* Insert before */
+/* V_STRING -> V_STRING -> V_TREE -> V_TREE */
+static struct value *tree_insb_glue(struct info *info, struct value *label,
+                                    struct value *path, struct value *tree) {
+    return tree_insert_glue(info, label, path, tree, 1);
+}
+
 /* V_STRING -> V_TREE -> V_TREE */
 static struct value *tree_rm_glue(struct info *info,
                                   struct value *path,
@@ -270,6 +306,10 @@ struct module *builtin_init(void) {
     define_native(modl, "set", 3, tree_set_glue, T_STRING, T_STRING, T_TREE,
                                                  T_TREE);
     define_native(modl, "rm", 2, tree_rm_glue, T_STRING, T_TREE, T_TREE);
+    define_native(modl, "insa", 3, tree_insa_glue, T_STRING, T_STRING, T_TREE,
+                                                   T_TREE);
+    define_native(modl, "insb", 3, tree_insb_glue, T_STRING, T_STRING, T_TREE,
+                                                   T_TREE);
     /* Transforms and filters */
     define_native(modl, "incl", 1, xform_incl, T_STRING, T_FILTER);
     define_native(modl, "excl", 1, xform_excl, T_STRING, T_FILTER);
