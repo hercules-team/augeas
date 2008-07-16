@@ -627,11 +627,11 @@ int tree_insert(struct tree **tree, const char *path, const char *label,
 
     struct segment *seg = last_segment(p);
     if (before) {
-        struct tree *siblings = seg_siblings(p, seg);
-        if (siblings == *tree) {
+        if (seg == p->segments) {
             list_insert_before(new, seg->tree, *tree);
         } else {
-            list_insert_before(new, seg->tree, siblings);
+            struct tree *parent = seg_parent(p, seg);
+            list_insert_before(new, seg->tree, parent->children);
         }
     } else {
         new->next = seg->tree->next;
