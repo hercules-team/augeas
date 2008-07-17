@@ -10,7 +10,7 @@ module Aliases =
 
    let comment = [ del /^[ \t]*(#.*)?\n/ "#\n" ]
 
-   let comma = del /,[ \t]+(\n[ \t]+)?/ ", "
+   let comma = del /,[ \t]*(\n[ \t]+)?/ ", "
    let alias =  [ seq "alias" .
                     [ label "name" . store name ] . colon .
                     [ label "value" . store word ] .
