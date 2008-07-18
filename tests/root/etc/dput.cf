@@ -1,0 +1,46 @@
+# Example dput.cf that defines the host that can be used
+# with dput for uploading.
+
+[DEFAULT]
+login = username
+method = ftp
+hash = md5
+allow_unsigned_uploads = 0
+run_lintian = 0
+run_dinstall = 0
+check_version = 0
+scp_compress = 0
+post_upload_command =
+pre_upload_command =
+passive_ftp = 1
+default_host_non-us =
+default_host_main = hebex
+
+[hebex]
+fqdn = condor.infra.s1.p.fti.net
+login = anonymous
+method = ftp
+incoming = /incoming/hebex
+passive_ftp = 0
+
+[dop/desktop]
+fqdn = condor.infra.s1.p.fti.net
+login = anonymous
+method = ftp
+incoming = /incoming/dop/desktop
+passive_ftp = 0
+
+[dop/experimental]
+fqdn = condor.infra.s1.p.fti.net
+login = anonymous
+method = ftp
+incoming = /incoming/dop/experimental
+passive_ftp = 0
+
+[dop/test]
+fqdn = condor.infra.s1.p.fti.net
+login = anonymous
+method = ftp
+incoming = /incoming/dop/test
+passive_ftp = 0
+
