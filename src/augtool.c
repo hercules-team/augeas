@@ -189,9 +189,8 @@ static void cmd_get(char *args[]) {
     printf("%s", path);
     if (aug_get(aug, path, &val) != 1) {
         printf(" (o)\n");
-        return;
     } else if (val == NULL) {
-        val = "(none)";
+        printf(" (none)\n");
     } else {
         printf(" = %s\n", val);
     }
