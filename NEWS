@@ -1,3 +1,16 @@
+0.2.2 - 2008-07-18
+  - Fix segfault in store.put on NULL values
+  - Properly move default lens dir with DATADIR (Jim Meyering)
+  - Fix 'short iteration' error on get/parse of empty string; this bug
+    made it impossible to save into a new file
+  - Add 'insa' and 'insb' primitives to allow insertion from
+    put unit tests
+  - aug_insert: handle insertion before first child properly
+  - New lenses
+    * /etc/exports: NFS exports
+    * /etc/dput.cf: Debian's dput (Raphael Pinson)
+    * /etc/aliases: don't require whitespace after comma (Greg Swift)
+
 0.2.1 - 2008-07-01
   - Address some compilation issues found on Ubuntu/Debian unstable
   - Fix segfault when aug_init/close are called multiple times
