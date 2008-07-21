@@ -384,6 +384,7 @@ int transform_save(struct augeas *aug, struct transform *xform,
                    const char *path, struct tree *tree) {
     FILE *fp = NULL;
     char *augnew = NULL, *augorig = NULL, *augsave = NULL;
+    char *augorig_canon = NULL;
     char *text = NULL;
     const char *filename = path + strlen(AUGEAS_FILES_TREE) + 1;
     const char *err_status = NULL;
@@ -433,6 +434,12 @@ int transform_save(struct augeas *aug, struct transform *xform,
     }
 
     if (!(aug->flags & AUG_SAVE_NEWFILE)) {
+        augorig_canon = canonicalize_file_name(augorig);
+        if (augorig_canon == NULL) {
+            err_status = "canon_augorig";
+            goto done;
+        }
+
         if (aug->flags & AUG_SAVE_BACKUP) {
             int r;
             r = asprintf(&augsave, "%s%s" EXT_AUGSAVE, aug->root, filename);
@@ -441,12 +448,12 @@ int transform_save(struct augeas *aug, struct transform *xform,
                 goto done;
             }
 
-            if (rename(augorig, augsave) != 0) {
+            if (rename(augorig_canon, augsave) != 0) {
                 err_status = "rename_augsave";
                 goto done;
             }
         }
-        if (rename(augnew, augorig) != 0) {
+        if (rename(augnew, augorig_canon) != 0) {
             err_status = "rename_augnew";
             goto done;
         }
@@ -458,6 +465,7 @@ int transform_save(struct augeas *aug, struct transform *xform,
     free(text);
     free(augnew);
     free(augorig);
+    free(augorig_canon);
     free(augsave);
     store_error(aug, filename, path, err_status, err);
     free_lns_error(err);
