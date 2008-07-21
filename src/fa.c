@@ -2182,7 +2182,7 @@ static char pick_char(struct trans *t) {
         if (isalnum(c)) return c;
     for (int c = t->min; c <= t->max; c++)
         if (isprint(c)) return c;
-    return t->min;
+    return t->max;
 }
 
 /* Generate an example string for FA. Traverse all transitions and record
