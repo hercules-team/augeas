@@ -46,7 +46,7 @@ const char *root = NULL;
 char *loadpath = NULL;
 
 static char *cleanpath(char *path) {
-    if (strlen(path) == 0)
+    if (path == NULL || strlen(path) == 0)
         return path;
     char *e = path + strlen(path) - 1;
     while (e != path && (*e == SEP || isspace(*e)))
