@@ -7,24 +7,29 @@ module IniFile  =
 
     (* Define useful shortcuts *)
 
-    let eol                = Util.del_str "\n"
-    let del_to_eol         = del /[^\n]*/ ""
-    let value_sep          = del /[ \t]*=[ \t]*/ " = "
-    let value_sepwithcolon = del /[ \t]*(=|:)[ \t]*/ " = "
-    let value_to_eol       = store /([^ \t\n][^\n]*)?/
+    let eol                = del /[ \t]*\n/ "\n"
+    let value_sep          = del /[ \t]*=/ " = "
+    let value_sepwithcolon = del /[ \t]*(=|:)/ " = "
+    let value_to_eol       = store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
+    let value_to_comment   = del /[ \t]*/ "" . store /[^;# \t\n]+/
+
+
+    (* Define comment and empty strings *)
+    (* Some implementations of INI file allow "#" as a comment sign *)
+    let comment_generic (pattern:regexp) = [ label "comment" . del pattern "; " .  value_to_eol . eol ]
+    let comment = comment_generic /[ \t]*(#|;)[ \t]*/
+    let comment_nosharp = comment_generic /[ \t]*;[ \t]*/
+
+    let empty  = [ del /[ \t]*\n/ "" ]
 
 
     (* Define entry function *)
     (* Some implementations of INI file allow ";" as separator *)
-    let entry (kw:regexp) = [ key kw . value_sepwithcolon . value_to_eol . eol ]
-    let entry_nocolon (kw:regexp) = [ key kw . value_sep . value_to_eol . eol ]
-
-    (* Define comment and empty strings *)
-    (* Some implementations of INI file allow "#" as a comment sign *)
-    let comment = [ label "comment" . del /(#|;)[ \t]*/ "; " .  store /([^ \t\n][^\n]*)?/ . eol ]
-    let comment_nosharp = [ label "comment" . del /;[ \t]*/ "; " .  store /([^ \t\n][^\n]*)?/ . eol ]
-
-    let empty  = [ del /[ \t]*/ "" . eol ]
+    let entry_generic (kw:regexp) (sep:lens) (comment:lens) = [ key kw . sep . value_to_comment? . (comment|eol) ]
+    let entry (kw:regexp)                                   = entry_generic kw value_sepwithcolon comment
+    let entry_setcomment (kw:regexp) (comment:lens)         = entry_generic kw value_sepwithcolon comment
+    let entry_nocolon (kw:regexp)                           = entry_generic kw value_sep comment
+    let entry_nocolon_setcomment (kw:regexp) (comment:lens) = entry_generic kw value_sep comment
 
 
     (* Define record *)
