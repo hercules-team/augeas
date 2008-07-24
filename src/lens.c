@@ -87,12 +87,6 @@ struct value *lns_make_union(struct info *info,
         if (exn != NULL)
             return exn;
     }
-    if (l1->value && l2->value) {
-        return make_exn_value(info, "Multiple stores in union");
-    }
-    if (l1->key && l2->key) {
-        return make_exn_value(info, "Multiple keys/labels in union");
-    }
 
     lens = make_lens_binop(L_UNION, info, l1, l2);
     lens->ctype = regexp_union(info, l1->ctype, l2->ctype);
