@@ -192,7 +192,8 @@ static char *err_path(const char *filename) {
  */
 static int store_error(struct augeas *aug,
                        const char *filename, const char *path,
-                       const char *status, const struct lns_error *err) {
+                       const char *status, int errnum,
+                       const struct lns_error *err) {
     char *ep = err_path(filename);
     size_t ep_len;
     int r;
@@ -241,6 +242,14 @@ static int store_error(struct augeas *aug,
             if (r < 0)
                 goto done;
             r = aug_set(aug, ep, err->message);
+            if (r < 0)
+                goto done;
+        } else if (errnum != 0) {
+            const char *msg = strerror(errnum);
+            r = pathjoin(&ep, 1, err_msg_node);
+            if (r < 0)
+                goto done;
+            r = aug_set(aug, ep, msg);
             if (r < 0)
                 goto done;
         }
@@ -347,7 +356,8 @@ static int load_file(struct augeas *aug, struct lens *lens, char *filename) {
 
     result = 0;
  done:
-    store_error(aug, filename + strlen(aug->root) - 1, path, err_status, err);
+    store_error(aug, filename + strlen(aug->root) - 1, path, err_status,
+                errno, err);
     free_lns_error(err);
     free(path);
     free_tree(tree);
@@ -416,8 +426,10 @@ int transform_save(struct augeas *aug, struct transform *xform,
     // to be able to write augnew, but we have no idea what permissions
     // etc. they should get. Just the process default ?
     fp = fopen(augnew, "w");
-    if (fp == NULL)
+    if (fp == NULL) {
+        err_status = "open_augnew";
         goto done;
+    }
 
     if (tree != NULL)
         lns_put(fp, xform->lens, tree->children, text, &err);
@@ -461,13 +473,13 @@ int transform_save(struct augeas *aug, struct transform *xform,
     result = 0;
 
  done:
+    store_error(aug, filename, path, err_status, errno, err);
     lens_release(xform->lens);
     free(text);
     free(augnew);
     free(augorig);
     free(augorig_canon);
     free(augsave);
-    store_error(aug, filename, path, err_status, err);
     free_lns_error(err);
 
     if (fp != NULL)
