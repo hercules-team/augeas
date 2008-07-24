@@ -460,11 +460,6 @@ static struct regexp *make_regexp_from_string(struct info *info,
    label of the tree that STORE created.
  */
 static struct regexp *lns_key_regexp(struct lens *l, struct value **exn) {
-    static const struct string leaf_key_string = {
-        .ref = REF_MAX, .str = (char *) "/"
-    };
-    static const struct string *const leaf_key_pat = &leaf_key_string;
-
     static const struct string digits_string = {
         .ref = REF_MAX, .str = (char *) "[0-9]+/"
     };
@@ -473,7 +468,6 @@ static struct regexp *lns_key_regexp(struct lens *l, struct value **exn) {
     *exn = NULL;
     switch(l->tag) {
     case L_STORE:
-        return make_regexp_from_string(l->info, (struct string *) leaf_key_pat);
     case L_DEL:
     case L_COUNTER:
         return NULL;
@@ -504,18 +498,11 @@ static struct regexp *lns_key_regexp(struct lens *l, struct value **exn) {
                 }
                 if (r != NULL) {
                     if (k != NULL) {
-                        if (k->pattern == leaf_key_pat) {
-                            unref(k, regexp);
-                            k = r;
-                        } else if (r->pattern == leaf_key_pat) {
-                            unref(r, regexp);
-                        } else {
-                            *exn = make_exn_value(ref(l->info),
-                                                  "More than one key");
-                            unref(r, regexp);
-                            unref(k, regexp);
-                            return NULL;
-                        }
+                        *exn = make_exn_value(ref(l->info),
+                                              "More than one key");
+                        unref(r, regexp);
+                        unref(k, regexp);
+                        return NULL;
                     } else {
                         k = r;
                     }
