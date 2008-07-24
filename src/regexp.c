@@ -102,6 +102,28 @@ regexp_union(struct info *info, struct regexp *r1, struct regexp *r2) {
 }
 
 struct regexp *
+regexp_union_n(struct info *info, int n, struct regexp **r) {
+    size_t len = 0;
+    char *pat, *p;
+
+    for (int i=0; i < n; i++)
+        len += strlen(r[i]->pattern->str) + 2;
+
+    if (ALLOC_N(pat, len + (n-1) + 1) < 0)
+        return NULL;
+
+    p = pat;
+    for (int i=0; i < n; i++) {
+        if (i > 0)
+            *p++ = '|';
+        *p++ = '(';
+        p = stpcpy(p, r[i]->pattern->str);
+        *p++ = ')';
+    }
+    return make_regexp(info, pat);
+}
+
+struct regexp *
 regexp_concat(struct info *info, struct regexp *r1, struct regexp *r2) {
     const char *p1 = r1->pattern->str;
     const char *p2 = r2->pattern->str;
@@ -110,6 +132,26 @@ regexp_concat(struct info *info, struct regexp *r1, struct regexp *r2) {
     if (asprintf(&s, "(%s)(%s)", p1, p2) == -1)
         return NULL;
     return make_regexp(info, s);
+}
+
+struct regexp *
+regexp_concat_n(struct info *info, int n, struct regexp **r) {
+    size_t len = 0;
+    char *pat, *p;
+
+    for (int i=0; i < n; i++)
+        len += strlen(r[i]->pattern->str) + 2;
+
+    if (ALLOC_N(pat, len+1) < 0)
+        return NULL;
+
+    p = pat;
+    for (int i=0; i < n; i++) {
+        *p++ = '(';
+        p = stpcpy(p, r[i]->pattern->str);
+        *p++ = ')';
+    }
+    return make_regexp(info, pat);
 }
 
 struct regexp *

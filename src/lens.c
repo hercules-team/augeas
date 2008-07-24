@@ -59,16 +59,68 @@ static struct lens *make_lens_unop(enum lens_tag tag, struct info *info,
     return lens;
 }
 
+typedef struct regexp *regexp_combinator(struct info *, int, struct regexp **);
+
 static struct lens *make_lens_binop(enum lens_tag tag, struct info *info,
-                                    struct lens *l1, struct lens *l2) {
+                                    struct lens *l1, struct lens *l2,
+                                    regexp_combinator *combinator) {
     struct lens *lens = make_lens(tag, info);
-    CALLOC(lens->children, 2);
-    lens->nchildren = 2;
-    lens->children[0] = l1;
-    lens->children[1] = l2;
-    lens->value = l1->value || l2->value;
-    lens->key = l1->key || l2->key;
+    int n1 = (l1->tag == tag) ? l1->nchildren : 1;
+    struct regexp **types = NULL;
+
+    if (lens == NULL)
+        goto error;
+
+    lens->nchildren = n1;
+    lens->nchildren += (l2->tag == tag) ? l2->nchildren : 1;
+
+    if (ALLOC_N(lens->children, lens->nchildren) < 0) {
+        lens->nchildren = 0;
+        goto error;
+    }
+
+    if (l1->tag == tag) {
+        for (int i=0; i < l1->nchildren; i++)
+            lens->children[i] = ref(l1->children[i]);
+        unref(l1, lens);
+    } else {
+        lens->children[0] = l1;
+    }
+
+    if (l2->tag == tag) {
+        for (int i=0; i < l2->nchildren; i++)
+            lens->children[n1 + i] = ref(l2->children[i]);
+        unref(l2, lens);
+    } else {
+        lens->children[n1] = l2;
+    }
+
+    for (int i=0; i < lens->nchildren; i++) {
+        lens->value = lens->value || lens->children[i]->value;
+        lens->key = lens->key || lens->children[i]->key;
+    }
+
+    if (ALLOC_N(types, lens->nchildren) < 0)
+        goto error;
+
+    for (int i=0; i < lens->nchildren; i++)
+        types[i] = lens->children[i]->ctype;
+    lens->ctype = (*combinator)(info, lens->nchildren, types);
+
+    for (int i=0; i < lens->nchildren; i++)
+        types[i] = lens->children[i]->atype;
+    lens->atype = (*combinator)(info, lens->nchildren, types);
+
+    FREE(types);
+
+    for (int i=0; i < lens->nchildren; i++)
+        assert(tag != lens->children[i]->tag);
+
     return lens;
+ error:
+    unref(lens, lens);
+    FREE(types);
+    return NULL;
 }
 
 static struct value *make_lens_value(struct lens *lens) {
@@ -88,9 +140,7 @@ struct value *lns_make_union(struct info *info,
             return exn;
     }
 
-    lens = make_lens_binop(L_UNION, info, l1, l2);
-    lens->ctype = regexp_union(info, l1->ctype, l2->ctype);
-    lens->atype = regexp_union(info, l1->atype, l2->atype);
+    lens = make_lens_binop(L_UNION, info, l1, l2, regexp_union_n);
     return make_lens_value(lens);
 }
 
@@ -111,9 +161,7 @@ struct value *lns_make_concat(struct info *info,
         return make_exn_value(info, "Multiple keys/labels in concat");
     }
 
-    lens = make_lens_binop(L_CONCAT, info, l1, l2);
-    lens->ctype = regexp_concat(info, l1->ctype, l2->ctype);
-    lens->atype = regexp_concat(info, l1->atype, l2->atype);
+    lens = make_lens_binop(L_CONCAT, info, l1, l2, regexp_concat_n);
     return make_lens_value(lens);
 }
 

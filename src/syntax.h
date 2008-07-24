@@ -180,6 +180,12 @@ struct regexp *
 regexp_concat(struct info *, struct regexp *r1, struct regexp *r2);
 
 struct regexp *
+regexp_union_n(struct info *, int n, struct regexp **r);
+
+struct regexp *
+regexp_concat_n(struct info *, int n, struct regexp **r);
+
+struct regexp *
 regexp_iter(struct info *info, struct regexp *r, int min, int max);
 
 /* Return a new REGEXP that matches all the words matched by R1 but
