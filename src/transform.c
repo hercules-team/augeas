@@ -448,8 +448,12 @@ int transform_save(struct augeas *aug, struct transform *xform,
     if (!(aug->flags & AUG_SAVE_NEWFILE)) {
         augorig_canon = canonicalize_file_name(augorig);
         if (augorig_canon == NULL) {
-            err_status = "canon_augorig";
-            goto done;
+            if (errno == ENOENT) {
+                augorig_canon = augorig;
+            } else {
+                err_status = "canon_augorig";
+                goto done;
+            }
         }
 
         if (aug->flags & AUG_SAVE_BACKUP) {
@@ -477,8 +481,9 @@ int transform_save(struct augeas *aug, struct transform *xform,
     lens_release(xform->lens);
     free(text);
     free(augnew);
+    if (augorig_canon != augorig)
+        free(augorig_canon);
     free(augorig);
-    free(augorig_canon);
     free(augsave);
     free_lns_error(err);
 
