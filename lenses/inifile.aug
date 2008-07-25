@@ -10,15 +10,15 @@ module IniFile  =
     let eol                = del /[ \t]*\n/ "\n"
     let value_sep          = del /[ \t]*=/ " = "
     let value_sepwithcolon = del /[ \t]*(=|:)/ " = "
-    let value_to_eol       = store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
+    let value_to_eol       = del /[ \t]*/ " " . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
     let value_to_comment   = del /[ \t]*/ "" . store /[^;# \t\n]+/
 
 
     (* Define comment and empty strings *)
     (* Some implementations of INI file allow "#" as a comment sign *)
-    let comment_generic (pattern:regexp) = [ label "comment" . del pattern "; " .  value_to_eol . eol ]
-    let comment = comment_generic /[ \t]*(#|;)[ \t]*/
-    let comment_nosharp = comment_generic /[ \t]*;[ \t]*/
+    let comment_generic (pattern:regexp) = [ label "comment" . del pattern "; " .  value_to_eol? . eol ]
+    let comment = comment_generic /[ \t]*(#|;)/
+    let comment_nosharp = comment_generic /[ \t]*;/
 
     let empty  = [ del /[ \t]*\n/ "" ]
 
