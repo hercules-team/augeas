@@ -34,7 +34,7 @@ module IniFile  =
 
     (* Define record *)
 
-    let title = Util.del_str "[" . store /[^] ]+/ . Util.del_str "]". eol
+    let title = Util.del_str "[" . store /[^]]+/ . Util.del_str "]". eol
     let record (label_name:string) (entry:lens) = [ label label_name . title . (entry | comment | empty)* ] 
     let record_setcomment (label_name:string) (entry:lens) (comment:lens) = [ label label_name . title . (entry | comment | empty)* ] 
     (* Some implementations of INI File do not allow empty lines *)
