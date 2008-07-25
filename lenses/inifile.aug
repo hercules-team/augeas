@@ -11,7 +11,7 @@ module IniFile  =
     let value_sep          = del /[ \t]*=/ " = "
     let value_sepwithcolon = del /[ \t]*(=|:)/ " = "
     let value_to_eol       = del /[ \t]*/ " " . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
-    let value_to_comment   = del /[ \t]*/ "" . store /[^;# \t\n]+/
+    let value_to_comment   = del /[ \t]*/ " " . store /[^;# \t\n][^;#\n]*[^;# \t\n]|[^;# \t\n]/
 
 
     (* Define comment and empty strings *)
