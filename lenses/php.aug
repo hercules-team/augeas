@@ -6,12 +6,6 @@ module PHP =
 
     autoload xfm
 
-    (* Define a special entry when spaces are allowed in values *)
-    (* This is the case for error_reporting for example         *)
-    let comment_nospace  = IniFile.comment_generic /(#|;)/
-    let value_allowspace = del /[ \t]*/ " " . store /[^;# \t\n][^;#\n]*[^;# \t\n]|[^;# \t\n]/
-    let entry_allowspace (kw:regexp) = [ key kw . IniFile.value_sepwithcolon . value_allowspace? . (comment_nospace|IniFile.eol) ]
-
     (* PHP is a standard INI file *)
     let setting = IniFile.entry "always_populate_raw_post_data"
                 | IniFile.entry "asp_tags"
@@ -103,7 +97,7 @@ module PHP =
 		| IniFile.entry /display(_startup)?_errors/
                 | IniFile.entry /disable_(classes|functions)/
                 | IniFile.entry /docref_(ext|root)/
-                | IniFile.entry /error_(append_string|log|prepend_string)/
+                | IniFile.entry /error_(append_string|log|prepend_string|reporting)/
                 | IniFile.entry /ignore_(repeated_errors|repeated_source|user_abort)/
                 | IniFile.entry /log_errors(_max_len)?/
                 | IniFile.entry /magic_quotes_(gpc|runtime|sybase)/
@@ -117,7 +111,6 @@ module PHP =
                 | IniFile.entry /upload_(max_filesize|tmp_dir)/
                 | IniFile.entry /user_(agent|dir)/
                 | IniFile.entry /xmlrpc_error(s|_number)/
-		| entry_allowspace "error_reporting"
 
 	let record = IniFile.record "section" setting
 	let lns    = IniFile.lns record
