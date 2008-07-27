@@ -31,9 +31,9 @@ elif [[ "x$1" == "xvalgrind" ]] ; then
     libtool --mode=execute valgrind --leak-check=full ./augtool < $AUGCMDS
 elif [[ "x$1" == "xcli" ]] ; then
     shift
-    ./augtool -c "$@"
+    ./augtool "$@"
 else
-    ./augtool -c "$@" < $AUGCMDS
+    ./augtool "$@" < $AUGCMDS
     echo
     for f in $(find $AUGEAS_ROOT -name \*.augnew); do
         echo "File $f"
