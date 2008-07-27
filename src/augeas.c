@@ -402,7 +402,13 @@ static char *path_expand(struct tree *tree, struct tree *start,
     return path;
 }
 
-static struct segment *aug_tree_create(struct path *path) {
+/* Expand the tree ROOT so that it contains all components of PATH. PATH
+ * must have been initialized against ROOT by a call to PATH_FIND_ONE.
+ *
+ * Return the first segment that was created by this operation, or NULL on
+ * error.
+ */
+static struct segment *tree_create(struct tree *root, struct path *path) {
     struct segment *s, *seg;
 
     for (seg = path->segments;
@@ -420,8 +426,13 @@ static struct segment *aug_tree_create(struct path *path) {
         s->tree->children = (s+1)->tree;
     }
 
-    return seg;
+    struct tree *tree = seg_parent(path, seg);
+    if (tree == NULL)
+        list_append(root, seg->tree);
+    else
+        list_append(tree->children, seg->tree);
 
+    return seg;
  error:
     for (s = seg; s->tree != NULL && s <= last_segment(path); s++) {
         free_tree(s->tree);
@@ -574,14 +585,8 @@ struct tree *tree_set(struct tree *root, const char *path, const char *value) {
         goto error;
 
     if (r == 0) {
-        struct segment *seg = aug_tree_create(p);
-        if (seg == NULL)
+        if (tree_create(root, p) == NULL)
             goto error;
-        tree = seg_parent(p, seg);
-        if (tree == NULL)
-            list_append(root, seg->tree);
-        else
-            list_append(tree->children, seg->tree);
     }
     tree = last_segment(p)->tree;
     free_path(p);
