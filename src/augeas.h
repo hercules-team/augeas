@@ -92,6 +92,20 @@ int aug_insert(augeas *aug, const char *path, const char *label, int before);
  */
 int aug_rm(augeas *aug, const char *path);
 
+/* Move the node SRC to DST. SRC must match exactly one node in the
+ * tree. DST must either match exactly one node in the tree, or may not
+ * exist yet. If DST exists already, it and all its descendants are
+ * deleted. If DST does not exist yet, it and all its missing ancestors are
+ * created.
+ *
+ * Note that the node SRC always becomes the node DST: when you move /a/b
+ * to /x, the node /a/b is now called /x, no matter whether /x existed
+ * initially or not.
+ *
+ * Return 0 on success and -1 on failure.
+ */
+int aug_mv(augeas *aug, const char *src, const char *dst);
+
 /* Return the number of matches of the path expression PATH in AUG. If
  * MATCHES is non-NULL, an array with the returned number of elements will
  * be allocated and filled with the paths of the matches. The caller must

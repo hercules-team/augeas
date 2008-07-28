@@ -6,6 +6,7 @@
       aug_set;
       aug_insert;
       aug_rm;
+      aug_mv;
       aug_ls;
       aug_match;
       aug_save;

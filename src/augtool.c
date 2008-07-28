@@ -163,6 +163,16 @@ static void cmd_rm(char *args[]) {
     printf(" %d\n", cnt);
 }
 
+static void cmd_mv(char *args[]) {
+    const char *src = cleanpath(args[0]);
+    const char *dst = cleanpath(args[1]);
+    int r;
+
+    r = aug_mv(aug, src, dst);
+    if (r == -1)
+        printf("Failed\n");
+}
+
 static void cmd_set(char *args[]) {
     const char *path = cleanpath(args[0]);
     const char *val = args[1];
@@ -309,6 +319,12 @@ static const struct command const commands[] = {
     { "rm",  1, 1, cmd_rm, "rm <PATH>",
       "Delete PATH and all its children from the tree"
     },
+    { "mv", 2, 2, cmd_mv, "mv <SRC> <DST>",
+      "Move node SRC to DST. SRC must match exactly one node in the tree.\n"
+      "        DST must either match exactly one node in the tree, or may not\n"
+      "        exist yet. If DST exists already, it and all its descendants are\n"
+      "        deleted. If DST does not exist yet, it and all its missing \n"
+      "        ancestors are created." },
     { "set", 2, 2, cmd_set, "set <PATH> <VALUE>",
       "Associate VALUE with PATH. If PATH is not in the tree yet,\n"
       "        it and all its ancestors will be created. These new tree entries\n"

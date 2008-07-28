@@ -771,6 +771,64 @@ int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub) {
     return -1;
 }
 
+int aug_mv(struct augeas *aug, const char *src, const char *dst) {
+    struct tree *root = aug->tree;
+    struct path *s = make_path(root, src);
+    struct path *d = make_path(root, dst);
+    struct tree *ts, *td, *t;
+    int r, ret;
+
+    ret = -1;
+    if (s == NULL || d == NULL)
+        goto done;
+
+    r = path_find_one(s);
+    if (r != 1)
+        goto done;
+
+    r = path_find_one(d);
+    if (r == -1)
+        goto done;
+
+    if (r == 0) {
+        if (tree_create(root, d) == NULL)
+            goto done;
+    }
+
+    ts = last_segment(s)->tree;
+    for_each_segment(ds, d) {
+        /* Don't move SRC into its own descendent */
+        if (ds->tree == ts)
+            goto done;
+    }
+    td = last_segment(d)->tree;
+    free_tree(td->children);
+
+    td->children = ts->children;
+
+    free(td->value);
+    td->value = ts->value;
+
+    ts->value = NULL;
+    ts->children = NULL;
+
+
+    t = seg_parent(s, last_segment(s));
+    if (t == NULL) t = root;
+    list_remove(ts, t->children);
+
+    t->dirty = 1;
+    td->dirty = 1;
+
+    free_tree(ts);
+
+    ret = 0;
+ done:
+    free_path(s);
+    free_path(d);
+    return ret;
+}
+
 int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
     struct path *p = NULL;
     struct tree *tree;
