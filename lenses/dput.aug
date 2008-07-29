@@ -6,26 +6,28 @@
 module Dput =
   autoload xfm
 
-    let setting = IniFile.entry "allow_non-us_software"
-                | IniFile.entry "allow_unsigned_uploads"
-                | IniFile.entry "check_version"
-                | IniFile.entry "default_host_main"
-                | IniFile.entry "default_host_non-us"
-                | IniFile.entry "fqdn"
-                | IniFile.entry "hash"
-                | IniFile.entry "incoming"
-                | IniFile.entry "login"
-                | IniFile.entry "method"
-                | IniFile.entry "passive_ftp"
-                | IniFile.entry "post_upload_command"
-                | IniFile.entry "pre_upload_command"
-                | IniFile.entry "progress_indicator"
-                | IniFile.entry "run_dinstall"
-                | IniFile.entry "run_lintian"
-                | IniFile.entry "scp_compress"
-		| IniFile.entry "ssh_config_options"
+    let setting = "allow_non-us_software"
+                | "allow_unsigned_uploads"
+                | "check_version"
+                | "default_host_main"
+                | "default_host_non-us"
+                | "fqdn"
+                | "hash"
+                | "incoming"
+                | "login"
+                | "method"
+                | "passive_ftp"
+                | "post_upload_command"
+                | "pre_upload_command"
+                | "progress_indicator"
+                | "run_dinstall"
+                | "run_lintian"
+                | "scp_compress"
+		| "ssh_config_options"
+	
+    let entry = IniFile.entry setting
 
-    let record = IniFile.record "target" setting
+    let record = IniFile.record "target" entry
 
     let lns = IniFile.lns record
 
