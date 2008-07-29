@@ -17,6 +17,7 @@ TESTS=$LENS_DIR/tests/test_*.aug
 LOG=$(mktemp /tmp/test-lenses.XXXXXX)
 trap 'rm "$LOG"' EXIT
 
+result=0
 for t in $TESTS
 do
   printf "%-30s ... " $(basename "$t" .aug)
@@ -34,3 +35,4 @@ do
      cat "$LOG"
   fi
 done
+exit $result
