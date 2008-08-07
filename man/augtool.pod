@@ -134,6 +134,11 @@ but before the default directory F</usr/share/augeas/lenses>
 
 =back
 
+=head1 DIAGNOSTICS
+
+Normally, exit status is 0. If one or more commands fail, the exit status
+is set to a non-zero value.
+
 =head1 EXAMPLES
 
   # command line mode
