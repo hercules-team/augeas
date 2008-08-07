@@ -58,6 +58,7 @@ struct state {
     struct dict      *dict;
     struct skel      *skel;
     char             *path;   /* Position in the tree, for errors */
+    size_t            pos;
     struct lns_error *error;
 };
 
@@ -92,7 +93,11 @@ static void put_error(struct state *state, struct lens *lens,
     CALLOC(state->error, 1);
     state->error->lens = ref(lens);
     state->error->pos  = -1;
-    state->error->path = strdup(state->path);
+    if (strlen(state->path) == 0) {
+        state->error->path = strdup("(root)");
+    } else {
+        state->error->path = strdup(state->path);
+    }
 
     va_start(ap, format);
     r = vasprintf(&state->error->message, format, ap);
@@ -143,6 +148,22 @@ static void split_append(struct split **split,
     sp->start = start;
     sp->end = end;
     list_append(*split, sp);
+}
+
+static struct split *next_split(struct state *state) {
+    if (state->split != NULL) {
+        state->split = state->split->next;
+        if (state->split != NULL)
+            state->pos = state->split->end;
+    }
+    return state->split;
+}
+
+static struct split *set_split(struct state *state, struct split *split) {
+    state->split = split;
+    if (split != NULL)
+        state->pos = split->end;
+    return split;
 }
 
 /* Refine a tree split OUTER according to the L_CONCAT lens LENS */
@@ -396,7 +417,8 @@ static void put_subtree(struct lens *lens, struct state *state) {
     state->value = tree->value;
     pathjoin(&state->path, 1, state->key);
 
-    state->split = split = make_split(tree->children);
+    split = make_split(tree->children);
+    set_split(state, split);
 
     if (entry == NULL) {
         state->skel = NULL;
@@ -449,7 +471,7 @@ static void put_concat(struct lens *lens, struct state *state) {
     struct split *split = split_concat(state, lens);
 
     state->skel = state->skel->skels;
-    state->split = split;
+    set_split(state, split);
     for (int i=0; i < lens->nchildren; i++) {
         if (state->split == NULL) {
             put_error(state, lens,
@@ -458,11 +480,11 @@ static void put_concat(struct lens *lens, struct state *state) {
             return;
         }
         put_lens(lens->children[i], state);
-        state->split = state->split->next;
         state->skel = state->skel->next;
+        next_split(state);
     }
     list_free(split);
-    state->split = oldsplit;
+    set_split(state, oldsplit);
     state->skel = oldskel;
 }
 
@@ -473,22 +495,23 @@ static void put_quant_star(struct lens *lens, struct state *state) {
     struct skel *oldskel = state->skel;
 
     struct split *split = split_iter(lens, state->split);
-    if (split == NULL)
-        return;
 
     state->skel = state->skel->skels;
-    state->split = split;
+    set_split(state, split);
     while (state->split != NULL && state->skel != NULL) {
         put_lens(lens->child, state);
-        state->split = state->split->next;
         state->skel = state->skel->next;
+        next_split(state);
     }
     while (state->split != NULL) {
         create_lens(lens->child, state);
-        state->split = state->split->next;
+        next_split(state);
     }
     list_free(split);
-    state->split = oldsplit;
+    if (state->pos != oldsplit->end) {
+        put_error(state, lens, "Short iteration");
+    }
+    set_split(state, oldsplit);
     state->skel = oldskel;
 }
 
@@ -592,7 +615,7 @@ static void create_concat(struct lens *lens, struct state *state) {
 
     struct split *split = split_concat(state, lens);
 
-    state->split = split;
+    set_split(state, split);
     for (int i=0; i < lens->nchildren; i++) {
         if (state->split == NULL) {
             syntax_error(lens->info, "Short split for concat");
@@ -600,10 +623,10 @@ static void create_concat(struct lens *lens, struct state *state) {
             return;
         }
         create_lens(lens->children[i], state);
-        state->split = state->split->next;
+        next_split(state);
     }
     list_free(split);
-    state->split = oldsplit;
+    set_split(state, oldsplit);
 }
 
 static void create_quant_star(struct lens *lens, struct state *state) {
@@ -611,16 +634,17 @@ static void create_quant_star(struct lens *lens, struct state *state) {
     struct split *oldsplit = state->split;
 
     struct split *split = split_iter(lens, state->split);
-    if (split == NULL)
-        return;
 
-    state->split = split;
+    set_split(state, split);
     while (state->split != NULL) {
         create_lens(lens->child, state);
-        state->split = state->split->next;
+        next_split(state);
     }
     list_free(split);
-    state->split = oldsplit;
+    if (state->pos != oldsplit->end) {
+        put_error(state, lens, "Short iteration");
+    }
+    set_split(state, oldsplit);
 }
 
 static void create_quant_maybe(struct lens *lens, struct state *state) {

@@ -10,7 +10,8 @@ valgrind: fatest
 	libtool --mode=execute valgrind --quiet --leak-check=full ./fatest
 
 check_SCRIPTS=test-lenses.sh test-interpreter.sh test-get.sh \
-              test-put-symlink.sh test-save-empty.sh test-mv.sh
+              test-put-symlink.sh test-save-empty.sh test-mv.sh \
+              test-bug-1.sh
 
 EXTRA_DIST=augtest $(AUGTESTS) root \
 	   $(check_SCRIPTS) modules
