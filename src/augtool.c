@@ -32,7 +32,7 @@ struct command {
     const char *name;
     int minargs;
     int maxargs;
-    void(*handler) (char *args[]);
+    int(*handler) (char *args[]);
     const char *synopsis;
     const char *help;
 };
@@ -98,14 +98,14 @@ static int child_count(const char *path) {
     return cnt;
 }
 
-static void cmd_ls(char *args[]) {
+static int cmd_ls(char *args[]) {
     int cnt;
     char *path = cleanpath(args[0]);
     char **paths;
 
     path = ls_pattern(path);
     if (path == NULL)
-        return;
+        return -1;
     cnt = aug_match(aug, path, &paths);
     for (int i=0; i < cnt; i++) {
         const char *val;
@@ -121,9 +121,10 @@ static void cmd_ls(char *args[]) {
     if (cnt > 0)
         free(paths);
     free(path);
+    return 0;
 }
 
-static void cmd_match(char *args[]) {
+static int cmd_match(char *args[]) {
     int cnt;
     const char *pattern = cleanpath(args[0]);
     char **matches;
@@ -132,11 +133,11 @@ static void cmd_match(char *args[]) {
     cnt = aug_match(aug, pattern, &matches);
     if (cnt == -1) {
         printf("  (error matching %s)\n", pattern);
-        return;
+        return -1;
     }
     if (cnt == 0) {
         printf("  (no matches)\n");
-        return;
+        return 0;
     }
 
     for (int i=0; i < cnt; i++) {
@@ -153,17 +154,19 @@ static void cmd_match(char *args[]) {
         free((void *) matches[i]);
     }
     free(matches);
+    return 0;
 }
 
-static void cmd_rm(char *args[]) {
+static int cmd_rm(char *args[]) {
     int cnt;
     const char *path = cleanpath(args[0]);
     printf("rm : %s", path);
     cnt = aug_rm(aug, path);
     printf(" %d\n", cnt);
+    return 0;
 }
 
-static void cmd_mv(char *args[]) {
+static int cmd_mv(char *args[]) {
     const char *src = cleanpath(args[0]);
     const char *dst = cleanpath(args[1]);
     int r;
@@ -171,9 +174,10 @@ static void cmd_mv(char *args[]) {
     r = aug_mv(aug, src, dst);
     if (r == -1)
         printf("Failed\n");
+    return r;
 }
 
-static void cmd_set(char *args[]) {
+static int cmd_set(char *args[]) {
     const char *path = cleanpath(args[0]);
     const char *val = args[1];
     int r;
@@ -181,18 +185,20 @@ static void cmd_set(char *args[]) {
     r = aug_set(aug, path, val);
     if (r == -1)
         printf ("Failed\n");
+    return r;
 }
 
-static void cmd_clear(char *args[]) {
+static int cmd_clear(char *args[]) {
     const char *path = cleanpath(args[0]);
     int r;
 
     r = aug_set(aug, path, NULL);
     if (r == -1)
         printf ("Failed\n");
+    return r;
 }
 
-static void cmd_get(char *args[]) {
+static int cmd_get(char *args[]) {
     const char *path = cleanpath(args[0]);
     const char *val;
 
@@ -204,21 +210,23 @@ static void cmd_get(char *args[]) {
     } else {
         printf(" = %s\n", val);
     }
+    return 0;
 }
 
-static void cmd_print(char *args[]) {
-    aug_print(aug, stdout, cleanpath(args[0]));
+static int cmd_print(char *args[]) {
+    return aug_print(aug, stdout, cleanpath(args[0]));
 }
 
-static void cmd_save(ATTRIBUTE_UNUSED char *args[]) {
+static int cmd_save(ATTRIBUTE_UNUSED char *args[]) {
     int r;
     r = aug_save(aug);
     if (r == -1) {
         printf("Saving failed\n");
     }
+    return r;
 }
 
-static void cmd_ins(char *args[]) {
+static int cmd_ins(char *args[]) {
     const char *label = args[0];
     const char *where = args[1];
     const char *path = cleanpath(args[2]);
@@ -231,15 +239,16 @@ static void cmd_ins(char *args[]) {
         before = 1;
     else {
         printf("The <WHERE> argument must be either 'before' or 'after'.");
-        return;
+        return -1;
     }
 
     r = aug_insert(aug, path, label, before);
     if (r == -1)
         printf ("Failed\n");
+    return r;
 }
 
-static void cmd_help(ATTRIBUTE_UNUSED char *args[]) {
+static int cmd_help(ATTRIBUTE_UNUSED char *args[]) {
     const struct command *c;
 
     printf("Commands:\n\n");
@@ -251,6 +260,7 @@ static void cmd_help(ATTRIBUTE_UNUSED char *args[]) {
     printf("    AUGEAS_ROOT\n        the file system root, defaults to '/'\n\n");
     printf("    AUGEAS_LENS_LIB\n        colon separated list of directories with lenses,\n\
         defaults to " AUGEAS_LENS_DIR "\n\n");
+    return 0;
 }
 
 static int chk_args(const struct command *cmd, int maxargs, char *args[]) {
@@ -370,7 +380,7 @@ static int run_command(char *cmd, int maxargs, char **args) {
     if (c->name) {
         r = chk_args(c, maxargs, args);
         if (r == 0) {
-            (*c->handler)(args);
+            r = (*c->handler)(args);
         }
     } else {
         fprintf(stderr, "Unknown command '%s'\n", cmd);
@@ -516,6 +526,7 @@ static int main_loop(void) {
     static const int maxargs = 3;
     char *line;
     char *cmd, *args[maxargs];
+    int ret = 0;
 
     while(1) {
         char *dup_line;
@@ -523,18 +534,21 @@ static int main_loop(void) {
         line = readline("augtool> ");
         if (line == NULL) {
             printf("\n");
-            return EXIT_SUCCESS;
+            return ret;
         }
 
         dup_line = strdup(line);
         if (dup_line == NULL) {
             fprintf(stderr, "Out of memory\n");
-            return EXIT_FAILURE;
+            return -1;
         }
 
         cmd = parseline(dup_line, maxargs, args);
         if (cmd != NULL && strlen(cmd) > 0) {
-            run_command(cmd, maxargs, args);
+            int r;
+            r = run_command(cmd, maxargs, args);
+            if (r < 0)
+                ret = -1;
             add_history(line);
         }
         free(dup_line);
@@ -555,10 +569,11 @@ int main(int argc, char **argv) {
     if (optind < argc) {
         // Accept one command from the command line
         r = run_command(argv[optind], argc - optind, argv+optind+1);
-        return r == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    } else {
+        r = main_loop();
     }
 
-    return main_loop();
+    return r == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 
