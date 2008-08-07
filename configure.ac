@@ -4,6 +4,10 @@ AC_CONFIG_AUX_DIR([build/aux])
 AM_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE([-Wno-portability])
 
+dnl Version info in libtool's notation
+AC_SUBST([LIBAUGEAS_VERSION_INFO], [1:0:1])
+AC_SUBST([LIBFA_VERSION_INFO], [0:0:0])
+
 AC_GNU_SOURCE
 
 AC_PROG_CC
