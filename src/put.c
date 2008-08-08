@@ -174,8 +174,18 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
     int count = 0;
     struct split *outer = state->split;
     struct re_registers regs;
-    struct split *split = NULL;
+    struct split *split = NULL, *tail = NULL;
     struct regexp *atype = lens->atype;
+
+    /* Fast path for leaf nodes, which will always lead to an empty split */
+    if (outer->tree == NULL && strlen(outer->labels) == 0
+        && regexp_is_empty_pattern(atype)) {
+        for (int i=0; i < lens->nchildren; i++) {
+            tail = split_append(&split, tail, NULL, NULL,
+                                outer->labels, 0, 0);
+        }
+        return split;
+    }
 
     if (atype->re != NULL)
         atype->re->regs_allocated = REGS_UNALLOCATED;
@@ -196,7 +206,6 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
 
     struct tree *cur = outer->tree;
     int reg = 1;
-    struct split *tail = NULL;
     for (int i=0; i < lens->nchildren; i++) {
         assert(reg < regs.num_regs);
         assert(regs.start[reg] != -1);

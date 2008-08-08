@@ -149,6 +149,10 @@ void print_regexp(FILE *out, struct regexp *regexp);
  */
 struct regexp *make_regexp(struct info *info, char *pat);
 
+/* Return 1 if R is an empty pattern, i.e. one consisting of nothing but
+   '(' and ')' characters, 0 otherwise */
+int regexp_is_empty_pattern(struct regexp *r);
+
 /* Make a regexp that matches TEXT literally; the string TEXT
  * is not used by the returned rgexp and must be freed by the caller
  */

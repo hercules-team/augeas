@@ -69,6 +69,14 @@ void free_regexp(struct regexp *regexp) {
     free(regexp);
 }
 
+int regexp_is_empty_pattern(struct regexp *r) {
+    for (char *s = r->pattern->str; *s; s++) {
+        if (*s != '(' && *s != ')')
+            return 0;
+    }
+    return 1;
+}
+
 struct regexp *make_regexp_literal(struct info *info, const char *text) {
     char *pattern, *p;
 
