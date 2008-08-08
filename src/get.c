@@ -267,14 +267,17 @@ static char *token_from_split(struct split *split) {
     return strndup(split->start, split->size);
 }
 
-static void split_append(struct split **split,
-                         const char *text, int start, int end) {
+static struct split *split_append(struct split **split, struct split *tail,
+                                  const char *text, int start, int end) {
     struct split *sp;
-    if (ALLOC(sp) >= 0) {
-        sp->start = text + start;
-        sp->size = end - start;
-        list_append(*split, sp);
-    }
+
+    if (ALLOC(sp) < 0)
+        return NULL;
+
+    sp->start = text + start;
+    sp->size = end - start;
+    list_tail_cons(*split, tail, sp);
+    return tail;
 }
 
 static struct split *next_split(struct state *state) {
@@ -318,16 +321,24 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
     }
 
     int reg = 1;
+    struct split *tail = NULL;
     for (int i=0; i < lens->nchildren; i++) {
         assert(reg < regs.num_regs);
         assert(regs.start[reg] != -1);
-        split_append(&split, outer->start, regs.start[reg], regs.end[reg]);
+        tail = split_append(&split, tail,
+                            outer->start, regs.start[reg], regs.end[reg]);
+        if (tail == NULL)
+            goto error;
         reg += 1 + regexp_nsub(lens->children[i]->ctype);
     }
     assert(reg < regs.num_regs);
+ done:
     free(regs.start);
     free(regs.end);
     return split;
+ error:
+    list_free(split);
+    goto done;
 }
 
 static struct split *split_iter(struct lens *lens, struct split *outer) {
@@ -350,6 +361,7 @@ static struct split *split_iter(struct lens *lens, struct split *outer) {
 
     const int reg = 0;
     int pos = 0;
+    struct split *tail = NULL;
     while (pos < outer->size) {
         count = regexp_match(ctype, outer->start, outer->size, pos, &regs);
         if (count == -2) {
@@ -358,12 +370,19 @@ static struct split *split_iter(struct lens *lens, struct split *outer) {
         } else if (count == -1) {
             break;
         }
-        split_append(&split, outer->start, regs.start[reg], regs.end[reg]);
+        tail = split_append(&split, tail,
+                            outer->start, regs.start[reg], regs.end[reg]);
+        if (tail == NULL)
+            goto error;
         pos = regs.end[reg];
     }
+ done:
     free(regs.start);
     free(regs.end);
     return split;
+ error:
+    list_free(split);
+    goto done;
 }
 
 static int applies(struct lens *lens, struct split *split) {
@@ -586,7 +605,7 @@ static struct skel *parse_concat(struct lens *lens, struct state *state,
 
 static struct tree *get_quant_star(struct lens *lens, struct state *state) {
     assert(lens->tag == L_STAR);
-    struct tree *tree = NULL;
+    struct tree *tree = NULL, *tail = NULL;
     struct split *oldsplit = state->split;
     struct split *split = split_iter(lens, state->split);
 
@@ -594,7 +613,7 @@ static struct tree *get_quant_star(struct lens *lens, struct state *state) {
     while (state->split != NULL) {
         struct tree *t = NULL;
         t = get_lens(lens->child, state);
-        list_append(tree, t);
+        list_tail_cons(tree, tail, t);
         next_split(state);
     }
     if (state->pos != oldsplit->start + oldsplit->size) {
@@ -610,7 +629,7 @@ static struct skel *parse_quant_star(struct lens *lens, struct state *state,
     assert(lens->tag == L_STAR);
     struct split *oldsplit = state->split;
     struct split *split = split_iter(lens, state->split);
-    struct skel *skel = make_skel(lens);
+    struct skel *skel = make_skel(lens), *tail = NULL;
 
     *dict = NULL;
     set_split(state, split);
@@ -618,7 +637,7 @@ static struct skel *parse_quant_star(struct lens *lens, struct state *state,
         struct skel *sk;
         struct dict *di = NULL;
         sk = parse_lens(lens->child, state, &di);
-        list_append(skel->skels, sk);
+        list_tail_cons(skel->skels, tail, sk);
         dict_append(dict, di);
         next_split(state);
     }

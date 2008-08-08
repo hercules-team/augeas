@@ -137,9 +137,9 @@ static void free_split(struct split *split) {
     free(split);
 }
 
-static void split_append(struct split **split,
-                         struct tree *tree, struct tree *follow,
-                         char *labels, size_t start, size_t end) {
+static struct split *split_append(struct split **split, struct split *tail,
+                                  struct tree *tree, struct tree *follow,
+                                  char *labels, size_t start, size_t end) {
     struct split *sp;
     CALLOC(sp, 1);
     sp->tree = tree;
@@ -147,7 +147,8 @@ static void split_append(struct split **split,
     sp->labels = labels;
     sp->start = start;
     sp->end = end;
-    list_append(*split, sp);
+    list_tail_cons(*split, tail, sp);
+    return tail;
 }
 
 static struct split *next_split(struct state *state) {
@@ -195,6 +196,7 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
 
     struct tree *cur = outer->tree;
     int reg = 1;
+    struct split *tail = NULL;
     for (int i=0; i < lens->nchildren; i++) {
         assert(reg < regs.num_regs);
         assert(regs.start[reg] != -1);
@@ -203,8 +205,8 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
             if (outer->labels[j] == '/')
                 follow = follow->next;
         }
-        split_append(&split, cur, follow,
-                     outer->labels, regs.start[reg], regs.end[reg]);
+        tail = split_append(&split, tail, cur, follow,
+                            outer->labels, regs.start[reg], regs.end[reg]);
         cur = follow;
         reg += 1 + regexp_nsub(lens->children[i]->atype);
     }
@@ -236,6 +238,7 @@ static struct split *split_iter(struct lens *lens, struct split *outer) {
     struct tree *cur = outer->tree;
     const int reg = 0;
     int pos = outer->start;
+    struct split *tail = NULL;
     while (pos < outer->end) {
         count = regexp_match(atype, outer->labels,
                              outer->end, pos, &regs);
@@ -250,8 +253,8 @@ static struct split *split_iter(struct lens *lens, struct split *outer) {
             if (outer->labels[j] == '/')
                 follow = follow->next;
         }
-        split_append(&split, cur, follow,
-                     outer->labels, regs.start[reg], regs.end[reg]);
+        tail = split_append(&split, tail, cur, follow,
+                            outer->labels, regs.start[reg], regs.end[reg]);
         cur = follow;
         pos = regs.end[reg];
     }
