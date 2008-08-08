@@ -94,6 +94,36 @@
         (list) = _e;                                                    \
     } while(0)
 
+#define list_reverse(list)                                              \
+    do {                                                                \
+        typeof(list) _head = (list);                                    \
+        typeof(list) _prev = NULL;                                      \
+        while (_head != NULL) {                                         \
+            typeof(list) _next = _head->next;                           \
+            _head->next = _prev;                                        \
+            _prev = _head;                                              \
+            _head = _next;                                              \
+        }                                                               \
+        (list) = _prev;                                                 \
+    } while (0)
+
+/* Append ELT to the end of LIST. TAIL must be NULL or a pointer to
+   the last element of LIST
+*/
+#define list_tail_cons(list, tail, elt)                                 \
+    do {                                                                \
+        if ((list) == NULL) {                                           \
+            (list) = (elt);                                             \
+            (tail) = (list);                                            \
+        } else {                                                        \
+            if ((tail) == NULL)                                         \
+                for ((tail) = (list); (tail)->next != NULL;             \
+                     (tail) = (tail)->next);                            \
+            (tail)->next = (elt);                                       \
+            (tail) = (elt);                                             \
+        }                                                               \
+    } while(0)
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil
