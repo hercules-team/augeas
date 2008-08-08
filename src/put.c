@@ -233,16 +233,9 @@ static struct split *split_iter(struct lens *lens, struct split *outer) {
     struct split *split = NULL;
     struct regexp *atype = lens->child->atype;
 
+    MEMZERO((&regs), 1);
     if (atype->re != NULL)
         atype->re->regs_allocated = REGS_UNALLOCATED;
-    count = regexp_match(atype, outer->labels, outer->end,
-                         outer->start, &regs);
-    if (count == -2) {
-        FIXME("Match failed - produce better error");
-        abort();
-    } else if (count == -1) {
-        return NULL;
-    }
 
     struct tree *cur = outer->tree;
     const int reg = 0;

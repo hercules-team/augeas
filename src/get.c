@@ -349,15 +349,9 @@ static struct split *split_iter(struct lens *lens, struct split *outer) {
     struct split *split = NULL;
     struct regexp *ctype = lens->child->ctype;
 
+    MEMZERO(&regs, 1);
     if (ctype->re != NULL)
         ctype->re->regs_allocated = REGS_UNALLOCATED;
-    count = regexp_match(ctype, outer->start, outer->size, 0, &regs);
-    if (count == -2) {
-        FIXME("Match failed - produce better error");
-        abort();
-    } else if (count == -1) {
-        return NULL;
-    }
 
     const int reg = 0;
     int pos = 0;
