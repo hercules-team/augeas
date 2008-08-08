@@ -1,3 +1,18 @@
+0.3.0 - 2008-08-07
+  - Add aug_mv call to public API
+  - Do not clobber symlinks, instead write new files to target of symlink
+  - Fail 'put' when tree has invalid entries
+  - Set exit status of augtool
+  - Avoid picking special characters, in particular '\0', in examples (libfa)
+  - Store system errors, using strerror, in the tree during writing of files
+  - New lenses
+    * Generic inifile module (Raphael Pinson)
+    * logrotate (Raphael Pinson)
+    * /etc/ntp.conf (Raphael Pinson)
+    * /etc/apt/preferences (Raphael Pinson)
+    * bbhosts for Big Brother [http://www.bb4.org/] (Raphael Pinson)
+    * php.ini (Raphael Pinson)
+
 0.2.2 - 2008-07-18
   - Fix segfault in store.put on NULL values
   - Properly move default lens dir with DATADIR (Jim Meyering)
