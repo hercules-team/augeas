@@ -95,20 +95,6 @@ struct skel {
     /* Also tag == L_SUBTREE, with no data in the union */
 };
 
-/* A dictionary that maps key to a list of (skel, dict) */
-struct dict_entry {
-    struct dict_entry *next;
-    struct skel *skel;
-    struct dict *dict;
-};
-
-struct dict {
-    struct dict *next;
-    char        *key;
-    struct dict_entry *entry; /* This will change as entries are looked up */
-    struct dict_entry *mark;  /* Pointer to initial entry, will never change */
-};
-
 struct lns_error {
     struct lens  *lens;
     int           pos;        /* Errors from get/parse */
@@ -116,6 +102,10 @@ struct lns_error {
     char         *message;
 };
 
+struct dict *make_dict(char *key, struct skel *skel, struct dict *subdict);
+void dict_lookup(const char *key, struct dict *dict,
+                 struct skel **skel, struct dict **subdict);
+int dict_append(struct dict **dict, struct dict *d2);
 void free_skel(struct skel *skel);
 void free_dict(struct dict *dict);
 void free_lns_error(struct lns_error *err);

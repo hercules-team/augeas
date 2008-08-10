@@ -114,34 +114,6 @@ void free_skel(struct skel *skel) {
     free(skel);
 }
 
-static struct dict *make_dict(char *key,
-                              struct skel *skel, struct dict *subdict) {
-    struct dict *dict;
-    CALLOC(dict, 1);
-    CALLOC(dict->entry, 1);
-    dict->key = key;
-    dict->entry->skel = skel;
-    dict->entry->dict = subdict;
-    dict->mark = dict->entry;
-    return dict;
-}
-
-void free_dict(struct dict *dict) {
-    while (dict != NULL) {
-        struct dict *next = dict->next;
-        while (dict->mark != NULL) {
-            struct dict_entry *del = dict->mark;
-            dict->mark = del->next;
-            free_skel(del->skel);
-            free_dict(del->dict);
-            free(del);
-        }
-        free(dict->key);
-        free(dict);
-        dict = next;
-    }
-}
-
 static void print_skel(struct skel *skel);
 static void print_skel_list(struct skel *skels, const char *beg,
                             const char *sep, const char *end) {
@@ -197,53 +169,6 @@ static void print_dict(struct dict *dict, int indent) {
     }
 }
 #endif
-
-static void dict_append(struct dict **dict, struct dict *d2) {
-    struct dict *d1 = *dict;
-
-    if (d1 == NULL) {
-        *dict = d2;
-        return;
-    }
-
-    struct dict *e2 = d2;
-#ifdef DICT_DUMP
-    printf("DICT_APPEND\n");
-    print_dict(d1, 0);
-    printf("AND\n");
-    print_dict(d2, 0);
-#endif
-    while (e2 != NULL) {
-        struct dict *e1;
-        for (e1=d1; e1 != NULL; e1 = e1->next) {
-            if (e1->key == NULL) {
-                if (e2->key == NULL)
-                    break;
-            } else {
-                if (e2->key != NULL && STREQ(e1->key, e2->key))
-                    break;
-            }
-        }
-        if (e1 == NULL) {
-            struct dict *last = e2;
-            e2 = e2->next;
-            last->next = NULL;
-            list_append(d1, last);
-        } else {
-            struct dict *del = e2;
-            list_append(e1->entry, e2->entry);
-            e2 = e2->next;
-            free(del->key);
-            free(del);
-        }
-    }
-#ifdef DICT_DUMP
-    printf("YIELDS\n");
-    print_dict(d1, 0);
-    printf("END\n");
-#endif
-    *dict = d1;
-}
 
 static void get_expected_error(struct state *state, struct lens *l) {
     char *word, *p, *pat;

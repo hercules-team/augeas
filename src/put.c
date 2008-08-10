@@ -268,22 +268,6 @@ static int applies(struct lens *lens, struct split *split) {
     return (count == split->end - split->start);
 }
 
-static struct dict_entry *dict_lookup(const char *key, struct dict *dict) {
-    struct dict *d;
-    if (key == NULL) {
-        for (d=dict; d != NULL && d->key != NULL; d = d->next);
-    } else {
-        for (d=dict; d != NULL && (d->key == NULL || STRNEQ(key, d->key));
-             d = d->next);
-    }
-    if (d == NULL)
-        return NULL;
-    struct dict_entry *result = d->entry;
-    if (result != NULL)
-        d->entry = result->next;
-    return result;
-}
-
 /* Print TEXT to OUT, translating common escapes like \n */
 static void print_escaped_chars(FILE *out, const char *text) {
     for (const char *c = text; *c != '\0'; c++) {
@@ -406,7 +390,6 @@ static void put_subtree(struct lens *lens, struct state *state) {
     size_t oldpathlen = strlen(state->path);
 
     struct tree *tree = state->split->tree;
-    struct dict_entry *entry = dict_lookup(tree->label, state->dict);
     struct split *split = NULL;
 
     state->key = tree->label;
@@ -416,13 +399,10 @@ static void put_subtree(struct lens *lens, struct state *state) {
     split = make_split(tree->children);
     set_split(state, split);
 
-    if (entry == NULL) {
-        state->skel = NULL;
-        state->dict = NULL;
+    dict_lookup(tree->label, state->dict, &state->skel, &state->dict);
+    if (state->skel == NULL) {
         create_lens(lens->child, state);
     } else {
-        state->skel = entry->skel;
-        state->dict = entry->dict;
         put_lens(lens->child, state);
     }
     assert(state->error != NULL || state->split->next == NULL);
