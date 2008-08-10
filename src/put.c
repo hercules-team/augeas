@@ -229,21 +229,14 @@ static struct split *split_iter(struct lens *lens, struct split *outer) {
     assert(lens->tag == L_STAR);
 
     int count = 0;
-    struct re_registers regs;
     struct split *split = NULL;
     struct regexp *atype = lens->child->atype;
 
-    MEMZERO((&regs), 1);
-    if (atype->re != NULL)
-        atype->re->regs_allocated = REGS_UNALLOCATED;
-
     struct tree *cur = outer->tree;
-    const int reg = 0;
     int pos = outer->start;
     struct split *tail = NULL;
     while (pos < outer->end) {
-        count = regexp_match(atype, outer->labels,
-                             outer->end, pos, &regs);
+        count = regexp_match(atype, outer->labels, outer->end, pos, NULL);
         if (count == -2) {
             FIXME("Match failed - produce better error");
             abort();
@@ -251,17 +244,15 @@ static struct split *split_iter(struct lens *lens, struct split *outer) {
             break;
         }
         struct tree *follow = cur;
-        for (int j = regs.start[reg]; j < regs.end[reg]; j++) {
+        for (int j = pos; j < pos + count; j++) {
             if (outer->labels[j] == '/')
                 follow = follow->next;
         }
         tail = split_append(&split, tail, cur, follow,
-                            outer->labels, regs.start[reg], regs.end[reg]);
+                            outer->labels, pos, pos + count);
         cur = follow;
-        pos = regs.end[reg];
+        pos += count;
     }
-    free(regs.start);
-    free(regs.end);
     return split;
 }
 

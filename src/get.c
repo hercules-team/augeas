@@ -345,38 +345,28 @@ static struct split *split_iter(struct lens *lens, struct split *outer) {
     assert(lens->tag == L_STAR);
 
     int count = 0;
-    struct re_registers regs;
     struct split *split = NULL;
     struct regexp *ctype = lens->child->ctype;
 
-    MEMZERO(&regs, 1);
-    if (ctype->re != NULL)
-        ctype->re->regs_allocated = REGS_UNALLOCATED;
-
-    const int reg = 0;
     int pos = 0;
     struct split *tail = NULL;
     while (pos < outer->size) {
-        count = regexp_match(ctype, outer->start, outer->size, pos, &regs);
+        count = regexp_match(ctype, outer->start, outer->size, pos, NULL);
         if (count == -2) {
             FIXME("Match failed - produce better error");
             abort();
         } else if (count == -1) {
             break;
         }
-        tail = split_append(&split, tail,
-                            outer->start, regs.start[reg], regs.end[reg]);
+        tail = split_append(&split, tail, outer->start, pos, pos + count);
         if (tail == NULL)
             goto error;
-        pos = regs.end[reg];
+        pos += count;
     }
- done:
-    free(regs.start);
-    free(regs.end);
     return split;
  error:
     list_free(split);
-    goto done;
+    return NULL;
 }
 
 static int applies(struct lens *lens, struct split *split) {
