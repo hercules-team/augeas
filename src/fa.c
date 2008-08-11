@@ -2515,22 +2515,10 @@ static char next(const char **regexp) {
     return c;
 }
 
-static char parse_char(const char **regexp, const char *special) {
-    if (match(regexp, '\\')) {
-        char c = next(regexp);
-        if (special != NULL) {
-            char *f = strchr(special, c);
-            if (f != NULL)
-                return c;
-        }
-        if (c == 'n')
-            return '\n';
-        else if (c == 't')
-            return '\t';
-        else if (c == 'r')
-            return '\r';
-        else
-            return c;
+static char parse_char(const char **regexp, int quoted) {
+    if (quoted && **regexp == '\\') {
+        next(regexp);
+        return next(regexp);
     } else {
         return next(regexp);
     }
@@ -2548,7 +2536,7 @@ static void parse_char_class(const char **regexp, struct re *re,
         *error = REG_EBRACK;
         goto error;
     }
-    char from = parse_char(regexp, NULL);
+    char from = parse_char(regexp, 0);
     char to = from;
     if (match(regexp, '-')) {
         if (! more(regexp)) {
@@ -2560,7 +2548,7 @@ static void parse_char_class(const char **regexp, struct re *re,
             add_re_char(re, '-', '-');
             return;
         } else {
-            to = parse_char(regexp, NULL);
+            to = parse_char(regexp, 0);
         }
     }
     add_re_char(re, from, to);
@@ -2606,7 +2594,7 @@ static struct re *parse_simple_exp(const char **regexp, int *error) {
         add_re_char(re, '\n', '\n');
     } else {
         if (more(regexp)) {
-            char c = parse_char(regexp, special_chars);
+            char c = parse_char(regexp, 1);
             re = make_re_char(c);
         }
     }

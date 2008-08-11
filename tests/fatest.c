@@ -321,6 +321,8 @@ static void testExample(CuTest *tc) {
     assertExample(tc, "u+|[0-9]", "u");
     assertExample(tc, "vu+|[0-9]", "0");
     assertExample(tc, "vu{2}|[0-9]", "0");
+    assertExample(tc, "\\[", "[");
+    assertExample(tc, "[\\]", "\\");
 
     assertExample(tc, "\001((\002.)*\001)+\002", "\001\001\002");
     assertExample(tc, "\001((\001.)*\002)+\002", "\001\002\002");
