@@ -27,6 +27,7 @@ module Sudoers =
  *************************************************************************)
 
 let eol       = del /[ \t]*\n/ "\n"
+let indent    = del /[ \t]+/ ""
 
 (* Define separators *)
 let sep_spc  = del /[ \t]+/ " " 
@@ -84,7 +85,7 @@ let alias_entry_single (field:string) (sto:lens)
  *  Alias_Type NAME = item1, item2, item3 : NAME = item4, item5
  *************************************************************************)
 let alias_entry (kw:string) (field:string) (sto:lens)
-    = [ key kw . sep_cont . alias_entry_single field sto
+    = [ indent? . key kw . sep_cont . alias_entry_single field sto
           . ( sep_col . alias_entry_single field sto )* . eol ]
 
 (* TODO: go further in user definitions *)
@@ -137,7 +138,7 @@ let parameter_list   = parameter . ( sep_com . parameter )*
 (************************************************************************
  *  Default_Entry ::= Default_Type Parameter_List
  *************************************************************************)
-let defaults = [ key "Defaults" . default_type? . sep_cont 
+let defaults = [ indent? . key "Defaults" . default_type? . sep_cont 
                    . parameter_list . eol ]
 
 
@@ -163,7 +164,7 @@ let tag_spec   =
  *  Cmnd_Spec ::= Runas_Spec? Tag_Spec* Cmnd
  *************************************************************************)
 let cmnd_spec  =
-  [ label "command" .  runas_spec? . tag_spec* . sto_to_com ]
+  [ label "command" .  runas_spec? . tag_spec* . sto_to_com_cmnd ]
 
 (************************************************************************
  * Cmnd_Spec_List ::= Cmnd_Spec |
@@ -179,7 +180,7 @@ let cmnd_spec_list = cmnd_spec . ( sep_com . cmnd_spec )*
 let spec_list = [ label "host_group" . alias_list "host" sto_to_com 
                     . sep_eq . cmnd_spec_list ]
 
-let spec = [ label "spec" 
+let spec = [ label "spec" . indent?
                . alias_list "user" sto_to_com_user . sep_cont
                . spec_list
     	       . ( sep_col . spec_list )* . eol ]

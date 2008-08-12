@@ -1,9 +1,9 @@
 module Test_sudoers =
 
    let conf = "
-Host_Alias LOCALNET = 192.168.0.0/24, localhost
+  Host_Alias LOCALNET = 192.168.0.0/24, localhost
 
-# User alias specification
+   # User alias specification
 
 # Cmnd alias specification
 
@@ -15,10 +15,10 @@ Cmnd_Alias \
     /usr/bin/dpkg, /usr/bin/dselect, /usr/sbin/dpkg-reconfigure \
     : PBUILDER = /usr/sbin/pbuilder
 
-Cmnd_Alias ICAL = /bin/cat /home/rpinson/.kde/share/apps/korganizer/std.ics
+   Cmnd_Alias ICAL = /bin/cat /home/rpinson/.kde/share/apps/korganizer/std.ics
 
-Defaults@LOCALNET        !lecture, \
-   	tty_tickets,!fqdn
+	Defaults@LOCALNET        !lecture, \
+   		tty_tickets,!fqdn
 
 Defaults:buildd env_keep+=\"APT_CONFIG DEBIAN_FRONTEND SHELL\"
 
@@ -32,6 +32,8 @@ root    ALL=(ALL) ALL
 www-data +biglab=(rpinson)NOEXEC: ICAL \
         : \
         localhost = NOPASSWD: 	/usr/bin/test
+
+	+secretaries           ALPHA = /usr/bin/su [!-]*, !/usr/bin/su *root*
 "
 
    test Sudoers.lns get conf = 
@@ -108,3 +110,10 @@ www-data +biglab=(rpinson)NOEXEC: ICAL \
 	      { "host" = "localhost" }
 	      { "command" = "/usr/bin/test"
 	          { "tag" = "NOPASSWD" } } } }
+      {}
+      { "spec"
+          { "user"    = "+secretaries" }
+	  { "host_group"
+	      { "host" = "ALPHA" }
+	      { "command" = "/usr/bin/su [!-]*" }
+	      { "command" = "!/usr/bin/su *root*" } } }
