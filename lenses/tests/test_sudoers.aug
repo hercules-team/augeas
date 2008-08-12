@@ -29,7 +29,7 @@ root    ALL=(ALL) ALL
 %admin  ALL=(ALL) ALL, NOPASSWD  :	NOSETENV: \
    DEBIAN_TOOLS
 %pbuilder       LOCALNET = NOPASSWD: PBUILDER
-www-data ALL=(rpinson) NOEXEC: ICAL \
+www-data ALL=(rpinson)NOEXEC: ICAL \
         : \
         localhost = NOPASSWD: 	/usr/bin/test
 "

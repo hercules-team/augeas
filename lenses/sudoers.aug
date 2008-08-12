@@ -152,7 +152,7 @@ let defaults = [ key "Defaults" . default_type? . sep_cont
  *  Runas_Spec ::= '(' Runas_List ')'
  *************************************************************************)
 let runas_spec = Util.del_str "(" . alias_list "runas_user" sto_to_com 
-    . Util.del_str ")" . sep_cont
+    . Util.del_str ")" . sep_cont?
 
 (************************************************************************
  * Tag_Spec ::= ('NOPASSWD:' | 'PASSWD:' | 'NOEXEC:' | 'EXEC:' |
