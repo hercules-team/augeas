@@ -2,8 +2,8 @@
 module Pam =
   autoload xfm
 
-  let eol = del /[ \t]*\n/ "\n"
-  let indent = del /[ \t]*/ ""
+  let eol = Util.eol
+  let indent = Util.indent
 
   (* For the control syntax of [key=value ..] we could split the key value *)
   (* pairs into an array and generate a subtree control/N/KEY = VALUE      *)
@@ -16,8 +16,8 @@ module Pam =
   (* and should be parsed as one                                           *)
   let argument = /[^#\n \t]+/
 
-  let comment = [ indent . label "comment" . del /#[ \t]*/ "# " . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ . eol ]
-  let empty   = [ del /[ \t]*#?[ \t]*\n/ "" ]
+  let comment = Util.comment
+  let empty   = Util.empty
 
 
   (* Not mentioned in the man page, but Debian uses the syntax             *)
