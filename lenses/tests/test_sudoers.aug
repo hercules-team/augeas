@@ -20,6 +20,8 @@ Cmnd_Alias ICAL = /bin/cat /home/rpinson/.kde/share/apps/korganizer/std.ics
 Defaults@LOCALNET        !lecture, \
    	tty_tickets,!fqdn
 
+Defaults:buildd env_keep+=\"APT_CONFIG DEBIAN_FRONTEND SHELL\"
+
 # User privilege specification
 root    ALL=(ALL) ALL
 
@@ -66,6 +68,10 @@ www-data ALL=(rpinson) NOEXEC: ICAL \
 	  { "parameter" = "!lecture" }
           { "parameter" = "tty_tickets" }
           { "parameter" = "!fqdn" } }
+      {}
+      { "Defaults"
+          { "type"      = ":buildd" }
+	  { "parameter" = "env_keep+=\"APT_CONFIG DEBIAN_FRONTEND SHELL\"" } }
       {}
       { "comment" = "User privilege specification" }
       { "spec"

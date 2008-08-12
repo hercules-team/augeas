@@ -42,7 +42,7 @@ let sto_to_com      = store /[^,=:#() \t\n\\\\]+/
 (* sto_to_com does not begin or end with a space *)
 (* TODO: there could be a \ in the middle of a command... *)
 let sto_to_com_user = store ( /[^,=:#() \t\n]+/ 
-                              - /(User|Runas|Host|Cmnd)_Alias|Defaults/ )
+                              - /(User|Runas|Host|Cmnd)_Alias|Defaults.*/ )
 let sto_to_eq  = store /[^,=:#() \t\n\\\\]+/
 let sto_to_spc = store /[^() \t\n\\\\]+/
 
@@ -117,7 +117,7 @@ let alias = user_alias | runas_alias | host_alias | cmnd_alias
  *                   'Defaults' '>' Runas_List
  *************************************************************************)
 let default_type     = 
-  let value = store /(@|:|>)[^ \t\n\\\\]+/ in
+  let value = store /[@:>][^ \t\n\\\\]+/ in
   [ label "type" . value ]
 
 (************************************************************************
@@ -126,7 +126,9 @@ let default_type     =
  *                Parameter '-=' Value |
  *                '!'* Parameter
  *************************************************************************)
-let parameter        = [ label "parameter" . sto_to_com ]
+let parameter        = 
+  let value = /([^,:= \t\n\\\\][^,\n\\\\]*[^, \t\n\\\\])|[^,:= \t\n\\\\]/ in
+  [ label "parameter" . store value ]
 
 (************************************************************************
  *  Parameter_List ::= Parameter |
