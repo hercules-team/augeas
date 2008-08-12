@@ -1,7 +1,8 @@
 # This will leave /etc/hosts with nothing but comments and whitespace
 refresh=true
 commands = "
-rm /files/etc/hosts/*
+rm /files/etc/hosts/1
+rm /files/etc/hosts/2
 save
 "
 
@@ -16,4 +17,3 @@ diff["/etc/hosts"] = <<TXT
  #172.31.122.1     galia.watzmann.net galia
 -172.31.122.14   orange.watzmann.net orange
 TXT
-

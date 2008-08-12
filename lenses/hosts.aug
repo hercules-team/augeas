@@ -6,16 +6,20 @@ module Hosts =
   let sep_tab = Util.del_ws_tab
   let sep_spc = Util.del_ws_spc
 
-  let eol = Util.del_str "\n"
+  let eol = del /[ \t]*\n/ "\n"
+  let indent = del /[ \t]*/ ""
 
-  let comment = [ del /(#.*|[ \t]*)\n/ "\n" ]
+  let comment = [ indent . label "comment" . del /#[ \t]*/ "# " . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ . eol ]
+  let empty   = [ del /[ \t]*#?[ \t]*\n/ "" ]
+
   let word = /[^# \n\t]+/
-  let record = [ seq "host" . [ label "ipaddr" . store  word ] . sep_tab .
+  let record = [ seq "host" . indent .
+                              [ label "ipaddr" . store  word ] . sep_tab .
                               [ label "canonical" . store word ] .
                               [ label "alias" . sep_spc . store word ]*
                  . eol ]
 
-  let lns = ( comment | record ) *
+  let lns = ( empty | comment | record ) *
 
   let xfm = transform lns (incl "/etc/hosts")
 

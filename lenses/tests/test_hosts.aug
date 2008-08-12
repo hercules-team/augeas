@@ -3,7 +3,7 @@
 module Test_hosts =
 
   let two_entries = "127.0.0.1 foo foo.example.com
-# comment
+  # \tcomment\t
 192.168.0.1 pigiron.example.com pigiron pigiron.example
 "
 
@@ -16,7 +16,7 @@ module Test_hosts =
           { "canonical" = "foo" }
           { "alias" = "foo.example.com" }
     }
-    { }
+    { "comment" = "comment" }
     { "2" { "ipaddr" = "192.168.0.1" }
           { "canonical" = "pigiron.example.com" }
           { "alias" = "pigiron" }
@@ -31,7 +31,7 @@ module Test_hosts =
     rm "1/alias[1]" ;
     rm "2/alias[2]"
   = "127.0.0.1 foo
-# comment
+  # \tcomment\t
 192.168.0.1 pigiron.example.com pigiron piggy
 "
 
@@ -41,8 +41,8 @@ module Test_hosts =
       rm "1/canonical"
     = *
 
-  (* Make sure blank lines get through *)
-  test Hosts.lns get "127.0.0.1\tlocalhost\n \n\n
+  (* Make sure blank and indented lines get through *)
+  test Hosts.lns get " \t 127.0.0.1\tlocalhost  \n \n\n
 127.0.1.1\tetch.example.com\tetch\n" = 
     { "1" { "ipaddr" = "127.0.0.1" }
           { "canonical" = "localhost" } }
