@@ -9,7 +9,7 @@
 module Xinetd =
   autoload xfm
 
-  let comment = [ del /(#.*|[ \t]*)\n/ "#\n" ]
+  let comment = [ del /[ \t]*(#.*|[ \t]*)\n/ "#\n" ]
 
   let name = key /[^ \t\n\/+-=]+/
   let opt_spc = del /[ \t]*/ ""
@@ -70,7 +70,7 @@ module Xinetd =
   (*       would simply be prohibitively large.                            *)
   let body (attr:lens) = Util.del_str "\n{\n"
                        . (comment|attr)*
-                       . Util.del_str "}\n"
+                       . del /[ \t]*}[ \t]*\n/ "}\n"
 
   (* It would be nice if we could use the directories given in include and *)
   (* includedir directives to parse additional files instead of hardcoding *)
