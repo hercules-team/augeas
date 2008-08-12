@@ -6,8 +6,6 @@ module Exports =
 
   let eol = del /[ \t]*\n/ "\n"
   
-  let comment = Hosts.comment
-
   let option = [ label "option" . store /[^,)]+/ ]
 
   let client = [ label "client" . store client_re .
@@ -20,6 +18,6 @@ module Exports =
                 Util.del_ws_spc .
                 client . (Util.del_ws_spc . client)* . eol ]
 
-  let lns = (entry | comment)*
+  let lns = (Hosts.empty | Hosts.comment | entry)*
 
   let xfm = transform lns (incl "/etc/exports")
