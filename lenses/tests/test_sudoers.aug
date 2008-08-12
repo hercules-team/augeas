@@ -29,7 +29,7 @@ root    ALL=(ALL) ALL
 %admin  ALL=(ALL) ALL, NOPASSWD  :	NOSETENV: \
    DEBIAN_TOOLS
 %pbuilder       LOCALNET = NOPASSWD: PBUILDER
-www-data ALL=(rpinson)NOEXEC: ICAL \
+www-data +biglab=(rpinson)NOEXEC: ICAL \
         : \
         localhost = NOPASSWD: 	/usr/bin/test
 "
@@ -100,7 +100,7 @@ www-data ALL=(rpinson)NOEXEC: ICAL \
       { "spec" 
           { "user"    = "www-data" }
 	  { "host_group"
-	      { "host" = "ALL" }
+	      { "host" = "+biglab" }
 	      { "command" = "ICAL"
 	          { "runas_user" = "rpinson" }
 		  { "tag" = "NOEXEC" } } }

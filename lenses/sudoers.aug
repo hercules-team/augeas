@@ -49,12 +49,10 @@ let sto_to_spc = store /[^() \t\n\\\\]+/
 
 (* define comments and empty lines *)
 let comment = 
-    let value_to_eol = del /[ \t]*/ " " 
-        . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ in
-    [ label "comment" . del /[ \t]*#/ "# " .  value_to_eol? . eol ]
-
-let empty   = [ del /[ \t]*\n/ "" ]
-
+  let value_to_eol = del /[ \t]*/ " " . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ in
+  [ label "comment" . del /[ \t]*#/ "# " .  value_to_eol . eol ]
+ 
+let empty   = [ del /[ \t]*#?[ \t]*\n/ "" ]
 
 (************************************************************************
  *                                     ALIASES
