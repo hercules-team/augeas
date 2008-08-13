@@ -8,7 +8,9 @@ module Fstab =
   let comma = Util.del_str ","
   let eol = del /[ \t]*\n/ "\n"
 
-  let comment = [ del /#.*\n/ "# " ]
+  let comment = Util.comment
+  let empty   = Util.empty 
+
   let word = /[^,# \n\t]+/
   let comma_sep_list (l:string) =
     [ label l . store word ] . ([comma . label l . store word])*
@@ -21,7 +23,7 @@ module Fstab =
                     ( sep_spc . [ label "passno" . store /[0-9]+/ ])? )?
                  . eol ]
 
-  let lns = ( comment | record ) *
+  let lns = ( empty | comment | record ) *
 
   let xfm = transform lns (incl "/etc/fstab")
 
