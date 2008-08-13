@@ -57,8 +57,8 @@ post_upload_command = /usr/bin/mini-dinstall --batch
 "
 
    test Dput.lns get conf = 
-      { "comment" = "Example dput.cf that defines the host that can be used" }
-      { "comment" = "with dput for uploading." }
+      { "#comment" = "Example dput.cf that defines the host that can be used" }
+      { "#comment" = "with dput for uploading." }
       {}
       { "target" = "DEFAULT"
          { "login"  = "username" }
@@ -94,20 +94,20 @@ post_upload_command = /usr/bin/mini-dinstall --batch
 	 { "incoming" = "/pub/Incoming/upload-non-US" }
 	 { "login" = "anonymous" }
          {}
-         { "comment" = "DISABLED due to being repaired currently" }
-         { "comment" = "[erlangen]" }
-         { "comment" = "fqdn = ftp.uni-erlangen.de" }
-         { "comment" = "incoming = /public/pub/Linux/debian/UploadQueue/" }
-         { "comment" = "login = anonymous" }
+         { "#comment" = "DISABLED due to being repaired currently" }
+         { "#comment" = "[erlangen]" }
+         { "#comment" = "fqdn = ftp.uni-erlangen.de" }
+         { "#comment" = "incoming = /public/pub/Linux/debian/UploadQueue/" }
+         { "#comment" = "login = anonymous" }
          {} }
       { "target" = "ftp-master" 
          { "fqdn" = "ftp-master.debian.org" }
 	 { "incoming" = "/pub/UploadQueue/" }
 	 { "login" = "anonymous" }
 	 { "post_upload_command" = "/usr/bin/mini-dinstall --batch" }
-         { "comment" = "And if you want to override one of the defaults, add it here." }
-         { "comment" = "# For example, comment out the next line" }
-         { "comment" = "# login = another_username" }
-         { "comment" = "# post_upload_command = /path/to/some/script" }
-         { "comment" = "# pre_upload_command = /path/to/some/script" }
+         { "#comment" = "And if you want to override one of the defaults, add it here." }
+         { "#comment" = "# For example, comment out the next line" }
+         { "#comment" = "# login = another_username" }
+         { "#comment" = "# post_upload_command = /path/to/some/script" }
+         { "#comment" = "# pre_upload_command = /path/to/some/script" }
 	 {} }

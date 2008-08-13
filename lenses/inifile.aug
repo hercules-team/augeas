@@ -27,7 +27,7 @@ let value_to_comment   = Util.del_opt_ws ""
 (* Some implementations of INI file allow "#" as a comment sign *)
 
 let comment_generic (pat:regexp) (default:string)
-                         = [ label "comment" . sep_gen pat default
+                         = [ label "#comment" . sep_gen pat default
 			   .  value_to_eol . eol ]
 let comment              = comment_generic /[#;]/ ";"
 let comment_nosharp      = comment_generic ";" ";"

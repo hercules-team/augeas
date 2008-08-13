@@ -20,13 +20,13 @@ test_ace =
 
 "
   test lns_ace get conf_ace = 
-      { "comment" = "comment with sharp" }
+      { "#comment" = "comment with sharp" }
       {}
       { "record_ace" = "section1"
           { "test_ace" = "value"
-	     { "comment" = "end of line comment" } }
+	     { "#comment" = "end of line comment" } }
 	  { "test_ace" }
-	  { "comment"  = "comment with colon" }
+	  { "#comment"  = "comment with colon" }
 	  {} }
 
 
@@ -42,13 +42,13 @@ test_acf : value2 # end of line comment
 ; comment with colon
 "
   test lns_acf get conf_acf = 
-      { "comment" = "comment with sharp" }
+      { "#comment" = "comment with sharp" }
       { "record_acf" = "section1"
          { "test_acf" = "value" }
 	 { "test_acf" }
          { "test_acf" = "value2"
-	    { "comment" = "end of line comment" } }
-	 { "comment"  = "comment with colon" } }
+	    { "#comment" = "end of line comment" } }
+	 { "#comment"  = "comment with colon" } }
 
 
   (* TEST a/d/e *)
@@ -65,12 +65,12 @@ test_ade : value2 ; end of line comment
 test_ade =
 "
    test lns_ade get conf_ade =
-      { "comment" = "a first comment with colon" }
+      { "#comment" = "a first comment with colon" }
       { "record_ade" = "section1"
          { "test_ade" = "value" }
          { "test_ade" = "value2"
-	    { "comment" = "end of line comment" } }
-	 { "comment"  = "comment with colon" }
+	    { "#comment" = "end of line comment" } }
+	 { "#comment"  = "comment with colon" }
 	 {}
 	 { "test_ade" } }
 
@@ -88,12 +88,12 @@ test_adf : value2 ; end of line comment
 test_adf =   
 "
    test lns_adf get conf_adf =
-      { "comment" = "a first comment with colon" }
+      { "#comment" = "a first comment with colon" }
       { "record_adf" = "section1"
          { "test_adf" = "value" }
          { "test_adf" = "value2"
-	    { "comment" = "end of line comment" } }
-	 { "comment"  = "comment with colon" }
+	    { "#comment" = "end of line comment" } }
+	 { "#comment"  = "comment with colon" }
 	 { "test_adf" } }
 
 
@@ -110,12 +110,12 @@ test_bce = value # end of line comment
 test_bce =
 "
   test lns_bce get conf_bce = 
-      { "comment" = "comment with sharp" }
+      { "#comment" = "comment with sharp" }
       {}
       { "record_bce" = "section1"
           { "test_bce" = "value"
-	     { "comment" = "end of line comment" } }
-	  { "comment"  = "comment with colon" }
+	     { "#comment" = "end of line comment" } }
+	  { "#comment"  = "comment with colon" }
 	  {}
 	  { "test_bce" } }
 
@@ -131,11 +131,11 @@ test_bcf = value # end of line comment
 test_bcf =
 "
   test lns_bcf get conf_bcf = 
-      { "comment" = "comment with sharp" }
+      { "#comment" = "comment with sharp" }
       { "record_bcf" = "section1"
           { "test_bcf" = "value"
-	     { "comment" = "end of line comment" } }
-	  { "comment"  = "comment with colon" }
+	     { "#comment" = "end of line comment" } }
+	  { "#comment"  = "comment with colon" }
 	  { "test_bcf" } }
 
 
@@ -153,12 +153,12 @@ test_bde = value ; end of line comment
 test_bde =   
 "
   test lns_bde get conf_bde = 
-      { "comment" = "first comment with colon" }
+      { "#comment" = "first comment with colon" }
       {}
       { "record_bde" = "section1"
           { "test_bde" = "value"
-	     { "comment" = "end of line comment" } }
-	  { "comment"  = "comment with colon" }
+	     { "#comment" = "end of line comment" } }
+	  { "#comment"  = "comment with colon" }
 	  {}
 	  { "test_bde" } }
 
@@ -175,11 +175,11 @@ test_bdf = value ; end of line comment
 test_bdf = 
 "
   test lns_bdf get conf_bdf = 
-      { "comment" = "first comment with colon" }
+      { "#comment" = "first comment with colon" }
       { "record_bdf" = "section1"
           { "test_bdf" = "value"
-	     { "comment" = "end of line comment" } }
-	  { "comment"  = "comment with colon" }
+	     { "#comment" = "end of line comment" } }
+	  { "#comment"  = "comment with colon" }
 	  { "test_bdf" } }
 
 
