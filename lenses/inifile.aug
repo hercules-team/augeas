@@ -13,13 +13,13 @@ module IniFile  =
 let eol                  = Util.eol
 
 let sep_gen (pat:regexp) (default:string) 
-                       = Util.del_opt_ws " " . del pat default
+                       = Util.del_opt_ws "" . del pat default
 let value_sep          = sep_gen "=" "="
 let value_sepwithcolon = sep_gen /[:=]/ "="
 
-let value_to_eol       = Util.del_opt_ws " "
+let value_to_eol       = Util.del_opt_ws ""
                          . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
-let value_to_comment   = Util.del_opt_ws " "
+let value_to_comment   = Util.del_opt_ws ""
                          . store /[^;# \t\n][^;#\n]*[^;# \t\n]|[^;# \t\n]/
 
 
@@ -39,7 +39,7 @@ let empty                = Util.empty
  *                             ENTRY
  *************************************************************************)
 
-(* Some implementations of INI file allow ";" as separator *)
+(* Some implementations of INI file allow ":" as separator *)
 let entry_generic (kw:regexp) (sep:lens) (comment:lens)
                     = [ key kw . sep . value_to_comment? . (comment|eol) ]
 let entry (kw:regexp)
