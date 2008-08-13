@@ -51,6 +51,11 @@ module Test_hosts =
           { "canonical" = "etch.example.com" } 
           { "alias" = "etch" } }
 
+  (* Comment at the end of a line *)
+  test Hosts.lns get "127.0.0.1 localhost # must always be there \n" =
+    { "1" { "ipaddr" = "127.0.0.1" }
+          { "canonical" = "localhost" } 
+          { "comment" = "must always be there" } }
 
 (* Local Variables: *)
 (* mode: caml *)

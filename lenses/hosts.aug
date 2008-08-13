@@ -17,7 +17,7 @@ module Hosts =
                               [ label "ipaddr" . store  word ] . sep_tab .
                               [ label "canonical" . store word ] .
                               [ label "alias" . sep_spc . store word ]*
-                 . eol ]
+                 . (comment|eol) ]
 
   let lns = ( empty | comment | record ) *
 
