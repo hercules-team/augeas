@@ -110,4 +110,4 @@ post_upload_command = /usr/bin/mini-dinstall --batch
          { "comment" = "# login = another_username" }
          { "comment" = "# post_upload_command = /path/to/some/script" }
          { "comment" = "# pre_upload_command = /path/to/some/script" }
-         { "comment" } }
+	 {} }
