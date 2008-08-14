@@ -53,7 +53,7 @@ post_upload_command = /usr/bin/mini-dinstall --batch
 # # login = another_username
 # # post_upload_command = /path/to/some/script
 # # pre_upload_command = /path/to/some/script
-#
+
 "
 
    test Dput.lns get conf = 

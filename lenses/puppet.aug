@@ -8,10 +8,35 @@
 module Puppet =
   autoload xfm
 
-let comment = IniFile.comment_generic "#" "#"
-let entry   = IniFile.entry_nocolon_setcomment /[a-z][a-z0-9\._-]+/ comment
-let record  = IniFile.record_setcomment "section" entry comment
-let lns     = IniFile.lns_setcomment record comment
+(************************************************************************
+ * INI File settings
+ *
+ * puppet.conf only supports "# as commentary and "=" as separator
+ *************************************************************************)
+let comment    = IniFile.comment "#" "#"
+let sep        = IniFile.sep "=" "="
+
+
+(************************************************************************
+ *                        ENTRY
+ * puppet.conf uses standard INI File entries
+ *************************************************************************)
+let entry   = IniFile.entry IniFile.entry_re sep comment
+
+
+(************************************************************************
+ *                        RECORD
+ * puppet.conf uses standard INI File records
+ *************************************************************************)
+let title   = IniFile.title IniFile.record_re
+let record  = IniFile.record title entry
+
+
+(************************************************************************
+ *                        LENS & FILTER
+ * puppet.conf uses standard INI File records
+ *************************************************************************)
+let lns     = IniFile.lns record comment
 
 let filter = (incl "/etc/puppet/puppet.conf")
 

@@ -10,15 +10,15 @@ server=misspiggy.network.com
 
    test Puppet.lns get conf =
       {}
-      { "section" = "main"
+      { "main"
          { "logdir" = "/var/log/puppet" }
          {} }
-      { "section" = "puppetd"
+      { "puppetd"
          { "server" = "misspiggy.network.com" } }
 
     test Puppet.lns put conf after
-       set "section[1]/vardir" "/var/lib/puppet";
-       set "section[1]/rundir" "/var/run/puppet"
+       set "main/vardir" "/var/lib/puppet";
+       set "main/rundir" "/var/run/puppet"
     = "
 [main]
 logdir=/var/log/puppet
