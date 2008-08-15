@@ -814,8 +814,12 @@ int aug_mv(struct augeas *aug, const char *src, const char *dst) {
 
 
     t = seg_parent(s, last_segment(s));
-    if (t == NULL) t = root;
-    list_remove(ts, t->children);
+    if (t == NULL) {
+        list_remove(ts, aug->tree);
+        t = aug->tree;
+    } else {
+        list_remove(ts, t->children);
+    }
 
     t->dirty = 1;
     td->dirty = 1;

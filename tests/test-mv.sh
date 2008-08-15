@@ -3,7 +3,7 @@
 aug_mv() {
 (augtool -r /dev/null | grep -v '/augeas\|augtool' | tr '\n' ' ') <<EOF
 set /a/b/c value
-mv /a/b/c $1
+mv $1 $2
 print
 EOF
 }
@@ -19,23 +19,27 @@ assert_eq() {
 
 }
 
-ACT=$(aug_mv /x)
+ACT=$(aug_mv /a/b/c /x)
 EXP='/a /a/b /x = "value" '
 assert_eq /x
 
-ACT=$(aug_mv /x/y)
+ACT=$(aug_mv /a/b/c /x/y)
 EXP='/a /a/b /x /x/y = "value" '
 assert_eq /x/y
 
-ACT=$(aug_mv /a/x)
+ACT=$(aug_mv /a/b/c /a/x)
 EXP='/a /a/b /a/x = "value" '
 assert_eq /a/x
 
 # Check that we don't move into a descendant
-ACT=$(aug_mv /a/b/c/d)
+ACT=$(aug_mv /a/b/c /a/b/c/d)
 EXP='Failed /a /a/b /a/b/c = "value" /a/b/c/d '
 assert_eq /a/b/c/d
 
-ACT=$(aug_mv /a/b/d)
+ACT=$(aug_mv /a/b/c /a/b/d)
 EXP='/a /a/b /a/b/d = "value" '
 assert_eq /a/b/d
+
+ACT=$(aug_mv /a /x/y)
+EXP='/x /x/y /x/y/b /x/y/b/c = "value" '
+assert_eq "/a to /x/y"
