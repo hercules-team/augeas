@@ -496,6 +496,7 @@ void augl_error(struct info *locp,
                 const char *s) {
   struct info info;
   struct string string;
+  MEMZERO(&info, 1);
   info.ref = string.ref = UINT_MAX;
   info.filename = &string;
 
