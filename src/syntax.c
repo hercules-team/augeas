@@ -456,7 +456,7 @@ struct module *module_create(const char *name) {
 
 static struct module *module_find(struct module *module, const char *name) {
     list_for_each(e, module) {
-        if (STREQ(e->name, name))
+        if (STRCASEEQ(e->name, name))
             return e;
     }
     return NULL;
@@ -487,7 +487,7 @@ static struct binding *ctx_lookup_bnd(struct info *info,
         if (dot != NULL) {
         qual_lookup:
             list_for_each(module, ctx->aug->modules) {
-                if (STREQLEN(module->name, name, strlen(module->name))
+                if (STRCASEEQLEN(module->name, name, strlen(module->name))
                     && dot - name == strlen(module->name))
                     return bnd_lookup(module->bindings, dot + 1);
             }
