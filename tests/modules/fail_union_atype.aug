@@ -4,7 +4,7 @@ module Fail_union_atype =
 
   let del_str (s:string) = del s s
 
-  let lns = [ key /a/ . store /b/ . del_str " (l)"  
+  let lns = [ key /a/ . store /b/ . del_str " (l)" ]
           | [ key /a/ . store /c/ . del_str " (r)" ]
 
   (* To make this a passing test, make sure that this also works: *)
