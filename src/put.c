@@ -326,10 +326,7 @@ static int skel_instance_of(struct lens *lens, struct skel *skel) {
         return regexp_match(lens->regexp, skel->text, strlen(skel->text),
                             0, NULL);
     case L_STORE:
-        if (skel->tag != L_STORE)
-            return 0;
-        return regexp_match(lens->regexp, skel->text, strlen(skel->text),
-                            0, NULL);
+        return skel->tag == L_STORE;
     case L_KEY:
         return skel->tag == L_KEY;
     case L_LABEL:
