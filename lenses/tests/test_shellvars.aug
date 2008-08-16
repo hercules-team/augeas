@@ -63,6 +63,9 @@ ONBOOT=yes
   test Shellvars.lns get "var=\"\\\"\"\n" = 
     { "var" = "\"\\\"\"" }
 
+  test Shellvars.lns get "var=\\\"\n" =
+    { "var" = "\\\"" }
+
   test Shellvars.lns get "var=ab#c\n" = 
     { "var" = "ab#c" }
 

@@ -8,15 +8,15 @@ module Shellvars =
   let eq = Util.del_str "="
   let comment = [ del /(#.*)?[ \t]*\n/ "# \n" ]
 
-  let char  = /[^() '"\t\n]/           (* " Emacs, relax *)
-  let dquot = /\"([^"\n]|\\\\\")*\"/   (* " Emacs, relax *)
+  let char  = /[^() '"\t\n]|\\\\"/   
+  let dquot = /"([^"\\\n]|\\\\.)*"/                    (* " Emacs, relax *)
   let squot = /'[^'\n]*'/
 
   (* Array values of the form '(val1 val2 val3)'. We do not handle empty *)
   (* arrays here because of typechecking headaches. Instead, they are    *)
   (* treated as a simple value                                           *)
   let array =
-    let array_value = store (char+ | dquot | squot) in
+    let array_value = store (char+ | dquot) in
     del "(" "(" . counter "values" .
       [ seq "values" . array_value . del /[ \t]+/ " " ] * .
       [ seq "values" . array_value ]
