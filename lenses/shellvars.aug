@@ -4,13 +4,31 @@ module Shellvars =
 
   let eol = Util.del_str "\n"
 
-  let key_re = /[][A-Za-z0-9_]+/
+  let key_re = /[A-Za-z0-9_]+(\[[0-9]+\])?/
   let eq = Util.del_str "="
-  let value = /[^\n]*/
-
   let comment = [ del /(#.*)?[ \t]*\n/ "# \n" ]
 
-  let kv = [ key key_re . eq . store value . eol ]
+  let char  = /[^() '"\t\n]/           (* " Emacs, relax *)
+  let dquot = /\"([^"\n]|\\\\\")*\"/   (* " Emacs, relax *)
+  let squot = /'[^'\n]*'/
+
+  (* Array values of the form '(val1 val2 val3)'. We do not handle empty *)
+  (* arrays here because of typechecking headaches. Instead, they are    *)
+  (* treated as a simple value                                           *)
+  let array =
+    let array_value = store (char+ | dquot | squot) in
+    del "(" "(" . counter "values" .
+      [ seq "values" . array_value . del /[ \t]+/ " " ] * .
+      [ seq "values" . array_value ]
+      . del ")" ")"
+  
+  (* Treat an empty list () as a value '()'; that's not quite correct *)
+  (* but fairly close.                                                *)
+  let simple_value = 
+    let empty_array = /\([ \t]*\)/ in
+   store (char* | dquot | squot | empty_array)
+
+  let kv = [ key key_re . eq . (simple_value | array) . eol ]
 
   let source = 
     [ 

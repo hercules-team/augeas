@@ -53,6 +53,40 @@ ONBOOT=yes
   test Shellvars.lns get ". /etc/java/java.conf\n" = 
     { ".source" = "/etc/java/java.conf" }
 
+  (* Quoted strings and other oddities *)
+  test Shellvars.lns get "var=\"foo 'bar'\"\n" = 
+    { "var" = "\"foo 'bar'\"" }
+
+  test Shellvars.lns get "var='Some \"funny\" value'\n" =
+    { "var" = "'Some \"funny\" value'" }
+
+  test Shellvars.lns get "var=\"\\\"\"\n" = 
+    { "var" = "\"\\\"\"" }
+
+  test Shellvars.lns get "var=ab#c\n" = 
+    { "var" = "ab#c" }
+
+  (* We don't handle comments at the end of a line yet *)
+  test Shellvars.lns get "var=ab #c\n" = *
+
+  (* Handling of arrays *)
+  test Shellvars.lns get "var=(val1 \"val\\\"2\\\"\" val3)\n" = 
+    { "var"
+        { "1" = "val1" }
+        { "2" = "\"val\\\"2\\\"\"" }
+        { "3" = "val3" } }
+
+  test Shellvars.lns get "var=()\n" = { "var" = "()" }
+
+  test Shellvars.lns put "var=()\n" after
+      set "var" "value"
+  = "var=value\n"
+
+  test Shellvars.lns put "var=(v1 v2)\n" after
+      rm "var/*" ;
+      set "var" "value"
+  = "var=value\n"
+  
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
