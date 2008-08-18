@@ -18,8 +18,8 @@ module Shellvars =
   let array =
     let array_value = store (char+ | dquot) in
     del "(" "(" . counter "values" .
-      [ seq "values" . array_value . del /[ \t]+/ " " ] * .
-      [ seq "values" . array_value ]
+      [ seq "values" . array_value ] .
+      [ del /[ \t]+/ " " . seq "values" . array_value ] *
       . del ")" ")"
   
   (* Treat an empty list () as a value '()'; that's not quite correct *)

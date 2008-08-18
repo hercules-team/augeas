@@ -90,6 +90,10 @@ ONBOOT=yes
       set "var" "value"
   = "var=value\n"
   
+  test Shellvars.lns put "var=(v1 v2)\n" after
+    set "var/3" "v3"
+  = "var=(v1 v2 v3)\n"
+  
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
