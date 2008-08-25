@@ -6,7 +6,7 @@ session    optional     pam_keyinit.so force revoke
 "
 
   test Pam.lns get example =
-    { "comment" = "%PAM-1.0" }
+    { "#comment" = "%PAM-1.0" }
     { "1" { "type" = "auth" }
           { "control" = "[user_unknown=ignore success=ok ignore=ignore default=bad]" }
           { "module" = "pam_securetty.so" } }

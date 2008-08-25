@@ -18,7 +18,7 @@ module Util =
      ignored together with empty lines
   *)
   let comment = 
-    [ indent . label "comment" . del /#[ \t]*/ "# " 
+    [ indent . label "#comment" . del /#[ \t]*/ "# " 
         . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ . eol ]
 
   let empty   = [ del /[ \t]*#?[ \t]*\n/ "" ]
