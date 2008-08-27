@@ -1,0 +1,16 @@
+[remi]
+name=Les RPM de remi pour FC$releasever - $basearch
+baseurl=http://remi.collet.free.fr/rpms/fc$releasever.$basearch/
+	http://iut-info.ens.univ-reims.fr/remirpms/fc$releasever.$basearch/
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-remi
+
+[remi-test]
+name=Les RPM de remi en test pour FC$releasever - $basearch
+baseurl=http://remi.collet.free.fr/rpms/test-fc$releasever.$basearch/
+	http://iut-info.ens.univ-reims.fr/remirpms/test-fc$releasever.$basearch/
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-remi
+
