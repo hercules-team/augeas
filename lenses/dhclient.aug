@@ -28,8 +28,8 @@ let empty             = Util.empty
 (* Define separators *)
 let sep_spc           = del /[ \t\n]+/ " "
 let sep_scl           = del /[ \t]*;/ ";"
-let sep_obr           = del /[ \t\n]*\{\n]*/" \{\n"
-let sep_cbr           = del /[ \t\n]*\}/ " \}"
+let sep_obr           = del /[ \t\n]*\{\n]*/ " {\n"
+let sep_cbr           = del /[ \t\n]*\}/ " }"
 let sep_com           = del /[ \t\n]*,[ \t\n]*/ ","
 let sep_slh           = del "\/" "/"
 let sep_col           = del ":" ":"
