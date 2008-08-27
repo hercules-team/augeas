@@ -17,7 +17,7 @@ module Ntp =
 
     (* define comments and empty lines *)
     let comment = [ label "comment" . del /#[ \t]*/ "#" .  store /([^ \t\n][^\n]*)?/ . eol ]
-    let empty   = [ del /[ \t]*\n/ "" ]
+    let empty   = [ del /[ \t]*\n/ "\n" ]
 
 
     (* Define generic record *)

@@ -276,6 +276,20 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
                                  string->str);
             goto error;
         }
+    } else if (tag == L_DEL) {
+        int cnt;
+        const char *dflt = string->str;
+        cnt = regexp_match(regexp, dflt, strlen(dflt), 0, NULL);
+        if (cnt != strlen(dflt)) {
+            char *s = escape(dflt, -1);
+            char *r = escape(regexp->pattern->str, -1);
+            exn = make_exn_value(info,
+                   "del: the default value '%s' does not match /%s/",
+                   s, r);
+            FREE(s);
+            FREE(r);
+            goto error;
+        }
     }
 
     /* Build the actual lens */

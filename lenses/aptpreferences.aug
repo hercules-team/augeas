@@ -14,7 +14,7 @@ module AptPreferences =
    let spc   = Util.del_ws_spc
 
    (* Define empty *)
-   let empty = [ del /[ \t]*\n/ "" ]
+   let empty = [ del /[ \t]*\n/ "\n" ]
 
    (* Define record *)
 

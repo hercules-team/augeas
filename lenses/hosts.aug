@@ -10,7 +10,7 @@ module Hosts =
   let indent = del /[ \t]*/ ""
 
   let comment = [ indent . label "comment" . del /#[ \t]*/ "# " . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ . eol ]
-  let empty   = [ del /[ \t]*#?[ \t]*\n/ "" ]
+  let empty   = [ del /[ \t]*#?[ \t]*\n/ "\n" ]
 
   let word = /[^# \n\t]+/
   let record = [ seq "host" . indent .

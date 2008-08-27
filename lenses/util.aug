@@ -21,7 +21,7 @@ module Util =
     [ indent . label "#comment" . del /#[ \t]*/ "# " 
         . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ . eol ]
 
-  let empty   = [ del /[ \t]*#?[ \t]*\n/ "" ]
+  let empty   = [ del /[ \t]*#?[ \t]*\n/ "\n" ]
 
   (* Split (SEP . ELT)* into an array-like tree where each match for ELT *)
   (* appears in a separate subtree. The labels for the subtrees are      *)

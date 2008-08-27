@@ -7,7 +7,7 @@ module Aptsources =
 
   let eol = Util.del_str "\n"
 
-  let comment = [ del /([ \t]*\n)|(#.*\n)/ "# " ]
+  let comment = [ del /([ \t]*\n)|(#.*\n)/ "#\n" ]
 
   let word = /[^# \n\t]+/
 

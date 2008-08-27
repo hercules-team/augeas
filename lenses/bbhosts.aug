@@ -21,7 +21,7 @@ module BBhosts =
 
     (* Define comments and empty lines *)
     let comment = [ label "comment" . del /#[ \t]*/ "# " .  store /([^ \t\n][^\n]*)?/ . eol_no_spc ]
-    let empty   = [ del /[ \t]*\n/ "" ]
+    let empty   = [ del /[ \t]*\n/ "\n" ]
 
 
     (* Define host *)

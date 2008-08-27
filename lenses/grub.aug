@@ -40,7 +40,7 @@ module Grub =
 
     let boot = [ label "title" . title . boot_setting* ]
 
-    let comment = [ del /(#.*|[ \t]*)\n/ "# " ]
+    let comment = [ del /(#.*|[ \t]*)\n/ "#\n" ]
 
     let lns = (comment | menu_setting | boot)*
     let xfm = transform lns (incl "/etc/grub.conf")
