@@ -37,6 +37,7 @@ let setting = "allow_non-us_software"
             | "run_lintian"
             | "scp_compress"
             | "ssh_config_options"
+            | "allowed_distributions"
 
 (************************************************************************
  * "name: value" entries, with continuations in the style of RFC 822;

@@ -17,6 +17,7 @@ pre_upload_command =
 passive_ftp = 1
 default_host_non-us =
 default_host_main = hebex
+allowed_distributions = (?!UNRELEASED)
 
 [hebex]
 fqdn = condor.infra.s1.p.fti.net
@@ -74,6 +75,7 @@ post_upload_command = /usr/bin/mini-dinstall --batch
          { "passive_ftp" = "1" }
          { "default_host_non-us" }
          { "default_host_main" = "hebex" }
+         { "allowed_distributions" = "(?!UNRELEASED)" }
          {} }
       { "target" = "hebex" 
          { "fqdn" = "condor.infra.s1.p.fti.net" }
