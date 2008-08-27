@@ -32,7 +32,7 @@ let sto_to_comment     = Util.del_opt_ws ""
 (* Define comment and defaults *)
 let comment (pat:regexp) (default:string)
                        = [ label "#comment" . sep pat default
-		         . sto_to_eol . eol ]
+		         . sto_to_eol? . eol ]
 let comment_re         = /[;#]/
 let comment_default    = ";"
 
