@@ -320,11 +320,14 @@ static int skel_instance_of(struct lens *lens, struct skel *skel) {
         return 0;
 
     switch (lens->tag) {
-    case L_DEL:
+    case L_DEL: {
+        int count;
         if (skel->tag != L_DEL)
             return 0;
-        return regexp_match(lens->regexp, skel->text, strlen(skel->text),
-                            0, NULL);
+        count = regexp_match(lens->regexp, skel->text, strlen(skel->text),
+                           0, NULL);
+        return count == strlen(skel->text);
+    }
     case L_STORE:
         return skel->tag == L_STORE;
     case L_KEY:
