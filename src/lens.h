@@ -86,7 +86,6 @@ struct value *lns_make_maybe(struct info *, struct lens *,
 /* Auxiliary data structures used during get/put/create */
 struct skel {
     struct skel *next;
-    struct lens *lens;
     enum lens_tag tag;
     union {
         char        *text;    /* L_DEL */

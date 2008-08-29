@@ -400,7 +400,7 @@ static void put_subtree(struct lens *lens, struct state *state) {
     set_split(state, split);
 
     dict_lookup(tree->label, state->dict, &state->skel, &state->dict);
-    if (state->skel == NULL) {
+    if (state->skel == NULL || ! skel_instance_of(lens->child, state->skel)) {
         create_lens(lens->child, state);
     } else {
         put_lens(lens->child, state);
@@ -440,7 +440,6 @@ static void put_union(struct lens *lens, struct state *state) {
 
 static void put_concat(struct lens *lens, struct state *state) {
     assert(lens->tag == L_CONCAT);
-    assert(state->skel->lens == lens);
     struct split *oldsplit = state->split;
     struct skel *oldskel = state->skel;
 
@@ -466,7 +465,6 @@ static void put_concat(struct lens *lens, struct state *state) {
 
 static void put_quant_star(struct lens *lens, struct state *state) {
     assert(lens->tag == L_STAR);
-    assert(state->skel->lens == lens);
     struct split *oldsplit = state->split;
     struct skel *oldskel = state->skel;
 
@@ -493,7 +491,6 @@ static void put_quant_star(struct lens *lens, struct state *state) {
 
 static void put_quant_maybe(struct lens *lens, struct state *state) {
     assert(lens->tag == L_MAYBE);
-    assert(state->skel->lens == lens);
 
     if (applies(lens->child, state->split)) {
         if (skel_instance_of(lens->child, state->skel))

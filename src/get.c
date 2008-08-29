@@ -95,7 +95,6 @@ static struct skel *make_skel(struct lens *lens) {
     enum lens_tag tag = lens->tag;
     CALLOC(skel, 1);
     skel->tag = tag;
-    skel->lens = lens;
     return skel;
 }
 
