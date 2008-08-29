@@ -17,9 +17,10 @@ sqlite.assoc_case = 0
 
 
    test PHP.lns get conf = 
-      {}
-      { "safe_mode" = "Off" }
-      { "section" = "PHP"
+      { ".anon"
+         {}
+         { "safe_mode" = "Off" } }
+      { "PHP"
          { "#comment" = "Enable the PHP scripting language engine under Apache." }
 	 { "engine"  = "On" }
 	 {}
@@ -28,5 +29,7 @@ sqlite.assoc_case = 0
 	 { "unserialize_callback_func" }
 	 { "date.default_latitude" = "31.7667" }
 	 {} }
-      { "section" = "sqlite"
+      { "sqlite"
          { "sqlite.assoc_case" = "0" } }
+
+    test PHP.lns put conf after rm "noop" = conf

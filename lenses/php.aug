@@ -11,6 +11,7 @@ module PHP =
 
 let comment  = IniFile.comment IniFile.comment_re IniFile.comment_default
 let sep      = IniFile.sep IniFile.sep_re IniFile.sep_default
+let empty    = IniFile.empty
 
 
 (************************************************************************
@@ -20,8 +21,7 @@ let sep      = IniFile.sep IniFile.sep_re IniFile.sep_default
  * otherwise it would lead to an ambiguity with the "section" label
  * since PHP allows entries outside of sections.
  *************************************************************************)
-let entry_re = ( /[A-Za-z][A-Za-z0-9\._-]+/ - /#comment/ - /section/ )
-let entry    = IniFile.entry entry_re sep comment
+let entry    = IniFile.entry IniFile.entry_re sep comment
 
 
 (************************************************************************
@@ -30,8 +30,10 @@ let entry    = IniFile.entry entry_re sep comment
  * We use IniFile.title_label because there can be entries
  * outside of sections whose labels would conflict with section names
  *************************************************************************)
-let title   = IniFile.title_label "section" IniFile.record_label_re
-let record  = IniFile.record title entry
+let title       = IniFile.title ( IniFile.record_re - /.anon/ )
+let record      = IniFile.record title entry
+
+let record_anon = [ label ".anon" . ( entry | empty )+ ]
 
 
 (************************************************************************
@@ -39,7 +41,7 @@ let record  = IniFile.record title entry
  * There can be entries before any section
  * IniFile.entry includes comment management, so we just pass entry to lns
  *************************************************************************)
-let lns    = IniFile.lns record entry
+let lns    = record_anon? . record*
 
 let filter = (incl "/etc/php*/*/php.ini")
              . Util.stdexcl
