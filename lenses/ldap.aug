@@ -5,10 +5,12 @@
 module Ldap =
   autoload xfm
 
+  (* plain spacevars lens *)
+  let entry = Spacevars.entry Spacevars.entry_re
+  let lns   = Spacevars.lns entry
+
   let filter = Util.stdexcl .
       incl "/etc/ldap.conf" .
       incl "/etc/ldap/ldap.conf"
-
-  let lns = Spacevars.lns
 
   let xfm = transform lns filter

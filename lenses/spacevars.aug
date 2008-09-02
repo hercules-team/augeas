@@ -18,16 +18,19 @@ let spc     = Util.del_ws_spc
 let comment = Util.comment
 let empty   = Util.empty
 
+let sto_to_eol = store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
+
 (************************************************************************
  *                               ENTRIES
  *************************************************************************)
 
-let keyword = key /[A-Za-z0-9\._-]+(\[[0-9]+\])?/
-let value   = store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
-let entry   = [ keyword . spc . value . eol ]
+
+let entry (kw:regexp)
+               = [ key kw . spc . sto_to_eol . eol ]
+let entry_re   = /[A-Za-z0-9\._-]+(\[[0-9]+\])?/
 
 (************************************************************************
  *                                LENS
  *************************************************************************)
 
-let lns     = (comment|empty|entry) *
+let lns (entry:lens) = (comment|empty|entry) *
