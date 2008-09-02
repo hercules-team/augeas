@@ -82,6 +82,11 @@ static struct value *make_exn_lns_error(struct info *info,
     struct value *v;
 
     v = make_exn_value(ref(info), "%s", err->message);
+    if (err->lens != NULL) {
+        char *s = format_info(err->lens->info);
+        exn_printf_line(v, "Lens: %s", s);
+        free(s);
+    }
     if (err->pos >= 0) {
         char *pos = format_pos(text, err->pos);
         exn_printf_line(v,

@@ -435,7 +435,7 @@ static void put_union(struct lens *lens, struct state *state) {
             return;
         }
     }
-    assert(0);
+    put_error(state, lens, "None of the alternatives in the union match");
 }
 
 static void put_concat(struct lens *lens, struct state *state) {
