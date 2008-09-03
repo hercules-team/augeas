@@ -172,6 +172,9 @@ int regexp_compile(struct regexp *r);
 int regexp_match(struct regexp *r, const char *string, const int size,
                  const int start, struct re_registers *regs);
 
+/* Return 1 if R matches the empty string, 0 otherwise */
+int regexp_matches_empty(struct regexp *r);
+
 /* Return the number of subexpressions (parentheses) inside R. May cause
  * compilation of R; return -1 if compilation fails.
  */

@@ -469,20 +469,13 @@ static struct value *typecheck_iter(struct info *info, struct lens *l) {
 
 static struct value *typecheck_maybe(struct info *info, struct lens *l) {
     /* Check (r)? as (<e>|r) where <e> is the empty language */
-    fa_t fa, eps;
     struct value *exn = NULL;
 
-    fa = regexp_to_fa(l->ctype);
-    if (fa == NULL)
-        return make_exn_value(ref(info), "Internal error: regexp_to_fa failed");
-
-    eps = fa_make_basic(FA_EPSILON);
-    if (fa_contains(eps, fa)) {
+    if (regexp_matches_empty(l->ctype)) {
         exn = make_exn_value(ref(info),
                 "illegal optional expression: /%s/ matches the empty word",
                 l->ctype->pattern->str);
     }
-    fa_free(fa);
 
     /* Typecheck the put direction; the check passes if
        (1) the atype does not match the empty string, because we can tell
@@ -491,19 +484,11 @@ static struct value *typecheck_maybe(struct info *info, struct lens *l) {
            depending on whether the current node has a non NULL value or not
     */
     if (exn == NULL && ! l->consumes_value) {
-        fa = regexp_to_fa(l->atype);
-        if (fa == NULL)
-            return make_exn_value(ref(info),
-                                  "Internal error: regexp_to_fa failed");
-
-        eps = fa_make_basic(FA_EPSILON);
-        if (fa_contains(eps, fa)) {
+        if (regexp_matches_empty(l->atype)) {
             exn = make_exn_value(ref(info),
-                                 "optional expression matches the empty tree");
+               "optional expression matches the empty tree but does not consume a value");
         }
-        fa_free(fa);
     }
-    fa_free(eps);
     return exn;
 }
 

@@ -274,6 +274,10 @@ int regexp_match(struct regexp *r,
     return re_match(r->re, string, size, start, regs);
 }
 
+int regexp_matches_empty(struct regexp *r) {
+    return regexp_match(r, "", 0, 0, NULL) == 0;
+}
+
 int regexp_nsub(struct regexp *r) {
     if (r->re == NULL)
         if (regexp_compile(r) == -1)
