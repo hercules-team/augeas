@@ -257,15 +257,21 @@ static struct split *split_iter(struct lens *lens, struct split *outer) {
 }
 
 /* Check if LENS applies to the current split in STATE */
-static int applies(struct lens *lens, struct split *split) {
+static int applies(struct lens *lens, struct state *state) {
     int count;
+    struct split *split = state->split;
+
     count = regexp_match(lens->atype, split->labels, split->end,
                          split->start, NULL);
     if (count == -2) {
         FIXME("Match failed - produce better error");
         abort();
     }
-    return (count == split->end - split->start);
+    if (count != split->end - split->start)
+        return 0;
+    if (count == 0 && lens->value)
+        return state->value != NULL;
+    return 1;
 }
 
 /* Print TEXT to OUT, translating common escapes like \n */
@@ -360,8 +366,9 @@ static int skel_instance_of(struct lens *lens, struct skel *skel) {
         break;
     case L_SUBTREE:
         return skel->tag == L_SUBTREE;
-    case L_STAR:
     case L_MAYBE:
+        return skel->tag == L_MAYBE || skel_instance_of(lens->child, skel);
+    case L_STAR:
         if (skel->tag != lens->tag)
             return 0;
         if (lens->tag == L_MAYBE &&
@@ -427,7 +434,7 @@ static void put_union(struct lens *lens, struct state *state) {
 
     for (int i=0; i < lens->nchildren; i++) {
         struct lens *l = lens->children[i];
-        if (applies(l, state->split)) {
+        if (applies(l, state)) {
             if (skel_instance_of(l, state->skel))
                 put_lens(l, state);
             else
@@ -491,12 +498,13 @@ static void put_quant_star(struct lens *lens, struct state *state) {
 
 static void put_quant_maybe(struct lens *lens, struct state *state) {
     assert(lens->tag == L_MAYBE);
+    struct lens *child = lens->child;
 
-    if (applies(lens->child, state->split)) {
-        if (skel_instance_of(lens->child, state->skel))
-            put_lens(lens->child, state);
+    if (applies(child, state)) {
+        if (skel_instance_of(child, state->skel))
+            put_lens(child, state);
         else
-            create_lens(lens->child, state);
+            create_lens(child, state);
     }
 }
 
@@ -574,7 +582,7 @@ static void create_union(struct lens *lens, struct state *state) {
     assert(lens->tag == L_UNION);
 
     for (int i=0; i < lens->nchildren; i++) {
-        if (applies(lens->children[i], state->split)) {
+        if (applies(lens->children[i], state)) {
             create_lens(lens->children[i], state);
             return;
         }
@@ -623,7 +631,7 @@ static void create_quant_star(struct lens *lens, struct state *state) {
 static void create_quant_maybe(struct lens *lens, struct state *state) {
     assert(lens->tag == L_MAYBE);
 
-    if (applies(lens->child, state->split)) {
+    if (applies(lens->child, state)) {
         create_lens(lens->child, state);
     }
 }

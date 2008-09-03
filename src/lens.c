@@ -141,6 +141,7 @@ struct value *lns_make_union(struct info *info,
     }
 
     lens = make_lens_binop(L_UNION, info, l1, l2, regexp_union_n);
+    lens->consumes_value = l1->consumes_value && l2->consumes_value;
     return make_lens_value(lens);
 }
 
@@ -162,6 +163,7 @@ struct value *lns_make_concat(struct info *info,
     }
 
     lens = make_lens_binop(L_CONCAT, info, l1, l2, regexp_concat_n);
+    lens->consumes_value = l1->consumes_value || l2->consumes_value;
     return make_lens_value(lens);
 }
 
@@ -298,6 +300,7 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
     lens->string = string;
     lens->key = (tag == L_KEY || tag == L_LABEL || tag == L_SEQ);
     lens->value = (tag == L_STORE);
+    lens->consumes_value = (tag == L_STORE);
     lens->atype = regexp_make_empty(info);
     if (tag == L_DEL || tag == L_STORE || tag == L_KEY) {
         lens->ctype = ref(regexp);
@@ -479,8 +482,28 @@ static struct value *typecheck_maybe(struct info *info, struct lens *l) {
                 "illegal optional expression: /%s/ matches the empty word",
                 l->ctype->pattern->str);
     }
-    fa_free(eps);
     fa_free(fa);
+
+    /* Typecheck the put direction; the check passes if
+       (1) the atype does not match the empty string, because we can tell
+           from looking at tree nodes whether L should be applied or not
+       (2) L handles a value; with that, we know whether to apply L or not
+           depending on whether the current node has a non NULL value or not
+    */
+    if (exn == NULL && ! l->consumes_value) {
+        fa = regexp_to_fa(l->atype);
+        if (fa == NULL)
+            return make_exn_value(ref(info),
+                                  "Internal error: regexp_to_fa failed");
+
+        eps = fa_make_basic(FA_EPSILON);
+        if (fa_contains(eps, fa)) {
+            exn = make_exn_value(ref(info),
+                                 "optional expression matches the empty tree");
+        }
+        fa_free(fa);
+    }
+    fa_free(eps);
     return exn;
 }
 

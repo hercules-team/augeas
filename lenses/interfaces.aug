@@ -65,8 +65,7 @@ let hotplug = [ stanza_id "allow-hotplug" . (comment|eol) ]
  *************************************************************************)
 
 let mapping = [ stanza_id "mapping"
-               . ( eol | ((eol . empty*)? . comment+) )
-               . empty*
+               . (comment|empty)+
                . stanza_option
                . (stanza_option|comment|empty)* ]
 
@@ -77,8 +76,7 @@ let mapping = [ stanza_id "mapping"
 let iface   = [ stanza_id    "iface"
               . stanza_param "family"
               . stanza_param "method"
-              . ( eol | ((eol . empty*)? . comment+) )
-              . empty*
+              . (comment|empty)+
               . ( stanza_option . (stanza_option|comment|empty)* )? ]
 
 (************************************************************************

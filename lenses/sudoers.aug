@@ -32,9 +32,10 @@ let indent    = del /[ \t]*/ ""
 (* Define separators *)
 let sep_spc  = del /[ \t]+/ " " 
 let sep_cont = del /([ \t]+|[ \t]*\\\\\n[ \t]*)/ " "
-let sep_com  = sep_cont? . Util.del_str "," . sep_cont?
-let sep_eq   = sep_cont? . Util.del_str "=" . sep_cont?
-let sep_col  = sep_cont? . Util.del_str ":" . sep_cont?
+let sep_cont_opt = del /([ \t]*|[ \t]*\\\\\n[ \t]*)/ " "
+let sep_com  = sep_cont_opt . Util.del_str "," . sep_cont_opt
+let sep_eq   = sep_cont_opt . Util.del_str "=" . sep_cont_opt
+let sep_col  = sep_cont_opt . Util.del_str ":" . sep_cont_opt
 
 (* Define fields *)
 let sto_to_com_cmnd = store /([^,=:#() \t\n\\\\][^,=:#()\n\\\\]*[^,=:#() \t\n\\\\])|[^,=:#() \t\n\\\\]/
@@ -151,7 +152,7 @@ let defaults = [ indent . key "Defaults" . default_type? . sep_cont
  *  Runas_Spec ::= '(' Runas_List ')'
  *************************************************************************)
 let runas_spec = Util.del_str "(" . alias_list "runas_user" sto_to_com 
-    . Util.del_str ")" . sep_cont?
+    . Util.del_str ")" . sep_cont_opt
 
 (************************************************************************
  * Tag_Spec ::= ('NOPASSWD:' | 'PASSWD:' | 'NOEXEC:' | 'EXEC:' |

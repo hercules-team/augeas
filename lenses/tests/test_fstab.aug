@@ -13,7 +13,9 @@ module Test_fstab =
 
   let trailing_ws = "/dev/vg00/lv00\t /\t ext3\t    defaults        1 1  \t\n"
 
-  let no_passno = "LABEL=/boot\t /boot\t ext3\t    defaults        1  \t\n"
+  let gen_no_passno(passno:string) = 
+    "LABEL=/boot\t /boot\t ext3\t    defaults        1" . passno . "  \t\n"
+  let no_passno = gen_no_passno ""
 
   let no_passno_tree = 
     { "1"
@@ -51,8 +53,7 @@ module Test_fstab =
 
   test Fstab.lns get no_passno = no_passno_tree
 
-  test Fstab.lns put no_passno after set "1/passno" "1" = 
-    "LABEL=/boot\t /boot\t ext3\t    defaults\t1 1  \t\n"
+  test Fstab.lns put no_passno after set "1/passno" "1" = gen_no_passno " 1"
 
   test Fstab.lns get no_dump = no_dump_tree
 

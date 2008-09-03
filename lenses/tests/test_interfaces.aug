@@ -47,7 +47,7 @@ mapping eth1
         { "allow-hotplug" = "eth1" }
         { "iface" = "lo"
             { "family" = "inet"}
-            { "method" = "loopback"} {} }
+            { "method" = "loopback"} {} {} }
         { "mapping" = "eth0"
             { "#comment" = "Home sweet home" }
             { "script" = "/usr/local/sbin/map-scheme"}
@@ -57,7 +57,7 @@ mapping eth1
         { "iface" = "eth0-home"
             { "family" = "inet"}
             { "method" = "static"}
-            {}
+            {} {}
             { "address" = "192.168.1.1" }
             { "netmask" = "255.255.255.0" }
             { "#comment" = "up flush-mail" }
@@ -65,7 +65,7 @@ mapping eth1
         { "iface" = "eth0-work"
             { "family" = "inet"}
             { "method" = "dhcp"}
-            {} }
+            {} {} }
         { "auto"
             { "1" = "eth1" } }
         { "iface" = "eth1"
@@ -74,6 +74,7 @@ mapping eth1
             { "#comment" = "This is easy" }
 	    {} }
         { "mapping" = "eth1"
+            {}
             { "#comment" = "I like mapping ..." }
             { "#comment" = "... and I like comments" }
             {}

@@ -48,6 +48,7 @@ struct lens {
     struct regexp            *atype;
     unsigned int              value : 1;
     unsigned int              key : 1;
+    unsigned int              consumes_value : 1;
     union {
         /* Primitive lenses */
         struct {                   /* L_DEL uses both */
@@ -89,7 +90,7 @@ struct skel {
     enum lens_tag tag;
     union {
         char        *text;    /* L_DEL */
-        struct skel *skels;  /* L_CONCAT, L_STAR, L_MAYBE */
+        struct skel *skels;   /* L_CONCAT, L_STAR */
     };
     /* Also tag == L_SUBTREE, with no data in the union */
 };

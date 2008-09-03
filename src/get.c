@@ -571,12 +571,12 @@ static struct skel *parse_quant_maybe(struct lens *lens, struct state *state,
                                       struct dict **dict) {
     assert(lens->tag == L_MAYBE);
 
-    struct skel *skel = make_skel(lens);
+    struct skel *skel = NULL;
     if (applies(lens->child, state->split)) {
-        struct skel *sk;
-        sk = parse_lens(lens->child, state, dict);
-        list_append(skel->skels, sk);
+        skel = parse_lens(lens->child, state, dict);
     }
+    if (skel == NULL)
+        skel = make_skel(lens);
     return skel;
 }
 
