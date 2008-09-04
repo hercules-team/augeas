@@ -1,3 +1,39 @@
+0.3.1 - 2008-09-04
+  - Major performance improvement when processing huge files, reducing some
+    O(n^2) behavior to O(n) behavior. It's now entirely feasible to
+    manipulate for example /etc/hosts files with 65k lines
+  - Handle character escapes '\x' in regular expressions in compliance with
+    Posix ERE
+  - aug_mv: fix bug when moving at the root level
+  - Fix endless loop when using a mixed-case module name like MyMod.lns
+  - Typecheck del lens: for 'del RE STR', STR must match RE
+  - Properly typecheck the '?' operator, especially the atype; also allow
+    '?' to be applied to lenses that contain only 'store', and do not
+    produce tree nodes.
+  - Many new/improved lenses
+    * many lenses now map comments as '#comment' nodes instead of just
+      deleting them
+    * Sudoers: added (Raphael Pinson)
+    * Hosts: map comments into tree, handle whitespace and comments
+             at the end of a line (Kjetil Homme)
+    * Xinetd: allow indented comments and spaces around "}" (Raphael Pinson)
+    * Pam: allow comments at the end of lines and leading spaces
+           (Raphael Pinson)
+    * Fstab: map comments and support empty lines (Raphael Pinson)
+    * Inifile: major revamp (Raphael Pinson)
+    * Puppet: new lens for /etc/puppet.conf (Raphael Pinson)
+    * Shellvars: handle quoted strings and arrays (Nahum Shalman)
+    * Php: map entries outside of sections to a '.anon' section
+           (Raphael Pinson)
+    * Ldap: new lens for /etc/ldap.conf (Free Ekanayaka)
+    * Dput: add allowed_distributions entry (Free Ekanayaka)
+    * OpenVPN: new lens for /etc/openvpn/{client,server}.conf (Raphael Pinson)
+    * Dhclient: new lens for /etc/dhcp3/dhclient.conf (Free Ekanayaka)
+    * Samba: new lens for /etc/samba/smb.conf (Free Ekanayaka)
+    * Slapd: new lens for /etc/ldap/slapd.conf (Free Ekanayaka)
+    * Dnsmasq: new lens for /etc/dnsmasq.conf (Free Ekanayaka)
+    * Sysctl: new lens for /etc/sysctl.conf (Sean Millichamp)
+
 0.3.0 - 2008-08-07
   - Add aug_mv call to public API
   - Do not clobber symlinks, instead write new files to target of symlink
