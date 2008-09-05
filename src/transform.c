@@ -316,6 +316,19 @@ static int add_load_info(struct augeas *aug, const char *filename,
     return result;
 }
 
+static char *append_newline(char *text, size_t len) {
+    /* Try to append a newline; this is a big hack to work */
+    /* around the fact that lenses generally break if the  */
+    /* file does not end with a newline. */
+    if (len == 0 || text[len-1] != '\n') {
+        if (REALLOC_N(text, len+2) == 0) {
+            text[len] = '\n';
+            text[len+1] = '\0';
+        }
+    }
+    return text;
+}
+
 static int load_file(struct augeas *aug, struct lens *lens, char *filename) {
     char *text = NULL;
     const char *err_status = NULL;
@@ -336,6 +349,7 @@ static int load_file(struct augeas *aug, struct lens *lens, char *filename) {
         err_status = "read_failed";
         goto done;
     }
+    text = append_newline(text, strlen(text));
 
     struct info *info;
     make_ref(info);
