@@ -2,7 +2,7 @@
 (* in /etc/sysconfig                                              *)
 module Shellvars =
 
-  let eol = del /[ \t]*\n/ "\n"
+  let eol = Util.eol
 
   let key_re = /[A-Za-z0-9_]+(\[[0-9]+\])?/
   let eq = Util.del_str "="
