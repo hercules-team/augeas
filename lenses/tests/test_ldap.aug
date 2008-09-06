@@ -9,7 +9,7 @@ ssl no
 pam_password md5
 "
 
-test Ldap.lns get conf =
+test Spacevars.simple_lns get conf =
   { "host" = "127.0.0.1" }
   {}
   { "#comment" = "The distinguished name of the search base." }

@@ -8,6 +8,7 @@
 *)
 
 module Spacevars =
+  autoload xfm
 
 (************************************************************************
  *                           USEFUL PRIMITIVES
@@ -34,3 +35,13 @@ let entry_re   = /[A-Za-z0-9\._-]+(\[[0-9]+\])?/
  *************************************************************************)
 
 let lns (entry:lens) = (comment|empty|entry) *
+
+let simple_lns = lns (entry entry_re)
+
+(* configuration files that can be parsed without customizing the lens *)
+let filter = Util.stdexcl
+           . incl "/etc/havp/havp.config"
+           . incl "/etc/ldap.conf"
+           . incl "/etc/ldap/ldap.conf"
+
+let xfm = transform simple_lns filter
