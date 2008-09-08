@@ -1,7 +1,8 @@
 #! /bin/bash
 
 aug_mv() {
-(augtool -r /dev/null | grep -v '/augeas\|augtool' | tr '\n' ' ') <<EOF
+opts='--nostdinc -r /dev/null'
+(augtool $opts | grep -v '/augeas\|augtool' | tr '\n' ' ') <<EOF
 set /a/b/c value
 mv $1 $2
 print

@@ -16,5 +16,5 @@ for t in $TESTS
 do
   echo Run $(basename $t .aug)
   set +e
-  ${AUGPARSE} -I $LENS_DIR $t
+  ${AUGPARSE} --nostdinc -I $LENS_DIR $t
 done

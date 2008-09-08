@@ -26,14 +26,14 @@ EOF
 
 cd $topdir/src
 if [[ "x$1" == "xgdb" ]] ; then
-    libtool --mode=execute gdb -x $GDBCMDS ./augtool
+    libtool --mode=execute gdb -x $GDBCMDS ./augtool --nostdinc
 elif [[ "x$1" == "xvalgrind" ]] ; then
-    libtool --mode=execute valgrind --leak-check=full ./augtool < $AUGCMDS
+    libtool --mode=execute valgrind --leak-check=full ./augtool --nostdinc < $AUGCMDS
 elif [[ "x$1" == "xcli" ]] ; then
     shift
-    ./augtool "$@"
+    ./augtool --nostdinc "$@"
 else
-    ./augtool "$@" < $AUGCMDS
+    ./augtool --nostdinc "$@" < $AUGCMDS
     echo
     for f in $(find $AUGEAS_ROOT -name \*.augnew); do
         echo "File $f"

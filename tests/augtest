@@ -62,7 +62,7 @@ args.each do |test|
     redir = echo ? "" : "> /dev/null"
     printf("Test %-#{WIDTH}s ... ", File::basename(test, ".rb"))
     unless skip
-        IO.popen("augtool -n #{augtool_check} #{redir}", "w") do |io|
+        IO.popen("augtool --nostdinc -n #{augtool_check} #{redir}", "w") do |io|
             io.print(commands)
             io.puts("\nquit")
         end

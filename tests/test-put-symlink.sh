@@ -16,7 +16,7 @@ EOF
 
 (cd $(dirname $HOSTS) && ln -s ../other/hosts $(basename $HOSTS))
 
-augtool -b -r $ROOT > /dev/null <<EOF
+augtool --nostdinc -b -r $ROOT > /dev/null <<EOF
 set /files/etc/hosts/1/alias myhost
 save
 EOF

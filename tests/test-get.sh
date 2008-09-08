@@ -9,5 +9,5 @@ TOPDIR=$(cd $(dirname $0)/.. && pwd)
 export AUGEAS_LENS_LIB=$abs_top_srcdir/lenses
 export AUGEAS_ROOT=$abs_top_srcdir/tests/root
 
-augtool print '/augeas/files' | grep -q /error && ret=1 || ret=0
+augtool --nostdinc print '/augeas/files' | grep -q /error && ret=1 || ret=0
 exit $ret

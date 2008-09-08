@@ -22,7 +22,7 @@ for t in $TESTS
 do
   printf "%-30s ... " $(basename "$t" .aug)
   set +e
-  augparse -I "$LENS_DIR" "$t" > "$LOG" 2>&1
+  augparse --nostdinc -I "$LENS_DIR" "$t" > "$LOG" 2>&1
   ret=$?
   set -e
   if [ ! $ret -eq 0 ]; then

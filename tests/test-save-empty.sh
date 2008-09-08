@@ -4,7 +4,8 @@
 # but that we do create new files correctly
 
 save_hosts() {
-(augtool -r $ROOT -I $abs_top_srcdir/lenses | grep ^/augeas) <<EOF
+opts="--nostdinc -r $ROOT -I $abs_top_srcdir/lenses"
+(augtool $opts | grep ^/augeas) <<EOF
 set /files/etc/hosts/1/ipaddr 127.0.0.1
 set /files/etc/hosts/1/canonical localhost
 save
