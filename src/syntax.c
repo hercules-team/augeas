@@ -1869,6 +1869,8 @@ int interpreter_init(struct augeas *aug) {
     glob_t globbuf;
     int gl_flags = GLOB_NOSORT;
 
+    MEMZERO(&globbuf, 1);
+
     while ((dir = argz_next(aug->modpathz, aug->nmodpath, dir)) != NULL) {
         char *globpat;
         r = asprintf(&globpat, "%s/*.aug", dir);

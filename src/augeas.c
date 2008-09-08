@@ -499,28 +499,32 @@ struct augeas *aug_init(const char *root, const char *loadpath,
     if (env != NULL) {
         argz_add_sep(&result->modpathz, &result->nmodpath, env, PATH_SEP_CHAR);
     }
-    argz_add(&result->modpathz, &result->nmodpath, AUGEAS_LENS_DIR);
+    if (!(flags & AUG_NO_STDINC)) {
+        argz_add(&result->modpathz, &result->nmodpath, AUGEAS_LENS_DIR);
+    }
     /* Clean up trailing slashes */
-    argz_stringify(result->modpathz, result->nmodpath, PATH_SEP_CHAR);
-    char *s, *t;
-    for (s = result->modpathz, t = result->modpathz; *s != '\0'; s++) {
-        char *p = s;
-        if (*p == '/') {
-            while (*p == '/') p += 1;
-            if (*p == '\0' || *p == PATH_SEP_CHAR)
-                s = p;
+    if (result->nmodpath > 0) {
+        argz_stringify(result->modpathz, result->nmodpath, PATH_SEP_CHAR);
+        char *s, *t;
+        for (s = result->modpathz, t = result->modpathz; *s != '\0'; s++) {
+            char *p = s;
+            if (*p == '/') {
+                while (*p == '/') p += 1;
+                if (*p == '\0' || *p == PATH_SEP_CHAR)
+                    s = p;
+            }
+            if (t != s)
+                *t++ = *s;
+            else
+                t += 1;
         }
-        if (t != s)
-            *t++ = *s;
-        else
-            t += 1;
+        if (t != s) {
+            *t = '\0';
+        }
+        s = result->modpathz;
+        argz_create_sep(s, PATH_SEP_CHAR, &result->modpathz, &result->nmodpath);
+        free(s);
     }
-    if (t != s) {
-        *t = '\0';
-    }
-    s = result->modpathz;
-    argz_create_sep(s, PATH_SEP_CHAR, &result->modpathz, &result->nmodpath);
-    free(s);
 
     /* We report the root dir in AUGEAS_META_ROOT, but we only use the
        value we store internally, to avoid any problems with

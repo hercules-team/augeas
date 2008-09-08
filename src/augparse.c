@@ -36,6 +36,8 @@ static void usage(void) {
     fprintf(stderr, "Evaluate MODULE. Generally, MODULE should contain unit tests.\n");
     fprintf(stderr, "\nOptions:\n\n");
     fprintf(stderr, "  -I, --include DIR  search DIR for modules; can be given mutiple times\n");
+    fprintf(stderr, "  --nostdinc         do not search the builtin default directories for modules\n");
+
     exit(EXIT_FAILURE);
 }
 
@@ -44,13 +46,17 @@ int main(int argc, char **argv) {
     struct augeas *aug;
     char *loadpath = NULL;
     size_t loadpathlen = 0;
+    enum {
+        VAL_NO_STDINC = CHAR_MAX + 1
+    };
     struct option options[] = {
         { "help",      0, 0, 'h' },
         { "include",   1, 0, 'I' },
+        { "nostdinc",  0, 0, VAL_NO_STDINC },
         { 0, 0, 0, 0}
     };
     int idx;
-
+    unsigned int flags = AUG_TYPE_CHECK|AUG_NO_DEFAULT_LOAD;
     progname = argv[0];
 
     while ((opt = getopt_long(argc, argv, "hI:", options, &idx)) != -1) {
@@ -60,6 +66,9 @@ int main(int argc, char **argv) {
             break;
         case 'h':
             usage();
+            break;
+        case VAL_NO_STDINC:
+            flags |= AUG_NO_STDINC;
             break;
         default:
             usage();
@@ -73,7 +82,7 @@ int main(int argc, char **argv) {
     }
 
     argz_stringify(loadpath, loadpathlen, PATH_SEP_CHAR);
-    aug = aug_init(NULL, loadpath, AUG_TYPE_CHECK|AUG_NO_DEFAULT_LOAD);
+    aug = aug_init(NULL, loadpath, flags);
     if (__aug_load_module_file(aug, argv[optind]) == -1) {
         fprintf(stderr, "%s: error: Loading failed\n", argv[optind]);
         exit(EXIT_FAILURE);

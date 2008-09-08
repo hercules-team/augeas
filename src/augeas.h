@@ -38,8 +38,10 @@ enum aug_flags {
                                      extension .augnew, and do not
                                      overwrite the original file. Takes
                                      precedence over AUG_SAVE_BACKUP */
-    AUG_TYPE_CHECK   = (1 << 2)   /* Typecheck lenses; since it can be very
+    AUG_TYPE_CHECK   = (1 << 2),  /* Typecheck lenses; since it can be very
                                      expensive it is not done by default */
+    AUG_NO_STDINC    = (1 << 3),  /* Do not use the builtin load path for
+                                     modules */
 };
 
 /* Initialize the library.
