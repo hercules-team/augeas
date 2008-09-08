@@ -27,6 +27,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <argz.h>
+#include <getopt.h>
 
 struct command {
     const char *name;
@@ -478,23 +479,31 @@ static void usage(void) {
     fprintf(stderr, "Run '%s help' to get a list of possible commands.\n",
             progname);
     fprintf(stderr, "\nOptions:\n\n");
-    fprintf(stderr, "  -c            Typecheck lenses. This can be very slow, and is therefore not\n"
-                    "                done by default, but is highly recommended during development.\n");
-    fprintf(stderr, "  -b            When files are changed, preserve the originals in a file\n"
-                    "                with extension '.augsave'\n");
-    fprintf(stderr, "  -n            Save changes in files with extension '.augnew', do not modify\n"
-                    "                the original files\n");
-    fprintf(stderr, "  -r ROOT       Use directory ROOT as the root of the filesystem.  Takes precedence\n"
-                    "                over a root set with the AUGEAS_ROOT environment variable.\n");
-    fprintf(stderr, "  -I DIR        Add DIR to the module loadpath. Can be given multiple times.\n");
+    fprintf(stderr, "  -c, --typecheck    typecheck lenses\n");
+    fprintf(stderr, "  -b, --backup       preserve originals of modified files with\n"
+                    "                     extension '.augsave'\n");
+    fprintf(stderr, "  -n, --new          save changes in files with extension '.augnew',\n"
+                    "                     leave original unchanged\n");
+    fprintf(stderr, "  -r, --root ROOT    use ROOT as the root of the filesystem\n");
+    fprintf(stderr, "  -I, --include DIR  search DIR for modules; can be given mutiple times\n");
     exit(EXIT_FAILURE);
 }
 
 static void parse_opts(int argc, char **argv) {
     int opt;
     size_t loadpathlen = 0;
+    struct option options[] = {
+        { "help",      0, 0, 'h' },
+        { "typecheck", 0, 0, 'c' },
+        { "backup",    0, 0, 'b' },
+        { "new",       0, 0, 'n' },
+        { "root",      1, 0, 'r' },
+        { "include",   1, 0, 'I' },
+        { 0, 0, 0, 0}
+    };
+    int idx;
 
-    while ((opt = getopt(argc, argv, "hnbcr:I:")) != -1) {
+    while ((opt = getopt_long(argc, argv, "hnbcr:I:", options, &idx)) != -1) {
         switch(opt) {
         case 'c':
             flags |= AUG_TYPE_CHECK;

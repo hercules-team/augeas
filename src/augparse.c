@@ -22,6 +22,7 @@
 
 #include <config.h>
 #include <argz.h>
+#include <getopt.h>
 
 #include "list.h"
 #include "syntax.h"
@@ -34,7 +35,7 @@ static void usage(void) {
     fprintf(stderr, "Usage: %s [OPTIONS] MODULE\n", progname);
     fprintf(stderr, "Evaluate MODULE. Generally, MODULE should contain unit tests.\n");
     fprintf(stderr, "\nOptions:\n\n");
-    fprintf(stderr, "  -I DIR        Add DIR to the module loadpath. Can be given multiple times.\n");
+    fprintf(stderr, "  -I, --include DIR  search DIR for modules; can be given mutiple times\n");
     exit(EXIT_FAILURE);
 }
 
@@ -43,10 +44,16 @@ int main(int argc, char **argv) {
     struct augeas *aug;
     char *loadpath = NULL;
     size_t loadpathlen = 0;
+    struct option options[] = {
+        { "help",      0, 0, 'h' },
+        { "include",   1, 0, 'I' },
+        { 0, 0, 0, 0}
+    };
+    int idx;
 
     progname = argv[0];
 
-    while ((opt = getopt(argc, argv, "hI:")) != -1) {
+    while ((opt = getopt_long(argc, argv, "hI:", options, &idx)) != -1) {
         switch(opt) {
         case 'I':
             argz_add(&loadpath, &loadpathlen, optarg);
