@@ -40,37 +40,47 @@
  * Various parameters about env vars, special tree nodes etc.
  */
 
-/* The default location for lens definitions */
+/* Define: AUGEAS_LENS_DIR
+ * The default location for lens definitions */
 #define AUGEAS_LENS_DIR DATADIR "/augeas/lenses"
 
-/* The env var that points to the chroot holding files we may modify.
-   Mostly useful for testing */
+/* Define: AUGEAS_ROOT_ENV
+ * The env var that points to the chroot holding files we may modify.
+ * Mostly useful for testing */
 #define AUGEAS_ROOT_ENV "AUGEAS_ROOT"
 
-/* The root for actual file contents */
+/* Define: AUGEAS_FILES_TREE
+ * The root for actual file contents */
 #define AUGEAS_FILES_TREE "/files"
 
-/* Augeas reports some information in this subtree */
+/* Define: AUGEAS_META_TREE
+ * Augeas reports some information in this subtree */
 #define AUGEAS_META_TREE "/augeas"
 
-/* Information about files */
+/* Define: AUGEAS_META_FILES
+ * Information about files */
 #define AUGEAS_META_FILES AUGEAS_META_TREE AUGEAS_FILES_TREE
 
-/* The root directory */
+/* Define: AUGEAS_META_ROOT
+ * The root directory */
 #define AUGEAS_META_ROOT AUGEAS_META_TREE "/root"
 
-/* How we save files. One of 'backup', 'overwrite' or 'newfile' */
+/* Define: AUGEAS_META_SAVE_MODE
+ * How we save files. One of 'backup', 'overwrite' or 'newfile' */
 #define AUGEAS_META_SAVE_MODE AUGEAS_META_TREE "/save"
 
-/* Name of env var that contains list of paths to search for additional
+/* Define: AUGEAS_LENS_ENV
+ * Name of env var that contains list of paths to search for additional
    spec files */
 #define AUGEAS_LENS_ENV "AUGEAS_LENS_LIB"
 
-/* Fairly arbitrary bound on the length of the path we
-   accept from AUGEAS_SPEC_ENV */
+/* Define: MAX_ENV_SIZE
+ * Fairly arbitrary bound on the length of the path we
+ *  accept from AUGEAS_SPEC_ENV */
 #define MAX_ENV_SIZE 4096
 
-/* Character separating paths in a list of paths */
+/* Define: PATH_SEP_CHAR
+ * Character separating paths in a list of paths */
 #define PATH_SEP_CHAR ':'
 
 
@@ -198,27 +208,36 @@ int pathjoin(char **path, int nseg, ...);
 
 // internal.c
 
-/* Escape nonprintable characters within TEXT, similar to how it's done in
+/* Function: escape
+ * Escape nonprintable characters within TEXT, similar to how it's done in
  * C string literals. Caller must free the returned string.
  */
 char *escape(const char *text, int cnt);
+
+/* Function: unescape */
 char *unescape(const char *s, int len);
+
+/* Function: print_chars */
 int print_chars(FILE *out, const char *text, int cnt);
 
-/* Print a pretty representation of being at position POS within TEXT */
+/* Function: print_pos
+ * Print a pretty representation of being at position POS within TEXT */
 void print_pos(FILE *out, const char *text, int pos);
 char *format_pos(const char *text, int pos);
 
-/* Read the contents of file PATH and return them as one long string. The
+/* Function: read_file
+ * Read the contents of file PATH and return them as one long string. The
  * caller must free the result. Return NULL if any error occurs.
  */
 char* read_file(const char *path);
 
-/* A hidden flag used by augparse to suppress loading of all the modules
-   on the path */
+/* Define: AUG_NO_DEFAULT_LOAD
+ * A hidden flag used by augparse to suppress loading of all the modules
+ * on the path */
 #define AUG_NO_DEFAULT_LOAD (1 << 15)
 
-/* The data structure representing a connection to Augeas. */
+/* Struct: augeas
+ * The data structure representing a connection to Augeas. */
 struct augeas {
     struct tree      *tree;
     const char       *root;       /* Filesystem root for all files */
@@ -230,7 +249,8 @@ struct augeas {
                                      glibc argz vector */
 };
 
-/* An entry in the global config tree. The data structure allows associating
+/* Struct: tree
+ * An entry in the global config tree. The data structure allows associating
  * values with interior nodes, but the API currently marks that as an error.
  */
 struct tree {
@@ -241,7 +261,8 @@ struct tree {
     int          dirty;
 };
 
-/* Allocate a new tree node with the given LABEL, VALUE, and CHILDREN,
+/* Function: make_tree
+ * Allocate a new tree node with the given LABEL, VALUE, and CHILDREN,
  * which are not copied. The new tree is marked as dirty
  */
 struct tree *make_tree(char *label, char *value, struct tree *children);
@@ -257,7 +278,8 @@ int print_tree(const struct tree *tree, FILE *out, const char *path,
                int pr_hidden);
 int tree_equal(const struct tree *t1, const struct tree *t2);
 
-/* Wrappers to simulate OPEN_MEMSTREAM where that's not available. The
+/* Struct: memstream
+ * Wrappers to simulate OPEN_MEMSTREAM where that's not available. The
  * STREAM member is opened by INIT_MEMSTREAM and closed by
  * CLOSE_MEMSTREAM. The BUF is allocated automatically, but can not be used
  * until after CLOSE_MEMSTREAM has been called. It is the callers
@@ -269,7 +291,8 @@ struct memstream {
     size_t size;
 };
 
-/* Initialize a memstream. On systems that have OPEN_MEMSTREAM, it is used
+/* Function: init_memstream
+ * Initialize a memstream. On systems that have OPEN_MEMSTREAM, it is used
  * to open MS->STREAM. On systems without OPEN_MEMSTREAM, MS->STREAM is
  * backed by a temporary file.
  *
@@ -277,7 +300,8 @@ struct memstream {
  */
 int init_memstream(struct memstream *ms);
 
-/* Close a memstream. After calling this, MS->STREAM can not be used
+/* Function: close_memstream
+ * Close a memstream. After calling this, MS->STREAM can not be used
  * anymore and a string representing whatever was written to it is
  * available in MS->BUF. The caller must free MS->BUF.
  *
