@@ -27,7 +27,9 @@
 
 typedef struct augeas augeas;
 
-/* Flags to influence the behavior of Augeas. Pass a bitmask of these flags
+/* Enum: aug_flags
+ *
+ * Flags to influence the behavior of Augeas. Pass a bitmask of these flags
  * to AUG_INIT.
  */
 enum aug_flags {
@@ -44,7 +46,9 @@ enum aug_flags {
                                      modules */
 };
 
-/* Initialize the library.
+/* Function: aug_init
+ *
+ * Initialize the library.
  *
  * Use ROOT as the filesystem root. If ROOT is NULL, use the value of the
  * environment variable AUGEAS_ROOT. If that doesn't exist eitehr, use "/".
@@ -55,46 +59,62 @@ enum aug_flags {
  *
  * FLAGS is a bitmask made up of values from AUG_FLAGS.
  *
- * Return a handle to the Augeas tree upon success. If initialization
- * fails, returns NULL.
+ * Returns:
+ * a handle to the Augeas tree upon success. If initialization fails,
+ * returns NULL.
  */
 augeas *aug_init(const char *root, const char *loadpath, unsigned int flags);
 
-/* Lookup the value associated with PATH. VALUE can be NULL, in which case
+/* Function: aug_get
+ *
+ * Lookup the value associated with PATH. VALUE can be NULL, in which case
  * it is ignored. If VALUE is not NULL, it is used to return a pointer to
  * the value associated with PATH if PATH matches exactly one node. If PATH
  * matches no nodes or more than one node, *VALUE is set to NULL.
  *
- * Return 1 if there is exactly one node matching PATH, 0 if there is none,
+ * Returns:
+ * 1 if there is exactly one node matching PATH, 0 if there is none,
  * and a negative value if there is more than one node matching PATH, or if
  * PATH is not a legal path expression.
  */
 int aug_get(const augeas *aug, const char *path, const char **value);
 
-/* Set the value associated with PATH to VALUE. VALUE is copied into the
+/* Function: aug_set
+ *
+ * Set the value associated with PATH to VALUE. VALUE is copied into the
  * internal data structure. Intermediate entries are created if they don't
- * exist. Return 0 on success, -1 on error. It is an error if more than one
- * node matches PATH.
+ * exist. 
+ *
+ * Returns:
+ * 0 on success, -1 on error. It is an error if more than one node
+ * matches PATH.
  */
 int aug_set(augeas *aug, const char *path, const char *value);
 
-/* Create a new sibling LABEL for PATH by inserting into the tree just
+/* Function: aug_insert
+ *
+ * Create a new sibling LABEL for PATH by inserting into the tree just
  * before PATH if BEFORE == 1 or just after PATH if BEFORE == 0.
  *
  * PATH must match exactly one existing node in the tree, and LABEL must be
  * a label, i.e. not contain a '/', '*' or end with a bracketed index
  * '[N]'.
  *
- * Return 0 on success, and -1 if the insertion fails.
+ * Returns:
+ * 0 on success, and -1 if the insertion fails.
  */
 int aug_insert(augeas *aug, const char *path, const char *label, int before);
 
-/* Remove path and all its children. Returns the number of entries removed.
+/* Function: aug_rm
+ *
+ * Remove path and all its children. Returns the number of entries removed.
  * All nodes that match PATH, and their descendants, are removed.
  */
 int aug_rm(augeas *aug, const char *path);
 
-/* Move the node SRC to DST. SRC must match exactly one node in the
+/* Function: aug_mv
+ *
+ * Move the node SRC to DST. SRC must match exactly one node in the
  * tree. DST must either match exactly one node in the tree, or may not
  * exist yet. If DST exists already, it and all its descendants are
  * deleted. If DST does not exist yet, it and all its missing ancestors are
@@ -104,11 +124,15 @@ int aug_rm(augeas *aug, const char *path);
  * to /x, the node /a/b is now called /x, no matter whether /x existed
  * initially or not.
  *
- * Return 0 on success and -1 on failure.
+ * Returns:
+ * 0 on success and -1 on failure.
  */
 int aug_mv(augeas *aug, const char *src, const char *dst);
 
-/* Return the number of matches of the path expression PATH in AUG. If
+/* Function: aug_match
+ *
+ * Returns:
+ * the number of matches of the path expression PATH in AUG. If
  * MATCHES is non-NULL, an array with the returned number of elements will
  * be allocated and filled with the paths of the matches. The caller must
  * free both the array and the entries in it. The returned paths are
@@ -120,6 +144,7 @@ int aug_mv(augeas *aug, const char *src, const char *dst);
  *
  * Returns -1 on error, or the total number of matches (which might be 0).
  *
+ * Path expressions:
  * Path expressions use a very simple subset of XPath: the path PATH
  * consists of a number of segments, separated by '/'; each segment can
  * either be a '*', matching any tree node, or a string, optionally
@@ -134,7 +159,12 @@ int aug_mv(augeas *aug, const char *src, const char *dst);
  */
 int aug_match(const augeas *aug, const char *path, char ***matches);
 
-/* Write all pending changes to disk. Return -1 if an error is encountered,
+/* Function: aug_save
+ *
+ * Write all pending changes to disk.
+ *
+ * Returns:
+ * -1 if an error is encountered,
  * 0 on success. Only files that had any changes made to them are written.
  *
  * If AUG_SAVE_NEWFILE is set in the FLAGS passed to AUG_INIT, create
@@ -148,12 +178,18 @@ int aug_match(const augeas *aug, const char *path, char ***matches);
  */
 int aug_save(augeas *aug);
 
-/* Print each node matching PATH and its descendants to OUT.
- * Return 0 on success, or a negative value on failure
+/* Function: aug_print
+ *
+ * Print each node matching PATH and its descendants to OUT.
+ * 
+ * Returns:
+ * 0 on success, or a negative value on failure
  */
 int aug_print(const augeas *aug, FILE *out, const char *path);
 
-/* Close this Augeas instance and free any storage associated with
+/* Function: aug_close
+ *
+ * Close this Augeas instance and free any storage associated with
  * it. After running AUG_CLOSE, AUG is invalid and can not be used for any
  * more operations.
  */
