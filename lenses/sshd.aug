@@ -7,7 +7,7 @@ module Sshd =
    let sep = Util.del_ws_spc
 
    let key_re = /[A-Za-z0-9]+/ 
-         - /MACs|Match|AcceptEnv|(Allow|Deny)(Groups|Users)/
+         - /MACs|Match|AcceptEnv|Subsystem|(Allow|Deny)(Groups|Users)/
 
    let comment = [ del /(#.*|[ \t]*)\n/ "\n" ]
 
@@ -26,6 +26,14 @@ module Sshd =
    let deny_groups = array_entry "DenyGroups"
    let deny_users = array_entry "DenyUsers"
 
+   let subsystemvalue = 
+     let value = store  /[^ \t\n]+/ in
+     [ key /[A-Za-z0-9]+/ . sep . value . eol ]  
+
+   let subsystem = 
+     let value = store  /[^ \t\n]+([ \t]+[^ \t\n]+)*/ in
+     [ key "Subsystem" .  sep .  subsystemvalue ]  
+
    let macs =
      let mac_value = store /[^, \t\n]+/ in
      [ key "MACs" . sep .
@@ -33,17 +41,21 @@ module Sshd =
          ([ seq "macs" . Util.del_str "," . mac_value])* .
          eol ]
 
+   let match_cond = 
+     [ label "Condition" . sep . [ key /[A-Za-z0-9]+/ . sep . 
+                             store /[^ \t\n]+/ ] ]
+
+   let match_entry = 
+     ( comment | (Util.indent . other_entry) )
+
    let match =
-     let value = store /[^ \t\n]+([ \t]+[^ \t\n]+)*/ in
-     [ key "Match" . sep .
-         [ seq "match" .
-             [ label "cond" . value . eol ] .
-             (sep . other_entry) *
-         ]
+     [ key "Match" . match_cond+ . del / */ "" . del "\n" "\n"
+        . [ label "Settings" .  match_entry+ ]
      ]
 
   let lns = (comment | accept_env | allow_groups | allow_users
-          | deny_groups | deny_users | macs | match | other_entry ) *
+          | deny_groups | subsystem | deny_users | macs 
+          | other_entry ) * . match*
 
   let xfm = transform lns (incl "/etc/ssh/sshd_config")
 
