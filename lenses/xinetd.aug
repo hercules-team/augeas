@@ -1,11 +1,19 @@
-(* Process xinetd config files *)
-(* The structure of the lens and allowed attributes are ripped directly   *)
-(* from xinetd's parser in xinetd/parse.c in xinetd's source checkout     *)
-(* The downside of being so precise here is that if attributes are added  *)
-(* they need to be added here, too. Writing a catchall entry, and getting *)
-(* to typecheck correctly would be a huge pain.                           *)
-(* A really enterprising soul could tighten this down even further by     *)
-(* restricting the acceptable values for each attribute.                  *)
+(*
+ * Module: Xinetd
+ *   Parses xinetd configuration files
+ *
+ *  The structure of the lens and allowed attributes are ripped directly
+ *  from xinetd's parser in xinetd/parse.c in xinetd's source checkout  
+ *  The downside of being so precise here is that if attributes are added
+ *  they need to be added here, too. Writing a catchall entry, and getting
+ *  to typecheck correctly would be a huge pain.                         
+ *
+ *  A really enterprising soul could tighten this down even further by    
+ *  restricting the acceptable values for each attribute.                  
+ * 
+ * Author: David Lutterkort
+ *)
+
 module Xinetd =
   autoload xfm
 
@@ -34,10 +42,13 @@ module Xinetd =
 
   let attr_lst_op (n:regexp) = attr_lst n op
 
-  (* Note: it is much faster to combine, for example, all the attr_one    *)
-  (* attributes into one regexp and pass that to a lens instead of        *)
-  (* using lens union (attr_one "a" | attr_one "b"|..) because the latter *)
-  (* causes the type checker to work _very_ hard.                         *)
+  (* Variable: service_attr
+   *   Note: 
+   *      It is much faster to combine, for example, all the attr_one 
+   *      attributes into one regexp and pass that to a lens instead of 
+   *      using lens union (attr_one "a" | attr_one "b"|..) because the latter 
+   *      causes the type checker to work _very_ hard.                         
+   *)
 
   let service_attr =
     attr_one ("socket_type" | "protocol" | "wait" | "user" | "group"
@@ -61,22 +72,28 @@ module Xinetd =
    |attr_lst_op ( "log_type" | "log_on_success" | "log_on_failure" | "disabled"
                 | "no_access" | "only_from" | "passenv" | "enabled" )
 
-  (* Note: we would really like to say "the body can contain any of a list *)
-  (*       of a list of attributes, each of them at most once"; but that   *)
-  (*       would require that we build a lens that matches the permutation *)
-  (*       of all attributes; with around 40 individual attributes, that's *)
-  (*       not computationally feasible, even if we didn't have to worry   *)
-  (*       about how to write that down. The resulting regular expressions *)
-  (*       would simply be prohibitively large.                            *)
+  (* View: body
+   *   Note: 
+   *       We would really like to say "the body can contain any of a list 
+   *       of a list of attributes, each of them at most once"; but that 
+   *       would require that we build a lens that matches the permutation 
+   *       of all attributes; with around 40 individual attributes, that's 
+   *       not computationally feasible, even if we didn't have to worry 
+   *       about how to write that down. The resulting regular expressions 
+   *       would simply be prohibitively large. 
+   *)
   let body (attr:lens) = Util.del_str "\n{\n"
                        . (comment|attr)*
                        . del /[ \t]*}[ \t]*\n/ "}\n"
 
-  (* It would be nice if we could use the directories given in include and *)
-  (* includedir directives to parse additional files instead of hardcoding *)
-  (* all the places where xinetd config files can be found; but that is    *)
-  (* currently not possible, and implementing that has a good amount of    *)
-  (* hairy corner cases to consider.                                       *)
+  (* View: includes
+   *  Note:
+   *   It would be nice if we could use the directories given in include and
+   *   includedir directives to parse additional files instead of hardcoding 
+   *   all the places where xinetd config files can be found; but that is  
+   *   currently not possible, and implementing that has a good amount of 
+   *   hairy corner cases to consider. 
+   *)
   let includes = [ key /include|includedir/
                      . Util.del_ws_spc . store /[^ \t\n]+/ . eol ]
 
