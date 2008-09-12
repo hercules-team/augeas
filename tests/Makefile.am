@@ -14,7 +14,7 @@ check_SCRIPTS=test-lenses.sh test-interpreter.sh test-get.sh \
               test-bug-1.sh
 
 EXTRA_DIST=augtest $(AUGTESTS) root \
-	   $(check_SCRIPTS) modules/*.aug
+	   $(check_SCRIPTS) $(wildcard modules/*.aug)
 
 noinst_SCRIPTS = $(check_SCRIPTS)
 
