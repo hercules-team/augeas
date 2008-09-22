@@ -58,7 +58,7 @@ module Logrotate =
 		| flag_to_eol "nomail" indent
 		| value_to_eol "errors" word indent
 		| value_to_eol "extension" word indent
-
+                | flag_to_eol "dateext" indent
 
    (* Define hooks *)
 

@@ -124,3 +124,9 @@ include /etc/logrotate.d
                 fi
 " } } 
 
+  test Logrotate.lns get "/var/log/file {\n dateext\n}\n" =
+    { "rule"
+      { "file" = "/var/log/file" }
+      { "dateext" } }
+
+
