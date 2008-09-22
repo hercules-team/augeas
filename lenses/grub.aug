@@ -24,6 +24,8 @@ module Grub =
                      | kw_pres "hiddenmenu"
                      | kw_menu_arg "timeout"
                      | kw_menu_arg "splashimage"
+                     | kw_menu_arg "serial"
+                     | kw_menu_arg "terminal"
 
     let title = del /title[ \t]+/ "title " . value_to_eol . eol
 
