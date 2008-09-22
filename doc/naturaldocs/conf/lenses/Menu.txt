@@ -45,6 +45,12 @@ SubTitle: Modules
 # --------------------------------------------------------------------------
 
 
+Group: Main Site  {
+
+   Link: Main  (/index.html)
+   Link: Documentation  (/docs/index.html)
+   }  # Group: Main Site
+
 Group: Specific Modules  {
 
    File: Sudoers  (sudoers.aug)
