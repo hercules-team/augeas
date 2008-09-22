@@ -158,11 +158,9 @@ blockquote {
 	background: #c9e0a7;
         }
 
-    .MText {
-        font-size: 8pt; font-style: italic }
+    .MText { }
 
-    .MLink {
-        font-style: italic }
+    .MLink { }
 
     #MSelected {
         color: #000000; background-color: #FFFFFF;
@@ -179,7 +177,6 @@ blockquote {
 
 
     #MSearchField {
-        font: italic 9pt Verdana, sans-serif;
         color: #606060;
         background-color: #E8E8E8;
         border: none;
@@ -396,7 +393,6 @@ blockquote {
 
     .CImageLink {
         color: #808080;
-        font-style: italic;
         }
     a.CImageLink:link,
     a.CImageLink:visited,
@@ -767,4 +763,3 @@ blockquote {
     #Footer a:hover,
     #Footer a:visited { color: #989898 }
     #Footer a:active { color: #A00000 }
-
