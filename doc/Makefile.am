@@ -1,10 +1,12 @@
 
-SUBDIRS = $(HAS_NATURALDOCS)
+SUBDIRS = naturaldocs
+
+EXTRA_DIST = lenses.tex unambig.tex
 
 # PDF targets
 PDFTARGETS=lenses.pdf unambig.pdf
 
-all: $(PDFDOCS)
+all-local: $(PDFDOCS)
 
 pdfdocs: $(PDFTARGETS)
 %.pdf: %.tex
@@ -12,4 +14,3 @@ pdfdocs: $(PDFTARGETS)
 
 clean-local:
 	rm -f *.pdf *.aux *.log
-

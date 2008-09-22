@@ -22,6 +22,8 @@ TAGS$
 ^src/(parser|lexer)\.[ch]$
 \.(aux|dvi|log|pdf)$
 man/.*\.1$
+doc/naturaldocs/output
+doc/naturaldocs/conf/(c_api|lenses)/Data/.*\.nd$
 
 # Some local stuff
 misc/

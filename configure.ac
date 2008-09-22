@@ -6,39 +6,28 @@ AM_INIT_AUTOMAKE([-Wno-portability])
 
 
 dnl Check for NaturalDocs
-AC_ARG_WITH([naturaldocs],
-  [AS_HELP_STRING([--with-naturaldocs=DIR],
-    [path to NaturalDocs install dir to generate documentation])], 
-  [AC_CHECK_FILE($withval/NaturalDocs,
-      [AC_PATH_PROG(PERL, perl, no)
-      if test "x$PERL" = "xno"; then
-           AC_MSG_ERROR(You need a working installation of Perl to use NaturalDocs)
-      fi
-      NATURALDOCSDIR=$withval
-      HAS_NATURALDOCS=naturaldocs
-      ],
-      [ AC_MSG_ERROR(You asked to use NaturalDocs but it could not be found)])
-  ])
-AC_SUBST(HAS_NATURALDOCS)
-AC_SUBST(NATURALDOCSDIR)
-AC_SUBST(PERL)
+AC_PATH_PROGS([ND_PROG], [naturaldocs NaturalDocs], missing)
+AM_CONDITIONAL([ND_ENABLED], [test "x$ND_PROG" != "xmissing"])
 
 dnl NaturalDocs output format, defaults to HTML
-NATURALDOCSFORMAT=HTML
+ND_FORMAT=HTML
 AC_ARG_WITH([naturaldocs-output],
   [AS_HELP_STRING([--with-naturaldocs-output=FORMAT],
     [format of NaturalDocs output (possible values: HTML/FramedHTML, default: HTML)])],
   [
+    if test "x$ND_PROG" = "xmissing"; then
+      AC_MSG_ERROR([NaturalDocs was not found on your path; there's no point in setting the output format])
+    fi
     case $withval in
        HTML|FramedHTML)
-          NATURALDOCSFORMAT=$withval
+          ND_FORMAT=$withval
 	  ;;
        *)
           AC_MSG_ERROR($withval is not a supported output format for NaturalDocs)
 	  ;;
     esac
   ])
-AC_SUBST(NATURALDOCSFORMAT)
+AC_SUBST(ND_FORMAT)
 
 
 dnl Check for pdflatex
