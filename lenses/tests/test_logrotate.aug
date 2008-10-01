@@ -13,6 +13,8 @@ create
 # uncomment this if you want your log files compressed
 #compress
 
+tabooext + .old .orig .ignore
+
 # packages drop log rotation information into this directory
 include /etc/logrotate.d
 
@@ -72,6 +74,8 @@ include /etc/logrotate.d
       { "comment" = "uncomment this if you want your log files compressed" }
       { "comment" = "compress" }
       {}
+      { "tabooext" = "+"  { ".old" } { ".orig" } { ".ignore" } }
+      {}
       { "comment" = "packages drop log rotation information into this directory" }
       { "include" = "/etc/logrotate.d" }
       {}
@@ -118,7 +122,7 @@ include /etc/logrotate.d
                 { "mode"  = "640"  }
                 { "owner" = "root" }
                 { "group" = "adm"  } }
-           { "sharedscripts" }
+           { "sharedscripts" = "sharedscripts" }
            { "prerotate" = "                if [ -f /var/run/apache2.pid ]; then
                         /etc/init.d/apache2 restart > /dev/null
                 fi
@@ -127,6 +131,5 @@ include /etc/logrotate.d
   test Logrotate.lns get "/var/log/file {\n dateext\n}\n" =
     { "rule"
       { "file" = "/var/log/file" }
-      { "dateext" } }
-
+      { "dateext" = "dateext" } }
 

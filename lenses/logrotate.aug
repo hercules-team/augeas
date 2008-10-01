@@ -1,5 +1,7 @@
 (* Logrotate module for Augeas                *)
 (* Author: Raphael Pinson <raphink@gmail.com> *)
+(* Patches from:                              *)
+(*   Sean Millichamp <sean@bruenor.org>       *)
 (*                                            *)
 (* Supported :                                *)
 (*   - defaults                               *)
@@ -25,9 +27,11 @@ module Logrotate =
 
    (* Useful functions *)
 
+   let list_item = [ sep_spc . key /[^\/+,# \n\t{}]+/ ]
    let select_to_eol (kw:string) (select:regexp) (indent:string) = [ del /[ \t]*/ indent . label kw . store select . eol ]
    let value_to_eol (kw:string) (value:regexp) (indent:string )  = [ del /[ \t]*/ indent . key kw . sep_spc . store value . eol ]
    let flag_to_eol (kw:string) (indent:string)                   = [ del /[ \t]*/ indent . key kw . eol ]
+   let list_to_eol (kw:string) (indent:string)                   = [ del /[ \t]*/ indent . key kw . list_item+ . eol ]
 
 
    (* Defaults *)
@@ -38,6 +42,8 @@ module Logrotate =
 		       [ label "group" . store word ])?
 		    . eol ]
 
+   let tabooext (indent:string) = [ del /[ \t]*/ indent . key "tabooext" . ( sep_spc . store /\+/ )? . list_item+ . eol ]
+
    let attrs (indent:string) = select_to_eol "schedule" /(daily|weekly|monthly)/ indent
                 | value_to_eol "rotate" num indent
 		| create indent
@@ -47,9 +53,9 @@ module Logrotate =
 		| select_to_eol "compress" /(no)?compress/ indent
 		| select_to_eol "delaycompress" /(no)?delaycompress/ indent
 		| select_to_eol "ifempty" /(not)?ifempty/ indent
-		| flag_to_eol "sharedscripts" indent
+		| select_to_eol "sharedscripts" /(no)?sharedscripts/ indent
 		| value_to_eol "size" word indent
-		| value_to_eol "tabooext" word indent
+		| tabooext indent
 		| value_to_eol "olddir" word indent
 		| flag_to_eol "noolddir" indent
 		| value_to_eol "mail" word indent
@@ -58,7 +64,18 @@ module Logrotate =
 		| flag_to_eol "nomail" indent
 		| value_to_eol "errors" word indent
 		| value_to_eol "extension" word indent
-                | flag_to_eol "dateext" indent
+		| select_to_eol "dateext" /(no)?dateext/ indent
+		| value_to_eol "compresscmd" word indent
+		| value_to_eol "uncompresscmd" word indent
+		| value_to_eol "compressext" word indent
+		| list_to_eol "compressoptions" indent
+		| select_to_eol "copy" /(no)?copy/ indent
+		| select_to_eol "copytruncate" /(no)?copytruncate/ indent
+		| value_to_eol "maxage" num indent
+		| value_to_eol "minsize" num indent
+		| select_to_eol "shred" /(no)?shred/ indent
+		| value_to_eol "shredcycles" num indent
+		| value_to_eol "start" num indent
 
    (* Define hooks *)
 
@@ -72,6 +89,8 @@ module Logrotate =
 
    let hooks = hook_func "postrotate"
              | hook_func "prerotate"
+             | hook_func "firstaction"
+             | hook_func "lastaction"
 
    (* Define rule *)
 
