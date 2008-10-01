@@ -19,14 +19,12 @@ fi
 
 cat > $GDBCMDS <<EOF
 set annotate 1
-set environment AUGEAS_LENS_LIB = $AUGEAS_LENS_LIB
-set environment AUGEAS_ROOT = $AUGEAS_ROOT
-run < $AUGCMDS
+run --nostdinc -I $AUGEAS_LENS_LIB -r $AUGEAS_ROOT < $AUGCMDS
 EOF
 
 cd $topdir/src
 if [[ "x$1" == "xgdb" ]] ; then
-    libtool --mode=execute gdb -x $GDBCMDS ./augtool --nostdinc
+    libtool --mode=execute gdb -x $GDBCMDS ./augtool
 elif [[ "x$1" == "xvalgrind" ]] ; then
     libtool --mode=execute valgrind --leak-check=full ./augtool --nostdinc < $AUGCMDS
 elif [[ "x$1" == "xcli" ]] ; then
