@@ -4,8 +4,6 @@ commands="
 ins 10000 before /files/etc/hosts/2
 set /files/etc/hosts/10000/ipaddr 192.168.0.1
 set /files/etc/hosts/10000/canonical pigiron.example.com
-clear /files/etc/hosts/10000/aliases
-print
 save
 "
 refresh=true

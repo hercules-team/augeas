@@ -194,7 +194,7 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
     if (count == -2) {
         FIXME("Match failed - produce better error");
         abort();
-    } else if (count == -1) {
+    } else if (count == -1 || count != outer->end - outer->start) {
         char *labels = strndup(outer->labels + outer->start,
                                outer->end - outer->start);
         put_error(state, lens,
