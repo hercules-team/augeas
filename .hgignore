@@ -1,4 +1,5 @@
 .*~$
+^.gitignore$
 ^augeas\.(pc|spec)$
 ^build/
 ^gnulib/
