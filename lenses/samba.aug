@@ -14,14 +14,15 @@ module Samba =
  *************************************************************************)
 
 let comment  = IniFile.comment IniFile.comment_re IniFile.comment_default
-let sep      = IniFile.sep IniFile.sep_re IniFile.sep_default
-
+let sep      = del /[ \t]*[=:]/ " ="
+let indent   = del /[ \t]*/ "   "
 
 (* Import useful INI File primitives *)
 let eol      = IniFile.eol
 let empty    = IniFile.empty
-let sto_to_comment
-             = IniFile.sto_to_comment
+let sto_to_comment 
+             = Util.del_opt_ws " "
+             . store /[^;# \t\n][^;#\n]*[^;# \t\n]|[^;# \t\n]/
 
 (************************************************************************
  *                        ENTRY
@@ -30,7 +31,7 @@ let sto_to_comment
 
 let entry_re = /[A-Za-z0-9_.-][A-Za-z0-9 _.-]*[A-Za-z0-9_.-]/
 let entry    = let kw = entry_re in
-             [ Util.indent
+             [ indent
              . key kw
              . sep
              . sto_to_comment?
