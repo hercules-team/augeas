@@ -9,6 +9,7 @@ module Test_grub =
 #          kernel /vmlinuz-version ro root=/dev/vg00/lv00
 #          initrd /initrd-version.img
 #boot=/dev/sda
+password --md5 $1$M9NLj$p2gs87vwNv48BUu.wAfVw0
 default=0
 timeout=5
 splashimage=(hd0,0)/grub/splash.xpm.gz
@@ -34,6 +35,8 @@ title Fedora (2.6.24.3-34.fc8)
 
   test Grub.lns get conf =
      {} {} {} {} {} {} {} {} {}
+     { "password" = "$1$M9NLj$p2gs87vwNv48BUu.wAfVw0"
+       { "md5" } }
      { "default" = "0" }
      { "timeout" = "5" }
      { "splashimage" = "(hd0,0)/grub/splash.xpm.gz" }

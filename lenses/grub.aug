@@ -16,6 +16,11 @@ module Grub =
 
     let kw_boot_arg (kw:string) = kw_arg kw "\t" " "
     let kw_menu_arg (kw:string) = kw_arg kw "" "="
+    let password_arg = [ key "password" .
+      (Util.del_ws_spc . [ Util.del_str "--md5" . label "md5" ])? .
+      Util.del_ws_spc . store (/[^ \t\n]+/ - "--md5") .
+      (Util.del_ws_spc . [ label "file" . store /[^ \t\n]+/ ])? .
+      eol ]
 
     let kw_pres (kw:string) = [ key kw . del_to_eol . eol ]
 
@@ -26,6 +31,7 @@ module Grub =
                      | kw_menu_arg "splashimage"
                      | kw_menu_arg "serial"
                      | kw_menu_arg "terminal"
+                     | password_arg
 
     let title = del /title[ \t]+/ "title " . value_to_eol . eol
 
