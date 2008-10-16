@@ -5,10 +5,13 @@
 %option warn nodefault
 %option outfile="lex.yy.c" prefix="augl_"
 
-%{
+%top{
+/* config.h must precede flex's inclusion of <stdio.h>
+   in order for its _GNU_SOURCE definition to take effect.  */
 #include <config.h>
-#include <string.h>
+}
 
+%{
 #include "syntax.h"
 
 typedef struct info YYLTYPE;
