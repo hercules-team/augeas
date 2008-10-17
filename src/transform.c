@@ -27,6 +27,10 @@
 #include <fnmatch.h>
 #include <glob.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include "internal.h"
 #include "memory.h"
 #include "augeas.h"
@@ -406,11 +410,44 @@ int transform_applies(struct transform *xform, const char *path) {
     return filter_matches(xform->filter, path + strlen(AUGEAS_FILES_TREE));
 }
 
+static int file_replace(const char *from, const char *to, int to_exists,
+                        const char **err_status) {
+    struct stat st;
+    int ret = 0;
+
+    if (to_exists) {
+        ret = lstat(to, &st);
+        if (lstat(to, &st) != 0) {
+            *err_status = "replace_stat";
+            return -1;
+        }
+    }
+
+    if (rename(from, to) != 0) {
+        *err_status = "rename_augnew";
+        return -1;
+    }
+
+    if (to_exists) {
+        if (lchown(to, st.st_uid, st.st_gid) != 0) {
+            *err_status = "replace_chown";
+            return -1;
+        }
+        if (chmod(to, st.st_mode) != 0) {
+            *err_status = "replace_chmod";
+            return -1;
+        }
+    }
+    /* FIXME: Preserve SELinux labels (and acls?) */
+    return 0;
+}
+
 int transform_save(struct augeas *aug, struct transform *xform,
                    const char *path, struct tree *tree) {
     FILE *fp = NULL;
     char *augnew = NULL, *augorig = NULL, *augsave = NULL;
     char *augorig_canon = NULL;
+    int   augorig_exists;
     char *text = NULL;
     const char *filename = path + strlen(AUGEAS_FILES_TREE) + 1;
     const char *err_status = NULL;
@@ -479,9 +516,11 @@ int transform_save(struct augeas *aug, struct transform *xform,
 
     if (!(aug->flags & AUG_SAVE_NEWFILE)) {
         augorig_canon = canonicalize_file_name(augorig);
+        augorig_exists = 1;
         if (augorig_canon == NULL) {
             if (errno == ENOENT) {
                 augorig_canon = augorig;
+                augorig_exists = 0;
             } else {
                 err_status = "canon_augorig";
                 goto done;
@@ -501,10 +540,9 @@ int transform_save(struct augeas *aug, struct transform *xform,
                 goto done;
             }
         }
-        if (rename(augnew, augorig_canon) != 0) {
-            err_status = "rename_augnew";
+        if (file_replace(augnew, augorig_canon,
+                         augorig_exists, &err_status) != 0)
             goto done;
-        }
     }
     result = 1;
 
