@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <selinux/selinux.h>
 
 #include "internal.h"
 #include "memory.h"
@@ -414,12 +415,20 @@ static int file_replace(const char *from, const char *to, int to_exists,
                         const char **err_status) {
     struct stat st;
     int ret = 0;
+    int selinux_enabled = (is_selinux_enabled() > 0);
+    security_context_t con = NULL;
 
     if (to_exists) {
         ret = lstat(to, &st);
         if (lstat(to, &st) != 0) {
             *err_status = "replace_stat";
             return -1;
+        }
+        if (selinux_enabled) {
+            if (lgetfilecon(to, &con) < 0) {
+                *err_status = "replace_getfscreatecon";
+                return -1;
+            }
         }
     }
 
@@ -437,8 +446,14 @@ static int file_replace(const char *from, const char *to, int to_exists,
             *err_status = "replace_chmod";
             return -1;
         }
+        if (selinux_enabled && con != NULL) {
+            if (lsetfilecon(to, con) < 0) {
+                *err_status = "replace_setfilecon";
+                return -1;
+            }
+            freecon(con);
+        }
     }
-    /* FIXME: Preserve SELinux labels (and acls?) */
     return 0;
 }
 

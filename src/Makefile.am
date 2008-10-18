@@ -26,7 +26,7 @@ libaugeas_la_SOURCES = augeas.h augeas.c \
 	transform.c ast.c get.c put.c list.h
 libaugeas_la_LDFLAGS = -Wl,--version-script=$(srcdir)/augeas_sym.version \
         -version-info $(LIBAUGEAS_VERSION_INFO)
-libaugeas_la_LIBADD = liblexer.la libfa.la $(GNULIB)
+libaugeas_la_LIBADD = liblexer.la libfa.la $(LIB_SELINUX) $(GNULIB)
 
 augtool_SOURCES = augtool.c
 augtool_LDADD = libaugeas.la $(READLINE_LIBS) $(GNULIB)

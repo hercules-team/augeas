@@ -15,6 +15,7 @@ echo -e '127.0.0.1\tlocalhost' > $hosts
 chmod 0600 $hosts
 group=$(groups | tr ' ' '\n' | tail -n 1)
 chgrp $group $hosts
+chcon -t etc_t $hosts
 
 augtool --nostdinc -r $root -I $abs_top_srcdir/lenses > /dev/null <<EOF
 set /files/etc/hosts/1/alias alias.example.com
@@ -27,7 +28,7 @@ fi
 
 act_group=$(ls -l $hosts | cut -d ' ' -f 4)
 act_mode=$(ls -l $hosts | cut -d ' ' -f 1)
-
+act_con=$(ls -Z $hosts | cut -d ' ' -f 5 | cut -d ':' -f 3)
 if [ "x$group" != "x$act_group" ] ; then
     echo "Expected group $group but got $act_group"
     exit 1
@@ -35,6 +36,11 @@ fi
 
 if [ x-rw------- != "x$act_mode" ] ; then
     echo "Expected mode 0600 but got $act_mode"
+    exit 1
+fi
+
+if [ xetc_t != "x$act_con" ] ; then
+    echo "Expected SELinux type etc_t but got $act_con"
     exit 1
 fi
 
