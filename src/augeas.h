@@ -42,7 +42,7 @@ enum aug_flags {
                                      precedence over AUG_SAVE_BACKUP */
     AUG_TYPE_CHECK   = (1 << 2),  /* Typecheck lenses; since it can be very
                                      expensive it is not done by default */
-    AUG_NO_STDINC    = (1 << 3),  /* Do not use the builtin load path for
+    AUG_NO_STDINC    = (1 << 3)   /* Do not use the builtin load path for
                                      modules */
 };
 
@@ -83,7 +83,7 @@ int aug_get(const augeas *aug, const char *path, const char **value);
  *
  * Set the value associated with PATH to VALUE. VALUE is copied into the
  * internal data structure. Intermediate entries are created if they don't
- * exist. 
+ * exist.
  *
  * Returns:
  * 0 on success, -1 on error. It is an error if more than one node
@@ -181,7 +181,7 @@ int aug_save(augeas *aug);
 /* Function: aug_print
  *
  * Print each node matching PATH and its descendants to OUT.
- * 
+ *
  * Returns:
  * 0 on success, or a negative value on failure
  */
