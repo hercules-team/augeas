@@ -461,6 +461,22 @@ int transform_save(struct augeas *aug, struct transform *xform,
         goto done;
     }
 
+    {
+        char *new_text = read_file(augnew);
+        int same = 0;
+        if (new_text == NULL) {
+            err_status = "read_augnew";
+            goto done;
+        }
+        same = STREQ(text, new_text);
+        FREE(new_text);
+        if (same) {
+            result = 0;
+            unlink(augnew);
+            goto done;
+        }
+    }
+
     if (!(aug->flags & AUG_SAVE_NEWFILE)) {
         augorig_canon = canonicalize_file_name(augorig);
         if (augorig_canon == NULL) {
