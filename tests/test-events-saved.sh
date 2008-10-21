@@ -23,12 +23,13 @@ for f in hosts grub.conf inittab; do
   cp -p $abs_top_srcdir/tests/root/etc/$f $root/etc
 done
 
-saved=$(run_augtool | grep ^/augeas/events/saved | cut -d ' ' -f 3 | tr '\n' ' ')
+saved=$(run_augtool | grep ^/augeas/events/saved | cut -d ' ' -f 3 | sort | tr '\n' ' ')
 exp="/files/etc/grub.conf /files/etc/hosts /files/etc/inittab "
 
 if [ "$saved" != "$exp" ]
 then
     echo "Unexpected entries in /augeas/events/saved:"
-    echo "$exp"
+    echo "Expected: \"$exp\""
+    echo "Actual:   \"$saved\""
     exit 1
 fi
