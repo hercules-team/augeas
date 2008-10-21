@@ -17,9 +17,10 @@ distclean-local:
 	-find $(top_builddir)/build/* -maxdepth 0 -not -name aux | xargs rm -rf
 
 ChangeLog:
-	@if test -d $(top_srcdir)/.hg; then \
-		hg log --style changelog > $@; \
-	 fi
+	if test -d $(top_srcdir)/.git; then                             \
+	  $(top_srcdir)/build/aux/gitlog-to-changelog > $@;             \
+	fi
+
 dist: ChangeLog
 
 .PHONY: ChangeLog
