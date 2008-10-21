@@ -506,7 +506,7 @@ int transform_save(struct augeas *aug, struct transform *xform,
             goto done;
         }
     }
-    result = 0;
+    result = 1;
 
  done:
     store_error(aug, filename, path, err_status, errno, err);

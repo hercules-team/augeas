@@ -224,6 +224,8 @@ static int cmd_save(ATTRIBUTE_UNUSED char *args[]) {
     r = aug_save(aug);
     if (r == -1) {
         printf("Saving failed\n");
+    } else if (r > 0) {
+        printf("Saved %d file(s)\n", r);
     }
     return r;
 }
