@@ -69,6 +69,12 @@
  * How we save files. One of 'backup', 'overwrite' or 'newfile' */
 #define AUGEAS_META_SAVE_MODE AUGEAS_META_TREE "/save"
 
+/* A hierarchy where we record certain 'events', e.g. which tree
+ * nodes actually gotsaved into files */
+#define AUGEAS_EVENTS AUGEAS_META_TREE "/events"
+
+#define AUGEAS_EVENTS_SAVED AUGEAS_EVENTS "/saved"
+
 /* Define: AUGEAS_LENS_ENV
  * Name of env var that contains list of paths to search for additional
    spec files */

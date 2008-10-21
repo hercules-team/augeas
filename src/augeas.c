@@ -897,9 +897,11 @@ static int tree_save(struct augeas *aug, struct tree *tree, const char *path,
                      int *count) {
     int result = 0;
     // FIXME: We need to detect subtrees that aren't saved by anything
+    aug_rm(aug, AUGEAS_EVENTS_SAVED);
+
     list_for_each(t, tree) {
         if (t->dirty) {
-            char *tpath;
+            char *tpath = NULL;
             struct transform *transform = NULL;
             if (asprintf(&tpath, "%s/%s", path, t->label) == -1) {
                 result = -1;
@@ -922,8 +924,21 @@ static int tree_save(struct augeas *aug, struct tree *tree, const char *path,
                 int r = transform_save(aug, transform, tpath, t);
                 if (r == -1)
                     result = -1;
-                else if (r > 0)
+                else if (r > 0) {
+                    char *sp;
                     *count += 1;
+                    if (asprintf(&sp, AUGEAS_EVENTS_SAVED "[%d]",
+                                 *count) < 0) {
+                        free(tpath);
+                        return -1;
+                    }
+                    if (aug_set(aug, sp, tpath) < 0) {
+                        free(tpath);
+                        free(sp);
+                        return -1;
+                    }
+                    free(sp);
+                }
             } else {
                 if (tree_save(aug, t->children, tpath, count) == -1)
                     result = -1;
