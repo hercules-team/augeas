@@ -1,3 +1,26 @@
+0.3.2 - 2008-10-21
+  - saving now reports which files were actually changed in
+    /augeas/events/saved; aug_save also returns the number of files
+    that were changed
+  - preserve file owner, permissions and SELinux context when changing a file.
+  - make saving idempotent, i.e. when a change to the tree does not result
+    in changes to the actual file's content, do not touch the original file
+  - report an error if there are nodes in the tree with a label that
+    is not allowed by the lens
+  - quietly append a newline to files that do not have one
+  - generate lens documentation using NaturalDocs and publish those
+    on the Auegas website (Raphael Pinson)
+  - Lens changes/additions
+    * Grub: support the 'password' directive (Joel Nimety)
+    * Grub: support 'serial' and 'terminal' directives (Sean E. Millichamp)
+    * Samba: change default indentation and separators (Free Ekanayaka)
+    * Logrotate: process tabooext, add dateext flag (Sean E. Millichamp)
+    * Sshd: Cleaner handling of 'Match' blocks (Dominique Dumont)
+    * Monit: new lens (Free Ekanayaka)
+    * Ldap: merge with Spacevars (Free Ekanayaka)
+    * Shellvars: support /etc/default (Free Ekanayaka)
+    * Shellvars: handle space at the end of a line
+
 0.3.1 - 2008-09-04
   - Major performance improvement when processing huge files, reducing some
     O(n^2) behavior to O(n) behavior. It's now entirely feasible to
