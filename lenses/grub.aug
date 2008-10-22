@@ -43,6 +43,8 @@ module Grub =
     let boot_setting = kw_boot_arg "root"
                      | kw_boot_arg "kernel"
                      | kw_boot_arg "initrd"
+                     | kw_boot_arg "rootnoverify"
+                     | kw_boot_arg "chainloader"
                      | kw_pres "quiet"  (* Seems to be a Ubuntu extension *)
                      | module_lines
 
