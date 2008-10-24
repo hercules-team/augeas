@@ -1,0 +1,19 @@
+# -*- makefile -*-
+
+# Targets useful for maintenance/making releases etc. Some of them depend
+# on very specific local setups
+
+include Makefile
+
+rpmbuild_dir=/data/rpmbuild/$(PACKAGE_NAME)-$(PACKAGE_VERSION)
+rpb_spec=$(rpmbuild_dir)/augeas.spec
+
+# This only works with the way I have set up my .rpmmacros
+build-rpm:
+	test -d $(rpmbuild_dir) || mkdir $(rpmbuild_dir)
+	rm -f $(rpmbuild_dir)/$(DIST_ARCHIVES) $(rpb_spec)
+	ln -sf $(abs_top_srcdir)/$(DIST_ARCHIVES) $(rpmbuild_dir)
+	ln -sf $(abs_top_srcdir)/augeas.spec $(rpmbuild_dir)
+	rpmbuild -ba $(rpmbuild_dir)/augeas.spec
+
+.PHONY: build-rpm
