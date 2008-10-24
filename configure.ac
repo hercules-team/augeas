@@ -77,13 +77,6 @@ AC_CHECK_FUNCS([open_memstream])
 
 gl_INIT
 
-ac_save_LIBS="$LIBS"
-AC_SEARCH_LIBS(setfilecon, selinux,
-               [test "$ac_cv_search_setfilecon" = "none required" ||
-                LIB_SELINUX=$ac_cv_search_setfilecon])
-AC_SUBST(LIB_SELINUX)
-LIBS="$ac_save_LIBS"
-
 AC_OUTPUT(Makefile \
           gnulib/lib/Makefile \
           gnulib/tests/Makefile \
