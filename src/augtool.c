@@ -224,8 +224,13 @@ static int cmd_save(ATTRIBUTE_UNUSED char *args[]) {
     r = aug_save(aug);
     if (r == -1) {
         printf("Saving failed\n");
-    } else if (r > 0) {
-        printf("Saved %d file(s)\n", r);
+    } else {
+        r = aug_match(aug, "/augeas/events/saved", NULL);
+        if (r > 0) {
+            printf("Saved %d file(s)\n", r);
+        } else if (r < 0) {
+            printf("Error during match: %d\n", r);
+        }
     }
     return r;
 }

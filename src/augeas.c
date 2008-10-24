@@ -965,12 +965,10 @@ int aug_save(struct augeas *aug) {
         tree_propagate_dirty(t);
     }
     if (files->dirty) {
+        int count = 0;
         list_for_each(t, files->children) {
-            int count = 0;
             if (tree_save(aug, t, AUGEAS_FILES_TREE, &count) == -1)
                 ret = -1;
-            else
-                ret = count;
         }
     }
     tree_clean(aug->tree);
