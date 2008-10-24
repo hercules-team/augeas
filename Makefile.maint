@@ -7,13 +7,21 @@ include Makefile
 
 rpmbuild_dir=/data/rpmbuild/$(PACKAGE_NAME)-$(PACKAGE_VERSION)
 rpb_spec=$(rpmbuild_dir)/augeas.spec
+et_rel_dir=et:/var/www/sites/augeas.et.redhat.com/download/
+
+tarball=$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.gz
 
 # This only works with the way I have set up my .rpmmacros
 build-rpm:
 	test -d $(rpmbuild_dir) || mkdir $(rpmbuild_dir)
-	rm -f $(rpmbuild_dir)/$(DIST_ARCHIVES) $(rpb_spec)
-	ln -sf $(abs_top_srcdir)/$(DIST_ARCHIVES) $(rpmbuild_dir)
+	rm -f $(rpmbuild_dir)/$(tarball) $(rpb_spec)
+	ln -sf $(abs_top_srcdir)/$(tarball) $(rpmbuild_dir)
 	ln -sf $(abs_top_srcdir)/augeas.spec $(rpmbuild_dir)
 	rpmbuild -ba $(rpmbuild_dir)/augeas.spec
+
+upload:
+	@gpg -q --batch --verify $(tarball).sig > /dev/null 2>&1 || \
+	  gpg --output $(tarball).sig --detach-sig $(tarball);     \
+	rsync -v $(tarball) $(tarball).sig $(et_rel_dir)
 
 .PHONY: build-rpm
