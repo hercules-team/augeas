@@ -411,48 +411,39 @@ int transform_applies(struct transform *xform, const char *path) {
     return filter_matches(xform->filter, path + strlen(AUGEAS_FILES_TREE));
 }
 
-static int file_replace(const char *from, const char *to, int to_exists,
-                        const char **err_status) {
+static int transfer_file_attrs(const char *from, const char *to,
+                               const char **err_status) {
     struct stat st;
     int ret = 0;
     int selinux_enabled = (is_selinux_enabled() > 0);
     security_context_t con = NULL;
 
-    if (to_exists) {
-        ret = lstat(to, &st);
-        if (lstat(to, &st) != 0) {
-            *err_status = "replace_stat";
-            return -1;
-        }
-        if (selinux_enabled) {
-            if (lgetfilecon(to, &con) < 0) {
-                *err_status = "replace_getfscreatecon";
-                return -1;
-            }
-        }
-    }
-
-    if (rename(from, to) != 0) {
-        *err_status = "rename_augnew";
+    ret = lstat(from, &st);
+    if (ret < 0) {
+        *err_status = "replace_stat";
         return -1;
     }
+    if (selinux_enabled) {
+        if (lgetfilecon(from, &con) < 0) {
+            *err_status = "replace_getfilecon";
+            return -1;
+        }
+    }
 
-    if (to_exists) {
-        if (lchown(to, st.st_uid, st.st_gid) != 0) {
-            *err_status = "replace_chown";
+    if (lchown(to, st.st_uid, st.st_gid) < 0) {
+        *err_status = "replace_chown";
+        return -1;
+    }
+    if (chmod(to, st.st_mode) < 0) {
+        *err_status = "replace_chmod";
+        return -1;
+    }
+    if (selinux_enabled && con != NULL) {
+        if (lsetfilecon(to, con) < 0) {
+            *err_status = "replace_setfilecon";
             return -1;
         }
-        if (chmod(to, st.st_mode) != 0) {
-            *err_status = "replace_chmod";
-            return -1;
-        }
-        if (selinux_enabled && con != NULL) {
-            if (lsetfilecon(to, con) < 0) {
-                *err_status = "replace_setfilecon";
-                return -1;
-            }
-            freecon(con);
-        }
+        freecon(con);
     }
     return 0;
 }
@@ -499,6 +490,22 @@ int transform_save(struct augeas *aug, struct transform *xform,
         goto done;
     }
 
+    augorig_canon = canonicalize_file_name(augorig);
+    augorig_exists = 1;
+    if (augorig_canon == NULL) {
+        if (errno == ENOENT) {
+            augorig_canon = augorig;
+            augorig_exists = 0;
+        } else {
+            err_status = "canon_augorig";
+            goto done;
+        }
+    }
+    if (augorig_exists) {
+        if (transfer_file_attrs(augorig_canon, augnew, &err_status) != 0)
+            goto done;
+    }
+
     if (tree != NULL)
         lns_put(fp, xform->lens, tree->children, text, &err);
     // FIXME: Delete file if tree == NULL
@@ -530,18 +537,6 @@ int transform_save(struct augeas *aug, struct transform *xform,
     }
 
     if (!(aug->flags & AUG_SAVE_NEWFILE)) {
-        augorig_canon = canonicalize_file_name(augorig);
-        augorig_exists = 1;
-        if (augorig_canon == NULL) {
-            if (errno == ENOENT) {
-                augorig_canon = augorig;
-                augorig_exists = 0;
-            } else {
-                err_status = "canon_augorig";
-                goto done;
-            }
-        }
-
         if (aug->flags & AUG_SAVE_BACKUP) {
             int r;
             r = asprintf(&augsave, "%s%s" EXT_AUGSAVE, aug->root, filename);
@@ -550,14 +545,19 @@ int transform_save(struct augeas *aug, struct transform *xform,
                 goto done;
             }
 
-            if (rename(augorig_canon, augsave) != 0) {
+            /* We do an unlink + link on AUGSAVE rather than a rename so that
+               we never have any point in time where augorig_canon does
+               not exist. */
+            unlink(augsave);   /* Return value ignored intentionally */
+            if (link(augorig_canon, augsave) != 0) {
                 err_status = "rename_augsave";
                 goto done;
             }
         }
-        if (file_replace(augnew, augorig_canon,
-                         augorig_exists, &err_status) != 0)
+        if (rename(augnew, augorig_canon) != 0) {
+            err_status = "rename_augnew";
             goto done;
+        }
     }
     result = 1;
 
