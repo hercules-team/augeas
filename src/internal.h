@@ -329,6 +329,21 @@ int init_memstream(struct memstream *ms);
  * The caller must free the MEMSTREAM structure.
  */
 int close_memstream(struct memstream *ms);
+
+/*
+ * Path expressions
+ */
+
+struct path;
+
+struct path *make_path(const struct tree *root, const char *path);
+struct tree *path_first(struct path *path);
+struct tree *path_next(struct path *path, struct tree *cur);
+int path_find_one(struct path *path, struct tree **match, int *segnr);
+struct tree *tree_create(struct path *path, struct tree *parent,
+                         int segnr);
+void free_path(struct path *path);
+
 #endif
 
 
