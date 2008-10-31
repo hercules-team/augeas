@@ -15,11 +15,11 @@ check_SCRIPTS=test-lenses.sh test-interpreter.sh test-get.sh \
 	      test-events-saved.sh test-save-mode.sh
 
 EXTRA_DIST=augtest $(AUGTESTS) root \
-	   $(check_SCRIPTS) $(wildcard modules/*.aug)
+	   $(check_SCRIPTS) $(wildcard modules/*.aug) xpath.tests
 
 noinst_SCRIPTS = $(check_SCRIPTS)
 
-check_PROGRAMS = fatest
+check_PROGRAMS = fatest test-xpath
 
 TESTS_ENVIRONMENT = \
   PATH='$(abs_top_builddir)/src$(PATH_SEPARATOR)'"$$PATH" \
@@ -32,3 +32,6 @@ INCLUDES = -I$(top_srcdir)/src
 
 fatest_SOURCES = fatest.c cutest.c cutest.h
 fatest_LDADD = $(top_builddir)/src/libaugeas.la $(GNULIB)
+
+test_xpath_SOURCES = test-xpath.c
+test_xpath_LDADD = $(top_builddir)/src/libaugeas.la $(GNULIB)

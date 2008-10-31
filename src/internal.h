@@ -350,7 +350,23 @@ int close_memstream(struct memstream *ms);
  * Path expressions
  */
 
+typedef enum {
+    PATHX_NOERROR = 0,
+    PATHX_ENAME,
+    PATHX_ESTRING,
+    PATHX_ENUMBER,
+    PATHX_EDELIM,
+    PATHX_ENOEQUAL,
+    PATHX_ENOMEM,
+    PATHX_EPRED,
+    PATHX_ESLASH,
+    PATHX_EINTERNAL,
+    PATHX_ETYPE
+} pathx_errcode_t;
+
 struct pathx;
+
+const char *pathx_error(struct pathx *pathx, const char **txt, int *pos);
 
 int pathx_parse(const struct tree *root, const char *path, struct pathx **px);
 struct tree *pathx_first(struct pathx *path);
