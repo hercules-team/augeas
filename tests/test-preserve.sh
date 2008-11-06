@@ -7,8 +7,17 @@
 root=$abs_top_builddir/build/preserve
 hosts=$root/etc/hosts
 
+init_dirs() {
 rm -rf $root
 mkdir -p $(dirname $hosts)
+}
+
+stat_inode() {
+ls -il $1 | cut -d ' ' -f 1
+}
+
+AUGTOOL="augtool --nostdinc -r $root -I $abs_top_srcdir/lenses"
+init_dirs
 
 echo -e '127.0.0.1\tlocalhost' > $hosts
 
@@ -21,7 +30,7 @@ if [ $selinux = yes ] ; then
   /usr/bin/chcon -t etc_t $hosts > /dev/null 2>/dev/null || selinux=no
 fi
 
-augtool --nostdinc -r $root -I $abs_top_srcdir/lenses > /dev/null <<EOF
+$AUGTOOL >/dev/null <<EOF
 set /files/etc/hosts/1/alias alias.example.com
 save
 EOF
@@ -51,9 +60,9 @@ if [ $selinux = yes -a xetc_t != "x$act_con" ] ; then
 fi
 
 # Check that we create new files without error
-rm -rf $root
-mkdir -p $(dirname $hosts)
-augtool --nostdinc -r $root -I $abs_top_srcdir/lenses > /dev/null <<EOF
+init_dirs
+
+$AUGTOOL > /dev/null <<EOF
 set /files/etc/hosts/1/ipaddr 127.0.0.1
 set /files/etc/hosts/1/canonical host.example.com
 save
@@ -61,4 +70,31 @@ EOF
 if [ $? != 0 ] ; then
     echo "augtool failed on new file"
     exit 1
+fi
+
+# Check that we preserve a backup file on request
+echo -e '127.0.0.1\tlocalhost' > $hosts
+exp_inode=$(stat_inode $hosts)
+
+$AUGTOOL -b > /dev/null <<EOF
+set /files/etc/hosts/1/alias alias.example.com
+print /augeas/save
+save
+EOF
+
+if [ ! -f $hosts.augsave ] ; then
+  echo "Backup file was not created"
+  exit 1
+fi
+
+act_inode=$(stat_inode $hosts.augsave)
+if [ "x$act_inode" != "x$exp_inode" ] ; then
+  echo "Backup file's inode changed"
+  exit 1
+fi
+
+act_inode=$(stat_inode $hosts)
+if [ "x$act_inode" = "x$exp_inode" ] ; then
+  echo "Same inode for backup file and main file"
+  exit 1
 fi
