@@ -24,4 +24,7 @@ upload:
 	  gpg --output $(tarball).sig --detach-sig $(tarball);     \
 	rsync -v $(tarball) $(tarball).sig $(et_rel_dir)
 
+tag-release:
+	@git-tag release-$(VERSION)
+
 .PHONY: build-rpm
