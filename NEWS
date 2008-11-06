@@ -1,3 +1,7 @@
+0.3.4 - 2008-11-05
+  - fix saving of backup files; in 0.3.3, when AUG_SAVE_BACKUP was passed
+    to aug_init, aug_save would always fail
+
 0.3.3 - 2008-10-24
   - restore the behavior of aug_save; in 0.3.2, aug_save broke API by
     returning the number of files changed on success instead of 0
