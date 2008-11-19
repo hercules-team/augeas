@@ -448,6 +448,68 @@ static int transfer_file_attrs(const char *from, const char *to,
     return 0;
 }
 
+static int clone_file(const char *from, const char *to,
+                      const char **err_status) {
+    FILE *from_fp = NULL, *to_fp = NULL;
+    char buf[BUFSIZ];
+    size_t len;
+    int result = -1;
+
+    unlink(to);   /* Return value ignored intentionally */
+    if (link(from, to) == 0)
+        return 0;
+    if (errno != EXDEV) {
+        *err_status = "link";
+        return -1;
+    }
+
+    /* link not possible, copy file contents */
+    from_fp = fopen(from, "r");
+    if (!(from_fp = fopen(from, "r"))) {
+        *err_status = "clone_open_src";
+        goto done;
+    }
+
+    if (!(to_fp = fopen(to, "w"))) {
+        *err_status = "clone_open_dst";
+        goto done;
+    }
+
+    if (transfer_file_attrs(from, to, err_status) < 0)
+        goto done;
+
+    while ((len = fread(buf, 1, BUFSIZ, from_fp)) > 0) {
+        if (fwrite(buf, 1, len, to_fp) != len) {
+            *err_status = "clone_write";
+            goto done;
+        }
+    }
+    if (ferror(from_fp)) {
+        *err_status = "clone_read";
+        goto done;
+    }
+
+    result = 0;
+ done:
+    fclose(from_fp);
+    fclose(to_fp);
+    if (result != 0)
+        unlink(to);
+    return result;
+}
+
+static char *strappend(const char *s1, const char *s2) {
+    size_t len = strlen(s1) + strlen(s2);
+    char *result = NULL, *p;
+
+    if (ALLOC_N(result, len + 1) < 0)
+        return NULL;
+
+    p = stpcpy(result, s1);
+    stpcpy(p, s2);
+    return result;
+}
+
 int transform_save(struct augeas *aug, struct transform *xform,
                    const char *path, struct tree *tree) {
     FILE *fp = NULL;
@@ -457,6 +519,7 @@ int transform_save(struct augeas *aug, struct transform *xform,
     char *text = NULL;
     const char *filename = path + strlen(AUGEAS_FILES_TREE) + 1;
     const char *err_status = NULL;
+    char *dyn_err_status = NULL;
     struct lns_error *err = NULL;
     int result = -1;
 
@@ -545,24 +608,29 @@ int transform_save(struct augeas *aug, struct transform *xform,
                 goto done;
             }
 
-            /* We do an unlink + link on AUGSAVE rather than a rename so that
-               we never have any point in time where augorig_canon does
-               not exist. */
-            unlink(augsave);   /* Return value ignored intentionally */
-            if (link(augorig_canon, augsave) != 0) {
-                err_status = "rename_augsave";
+            if (clone_file(augorig_canon, augsave, &err_status) != 0) {
+                dyn_err_status = strappend(err_status, "_augsave");
                 goto done;
             }
         }
-        if (rename(augnew, augorig_canon) != 0) {
-            err_status = "rename_augnew";
+        if (clone_file(augnew, augorig_canon, &err_status) != 0) {
+            dyn_err_status = strappend(err_status, "_augnew");
+            goto done;
+        }
+        if (unlink(augnew) != 0) {
+            err_status = "unlink_augnew";
             goto done;
         }
     }
     result = 1;
 
  done:
-    store_error(aug, filename, path, err_status, errno, err);
+    {
+        const char *emsg =
+            dyn_err_status == NULL ? err_status : dyn_err_status;
+        store_error(aug, filename, path, emsg, errno, err);
+    }
+    free(dyn_err_status);
     lens_release(xform->lens);
     free(text);
     free(augnew);
