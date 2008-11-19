@@ -600,7 +600,7 @@ int transform_save(struct augeas *aug, struct transform *xform,
     }
 
     if (!(aug->flags & AUG_SAVE_NEWFILE)) {
-        if (aug->flags & AUG_SAVE_BACKUP) {
+        if (augorig_exists && (aug->flags & AUG_SAVE_BACKUP)) {
             int r;
             r = asprintf(&augsave, "%s%s" EXT_AUGSAVE, aug->root, filename);
             if (r == -1) {

@@ -72,6 +72,19 @@ if [ $? != 0 ] ; then
     exit 1
 fi
 
+# Check that we create new files without error when backups are requested
+init_dirs
+
+$AUGTOOL -b > /dev/null <<EOF
+set /files/etc/hosts/1/ipaddr 127.0.0.1
+set /files/etc/hosts/1/canonical host.example.com
+save
+EOF
+if [ $? != 0 ] ; then
+    echo "augtool -b failed on new file"
+    exit 1
+fi
+
 # Check that we preserve a backup file on request
 echo -e '127.0.0.1\tlocalhost' > $hosts
 exp_inode=$(stat_inode $hosts)
