@@ -49,14 +49,14 @@ Banner /etc/welcome.txt
   test Sshd.lns get match_blocks =
     { "X11Forwarding" = "yes"}
       { "Match"
-	  { "Condition" { "User" = "sarko"   } }
-	  { "Condition" { "Group" = "pres.*" } }
+	  { "Condition" { "User" = "sarko"   }
+	                { "Group" = "pres.*" } }
 	  { "Settings"  { "Banner" = "/etc/bienvenue.txt" }
        	                { "X11Forwarding" = "no" } } }
       { "Match"
-	  { "Condition" { "User" = "bush"    } }
-	  { "Condition" { "Group" = "pres.*" } }
-	  { "Condition" { "Host"  = "white.house.*" } }
+	  { "Condition" { "User" = "bush"    }
+	                { "Group" = "pres.*" }
+	                { "Host"  = "white.house.*" } }
 	  { "Settings"  { "Banner" = "/etc/welcome.txt" } } }
 
 (* Local Variables: *)

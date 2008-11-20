@@ -41,15 +41,18 @@ module Sshd =
          ([ seq "macs" . Util.del_str "," . mac_value])* .
          eol ]
 
+   let condition_entry =
+    let value = store  /[^ \t\n]+/ in
+    [ sep . key /[A-Za-z0-9]+/ . sep . value ]
+
    let match_cond = 
-     [ label "Condition" . sep . [ key /[A-Za-z0-9]+/ . sep . 
-                             store /[^ \t\n]+/ ] ]
+     [ label "Condition" . condition_entry+ . eol ]
 
    let match_entry = 
      ( comment | (Util.indent . other_entry) )
 
    let match =
-     [ key "Match" . match_cond+ . del / */ "" . del "\n" "\n"
+     [ key "Match" . match_cond
         . [ label "Settings" .  match_entry+ ]
      ]
 
