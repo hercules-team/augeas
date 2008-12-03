@@ -20,23 +20,26 @@ module Xinetd =
   let comment = [ del /[ \t]*(#.*|[ \t]*)\n/ "#\n" ]
 
   let name = key /[^ \t\n\/+-=]+/
-  let opt_spc = del /[ \t]*/ ""
+  let bol_spc = del /[ \t]*/ "\t"
   let spc = del /[ \t]+/ " "
   let eol = del /[ \t]*\n/ "\n"
 
-  let eq = opt_spc . Util.del_str "="
+  let op_delim (op:string) = del (/[ \t]*/ . op . /[ \t]*/) (" " . op . " ")
+  let eq       = op_delim "="
 
-  let op = opt_spc . ([ label "add" . Util.del_str "+=" ]
-                 |[ label "del" . Util.del_str "-=" ]
-                 |Util.del_str "=")
+  let op = ([ label "add" . op_delim "+=" ]
+           |[ label "del" . op_delim "-=" ]
+           | eq)
 
   let value = store /[^ \t\n]+/
 
   let attr_one (n:regexp) =
-    [ opt_spc . key n . eq . spc . value . eol ]
+    [ bol_spc . key n . eq . value . eol ]
 
   let attr_lst (n:regexp) (op_eq: lens) =
-    [ opt_spc . key n . op_eq . [label "value" . spc . value]* . eol ]
+    [ bol_spc . key n . op_eq .
+        [label "value" . value] . [label "value" . spc . value]* .
+      eol ]
 
   let attr_lst_eq (n:regexp) = attr_lst n eq
 

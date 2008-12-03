@@ -62,6 +62,13 @@ test Xinetd.lns get cvs =
 test Xinetd.lns put lst_add after rm "/svc_add/log_on_failure/add" =
   "service svc_add\n{\n   log_on_failure = HOST\n}\n"
 
+test Xinetd.lns put "" after
+  set "/svc/instances" "UNLIMITED" = "service svc
+{
+\tinstances = UNLIMITED
+}
+"
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
