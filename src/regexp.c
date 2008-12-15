@@ -139,13 +139,19 @@ regexp_union_n(struct info *info, int n, struct regexp **r) {
     char *pat, *p;
 
     for (int i=0; i < n; i++)
-        len += strlen(r[i]->pattern->str) + 2;
+        if (r[i] != NULL)
+            len += strlen(r[i]->pattern->str) + strlen("()|");
 
-    if (ALLOC_N(pat, len + (n-1) + 1) < 0)
+    if (len == 0)
+        return NULL;
+
+    if (ALLOC_N(pat, len) < 0)
         return NULL;
 
     p = pat;
     for (int i=0; i < n; i++) {
+        if (r[i] == NULL)
+            continue;
         if (i > 0)
             *p++ = '|';
         *p++ = '(';
@@ -172,13 +178,19 @@ regexp_concat_n(struct info *info, int n, struct regexp **r) {
     char *pat, *p;
 
     for (int i=0; i < n; i++)
-        len += strlen(r[i]->pattern->str) + 2;
+        if (r[i] != NULL)
+            len += strlen(r[i]->pattern->str) + strlen("()");
+
+    if (len == 0)
+        return NULL;
 
     if (ALLOC_N(pat, len+1) < 0)
         return NULL;
 
     p = pat;
     for (int i=0; i < n; i++) {
+        if (r[i] == NULL)
+            continue;
         *p++ = '(';
         p = stpcpy(p, r[i]->pattern->str);
         *p++ = ')';
