@@ -24,6 +24,7 @@
 
 #include <stdarg.h>
 #include "syntax.h"
+#include "memory.h"
 
 /* Data structure to keep track of where we are in the tree. The split
  * describes a sublist of the list of siblings in the current tree. The
@@ -35,15 +36,18 @@
  * part of the split anymore (NULL if we are talking about all the siblings
  * of TREE)
  *
- * LABELS is a string containing all the labels of the siblings joined with
- * '/' as a separator. We are currently looking at a part of that string,
- * namely the END - START characters starting at LABELS + START.
+ * ENC is a string containing the encoding of the current position in the
+ * tree.  The encoding is
+ *   <label>=<value>/<label>=<value>/.../<label>=<value>/
+ * where the label/value pairs come from TREE and its
+ * siblings. The encoding uses ENC_EQ instead of the '=' above to avoid
+ * clashes with legitimate values, and encodes NULL values as ENC_NULL.
  */
 struct split {
     struct split *next;
     struct tree  *tree;
     struct tree  *follow;
-    char         *labels;
+    char         *enc;
     size_t        start;
     size_t        end;
 };
@@ -88,15 +92,31 @@ static void put_error(struct state *state, struct lens *lens,
         state->error->message = NULL;
 }
 
+ATTRIBUTE_PURE
+static int enclen(const char *key, const char *value) {
+    return ENCLEN(key) + strlen(ENC_EQ) + ENCLEN(value)
+        + strlen(ENC_SLASH);
+}
+
+static char *encpcpy(char *e, const char *key, const char *value) {
+    e = stpcpy(e, ENCSTR(key));
+    e = stpcpy(e, ENC_EQ);
+    e = stpcpy(e, ENCSTR(value));
+    e = stpcpy(e, ENC_SLASH);
+    return e;
+}
+
 static void regexp_match_error(struct state *state, struct lens *lens,
                                int count, struct split *split,
                                struct regexp *r) {
-    char *text = strndup(split->labels + split->start,
+    // FIXME: Split the regexp and encoding back
+    // into something resembling a tree level
+    char *text = strndup(split->enc + split->start,
                          split->end - split->start);
     char *pat = regexp_escape(r);
 
     if (count == -1) {
-        put_error(state, lens, "Failed to match /%s/ with %s", pat, text);
+        put_error(state, lens, "Failed to match /%s/ with %s", pat, enc_format(text, strlen(text)));
     } else if (count == -2) {
         put_error(state, lens, "Internal error matching /%s/ with %s",
                   pat, text);
@@ -108,45 +128,48 @@ static void regexp_match_error(struct state *state, struct lens *lens,
     free(text);
 }
 
-static struct split *make_split(struct tree *tree) {
-    struct split *split;
-    CALLOC(split, 1);
-
-    split->tree = tree;
-    split->start = 0;
-    for (struct tree *t = tree; t != NULL; t = t->next) {
-        if (t->label != NULL)
-            split->end += strlen(t->label);
-        split->end += 1;
-    }
-    char *labels;
-    CALLOC(labels, split->end + 1);
-    char *l = labels;
-    for (struct tree *t = tree; t != NULL; t = t->next) {
-        if (t->label != NULL)
-            l = stpcpy(l, t->label);
-        l = stpcpy(l, "/");
-    }
-    split->labels = labels;
-    return split;
-}
-
 static void free_split(struct split *split) {
     if (split == NULL)
         return;
 
-    free(split->labels);
+    free(split->enc);
     free(split);
+}
+
+/* Encode the list of TREE's children as a string.
+ */
+static struct split *make_split(struct tree *tree) {
+    struct split *split;
+
+    if (ALLOC(split) < 0)
+        return NULL;
+
+    split->tree = tree;
+    list_for_each(t, tree) {
+        split->end += enclen(t->label, t->value);
+    }
+
+    if (ALLOC_N(split->enc, split->end + 1) < 0)
+        goto error;
+
+    char *enc = split->enc;
+    list_for_each(t, tree) {
+        enc = encpcpy(enc, t->label, t->value);
+    }
+    return split;
+ error:
+    free_split(split);
+    return NULL;
 }
 
 static struct split *split_append(struct split **split, struct split *tail,
                                   struct tree *tree, struct tree *follow,
-                                  char *labels, size_t start, size_t end) {
+                                  char *enc, size_t start, size_t end) {
     struct split *sp;
     CALLOC(sp, 1);
     sp->tree = tree;
     sp->follow = follow;
-    sp->labels = labels;
+    sp->enc = enc;
     sp->start = start;
     sp->end = end;
     list_tail_cons(*split, tail, sp);
@@ -180,17 +203,18 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
     struct regexp *atype = lens->atype;
 
     /* Fast path for leaf nodes, which will always lead to an empty split */
-    if (outer->tree == NULL && strlen(outer->labels) == 0
+    // FIXME: This doesn't match the empty encoding
+    if (outer->tree == NULL && strlen(outer->enc) == 0
         && regexp_is_empty_pattern(atype)) {
         for (int i=0; i < lens->nchildren; i++) {
             tail = split_append(&split, tail, NULL, NULL,
-                                outer->labels, 0, 0);
+                                outer->enc, 0, 0);
         }
         return split;
     }
 
     MEMZERO(&regs, 1);
-    count = regexp_match(atype, outer->labels, outer->end,
+    count = regexp_match(atype, outer->enc, outer->end,
                          outer->start, &regs);
     if (count >= 0 && count != outer->end - outer->start)
         count = -1;
@@ -206,11 +230,11 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
         assert(regs.start[reg] != -1);
         struct tree *follow = cur;
         for (int j = regs.start[reg]; j < regs.end[reg]; j++) {
-            if (outer->labels[j] == '/')
+            if (outer->enc[j] == ENC_SLASH_CH)
                 follow = follow->next;
         }
         tail = split_append(&split, tail, cur, follow,
-                            outer->labels, regs.start[reg], regs.end[reg]);
+                            outer->enc, regs.start[reg], regs.end[reg]);
         cur = follow;
         reg += 1 + regexp_nsub(lens->children[i]->atype);
     }
@@ -232,7 +256,7 @@ static struct split *split_iter(struct state *state, struct lens *lens) {
     int pos = outer->start;
     struct split *tail = NULL;
     while (pos < outer->end) {
-        count = regexp_match(atype, outer->labels, outer->end, pos, NULL);
+        count = regexp_match(atype, outer->enc, outer->end, pos, NULL);
         if (count == -1) {
             break;
         } else if (count < -1) {
@@ -242,11 +266,11 @@ static struct split *split_iter(struct state *state, struct lens *lens) {
 
         struct tree *follow = cur;
         for (int j = pos; j < pos + count; j++) {
-            if (outer->labels[j] == '/')
+            if (outer->enc[j] == ENC_SLASH_CH)
                 follow = follow->next;
         }
         tail = split_append(&split, tail, cur, follow,
-                            outer->labels, pos, pos + count);
+                            outer->enc, pos, pos + count);
         cur = follow;
         pos += count;
     }
@@ -261,7 +285,7 @@ static int applies(struct lens *lens, struct state *state) {
     int count;
     struct split *split = state->split;
 
-    count = regexp_match(lens->atype, split->labels, split->end,
+    count = regexp_match(lens->atype, split->enc, split->end,
                          split->start, NULL);
     if (count < -1) {
         regexp_match_error(state, lens, count, split, lens->atype);

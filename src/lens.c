@@ -29,7 +29,8 @@
 static const int const type_offs[] = {
     offsetof(struct lens, ctype),
     offsetof(struct lens, atype),
-    offsetof(struct lens, ktype)
+    offsetof(struct lens, ktype),
+    offsetof(struct lens, vtype)
 };
 static const int ntypes = sizeof(type_offs)/sizeof(type_offs[0]);
 
@@ -42,8 +43,6 @@ static struct value *typecheck_concat(struct info *,
 static struct value *typecheck_iter(struct info *info, struct lens *l);
 static struct value *typecheck_maybe(struct info *info, struct lens *l);
 
-static struct regexp *make_key_regexp(struct info *info, const char *pat);
-
 /* Lens names for pretty printing */
 static const char *const tags[] = {
     "del", "store", "key", "label", "seq", "counter", "concat", "union",
@@ -51,7 +50,7 @@ static const char *const tags[] = {
 };
 
 static const struct string digits_string = {
-    .ref = REF_MAX, .str = (char *) "[0-9]+/"
+    .ref = REF_MAX, .str = (char *) "[0-9]+"
 };
 static const struct string *const digits_pat = &digits_string;
 
@@ -219,13 +218,17 @@ struct value *lns_make_concat(struct info *info,
 
 struct value *lns_make_subtree(struct info *info, struct lens *l) {
     struct lens *lens;
+    const char *kpat = (l->ktype == NULL) ? ENC_NULL : l->ktype->pattern->str;
+    const char *vpat = (l->vtype == NULL) ? ENC_NULL : l->vtype->pattern->str;
+    char *pat;
+
+    if (asprintf(&pat, "%s%s%s%s", kpat, ENC_EQ, vpat, ENC_SLASH) < 0)
+        return NULL;
 
     lens = make_lens_unop(L_SUBTREE, info, l);
     lens->ctype = ref(l->ctype);
-    lens->atype = ref(l->ktype);
+    lens->atype = make_regexp(info, pat);
     lens->value = lens->key = 0;
-    if (lens->atype == NULL)
-        lens->atype = make_key_regexp(info, "");
     return make_lens_value(lens);
 }
 
@@ -293,6 +296,25 @@ static struct regexp *make_regexp_from_string(struct info *info,
         r->info = ref(info);
         r->pattern = ref(string);
     }
+    return r;
+}
+
+static struct regexp *restrict_regexp(struct regexp *r) {
+    char *nre = NULL;
+    size_t nre_len;
+    int ret;
+
+    ret = fa_restrict_alphabet(r->pattern->str, strlen(r->pattern->str),
+                               &nre, &nre_len,
+                               RESERVED_FROM, RESERVED_TO);
+    assert(nre_len == strlen(nre));
+    // FIXME: Tell the user what's wrong
+    if (ret != 0)
+        return NULL;
+
+    r = make_regexp(r->info, nre);
+    if (regexp_compile(r) != 0)
+        abort();
     return r;
 }
 
@@ -369,18 +391,19 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
     if (tag == L_SEQ) {
         lens->ktype =
             make_regexp_from_string(info, (struct string *) digits_pat);
+        if (lens->ktype == NULL)
+            goto error;
     } else if (tag == L_KEY) {
-        lens->ktype = make_key_regexp(info, lens->regexp->pattern->str);
+        lens->ktype = restrict_regexp(lens->regexp);
     } else if (tag == L_LABEL) {
-        struct regexp *r = make_regexp_literal(info, lens->string->str);
-        if (r == NULL)
+        lens->ktype = make_regexp_literal(info, lens->string->str);
+        if (lens->ktype == NULL)
             goto error;
-        if (REALLOC_N(r->pattern->str, strlen(r->pattern->str) + 2) == -1) {
-            unref(r, regexp);
-            goto error;
-        }
-        strcat(r->pattern->str, "/");
-        lens->ktype = r;
+    }
+
+    /* Set the vtype */
+    if (tag == L_STORE) {
+        lens->vtype = restrict_regexp(lens->regexp);
     }
 
     return make_lens_value(lens);
@@ -449,7 +472,9 @@ static struct value *typecheck_union(struct info *info,
     return exn;
 }
 
-static struct value *ambig_check(struct info *info, struct fa *fa1, struct fa *fa2,
+static struct value *ambig_check(struct info *info,
+                                 struct fa *fa1, struct fa *fa2,
+                                 struct regexp *r1, struct regexp *r2,
                                  const char *msg) {
     char *upv, *pv, *v;
     size_t upv_len;
@@ -463,6 +488,8 @@ static struct value *ambig_check(struct info *info, struct fa *fa1, struct fa *f
         char *e_pv = escape(pv, -1);
         char *e_v = escape(v, -1);
         exn = make_exn_value(ref(info), "%s", msg);
+        exn_printf_line(exn, "  First regexp: /%s/", escape(r1->pattern->str, -1));
+        exn_printf_line(exn, "  Second regexp: /%s/", escape(r2->pattern->str, -1));
         exn_printf_line(exn, "  '%s' can be split into", e_upv);
         exn_printf_line(exn, "  '%s|=|%s'\n", e_u, e_pv);
         exn_printf_line(exn, " and");
@@ -491,7 +518,7 @@ static struct value *ambig_concat_check(struct info *info, const char *msg,
     if (result != NULL)
         goto done;
 
-    result = ambig_check(info, fa1, fa2, msg);
+    result = ambig_check(info, fa1, fa2, r1, r2, msg);
  done:
     fa_free(fa1);
     fa_free(fa2);
@@ -530,7 +557,7 @@ static struct value *ambig_iter_check(struct info *info, const char *msg,
 
     fas = fa_iter(fa, 0, -1);
 
-    result = ambig_check(info, fa, fas, msg);
+    result = ambig_check(info, fa, fas, r, r, msg);
 
  done:
     fa_free(fa);
@@ -576,18 +603,6 @@ static struct value *typecheck_maybe(struct info *info, struct lens *l) {
         }
     }
     return exn;
-}
-
-static struct regexp *make_key_regexp(struct info *info, const char *pat) {
-    struct regexp *regexp;
-    size_t len = strlen(pat) + 4;
-
-    make_ref(regexp);
-    make_ref(regexp->pattern);
-    regexp->info = ref(info);
-    CALLOC(regexp->pattern->str, len);
-    snprintf(regexp->pattern->str, len, "(%s)/", pat);
-    return regexp;
 }
 
 void free_lens(struct lens *lens) {
@@ -648,6 +663,57 @@ void lens_release(struct lens *lens) {
             lens_release(lens->children[i]);
         }
     }
+}
+
+/*
+ * Encoding of tree levels
+ */
+char *enc_format(const char *e, size_t len) {
+    size_t size = 0;
+    char *result = NULL, *r;
+    const char *k = e;
+
+    while (*k && k - e < len) {
+        char *eq,  *slash, *v;
+        eq = strchr(k, ENC_EQ_CH);
+        slash = strchr(eq, ENC_SLASH_CH);
+        assert(eq != NULL && slash != NULL);
+        v = eq + 1;
+
+        size += 6;     /* Surrounding braces */
+        if (k != eq)
+            size += 1 + (eq - k) + 1;
+        if (v != slash)
+            size += 4 + (slash - v) + 1;
+        k = slash + 1;
+    }
+    if (ALLOC_N(result, size + 1) < 0)
+        return NULL;
+
+    k = e;
+    r = result;
+    while (*k && k - e < len) {
+        char *eq,  *slash, *v;
+        eq = strchr(k, ENC_EQ_CH);
+        slash = strchr(eq, ENC_SLASH_CH);
+        assert(eq != NULL && slash != NULL);
+        v = eq + 1;
+
+        r = stpcpy(r, " { \"");
+        if (k != eq) {
+            r = stpcpy(r, "\"");
+            r = stpncpy(r, k, eq - k);
+            r = stpcpy(r, "\"");
+        }
+        if (v != slash) {
+            r = stpcpy (r, " = \"");
+            r = stpncpy(r, v, slash - v);
+            r = stpcpy(r, "\"");
+        }
+        r = stpcpy(r, " }");
+        k = slash + 1;
+    }
+    return result;
 }
 
 /*

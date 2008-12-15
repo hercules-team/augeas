@@ -40,6 +40,16 @@ enum lens_tag {
     L_MAYBE
 };
 
+/* A lens. The way the type information is computed is a little
+ * delicate. There are various regexps involved to form the final type:
+ *
+ * CTYPE - the concrete type, used to parse file -> tree
+ * ATYPE - the abstract type, used to parse tree -> file
+ * KTYPE - the 'key' type, matching the label that this lens
+ *         can produce, or NULL if no label is produced
+ * VTYPE - the 'value' type, matching the value that this lens
+ *         can produce, or NULL if no value is produce
+ */
 struct lens {
     unsigned int              ref;
     enum lens_tag             tag;
@@ -47,6 +57,7 @@ struct lens {
     struct regexp            *ctype;
     struct regexp            *atype;
     struct regexp            *ktype;
+    struct regexp            *vtype;
     unsigned int              value : 1;
     unsigned int              key : 1;
     unsigned int              consumes_value : 1;
@@ -131,6 +142,47 @@ void lns_put(FILE *out, struct lens *lens, struct tree *tree,
    regular expressions */
 void lens_release(struct lens *lens);
 void free_lens(struct lens *lens);
+
+/*
+ * Encoding of tree levels into strings
+ */
+
+/* Special characters used when encoding one level of the tree as a string.
+ * We encode one tree node as KEY . ENC_EQ . VALUE . ENC_SLASH; if KEY or
+ * VALUE are NULL, we use ENC_NULL, which is the empty string. This has the
+ * effect that NULL strings are treated the same as empty strings.
+ *
+ * This encoding is used both for actual trees in the put direction, and to
+ * produce regular expressions describing one level in the tree (we
+ * disregard subtrees)
+ *
+ * For this to work, neither ENC_EQ nor ENC_SLASH can be allowed in a
+ * VALUE; we do this behind the scenes by rewriting regular expressions for
+ * values.
+ */
+#define ENC_EQ        "\003"
+#define ENC_SLASH     "\004"
+#define ENC_NULL      ""
+#define ENC_EQ_CH     (ENC_EQ[0])
+#define ENC_SLASH_CH  (ENC_SLASH[0])
+
+/* The reserved range of characters that we do not allow in user-supplied
+   regular expressions, since we need them for internal bookkeeping.
+
+   This range must include the ENC_* characters
+*/
+#define RESERVED_FROM '\001'
+#define RESERVED_TO   ENC_SLASH_CH
+
+/* The length of the string S encoded */
+#define ENCLEN(s) ((s) == NULL ? strlen(ENC_NULL) : strlen(s))
+#define ENCSTR(s) ((s) == NULL ? ENC_NULL : s)
+
+/* Format an encoded level as
+ *    { key1 = value1 } { key2 = value2 } .. { keyN = valueN }
+ */
+char *enc_format(const char *e, size_t len);
+
 #endif
 
 
