@@ -417,6 +417,8 @@ static void testAsRegexp(CuTest *tc) {
     assertFaAsRegexp(tc, "ab|cd");
     assertFaAsRegexp(tc, "[a-z]+");
     assertFaAsRegexp(tc, "[]a-]+");
+    assertFaAsRegexp(tc, "[^0-9A-Z]");
+    assertFaAsRegexp(tc, "ab|(xy[A-Z0-9])*(uv[^0-9]?)");
     assertFaAsRegexp(tc, "[A-CE-GI-LN-QS-Z]");
 }
 
@@ -460,6 +462,30 @@ static void testNul(CuTest *tc) {
     CuAssertIntEquals(tc, 0, memcmp(re0, re, re0_len));
 }
 
+static void testRestrictAlphabet(CuTest *tc) {
+    const char *re = "ab|(xy[B-Z0-9])*(uv[^0-9]?)";
+    struct fa *fa_exp = make_good_fa(tc, "((xy[0-9])*)uv[^0-9A-Z]?|ab");
+    struct fa *fa_act = NULL;
+    size_t nre_len;
+    char *nre;
+    int r;
+
+    r = fa_restrict_alphabet(re, strlen(re), &nre, &nre_len, 'A', 'Z');
+    CuAssertIntEquals(tc, 0, r);
+    CuAssertIntEquals(tc, nre_len, strlen(nre));
+    fa_act = make_good_fa(tc, nre);
+    CuAssertTrue(tc, fa_equals(fa_exp, fa_act));
+    free(nre);
+
+    r = fa_restrict_alphabet("HELLO", strlen("HELLO"),
+                             &nre, &nre_len, 'A', 'Z');
+    CuAssertIntEquals(tc, -2, r);
+    CuAssertPtrEquals(tc, NULL, nre);
+
+    r = fa_restrict_alphabet("a{2,", strlen("a{2"), &nre, &nre_len, 'A', 'Z');
+    CuAssertIntEquals(tc, REG_EBRACE, r);
+}
+
 int main(int argc, char **argv) {
     if (argc == 1) {
         char *output = NULL;
@@ -480,6 +506,7 @@ int main(int argc, char **argv) {
         SUITE_ADD_TEST(suite, testAsRegexpMinus);
         SUITE_ADD_TEST(suite, testRangeEnd);
         SUITE_ADD_TEST(suite, testNul);
+        SUITE_ADD_TEST(suite, testRestrictAlphabet);
 
         CuSuiteRun(suite);
         CuSuiteSummary(suite, &output);

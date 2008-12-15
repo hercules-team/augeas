@@ -19,5 +19,6 @@ FA_1.0.0 {
       fa_example;
       fa_ambig_example;
       fa_as_regexp;
+      fa_restrict_alphabet;
     local: *;
 };

@@ -197,6 +197,26 @@ int fa_ambig_example(struct fa *fa1, struct fa *fa2,
  * to fail for FA_AS_REGEXP is running out of memory.
  */
 int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len);
+
+/* Given the regular expression REGEXP construct a new regular expression
+ * NEWREGEXP that does not match strings containing any of the characters
+ * in the range FROM to TO, with the endpoints included.
+ *
+ * The new regular expression is constructed by removing the range FROM to
+ * TO from all character sets in REGEXP; if any of the characters [FROM,
+ * TO] appear outside a character set in REGEXP, return -2.
+ *
+ * Return 0 if NEWREGEXP was constructed successfully, -1 if an internal
+ * error happened (e.g., an allocation failed) and -2 if NEWREGEXP can not
+ * be constructed because any character in the range [FROM, TO] appears
+ * outside of a character set.
+ *
+ * Return a positive value if REGEXP is not syntactically valid; the value
+ * returned is one of the REG_ERRCODE_T POSIX error codes.
+ */
+int fa_restrict_alphabet(const char *regexp, size_t regexp_len,
+                         char **newregexp, size_t *newregexp_len,
+                         char from, char to);
 #endif
 
 
