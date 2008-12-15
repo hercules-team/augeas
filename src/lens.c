@@ -21,9 +21,19 @@
  */
 
 #include <config.h>
+#include <stddef.h>
 
 #include "lens.h"
 #include "memory.h"
+
+static const int const type_offs[] = {
+    offsetof(struct lens, ctype),
+    offsetof(struct lens, atype),
+    offsetof(struct lens, ktype)
+};
+static const int ntypes = sizeof(type_offs)/sizeof(type_offs[0]);
+
+#define ltype(lns, t) *((struct regexp **) ((char *) lns + type_offs[t]))
 
 static struct value * typecheck_union(struct info *,
                                       struct lens *l1, struct lens *l2);
@@ -145,17 +155,11 @@ static struct lens *make_lens_binop(enum lens_tag tag, struct info *info,
     if (ALLOC_N(types, lens->nchildren) < 0)
         goto error;
 
-    for (int i=0; i < lens->nchildren; i++)
-        types[i] = lens->children[i]->ctype;
-    lens->ctype = (*combinator)(info, lens->nchildren, types);
-
-    for (int i=0; i < lens->nchildren; i++)
-        types[i] = lens->children[i]->atype;
-    lens->atype = (*combinator)(info, lens->nchildren, types);
-
-    for (int i=0; i < lens->nchildren; i++)
-        types[i] = lens->children[i]->ktype;
-    lens->ktype = (*combinator)(info, lens->nchildren, types);
+    for (int t=0; t < ntypes; t++) {
+        for (int i=0; i < lens->nchildren; i++)
+            types[i] = ltype(lens->children[i], t);
+        ltype(lens, t) = (*combinator)(info, lens->nchildren, types);
+    }
 
     FREE(types);
 
@@ -242,9 +246,9 @@ struct value *lns_make_star(struct info *info, struct lens *l, int check) {
     }
 
     lens = make_lens_unop(L_STAR, info, l);
-    lens->ctype = regexp_iter(info, l->ctype, 0, -1);
-    lens->atype = regexp_iter(info, l->atype, 0, -1);
-    lens->ktype = regexp_iter(info, l->ktype, 0, -1);
+    for (int t = 0; t < ntypes; t++) {
+        ltype(lens, t) = regexp_iter(info, ltype(l, t), 0, -1);
+    }
     return make_lens_value(lens);
 }
 
@@ -270,9 +274,8 @@ struct value *lns_make_maybe(struct info *info, struct lens *l, int check) {
         }
     }
     lens = make_lens_unop(L_MAYBE, info, l);
-    lens->ctype = regexp_maybe(info, l->ctype);
-    lens->atype = regexp_maybe(info, l->atype);
-    lens->ktype = regexp_maybe(info, l->ktype);
+    for (int t=0; t < ntypes; t++)
+        ltype(lens, t) = regexp_maybe(info, ltype(l, t));
     lens->value = l->value;
     lens->key = l->key;
     return make_lens_value(lens);
@@ -593,8 +596,9 @@ void free_lens(struct lens *lens) {
     assert(lens->ref == 0);
 
     unref(lens->info, info);
-    unref(lens->ctype, regexp);
-    unref(lens->atype, regexp);
+    for (int t=0; t < ntypes; t++)
+        unref(ltype(lens, t), regexp);
+
     switch (lens->tag) {
     case L_DEL:
         unref(lens->regexp, regexp);
@@ -628,10 +632,9 @@ void free_lens(struct lens *lens) {
 }
 
 void lens_release(struct lens *lens) {
-    if (lens == NULL)
-        return;
-    regexp_release(lens->ctype);
-    regexp_release(lens->atype);
+    for (int t=0; t < ntypes; t++)
+        regexp_release(ltype(lens, t));
+
     if (lens->tag == L_KEY || lens->tag == L_STORE)
         regexp_release(lens->regexp);
 
