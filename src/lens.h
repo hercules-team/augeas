@@ -46,6 +46,7 @@ struct lens {
     struct info              *info;
     struct regexp            *ctype;
     struct regexp            *atype;
+    struct regexp            *ktype;
     unsigned int              value : 1;
     unsigned int              key : 1;
     unsigned int              consumes_value : 1;

@@ -32,7 +32,6 @@ static struct value *typecheck_concat(struct info *,
 static struct value *typecheck_iter(struct info *info, struct lens *l);
 static struct value *typecheck_maybe(struct info *info, struct lens *l);
 
-static struct regexp *lns_key_regexp(struct lens *l, struct value **exn);
 static struct regexp *make_key_regexp(struct info *info, const char *pat);
 
 /* Lens names for pretty printing */
@@ -40,6 +39,11 @@ static const char *const tags[] = {
     "del", "store", "key", "label", "seq", "counter", "concat", "union",
     "subtree", "star", "maybe"
 };
+
+static const struct string digits_string = {
+    .ref = REF_MAX, .str = (char *) "[0-9]+/"
+};
+static const struct string *const digits_pat = &digits_string;
 
 /* Construct a finite automaton from REGEXP and return it in *FA.
  *
@@ -149,6 +153,10 @@ static struct lens *make_lens_binop(enum lens_tag tag, struct info *info,
         types[i] = lens->children[i]->atype;
     lens->atype = (*combinator)(info, lens->nchildren, types);
 
+    for (int i=0; i < lens->nchildren; i++)
+        types[i] = lens->children[i]->ktype;
+    lens->ktype = (*combinator)(info, lens->nchildren, types);
+
     FREE(types);
 
     for (int i=0; i < lens->nchildren; i++)
@@ -207,16 +215,10 @@ struct value *lns_make_concat(struct info *info,
 
 struct value *lns_make_subtree(struct info *info, struct lens *l) {
     struct lens *lens;
-    struct value *exn;
-    struct regexp *atype;
-
-    atype = lns_key_regexp(l, &exn);
-    if (exn != NULL)
-        return exn;
 
     lens = make_lens_unop(L_SUBTREE, info, l);
     lens->ctype = ref(l->ctype);
-    lens->atype = atype;
+    lens->atype = ref(l->ktype);
     lens->value = lens->key = 0;
     if (lens->atype == NULL)
         lens->atype = make_key_regexp(info, "");
@@ -242,6 +244,7 @@ struct value *lns_make_star(struct info *info, struct lens *l, int check) {
     lens = make_lens_unop(L_STAR, info, l);
     lens->ctype = regexp_iter(info, l->ctype, 0, -1);
     lens->atype = regexp_iter(info, l->atype, 0, -1);
+    lens->ktype = regexp_iter(info, l->ktype, 0, -1);
     return make_lens_value(lens);
 }
 
@@ -269,6 +272,7 @@ struct value *lns_make_maybe(struct info *info, struct lens *l, int check) {
     lens = make_lens_unop(L_MAYBE, info, l);
     lens->ctype = regexp_maybe(info, l->ctype);
     lens->atype = regexp_maybe(info, l->atype);
+    lens->ktype = regexp_maybe(info, l->ktype);
     lens->value = l->value;
     lens->key = l->key;
     return make_lens_value(lens);
@@ -277,6 +281,18 @@ struct value *lns_make_maybe(struct info *info, struct lens *l, int check) {
 /*
  * Lens primitives
  */
+
+static struct regexp *make_regexp_from_string(struct info *info,
+                                              struct string *string) {
+    struct regexp *r;
+    make_ref(r);
+    if (r != NULL) {
+        r->info = ref(info);
+        r->pattern = ref(string);
+    }
+    return r;
+}
+
 struct value *lns_make_prim(enum lens_tag tag, struct info *info,
                             struct regexp *regexp, struct string *string) {
     struct lens *lens = NULL;
@@ -337,6 +353,7 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
     lens->value = (tag == L_STORE);
     lens->consumes_value = (tag == L_STORE);
     lens->atype = regexp_make_empty(info);
+    /* Set the ctype */
     if (tag == L_DEL || tag == L_STORE || tag == L_KEY) {
         lens->ctype = ref(regexp);
     } else if (tag == L_LABEL || tag == L_SEQ || tag == L_COUNTER) {
@@ -344,6 +361,25 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
     } else {
         assert(0);
     }
+
+    /* Set the ktype */
+    if (tag == L_SEQ) {
+        lens->ktype =
+            make_regexp_from_string(info, (struct string *) digits_pat);
+    } else if (tag == L_KEY) {
+        lens->ktype = make_key_regexp(info, lens->regexp->pattern->str);
+    } else if (tag == L_LABEL) {
+        struct regexp *r = make_regexp_literal(info, lens->string->str);
+        if (r == NULL)
+            goto error;
+        if (REALLOC_N(r->pattern->str, strlen(r->pattern->str) + 2) == -1) {
+            unref(r, regexp);
+            goto error;
+        }
+        strcat(r->pattern->str, "/");
+        lens->ktype = r;
+    }
+
     return make_lens_value(lens);
  error:
     fa_free(fa_isect);
@@ -549,110 +585,6 @@ static struct regexp *make_key_regexp(struct info *info, const char *pat) {
     CALLOC(regexp->pattern->str, len);
     snprintf(regexp->pattern->str, len, "(%s)/", pat);
     return regexp;
-}
-
-static struct regexp *make_regexp_from_string(struct info *info,
-                                              struct string *string) {
-    struct regexp *r;
-    make_ref(r);
-    if (r != NULL) {
-        r->info = ref(info);
-        r->pattern = ref(string);
-    }
-    return r;
-}
-
-/* Calculate the regexp that matches the labels if the trees that L can
-   generate.
-
-   We have some headache here because of the behavior of STORE: since STORE
-   creates a tree with no label (a leaf, really), its key regexp should be
-   "/", but only of there is no KEY or LABEL statement that fills in the
-   label of the tree that STORE created.
- */
-static struct regexp *lns_key_regexp(struct lens *l, struct value **exn) {
-    static const struct string digits_string = {
-        .ref = REF_MAX, .str = (char *) "[0-9]+/"
-    };
-    static const struct string *const digits_pat = &digits_string;
-
-    *exn = NULL;
-    switch(l->tag) {
-    case L_STORE:
-    case L_DEL:
-    case L_COUNTER:
-        return NULL;
-    case L_SEQ:
-        return make_regexp_from_string(l->info, (struct string *) digits_pat);
-    case L_KEY:
-        return make_key_regexp(l->info, l->regexp->pattern->str);
-    case L_LABEL:
-        {
-            struct regexp *r = make_regexp_literal(l->info, l->string->str);
-            if (r == NULL)
-                return NULL;
-            if (REALLOC_N(r->pattern->str, strlen(r->pattern->str) + 2) == -1) {
-                unref(r, regexp);
-                return NULL;
-            }
-            strcat(r->pattern->str, "/");
-            return r;
-        }
-    case L_CONCAT:
-        {
-            struct regexp *k = NULL;
-            for (int i=0; i < l->nchildren; i++) {
-                struct regexp *r = lns_key_regexp(l->children[i], exn);
-                if (*exn != NULL) {
-                    free_regexp(k);
-                    return NULL;
-                }
-                if (r != NULL) {
-                    if (k != NULL) {
-                        *exn = make_exn_value(ref(l->info),
-                                              "More than one key");
-                        unref(r, regexp);
-                        unref(k, regexp);
-                        return NULL;
-                    } else {
-                        k = r;
-                    }
-                }
-            }
-            return k;
-        }
-        break;
-    case L_UNION:
-        {
-            struct regexp *k = NULL;
-            for (int i=0; i < l->nchildren; i++) {
-                struct regexp *r = lns_key_regexp(l->children[i], exn);
-                if (*exn != NULL)
-                    return NULL;
-                if (r != NULL) {
-                    if (k == NULL) {
-                        k = r;
-                    } else {
-                        struct regexp *u = regexp_union(l->info, k, r);
-                        unref(k, regexp);
-                        unref(r, regexp);
-                        k = u;
-                    }
-                }
-            }
-            return k;
-        }
-        break;
-    case L_SUBTREE:
-        return NULL;
-        break;
-    case L_STAR:
-    case L_MAYBE:
-        return lns_key_regexp(l->child, exn);
-    default:
-        assert(0);
-    }
-    return NULL;
 }
 
 void free_lens(struct lens *lens) {
