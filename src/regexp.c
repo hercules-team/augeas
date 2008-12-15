@@ -229,10 +229,14 @@ regexp_minus(struct info *info, struct regexp *r1, struct regexp *r2) {
 
 struct regexp *
 regexp_iter(struct info *info, struct regexp *r, int min, int max) {
-    const char *p = r->pattern->str;
+    const char *p;
     char *s;
     int ret = 0;
 
+    if (r == NULL)
+        return NULL;
+
+    p = r->pattern->str;
     if ((min == 0 || min == 1) && max == -1) {
         char q = (min == 0) ? '*' : '+';
         ret = asprintf(&s, "(%s)%c", p, q);
@@ -246,10 +250,13 @@ regexp_iter(struct info *info, struct regexp *r, int min, int max) {
 
 struct regexp *
 regexp_maybe(struct info *info, struct regexp *r) {
-    const char *p = r->pattern->str;
+    const char *p;
     char *s;
     int ret;
 
+    if (r == NULL)
+        return NULL;
+    p = r->pattern->str;
     ret = asprintf(&s, "(%s)?", p);
     return (ret == -1) ? NULL : make_regexp(info, s);
 }
