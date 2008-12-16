@@ -75,6 +75,7 @@ module Shellvars =
       sc_incl "samba" .
       sc_incl "saslauthd" .
       sc_incl "selinux" .
+      sc_incl "sendmail" .
       sc_incl "smartmontools" .
       sc_incl "spamassassin" .
       sc_incl "sysstat" .
