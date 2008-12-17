@@ -104,11 +104,11 @@ static void free_path(struct path *path) {
     free(path);
 }
 
-/* Return the start of the list of siblings of SEG->TREE */
-static struct tree *seg_siblings(struct segment *seg) {
-    if (seg->tree == NULL || seg->tree->parent == NULL)
+/* Return the start of the list of siblings of TREE */
+static struct tree *tree_siblings(struct tree *tree) {
+    if (tree == NULL || tree->parent == NULL)
         return NULL;
-    return seg->tree->parent->children;
+    return tree->parent->children;
 }
 
 /* Take a path expression PATH and turn it into a path structure usable for
@@ -200,7 +200,7 @@ static int complete_path(struct path *path, int segnr, struct tree *tree) {
     while (1) {
         struct segment *seg = path->segments + cur;
         int found = 0;
-        struct tree *siblings = seg_siblings(seg);
+        struct tree *siblings = tree_siblings(seg->tree);
         list_for_each(t, seg->tree) {
             if (seg->any || streqv(t->label, seg->label)) {
                 int indx = sibling_index(siblings, t);
@@ -231,7 +231,7 @@ static int complete_path(struct path *path, int segnr, struct tree *tree) {
 static struct tree *path_next(struct path *path) {
     for (int i = path->nsegments-1; i >= 0; i--) {
         struct segment *seg = path->segments + i;
-        struct tree *siblings = seg_siblings(seg);
+        struct tree *siblings = tree_siblings(seg->tree);
         if (! seg->fixed) {
             list_for_each(t, seg->tree->next) {
                 if (seg->any || streqv(t->label, seg->label)) {
