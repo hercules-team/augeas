@@ -589,7 +589,7 @@ static struct tree *get_subtree(struct lens *lens, struct state *state) {
     state->value = NULL;
     children = get_lens(lens->child, state);
 
-    tree = make_tree(state->key, state->value, children);
+    tree = make_tree(state->key, state->value, NULL, children);
 
     state->key = key;
     state->value = value;

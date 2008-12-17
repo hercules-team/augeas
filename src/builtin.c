@@ -177,7 +177,7 @@ static struct value *tree_set_glue(struct info *info, struct value *path,
     struct tree *fake = NULL;
 
     if (tree->tree == NULL) {
-        fake = make_tree(NULL, NULL, NULL);
+        fake = make_tree(NULL, NULL, NULL, NULL);
         tree->tree = fake;
     }
 

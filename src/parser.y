@@ -291,11 +291,11 @@ tree_const: '{' tree_branch '}' tree_const
 
 tree_branch: tree_label tree_const
              {
-               $$ = make_tree($1, NULL, $2);
+               $$ = make_tree($1, NULL, NULL, $2);
              }
            | tree_label '=' DQUOTED tree_const
              {
-               $$ = make_tree($1, $3, $4);
+               $$ = make_tree($1, $3, NULL, $4);
              }
 tree_label: DQUOTED
           | /* empty */
