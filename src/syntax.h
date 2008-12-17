@@ -303,7 +303,7 @@ struct value {
         struct regexp  *regexp;  /* V_REGEXP */
         struct lens    *lens;    /* V_LENS */
         struct native  *native;  /* V_NATIVE */
-        struct tree    *tree;    /* V_TREE */
+        struct tree    *origin;  /* V_TREE */
         struct filter  *filter;  /* V_FILTER */
         struct transform *transform; /* V_TRANSFORM */
         struct exn     *exn;     /* V_EXN */

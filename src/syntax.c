@@ -292,7 +292,7 @@ void free_value(struct value *v) {
         unref(v->lens, lens);
         break;
     case V_TREE:
-        free_tree(v->tree);
+        free_tree(v->origin);
         break;
     case V_FILTER:
         unref(v->filter, filter);
@@ -625,7 +625,7 @@ static void print_value(FILE *out, struct value *v) {
         fprintf(out, ">");
         break;
     case V_TREE:
-        print_tree(v->tree, stdout, "/*" , 1);
+        print_tree(v->origin->children, stdout, "/*" , 1);
         break;
     case V_FILTER:
         fprintf(out, "<filter:");
@@ -681,7 +681,7 @@ static int value_equal(struct value *v1, struct value *v2) {
         return v1->lens == v2->lens;
         break;
     case V_TREE:
-        return tree_equal(v1->tree, v2->tree);
+        return tree_equal(v1->origin->children, v2->origin->children);
         break;
     case V_FILTER:
         return v1->filter == v2->filter;

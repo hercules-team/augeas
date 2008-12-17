@@ -245,7 +245,7 @@ char* read_file(const char *path);
 /* Struct: augeas
  * The data structure representing a connection to Augeas. */
 struct augeas {
-    struct tree      *tree;
+    struct tree      *origin;     /* Actual tree root is origin->children */
     const char       *root;       /* Filesystem root for all files */
                                   /* always ends with '/' */
     unsigned int      flags;      /* Flags passed to AUG_INIT */
@@ -258,15 +258,22 @@ struct augeas {
 /* Struct: tree
  * An entry in the global config tree. The data structure allows associating
  * values with interior nodes, but the API currently marks that as an error.
+ *
+ * To make dealing with parents uniform, even for the root, we create
+ * standalone trees with a fake root, called origin. That root is generally
+ * not referenced from anywhere. Standalone trees should be created with
+ * MAKE_TREE_ORIGIN.
  */
 struct tree {
     struct tree *next;
-    struct tree *parent;     /* NULL for root */
+    struct tree *parent;     /* Points to self for root */
     char        *label;      /* Last component of PATH */
     struct tree *children;   /* List of children through NEXT */
     char        *value;
     int          dirty;
 };
+
+#define ROOT_P(t) ((t) != NULL && (t)->parent == (t)->parent->parent)
 
 /* Function: make_tree
  * Allocate a new tree node with the given LABEL, VALUE, and CHILDREN,
@@ -275,11 +282,17 @@ struct tree {
 struct tree *make_tree(char *label, char *value,
                        struct tree *parent, struct tree *children);
 
+/* Mark a tree as a standalone tree; this creates a fake parent for ROOT,
+ * so that even ROOT has a parent. A new node with only child ROOT is
+ * returned on success, and NULL on failure.
+ */
+struct tree  *make_tree_origin(struct tree *root);
+
 int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub);
 
-int tree_rm(struct tree **tree, const char *path);
+int tree_rm(struct tree *origin, const char *path);
 struct tree *tree_set(struct tree *tree, const char *path, const char *value);
-int tree_insert(struct tree **tree, const char *path, const char *label,
+int tree_insert(struct tree *origin, const char *path, const char *label,
                 int before);
 int free_tree(struct tree *tree);
 int print_tree(const struct tree *tree, FILE *out, const char *path,

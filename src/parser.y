@@ -479,7 +479,7 @@ static struct term *make_test(struct term *test, struct term *result,
 static struct term *make_tree_value(struct tree *tree, struct info *locp) {
   struct term *term = make_term_locp(A_VALUE, locp);
   struct value *value = make_value(V_TREE, ref(term->info));
-  value->tree = tree;
+  value->origin = make_tree_origin(tree);
   term->type = make_base_type(T_TREE);
   term->value = value;
   return term;

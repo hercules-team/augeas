@@ -124,12 +124,14 @@ static struct value *lens_get(struct info *info, struct value *l,
     struct tree *tree = lns_get(info, l->lens, text, &err);
     if (err == NULL) {
         v = make_value(V_TREE, ref(info));
-        v->tree = tree;
+        v->origin = make_tree_origin(tree);
     } else {
+        tree = make_tree_origin(tree);
+
         v = make_exn_lns_error(info, err, text);
         if (tree != NULL) {
             exn_printf_line(v, "Tree generated so far:");
-            exn_print_tree(v, tree);
+            exn_print_tree(v, tree->children);
             free_tree(tree);
         }
         free_lns_error(err);
@@ -150,7 +152,8 @@ static struct value *lens_put(struct info *info, struct value *l,
     struct lns_error *err;
 
     init_memstream(&ms);
-    lns_put(ms.stream, l->lens, tree->tree, str->string->str, &err);
+    lns_put(ms.stream, l->lens, tree->origin->children,
+            str->string->str, &err);
     close_memstream(&ms);
 
     if (err == NULL) {
@@ -176,18 +179,19 @@ static struct value *tree_set_glue(struct info *info, struct value *path,
 
     struct tree *fake = NULL;
 
-    if (tree->tree == NULL) {
-        fake = make_tree(NULL, NULL, NULL, NULL);
-        tree->tree = fake;
+    if (tree->origin->children == NULL) {
+        tree->origin->children = make_tree(NULL, NULL, tree->origin, NULL);
+        fake = tree->origin->children;
     }
 
-    if (tree_set(tree->tree, path->string->str, val->string->str) == NULL) {
+    if (tree_set(tree->origin->children, path->string->str,
+                 val->string->str) == NULL) {
         return make_exn_value(ref(info),
                               "Tree set of %s to '%s' failed",
                               path->string->str, val->string->str);
     }
     if (fake != NULL) {
-        list_remove(fake, tree->tree);
+        list_remove(fake, tree->origin->children);
         free_tree(fake);
     }
 
@@ -205,7 +209,7 @@ static struct value *tree_insert_glue(struct info *info, struct value *label,
     assert(tree->tag == V_TREE);
 
     int r;
-    r = tree_insert(&(tree->tree), path->string->str,
+    r = tree_insert(tree->origin, path->string->str,
                     label->string->str, before);
     if (r != 0) {
         return make_exn_value(ref(info),
@@ -239,7 +243,7 @@ static struct value *tree_rm_glue(struct info *info,
     // need to copy TREE first
     assert(path->tag == V_STRING);
     assert(tree->tag == V_TREE);
-    if (tree_rm(&tree->tree, path->string->str) == -1) {
+    if (tree_rm(tree->origin, path->string->str) == -1) {
         return make_exn_value(ref(info), "Tree rm of %s failed",
                               path->string->str);
     }
