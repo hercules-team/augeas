@@ -229,7 +229,7 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
     if (value != NULL)
         *value = NULL;
 
-    r = path_find_one(p, &match, NULL);
+    r = path_find_one(p, &match);
     if (r == 1 && value != NULL)
         *value = match->value;
     free_path(p);
@@ -284,7 +284,7 @@ int tree_insert(struct tree *origin, const char *path, const char *label,
     if (p == NULL)
         goto error;
 
-    if (path_find_one(p, &match, NULL) != 1)
+    if (path_find_one(p, &match) != 1)
         goto error;
 
     new = make_tree(strdup(label), NULL, match->parent, NULL);
@@ -447,7 +447,7 @@ int aug_mv(struct augeas *aug, const char *src, const char *dst) {
     if (s == NULL || d == NULL)
         goto done;
 
-    r = path_find_one(s, &ts, NULL);
+    r = path_find_one(s, &ts);
     if (r != 1)
         goto done;
 
@@ -607,7 +607,7 @@ int aug_save(struct augeas *aug) {
     struct tree *files;
     struct path *p = make_path(aug->origin->children, AUGEAS_FILES_TREE);
 
-    if (p == NULL || path_find_one(p, &files, NULL) != 1) {
+    if (p == NULL || path_find_one(p, &files) != 1) {
         free_path(p);
         return -1;
     }

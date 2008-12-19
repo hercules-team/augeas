@@ -253,7 +253,7 @@ struct tree *path_first(struct path *path) {
  * number of the segment in PATH where MATCH matched. If no node matches,
  * MATCH will be NULL, and SEGNR -1
  */
-int path_find_one(struct path *path, struct tree **match, int *segnr) {
+static int path_search(struct path *path, struct tree **match, int *segnr) {
     struct tree **matches = NULL;
     int *nmatches = NULL;
     int result;
@@ -327,7 +327,7 @@ int path_expand_tree(struct path *path, struct tree **tree) {
     int r, segnr;
 
     *tree = path->root;
-    r = path_find_one(path, tree, &segnr);
+    r = path_search(path, tree, &segnr);
     if (r == -1)
         return -1;
 
@@ -364,6 +364,17 @@ int path_expand_tree(struct path *path, struct tree **tree) {
     return -1;
 }
 
+int path_find_one(struct path *path, struct tree **tree) {
+    *tree = path_first(path);
+    if (*tree == NULL)
+        return 0;
+
+    if (path_next(path, *tree) != NULL) {
+        *tree = NULL;
+        return -1;
+    }
+    return 1;
+}
 /*
  * Local variables:
  *  indent-tabs-mode: nil
