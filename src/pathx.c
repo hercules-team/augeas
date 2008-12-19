@@ -323,36 +323,45 @@ int path_find_one(struct path *path, struct tree **match, int *segnr) {
  * Return the first segment that was created by this operation, or NULL on
  * error.
  */
-struct tree *tree_create(struct path *path, struct tree *parent,
-                         int segnr) {
-    struct segment *s, *seg;
-    struct tree *first_child = NULL;
+int path_expand_tree(struct path *path, struct tree **tree) {
+    int r, segnr;
+
+    *tree = path->root;
+    r = path_find_one(path, tree, &segnr);
+    if (r == -1)
+        return -1;
 
     if (segnr == path->nsegments - 1)
         return 0;
 
+    struct tree *first_child = NULL;
+    struct tree *parent = *tree;
+    struct segment *seg = path->segments + segnr + 1;
+
     if (parent == NULL)
         parent = path->root->parent;
 
-    seg = path->segments + segnr + 1;
-    for (s = seg ; s <= last_segment(path); s++) {
-        struct tree *tree = make_tree(strdup(s->label), NULL, parent, NULL);
+    for (struct segment *s = seg ; s <= last_segment(path); s++) {
+        struct tree *t = make_tree(strdup(s->label), NULL, parent, NULL);
         if (first_child == NULL)
-            first_child = tree;
-        if (tree == NULL || tree->label == NULL)
+            first_child = t;
+        if (t == NULL || t->label == NULL)
             goto error;
-        list_append(parent->children, tree);
-        parent = tree;
+        list_append(parent->children, t);
+        parent = t;
     }
 
     while (first_child->children != NULL)
         first_child = first_child->children;
 
-    return first_child;
+    *tree = first_child;
+    return 0;
+
  error:
     list_remove(first_child, first_child->parent->children);
     free_tree(first_child);
-    return NULL;
+    *tree = NULL;
+    return -1;
 }
 
 /*

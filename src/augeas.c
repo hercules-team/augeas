@@ -93,7 +93,6 @@ static char *format_path(struct tree *tree) {
     return path;
 }
 
-
 /* Propagate dirty flags towards the root */
 static int tree_propagate_dirty(struct tree *tree) {
     if (tree->dirty)
@@ -241,19 +240,14 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
 struct tree *tree_set(struct tree *root, const char *path, const char *value) {
     struct tree *tree;
     struct path *p = make_path(root, path);
-    int r, segnr;
+    int r;
 
     if (p == NULL)
         goto error;
 
-    r = path_find_one(p, &tree, &segnr);
+    r = path_expand_tree(p, &tree);
     if (r == -1)
         goto error;
-
-    if (r == 0) {
-        if ((tree = tree_create(p, tree, segnr)) == NULL)
-            goto error;
-    }
     free_path(p);
 
     if (tree->value != NULL) {
@@ -447,7 +441,7 @@ int aug_mv(struct augeas *aug, const char *src, const char *dst) {
     struct path *s = make_path(root, src);
     struct path *d = make_path(root, dst);
     struct tree *ts, *td, *t;
-    int r, ret, segnr;
+    int r, ret;
 
     ret = -1;
     if (s == NULL || d == NULL)
@@ -457,14 +451,9 @@ int aug_mv(struct augeas *aug, const char *src, const char *dst) {
     if (r != 1)
         goto done;
 
-    r = path_find_one(d, &td, &segnr);
+    r = path_expand_tree(d, &td);
     if (r == -1)
         goto done;
-
-    if (r == 0) {
-        if ((td = tree_create(d, td, segnr)) == NULL)
-            goto done;
-    }
 
     /* Don't move SRC into its own descendent */
     t = td;
