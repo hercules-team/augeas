@@ -350,14 +350,14 @@ int close_memstream(struct memstream *ms);
  * Path expressions
  */
 
-struct path;
+struct pathx;
 
-struct path *make_path(const struct tree *root, const char *path);
-struct tree *path_first(struct path *path);
-struct tree *path_next(struct path *path, struct tree *cur);
-int path_find_one(struct path *path, struct tree **match);
-int path_expand_tree(struct path *path, struct tree **tree);
-void free_path(struct path *path);
+int pathx_parse(const struct tree *root, const char *path, struct pathx **px);
+struct tree *pathx_first(struct pathx *path);
+struct tree *pathx_next(struct pathx *path, struct tree *cur);
+int pathx_find_one(struct pathx *path, struct tree **match);
+int pathx_expand_tree(struct pathx *path, struct tree **tree);
+void free_pathx(struct pathx *path);
 
 #endif
 

@@ -38,14 +38,14 @@ struct segment {
     char        *label;
 };
 
-struct path {
+struct pathx {
     size_t      nsegments;
     struct segment *segments;
     struct tree    *root;
 };
 
 #define for_each_segment(seg, path)                                 \
-    for (typeof(path->segments) (seg) = (path)->segments;           \
+    for (typeof((path)->segments) (seg) = (path)->segments;         \
          (seg) < (path)->segments + (path)->nsegments;              \
          (seg)++)
 
@@ -80,7 +80,7 @@ static int sibling_index(struct tree *tree) {
     return indx;
 }
 
-void free_path(struct path *path) {
+void free_pathx(struct pathx *path) {
     if (path == NULL)
         return;
 
@@ -102,32 +102,31 @@ void free_path(struct path *path) {
  * SEGMENT = STRING ('[' N ']') ? | '*'
  * where STRING is any string not containing '/' and N is a positive number
  */
-struct path *make_path(const struct tree *root, const char *path) {
-    struct path *result;
+int pathx_parse(const struct tree *root, const char *path,
+                struct pathx **px) {
 
-    CALLOC(result, 1);
-    if (result == NULL)
-        return NULL;
-    result->root = (struct tree *) root;
+    if (ALLOC(*px) < 0)
+        return -1;
+    (*px)->root = (struct tree *) root;
 
     if (*path != SEP)
-        result->nsegments = 1;
+        (*px)->nsegments = 1;
     for (const char *p = path; *p != '\0'; p++) {
         if (*p == SEP) {
             while (*p == SEP) p++;
             if (*p == '\0')
                 break;
-            result->nsegments++;
+            (*px)->nsegments++;
         }
     }
-    if (result->nsegments == 0)
+    if ((*px)->nsegments == 0)
         goto error;
 
-    CALLOC(result->segments, result->nsegments);
-    if (result->segments == NULL)
+    CALLOC((*px)->segments, (*px)->nsegments);
+    if ((*px)->segments == NULL)
         goto error;
 
-    for_each_segment(seg, result) {
+    for_each_segment(seg, *px) {
         const char *next, *brack;
 
         while (*path == SEP)
@@ -162,11 +161,11 @@ struct path *make_path(const struct tree *root, const char *path) {
         path = next;
         while (*path == SEP) path += 1;
     }
-    return result;
+    return 0;
 
  error:
-    free_path(result);
-    return NULL;
+    free_pathx(*px);
+    return -1;
 }
 
 static void calc_last_index(struct segment *seg, struct tree *tree) {
@@ -205,7 +204,7 @@ static int tree_next(struct tree **tree, int *depth, int mindepth) {
 
 /* Given a node TREE that should match the segment SEGNR in PATH,
    find the next node that matches all of PATH, or return NULL */
-static struct tree *complete_path(struct path *path, int segnr,
+static struct tree *complete_path(struct pathx *path, int segnr,
                                   struct tree *tree) {
     int cur = segnr;
 
@@ -230,7 +229,7 @@ static struct tree *complete_path(struct path *path, int segnr,
     }
 }
 
-struct tree *path_next(struct path *path, struct tree *cur) {
+struct tree *pathx_next(struct pathx *path, struct tree *cur) {
     int segnr = path->nsegments - 1;
 
     if (tree_next(&cur, &segnr, -1) < 0)
@@ -240,7 +239,7 @@ struct tree *path_next(struct path *path, struct tree *cur) {
 }
 
 /* Find the first node in TREE matching PATH. */
-struct tree *path_first(struct path *path) {
+struct tree *pathx_first(struct pathx *path) {
     return complete_path(path, 0, path->root);
 }
 
@@ -253,7 +252,7 @@ struct tree *path_first(struct path *path) {
  * number of the segment in PATH where MATCH matched. If no node matches,
  * MATCH will be NULL, and SEGNR -1
  */
-static int path_search(struct path *path, struct tree **match, int *segnr) {
+static int path_search(struct pathx *path, struct tree **match, int *segnr) {
     struct tree **matches = NULL;
     int *nmatches = NULL;
     int result;
@@ -323,7 +322,7 @@ static int path_search(struct path *path, struct tree **match, int *segnr) {
  * Return the first segment that was created by this operation, or NULL on
  * error.
  */
-int path_expand_tree(struct path *path, struct tree **tree) {
+int pathx_expand_tree(struct pathx *path, struct tree **tree) {
     int r, segnr;
 
     *tree = path->root;
@@ -364,12 +363,12 @@ int path_expand_tree(struct path *path, struct tree **tree) {
     return -1;
 }
 
-int path_find_one(struct path *path, struct tree **tree) {
-    *tree = path_first(path);
+int pathx_find_one(struct pathx *path, struct tree **tree) {
+    *tree = pathx_first(path);
     if (*tree == NULL)
         return 0;
 
-    if (path_next(path, *tree) != NULL) {
+    if (pathx_next(path, *tree) != NULL) {
         *tree = NULL;
         return -1;
     }
