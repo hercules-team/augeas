@@ -87,9 +87,12 @@ module Shellvars =
 
   let filter_ifcfg   = incl "/etc/sysconfig/network-scripts/ifcfg-*"
   let filter_default = incl "/etc/default/*"
+  let filter_misc    = incl "/etc/arno-iptables-firewall/debconf.cfg"
+                     . incl "/etc/cron-apt/config"
   let filter = filter_sysconfig
              . filter_ifcfg
              . filter_default
+             . filter_misc
              . Util.stdexcl
 
   let xfm = transform lns filter
