@@ -424,7 +424,7 @@ static int transfer_file_attrs(const char *from, const char *to,
         return -1;
     }
     if (selinux_enabled) {
-        if (lgetfilecon(from, &con) < 0) {
+        if (lgetfilecon(from, &con) < 0 && errno != ENOTSUP) {
             *err_status = "replace_getfilecon";
             return -1;
         }
@@ -439,7 +439,7 @@ static int transfer_file_attrs(const char *from, const char *to,
         return -1;
     }
     if (selinux_enabled && con != NULL) {
-        if (lsetfilecon(to, con) < 0) {
+        if (lsetfilecon(to, con) < 0 && errno != ENOTSUP) {
             *err_status = "replace_setfilecon";
             return -1;
         }
