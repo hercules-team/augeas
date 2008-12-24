@@ -1,3 +1,28 @@
+0.3.5 - 2008-12-23
+  - add an option to rewrite files by overwriting their contents instead of
+    putting the new file in place atomically with rename(2); file contents
+    are only copied after rename fails with EXDEV or EBUSY, and only if the
+    node /augeas/save/copy_if_rename_fails (fix #32)
+  - saving of backup (.augsave) files now works even if the original and
+    backup files are on different devices
+  - major refactoring of how path expressions are handled internally. Fixes
+    a number of bugs and oddities (e.g. tickets #7 and #23)
+  - fix a bug in fa_as_regexp: a '.' wasn't escaped, ultimately leading to
+    spurious errors from the typechecker
+  - Lens chanes/additions
+    * Group: process /etc/group (Free Ekanayaka)
+    * Passwd: process /etc/passwd (Free Ekanayaka)
+    * Phpvars: process files that set PHP variables, in particular
+      /etc/squirrelmail/config.php (Free Ekanayaka)
+    * Rsyncd: process /etc/rsyncd.conf (Marc Fournier)
+    * Shellvars: process /etc/arno-iptables-firewall/debconf.cfg and
+      /etc/cron-apt/config (Free Ekanayaka), load /etc/sysconfig/sendmail
+    * Postfix: process postfix's main.cf and master.cf (Free Ekanayaka)
+    * Squid: new lens for squid.conf (Free Ekanayaka)
+    * Webmin: new lens (Free Ekanayaka)
+    * Xinetd: make sure equal sign is surrounded by spaces (#30)
+    * Sshd: change the structure of Condition subtrees (Dominique Dumont)
+
 0.3.4 - 2008-11-05
   - fix saving of backup files; in 0.3.3, when AUG_SAVE_BACKUP was passed
     to aug_init, aug_save would always fail
