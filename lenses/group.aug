@@ -17,7 +17,8 @@ let eol        = Util.eol
 let comment    = Util.comment
 let empty      = Util.empty
 
-let colon      = del /:/ ":"
+let colon      = del ":" ":"
+let comma      = del "," ","
 
 let sto_to_eol = store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
 
@@ -28,11 +29,12 @@ let integer    = /[0-9]+/
  *                               ENTRIES
  *************************************************************************)
 
+let user      = [ label "user"     . store word ]
 let entry     = [ key word
                 . colon
                 . [ label "password" . store word    . colon ]
                 . [ label "gid"      . store integer . colon ]
-                . [ label "users"    . sto_to_eol? ]
+                . (user . (comma . user)*)?
                 . eol ]
 
 (************************************************************************
