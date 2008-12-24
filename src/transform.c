@@ -448,22 +448,29 @@ static int transfer_file_attrs(const char *from, const char *to,
     return 0;
 }
 
+/* Try to rename FROM to TO. If that fails with an error other than EXDEV
+ * or EBUSY, return -1. If the failure is EXDEV or EBUSY (which we assume
+ * means that FROM or TO is a bindmounted file), and COPY_IF_RENAME_FAILS
+ * is true, copy the contents of FROM into TO and delete FROM.
+ *
+ * Return 0 on success (either rename succeeded or we copied the contents
+ * over successfully), -1 on failure.
+ */
 static int clone_file(const char *from, const char *to,
-                      const char **err_status) {
+                      const char **err_status, int copy_if_rename_fails) {
     FILE *from_fp = NULL, *to_fp = NULL;
     char buf[BUFSIZ];
     size_t len;
     int result = -1;
 
-    unlink(to);   /* Return value ignored intentionally */
-    if (link(from, to) == 0)
+    if (rename(from, to) == 0)
         return 0;
-    if (errno != EXDEV) {
-        *err_status = "link";
+    if ((errno != EXDEV && errno != EBUSY) || !copy_if_rename_fails) {
+        *err_status = "rename";
         return -1;
     }
 
-    /* link not possible, copy file contents */
+    /* rename not possible, copy file contents */
     from_fp = fopen(from, "r");
     if (!(from_fp = fopen(from, "r"))) {
         *err_status = "clone_open_src";
@@ -495,6 +502,8 @@ static int clone_file(const char *from, const char *to,
     fclose(to_fp);
     if (result != 0)
         unlink(to);
+    if (result == 0)
+        unlink(from);
     return result;
 }
 
@@ -510,18 +519,35 @@ static char *strappend(const char *s1, const char *s2) {
     return result;
 }
 
+/*
+ * Save TREE->CHILDREN into the file PATH using the lens from XFORM. Errors
+ * are noted in the /augeas/files hierarchy in AUG->ORIGIN under
+ * PATH/error.
+ *
+ * Writing the file happens by first writing into PATH.augnew, transferring
+ * all file attributes of PATH to PATH.augnew, and then renaming
+ * PATH.augnew to PATH. If the rename fails, and the entry
+ * AUGEAS_COPY_IF_FAILURE exists in AUG->ORIGIN, PATH is overwritten by
+ * copying file contents
+ *
+ * Return 0 on success, -1 on failure.
+ */
 int transform_save(struct augeas *aug, struct transform *xform,
                    const char *path, struct tree *tree) {
     FILE *fp = NULL;
     char *augnew = NULL, *augorig = NULL, *augsave = NULL;
     char *augorig_canon = NULL;
     int   augorig_exists;
+    int   copy_if_rename_fails = 0;
     char *text = NULL;
     const char *filename = path + strlen(AUGEAS_FILES_TREE) + 1;
     const char *err_status = NULL;
     char *dyn_err_status = NULL;
     struct lns_error *err = NULL;
-    int result = -1;
+    int result = -1, r;
+
+    copy_if_rename_fails =
+        aug_get(aug, AUGEAS_COPY_IF_RENAME_FAILS, NULL) == 1;
 
     if (asprintf(&augorig, "%s%s", aug->root, filename) == -1) {
         augorig = NULL;
@@ -601,24 +627,22 @@ int transform_save(struct augeas *aug, struct transform *xform,
 
     if (!(aug->flags & AUG_SAVE_NEWFILE)) {
         if (augorig_exists && (aug->flags & AUG_SAVE_BACKUP)) {
-            int r;
             r = asprintf(&augsave, "%s%s" EXT_AUGSAVE, aug->root, filename);
             if (r == -1) {
                 augsave = NULL;
                 goto done;
             }
 
-            if (clone_file(augorig_canon, augsave, &err_status) != 0) {
+            r = clone_file(augorig_canon, augsave, &err_status, 1);
+            if (r != 0) {
                 dyn_err_status = strappend(err_status, "_augsave");
                 goto done;
             }
         }
-        if (clone_file(augnew, augorig_canon, &err_status) != 0) {
+        r = clone_file(augnew, augorig_canon, &err_status,
+                       copy_if_rename_fails);
+        if (r != 0) {
             dyn_err_status = strappend(err_status, "_augnew");
-            goto done;
-        }
-        if (unlink(augnew) != 0) {
-            err_status = "unlink_augnew";
             goto done;
         }
     }

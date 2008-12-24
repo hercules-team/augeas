@@ -69,6 +69,14 @@
  * How we save files. One of 'backup', 'overwrite' or 'newfile' */
 #define AUGEAS_META_SAVE_MODE AUGEAS_META_TREE "/save"
 
+/* Define: AUGEAS_CLONE_IF_RENAME_FAILS
+ * Control what save does when renaming the temporary file to its final
+ * destination fails with EXDEV or EBUSY: when this tree node exists, copy
+ * the file contents. If it is not present, simply give up and report an
+ * error.  */
+#define AUGEAS_COPY_IF_RENAME_FAILS \
+    AUGEAS_META_SAVE_MODE "/copy_if_rename_fails"
+
 /* A hierarchy where we record certain 'events', e.g. which tree
  * nodes actually gotsaved into files */
 #define AUGEAS_EVENTS AUGEAS_META_TREE "/events"
