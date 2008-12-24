@@ -139,7 +139,7 @@ static void bitset_free(bitset *bs) {
  *           | CHAR
  */
 
-static const char * const special_chars = "|()[]{}*+?";
+static const char * const special_chars = ".()[]{}*+?";
 
 enum re_type {
     UNION,
