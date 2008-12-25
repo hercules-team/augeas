@@ -96,7 +96,7 @@ if test x$OBJ_DIR != x; then
     cd "$OBJ_DIR"
 fi
 
-$srcdir/configure --enable-warnings "${CF_ARGS[@]}" && {
+$srcdir/configure "${CF_ARGS[@]}" && {
     echo
     echo "Now type 'make' to compile augeas."
 }
