@@ -28,7 +28,7 @@ let entry    = IniFile.entry entry_re sep comment
  * We use IniFile.title_label because there can be entries
  * outside of sections whose labels would conflict with section names
  *************************************************************************)
-let title       = IniFile.title ( IniFile.record_re - /.anon/ )
+let title       = IniFile.title ( IniFile.record_re - ".anon" )
 let record      = IniFile.record title entry
 
 let record_anon = [ label ".anon" . ( entry | empty )+ ]
