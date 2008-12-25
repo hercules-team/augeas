@@ -17,7 +17,7 @@ let eol        = Util.eol
 let indent     = Util.indent
 let empty      = Util.empty
 
-let sep_php    = del /<\?php\n/ "<?php\n"
+let sep_php    = del /<\?php[ \t]*\n/ "<?php\n"
 let sep_eq     = del /[ \n]*=/ " ="
 let sep_spc    = del /[ \n]+/ " "
 let sep_dollar = del /\$/ "$"
