@@ -126,7 +126,10 @@ static struct value *lens_get(struct info *info, struct value *l,
         v = make_value(V_TREE, ref(info));
         v->origin = make_tree_origin(tree);
     } else {
-        tree = make_tree_origin(tree);
+        struct tree *t = make_tree_origin(tree);
+        if (t == NULL)
+            free_tree(tree);
+        tree = t;
 
         v = make_exn_lns_error(info, err, text);
         if (tree != NULL) {
