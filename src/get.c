@@ -675,9 +675,9 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
 
     /* We are probably being overly cautious here: if the lens can't process
      * all of TEXT, we should really fail somewhere in one of the sublenses.
-     * But to be safe, we check that we can process everythign anyway, then
+     * But to be safe, we check that we can process everything anyway, then
      * try to process, hoping we'll get a more specific error, and if that
-     * fails, we throw our arms in the air and say 'something wnet wrong'
+     * fails, we throw our arms in the air and say 'something went wrong'
      */
     partial = !applies(lens, &split);
 
