@@ -582,13 +582,15 @@ static struct regexp *lns_key_regexp(struct lens *l, struct value **exn) {
                 struct regexp *r = lns_key_regexp(l->children[i], exn);
                 if (*exn != NULL)
                     return NULL;
-                if (k == NULL) {
-                    k = r;
-                } else {
-                    struct regexp *u = regexp_union(l->info, k, r);
-                    unref(k, regexp);
-                    unref(r, regexp);
-                    k = u;
+                if (r != NULL) {
+                    if (k == NULL) {
+                        k = r;
+                    } else {
+                        struct regexp *u = regexp_union(l->info, k, r);
+                        unref(k, regexp);
+                        unref(r, regexp);
+                        k = u;
+                    }
                 }
             }
             return k;
