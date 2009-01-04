@@ -23,6 +23,8 @@
 #ifndef REF_H_
 #define REF_H_
 
+#include <limits.h>
+
 /* Reference counting for pointers to structs with a REF field of type ref_t
  *
  * When a pointer to such a struct is passed into a function that stores
