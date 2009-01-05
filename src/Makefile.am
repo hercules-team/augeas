@@ -45,7 +45,7 @@ liblexer_la_CFLAGS = $(AM_CFLAGS) -Wno-error
 internal.h: datadir.h
 
 FORCE-datadir.h: Makefile
-	echo '#define DATADIR "$(abspath $(datadir))"' > datadir.h1
+	echo '#define DATADIR "$(datadir)"' > datadir.h1
 	$(top_srcdir)/build/aux/move-if-change datadir.h1 datadir.h
 
 datadir.h: FORCE-datadir.h
