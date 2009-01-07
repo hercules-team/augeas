@@ -40,9 +40,9 @@ if [ $? != 0 ] ; then
 fi
 
 act_group=$(ls -l $hosts | cut -d ' ' -f 4)
-act_mode=$(ls -l $hosts | cut -d ' ' -f 1)
+act_mode=$(ls -l $hosts | cut -b 1-10)
 if [ $selinux = yes ] ; then
-  act_con=$(ls -Z $hosts | cut -d ' ' -f 5 | cut -d ':' -f 3)
+  act_con=$(ls -lZ $hosts | cut -d ' ' -f 5 | cut -d ':' -f 3)
 fi
 if [ "x$group" != "x$act_group" ] ; then
     echo "Expected group $group but got $act_group"
