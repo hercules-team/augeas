@@ -177,7 +177,8 @@ struct augeas *aug_init(const char *root, const char *loadpath,
     if (tree_root == NULL)
         return NULL;
 
-    CALLOC(result, 1);
+    if (ALLOC(result) < 0)
+        goto error;
     result->origin = make_tree_origin(tree_root);
     if (result->origin == NULL) {
         free_tree(tree_root);
