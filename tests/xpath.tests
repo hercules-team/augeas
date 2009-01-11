@@ -8,7 +8,8 @@
 # The test is declared with a line 'test NAME MATCH'. A result is either
 # just a path (meaning that the value associated with that node must be
 # NULL) or of the form PATH = VALUE, meaning that the value for the node at
-# PATH must be VALUE
+# PATH must be VALUE. If VALUE is '...', the test does not check the value
+# associated with PATH in the tree.
 #
 # The MATCH XPath expression is matched against a fixed tree (the one from the
 # root/ subdirectory) and the result of the aug_match is compared with the
@@ -97,3 +98,41 @@ test descendant /files/etc/aliases/4/descendant::4
 
 test descendant-or-self-2 /files/etc/aliases/4/descendant-or-self::4
      /files/etc/aliases/4
+
+# No matches because the predicate asks if there is a toplevel node
+# 'ipaddr' with the given value
+test abs-locpath /files/etc/hosts/*[/ipaddr = '127.0.0.1']/canonical
+
+test rel-pred /files/etc/hosts/*/canonical[../ipaddr = '127.0.0.1']
+     /files/etc/hosts/1/canonical = localhost.localdomain
+
+# Not the best way to write this, but entirely acceptable
+test path-with-parent /files/etc/hosts/*/canonical[../ipaddr = '127.0.0.1']/../alias
+     /files/etc/hosts/1/alias[1] = localhost
+     /files/etc/hosts/1/alias[2] = galia.watzmann.net
+     /files/etc/hosts/1/alias[3] = galia
+
+test node-exists-pred /files/etc/hosts/*/canonical[../alias]
+     /files/etc/hosts/1/canonical = localhost.localdomain
+     /files/etc/hosts/2/canonical = orange.watzmann.net
+
+test ipaddr-child //*[ipaddr]
+     /files/etc/hosts/1
+     /files/etc/hosts/2
+
+test ipaddr-sibling //*[../ipaddr]
+     /files/etc/hosts/1/ipaddr = 127.0.0.1
+     /files/etc/hosts/1/canonical = localhost.localdomain
+     /files/etc/hosts/1/alias[1] = localhost
+     /files/etc/hosts/1/alias[2] = galia.watzmann.net
+     /files/etc/hosts/1/alias[3] = galia
+     /files/etc/hosts/2/ipaddr = 172.31.122.14
+     /files/etc/hosts/2/canonical = orange.watzmann.net
+     /files/etc/hosts/2/alias = orange
+
+test lircd-ancestor //*[ancestor::kudzu]
+     /augeas/files/etc/sysconfig/kudzu/path = /files/etc/sysconfig/kudzu
+     /augeas/files/etc/sysconfig/kudzu/lens
+     /augeas/files/etc/sysconfig/kudzu/lens/info = ...
+     /augeas/files/etc/sysconfig/kudzu/lens/id = ...
+     /files/etc/sysconfig/kudzu/SAFE = no

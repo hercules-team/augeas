@@ -153,9 +153,11 @@ static int run_one_test(struct augeas *aug, struct test *t) {
         for (e = t->entries, i = 0; e != NULL; e = e->next, i++) {
             if (!STREQ(e->path, matches[i]))
                 result = -1;
-            aug_get(aug, e->path, &val);
-            if (!streqv(e->value, val))
-                result = -1;
+            if (! streqv(e->value, "...")) {
+                aug_get(aug, e->path, &val);
+                if (!streqv(e->value, val))
+                    result = -1;
+            }
         }
     }
     if (result == 0) {
