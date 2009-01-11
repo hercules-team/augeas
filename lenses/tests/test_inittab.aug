@@ -30,9 +30,9 @@ l0:0:wait:/etc/rc.d/rc 0
           { "action" = "wait" }
           { "process" = "/etc/rc.d/rc 0" } }
 
-  test Inittab.lns put simple after rm "1/process" = *
+  test Inittab.lns put simple after rm "/1/process" = *
 
-  test Inittab.lns put simple after set "1/runlevels" "3" =
+  test Inittab.lns put simple after set "/1/runlevels" "3" =
     "id:3:initdefault:\n"
 
 (* Local Variables: *)

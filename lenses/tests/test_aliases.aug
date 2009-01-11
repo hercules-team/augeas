@@ -29,9 +29,9 @@ adm:		root
           { "value" = "root" } }
 
   test Aliases.lns put file after
-      rm "4" ; rm "5" ;
-      set "1/value[2]" "barbar" ;
-      set "3/value[2]" "ruth"
+    rm "/4" ; rm "/5" ;
+      set "/1/value[2]" "barbar" ;
+      set "/3/value[2]" "ruth"
     = "#
 #  Aliases in this file will NOT be expanded in the header from
 #  Mail, but WILL be visible over networks or from /bin/mail.
@@ -46,8 +46,8 @@ bin:		root, ruth
 
   (* Schema violation, no 3/name *)
   test Aliases.lns put file after
-      rm "3" ;
-      set "3/values/2" "ruth"
+      rm "/3" ;
+      set "/3/value/2" "ruth"
     = *
 
   (* Don't have to have whitespace after a comma *)

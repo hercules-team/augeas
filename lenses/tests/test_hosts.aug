@@ -23,13 +23,13 @@ module Test_hosts =
           { "alias" = "pigiron.example" }  }
 
   test Hosts.record put "127.0.0.1 foo\n" after
-      set "1/canonical" "bar"
+      set "/1/canonical" "bar"
   = "127.0.0.1 bar\n"
 
   test Hosts.lns put two_entries after
-    set "2/alias[10]" "piggy" ;
-    rm "1/alias[1]" ;
-    rm "2/alias[2]"
+    set "/2/alias[10]" "piggy" ;
+    rm "/1/alias[1]" ;
+    rm "/2/alias[2]"
   = "127.0.0.1 foo
   # \tcomment\t
 192.168.0.1 pigiron.example.com pigiron piggy
@@ -38,7 +38,7 @@ module Test_hosts =
   (* Deleting the 'canonical' node violates the schema; each host entry *)
   (* must have one                                                      *)
   test Hosts.lns put two_entries after
-      rm "1/canonical"
+      rm "/1/canonical"
     = *
 
   (* Make sure blank and indented lines get through *)

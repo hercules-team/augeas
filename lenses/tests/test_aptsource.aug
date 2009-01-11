@@ -60,7 +60,7 @@ deb-src http://mirror.bytemark.co.uk/debian etch main contrib non-free\n"
 
     (* Should be a noop; makes sure that we preserve the trailing comment *)
     test Aptsources.lns put trailing_comment after
-      set "1/type" "deb"
+      set "/1/type" "deb"
     = trailing_comment
 
 (* Local Variables: *)

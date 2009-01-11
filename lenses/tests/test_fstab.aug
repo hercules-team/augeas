@@ -53,7 +53,7 @@ module Test_fstab =
 
   test Fstab.lns get no_passno = no_passno_tree
 
-  test Fstab.lns put no_passno after set "1/passno" "1" = gen_no_passno " 1"
+  test Fstab.lns put no_passno after set "/1/passno" "1" = gen_no_passno " 1"
 
   test Fstab.lns get no_dump = no_dump_tree
 

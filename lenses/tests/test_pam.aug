@@ -17,7 +17,7 @@ session    optional     pam_keyinit.so force revoke
           { "argument" = "revoke" } }
 
   test Pam.lns put example after
-    set "1/control" "requisite"
+    set "/1/control" "requisite"
   = "#%PAM-1.0
 auth requisite pam_securetty.so
 session    optional     pam_keyinit.so force revoke
@@ -27,7 +27,7 @@ session    optional     pam_keyinit.so force revoke
   let trailing_ws = "auth\trequired\tpam_unix.so \n"
 
   test Pam.lns put trailing_ws after
-    set "1/type" "auth"
+    set "/1/type" "auth"
   = trailing_ws
 
   test Pam.lns get "@include common-password\n" = 
