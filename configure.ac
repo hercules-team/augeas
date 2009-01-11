@@ -46,6 +46,15 @@ AC_ARG_WITH([pdfdocs],
 AC_SUBST(PDFLATEX)
 AC_SUBST(PDFDOCS)
 
+dnl Support for memory tests with failmalloc
+AC_ARG_WITH([failmalloc],
+  [AS_HELP_STRING([--with-failmalloc=FAILMALLOC],
+     [enable failmalloc test targets and use the failmalloc library FAILMALLOC])],
+  [AC_SUBST([LIBFAILMALLOC], ["$with_failmalloc"])],
+  [with_failmalloc=no])
+
+AM_CONDITIONAL([WITH_FAILMALLOC], [test x$with_failmalloc != xno])
+
 dnl Version info in libtool's notation
 AC_SUBST([LIBAUGEAS_VERSION_INFO], [9:2:9])
 AC_SUBST([LIBFA_VERSION_INFO], [2:0:1])

@@ -1,4 +1,3 @@
-
 GNULIB= ../gnulib/lib/libgnu.la
 GNULIB_CFLAGS= -I $(top_srcdir)/gnulib/lib
 
@@ -50,6 +49,12 @@ libfa_la_LDFLAGS = $(FA_VERSION_SCRIPT) -version-info $(LIBFA_VERSION_INFO)
 
 liblexer_la_SOURCES = lexer.l
 liblexer_la_CFLAGS = $(AM_CFLAGS) -Wno-error
+
+FAILMALLOC_START ?= 1
+FAILMALLOC_REP   ?= 20
+FAILMALLOC_PROG ?= ./augtool
+
+include $(top_srcdir)/Makefile.inc
 
 # Generate datadir.h. AUGEAS_LENS_DIR in internal.h depends on
 # the value of DATADIR

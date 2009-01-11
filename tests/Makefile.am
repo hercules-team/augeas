@@ -117,14 +117,20 @@ TESTS = augtest $(check_SCRIPTS) $(check_PROGRAMS)
 
 INCLUDES = -I$(top_srcdir)/src
 
-fatest_SOURCES = fatest.c cutest.c cutest.h
+fatest_SOURCES = fatest.c cutest.c cutest.h $(top_srcdir)/src/memory.c $(top_srcdir)/src/memory.h
 fatest_LDADD = $(top_builddir)/src/libaugeas.la $(GNULIB)
 
 test_xpath_SOURCES = test-xpath.c $(top_srcdir)/src/memory.c
 test_xpath_LDADD = $(top_builddir)/src/libaugeas.la $(GNULIB)
 
-test_load_SOURCES = test-load.c cutest.c cutest.h
+test_load_SOURCES = test-load.c cutest.c cutest.h $(top_srcdir)/src/memory.c $(top_srcdir)/src/memory.h
 test_load_LDADD = $(top_builddir)/src/libaugeas.la $(GNULIB)
 
-test_save_SOURCES = test-save.c cutest.c cutest.h
+test_save_SOURCES = test-save.c cutest.c cutest.h $(top_srcdir)/src/memory.c $(top_srcdir)/src/memory.h
 test_save_LDADD = $(top_builddir)/src/libaugeas.la $(GNULIB)
+
+FAILMALLOC_START ?= 1
+FAILMALLOC_REP   ?= 20
+FAILMALLOC_PROG ?= ./fatest
+
+include $(top_srcdir)/Makefile.inc
