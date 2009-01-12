@@ -97,6 +97,12 @@
  * Character separating paths in a list of paths */
 #define PATH_SEP_CHAR ':'
 
+/* Constants for setting the save mode via the augeas path at
+ * AUGEAS_META_SAVE_MODE */
+#define AUG_SAVE_BACKUP_TEXT "backup"
+#define AUG_SAVE_NEWFILE_TEXT "newfile"
+#define AUG_SAVE_NOOP_TEXT "noop"
+#define AUG_SAVE_OVERWRITE_TEXT "overwrite"
 
 #ifdef __GNUC__
 

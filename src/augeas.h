@@ -42,8 +42,10 @@ enum aug_flags {
                                      precedence over AUG_SAVE_BACKUP */
     AUG_TYPE_CHECK   = (1 << 2),  /* Typecheck lenses; since it can be very
                                      expensive it is not done by default */
-    AUG_NO_STDINC    = (1 << 3)   /* Do not use the builtin load path for
+    AUG_NO_STDINC    = (1 << 3),   /* Do not use the builtin load path for
                                      modules */
+    AUG_SAVE_NOOP    = (1 << 4)   /* Make save a no-op process, just record
+                                     what would have changed */
 };
 
 /* Function: aug_init

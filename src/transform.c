@@ -622,6 +622,10 @@ int transform_save(struct augeas *aug, struct transform *xform,
             result = 0;
             unlink(augnew);
             goto done;
+        } else if (aug->flags & AUG_SAVE_NOOP) {
+            result = 1;
+            unlink(augnew);
+            goto done;
         }
     }
 
