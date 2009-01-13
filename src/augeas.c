@@ -604,30 +604,39 @@ static int tree_save(struct augeas *aug, struct tree *tree, const char *path,
     return result;
 }
 
-int aug_save(struct augeas *aug) {
-    int ret = 0;
-    struct tree *files;
-    struct path *p = make_path(aug->origin->children, AUGEAS_FILES_TREE);
-
-    /* Reset the flags based on what is set in the true.
-     * Note, this does cuase us to loose init flags such as
-     * AUG_TYPE_CHECK and AUG_NO_STDINC */
+/* Reset the flags based on what is set in the tree. */
+static int update_save_flags(struct augeas *aug) {
     const char *savemode ;
     int noop = 0 ;
 
-    aug_get(aug, AUGEAS_META_SAVE_MODE, &savemode) ;
+    aug_get(aug, AUGEAS_META_SAVE_MODE, &savemode);
+    if (savemode == NULL)
+        return -1;
 
-    if (strcmp(savemode,AUG_SAVE_NEWFILE_TEXT)==0) {
-        aug->flags = AUG_SAVE_NEWFILE ;
-    } else if (strcmp(savemode,AUG_SAVE_BACKUP_TEXT)==0) {
-        aug->flags = AUG_SAVE_BACKUP ;
-    } else if (strcmp(savemode,AUG_SAVE_NOOP_TEXT)==0) {
-        aug->flags = AUG_SAVE_NOOP ;
+    aug->flags &= ~(AUG_SAVE_BACKUP|AUG_SAVE_NEWFILE|AUG_SAVE_NOOP);
+    if (STREQ(savemode, AUG_SAVE_NEWFILE_TEXT)) {
+        aug->flags |= AUG_SAVE_NEWFILE;
+    } else if (STREQ(savemode, AUG_SAVE_BACKUP_TEXT)) {
+        aug->flags |= AUG_SAVE_BACKUP;
+    } else if (STREQ(savemode, AUG_SAVE_NOOP_TEXT)) {
+        aug->flags |= AUG_SAVE_NOOP ;
         noop = 1 ;
-    } else {
-        aug->flags = AUG_NONE ;
+    } else if (STRNEQ(savemode, AUG_SAVE_OVERWRITE_TEXT)) {
+        return -1;
     }
 
+    return 0;
+}
+
+int aug_save(struct augeas *aug) {
+    int ret = 0;
+    struct tree *files;
+    struct path *p = NULL;
+
+    if (update_save_flags(aug) < 0)
+        return -1;
+
+    p = make_path(aug->origin->children, AUGEAS_FILES_TREE);
     if (p == NULL || path_find_one(p, &files) != 1) {
         free_path(p);
         return -1;
@@ -644,7 +653,7 @@ int aug_save(struct augeas *aug) {
                 ret = -1;
         }
     }
-    if (!noop) {
+    if (!(aug->flags & AUG_SAVE_NOOP)) {
         tree_clean(aug->origin->children);
     }
     return ret;
