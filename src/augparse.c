@@ -27,6 +27,7 @@
 #include "list.h"
 #include "syntax.h"
 #include "augeas.h"
+#include <locale.h>
 
 const char *progname;
 bool print_version = false;
@@ -86,6 +87,7 @@ int main(int argc, char **argv) {
     unsigned int flags = AUG_TYPE_CHECK|AUG_NO_MODL_AUTOLOAD;
     progname = argv[0];
 
+    setlocale(LC_ALL, "");
     while ((opt = getopt_long(argc, argv, "hI:", options, &idx)) != -1) {
         switch(opt) {
         case 'I':

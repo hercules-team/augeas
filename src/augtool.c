@@ -30,6 +30,7 @@
 #include <getopt.h>
 #include <limits.h>
 #include <ctype.h>
+#include <locale.h>
 
 struct command {
     const char *name;
@@ -745,6 +746,8 @@ static int main_loop(void) {
 
 int main(int argc, char **argv) {
     int r;
+
+    setlocale(LC_ALL, "");
 
     parse_opts(argc, argv);
 
