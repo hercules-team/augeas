@@ -53,6 +53,8 @@ Group: Main Site  {
 
 Group: Specific Modules  {
 
+   File: Dpkg  (dpkg.aug)
+   File: Exports  (exports.aug)
    File: Sudoers  (sudoers.aug)
    File: Xinetd  (xinetd.aug)
    }  # Group: Specific Modules
