@@ -12,6 +12,8 @@ About: Description
 
 About: Usage Example
 
+(start code)
+
     $ augtool
     augtool> ls /files/etc/exports/
     comment[1] = /etc/exports: the access control list for filesystems which may be exported
@@ -26,28 +28,37 @@ About: Usage Example
     augtool> ls /files/etc/exports/dir[1]
     client[1]/ = master
     client[2]/ = trusty
+(end code)
 
-    The corresponding line in the file is:
+The corresponding line in the file is:
 
+(start code)
 	/               master(rw) trusty(rw,no_root_squash)
+(end code)
 
     Digging further:
 
+(start code)
     augtool> ls /files/etc/exports/dir[1]/client[1]
     option = rw
 
     To add a new entry, you'd do something like this:
+(end code)
 
+(start code)
     augtool> set /files/etc/exports/dir[10000] /foo
     augtool> set /files/etc/exports/dir[last()]/client[1] weeble
     augtool> set /files/etc/exports/dir[last()]/client[1]/option[1] ro
     augtool> set /files/etc/exports/dir[last()]/client[1]/option[2] all_squash
     augtool> save
     Saved 1 file(s)
+(end code)
 
     Which creates the line:
 
+(start code)
     /foo weeble(ro,all_squash)
+(end code)
 
 About: Limitations
     This lens cannot handle options without a host, as with the last

@@ -18,6 +18,7 @@ About: Description
 
 About: Usage Example
 
+(start code)
     $ augtool -n
     augtool> ls /files/etc/dpkg/dpkg.cfg
     #comment[1] = dpkg configuration file
@@ -54,6 +55,7 @@ About: Usage Example
     log /var/log/dpkg.log
     testopt
     testopt2 test
+(end code)
 
 *)
 
