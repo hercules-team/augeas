@@ -106,10 +106,30 @@ static void exn_print_tree(struct value *exn, struct tree *tree) {
     struct memstream ms;
 
     init_memstream(&ms);
-    print_tree(tree, ms.stream, "/*", 1);
+    dump_tree(ms.stream, tree);
     close_memstream(&ms);
     exn_printf_line(exn, "%s", ms.buf);
     FREE(ms.buf);
+}
+
+static struct value *make_pathx_exn(struct info *info, struct pathx *p) {
+    struct value *v;
+    char *msg;
+    const char *txt;
+    int pos;
+
+    msg = strdup(pathx_error(p, &txt, &pos));
+    if (msg == NULL)
+        return NULL;
+
+    v = make_exn_value(ref(info), "syntax error in path expression: %s", msg);
+    if (ALLOC_N(msg, strlen(txt) + 4) >= 0) {
+        strncpy(msg, txt, pos);
+        strcat(msg, "|=|");
+        strcat(msg, txt + pos);
+        exn_add_lines(v, 1, msg);
+    }
+    return v;
 }
 
 /* V_LENS -> V_STRING -> V_TREE */
@@ -181,24 +201,34 @@ static struct value *tree_set_glue(struct info *info, struct value *path,
     assert(tree->tag == V_TREE);
 
     struct tree *fake = NULL;
+    struct pathx *p = NULL;
+    struct value *result = NULL;
 
     if (tree->origin->children == NULL) {
         tree->origin->children = make_tree(NULL, NULL, tree->origin, NULL);
         fake = tree->origin->children;
     }
 
-    if (tree_set(tree->origin, path->string->str,
-                 val->string->str) == NULL) {
-        return make_exn_value(ref(info),
-                              "Tree set of %s to '%s' failed",
-                              path->string->str, val->string->str);
+    if (pathx_parse(tree->origin, path->string->str, &p) != PATHX_NOERROR) {
+        result = make_pathx_exn(ref(info), p);
+        goto done;
+    }
+
+    if (tree_set(p, val->string->str) == NULL) {
+        result = make_exn_value(ref(info),
+                                "Tree set of %s to '%s' failed",
+                                path->string->str, val->string->str);
+        goto done;
     }
     if (fake != NULL) {
         list_remove(fake, tree->origin->children);
         free_tree(fake);
     }
+    result = ref(tree);
 
-    return ref(tree);
+ done:
+    free_pathx(p);
+    return result;
 }
 
 static struct value *tree_insert_glue(struct info *info, struct value *label,
@@ -212,15 +242,26 @@ static struct value *tree_insert_glue(struct info *info, struct value *label,
     assert(tree->tag == V_TREE);
 
     int r;
-    r = tree_insert(tree->origin, path->string->str,
-                    label->string->str, before);
-    if (r != 0) {
-        return make_exn_value(ref(info),
-                              "Tree insert of %s at %s failed",
-                              label->string->str, path->string->str);
+    struct pathx *p = NULL;
+    struct value *result = NULL;
+
+    if (pathx_parse(tree->origin, path->string->str, &p) != PATHX_NOERROR) {
+        result = make_pathx_exn(ref(info), p);
+        goto done;
     }
 
-    return ref(tree);
+    r = tree_insert(p, label->string->str, before);
+    if (r != 0) {
+        result = make_exn_value(ref(info),
+                                "Tree insert of %s at %s failed",
+                                label->string->str, path->string->str);
+        goto done;
+    }
+
+    result = ref(tree);
+ done:
+    free_pathx(p);
+    return result;
 }
 
 /* Insert after */
@@ -246,11 +287,24 @@ static struct value *tree_rm_glue(struct info *info,
     // need to copy TREE first
     assert(path->tag == V_STRING);
     assert(tree->tag == V_TREE);
-    if (tree_rm(tree->origin, path->string->str) == -1) {
-        return make_exn_value(ref(info), "Tree rm of %s failed",
-                              path->string->str);
+
+    struct pathx *p = NULL;
+    struct value *result = NULL;
+
+    if (pathx_parse(tree->origin, path->string->str, &p) != PATHX_NOERROR) {
+        result = make_pathx_exn(ref(info), p);
+        goto done;
     }
-    return ref(tree);
+
+    if (tree_rm(p) == -1) {
+        result = make_exn_value(ref(info), "Tree rm of %s failed",
+                                path->string->str);
+        goto done;
+    }
+    result = ref(tree);
+ done:
+    free_pathx(p);
+    return result;
 }
 
 /* V_STRING -> V_STRING */

@@ -289,6 +289,11 @@ struct tree {
     int          dirty;
 };
 
+/* The opaque structure used to represent path expressions. API's
+ * using STRUCT PATHX are declared farther below
+ */
+struct pathx;
+
 #define ROOT_P(t) ((t) != NULL && (t)->parent == (t)->parent->parent)
 
 /* Function: make_tree
@@ -306,13 +311,11 @@ struct tree  *make_tree_origin(struct tree *root);
 
 int tree_replace(struct tree *origin, const char *path, struct tree *sub);
 
-int tree_rm(struct tree *origin, const char *path);
-struct tree *tree_set(struct tree *origin, const char *path, const char *value);
-int tree_insert(struct tree *origin, const char *path, const char *label,
-                int before);
+int tree_rm(struct pathx *p);
+struct tree *tree_set(struct pathx *p, const char *value);
+int tree_insert(struct pathx *p, const char *label, int before);
 int free_tree(struct tree *tree);
-int print_tree(const struct tree *origin, FILE *out, const char *path,
-               int pr_hidden);
+int dump_tree(FILE *out, struct tree *tree);
 int tree_equal(const struct tree *t1, const struct tree *t2);
 
 /* Struct: memstream

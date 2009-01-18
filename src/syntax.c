@@ -625,7 +625,7 @@ static void print_value(FILE *out, struct value *v) {
         fprintf(out, ">");
         break;
     case V_TREE:
-        print_tree(v->origin, stdout, "/*" , 1);
+        dump_tree(stdout, v->origin);
         break;
     case V_FILTER:
         fprintf(out, "<filter:");

@@ -250,19 +250,13 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
     return r;
 }
 
-struct tree *tree_set(struct tree *origin, const char *path,
-                      const char *value) {
+struct tree *tree_set(struct pathx *p, const char *value) {
     struct tree *tree;
-    struct pathx *p;
     int r;
-
-    if (pathx_parse(origin, path, &p) != 0)
-        goto error;
 
     r = pathx_expand_tree(p, &tree);
     if (r == -1)
-        goto error;
-    free_pathx(p);
+        return NULL;
 
     if (tree->value != NULL) {
         free(tree->value);
@@ -271,31 +265,29 @@ struct tree *tree_set(struct tree *origin, const char *path,
     if (value != NULL) {
         tree->value = strdup(value);
         if (tree->value == NULL)
-            goto error;
+            return NULL;
     }
     tree->dirty = 1;
     return tree;
- error:
-    free_pathx(p);
-    return NULL;
 }
 
 int aug_set(struct augeas *aug, const char *path, const char *value) {
-    return tree_set(aug->origin, path, value) == NULL ? -1 : 0;
+    struct pathx *p;
+    int result;
+
+    if (pathx_parse(aug->origin, path, &p) != PATHX_NOERROR)
+        return -1;
+
+    result = tree_set(p, value) == NULL ? -1 : 0;
+    free_pathx(p);
+    return result;
 }
 
-int tree_insert(struct tree *origin, const char *path, const char *label,
-                int before) {
-    assert(origin->parent == origin);
-
-    struct pathx *p = NULL;
+int tree_insert(struct pathx *p, const char *label, int before) {
     struct tree *new = NULL, *match;
 
     if (strchr(label, SEP) != NULL)
         return -1;
-
-    if (pathx_parse(origin, path, &p) != 0)
-        goto error;
 
     if (pathx_find_one(p, &match) != 1)
         goto error;
@@ -310,17 +302,24 @@ int tree_insert(struct tree *origin, const char *path, const char *label,
         new->next = match->next;
         match->next = new;
     }
-    free_pathx(p);
     return 0;
  error:
     free_tree(new);
-    free_pathx(p);
     return -1;
 }
 
 int aug_insert(struct augeas *aug, const char *path, const char *label,
                int before) {
-    return tree_insert(aug->origin, path, label, before);
+    struct pathx *p = NULL;
+    int result = -1;
+
+    if (pathx_parse(aug->origin, path, &p) != PATHX_NOERROR)
+        goto done;
+
+    result = tree_insert(p, label, before);
+ done:
+    free_pathx(p);
+    return result;
 }
 
 struct tree *make_tree(char *label, char *value, struct tree *parent,
@@ -376,26 +375,17 @@ int free_tree(struct tree *tree) {
     return cnt;
 }
 
-int tree_rm(struct tree *origin, const char *path) {
-    assert(origin->parent == origin);
-    assert(origin->next == NULL);
-
-    struct pathx *p = NULL;
+int tree_rm(struct pathx *p) {
     struct tree *tree, **del;
     int cnt = 0, ndel = 0, i;
-
-    if (pathx_parse(origin, path, &p) != 0)
-        return -1;
 
     for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
         if (! TREE_HIDDEN(tree))
             ndel += 1;
     }
 
-    if (ndel == 0) {
-        free_pathx(p);
+    if (ndel == 0)
         return 0;
-    }
 
     if (ALLOC_N(del, ndel) < 0) {
         free(del);
@@ -408,7 +398,6 @@ int tree_rm(struct tree *origin, const char *path) {
         del[i] = tree;
         i += 1;
     }
-    free_pathx(p);
 
     for (i = 0; i < ndel; i++) {
         assert (del[i]->parent != NULL);
@@ -423,18 +412,31 @@ int tree_rm(struct tree *origin, const char *path) {
 }
 
 int aug_rm(struct augeas *aug, const char *path) {
-    return tree_rm(aug->origin, path);
+    struct pathx *p = NULL;
+    int result;
+
+    if (pathx_parse(aug->origin, path, &p) != PATHX_NOERROR)
+        return -1;
+
+    result = tree_rm(p);
+    free_pathx(p);
+
+    return result;
 }
 
 int tree_replace(struct tree *origin, const char *path, struct tree *sub) {
     struct tree *parent;
+    struct pathx *p = NULL;
     int r;
 
-    r = tree_rm(origin, path);
+    if (pathx_parse(origin, path, &p) != PATHX_NOERROR)
+        goto error;
+
+    r = tree_rm(p);
     if (r == -1)
         goto error;
 
-    parent = tree_set(aug->origin, path, NULL);
+    parent = tree_set(p, NULL);
     if (parent == NULL)
         goto error;
 
@@ -442,8 +444,10 @@ int tree_replace(struct tree *origin, const char *path, struct tree *sub) {
     list_for_each(s, sub) {
         s->parent = parent;
     }
+    free_pathx(p);
     return 0;
  error:
+    free_pathx(p);
     return -1;
 }
 
@@ -716,16 +720,10 @@ static int print_rec(FILE *out, struct tree *start, const char *ppath,
     return -1;
 }
 
-int print_tree(const struct tree *start, FILE *out, const char *pathin,
-               int pr_hidden) {
-
-    struct pathx *p;
+static int print_tree(FILE *out, struct pathx *p, int pr_hidden) {
     char *path = NULL;
     struct tree *tree;
     int r;
-
-    if (pathx_parse(start, pathin, &p) != 0)
-        return -1;
 
     for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
         if (TREE_HIDDEN(tree) && ! pr_hidden)
@@ -743,18 +741,39 @@ int print_tree(const struct tree *start, FILE *out, const char *pathin,
         free(path);
         path = NULL;
     }
-    free_pathx(p);
     return 0;
  error:
     free(path);
     return -1;
 }
 
+int dump_tree(FILE *out, struct tree *tree) {
+    struct pathx *p;
+    int result;
+
+    if (pathx_parse(tree, "/*", &p) != PATHX_NOERROR)
+        return -1;
+
+    result = print_tree(out, p, 1);
+    free_pathx(p);
+    return result;
+}
+
 int aug_print(const struct augeas *aug, FILE *out, const char *pathin) {
+    struct pathx *p;
+    int result;
+
     if (pathin == NULL || strlen(pathin) == 0) {
         pathin = "/*";
     }
-    return print_tree(aug->origin, out, pathin, 0);
+
+    if (pathx_parse(aug->origin, pathin, &p) != PATHX_NOERROR)
+        return -1;
+
+    result = print_tree(out, p, 0);
+    free_pathx(p);
+
+    return result;
 }
 
 void aug_close(struct augeas *aug) {
