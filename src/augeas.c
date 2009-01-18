@@ -426,11 +426,11 @@ int aug_rm(struct augeas *aug, const char *path) {
     return tree_rm(aug->origin, path);
 }
 
-int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub) {
+int tree_replace(struct tree *origin, const char *path, struct tree *sub) {
     struct tree *parent;
     int r;
 
-    r = aug_rm(aug, path);
+    r = tree_rm(origin, path);
     if (r == -1)
         goto error;
 

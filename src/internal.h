@@ -304,7 +304,7 @@ struct tree *make_tree(char *label, char *value,
  */
 struct tree  *make_tree_origin(struct tree *root);
 
-int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub);
+int tree_replace(struct tree *origin, const char *path, struct tree *sub);
 
 int tree_rm(struct tree *origin, const char *path);
 struct tree *tree_set(struct tree *origin, const char *path, const char *value);
