@@ -148,6 +148,8 @@
 #define ATTRIBUTE_RETURN_CHECK
 #endif                                   /* __GNUC__ */
 
+#define ARRAY_CARDINALITY(array) (sizeof (array) / sizeof *(array))
+
 /* String equality tests, suggested by Jim Meyering. */
 #define STREQ(a,b) (strcmp((a),(b)) == 0)
 #define STRCASEEQ(a,b) (strcasecmp((a),(b)) == 0)

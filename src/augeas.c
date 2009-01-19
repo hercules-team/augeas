@@ -35,6 +35,14 @@
 
 #define TREE_HIDDEN(tree) ((tree)->label == NULL)
 
+static const char *const static_nodes[][2] = {
+    { AUGEAS_META_TREE "/version", PACKAGE_VERSION },
+    { AUGEAS_META_TREE "/version/save/mode[1]", AUG_SAVE_BACKUP_TEXT },
+    { AUGEAS_META_TREE "/version/save/mode[2]", AUG_SAVE_NEWFILE_TEXT },
+    { AUGEAS_META_TREE "/version/save/mode[3]", AUG_SAVE_NOOP_TEXT },
+    { AUGEAS_META_TREE "/version/save/mode[4]", AUG_SAVE_OVERWRITE_TEXT }
+};
+
 static const char *pretty_label(const struct tree *tree) {
     if (tree == NULL)
         return "(no_tree)";
@@ -190,6 +198,9 @@ struct augeas *aug_init(const char *root, const char *loadpath,
        value we store internally, to avoid any problems with
        AUGEAS_META_ROOT getting changed. */
     aug_set(result, AUGEAS_META_ROOT, result->root);
+
+    for (int i=0; i < ARRAY_CARDINALITY(static_nodes); i++)
+        aug_set(result, static_nodes[i][0], static_nodes[i][1]);
 
     if (flags & AUG_SAVE_NEWFILE) {
         aug_set(result, AUGEAS_META_SAVE_MODE, AUG_SAVE_NEWFILE_TEXT);
