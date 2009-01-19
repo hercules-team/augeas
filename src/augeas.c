@@ -118,6 +118,37 @@ static void tree_clean(struct tree *tree) {
         tree_clean(c);
 }
 
+/* Parse a path expression. Report errors in /augeas/pathx/error */
+static struct pathx *parse_user_pathx(const struct augeas *aug,
+                                      const char *path) {
+    struct pathx *result;
+    struct pathx *err;
+    int    pos;
+
+    if (pathx_parse(aug->origin, path, &result) == PATHX_NOERROR)
+        return result;
+
+    if (pathx_parse(aug->origin, AUGEAS_META_PATHX "/error", &err)
+        != PATHX_NOERROR)
+        return NULL;
+    tree_set(err, pathx_error(result, NULL, &pos));
+    free_pathx(err);
+
+    if (pathx_parse(aug->origin, AUGEAS_META_PATHX "/error/pos", &err)
+        == PATHX_NOERROR) {
+        char *msg;
+        if (ALLOC_N(msg, strlen(path) + 4) >= 0) {
+            strncpy(msg, path, pos);
+            strcat(msg, "|=|");
+            strcat(msg, path + pos);
+            tree_set(err, msg);
+            free(msg);
+        }
+    }
+    free_pathx(err);
+    return NULL;
+}
+
 static const char *init_root(const char *root0) {
     char *root;
 
@@ -236,7 +267,8 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
     struct tree *match;
     int r;
 
-    if (pathx_parse(aug->origin, path, &p) != 0)
+    p = parse_user_pathx(aug, path);
+    if (p == NULL)
         return -1;
 
     if (value != NULL)
@@ -275,7 +307,8 @@ int aug_set(struct augeas *aug, const char *path, const char *value) {
     struct pathx *p;
     int result;
 
-    if (pathx_parse(aug->origin, path, &p) != PATHX_NOERROR)
+    p = parse_user_pathx(aug, path);
+    if (p == NULL)
         return -1;
 
     result = tree_set(p, value) == NULL ? -1 : 0;
@@ -313,7 +346,8 @@ int aug_insert(struct augeas *aug, const char *path, const char *label,
     struct pathx *p = NULL;
     int result = -1;
 
-    if (pathx_parse(aug->origin, path, &p) != PATHX_NOERROR)
+    p = parse_user_pathx(aug, path);
+    if (p == NULL)
         goto done;
 
     result = tree_insert(p, label, before);
@@ -415,7 +449,8 @@ int aug_rm(struct augeas *aug, const char *path) {
     struct pathx *p = NULL;
     int result;
 
-    if (pathx_parse(aug->origin, path, &p) != PATHX_NOERROR)
+    p = parse_user_pathx(aug, path);
+    if (p == NULL)
         return -1;
 
     result = tree_rm(p);
@@ -452,13 +487,17 @@ int tree_replace(struct tree *origin, const char *path, struct tree *sub) {
 }
 
 int aug_mv(struct augeas *aug, const char *src, const char *dst) {
-    struct pathx *s, *d;
+    struct pathx *s = NULL, *d = NULL;
     struct tree *ts, *td, *t;
     int r, ret;
 
     ret = -1;
-    if (pathx_parse(aug->origin, src, &s) != 0
-        || pathx_parse(aug->origin, dst, &d) != 0)
+    s = parse_user_pathx(aug, src);
+    if (s == NULL)
+        goto done;
+
+    d = parse_user_pathx(aug, dst);
+    if (d == NULL)
         goto done;
 
     r = pathx_find_one(s, &ts);
@@ -516,7 +555,8 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
         pathin = "/*";
     }
 
-    if (pathx_parse(aug->origin, pathin, &p) != 0)
+    p = parse_user_pathx(aug, pathin);
+    if (p == NULL)
         return -1;
 
     for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
@@ -767,7 +807,8 @@ int aug_print(const struct augeas *aug, FILE *out, const char *pathin) {
         pathin = "/*";
     }
 
-    if (pathx_parse(aug->origin, pathin, &p) != PATHX_NOERROR)
+    p = parse_user_pathx(aug, pathin);
+    if (p == NULL)
         return -1;
 
     result = print_tree(out, p, 0);

@@ -83,6 +83,9 @@
 
 #define AUGEAS_EVENTS_SAVED AUGEAS_EVENTS "/saved"
 
+/* Where to put information about parsing of path expressions */
+#define AUGEAS_META_PATHX AUGEAS_META_TREE "/pathx"
+
 /* Define: AUGEAS_LENS_ENV
  * Name of env var that contains list of paths to search for additional
    spec files */
