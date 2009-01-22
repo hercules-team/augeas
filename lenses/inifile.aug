@@ -141,6 +141,26 @@ let entry (kw:regexp) (sep:lens) (comment:lens)
                        = [ key kw . sep . sto_to_comment? . (comment|eol) ] | comment
 
 (*
+View: indented_entry
+  Generic INI File entry that might be indented with an arbitrary
+  amount of whitespace
+
+  Parameters:
+    kw:regexp    - keyword regexp for the label
+    sep:lens     - lens to use as key/value separator
+    comment:lens - lens to use as comment
+
+  Sample Usage:
+     > let entry = IniFile.indented_entry setting sep comment
+*)
+let indented_entry (kw:regexp) (sep:lens) (comment:lens)
+                       = [ Util.del_opt_ws "" .
+                           key kw . sep . sto_to_comment? .
+                           (comment|eol)
+                         ]
+                         | comment
+
+(*
 Variable: entry_re
   Default regexp for <entry> keyword
 *)
@@ -165,6 +185,20 @@ View: title
 *)
 let title (kw:regexp)
                        = Util.del_str "[" . key kw
+                         . Util.del_str "]". eol
+
+(*
+View: indented_title
+  Title for <record>. This maps the title of a record as a node in the abstract tree. The title may be indented with arbitrary amounts of whitespace
+
+  Parameters:
+    kw:regexp - keyword regexp for the label
+
+  Sample Usage:
+    > let title   = IniFile.title IniFile.record_re
+*)
+let indented_title (kw:regexp)
+                       = Util.del_opt_ws "" . Util.del_str "[" . key kw
                          . Util.del_str "]". eol
 
 (*

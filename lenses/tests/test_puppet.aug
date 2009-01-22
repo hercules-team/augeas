@@ -4,8 +4,8 @@ module Test_puppet =
 [main]
 logdir=/var/log/puppet
 
-[puppetd]
-server=misspiggy.network.com
+  [puppetd]
+  server=misspiggy.network.com
 "
 
    test Puppet.lns get conf =
@@ -25,7 +25,7 @@ logdir=/var/log/puppet
 
 vardir=/var/lib/puppet
 rundir=/var/run/puppet
-[puppetd]
-server=misspiggy.network.com
+  [puppetd]
+  server=misspiggy.network.com
 "
 
