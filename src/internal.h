@@ -307,11 +307,11 @@ struct tree  *make_tree_origin(struct tree *root);
 int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub);
 
 int tree_rm(struct tree *origin, const char *path);
-struct tree *tree_set(struct tree *tree, const char *path, const char *value);
+struct tree *tree_set(struct tree *origin, const char *path, const char *value);
 int tree_insert(struct tree *origin, const char *path, const char *label,
                 int before);
 int free_tree(struct tree *tree);
-int print_tree(const struct tree *tree, FILE *out, const char *path,
+int print_tree(const struct tree *origin, FILE *out, const char *path,
                int pr_hidden);
 int tree_equal(const struct tree *t1, const struct tree *t2);
 
@@ -368,9 +368,9 @@ struct pathx;
 
 const char *pathx_error(struct pathx *pathx, const char **txt, int *pos);
 
-int pathx_parse(const struct tree *root, const char *path, struct pathx **px);
+int pathx_parse(const struct tree *origin, const char *path, struct pathx **px);
 struct tree *pathx_first(struct pathx *path);
-struct tree *pathx_next(struct pathx *path, struct tree *cur);
+struct tree *pathx_next(struct pathx *path);
 int pathx_find_one(struct pathx *path, struct tree **match);
 int pathx_expand_tree(struct pathx *path, struct tree **tree);
 void free_pathx(struct pathx *path);

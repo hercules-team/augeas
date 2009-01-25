@@ -1255,8 +1255,7 @@ int pathx_parse(const struct tree *tree, const char *txt,
     if (ALLOC(*pathx) < 0)
         return PATHX_ENOMEM;
 
-    if (tree != NULL)
-        (*pathx)->origin = (struct tree *) tree->parent;
+    (*pathx)->origin = (struct tree *) tree;
 
     /* Set up state */
     if (ALLOC((*pathx)->state) < 0) {
@@ -1482,8 +1481,7 @@ static struct tree *locpath_next(struct locpath *lp, struct state *state) {
     return complete_path(lp->last, state);
 }
 
-struct tree *pathx_next(struct pathx *pathx,
-                        ATTRIBUTE_UNUSED struct tree *cur) {
+struct tree *pathx_next(struct pathx *pathx) {
     return locpath_next(pathx->locpath, pathx->state);
 }
 
@@ -1494,8 +1492,6 @@ static struct tree *locpath_first(struct locpath *lp, struct state *state) {
 
 /* Find the first node in TREE matching PATH. */
 struct tree *pathx_first(struct pathx *pathx) {
-    if (pathx->origin == NULL)
-        return NULL;
     pathx->locpath->ctx = pathx->origin;
     return locpath_first(pathx->locpath, pathx->state);
 }
@@ -1644,7 +1640,7 @@ int pathx_find_one(struct pathx *path, struct tree **tree) {
     if (*tree == NULL)
         return 0;
 
-    if (pathx_next(path, *tree) != NULL) {
+    if (pathx_next(path) != NULL) {
         *tree = NULL;
         return -1;
     }

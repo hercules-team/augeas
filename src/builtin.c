@@ -134,7 +134,7 @@ static struct value *lens_get(struct info *info, struct value *l,
         v = make_exn_lns_error(info, err, text);
         if (tree != NULL) {
             exn_printf_line(v, "Tree generated so far:");
-            exn_print_tree(v, tree->children);
+            exn_print_tree(v, tree);
             free_tree(tree);
         }
         free_lns_error(err);
@@ -187,7 +187,7 @@ static struct value *tree_set_glue(struct info *info, struct value *path,
         fake = tree->origin->children;
     }
 
-    if (tree_set(tree->origin->children, path->string->str,
+    if (tree_set(tree->origin, path->string->str,
                  val->string->str) == NULL) {
         return make_exn_value(ref(info),
                               "Tree set of %s to '%s' failed",

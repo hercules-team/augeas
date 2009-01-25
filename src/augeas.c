@@ -236,7 +236,7 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
     struct tree *match;
     int r;
 
-    if (pathx_parse(aug->origin->children, path, &p) != 0)
+    if (pathx_parse(aug->origin, path, &p) != 0)
         return -1;
 
     if (value != NULL)
@@ -250,12 +250,13 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
     return r;
 }
 
-struct tree *tree_set(struct tree *root, const char *path, const char *value) {
+struct tree *tree_set(struct tree *origin, const char *path,
+                      const char *value) {
     struct tree *tree;
     struct pathx *p;
     int r;
 
-    if (pathx_parse(root, path, &p) != 0)
+    if (pathx_parse(origin, path, &p) != 0)
         goto error;
 
     r = pathx_expand_tree(p, &tree);
@@ -280,7 +281,7 @@ struct tree *tree_set(struct tree *root, const char *path, const char *value) {
 }
 
 int aug_set(struct augeas *aug, const char *path, const char *value) {
-    return tree_set(aug->origin->children, path, value) == NULL ? -1 : 0;
+    return tree_set(aug->origin, path, value) == NULL ? -1 : 0;
 }
 
 int tree_insert(struct tree *origin, const char *path, const char *label,
@@ -293,7 +294,7 @@ int tree_insert(struct tree *origin, const char *path, const char *label,
     if (strchr(label, SEP) != NULL)
         return -1;
 
-    if (pathx_parse(origin->children, path, &p) != 0)
+    if (pathx_parse(origin, path, &p) != 0)
         goto error;
 
     if (pathx_find_one(p, &match) != 1)
@@ -380,14 +381,13 @@ int tree_rm(struct tree *origin, const char *path) {
     assert(origin->next == NULL);
 
     struct pathx *p = NULL;
-    struct tree *root = origin->children;
     struct tree *tree, **del;
     int cnt = 0, ndel = 0, i;
 
-    if (pathx_parse(root, path, &p) != 0)
+    if (pathx_parse(origin, path, &p) != 0)
         return -1;
 
-    for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p, tree)) {
+    for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
         if (! TREE_HIDDEN(tree))
             ndel += 1;
     }
@@ -402,7 +402,7 @@ int tree_rm(struct tree *origin, const char *path) {
         return -1;
     }
 
-    for (i = 0, tree = pathx_first(p); tree != NULL; tree = pathx_next(p, tree)) {
+    for (i = 0, tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
         if (TREE_HIDDEN(tree))
             continue;
         del[i] = tree;
@@ -434,7 +434,7 @@ int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub) {
     if (r == -1)
         goto error;
 
-    parent = tree_set(aug->origin->children, path, NULL);
+    parent = tree_set(aug->origin, path, NULL);
     if (parent == NULL)
         goto error;
 
@@ -448,13 +448,13 @@ int aug_tree_replace(struct augeas *aug, const char *path, struct tree *sub) {
 }
 
 int aug_mv(struct augeas *aug, const char *src, const char *dst) {
-    struct tree *root = aug->origin->children;
     struct pathx *s, *d;
     struct tree *ts, *td, *t;
     int r, ret;
 
     ret = -1;
-    if (pathx_parse(root, src, &s) != 0 || pathx_parse(root, dst, &d) != 0)
+    if (pathx_parse(aug->origin, src, &s) != 0
+        || pathx_parse(aug->origin, dst, &d) != 0)
         goto done;
 
     r = pathx_find_one(s, &ts);
@@ -512,10 +512,10 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
         pathin = "/*";
     }
 
-    if (pathx_parse(aug->origin->children, pathin, &p) != 0)
+    if (pathx_parse(aug->origin, pathin, &p) != 0)
         return -1;
 
-    for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p, tree)) {
+    for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
         if (! TREE_HIDDEN(tree))
             cnt += 1;
     }
@@ -529,10 +529,10 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
     if (*matches == NULL)
         goto error;
 
-    pathx_parse(aug->origin->children, pathin, &p);
+    pathx_parse(aug->origin, pathin, &p);
 
     int i = 0;
-    for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p, tree)) {
+    for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
         if (TREE_HIDDEN(tree))
             continue;
         (*matches)[i] = format_path(tree);
@@ -644,7 +644,7 @@ int aug_save(struct augeas *aug) {
     if (update_save_flags(aug) < 0)
         return -1;
 
-    if (pathx_parse(aug->origin->children, AUGEAS_FILES_TREE, &p) != 0)
+    if (pathx_parse(aug->origin, AUGEAS_FILES_TREE, &p) != 0)
         return -1;
     if (pathx_find_one(p, &files) != 1) {
         free_pathx(p);
@@ -727,7 +727,7 @@ int print_tree(const struct tree *start, FILE *out, const char *pathin,
     if (pathx_parse(start, pathin, &p) != 0)
         return -1;
 
-    for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p, tree)) {
+    for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
         if (TREE_HIDDEN(tree) && ! pr_hidden)
             continue;
 
@@ -754,7 +754,7 @@ int aug_print(const struct augeas *aug, FILE *out, const char *pathin) {
     if (pathin == NULL || strlen(pathin) == 0) {
         pathin = "/*";
     }
-    return print_tree(aug->origin->children, out, pathin, 0);
+    return print_tree(aug->origin, out, pathin, 0);
 }
 
 void aug_close(struct augeas *aug) {
