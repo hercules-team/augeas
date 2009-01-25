@@ -563,8 +563,6 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
         if (! TREE_HIDDEN(tree))
             cnt += 1;
     }
-    free_pathx(p);
-    p = NULL;
 
     if (matches == NULL)
         return cnt;
@@ -572,8 +570,6 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
     CALLOC(*matches, cnt);
     if (*matches == NULL)
         goto error;
-
-    pathx_parse(aug->origin, pathin, &p);
 
     int i = 0;
     for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
