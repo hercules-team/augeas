@@ -1,4 +1,68 @@
-(* /etc/sshd/sshd_config *)
+(*
+Module: Sshd
+  Parses /etc/ssh/sshd_config
+
+Author: David Lutterkort lutter@redhat.com
+        Dominique Dumont dominique.dumont@hp.com
+
+About: Reference
+  sshd_config man page.
+  See http://www.openbsd.org/cgi-bin/man.cgi?query=sshd_config&sektion=5
+
+About: License
+  This file is licensed under the LGPL v2+.
+
+About: Lens Usage
+  Sample usage of this lens in augtool:
+
+    * Get your current setup
+      > print /files/etc/ssh/sshd_config
+      ...
+
+    * Set X11Forwarding to "no"
+      > set /files/etc/ssh/sshd_config/X11Forwarding "no"
+
+  More advanced usage:
+
+    * Set a Match section
+      > set /files/etc/ssh/sshd_config/Match[1]/Condition/User "foo"
+      > set /files/etc/ssh/sshd_config/Match[1]/Settings/X11Forwarding "yes"
+
+  Saving your file:
+
+      > save
+
+
+About: CAVEATS
+
+  In sshd_config, Match blocks must be located at the end of the file.
+  This means that any new "global" parameters (i.e. outside of a Match
+  block) must be written before the first Match block. By default,
+  Augeas will write new parameters at the end of the file.
+
+  I.e. if you have a Match section and no ChrootDirectory parameter,
+  this command:
+
+     > set /files/etc/ssh/sshd_config/ChrootDirectory "foo"
+
+  will be stored in a new node after the Match section and Augeas will
+  refuse to save sshd_config file.
+
+  To create a new parameter as the right place, you must first create
+  a new Augeas node before the Match section:
+
+     > ins ChrootDirectory before /files/etc/ssh/sshd_config/Match
+
+  Then, you can set the parameter
+
+     > set /files/etc/ssh/sshd_config/ChrootDirectory "foo"
+
+
+About: Configuration files
+  This lens applies to /etc/ssh/sshd_config
+
+*)
+
 module Sshd =
    autoload xfm
 
