@@ -1,3 +1,21 @@
+0.3.6 - 2009-01-26
+  - report version in /augeas/version, report legal save modes in
+    /augeas/version/save/mode for feature tests/version checking
+  - dynamically change behavior of aug_save; add noop save mode
+    (Bryan Kearney)
+  - plug memory leak, more portable SELinux test (Jim Meyering)
+  - fix bz #478619 - do not use abspath (Arnaud Gomes-do-Vale)
+  - fix segfault when branch in a union does not have a ktype
+  - Lens changes/additions
+    * Dpkg: new lens for Debian's dpkg.cfg (Robin Lee Powell)
+    * Limits: new lens for /etc/security/limits.conf (Free Ekanayaka)
+    * Soma: new lens for http://www.somasuite.org/ config
+      (Free Ekanayaka)
+    * Php, Gdm: fix minor regexp error (Marc Fournier)
+      expand filter for Php config files (Robin Lee Powell)
+    * Phpvars: whitspace fixes (Free Ekanayaka)
+    * Puppet: accept indented puppet.conf (ticket #25)
+
 0.3.5 - 2008-12-23
   - add an option to rewrite files by overwriting their contents instead of
     putting the new file in place atomically with rename(2); file contents
@@ -9,7 +27,7 @@
     a number of bugs and oddities (e.g. tickets #7 and #23)
   - fix a bug in fa_as_regexp: a '.' wasn't escaped, ultimately leading to
     spurious errors from the typechecker
-  - Lens chanes/additions
+  - Lens changes/additions
     * Group: process /etc/group (Free Ekanayaka)
     * Passwd: process /etc/passwd (Free Ekanayaka)
     * Phpvars: process files that set PHP variables, in particular
