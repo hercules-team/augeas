@@ -65,6 +65,24 @@ title Fedora (2.6.24.3-34.fc8)
 
 ## default num\n" = {} {} {}
 
+  (* Color directive *)
+  test Grub.lns get "color cyan/blue white/blue\n" =
+    { "color"
+      { "normal"    { "foreground" = "cyan" }
+                    { "background" = "blue" } }
+      { "highlight" { "foreground" = "white" }
+                    { "background" = "blue" } } }
+
+  test Grub.lns get "\tcolor cyan/light-blue\n" =
+    { "color"
+      { "normal" { "foreground" = "cyan" }
+                 { "background" = "light-blue" } } }
+
+  test Grub.lns put "color cyan/light-blue\n" after
+    set "/color/highlight/foreground" "white";
+    set "/color/highlight/background" "black"    =
+    "color cyan/light-blue white/black\n"
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

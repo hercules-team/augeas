@@ -8,6 +8,7 @@ module Grub =
     let value_to_eol = store /[^= \t][^\n]*/
     let eol = Util.del_str "\n"
     let del_to_eol = del /[^\n]*/ ""
+    let opt_ws = Util.del_opt_ws ""
     let value_sep (dflt:string) = del /[ \t]*[ \t=][ \t]*/ dflt
 
     let kw_arg (kw:string) (indent:string) (dflt_sep:string) =
@@ -24,6 +25,19 @@ module Grub =
 
     let kw_pres (kw:string) = [ key kw . del_to_eol . eol ]
 
+    let color =
+      (* Should we nail it down to exactly the color names that *)
+      (* grub supports ? *)
+      let color_name = store /[A-Za-z-]+/ in
+      let color_spec =
+        [ label "foreground" . color_name] .
+        Util.del_str "/" .
+        [ label "background" . color_name ] in
+      [ opt_ws . key "color" .
+        Util.del_ws_spc . [ label "normal" . color_spec ] .
+        (Util.del_ws_spc . [ label "highlight" . color_spec ])? .
+        eol ]
+
     let menu_setting = kw_menu_arg "default"
                      | kw_menu_arg "fallback"
                      | kw_pres "hiddenmenu"
@@ -32,6 +46,7 @@ module Grub =
                      | kw_menu_arg "serial"
                      | kw_menu_arg "terminal"
                      | password_arg
+                     | color
 
     let title = del /title[ \t]+/ "title " . value_to_eol . eol
 
