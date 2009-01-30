@@ -170,11 +170,13 @@ static void print_dict(struct dict *dict, int indent) {
 #endif
 
 static void get_expected_error(struct state *state, struct lens *l) {
-    char *word, *p, *pat;
+    /* Size of the excerpt of the input text we'll show */
+    static const int wordlen = 10;
+    char word[wordlen+1];
+    char *p, *pat;
 
-    word = alloca(11);
-    strncpy(word, state->split->start, 10);
-    word[10] = '\0';
+    strncpy(word, state->split->start, wordlen);
+    word[wordlen] = '\0';
     for (p = word; *p != '\0' && *p != '\n'; p++);
     *p = '\0';
 
