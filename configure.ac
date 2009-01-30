@@ -75,6 +75,11 @@ AC_SUBST(AUGEAS_CFLAGS)
 AUGEAS_CHECK_READLINE
 AC_CHECK_FUNCS([open_memstream])
 
+VERSION_SCRIPT_FLAGS=-Wl,--version-script=
+$(/usr/bin/ld --help 2>&1 | grep -- --version-script >/dev/null) || \
+    VERSION_SCRIPT_FLAGS="-Wl,-M -Wl,"
+AC_SUBST(VERSION_SCRIPT_FLAGS)
+
 gl_INIT
 
 AC_OUTPUT(Makefile \

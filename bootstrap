@@ -59,11 +59,13 @@ gnulib_tool=$GNULIB_SRCDIR/gnulib-tool
 
 modules='
 argz
+fnmatch
 gitlog-to-changelog
 canonicalize-lgpl
 regex
 selinux-h
 strndup
+vasprintf
 '
 
 # Tell gnulib to:

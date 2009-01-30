@@ -7,11 +7,10 @@
       aug_insert;
       aug_rm;
       aug_mv;
-      aug_ls;
       aug_match;
       aug_save;
       aug_print;
-      /* Symbols with __ are private */
+      # Symbols with __ are private
       __aug_load_module_file;
     local: *;
 };
