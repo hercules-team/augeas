@@ -23,6 +23,7 @@
 #include <config.h>
 #include <internal.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <memory.h>
 #include <ctype.h>
 
@@ -144,7 +145,7 @@ struct value {
         struct locpath  *locpath;     /* T_LOCPATH */
         int              number;      /* T_NUMBER */
         char            *string;      /* T_STRING  */
-        unsigned int     bool;        /* T_BOOLEAN */
+        bool             boolval;     /* T_BOOLEAN */
     };
 };
 
@@ -1275,9 +1276,9 @@ int pathx_parse(const struct tree *tree, const char *txt,
     }
     state->value_pool_size = 8;
     state->value_pool[0].tag = T_BOOLEAN;
-    state->value_pool[0].bool = 0;
+    state->value_pool[0].boolval = 0;
     state->value_pool[1].tag = T_BOOLEAN;
-    state->value_pool[1].bool = 1;
+    state->value_pool[1].boolval = 1;
     state->value_pool_used = 2;
 
     /* Parse */
@@ -1354,7 +1355,7 @@ static int pred_matches(struct step *step, struct state *state) {
         struct value *v = pop_value(state);
         switch(v->tag) {
         case T_BOOLEAN:
-            if (! v->bool)
+            if (! v->boolval)
                 return 0;
             break;
         case T_NUMBER:
