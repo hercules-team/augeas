@@ -1321,6 +1321,10 @@ int pathx_parse(const struct tree *tree, const char *txt,
  * Searching in the tree
  *************************************************************************/
 
+static bool step_matches(struct step *step, struct tree *tree) {
+    return (step->name == NULL || streqv(step->name, tree->label));
+}
+
 /* Return the 1-based position of STEP->CUR amongst its siblings */
 static int position(struct step *step) {
     int pos = 0;
@@ -1329,7 +1333,7 @@ static int position(struct step *step) {
     for (struct tree *t = step_first(step, step->ctx);
          t != NULL;
          t = step_next(step)) {
-        if (streqv(t->label, cur->label)) {
+        if (step_matches(step, t)) {
             pos += 1;
             if (t == cur) {
                 step->cur = cur;
@@ -1403,7 +1407,7 @@ static struct tree *step_first(struct step *step, struct tree *ctx) {
     }
     if (step->cur == NULL)
         return NULL;
-    if (step->name != NULL && ! streqv(step->cur->label, step->name))
+    if (! step_matches(step, step->cur))
         step_next(step);
     return step->cur;
 }
@@ -1445,9 +1449,8 @@ static struct tree *step_next(struct step *step) {
         default:
             assert(0);
         }
-        if (step->cur != NULL)
-            if (step->name == NULL || streqv(step->cur->label, step->name))
-                break;
+        if (step->cur != NULL && step_matches(step, step->cur))
+            break;
     }
     return step->cur;
 }

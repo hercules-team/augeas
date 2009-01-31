@@ -136,3 +136,6 @@ test lircd-ancestor //*[ancestor::kudzu]
      /augeas/files/etc/sysconfig/kudzu/lens/info = ...
      /augeas/files/etc/sysconfig/kudzu/lens/id = ...
      /files/etc/sysconfig/kudzu/SAFE = no
+
+test wildcard-last /files/etc/hosts/*[last()]
+     /files/etc/hosts/2
