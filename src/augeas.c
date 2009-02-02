@@ -157,6 +157,8 @@ static const char *init_root(const char *root0) {
     if (root0 == NULL)
         root0 = "/";
     root = strdup(root0);
+    if (root == NULL)
+        return NULL;
     if (root[strlen(root)-1] != SEP) {
         if (REALLOC_N(root, strlen(root) + 2) == -1) {
             FREE(root);
