@@ -245,7 +245,8 @@ void free_value(struct value *v) {
         unref(v->transform, transform);
         break;
     case V_NATIVE:
-        unref(v->native->type, type);
+        if (v->native)
+            unref(v->native->type, type);
         free(v->native);
         break;
     case V_CLOS:
@@ -1709,17 +1710,18 @@ static struct info *make_native_info(const char *fname, int line) {
     return info;
 }
 
-void define_native_intl(const char *file, int line,
-                        struct module *module, const char *name,
-                        int argc, void *impl, ...) {
+int define_native_intl(const char *file, int line,
+                       struct module *module, const char *name,
+                       int argc, void *impl, ...) {
     assert(argc > 0);  /* We have no unit type */
     assert(argc <= 5);
     va_list ap;
     enum type_tag tag;
-    struct term *params = NULL, *body;
+    struct term *params = NULL, *body = NULL, *func = NULL;
     struct type *type;
-    struct value *v;
+    struct value *v = NULL;
     struct info *info = make_native_info(file, line);
+    struct ctx ctx;
 
     va_start(ap, impl);
     for (int i=0; i < argc; i++) {
@@ -1737,22 +1739,31 @@ void define_native_intl(const char *file, int line,
     type = make_base_type(tag);
 
     make_ref(v);
+    if (v == NULL)
+        goto error;
     v->tag = V_NATIVE;
     v->info = info;
 
-    CALLOC(v->native, 1);
+    if (ALLOC(v->native) < 0)
+        goto error;
     v->native->argc = argc;
     v->native->type = type;
     v->native->impl = impl;
 
     make_ref(body);
+    if (body == NULL)
+        goto error;
     body->info = ref(info);
     body->type = ref(type);
     body->tag = A_VALUE;
     body->value = v;
+    v = NULL;
 
-    struct term *func = build_func(params, body);
-    struct ctx ctx;
+    func = build_func(params, body);
+    if (func == NULL)
+        goto error;
+    body = NULL;
+
     ctx.aug = NULL;
     ctx.local = ref(module->bindings);
     ctx.name = module->name;
@@ -1762,12 +1773,22 @@ void define_native_intl(const char *file, int line,
         abort();
     }
     v = make_closure(func, ctx.local);
+    if (v == NULL) {
+        unref(module->bindings, binding);
+        goto error;
+    }
     bind(&ctx.local, name, func->type, v);
     unref(v, value);
     unref(func, term);
     unref(module->bindings, binding);
 
     module->bindings = ctx.local;
+    return 0;
+ error:
+    unref(v, value);
+    unref(body, term);
+    unref(func, term);
+    return -1;
 }
 
 

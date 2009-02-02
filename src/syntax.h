@@ -255,9 +255,10 @@ struct module *module_create(const char *name);
 #define define_native(module, name, argc, impl, types ...)       \
     define_native_intl(__FILE__, __LINE__, module, name, argc, impl, ## types)
 
-void define_native_intl(const char *fname, int line,
-                        struct module *module, const char *name,
-                        int argc, void *impl, ...);
+ATTRIBUTE_RETURN_CHECK
+int define_native_intl(const char *fname, int line,
+                       struct module *module, const char *name,
+                       int argc, void *impl, ...);
 
 struct module *builtin_init(void);
 

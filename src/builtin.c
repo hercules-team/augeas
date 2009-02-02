@@ -429,39 +429,49 @@ static struct value *sys_read_file(struct info *info, struct value *n) {
 
 struct module *builtin_init(void) {
     struct module *modl = module_create("Builtin");
-    define_native(modl, "gensym", 1, gensym, T_STRING, T_STRING);
+    int r;
+
+#define DEFINE_NATIVE(modl, name, nargs, impl, types ...)               \
+    r = define_native(modl, name, nargs, impl, ##types);                \
+    if (r < 0) goto error;
+
+    DEFINE_NATIVE(modl, "gensym", 1, gensym, T_STRING, T_STRING);
+
     /* Primitive lenses */
-    define_native(modl, "del",     2, lns_del, T_REGEXP, T_STRING, T_LENS);
-    define_native(modl, "store",   1, lns_store, T_REGEXP, T_LENS);
-    define_native(modl, "key",     1, lns_key, T_REGEXP, T_LENS);
-    define_native(modl, "label",   1, lns_label, T_STRING, T_LENS);
-    define_native(modl, "seq",     1, lns_seq, T_STRING, T_LENS);
-    define_native(modl, "counter", 1, lns_counter, T_STRING, T_LENS);
+    DEFINE_NATIVE(modl, "del",     2, lns_del, T_REGEXP, T_STRING, T_LENS);
+    DEFINE_NATIVE(modl, "store",   1, lns_store, T_REGEXP, T_LENS);
+    DEFINE_NATIVE(modl, "key",     1, lns_key, T_REGEXP, T_LENS);
+    DEFINE_NATIVE(modl, "label",   1, lns_label, T_STRING, T_LENS);
+    DEFINE_NATIVE(modl, "seq",     1, lns_seq, T_STRING, T_LENS);
+    DEFINE_NATIVE(modl, "counter", 1, lns_counter, T_STRING, T_LENS);
     /* Applying lenses (mostly for tests) */
-    define_native(modl, "get",     2, lens_get, T_LENS, T_STRING, T_TREE);
-    define_native(modl, "put",     3, lens_put, T_LENS, T_TREE, T_STRING,
-                                               T_STRING);
+    DEFINE_NATIVE(modl, "get",     2, lens_get, T_LENS, T_STRING, T_TREE);
+    DEFINE_NATIVE(modl, "put",     3, lens_put, T_LENS, T_TREE, T_STRING,
+                  T_STRING);
     /* Tree manipulation used by the PUT tests */
-    define_native(modl, "set", 3, tree_set_glue, T_STRING, T_STRING, T_TREE,
+    DEFINE_NATIVE(modl, "set", 3, tree_set_glue, T_STRING, T_STRING, T_TREE,
                                                  T_TREE);
-    define_native(modl, "clear", 2, tree_clear_glue, T_STRING, T_TREE,
+    DEFINE_NATIVE(modl, "clear", 2, tree_clear_glue, T_STRING, T_TREE,
                                                  T_TREE);
-    define_native(modl, "rm", 2, tree_rm_glue, T_STRING, T_TREE, T_TREE);
-    define_native(modl, "insa", 3, tree_insa_glue, T_STRING, T_STRING, T_TREE,
+    DEFINE_NATIVE(modl, "rm", 2, tree_rm_glue, T_STRING, T_TREE, T_TREE);
+    DEFINE_NATIVE(modl, "insa", 3, tree_insa_glue, T_STRING, T_STRING, T_TREE,
                                                    T_TREE);
-    define_native(modl, "insb", 3, tree_insb_glue, T_STRING, T_STRING, T_TREE,
+    DEFINE_NATIVE(modl, "insb", 3, tree_insb_glue, T_STRING, T_STRING, T_TREE,
                                                    T_TREE);
     /* Transforms and filters */
-    define_native(modl, "incl", 1, xform_incl, T_STRING, T_FILTER);
-    define_native(modl, "excl", 1, xform_excl, T_STRING, T_FILTER);
-    define_native(modl, "transform", 2, xform_transform, T_LENS, T_FILTER,
+    DEFINE_NATIVE(modl, "incl", 1, xform_incl, T_STRING, T_FILTER);
+    DEFINE_NATIVE(modl, "excl", 1, xform_excl, T_STRING, T_FILTER);
+    DEFINE_NATIVE(modl, "transform", 2, xform_transform, T_LENS, T_FILTER,
                                                          T_TRANSFORM);
     /* System functions */
     struct module *sys = module_create("Sys");
     modl->next = sys;
-    define_native(sys, "getenv", 1, sys_getenv, T_STRING, T_STRING);
-    define_native(sys, "read_file", 1, sys_read_file, T_STRING, T_STRING);
+    DEFINE_NATIVE(sys, "getenv", 1, sys_getenv, T_STRING, T_STRING);
+    DEFINE_NATIVE(sys, "read_file", 1, sys_read_file, T_STRING, T_STRING);
     return modl;
+ error:
+    unref(modl, module);
+    return NULL;
 }
 
 /*
