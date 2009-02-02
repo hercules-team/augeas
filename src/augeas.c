@@ -362,8 +362,7 @@ int aug_insert(struct augeas *aug, const char *path, const char *label,
 struct tree *make_tree(char *label, char *value, struct tree *parent,
                        struct tree *children) {
     struct tree *tree;
-    CALLOC(tree, 1);
-    if (tree == NULL)
+    if (ALLOC(tree) < 0)
         return NULL;
 
     tree->label = label;
@@ -570,8 +569,7 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
     if (matches == NULL)
         return cnt;
 
-    CALLOC(*matches, cnt);
-    if (*matches == NULL)
+    if (ALLOC_N(*matches, cnt) < 0)
         goto error;
 
     int i = 0;
