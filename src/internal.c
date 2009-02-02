@@ -163,7 +163,9 @@ char *unescape(const char *s, int len) {
             i += 1;
         }
 
-    CALLOC(result, size + 1);
+    if (ALLOC_N(result, size + 1) < 0)
+        return NULL;
+
     for (i = 0, t = result; i < len; i++, size++) {
         if (s[i] == '\\' && (n = strchr(escape_names, s[i+1])) != NULL) {
             *t++ = escape_chars[n - escape_names];
@@ -191,7 +193,8 @@ char *escape(const char *text, int cnt) {
         else
             len += 1;
     }
-    CALLOC(esc, len+1);
+    if (ALLOC_N(esc, len+1) < 0)
+        return NULL;
     e = esc;
     for (int i=0; i < cnt; i++) {
         char *p;
