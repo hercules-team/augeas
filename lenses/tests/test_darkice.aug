@@ -11,7 +11,7 @@ bitrateMode=cbr
 format = vorbis
 "
 
-   test Darkice.lns get conf = 
+   test Darkice.lns get conf =
       { "#comment" = "this is a comment" }
       {}
       { "target" = "general"
