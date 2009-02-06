@@ -21,7 +21,7 @@ test wildcard /files/etc/hosts/*/ipaddr
      /files/etc/hosts/2/ipaddr = 172.31.122.14
 
 # Compare the value of the current node with a constant
-test self-value /files/etc/hosts/*/ipaddr[ value() = '127.0.0.1' ]
+test self-value /files/etc/hosts/*/ipaddr[ . = '127.0.0.1' ]
      /files/etc/hosts/1/ipaddr = 127.0.0.1
 
 # Find nodes that have a child named 'ipaddr' with a fixed value
@@ -32,7 +32,7 @@ test child-value /files/etc/hosts/*[ipaddr = '127.0.0.1']
 test child-nil-value /files/etc/hosts/*[ipaddr = '']
 
 # Find nodes that have no value
-test self-nil-value /files/etc/hosts/*[value() = '']
+test self-nil-value /files/etc/hosts/*[. = '']
      /files/etc/hosts/1
      /files/etc/hosts/2
 

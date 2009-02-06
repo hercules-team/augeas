@@ -221,11 +221,8 @@ struct func {
 };
 
 static void func_last(struct state *state);
-static void func_value(struct state *state);
 
 static const struct func builtin_funcs[] = {
-    { .name = "value", .arity = 0, .type = T_STRING, .arg_types = NULL,
-      .impl = func_value },
     { .name = "last", .arity = 0, .type = T_NUMBER, .arg_types = NULL,
       .impl = func_last }
 };
@@ -431,22 +428,6 @@ static void func_last(struct state *state) {
     vind = make_value(T_NUMBER, state);
     CHECK_ERROR;
     state->value_pool[vind].number = count;
-    push_value(vind, state);
-}
-
-static void func_value(struct state *state) {
-    value_ind_t vind = make_value(T_STRING, state);
-    const char *s = state->step->cur->value;
-    char *v;
-
-    if (s == NULL) s = "";
-
-    v = strdup(s);
-    if (v == NULL) {
-        STATE_ENOMEM;
-        return;
-    }
-    state->value_pool[vind].string = v;
     push_value(vind, state);
 }
 
