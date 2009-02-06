@@ -134,6 +134,17 @@ static void print_pv(const char *path, const char *value) {
         printf("    %s\n", path);
 }
 
+static int has_match(const char *path, char **matches, int nmatches) {
+    int found = 0;
+    for (int i=0; i < nmatches; i++) {
+        if (matches[i] != NULL && STREQ(path, matches[i])) {
+            found = 1;
+            break;
+        }
+    }
+    return found;
+}
+
 static int run_one_test(struct augeas *aug, struct test *t) {
     int nexp = 0, nact;
     char **matches;
@@ -147,11 +158,10 @@ static int run_one_test(struct augeas *aug, struct test *t) {
         result = -1;
     } else {
         struct entry *e;
-        int i;
         const char *val;
 
-        for (e = t->entries, i = 0; e != NULL; e = e->next, i++) {
-            if (!STREQ(e->path, matches[i]))
+        for (e = t->entries; e != NULL; e = e->next) {
+            if (! has_match(e->path, matches, nact))
                 result = -1;
             if (! streqv(e->value, "...")) {
                 aug_get(aug, e->path, &val);
