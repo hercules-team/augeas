@@ -198,6 +198,16 @@ struct state {
     size_t         exprs_size;
 };
 
+/* We consider NULL and the empty string to be equal */
+ATTRIBUTE_PURE
+static inline int streqx(const char *s1, const char *s2) {
+    if (s1 == NULL)
+        return (s2 == NULL || strlen(s2) == 0);
+    if (s2 == NULL)
+        return strlen(s1) == 0;
+    return STREQ(s1, s2);
+}
+
 /* Functions */
 
 typedef void (*func_impl_t)(struct state *state);
@@ -445,10 +455,10 @@ static int calc_eq_locpath_locpath(struct locpath *ns1, struct locpath *ns2,
     for_each_node(t1, ns1, state) {
         for_each_node(t2, ns2, state) {
             if (neq) {
-                if (!streqv(t1->value, t2->value))
+                if (!streqx(t1->value, t2->value))
                     return 1;
             } else {
-                if (streqv(t1->value, t2->value))
+                if (streqx(t1->value, t2->value))
                     return 1;
             }
         }
@@ -461,10 +471,10 @@ static int calc_eq_locpath_string(struct locpath *lp, const char *s,
     lp->ctx = state->step->cur;
     for_each_node(t, lp, state) {
         if (neq) {
-            if (!streqv(t->value, s))
+            if (!streqx(t->value, s))
                 return 1;
         } else {
-            if (streqv(t->value, s))
+            if (streqx(t->value, s))
                 return 1;
         }
     }
@@ -485,7 +495,7 @@ static void eval_eq(struct state *state, int neq) {
     } else {
         assert(l->tag == T_STRING);
         assert(r->tag == T_STRING);
-        res = streqv(l->string, r->string);
+        res = streqx(l->string, r->string);
     }
     CHECK_ERROR;
 
@@ -1342,7 +1352,7 @@ int pathx_parse(const struct tree *tree, const char *txt,
  *************************************************************************/
 
 static bool step_matches(struct step *step, struct tree *tree) {
-    return (step->name == NULL || streqv(step->name, tree->label));
+    return (step->name == NULL || streqx(step->name, tree->label));
 }
 
 /* Return the 1-based position of STEP->CUR amongst its siblings */
