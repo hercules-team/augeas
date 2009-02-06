@@ -83,6 +83,22 @@ title Fedora (2.6.24.3-34.fc8)
     set "/color/highlight/background" "black"    =
     "color cyan/light-blue white/black\n"
 
+  (* Boot stanza with savedefault *)
+  let boot_savedefault =
+"title\t\tDebian GNU/Linux, kernel 2.6.18-6-vserver-686
+root\t\t(hd0,0)
+  kernel\t\t/boot/vmlinuz-2.6.18-6-vserver-686 root=/dev/md0 ro
+initrd\t\t/boot/initrd.img-2.6.18-6-vserver-686
+\tsavedefault\n"
+
+  test Grub.lns get boot_savedefault =
+    { "title" = "Debian GNU/Linux, kernel 2.6.18-6-vserver-686"
+      { "root" = "(hd0,0)" }
+      { "kernel" = "/boot/vmlinuz-2.6.18-6-vserver-686 root=/dev/md0 ro" }
+      { "initrd" = "/boot/initrd.img-2.6.18-6-vserver-686" }
+      { "savedefault" } }
+
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

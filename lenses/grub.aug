@@ -23,7 +23,7 @@ module Grub =
       (Util.del_ws_spc . [ label "file" . store /[^ \t\n]+/ ])? .
       eol ]
 
-    let kw_pres (kw:string) = [ key kw . del_to_eol . eol ]
+    let kw_pres (kw:string) = [ opt_ws . key kw . del_to_eol . eol ]
 
     let color =
       (* Should we nail it down to exactly the color names that *)
@@ -61,6 +61,7 @@ module Grub =
                      | kw_boot_arg "rootnoverify"
                      | kw_boot_arg "chainloader"
                      | kw_pres "quiet"  (* Seems to be a Ubuntu extension *)
+                     | kw_pres "savedefault"
                      | module_lines
 
     let boot = [ label "title" . title . boot_setting* ]
