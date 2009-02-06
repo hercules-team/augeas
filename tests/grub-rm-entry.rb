@@ -18,4 +18,10 @@ diff["/etc/grub.conf"] = <<TXT
  title Fedora (2.6.21.7-3.fc8xen)
  \troot (hd0,0)
  \tkernel /xen.gz-2.6.21.7-3.fc8
+@@ -28,4 +24,4 @@
+ \troot (hd0,0)
+ \tkernel /vmlinuz-2.6.24.3-34.fc8 ro root=/dev/vg00/lv00
+ \tinitrd /initrd-2.6.24.3-34.fc8.img
+-        savedefault
++savedefault
 TXT
