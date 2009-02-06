@@ -40,7 +40,6 @@ WIDTH = args.inject(0) do |max, arg|
 end
 status = 0
 
-augtool_check = "-c"
 args.each do |test|
     if File::directory?(AUGEAS_ROOT)
         FileUtils::rm_rf(AUGEAS_ROOT)
@@ -62,12 +61,11 @@ args.each do |test|
     redir = echo ? "" : "> /dev/null"
     printf("Test %-#{WIDTH}s ... ", File::basename(test, ".rb"))
     unless skip
-        IO.popen("augtool --nostdinc -n #{augtool_check} #{redir}", "w") do |io|
+        IO.popen("augtool --nostdinc -n #{redir}", "w") do |io|
             io.print(commands)
             io.puts("\nquit")
         end
         success=$?.success?
-        augtool_check = "" # It's enough to run augtool with -c once
         msgs = []
         diff.each do |file, exp|
             file = File::join(AUGEAS_ROOT, file)
