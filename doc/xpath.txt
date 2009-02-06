@@ -120,7 +120,7 @@ MultiplicativeExpr ::= PathExpr ('*' PathExpr)*
 
 Literal ::= '"' /[^"]* / '"' | "'" /[^']* / "'"
 Number       ::= /[0-9]+/
-Name ::= /[^/\[ \t\n]+/
+Name ::= /([^][/\= \t\n]|\\.)+/
 
 
 Additional stuff

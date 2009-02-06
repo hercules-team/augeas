@@ -800,9 +800,17 @@ static char *parse_name(struct state *state) {
 
     while (*state->pos != '\0' &&
            *state->pos != L_BRACK && *state->pos != SEP &&
-           *state->pos != R_BRACK &&
-           !isspace(*state->pos))
+           *state->pos != R_BRACK && *state->pos != '=' &&
+           !isspace(*state->pos)) {
+        if (*state->pos == '\\') {
+            state->pos += 1;
+            if (*state->pos == '\0') {
+                STATE_ERROR(state, PATHX_ENAME);
+                return NULL;
+            }
+        }
         state->pos += 1;
+    }
 
     if (state->pos == s) {
         STATE_ERROR(state, PATHX_ENAME);
@@ -814,6 +822,15 @@ static char *parse_name(struct state *state) {
         STATE_ENOMEM;
         return NULL;
     }
+
+    char *p = result;
+    for (char *t = result; *t != '\0'; t++, p++) {
+        if (*t == '\\')
+            t += 1;
+        *p = *t;
+    }
+    *p = '\0';
+
     return result;
 }
 

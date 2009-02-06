@@ -37,7 +37,7 @@ test self-nil-value /files/etc/hosts/*[value() = '']
      /files/etc/hosts/2
 
 # Match over two levels of the tree
-test two-wildcards /files/etc/*/*[ipaddr = '127.0.0.1']
+test two-wildcards /files/etc/*/*[ipaddr='127.0.0.1']
      /files/etc/hosts/1
 
 test pam-system-auth /files/etc/pam.d/*/*[module = 'system-auth']
