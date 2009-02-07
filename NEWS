@@ -1,3 +1,11 @@
+0.4.0 - 2009-02-06
+  - Much improved and expanded support for path expressions in the public
+    API. See doc/xpath.txt and tests/xpath.tests for details.
+  - Solaris support: builds at least on OpenSolaris 2008.11
+  - Lens changes/additions
+    * Grub: support color and savedefault
+    * DarkIce: new lens for http://darkice.tyrell.hu/ (Free Ekanayaka)
+
 0.3.6 - 2009-01-26
   - report version in /augeas/version, report legal save modes in
     /augeas/version/save/mode for feature tests/version checking
