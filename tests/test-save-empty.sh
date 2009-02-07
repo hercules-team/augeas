@@ -47,7 +47,7 @@ if [ ! -f $HOSTS ] ; then
     exit 1
 fi
 
-echo -e '127.0.0.1\tlocalhost' > $HOSTS.expected
+printf '127.0.0.1\tlocalhost\n' > $HOSTS.expected
 
 if ! cmp $HOSTS $HOSTS.expected > /dev/null 2>&1 ; then
     echo "Contents of $HOSTS are incorrect"

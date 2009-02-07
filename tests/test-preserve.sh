@@ -19,7 +19,7 @@ ls -il $1 | cut -d ' ' -f 1
 AUGTOOL="augtool --nostdinc -r $root -I $abs_top_srcdir/lenses"
 init_dirs
 
-echo -e '127.0.0.1\tlocalhost' > $hosts
+printf '127.0.0.1\tlocalhost\n' > $hosts
 
 chmod 0600 $hosts
 group=$(groups | tr ' ' '\n' | tail -n 1)
@@ -86,7 +86,7 @@ if [ $? != 0 ] ; then
 fi
 
 # Check that we preserve a backup file on request
-echo -e '127.0.0.1\tlocalhost' > $hosts
+printf '127.0.0.1\tlocalhost\n' > $hosts
 exp_inode=$(stat_inode $hosts)
 
 $AUGTOOL -b > /dev/null <<EOF
