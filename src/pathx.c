@@ -1353,6 +1353,9 @@ static int position(struct step *step) {
         }
     }
     assert(0);
+    /* Never reached, but Solaris headers miss __attribute__((noreturn))
+       in assert.h */
+    return -1;
 }
 
 static int pred_matches(struct step *step, struct state *state) {
