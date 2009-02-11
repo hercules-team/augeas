@@ -222,6 +222,25 @@ static struct split *set_split(struct state *state, struct split *split) {
     return split;
 }
 
+static void regexp_match_error(struct state *state, struct lens *lens,
+                               int count, struct split *split,
+                               struct regexp *r) {
+    char *text = strndup(split->start, split->size);
+    char *pat = regexp_escape(r);
+
+    if (count == -1) {
+        get_error(state, lens, "Failed to match /%s/ with %s", pat, text);
+    } else if (count == -2) {
+        get_error(state, lens, "Internal error matching /%s/ with %s",
+                  pat, text);
+    } else if (count == -3) {
+        /* Should have been caught by the typechecker */
+        get_error(state, lens, "Syntax error in regexp /%s/", pat);
+    }
+    free(pat);
+    free(text);
+}
+
 /* Refine a tree split OUTER according to the L_CONCAT lens LENS */
 static struct split *split_concat(struct state *state, struct lens *lens) {
     assert(lens->tag == L_CONCAT);
@@ -235,14 +254,8 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
     if (ctype->re != NULL)
         ctype->re->regs_allocated = REGS_UNALLOCATED;
     count = regexp_match(ctype, outer->start, outer->size, 0, &regs);
-    if (count == -2) {
-        FIXME("Match failed - produce better error");
-        abort();
-    } else if (count == -1) {
-        char *text = strndup(outer->start, outer->size);
-        get_error(state, lens,
-                  "Failed to match /%s/ with %s", ctype->pattern->str, text);
-        free(text);
+    if (count < 0) {
+        regexp_match_error(state, lens, count, outer, ctype);
         return NULL;
     }
 
@@ -267,10 +280,11 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
     goto done;
 }
 
-static struct split *split_iter(struct lens *lens, struct split *outer) {
+static struct split *split_iter(struct state *state, struct lens *lens) {
     assert(lens->tag == L_STAR);
 
     int count = 0;
+    struct split *outer = state->split;
     struct split *split = NULL;
     struct regexp *ctype = lens->child->ctype;
 
@@ -278,11 +292,11 @@ static struct split *split_iter(struct lens *lens, struct split *outer) {
     struct split *tail = NULL;
     while (pos < outer->size) {
         count = regexp_match(ctype, outer->start, outer->size, pos, NULL);
-        if (count == -2) {
-            FIXME("Match failed - produce better error");
-            abort();
-        } else if (count == -1) {
+        if (count == -1) {
             break;
+        } else if (count < -1) {
+            regexp_match_error(state, lens, count, outer, ctype);
+            goto error;
         }
         tail = split_append(&split, tail, outer->start, pos, pos + count);
         if (tail == NULL)
@@ -295,12 +309,15 @@ static struct split *split_iter(struct lens *lens, struct split *outer) {
     return NULL;
 }
 
-static int applies(struct lens *lens, struct split *split) {
+static int applies(struct state *state, struct lens *lens) {
+    struct split *split = state->split;
     int count;
     count = regexp_match(lens->ctype, split->start, split->size, 0, NULL);
-    if (count == -2) {
-        FIXME("Match failed - produce better error");
-        abort();
+    if (count == -1)
+        return 0;
+    else if (count < -1) {
+        regexp_match_error(state, lens, count, split, lens->ctype);
+        return 0;
     }
     return (count == split->size);
 }
@@ -425,7 +442,7 @@ static struct tree *get_union(struct lens *lens, struct state *state) {
 
     for (int i=0; i < lens->nchildren; i++) {
         struct lens *l = lens->children[i];
-        if (applies(l, state->split)) {
+        if (applies(state, l)) {
             tree = get_lens(l, state);
             applied = 1;
             break;
@@ -444,7 +461,7 @@ static struct skel *parse_union(struct lens *lens, struct state *state,
 
     for (int i=0; i < lens->nchildren; i++) {
         struct lens *l = lens->children[i];
-        if (applies(l, state->split)) {
+        if (applies(state, l)) {
             skel = parse_lens(l, state, dict);
             applied = 1;
             break;
@@ -517,7 +534,7 @@ static struct tree *get_quant_star(struct lens *lens, struct state *state) {
     assert(lens->tag == L_STAR);
     struct tree *tree = NULL, *tail = NULL;
     struct split *oldsplit = state->split;
-    struct split *split = split_iter(lens, state->split);
+    struct split *split = split_iter(state, lens);
 
     set_split(state, split);
     while (state->split != NULL) {
@@ -538,7 +555,7 @@ static struct skel *parse_quant_star(struct lens *lens, struct state *state,
                                      struct dict **dict) {
     assert(lens->tag == L_STAR);
     struct split *oldsplit = state->split;
-    struct split *split = split_iter(lens, state->split);
+    struct split *split = split_iter(state, lens);
     struct skel *skel = make_skel(lens), *tail = NULL;
 
     *dict = NULL;
@@ -563,7 +580,7 @@ static struct tree *get_quant_maybe(struct lens *lens, struct state *state) {
     assert(lens->tag == L_MAYBE);
     struct tree *tree = NULL;
 
-    if (applies(lens->child, state->split)) {
+    if (applies(state, lens->child)) {
         tree = get_lens(lens->child, state);
     }
     return tree;
@@ -574,7 +591,7 @@ static struct skel *parse_quant_maybe(struct lens *lens, struct state *state,
     assert(lens->tag == L_MAYBE);
 
     struct skel *skel = NULL;
-    if (applies(lens->child, state->split)) {
+    if (applies(state, lens->child)) {
         skel = parse_lens(lens->child, state, dict);
     }
     if (skel == NULL)
@@ -681,7 +698,7 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
      * try to process, hoping we'll get a more specific error, and if that
      * fails, we throw our arms in the air and say 'something went wrong'
      */
-    partial = !applies(lens, &split);
+    partial = !applies(&state, lens);
 
     tree = get_lens(lens, &state);
 
@@ -773,7 +790,7 @@ struct skel *lns_parse(struct lens *lens, const char *text, struct dict **dict,
     state.text = text;
     state.pos = text;
 
-    if (applies(lens, &split)) {
+    if (applies(&state, lens)) {
         *dict = NULL;
         skel = parse_lens(lens, &state, dict);
 

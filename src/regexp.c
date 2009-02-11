@@ -31,6 +31,26 @@ static const struct string empty_pattern_string = {
 
 static const struct string *const empty_pattern = &empty_pattern_string;
 
+char *regexp_escape(struct regexp *r) {
+    char *pat = escape(r->pattern->str, -1);
+
+    if (pat == NULL)
+        return NULL;
+
+    /* Remove unneeded '()' from pat */
+    for (int changed = 1; changed;) {
+        changed = 0;
+        for (char *p = pat; *p != '\0'; p++) {
+            if (*p == '(' && p[1] == ')') {
+                memmove(p, p+2, strlen(p+2)+1);
+                changed = 1;
+            }
+        }
+    }
+
+    return pat;
+}
+
 void print_regexp(FILE *out, struct regexp *r) {
     if (r == NULL) {
         fprintf(out, "<NULL>");

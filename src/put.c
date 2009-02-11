@@ -106,6 +106,26 @@ static void put_error(struct state *state, struct lens *lens,
         state->error->message = NULL;
 }
 
+static void regexp_match_error(struct state *state, struct lens *lens,
+                               int count, struct split *split,
+                               struct regexp *r) {
+    char *text = strndup(split->labels + split->start,
+                         split->end - split->start);
+    char *pat = regexp_escape(r);
+
+    if (count == -1) {
+        put_error(state, lens, "Failed to match /%s/ with %s", pat, text);
+    } else if (count == -2) {
+        put_error(state, lens, "Internal error matching /%s/ with %s",
+                  pat, text);
+    } else if (count == -3) {
+        /* Should have been caught by the typechecker */
+        put_error(state, lens, "Syntax error in regexp /%s/", pat);
+    }
+    free(pat);
+    free(text);
+}
+
 static struct split *make_split(struct tree *tree) {
     struct split *split;
     CALLOC(split, 1);
@@ -191,16 +211,10 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
         atype->re->regs_allocated = REGS_UNALLOCATED;
     count = regexp_match(atype, outer->labels, outer->end,
                          outer->start, &regs);
-    if (count == -2) {
-        FIXME("Match failed - produce better error");
-        abort();
-    } else if (count == -1 || count != outer->end - outer->start) {
-        char *labels = strndup(outer->labels + outer->start,
-                               outer->end - outer->start);
-        put_error(state, lens,
-                  "Failed to match /%s/ with %s",
-                  atype->pattern->str, labels);
-        free(labels);
+    if (count >= 0 && count != outer->end - outer->start)
+        count = -1;
+    if (count < 0) {
+        regexp_match_error(state, lens, count, outer, atype);
         return NULL;
     }
 
@@ -225,10 +239,11 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
     return split;
 }
 
-static struct split *split_iter(struct lens *lens, struct split *outer) {
+static struct split *split_iter(struct state *state, struct lens *lens) {
     assert(lens->tag == L_STAR);
 
     int count = 0;
+    struct split *outer = state->split;
     struct split *split = NULL;
     struct regexp *atype = lens->child->atype;
 
@@ -237,12 +252,13 @@ static struct split *split_iter(struct lens *lens, struct split *outer) {
     struct split *tail = NULL;
     while (pos < outer->end) {
         count = regexp_match(atype, outer->labels, outer->end, pos, NULL);
-        if (count == -2) {
-            FIXME("Match failed - produce better error");
-            abort();
-        } else if (count == -1) {
+        if (count == -1) {
             break;
+        } else if (count < -1) {
+            regexp_match_error(state, lens, count, outer, atype);
+            goto error;
         }
+
         struct tree *follow = cur;
         for (int j = pos; j < pos + count; j++) {
             if (outer->labels[j] == '/')
@@ -254,6 +270,9 @@ static struct split *split_iter(struct lens *lens, struct split *outer) {
         pos += count;
     }
     return split;
+ error:
+    free_split(split);
+    return NULL;
 }
 
 /* Check if LENS applies to the current split in STATE */
@@ -263,10 +282,11 @@ static int applies(struct lens *lens, struct state *state) {
 
     count = regexp_match(lens->atype, split->labels, split->end,
                          split->start, NULL);
-    if (count == -2) {
-        FIXME("Match failed - produce better error");
-        abort();
+    if (count < -1) {
+        regexp_match_error(state, lens, count, split, lens->atype);
+        return 0;
     }
+
     if (count != split->end - split->start)
         return 0;
     if (count == 0 && lens->value)
@@ -475,7 +495,7 @@ static void put_quant_star(struct lens *lens, struct state *state) {
     struct split *oldsplit = state->split;
     struct skel *oldskel = state->skel;
 
-    struct split *split = split_iter(lens, state->split);
+    struct split *split = split_iter(state, lens);
 
     state->skel = state->skel->skels;
     set_split(state, split);
@@ -614,7 +634,7 @@ static void create_quant_star(struct lens *lens, struct state *state) {
     assert(lens->tag == L_STAR);
     struct split *oldsplit = state->split;
 
-    struct split *split = split_iter(lens, state->split);
+    struct split *split = split_iter(state, lens);
 
     set_split(state, split);
     while (state->split != NULL) {

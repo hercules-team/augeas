@@ -210,6 +210,9 @@ struct regexp *regexp_make_empty(struct info *);
    regular expressions */
 void regexp_release(struct regexp *regexp);
 
+/* Produce a printable representation of R */
+char *regexp_escape(struct regexp *r);
+
 struct native {
     unsigned int argc;
     struct type *type;
