@@ -285,18 +285,6 @@ int regexp_nsub(struct regexp *r) {
     return r->re->re_nsub;
 }
 
-fa_t regexp_to_fa(struct regexp *regexp) {
-    fa_t fa;
-    int error = fa_compile(regexp->pattern->str, &fa);
-    if (error != REG_NOERROR) {
-        syntax_error(regexp->info,
-                     "unexpected error from fa_compile %d compiling %s",
-                     error, regexp->pattern->str);
-        return NULL;
-    }
-    return fa;
-}
-
 void regexp_release(struct regexp *regexp) {
     if (regexp->re != NULL) {
         regfree(regexp->re);

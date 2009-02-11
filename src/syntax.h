@@ -210,13 +210,6 @@ struct regexp *regexp_make_empty(struct info *);
    regular expressions */
 void regexp_release(struct regexp *regexp);
 
-/* Construct a finite automaton from REGEXP. The pattern for REGEXP
- * must be known to be syntactically correct.
- *
- * Return a new automaton, or NULL if the REGEXP has a syntax error
- */
-fa_t regexp_to_fa(struct regexp *regexp);
-
 struct native {
     unsigned int argc;
     struct type *type;

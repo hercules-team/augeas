@@ -41,6 +41,44 @@ static const char *const tags[] = {
     "subtree", "star", "maybe"
 };
 
+/* Construct a finite automaton from REGEXP and return it in *FA.
+ *
+ * Return NULL if REGEXP is valid, if the regexp REGEXP has syntax errors,
+ * return an exception.
+ */
+static struct value *str_to_fa(struct info *info, const char *pattern,
+                               fa_t *fa) {
+    int error;
+    struct value *exn = NULL;
+    size_t re_err_len;
+    char *re_str, *re_err;
+
+    error = fa_compile(pattern, fa);
+    if (error == REG_NOERROR)
+        return NULL;
+
+    re_str = escape(pattern, -1);
+    if (re_str == NULL) {
+        FIXME("Out of memory");
+    }
+    exn = make_exn_value(info, "Invalid regular expression /%s/", re_str);
+
+    re_err_len = regerror(error, NULL, NULL, 0);
+    if (ALLOC_N(re_err, re_err_len) < 0) {
+        FIXME("Out of memory");
+    }
+    regerror(error, NULL, re_err, re_err_len);
+    exn_printf_line(exn, "%s", re_err);
+
+    free(re_str);
+    free(re_err);
+    return exn;
+}
+
+static struct value *regexp_to_fa(struct regexp *regexp, fa_t *fa) {
+    return str_to_fa(regexp->info, regexp->pattern->str, fa);
+}
+
 static struct lens *make_lens(enum lens_tag tag, struct info *info) {
     struct lens *lens;
     make_ref(lens);
@@ -249,17 +287,14 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
 
     /* Typecheck */
     if (tag == L_KEY) {
-        int error = fa_compile("(.|\n)*/(.|\n)*", &fa_slash);
-        if (error != REG_NOERROR) {
-            exn = make_exn_value(info,
-                                 "unexpected error from fa_compile %d", error);
+        exn = str_to_fa(info, "(.|\n)*/(.|\n)*", &fa_slash);
+        if (exn != NULL)
             goto error;
-        }
-        fa_key = regexp_to_fa(regexp);
-        if (fa_key == NULL) {
-            exn = make_exn_value(info, "fa_compile of key failed");
+
+        exn = regexp_to_fa(regexp, &fa_key);
+        if (exn != NULL)
             goto error;
-        }
+
         fa_isect = fa_intersect(fa_slash, fa_key);
         if (! fa_is_basic(fa_isect, FA_EMPTY)) {
             exn = make_exn_value(info,
@@ -322,17 +357,18 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
  */
 static struct value *disjoint_check(struct info *info, const char *msg,
                                     struct regexp *r1, struct regexp *r2) {
-    fa_t fa1 = regexp_to_fa(r1);
-    fa_t fa2 = regexp_to_fa(r2);
+    fa_t fa1 = NULL;
+    fa_t fa2 = NULL;
     fa_t fa = NULL;
     struct value *exn = NULL;
 
-    if (fa1 == NULL || fa2 == NULL) {
-        fa_free(fa1);
-        fa_free(fa2);
-        return make_exn_value(ref(info),
-              "internal error: compile in disjoint_check failed");
-    }
+    exn = regexp_to_fa(r1, &fa1);
+    if (exn != NULL)
+        goto done;
+
+    exn = regexp_to_fa(r2, &fa2);
+    if (exn != NULL)
+        goto done;
 
     fa = fa_intersect(fa1, fa2);
     if (! fa_is_basic(fa, FA_EMPTY)) {
@@ -344,6 +380,7 @@ static struct value *disjoint_check(struct info *info, const char *msg,
         free(xmpl);
     }
 
+ done:
     fa_free(fa);
     fa_free(fa1);
     fa_free(fa2);
@@ -400,17 +437,20 @@ static struct value *ambig_check(struct info *info, fa_t fa1, fa_t fa2,
 
 static struct value *ambig_concat_check(struct info *info, const char *msg,
                                         struct regexp *r1, struct regexp *r2) {
-    fa_t fa1 = regexp_to_fa(r1);
-    fa_t fa2 = regexp_to_fa(r2);
+    fa_t fa1 = NULL;
+    fa_t fa2 = NULL;
     struct value *result = NULL;
 
-    if (fa1 == NULL || fa2 == NULL) {
-        fa_free(fa1);
-        fa_free(fa2);
-        return make_exn_value(ref(info), "Internal error: regexp_to_fa failed");
-    }
+    result = regexp_to_fa(r1, &fa1);
+    if (result != NULL)
+        goto done;
+
+    result = regexp_to_fa(r2, &fa2);
+    if (result != NULL)
+        goto done;
 
     result = ambig_check(info, fa1, fa2, msg);
+ done:
     fa_free(fa1);
     fa_free(fa2);
     return result;
@@ -439,14 +479,18 @@ static struct value *typecheck_concat(struct info *info,
 
 static struct value *ambig_iter_check(struct info *info, const char *msg,
                                       struct regexp *r) {
-    fa_t fas, fa;
+    fa_t fas = NULL, fa = NULL;
     struct value *result = NULL;
 
-    fa = regexp_to_fa(r);
+    result = regexp_to_fa(r, &fa);
+    if (result != NULL)
+        goto done;
+
     fas = fa_iter(fa, 0, -1);
 
     result = ambig_check(info, fa, fas, msg);
 
+ done:
     fa_free(fa);
     fa_free(fas);
     return result;
