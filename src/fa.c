@@ -2544,12 +2544,20 @@ static void parse_char_class(const char **regexp, struct re *re,
             goto error;
         }
         if (peek(regexp, "]")) {
+            if (from > to) {
+                *error = REG_ERANGE;
+                goto error;
+            }
             add_re_char(re, from, to);
             add_re_char(re, '-', '-');
             return;
         } else {
             to = parse_char(regexp, 0);
         }
+    }
+    if (from > to) {
+        *error = REG_ERANGE;
+        goto error;
     }
     add_re_char(re, from, to);
  error:

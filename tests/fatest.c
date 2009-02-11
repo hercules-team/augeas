@@ -418,6 +418,10 @@ static void testAsRegexpMinus(CuTest *tc) {
     free(re);
 }
 
+static void testRangeEnd(CuTest *tc) {
+    make_fa(tc, "[1-0]", REG_ERANGE);
+}
+
 int main(int argc, char **argv) {
     if (argc == 1) {
         char *output = NULL;
@@ -436,6 +440,7 @@ int main(int argc, char **argv) {
         SUITE_ADD_TEST(suite, testAmbig);
         SUITE_ADD_TEST(suite, testAsRegexp);
         SUITE_ADD_TEST(suite, testAsRegexpMinus);
+        SUITE_ADD_TEST(suite, testRangeEnd);
 
         CuSuiteRun(suite);
         CuSuiteSummary(suite, &output);
