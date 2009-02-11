@@ -133,7 +133,7 @@ static int cmd_match(char *args[]) {
     int filter = (args[1] != NULL) && (strlen(args[1]) > 0);
 
     cnt = aug_match(aug, pattern, &matches);
-    if (cnt == -1) {
+    if (cnt < 0) {
         printf("  (error matching %s)\n", pattern);
         return -1;
     }
