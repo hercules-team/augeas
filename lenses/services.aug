@@ -41,12 +41,12 @@ module Services =
 (* Group: Generic primitives *)
 
 (* Variable: eol *)
-let eol         = Util.eol
+let eol         = del /[ \t]*(#)?[ \t]*\n/ "\n"
 let indent      = Util.indent
 let comment     = Util.comment
 let empty       = Util.empty
 let protocol_re = /[a-zA-Z]+/
-let word_re     = /[a-zA-Z0-9_-]+/
+let word_re     = /[a-zA-Z0-9_.+*\/-]+/
 let num_re      = /[0-9]+/
 
 (* Group: Separators *)
@@ -83,5 +83,3 @@ let lns = ( empty | comment | record )*
 let filter = (incl "/etc/services")
 
 let xfm = transform lns filter
-
-
