@@ -59,6 +59,7 @@ Group: Specific Modules  {
    File: Sshd  (sshd.aug)
    File: Sudoers  (sudoers.aug)
    File: Xinetd  (xinetd.aug)
+   File: Xorg  (xorg.aug)
    }  # Group: Specific Modules
 
 Group: Generic Modules  {
