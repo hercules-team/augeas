@@ -295,6 +295,7 @@ int regexp_compile(struct regexp *r) {
     c = re_compile_pattern(r->pattern->str, strlen(r->pattern->str), r->re);
     re_syntax_options = old_syntax;
 
+    r->re->regs_allocated = REGS_REALLOCATE;
     if (c != NULL) {
         char *p = escape(r->pattern->str, -1);
         syntax_error(r->info, "invalid regexp /%s/: %s", p, c);

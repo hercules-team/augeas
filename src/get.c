@@ -251,8 +251,7 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
     struct split *split = NULL;
     struct regexp *ctype = lens->ctype;
 
-    if (ctype->re != NULL)
-        ctype->re->regs_allocated = REGS_UNALLOCATED;
+    MEMZERO(&regs, 1);
     count = regexp_match(ctype, outer->start, outer->size, 0, &regs);
     if (count < 0) {
         regexp_match_error(state, lens, count, outer, ctype);

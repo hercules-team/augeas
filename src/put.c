@@ -189,8 +189,7 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
         return split;
     }
 
-    if (atype->re != NULL)
-        atype->re->regs_allocated = REGS_UNALLOCATED;
+    MEMZERO(&regs, 1);
     count = regexp_match(atype, outer->labels, outer->end,
                          outer->start, &regs);
     if (count >= 0 && count != outer->end - outer->start)
