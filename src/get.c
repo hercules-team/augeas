@@ -33,15 +33,6 @@
 #define assert_error(state, format, args ...) \
     assert_error_at(__FILE__, __LINE__, &(state->info), format, ## args)
 
-/* A substring in the overall string we are matching. A lens is supposed
-   to process the whole string from start[0] ... start[size]
-*/
-struct split {
-    struct split *next;
-    const char   *start;    /* The start of the text to process */
-    int           size;
-};
-
 struct seq {
     struct seq *next;
     const char *name;
@@ -50,14 +41,35 @@ struct seq {
 
 struct state {
     struct info       info;
-    struct split     *split;
     const char       *text;
-    const char       *pos;
     struct seq       *seqs;
     char             *key;
     char             *value;     /* GET_STORE leaves a value here */
     struct lns_error *error;
+    /* We use the registers from a regular expression match to keep track
+     * of the substring we are currently looking at. REGS are the registers
+     * from the last regexp match; NREG is the number of the register
+     * in REGS that describes the substring we are currently looking at.
+     *
+     * We adjust NREG as we traverse lenses either because we know the
+     * grouping structure of lenses (for L_STAR, the child lens is always
+     * in NREG + 1) or by looking at the number of groups in a sublens (as
+     * we move from one child of L_CONCAT to the next, we need to add 1 +
+     * number of groups of that child to NREG) How NREG is adjusted is
+     * closely related to how the REGEXP_* routines build up bigger regexps
+     * from smaller ones.
+     */
+    struct re_registers *regs;
+    uint                 nreg;
 };
+
+#define REG_START(state) ((state)->regs->start[(state)->nreg])
+#define REG_END(state)   ((state)->regs->end[(state)->nreg])
+#define REG_SIZE(state) (REG_END(state) - REG_START(state))
+#define REG_POS(state) ((state)->text + REG_START(state))
+#define REG_VALID(state) ((state)->nreg < (state)->regs->num_regs)
+#define REG_MATCHED(state) (REG_VALID(state)                            \
+                            && (state)->regs->start[(state)->nreg] >= 0)
 
 static void get_error(struct state *state, struct lens *lens,
                       const char *format, ...)
@@ -82,7 +94,10 @@ static void get_error(struct state *state, struct lens *lens,
         return;
     CALLOC(state->error, 1);
     state->error->lens = ref(lens);
-    state->error->pos  = state->pos - state->text;
+    if (REG_MATCHED(state))
+        state->error->pos  = REG_START(state);
+    else
+        state->error->pos = 0;
     va_start(ap, format);
     r = vasprintf(&state->error->message, format, ap);
     va_end(ap);
@@ -175,7 +190,10 @@ static void get_expected_error(struct state *state, struct lens *l) {
     char word[wordlen+1];
     char *p, *pat;
 
-    strncpy(word, state->split->start, wordlen);
+    if (REG_MATCHED(state))
+        strncpy(word, REG_POS(state), wordlen);
+    else
+        strncpy(word, state->text, wordlen);
     word[wordlen] = '\0';
     for (p = word; *p != '\0' && *p != '\n'; p++);
     *p = '\0';
@@ -189,43 +207,13 @@ static void get_expected_error(struct state *state, struct lens *l) {
  * Splitting of the input text
  */
 
-static char *token_from_split(struct split *split) {
-    return strndup(split->start, split->size);
-}
-
-static struct split *split_append(struct split **split, struct split *tail,
-                                  const char *text, int start, int end) {
-    struct split *sp;
-
-    if (ALLOC(sp) < 0)
-        return NULL;
-
-    sp->start = text + start;
-    sp->size = end - start;
-    list_tail_cons(*split, tail, sp);
-    return tail;
-}
-
-static struct split *next_split(struct state *state) {
-    if (state->split != NULL) {
-        state->split = state->split->next;
-        if (state->split != NULL)
-            state->pos = state->split->start + state->split->size;
-    }
-    return state->split;
-}
-
-static struct split *set_split(struct state *state, struct split *split) {
-    state->split = split;
-    if (split != NULL)
-        state->pos = split->start + split->size;
-    return split;
+static char *token(struct state *state) {
+    return strndup(REG_POS(state), REG_SIZE(state));
 }
 
 static void regexp_match_error(struct state *state, struct lens *lens,
-                               int count, struct split *split,
-                               struct regexp *r) {
-    char *text = strndup(split->start, split->size);
+                               int count, struct regexp *r) {
+    char *text = strndup(REG_POS(state), REG_SIZE(state));
     char *pat = regexp_escape(r);
 
     if (count == -1) {
@@ -241,84 +229,35 @@ static void regexp_match_error(struct state *state, struct lens *lens,
     free(text);
 }
 
-/* Refine a tree split OUTER according to the L_CONCAT lens LENS */
-static struct split *split_concat(struct state *state, struct lens *lens) {
-    assert(lens->tag == L_CONCAT);
-
-    int count = 0;
-    struct split *outer = state->split;
-    struct re_registers regs;
-    struct split *split = NULL;
-    struct regexp *ctype = lens->ctype;
-
-    MEMZERO(&regs, 1);
-    count = regexp_match(ctype, outer->start, outer->size, 0, &regs);
-    if (count < 0) {
-        regexp_match_error(state, lens, count, outer, ctype);
-        return NULL;
-    }
-
-    int reg = 1;
-    struct split *tail = NULL;
-    for (int i=0; i < lens->nchildren; i++) {
-        assert(reg < regs.num_regs);
-        assert(regs.start[reg] != -1);
-        tail = split_append(&split, tail,
-                            outer->start, regs.start[reg], regs.end[reg]);
-        if (tail == NULL)
-            goto error;
-        reg += 1 + regexp_nsub(lens->children[i]->ctype);
-    }
-    assert(reg < regs.num_regs);
- done:
-    free(regs.start);
-    free(regs.end);
-    return split;
- error:
-    list_free(split);
-    goto done;
-}
-
-static struct split *split_iter(struct state *state, struct lens *lens) {
-    assert(lens->tag == L_STAR);
-
-    int count = 0;
-    struct split *outer = state->split;
-    struct split *split = NULL;
-    struct regexp *ctype = lens->child->ctype;
-
-    int pos = 0;
-    struct split *tail = NULL;
-    while (pos < outer->size) {
-        count = regexp_match(ctype, outer->start, outer->size, pos, NULL);
-        if (count == -1) {
-            break;
-        } else if (count < -1) {
-            regexp_match_error(state, lens, count, outer, ctype);
-            goto error;
-        }
-        tail = split_append(&split, tail, outer->start, pos, pos + count);
-        if (tail == NULL)
-            goto error;
-        pos += count;
-    }
-    return split;
- error:
-    list_free(split);
-    return NULL;
-}
-
-static int applies(struct state *state, struct lens *lens) {
-    struct split *split = state->split;
+/* Modifies STATE->REGS and STATE->NREG. The caller must save these
+ * if they are still needed
+ *
+ * Return the number of characters matched
+ */
+static int match(struct state *state, struct lens *lens,
+                 struct regexp *re, uint size, uint start) {
+    struct re_registers *regs;
     int count;
-    count = regexp_match(lens->ctype, split->start, split->size, 0, NULL);
-    if (count == -1)
-        return 0;
-    else if (count < -1) {
-        regexp_match_error(state, lens, count, split, lens->ctype);
-        return 0;
+
+    if (ALLOC(regs) < 0)
+        return -1;
+
+    count = regexp_match(re, state->text, size, start, regs);
+    if (count < -1) {
+        regexp_match_error(state, lens, count, re);
+        return -1;
     }
-    return (count == split->size);
+    state->regs = regs;
+    state->nreg = 0;
+    return count;
+}
+
+static void free_regs(struct state *state) {
+    if (state->regs != NULL) {
+        free(state->regs->start);
+        free(state->regs->end);
+        FREE(state->regs);
+    }
 }
 
 static struct tree *get_lens(struct lens *lens, struct state *state);
@@ -389,7 +328,7 @@ static struct skel *parse_del(struct lens *lens, struct state *state) {
     struct skel *skel = NULL;
 
     skel = make_skel(lens);
-    skel->text = token_from_split(state->split);
+    skel->text = token(state);
     return skel;
 }
 
@@ -401,7 +340,7 @@ static struct tree *get_store(struct lens *lens, struct state *state) {
     if (state->value != NULL) {
         get_error(state, lens, "More than one store in a subtree");
     } else {
-        state->value = token_from_split(state->split);
+        state->value = token(state);
     }
     return tree;
 }
@@ -414,7 +353,7 @@ static struct skel *parse_store(struct lens *lens,
 
 static struct tree *get_key(struct lens *lens, struct state *state) {
     assert(lens->tag == L_KEY);
-    state->key = token_from_split(state->split);
+    state->key = token(state);
     return NULL;
 }
 
@@ -438,15 +377,18 @@ static struct tree *get_union(struct lens *lens, struct state *state) {
     assert(lens->tag == L_UNION);
     struct tree *tree = NULL;
     int applied = 0;
+    uint old_nreg = state->nreg;
 
+    state->nreg += 1;
     for (int i=0; i < lens->nchildren; i++) {
-        struct lens *l = lens->children[i];
-        if (applies(state, l)) {
-            tree = get_lens(l, state);
+        if (REG_MATCHED(state)) {
+            tree = get_lens(lens->children[i], state);
             applied = 1;
             break;
         }
+        state->nreg += 1 + regexp_nsub(lens->children[i]->ctype);
     }
+    state->nreg = old_nreg;
     if (!applied)
         get_expected_error(state, lens);
     return tree;
@@ -457,15 +399,19 @@ static struct skel *parse_union(struct lens *lens, struct state *state,
     assert(lens->tag == L_UNION);
     struct skel *skel = NULL;
     int applied = 0;
+    uint old_nreg = state->nreg;
 
+    state->nreg += 1;
     for (int i=0; i < lens->nchildren; i++) {
         struct lens *l = lens->children[i];
-        if (applies(state, l)) {
+        if (REG_MATCHED(state)) {
             skel = parse_lens(l, state, dict);
             applied = 1;
             break;
         }
+        state->nreg += 1 + regexp_nsub(lens->children[i]->ctype);
     }
+    state->nreg = old_nreg;
     if (! applied)
         get_expected_error(state, lens);
 
@@ -475,27 +421,25 @@ static struct skel *parse_union(struct lens *lens, struct state *state,
 static struct tree *get_concat(struct lens *lens, struct state *state) {
     assert(lens->tag == L_CONCAT);
     struct tree *tree = NULL;
-    struct split *oldsplit = state->split;
-    struct split *split = split_concat(state, lens);
+    uint old_nreg = state->nreg;
 
-    set_split(state, split);
+    state->nreg += 1;
     for (int i=0; i < lens->nchildren; i++) {
         struct tree *t = NULL;
-        if (state->split == NULL) {
+        if (! REG_VALID(state)) {
             get_error(state, lens->children[i],
                       "Not enough components in concat");
-            list_free(split);
             free_tree(tree);
+            state->nreg = old_nreg;
             return NULL;
         }
 
         t = get_lens(lens->children[i], state);
         list_append(tree, t);
-        next_split(state);
+        state->nreg += 1 + regexp_nsub(lens->children[i]->ctype);
     }
+    state->nreg = old_nreg;
 
-    set_split(state, oldsplit);
-    list_free(split);
     return tree;
 }
 
@@ -503,17 +447,15 @@ static struct skel *parse_concat(struct lens *lens, struct state *state,
                                  struct dict **dict) {
     assert(lens->tag == L_CONCAT);
     struct skel *skel = make_skel(lens);
-    struct split *oldsplit = state->split;
-    struct split *split = split_concat(state, lens);
+    uint old_nreg = state->nreg;
 
-    set_split(state, split);
+    state->nreg += 1;
     for (int i=0; i < lens->nchildren; i++) {
         struct skel *sk = NULL;
         struct dict *di = NULL;
-        if (state->split == NULL) {
+        if (! REG_VALID(state)) {
             get_error(state, lens->children[i],
                       "Not enough components in concat");
-            list_free(split);
             free_skel(skel);
             return NULL;
         }
@@ -521,57 +463,71 @@ static struct skel *parse_concat(struct lens *lens, struct state *state,
         sk = parse_lens(lens->children[i], state, &di);
         list_append(skel->skels, sk);
         dict_append(dict, di);
-        next_split(state);
+        state->nreg += 1 + regexp_nsub(lens->children[i]->ctype);
     }
+    state->nreg = old_nreg;
 
-    set_split(state, oldsplit);
-    list_free(split);
     return skel;
 }
 
 static struct tree *get_quant_star(struct lens *lens, struct state *state) {
     assert(lens->tag == L_STAR);
+    struct lens *child = lens->child;
     struct tree *tree = NULL, *tail = NULL;
-    struct split *oldsplit = state->split;
-    struct split *split = split_iter(state, lens);
+    struct re_registers *old_regs = state->regs;
+    uint old_nreg = state->nreg;
+    uint end = REG_END(state);
+    uint start = REG_START(state);
+    uint size = end - start;
 
-    set_split(state, split);
-    while (state->split != NULL) {
+    while (size > 0 && match(state, child, child->ctype, end, start) > 0) {
         struct tree *t = NULL;
+
         t = get_lens(lens->child, state);
         list_tail_cons(tree, tail, t);
-        next_split(state);
+
+        start += REG_SIZE(state);
+        size -= REG_SIZE(state);
+        free_regs(state);
     }
-    if (state->pos != oldsplit->start + oldsplit->size) {
+    state->regs = old_regs;
+    state->nreg = old_nreg;
+    if (size != 0) {
         get_error(state, lens, "Short iteration");
+        state->error->pos = start;
     }
-    set_split(state, oldsplit);
-    list_free(split);
     return tree;
 }
 
 static struct skel *parse_quant_star(struct lens *lens, struct state *state,
                                      struct dict **dict) {
     assert(lens->tag == L_STAR);
-    struct split *oldsplit = state->split;
-    struct split *split = split_iter(state, lens);
+    struct lens *child = lens->child;
     struct skel *skel = make_skel(lens), *tail = NULL;
+    struct re_registers *old_regs = state->regs;
+    uint old_nreg = state->nreg;
+    uint end = REG_END(state);
+    uint start = REG_START(state);
+    uint size = end - start;
 
     *dict = NULL;
-    set_split(state, split);
-    while (state->split != NULL) {
+    while (size > 0 && match(state, child, child->ctype, end, start) > 0) {
         struct skel *sk;
         struct dict *di = NULL;
+
         sk = parse_lens(lens->child, state, &di);
         list_tail_cons(skel->skels, tail, sk);
         dict_append(dict, di);
-        next_split(state);
+
+        start += REG_SIZE(state);
+        size -= REG_SIZE(state);
+        free_regs(state);
     }
-    if (state->pos != oldsplit->start + oldsplit->size) {
+    state->regs = old_regs;
+    state->nreg = old_nreg;
+    if (size != 0) {
         get_error(state, lens, "Short iteration");
     }
-    set_split(state, oldsplit);
-    list_free(split);
     return skel;
 }
 
@@ -579,9 +535,15 @@ static struct tree *get_quant_maybe(struct lens *lens, struct state *state) {
     assert(lens->tag == L_MAYBE);
     struct tree *tree = NULL;
 
-    if (applies(state, lens->child)) {
+    /* Check that our child matched. For a construct like (r)?, the
+     * matcher will report a zero length match for group 0, even if r
+     * does not match at all
+     */
+    state->nreg += 1;
+    if (REG_MATCHED(state)) {
         tree = get_lens(lens->child, state);
     }
+    state->nreg -= 1;
     return tree;
 }
 
@@ -590,9 +552,12 @@ static struct skel *parse_quant_maybe(struct lens *lens, struct state *state,
     assert(lens->tag == L_MAYBE);
 
     struct skel *skel = NULL;
-    if (applies(state, lens->child)) {
+
+    state->nreg += 1;
+    if (REG_MATCHED(state)) {
         skel = parse_lens(lens->child, state, dict);
     }
+    state->nreg -= 1;
     if (skel == NULL)
         skel = make_skel(lens);
     return skel;
@@ -674,22 +639,15 @@ static struct tree *get_lens(struct lens *lens, struct state *state) {
 struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
                      struct lns_error **err) {
     struct state state;
-    struct split split;
     struct tree *tree = NULL;
-    int partial = 1;
+    uint size = strlen(text);
+    int partial;
 
     MEMZERO(&state, 1);
-    MEMZERO(&split, 1);
     state.info = *info;
     state.info.ref = UINT_MAX;
-    state.pos = text;
 
-    split.start = text;
-    split.size = strlen(text);
-
-    state.split = &split;
     state.text = text;
-    state.pos = text;
 
     /* We are probably being overly cautious here: if the lens can't process
      * all of TEXT, we should really fail somewhere in one of the sublenses.
@@ -697,7 +655,7 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
      * try to process, hoping we'll get a more specific error, and if that
      * fails, we throw our arms in the air and say 'something went wrong'
      */
-    partial = !applies(&state, lens);
+    partial = match(&state, lens, lens->ctype, size, 0) != size;
 
     tree = get_lens(lens, &state);
 
@@ -713,6 +671,8 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
     if (partial && state.error == NULL) {
         get_error(&state, lens, "Get did not match entire input");
     }
+
+    free_regs(&state);
 
     if (err != NULL) {
         *err = state.error;
@@ -774,22 +734,18 @@ static struct skel *parse_lens(struct lens *lens, struct state *state,
 struct skel *lns_parse(struct lens *lens, const char *text, struct dict **dict,
                        struct lns_error **err) {
     struct state state;
-    struct split split;
     struct skel *skel = NULL;
+    uint size = strlen(text);
+    int partial;
 
     MEMZERO(&state, 1);
-    MEMZERO(&split, 1);
     state.info.ref = UINT_MAX;
     state.text = text;
 
-    split.start = text;
-    split.size = strlen(text);
-
-    state.split = &split;
     state.text = text;
-    state.pos = text;
 
-    if (applies(&state, lens)) {
+    partial = match(&state, lens, lens->ctype, size, 0) != size;
+    if (! partial) {
         *dict = NULL;
         skel = parse_lens(lens, &state, dict);
 
@@ -812,6 +768,8 @@ struct skel *lns_parse(struct lens *lens, const char *text, struct dict **dict,
         // This should never happen during lns_parse
         get_error(&state, lens, "parse can not process entire input");
     }
+
+    free_regs(&state);
 
     if (err != NULL) {
         *err = state.error;
