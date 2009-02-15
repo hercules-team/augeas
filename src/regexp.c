@@ -275,12 +275,25 @@ struct regexp *regexp_make_empty(struct info *info) {
 }
 
 int regexp_compile(struct regexp *r) {
+    /* See the GNU regex manual or regex.h in gnulib for
+     * an explanation of these flags. They are set so that the regex
+     * matcher interprets regular expressions the same way that libfa
+     * does
+     */
+    static const reg_syntax_t syntax =
+        RE_CONTEXT_INDEP_OPS|RE_CONTEXT_INVALID_OPS|RE_DOT_NOT_NULL
+        |RE_INTERVALS|RE_NO_BK_BRACES|RE_NO_BK_PARENS|RE_NO_BK_REFS
+        |RE_NO_BK_VBAR|RE_NO_EMPTY_RANGES
+        |RE_NO_POSIX_BACKTRACKING|RE_CONTEXT_INVALID_DUP|RE_NO_GNU_OPS;
+    reg_syntax_t old_syntax = re_syntax_options;
+    const char *c = NULL;
+
     if (r->re == NULL)
         CALLOC(r->re, 1);
 
-    re_syntax_options = RE_SYNTAX_POSIX_MINIMAL_EXTENDED & ~(RE_DOT_NEWLINE);
-    const char *c =
-        re_compile_pattern(r->pattern->str, strlen(r->pattern->str), r->re);
+    re_syntax_options = syntax;
+    c = re_compile_pattern(r->pattern->str, strlen(r->pattern->str), r->re);
+    re_syntax_options = old_syntax;
 
     if (c != NULL) {
         char *p = escape(r->pattern->str, -1);
