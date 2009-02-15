@@ -23,8 +23,6 @@
 #ifndef INTERNAL_H_
 #define INTERNAL_H_
 
-#define DEBUG
-
 #include "list.h"
 #include "datadir.h"
 
