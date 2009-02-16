@@ -25,8 +25,6 @@
 #include <stdarg.h>
 #include "syntax.h"
 
-//#define DEBUG_SPEW
-
 /* Data structure to keep track of where we are in the tree. The split
  * describes a sublist of the list of siblings in the current tree. The
  * put_* functions don't operate on the tree directly, instead they operate
@@ -64,22 +62,6 @@ struct state {
 
 static void create_lens(struct lens *lens, struct state *state);
 static void put_lens(struct lens *lens, struct state *state);
-
-#ifdef DEBUG_SPEW
-#define _l(obj) (((obj) == NULL) ? "nil" : (obj)->label)
-
-static const char *_t(struct lens *lens) {
-    static const char *types[] = {
-        "action", "[]", "literal", "name", "|", ".",
-        "rule", "abbrev", "+", "*", "?"
-    };
-    return types[match->type];
-}
-
-#define debug(fmt, args ...) printf(fmt, ## args)
-#else
-#define debug(fmt, args ...)
-#endif
 
 static void put_error(struct state *state, struct lens *lens,
                       const char *format, ...)
@@ -543,8 +525,6 @@ static void put_store(struct lens *lens, struct state *state) {
 }
 
 static void put_lens(struct lens *lens, struct state *state) {
-    debug("put_lens: %s:%d %s\n", _t(lens), lens->info->first_line,
-          _l(state->tree));
     if (state->error != NULL)
         return;
 
@@ -657,8 +637,6 @@ static void create_quant_maybe(struct lens *lens, struct state *state) {
 }
 
 static void create_lens(struct lens *lens, struct state *state) {
-    debug("create_lens: %s:%d %s\n", _t(lens), lens->info->first_line,
-          _l(state->tree));
     if (state->error != NULL)
         return;
     switch(lens->tag) {
@@ -737,35 +715,6 @@ void lns_put(FILE *out, struct lens *lens, struct tree *tree,
         free_lns_error(state.error);
     }
 }
-
-/*
-  Cleverly created with Elisp:
-(defun my-ins-put ()
-  (interactive)
-  (insert "// BEGIN\n")
-  (let
-      ((types '("ACTION" "SUBTREE" "LITERAL" "NAME" "ALTERNATIVE"
-                "SEQUENCE" "RULE_REF" "ABBREV_REF"
-                "QUANT_PLUS" "QUANT_STAR" "QUANT_MAYBE")))
-    (mapcar
-     (lambda (type)
-       (insert "static void put_" (downcase type) "(struct match *match, struct state *state) {
-    assert(match->type == " type ");
-}
-
-"))
-          types)
-    (mapcar
-     (lambda (type)
-       (insert "static void create_" (downcase type) "(struct match *match, struct state *state) {
-    assert(match->type == " type ");
-
-}
-
-"))
-          types)
-  (insert "// END\n")))
- */
 
 /*
  * Local variables:
