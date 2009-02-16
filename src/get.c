@@ -636,6 +636,32 @@ static struct tree *get_lens(struct lens *lens, struct state *state) {
     return tree;
 }
 
+/* Initialize registers. Return 0 if the lens matches the entire text, 1 if
+ * it does not and -1 on error.
+ */
+static int init_regs(struct state *state, struct lens *lens, uint size) {
+    int r;
+
+    if (lens->tag != L_STAR) {
+        r = match(state, lens, lens->ctype, size, 0);
+        if (r < -1)
+            return -1;
+        return r != size;
+    }
+    /* Special case the very common situation that the lens is (l)*
+     * We can avoid matching the entire text in that case - that
+     * match can be very expensive
+     */
+    if (ALLOC(state->regs) < 0)
+        return -1;
+    state->regs->num_regs = 1;
+    if (ALLOC(state->regs->start) < 0 || ALLOC(state->regs->end) < 0)
+        return -1;
+    state->regs->start[0] = 0;
+    state->regs->end[0] = size;
+    return 0;
+}
+
 struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
                      struct lns_error **err) {
     struct state state;
@@ -655,7 +681,7 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
      * try to process, hoping we'll get a more specific error, and if that
      * fails, we throw our arms in the air and say 'something went wrong'
      */
-    partial = match(&state, lens, lens->ctype, size, 0) != size;
+    partial = init_regs(&state, lens, size);
 
     tree = get_lens(lens, &state);
 
@@ -744,7 +770,7 @@ struct skel *lns_parse(struct lens *lens, const char *text, struct dict **dict,
 
     state.text = text;
 
-    partial = match(&state, lens, lens->ctype, size, 0) != size;
+    partial = init_regs(&state, lens, size);
     if (! partial) {
         *dict = NULL;
         skel = parse_lens(lens, &state, dict);
