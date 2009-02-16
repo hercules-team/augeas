@@ -1596,6 +1596,25 @@ static struct value *compile_exp(struct info *info,
     return v;
 }
 
+static void print_tree(FILE *out, int indent, struct tree *tree) {
+    list_for_each(t, tree) {
+        for (int i=0; i < indent; i++) fputc(' ', out);
+        fprintf(out, "{ ");
+        if (t->label != NULL)
+            fprintf(out, "\"%s\"", t->label);
+        if (t->value != NULL)
+            fprintf(out, " = \"%s\"", t->value);
+        if (t->children != NULL) {
+            fputc('\n', out);
+            print_tree(out, indent + 2, t->children);
+            for (int i=0; i < indent; i++) fputc(' ', out);
+        } else {
+            fputc(' ', out);
+        }
+        fprintf(out, "}\n");
+    }
+}
+
 static int compile_test(struct term *term, struct ctx *ctx) {
     struct value *actual = compile_exp(term->info, term->test, ctx);
     struct value *expect = NULL;
@@ -1634,7 +1653,11 @@ static int compile_test(struct term *term, struct ctx *ctx) {
             printf("Test result: ");
             print_info(stdout, term->info);
             printf("\n");
-            print_value(stdout, actual);
+            if (actual->tag == V_TREE) {
+                print_tree(stdout, 2, actual->origin->children);
+            } else {
+                print_value(stdout, actual);
+            }
             printf("\n");
         }
     }
