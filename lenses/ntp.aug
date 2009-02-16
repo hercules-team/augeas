@@ -9,14 +9,16 @@ module Ntp =
 
     (* Define useful shortcuts *)
 
-    let eol = Util.del_str "\n"
+    let eol = del /[ \t]*/ "" . [ label "#comment" . store /#.*/]?
+            . Util.del_str "\n"
     let sep_spc = Util.del_ws_spc
     let word = /[^,# \n\t]+/
     let num  = /[0-9]+/
 
 
     (* define comments and empty lines *)
-    let comment = [ label "comment" . del /#[ \t]*/ "#" .  store /([^ \t\n][^\n]*)?/ . eol ]
+    let comment = [ label "#comment" . del /#[ \t]*/ "#" .
+                    store /([^ \t\n][^\n]*)?/ . del "\n" "\n" ]
     let empty   = [ del /[ \t]*\n/ "\n" ]
 
 
@@ -24,8 +26,9 @@ module Ntp =
     let record (kw:string) (value:lens) = [ key kw . sep_spc . store word . value . eol ]
 
     (* Define a server record *)
-    let version  = [ sep_spc . key "version" . sep_spc . store word ]
-    let server_record   = record "server" version
+    let server_opt = [ sep_spc . key "version" . sep_spc . store word ]
+                   | [ sep_spc . key "dynamic" ]
+    let server_record   = record "server" server_opt?
 
     (* Define simple settings *)
     let simple_setting (kw:string) = [ key kw . sep_spc . store word . eol ]
@@ -35,8 +38,11 @@ module Ntp =
 			| simple_setting "statsdir"
     
     (* Define restrict *)
-    let action    = [ label "action" . sep_spc . store word ]
-    let restrict_record   = record "restrict" action?
+    let restrict_record   =
+      let action    = [ label "action" . sep_spc . store word ] in
+      [ key "restrict" . sep_spc .
+          [ label "ipv6" . Util.del_str "-6" . sep_spc ]? .
+          store (word - "-6") . action* . eol ]
 
     (* Define statistics *)
     let statistics_flag (kw:string) = [ sep_spc . key kw ]
@@ -62,10 +68,12 @@ module Ntp =
 
     let filegen_record = [ label "filegen" . filegen . filegen_opts* . eol ]
 
+    (* Includefile/keys *)
+    let files = [ key /includefile|keys/ . sep_spc . store word . eol ]
 
     (* Define lens *)
 
-    let lns = ( comment | empty | server_record | restrict_record | simple_settings | statistics_record | filegen_record )*
+    let lns = ( comment | empty | server_record | restrict_record | simple_settings | statistics_record | filegen_record | files)*
 
     let filter = (incl "/etc/ntp.conf")
         . Util.stdexcl

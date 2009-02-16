@@ -27,9 +27,9 @@ filegen clockstats file clockstats type day enable nolink
 "
 
    test Ntp.lns get conf = 
-      { "comment" = "" }
-      { "comment" = "Fichier genere par puppet" }
-      { "comment" = "Environnement: development" }
+      { "#comment" = "" }
+      { "#comment" = "Fichier genere par puppet" }
+      { "#comment" = "Environnement: development" }
       {}
       { "server" = "dns01.echo-net.net"
          { "version"  = "3" } }
@@ -41,11 +41,11 @@ filegen clockstats file clockstats type day enable nolink
       { "restrict"  = "default" 
          { "action" = "ignore" } }
       {}
-      { "comment" = "server dns01.echo-net.net" }
+      { "#comment" = "server dns01.echo-net.net" }
       { "restrict"  = "192.168.0.150"
          { "action" = "nomodify" } }
       {}
-      { "comment" = "allow everything from localhost" }
+      { "#comment" = "allow everything from localhost" }
       { "restrict" = "127.0.0.1" }
       {}
       { "logfile"  = "/var/log/ntpd" }
@@ -69,3 +69,46 @@ filegen clockstats file clockstats type day enable nolink
 	 { "type" = "day" }
          { "enable" = "enable" }
 	 { "link" = "nolink" } }
+
+  (* Some things needed to process the default ntp.conf on Fedora *)
+  test Ntp.lns get
+    "server 66.187.233.4  # added by /sbin/dhclient-script\n" =
+    { "server" = "66.187.233.4"
+      { "#comment" = "# added by /sbin/dhclient-script" } }
+
+  test Ntp.lns get
+    "server 0.fedora.pool.ntp.org dynamic\n" =
+    { "server" = "0.fedora.pool.ntp.org" { "dynamic" } }
+
+  test Ntp.lns get
+    "restrict 127.0.0.1 \n" =
+    { "restrict" = "127.0.0.1" }
+
+  test Ntp.lns get
+    "restrict default kod nomodify notrap nopeer noquery\n" =
+    { "restrict" = "default"
+      { "action" = "kod" }
+      { "action" = "nomodify" }
+      { "action" = "notrap" }
+      { "action" = "nopeer" }
+      { "action" = "noquery" } }
+
+  test Ntp.lns put
+    "restrict default kod nomodify notrap nopeer noquery\n"
+  after
+    insb "ipv6" "restrict/action[1]" =
+    "restrict -6 default kod nomodify notrap nopeer noquery\n"
+
+  test Ntp.lns get
+    "restrict -6 default kod nomodify notrap nopeer noquery\n" =
+    { "restrict" = "default"
+      { "ipv6" }
+      { "action" = "kod" }
+      { "action" = "nomodify" }
+      { "action" = "notrap" }
+      { "action" = "nopeer" }
+      { "action" = "noquery" } }
+
+  test Ntp.lns get
+    "includefile /etc/ntp/crypto/pw\n" =
+    { "includefile" = "/etc/ntp/crypto/pw" }
