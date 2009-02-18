@@ -151,3 +151,6 @@ test last-ssh-service /files/etc/services/service-name[port = '22'][last()]
 
 test count-one-alias /files/etc/hosts/*[count(alias) = 1]
      /files/etc/hosts/2
+
+test number-gt /files/etc/hosts/*[count(alias) > 2]
+     /files/etc/hosts/1

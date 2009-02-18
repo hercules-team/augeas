@@ -63,6 +63,10 @@ enum expr_tag {
 enum binary_op {
     OP_EQ,         /* '='  */
     OP_NEQ,        /* '!=' */
+    OP_LT,         /* '<'  */
+    OP_LE,         /* '<=' */
+    OP_GT,         /* '>'  */
+    OP_GE,         /* '>=' */
     OP_PLUS,       /* '+'  */
     OP_MINUS,      /* '-'  */
     OP_STAR        /* '*'  */
@@ -546,6 +550,36 @@ static void eval_arith(struct state *state, enum binary_op op) {
     push_value(vind, state);
 }
 
+static void eval_rel(struct state *state, bool greater, bool equal) {
+    struct value *r, *l;
+    int res;
+
+    /* We always check l < r or l <= r */
+    if (greater) {
+        l = pop_value(state);
+        r = pop_value(state);
+    } else {
+        r = pop_value(state);
+        l = pop_value(state);
+    }
+    if (l->tag == T_NUMBER) {
+        if (equal)
+            res = (l->number < r->number);
+        else
+            res = (l->number <= r->number);
+    } else if (l->tag == T_STRING) {
+        int cmp = strcmp(l->string, r->string);
+        if (equal)
+            res = cmp <= 0;
+        else
+            res = cmp < 0;
+    } else {
+        assert(0);
+    }
+
+    push_boolean_value(res, state);
+}
+
 static void eval_binary(struct expr *expr, struct state *state) {
     eval_expr(expr->left, state);
     eval_expr(expr->right, state);
@@ -557,6 +591,18 @@ static void eval_binary(struct expr *expr, struct state *state) {
         break;
     case OP_NEQ:
         eval_eq(state, 1);
+        break;
+    case OP_LT:
+        eval_rel(state, false, false);
+        break;
+    case OP_LE:
+        eval_rel(state, false, true);
+        break;
+    case OP_GT:
+        eval_rel(state, true, false);
+        break;
+    case OP_GE:
+        eval_rel(state, true, true);
         break;
     case OP_MINUS:
     case OP_PLUS:
@@ -779,6 +825,9 @@ static void check_app(struct expr *expr, struct state *state) {
  *              T_NODESET -> T_STRING  -> T_BOOLEAN
  *              T_NUMBER  -> T_NUMBER  -> T_BOOLEAN
  *
+ * '>', '>=',
+ * '<', '<='  : T_NUMBER -> T_NUMBER -> T_BOOLEAN
+ *              T_STRING -> T_STRING -> T_BOOLEAN
  * '+', '-', '*': T_NUMBER -> T_NUMBER -> T_NUMBER
  *
  */
@@ -798,6 +847,14 @@ static void check_binary(struct expr *expr, struct state *state) {
         ok = ((l == T_NODESET || l == T_STRING)
               && (r == T_NODESET || r == T_STRING))
             || (l == T_NUMBER && r == T_NUMBER);;
+        res = T_BOOLEAN;
+        break;
+    case OP_LT:
+    case OP_LE:
+    case OP_GT:
+    case OP_GE:
+        ok = (l == T_NUMBER && r == T_NUMBER)
+            || (l == T_STRING && r == T_STRING);
         res = T_BOOLEAN;
         break;
     case OP_PLUS:
@@ -1379,18 +1436,39 @@ static void parse_additive_expr(struct state *state) {
 }
 
 /*
- * EqualityExpr ::= AdditiveExpr (EqualityOp AdditiveExpr)?
+ * RelationalExpr ::= AdditiveExpr (RelationalOp AdditiveExpr)?
+ * EqualityOp ::= ">" | "<" | ">=" | "<="
+ */
+static void parse_relational_expr(struct state *state) {
+    parse_additive_expr(state);
+    CHECK_ERROR;
+    if (*state->pos == '<' || *state->pos == '>') {
+        enum binary_op op = (*state->pos == '<') ? OP_LT : OP_GT;
+        state->pos += 1;
+        if (*state->pos == '=') {
+            op = (op == OP_LT) ? OP_LE : OP_GE;
+            state->pos += 1;
+        }
+        skipws(state);
+        parse_additive_expr(state);
+        CHECK_ERROR;
+        push_new_binary_op(op, state);
+    }
+}
+
+/*
+ * EqualityExpr ::= RelationalExpr (EqualityOp RelationalExpr)?
  * EqualityOp ::= "=" | "!="
  */
 static void parse_equality_expr(struct state *state) {
-    parse_additive_expr(state);
+    parse_relational_expr(state);
     CHECK_ERROR;
     if (*state->pos == '=' ||
         (*state->pos == '!' && state->pos[1] == '=')) {
         enum binary_op op = (*state->pos == '=') ? OP_EQ : OP_NEQ;
         state->pos += (op == OP_EQ) ? 1 : 2;
         skipws(state);
-        parse_additive_expr(state);
+        parse_relational_expr(state);
         CHECK_ERROR;
         push_new_binary_op(op, state);
     }
