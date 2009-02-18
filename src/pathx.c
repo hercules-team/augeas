@@ -222,12 +222,18 @@ struct func {
 
 static void func_last(struct state *state);
 static void func_position(struct state *state);
+static void func_count(struct state *state);
+
+static const enum type const count_arg_types[] = { T_NODESET };
 
 static const struct func builtin_funcs[] = {
     { .name = "last", .arity = 0, .type = T_NUMBER, .arg_types = NULL,
       .impl = func_last },
     { .name = "position", .arity = 0, .type = T_NUMBER, .arg_types = NULL,
-      .impl = func_position }
+      .impl = func_position },
+    { .name = "count", .arity = 1, .type = T_NUMBER,
+      .arg_types = count_arg_types,
+      .impl = func_count }
 };
 
 #define CHECK_ERROR                                                     \
@@ -443,6 +449,16 @@ static void func_position(struct state *state) {
     vind = make_value(T_NUMBER, state);
     CHECK_ERROR;
     state->value_pool[vind].number = state->ctx_pos;
+    push_value(vind, state);
+}
+
+static void func_count(struct state *state) {
+    value_ind_t vind;
+    struct value *ns = pop_value(state);
+
+    vind = make_value(T_NUMBER, state);
+    CHECK_ERROR;
+    state->value_pool[vind].number = ns->nodeset->used;
     push_value(vind, state);
 }
 
