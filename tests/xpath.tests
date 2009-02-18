@@ -157,3 +157,6 @@ test number-gt /files/etc/hosts/*[count(alias) > 2]
 
 test pred-or /files/etc/hosts/*[canonical = 'localhost' or alias = 'localhost']
      /files/etc/hosts/1
+
+test pred-and-or /files/etc/hosts/*[(canonical = 'localhost' or alias = 'localhost') and ipaddr = '127.0.0.1']
+     /files/etc/hosts/1

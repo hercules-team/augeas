@@ -35,7 +35,8 @@ static const char *const errcodes[] = {
     "string missing ending ' or \"",
     "expected '='",
     "allocation failed",
-    "unmatched ']'",
+    "unmatched '['",
+    "unmatched '('",
     "expected a '/'",
     "internal error",   /* PATHX_EINTERNAL */
     "type error"        /* PATHX_ETYPE */
@@ -1353,7 +1354,7 @@ static void parse_function_call(struct state *state) {
         } while (match(state, ','));
 
         if (! match(state, ')')) {
-            STATE_ERROR(state, PATHX_EDELIM);
+            STATE_ERROR(state, PATHX_EPAREN);
             return;
         }
     }
@@ -1384,6 +1385,7 @@ static void parse_function_call(struct state *state) {
  * PrimaryExpr ::= Literal
  *               | Number
  *               | FunctionCall
+ *               | '(' Expr ')'
  *
  */
 static void parse_primary_expr(struct state *state) {
@@ -1391,6 +1393,13 @@ static void parse_primary_expr(struct state *state) {
         parse_literal(state);
     } else if (peek(state, "0123456789")) {
         parse_number(state);
+    } else if (match(state, '(')) {
+        parse_expr(state);
+        CHECK_ERROR;
+        if (! match(state, ')')) {
+            STATE_ERROR(state, PATHX_EPAREN);
+            return;
+        }
     } else {
         parse_function_call(state);
     }
