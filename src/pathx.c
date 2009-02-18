@@ -917,6 +917,7 @@ static char *parse_name(struct state *state) {
     while (*state->pos != '\0' &&
            *state->pos != L_BRACK && *state->pos != SEP &&
            *state->pos != R_BRACK && *state->pos != '=' &&
+           *state->pos != ')' &&
            !isspace(*state->pos)) {
         if (*state->pos == '\\') {
             state->pos += 1;
