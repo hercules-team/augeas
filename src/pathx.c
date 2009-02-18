@@ -478,6 +478,11 @@ static void eval_eq(struct state *state, int neq) {
         res = calc_eq_nodeset_string(l->nodeset, r->string, neq);
     } else if (r->tag == T_NODESET) {
         res = calc_eq_nodeset_string(r->nodeset, l->string, neq);
+    } else if (l->tag == T_NUMBER && r->tag == T_NUMBER) {
+        if (neq)
+            res = (l->number != r->number);
+        else
+            res = (l->number == r->number);
     } else {
         assert(l->tag == T_STRING);
         assert(r->tag == T_STRING);
@@ -744,6 +749,7 @@ static void check_app(struct expr *expr, struct state *state) {
  * '=', '!='  : T_NODESET -> T_NODESET -> T_BOOLEAN
  *              T_STRING  -> T_NODESET -> T_BOOLEAN
  *              T_NODESET -> T_STRING  -> T_BOOLEAN
+ *              T_NUMBER  -> T_NUMBER  -> T_BOOLEAN
  *
  * '+', '-', '*': T_NUMBER -> T_NUMBER -> T_NUMBER
  *
@@ -762,7 +768,8 @@ static void check_binary(struct expr *expr, struct state *state) {
     case OP_EQ:
     case OP_NEQ:
         ok = ((l == T_NODESET || l == T_STRING)
-              && (r == T_NODESET || r == T_STRING));
+              && (r == T_NODESET || r == T_STRING))
+            || (l == T_NUMBER && r == T_NUMBER);;
         res = T_BOOLEAN;
         break;
     case OP_PLUS:
