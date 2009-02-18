@@ -44,7 +44,7 @@ module Logrotate =
 
    let tabooext (indent:string) = [ del /[ \t]*/ indent . key "tabooext" . ( sep_spc . store /\+/ )? . list_item+ . eol ]
 
-   let attrs (indent:string) = select_to_eol "schedule" /(daily|weekly|monthly)/ indent
+   let attrs (indent:string) = select_to_eol "schedule" /(daily|weekly|monthly|yearly)/ indent
                 | value_to_eol "rotate" num indent
 		| create indent
 		| flag_to_eol "nocreate" indent
@@ -94,9 +94,9 @@ module Logrotate =
 
    (* Define rule *)
 
-   let body = Util.del_str "{\n"
+   let body = del /\{[ \t]*\n/ "{\n"
                        . ( comment "\t" | attrs "\t" | hooks | empty )*
-                       . Util.del_str "}\n"
+                       . del /[ \t]*\}[ \t]*\n/ "}\n"
 
    let rule = 
      [ label "rule" . 
