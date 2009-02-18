@@ -47,13 +47,14 @@ static const char *const errcodes[] = {
 
 enum type {
     T_NONE = 0,     /* Not a type */
-    T_LOCPATH,
+    T_NODESET,
     T_BOOLEAN,
     T_NUMBER,
     T_STRING
 };
 
 enum expr_tag {
+    E_LOCPATH,
     E_BINARY,
     E_VALUE,
     E_APP
@@ -102,48 +103,44 @@ static const char *const axis_sep = "::";
  */
 struct step {
     struct step *next;
-    struct step *prev;
     enum axis    axis;
     char        *name;              /* NULL to match any name */
     struct pred *predicates;
-    struct tree *ctx;
-    struct tree *cur;
 };
+
 /* Iteration over the nodes on a step, ignoring the predicates */
 static struct tree *step_first(struct step *step, struct tree *ctx);
-static struct tree *step_next(struct step *step);
+static struct tree *step_next(struct step *step, struct tree *ctx,
+                              struct tree *node);
 
 struct pathx {
     struct state   *state;
     struct locpath *locpath;
+    struct nodeset *nodeset;
+    int             node;
     struct tree    *origin;
 };
 
 #define L_BRACK '['
 #define R_BRACK ']'
 
-/* Locpaths are represented as iterators, consisting of multiple steps */
 struct locpath {
     struct step *steps;
-    struct step *last;
-    struct tree *ctx;
 };
 
-static struct tree *locpath_first(struct locpath *lp, struct state *state);
-static struct tree *locpath_next(struct locpath *lp, struct state *state);
-
-#define for_each_node(t, locpath, state)                                \
-    for (struct tree *t = locpath_first(locpath, state);                \
-         t != NULL;                                                     \
-         t = locpath_next(locpath, state))
+struct nodeset {
+    struct tree **nodes;
+    size_t        used;
+    size_t        size;
+};
 
 typedef uint32_t value_ind_t;
 
 struct value {
     enum type tag;
     union {
-        struct locpath  *locpath;     /* T_LOCPATH */
-        int              number;      /* T_NUMBER */
+        struct nodeset  *nodeset;     /* T_NODESET */
+        int              number;      /* T_NUMBER  */
         char            *string;      /* T_STRING  */
         bool             boolval;     /* T_BOOLEAN */
     };
@@ -153,6 +150,7 @@ struct expr {
     enum expr_tag tag;
     enum type     type;
     union {
+        struct locpath  *locpath;      /* E_LOCPATH */
         struct {                       /* E_BINARY */
             enum binary_op op;
             struct expr *left;
@@ -175,7 +173,9 @@ struct state {
     const char     *txt;  /* Entire expression */
     const char     *pos;  /* Current position within TXT during parsing */
 
-    struct step    *step; /* Evaluation context */
+    struct tree *ctx; /* The current node */
+    uint            ctx_pos;
+    uint            ctx_len;
 
     /* A table of all values. The table is dynamically reallocated, i.e.
      * pointers to struct value should not be used across calls that
@@ -256,10 +256,49 @@ static const struct func builtin_funcs[] = {
  * Free the various data structures
  */
 
+static void free_expr(struct expr *expr);
+
+static void free_pred(struct pred *pred) {
+    if (pred == NULL)
+        return;
+
+    for (int i=0; i < pred->nexpr; i++) {
+        free_expr(pred->exprs[i]);
+    }
+    free(pred->exprs);
+    free(pred);
+}
+
+static void free_step(struct step *step) {
+    while (step != NULL) {
+        struct step *del = step;
+        step = del->next;
+        free(del->name);
+        free_pred(del->predicates);
+        free(del);
+    }
+}
+
+static void free_locpath(struct locpath *locpath) {
+    if (locpath == NULL)
+        return;
+    while (locpath->steps != NULL) {
+        struct step *step = locpath->steps;
+        locpath->steps = step->next;
+        free(step->name);
+        free_pred(step->predicates);
+        free(step);
+    }
+    free(locpath);
+}
+
 static void free_expr(struct expr *expr) {
     if (expr == NULL)
         return;
     switch (expr->tag) {
+    case E_LOCPATH:
+        free_locpath(expr->locpath);
+        break;
     case E_BINARY:
         free_expr(expr->left);
         free_expr(expr->right);
@@ -276,37 +315,10 @@ static void free_expr(struct expr *expr) {
     free(expr);
 }
 
-static void free_pred(struct pred *pred) {
-    if (pred == NULL)
-        return;
-
-    for (int i=0; i < pred->nexpr; i++) {
-        free_expr(pred->exprs[i]);
-    }
-    free(pred->exprs);
-    free(pred);
-}
-
-static void free_locpath(struct locpath *locpath) {
-    if (locpath == NULL)
-        return;
-    while (locpath->steps != NULL) {
-        struct step *step = locpath->steps;
-        locpath->steps = step->next;
-        free(step->name);
-        free_pred(step->predicates);
-        free(step);
-    }
-    free(locpath);
-}
-
-static void free_step(struct step *step) {
-    while (step != NULL) {
-        struct step *del = step;
-        step = del->next;
-        free(del->name);
-        free_pred(del->predicates);
-        free(del);
+static void free_nodeset(struct nodeset *ns) {
+    if (ns != NULL) {
+        free(ns->nodes);
+        free(ns);
     }
 }
 
@@ -321,8 +333,8 @@ static void free_state(struct state *state) {
     for(int i=0; i < state->value_pool_used; i++) {
         struct value *v = state->value_pool + i;
         switch (v->tag) {
-        case T_LOCPATH:
-            free_locpath(v->locpath);
+        case T_NODESET:
+            free_nodeset(v->nodeset);
             break;
         case T_STRING:
             free(v->string);
@@ -414,27 +426,20 @@ static struct value *expr_value(struct expr *expr, struct state *state) {
 static void eval_expr(struct expr *expr, struct state *state);
 
 static void func_last(struct state *state) {
-    int count = 0;
     value_ind_t vind;
-    struct step *step = state->step;
-    struct tree *cur = step->cur;
-
-    for (struct tree *t = step_first(step, step->ctx);
-         t != NULL;
-         t = step_next(step))
-        count += 1;
-    state->step->cur = cur;
 
     vind = make_value(T_NUMBER, state);
     CHECK_ERROR;
-    state->value_pool[vind].number = count;
+    state->value_pool[vind].number = state->ctx_len;
     push_value(vind, state);
 }
 
-static int calc_eq_locpath_locpath(struct locpath *ns1, struct locpath *ns2,
-                                   int neq, struct state *state) {
-    for_each_node(t1, ns1, state) {
-        for_each_node(t2, ns2, state) {
+static int calc_eq_nodeset_nodeset(struct nodeset *ns1, struct nodeset *ns2,
+                                   int neq) {
+    for (int i1=0; i1 < ns1->used; i1++) {
+        struct tree *t1 = ns1->nodes[i1];
+        for (int i2=0; i2 < ns2->used; i2++) {
+            struct tree *t2 = ns2->nodes[i2];
             if (neq) {
                 if (!streqx(t1->value, t2->value))
                     return 1;
@@ -447,10 +452,10 @@ static int calc_eq_locpath_locpath(struct locpath *ns1, struct locpath *ns2,
     return 0;
 }
 
-static int calc_eq_locpath_string(struct locpath *lp, const char *s,
-                                  int neq, struct state *state) {
-    lp->ctx = state->step->cur;
-    for_each_node(t, lp, state) {
+static int calc_eq_nodeset_string(struct nodeset *ns, const char *s,
+                                  int neq) {
+    for (int i=0; i < ns->used; i++) {
+        struct tree *t = ns->nodes[i];
         if (neq) {
             if (!streqx(t->value, s))
                 return 1;
@@ -467,12 +472,12 @@ static void eval_eq(struct state *state, int neq) {
     struct value *l = pop_value(state);
     int res;
 
-    if (l->tag == T_LOCPATH && r->tag == T_LOCPATH) {
-        res = calc_eq_locpath_locpath(l->locpath, r->locpath, neq, state);
-    } else if (l->tag == T_LOCPATH) {
-        res = calc_eq_locpath_string(l->locpath, r->string, neq, state);
-    } else if (r->tag == T_LOCPATH) {
-        res = calc_eq_locpath_string(r->locpath, l->string, neq, state);
+    if (l->tag == T_NODESET && r->tag == T_NODESET) {
+        res = calc_eq_nodeset_nodeset(l->nodeset, r->nodeset, neq);
+    } else if (l->tag == T_NODESET) {
+        res = calc_eq_nodeset_string(l->nodeset, r->string, neq);
+    } else if (r->tag == T_NODESET) {
+        res = calc_eq_nodeset_string(r->nodeset, l->string, neq);
     } else {
         assert(l->tag == T_STRING);
         assert(r->tag == T_STRING);
@@ -540,9 +545,134 @@ static void eval_app(struct expr *expr, struct state *state) {
     expr->func->impl(state);
 }
 
+static int eval_pred(struct expr *expr, struct state *state) {
+    eval_expr(expr, state);
+    struct value *v = pop_value(state);
+    switch(v->tag) {
+    case T_BOOLEAN:
+        return v->boolval;
+    case T_NUMBER:
+        return (state->ctx_pos == v->number);
+    case T_NODESET:
+        return v->nodeset->used > 0;
+    default:
+        assert(0);
+    }
+}
+
+static struct nodeset *make_nodeset(struct state *state) {
+    struct nodeset *result;
+    if (ALLOC(result) < 0)
+        STATE_ENOMEM;
+    return result;
+}
+
+static void ns_add(struct nodeset *ns, struct tree *node,
+                   struct state *state) {
+    if (ns->used >= ns->size) {
+        size_t size = 2 * ns->size;
+        if (size < 10) size = 10;
+        if (REALLOC_N(ns->nodes, size) < 0)
+            STATE_ENOMEM;
+        ns->size = size;
+    }
+    ns->nodes[ns->used] = node;
+    ns->used += 1;
+}
+
+/* Return an array of nodesets, one for each step in the locpath.
+ *
+ * On return, (*NS)[0] will contain state->ctx, and (*NS)[*MAXNS] will
+ * contain the nodes that matched the entire locpath
+ */
+static void ns_from_locpath(struct locpath *lp, uint *maxns,
+                            struct nodeset ***ns,
+                            struct state *state) {
+    struct tree *old_ctx = state->ctx;
+    uint old_ctx_len = state->ctx_len;
+    uint old_ctx_pos = state->ctx_pos;
+
+    *maxns = 0;
+    *ns = NULL;
+    list_for_each(step, lp->steps)
+        *maxns += 1;
+    if (ALLOC_N(*ns, *maxns+1) < 0) {
+        STATE_ERROR(state, PATHX_ENOMEM);
+        goto error;
+    }
+    for (int i=0; i <= *maxns; i++) {
+        (*ns)[i] = make_nodeset(state);
+        if (HAS_ERROR(state))
+            goto error;
+    }
+    ns_add((*ns)[0], state->ctx, state);
+
+    uint cur_ns = 0;
+    list_for_each(step, lp->steps) {
+        struct nodeset *work = (*ns)[cur_ns];
+        struct nodeset *next = (*ns)[cur_ns + 1];
+        for (int i=0; i < work->used; i++) {
+            for (struct tree *node = step_first(step, work->nodes[i]);
+                 node != NULL;
+                 node = step_next(step, work->nodes[i], node))
+                ns_add(next, node, state);
+        }
+        // FIXME: Need to uniquify NS
+        if (step->predicates != NULL) {
+            for (int p=0; p < step->predicates->nexpr; p++) {
+                state->ctx_len = next->used;
+                state->ctx_pos = 1;
+                for (int i=0; i < next->used; state->ctx_pos++) {
+                    state->ctx = next->nodes[i];
+                    if (eval_pred(step->predicates->exprs[p], state)) {
+                        i+=1;
+                    } else {
+                        memmove(next->nodes + i, next->nodes + i+1,
+                                sizeof(next->nodes[0]) * (next->used - (i+1)));
+                        next->used -= 1;
+                    }
+                }
+            }
+        }
+        cur_ns += 1;
+    }
+
+    state->ctx = old_ctx;
+    state->ctx_pos = old_ctx_pos;
+    state->ctx_len = old_ctx_len;
+    return;
+ error:
+    if (*ns != NULL) {
+        for (int i=0; i <= *maxns; i++)
+            free_nodeset((*ns)[i]);
+        FREE(*ns);
+    }
+    return;
+}
+
+static void eval_locpath(struct locpath *lp, struct state *state) {
+    struct nodeset **ns = NULL;
+    uint maxns;
+
+    ns_from_locpath(lp, &maxns, &ns, state);
+    CHECK_ERROR;
+
+    value_ind_t vind = make_value(T_NODESET, state);
+    CHECK_ERROR;
+    state->value_pool[vind].nodeset = ns[maxns];
+    push_value(vind, state);
+
+    for (int i=0; i < maxns; i++)
+        free_nodeset(ns[i]);
+    FREE(ns);
+}
+
 static void eval_expr(struct expr *expr, struct state *state) {
     CHECK_ERROR;
     switch (expr->tag) {
+    case E_LOCPATH:
+        eval_locpath(expr->locpath, state);
+        break;
     case E_BINARY:
         eval_binary(expr, state);
         break;
@@ -566,7 +696,7 @@ static void check_expr(struct expr *expr, struct state *state);
 /* Typecheck a list of predicates. A predicate is a function of
  * one of the following types:
  *
- * T_LOCPATH -> T_BOOLEAN
+ * T_NODESET -> T_BOOLEAN
  * T_NUMBER  -> T_BOOLEAN  (position test)
  * T_BOOLEAN -> T_BOOLEAN
  */
@@ -575,7 +705,7 @@ static void check_preds(struct pred *pred, struct state *state) {
         struct expr *e = pred->exprs[i];
         check_expr(e, state);
         CHECK_ERROR;
-        if (e->type != T_LOCPATH && e->type != T_NUMBER &&
+        if (e->type != T_NODESET && e->type != T_NUMBER &&
             e->type != T_BOOLEAN) {
             STATE_ERROR(state, PATHX_ETYPE);
             return;
@@ -583,24 +713,17 @@ static void check_preds(struct pred *pred, struct state *state) {
     }
 }
 
-/* Typecheck a value; the type of the expression is the type of the value.
- * We also need to make sure that the expressions inside predicates are
- * typechecked for locpaths.
- */
-static void check_value(struct expr *expr, struct state *state) {
-    assert(expr->tag == E_VALUE);
-    struct value *v = expr_value(expr, state);
+static void check_locpath(struct expr *expr, struct state *state) {
+    assert(expr->tag == E_LOCPATH);
 
-    if (v->tag == T_LOCPATH) {
-        struct locpath *locpath = v->locpath;
-        list_for_each(s, locpath->steps) {
-            if (s->predicates != NULL) {
-                check_preds(s->predicates, state);
-                CHECK_ERROR;
-            }
+    struct locpath *locpath = expr->locpath;
+    list_for_each(s, locpath->steps) {
+        if (s->predicates != NULL) {
+            check_preds(s->predicates, state);
+            CHECK_ERROR;
         }
     }
-    expr->type = v->tag;
+    expr->type = T_NODESET;
 }
 
 static void check_app(struct expr *expr, struct state *state) {
@@ -618,11 +741,9 @@ static void check_app(struct expr *expr, struct state *state) {
 
 /* Check the binary operators. Type rules:
  *
- * '=', '!='  : T_LOCPATH -> T_LOCPATH -> T_BOOLEAN
- *              T_STRING  -> T_LOCPATH -> T_BOOLEAN
- *              T_LOCPATH -> T_STRING  -> T_BOOLEAN
- *
- * '|' :        T_LOCPATH -> T_LOCPATH -> T_LOCPATH
+ * '=', '!='  : T_NODESET -> T_NODESET -> T_BOOLEAN
+ *              T_STRING  -> T_NODESET -> T_BOOLEAN
+ *              T_NODESET -> T_STRING  -> T_BOOLEAN
  *
  * '+', '-', '*': T_NUMBER -> T_NUMBER -> T_NUMBER
  *
@@ -640,8 +761,8 @@ static void check_binary(struct expr *expr, struct state *state) {
     switch(expr->op) {
     case OP_EQ:
     case OP_NEQ:
-        ok = ((l == T_LOCPATH || l == T_STRING)
-              && (r == T_LOCPATH || r == T_STRING));
+        ok = ((l == T_NODESET || l == T_STRING)
+              && (r == T_NODESET || r == T_STRING));
         res = T_BOOLEAN;
         break;
     case OP_PLUS:
@@ -664,11 +785,14 @@ static void check_binary(struct expr *expr, struct state *state) {
 static void check_expr(struct expr *expr, struct state *state) {
     CHECK_ERROR;
     switch(expr->tag) {
+    case E_LOCPATH:
+        check_locpath(expr, state);
+        break;
     case E_BINARY:
         check_binary(expr, state);
         break;
     case E_VALUE:
-        check_value(expr, state);
+        expr->type = expr_value(expr, state)->tag;
         break;
     case E_APP:
         check_app(expr, state);
@@ -676,24 +800,6 @@ static void check_expr(struct expr *expr, struct state *state) {
     default:
         assert(0);
     }
-}
-
-static void append_step(struct locpath *locpath, struct step *tail) {
-    tail->prev = locpath->last;
-    if (locpath->last != NULL)
-        locpath->last->next = tail;
-    locpath->last = tail;
-    if (locpath->steps == NULL)
-        locpath->steps = tail;
-}
-
-static void prepend_step(struct locpath *locpath, struct step *head) {
-    if (locpath->steps != NULL)
-        locpath->steps->prev = head;
-    head->next = locpath->steps;
-    locpath->steps = head;
-    if (locpath->last == NULL)
-        locpath->last = head;
 }
 
 /*
@@ -948,7 +1054,7 @@ parse_relative_location_path(struct state *state) {
         STATE_ENOMEM;
         goto error;
     }
-    append_step(locpath, step);
+    list_append(locpath->steps, step);
     step = NULL;
 
     while (match(state, '/')) {
@@ -956,12 +1062,12 @@ parse_relative_location_path(struct state *state) {
             state->pos += 1;
             step = make_step(DESCENDANT_OR_SELF, state);
             ENOMEM_ON_NULL(state, step);
-            append_step(locpath, step);
+            list_append(locpath->steps, step);
         }
         step = parse_step(state);
         if (HAS_ERROR(state))
             goto error;
-        append_step(locpath, step);
+        list_append(locpath->steps, step);
         step = NULL;
     }
     return locpath;
@@ -992,7 +1098,7 @@ static void parse_location_path(struct state *state) {
             struct step *step = make_step(DESCENDANT_OR_SELF, state);
             if (HAS_ERROR(state))
                 goto error;
-            prepend_step(locpath, step);
+            list_cons(locpath->steps, step);
         } else {
             if (*state->pos != '\0') {
                 locpath = parse_relative_location_path(state);
@@ -1003,7 +1109,7 @@ static void parse_location_path(struct state *state) {
             struct step *step = make_step(ROOT, state);
             if (HAS_ERROR(state))
                 goto error;
-            prepend_step(locpath, step);
+            list_cons(locpath->steps, step);
         }
     } else {
         locpath = parse_relative_location_path(state);
@@ -1011,10 +1117,8 @@ static void parse_location_path(struct state *state) {
 
     if (ALLOC(expr) < 0)
         goto err_nomem;
-    expr->tag = E_VALUE;
-    expr->value_ind = make_value(T_LOCPATH, state);
-    CHECK_ERROR;
-    expr_value(expr, state)->locpath = locpath;
+    expr->tag = E_LOCPATH;
+    expr->locpath = locpath;
     push_expr(expr, state);
     return;
 
@@ -1213,8 +1317,10 @@ static void parse_path_expr(struct state *state) {
  */
 static void parse_multiplicative_expr(struct state *state) {
     parse_path_expr(state);
+    CHECK_ERROR;
     while (match(state, '*')) {
         parse_path_expr(state);
+        CHECK_ERROR;
         push_new_binary_op(OP_STAR, state);
     }
 }
@@ -1225,11 +1331,13 @@ static void parse_multiplicative_expr(struct state *state) {
  */
 static void parse_additive_expr(struct state *state) {
     parse_multiplicative_expr(state);
+    CHECK_ERROR;
     while (*state->pos == '+' || *state->pos == '-') {
         enum binary_op op = (*state->pos == '+') ? OP_PLUS : OP_MINUS;
         state->pos += 1;
         skipws(state);
         parse_multiplicative_expr(state);
+        CHECK_ERROR;
         push_new_binary_op(op, state);
     }
 }
@@ -1240,12 +1348,14 @@ static void parse_additive_expr(struct state *state) {
  */
 static void parse_equality_expr(struct state *state) {
     parse_additive_expr(state);
+    CHECK_ERROR;
     if (*state->pos == '=' ||
         (*state->pos == '!' && state->pos[1] == '=')) {
         enum binary_op op = (*state->pos == '=') ? OP_EQ : OP_NEQ;
         state->pos += (op == OP_EQ) ? 1 : 2;
         skipws(state);
         parse_additive_expr(state);
+        CHECK_ERROR;
         push_new_binary_op(op, state);
     }
 }
@@ -1307,22 +1417,13 @@ int pathx_parse(const struct tree *tree, const char *txt,
     if (HAS_ERROR(state))
         goto done;
 
-    if (state->exprs[0]->type != T_LOCPATH) {
+    if (state->exprs[0]->type != T_NODESET
+        || state->exprs[0]->tag != E_LOCPATH) {
         STATE_ERROR(state, PATHX_ETYPE);
         goto done;
     }
 
-    /* Evaluate */
-    eval_expr(state->exprs[0], state);
-    if (HAS_ERROR(state))
-        goto done;
-
-    if (state->values_used != 1) {
-        STATE_ERROR(state, PATHX_EINTERNAL);
-        goto done;
-    }
-
-    (*pathx)->locpath = pop_value(state)->locpath;
+    (*pathx)->locpath = state->exprs[0]->locpath;
 
  done:
     return state->errcode;
@@ -1336,182 +1437,107 @@ static bool step_matches(struct step *step, struct tree *tree) {
     return (step->name == NULL || streqx(step->name, tree->label));
 }
 
-/* Return the 1-based position of STEP->CUR amongst its siblings */
-static int position(struct step *step) {
-    int pos = 0;
-    struct tree *cur = step->cur;
-
-    for (struct tree *t = step_first(step, step->ctx);
-         t != NULL;
-         t = step_next(step)) {
-        if (step_matches(step, t)) {
-            pos += 1;
-            if (t == cur) {
-                step->cur = cur;
-                return pos;
-            }
-        }
-    }
-    assert(0);
-    /* Never reached, but Solaris headers miss __attribute__((noreturn))
-       in assert.h */
-    return -1;
-}
-
-static int pred_matches(struct step *step, struct state *state) {
-    struct pred *pred = step->predicates;
-
-    if (step->cur == NULL)
-        return 0;
-
-    if (pred == NULL)
-        return 1;
-
-    for (int i=0; i < pred->nexpr; i++) {
-        state->step = step;
-        eval_expr(pred->exprs[i], state);
-        struct value *v = pop_value(state);
-        switch(v->tag) {
-        case T_BOOLEAN:
-            if (! v->boolval)
-                return 0;
-            break;
-        case T_NUMBER:
-            if (position(state->step) != v->number)
-                return 0;
-            break;
-        case T_LOCPATH:
-            v->locpath->ctx = state->step->cur;
-            if (locpath_first(v->locpath, state) == NULL)
-                return 0;
-            break;
-        default:
-            assert(0);
-        }
-    }
-    return 1;
-}
-
 static struct tree *step_first(struct step *step, struct tree *ctx) {
-    step->ctx = ctx;
+    struct tree *node = NULL;
     switch (step->axis) {
     case SELF:
-        step->cur = ctx;
+    case DESCENDANT_OR_SELF:
+        node = ctx;
         break;
     case CHILD:
-        step->cur = ctx->children;
-        break;
     case DESCENDANT:
-        step->cur = ctx->children;
-        break;
-    case DESCENDANT_OR_SELF:
-        step->cur = ctx;
+        node = ctx->children;
         break;
     case PARENT:
     case ANCESTOR:
-        step->cur = ctx->parent;
+        node = ctx->parent;
         break;
     case ROOT:
         while (ctx->parent != ctx)
             ctx = ctx->parent;
-        step->cur = ctx;
+        node = ctx;
         break;
     default:
         assert(0);
     }
-    if (step->cur == NULL)
+    if (node == NULL)
         return NULL;
-    if (! step_matches(step, step->cur))
-        step_next(step);
-    return step->cur;
+    if (step_matches(step, node))
+        return node;
+    return step_next(step, ctx, node);
 }
 
-static struct tree *step_next(struct step *step) {
-    while (step->cur != NULL) {
+static struct tree *step_next(struct step *step, struct tree *ctx,
+                              struct tree *node) {
+    while (node != NULL) {
         switch (step->axis) {
         case SELF:
-            step->cur = NULL;
+            node = NULL;
             break;
         case CHILD:
-            step->cur = step->cur->next;
+            node = node->next;
             break;
         case DESCENDANT:
         case DESCENDANT_OR_SELF:
-            if (step->cur->children != NULL) {
-                step->cur = step->cur->children;
+            if (node->children != NULL) {
+                node = node->children;
             } else {
-                while (step->cur->next == NULL && step->cur != step->ctx)
-                    step->cur = step->cur->parent;
-                if (step->cur == step->ctx)
-                    step->cur = NULL;
+                while (node->next == NULL && node != ctx)
+                    node = node->parent;
+                if (node == ctx)
+                    node = NULL;
                 else
-                    step->cur = step->cur->next;
+                    node = node->next;
             }
             break;
         case PARENT:
-            step->cur = NULL;
+        case ROOT:
+            node = NULL;
             break;
         case ANCESTOR:
-            if (step->cur->parent == step->cur)
-                step->cur = NULL;
+            if (node->parent == node)
+                node = NULL;
             else
-                step->cur = step->cur->parent;
-            break;
-        case ROOT:
-            step->cur = NULL;
+                node = node->parent;
             break;
         default:
             assert(0);
         }
-        if (step->cur != NULL && step_matches(step, step->cur))
+        if (node != NULL && step_matches(step, node))
             break;
     }
-    return step->cur;
-}
-
-static struct tree *complete_path(struct step *step, struct state *state) {
-    if (step == NULL)
-        return NULL;
-
-    while (1) {
-        int found = pred_matches(step, state);
-
-        if (found && step->next == NULL) {
-            return step->cur;
-        } else if (found && step_first(step->next, step->cur) != NULL) {
-            step = step->next;
-        } else {
-            do {
-                step_next(step);
-                if (step->cur == NULL) {
-                    step = step->prev;
-                    if (step == NULL)
-                        return NULL;
-                    step_next(step);
-                }
-            } while (step->cur == NULL);
-        }
-    }
-}
-
-static struct tree *locpath_next(struct locpath *lp, struct state *state) {
-    step_next(lp->last);
-    return complete_path(lp->last, state);
+    return node;
 }
 
 struct tree *pathx_next(struct pathx *pathx) {
-    return locpath_next(pathx->locpath, pathx->state);
-}
-
-static struct tree *locpath_first(struct locpath *lp, struct state *state) {
-    step_first(lp->steps, lp->ctx);
-    return complete_path(lp->steps, state);
+    if (pathx->node + 1 < pathx->nodeset->used)
+        return pathx->nodeset->nodes[++pathx->node];
+    return NULL;
 }
 
 /* Find the first node in TREE matching PATH. */
 struct tree *pathx_first(struct pathx *pathx) {
-    pathx->locpath->ctx = pathx->origin;
-    return locpath_first(pathx->locpath, pathx->state);
+    if (pathx->nodeset == NULL) {
+        /* Evaluate */
+        struct state *state = pathx->state;
+        state->ctx = pathx->origin;
+        state->ctx_pos = 1;
+        state->ctx_len = 1;
+        eval_expr(state->exprs[0], state);
+        if (HAS_ERROR(state))
+            return NULL;
+
+        if (state->values_used != 1) {
+            STATE_ERROR(state, PATHX_EINTERNAL);
+            return NULL;
+        }
+        pathx->nodeset = pop_value(state)->nodeset;
+    }
+    pathx->node = 0;
+    if (pathx->nodeset->used == 0)
+        return NULL;
+    else
+        return pathx->nodeset->nodes[0];
 }
 
 /* Find a node in the tree that matches the longest prefix of PATH.
@@ -1526,79 +1552,38 @@ struct tree *pathx_first(struct pathx *pathx) {
  */
 static int locpath_search(struct locpath *lp, struct state *state,
                           struct tree **tmatch, struct step **smatch) {
-    struct tree **matches = NULL;
-    struct step *step;
+    struct nodeset **ns = NULL;
+    uint maxns;
+    int last;
+    int result = -1;
 
-    int *nmatches = NULL, nsteps = 0;
-    int result, level;
+    state->ctx = *tmatch;
+    *tmatch = NULL;
+    *smatch = NULL;
 
-    lp->ctx = *tmatch;
-    *smatch = lp->steps;
+    ns_from_locpath(lp, &maxns, &ns, state);
+    if (HAS_ERROR(state))
+        goto done;
 
-    if (lp->ctx == NULL)
-        return -1;
-
-    list_for_each(s, lp->steps) nsteps++;
-
-    if (ALLOC_N(matches, nsteps) < 0)
-        return -1;
-
-    if (ALLOC_N(nmatches, nsteps) < 0) {
-        free(matches);
-        return -1;
-    }
-
-    step = lp->steps;
-    if (step_first(step, lp->ctx) == NULL) {
+    for (last=maxns; last >= 0 && ns[last]->used == 0; last--);
+    if (last < 0) {
         *smatch = lp->steps;
-        return 0;
+        result = 1;
+        goto done;
     }
-
-    level = 0;
-    while (step != NULL) {
-        int found = pred_matches(step, state);
-
-        if (found) {
-            if (nmatches[level] == 0)
-                matches[level] = step->cur;
-            nmatches[level]++;
-        }
-
-        if (found && step->next == NULL) {
-            break;
-        } else if (found && step_first(step->next, step->cur) != NULL) {
-            step = step->next;
-            level += 1;
-        } else {
-            do {
-                step_next(step);
-                if (step->cur == NULL) {
-                    step = step->prev;
-                    level -= 1;
-                    if (step != NULL)
-                        step_next(step);
-                }
-            } while (step != NULL && step->cur == NULL);
-        }
+    if (ns[last]->used > 1) {
+        result = -1;
+        goto done;
     }
-
-    result = nmatches[nsteps - 1] == 1;
-    for (level = nsteps-1, step = lp->last;
-         level >=0;
-         level--, step = step->prev) {
-        if (nmatches[level] > 1) {
-            result = -1;
-            break;
-        }
-        if (nmatches[level] == 1) {
-            *tmatch = matches[level];
-            *smatch = step->next;
-            break;
-        }
-    }
-
-    free(matches);
-    free(nmatches);
+    result = 0;
+    *tmatch = ns[last]->nodes[0];
+    *smatch = lp->steps;
+    for (int i=0; i < last; i++)
+        *smatch = (*smatch)->next;
+ done:
+    for (int i=0; i <= maxns; i++)
+        free_nodeset(ns[i]);
+    FREE(ns);
     return result;
 }
 

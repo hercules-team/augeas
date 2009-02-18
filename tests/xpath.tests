@@ -139,3 +139,9 @@ test lircd-ancestor //*[ancestor::kudzu]
 
 test wildcard-last /files/etc/hosts/*[last()]
      /files/etc/hosts/2
+
+test nodeset-nodeset-eq /files/etc/sysconfig/network-scripts/*[BRIDGE = /files/etc/sysconfig/network-scripts/ifcfg-br0/DEVICE]
+     /files/etc/sysconfig/network-scripts/ifcfg-eth0
+
+test last-ssh-service /files/etc/services/service-name[port = '22'][last()]
+     /files/etc/services/service-name[24] = ssh
