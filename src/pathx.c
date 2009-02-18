@@ -69,7 +69,9 @@ enum binary_op {
     OP_GE,         /* '>=' */
     OP_PLUS,       /* '+'  */
     OP_MINUS,      /* '-'  */
-    OP_STAR        /* '*'  */
+    OP_STAR,       /* '*'  */
+    OP_AND,        /* 'and' */
+    OP_OR          /* 'or' */
 };
 
 struct pred {
@@ -580,6 +582,16 @@ static void eval_rel(struct state *state, bool greater, bool equal) {
     push_boolean_value(res, state);
 }
 
+static void eval_and_or(struct state *state, enum binary_op op) {
+    struct value *r = pop_value(state);
+    struct value *l = pop_value(state);
+
+    if (op == OP_AND)
+        push_boolean_value(l->boolval && r->boolval, state);
+    else
+        push_boolean_value(l->boolval || r->boolval, state);
+}
+
 static void eval_binary(struct expr *expr, struct state *state) {
     eval_expr(expr->left, state);
     eval_expr(expr->right, state);
@@ -608,6 +620,10 @@ static void eval_binary(struct expr *expr, struct state *state) {
     case OP_PLUS:
     case OP_STAR:
         eval_arith(state, expr->op);
+        break;
+    case OP_AND:
+    case OP_OR:
+        eval_and_or(state, expr->op);
         break;
     default:
         assert(0);
@@ -830,6 +846,8 @@ static void check_app(struct expr *expr, struct state *state) {
  *              T_STRING -> T_STRING -> T_BOOLEAN
  * '+', '-', '*': T_NUMBER -> T_NUMBER -> T_NUMBER
  *
+ * 'and', 'or': T_BOOLEAN -> T_BOOLEAN -> T_BOOLEAN
+ *
  */
 static void check_binary(struct expr *expr, struct state *state) {
     check_expr(expr->left, state);
@@ -862,6 +880,11 @@ static void check_binary(struct expr *expr, struct state *state) {
     case OP_STAR:
         ok =  (l == T_NUMBER && r == T_NUMBER);
         res = T_NUMBER;
+        break;
+    case OP_AND:
+    case OP_OR:
+        ok = (l == T_BOOLEAN && r == T_BOOLEAN);
+        res = T_BOOLEAN;
         break;
     default:
         assert(0);
@@ -1475,11 +1498,42 @@ static void parse_equality_expr(struct state *state) {
 }
 
 /*
+ * AndExpr ::= EqualityExpr ('and' EqualityExpr)*
+ */
+static void parse_and_expr(struct state *state) {
+    parse_equality_expr(state);
+    CHECK_ERROR;
+    while (*state->pos == 'a' && state->pos[1] == 'n'
+        && state->pos[2] == 'd') {
+        state->pos += 3;
+        skipws(state);
+        parse_equality_expr(state);
+        CHECK_ERROR;
+        push_new_binary_op(OP_AND, state);
+    }
+}
+
+/*
+ * OrExpr ::= AndExpr ('or' AndExpr)*
+ */
+static void parse_or_expr(struct state *state) {
+    parse_and_expr(state);
+    CHECK_ERROR;
+    while (*state->pos == 'o' && state->pos[1] == 'r') {
+        state->pos += 2;
+        skipws(state);
+        parse_and_expr(state);
+        CHECK_ERROR;
+        push_new_binary_op(OP_OR, state);
+    }
+}
+
+/*
  * Expr ::= EqualityExpr
  */
 static void parse_expr(struct state *state) {
     skipws(state);
-    parse_equality_expr(state);
+    parse_or_expr(state);
 }
 
 int pathx_parse(const struct tree *tree, const char *txt,

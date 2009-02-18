@@ -154,3 +154,6 @@ test count-one-alias /files/etc/hosts/*[count(alias) = 1]
 
 test number-gt /files/etc/hosts/*[count(alias) > 2]
      /files/etc/hosts/1
+
+test pred-or /files/etc/hosts/*[canonical = 'localhost' or alias = 'localhost']
+     /files/etc/hosts/1
