@@ -137,8 +137,11 @@ test lircd-ancestor //*[ancestor::kudzu]
      /augeas/files/etc/sysconfig/kudzu/lens/id = ...
      /files/etc/sysconfig/kudzu/SAFE = no
 
-test wildcard-last /files/etc/hosts/*[last()]
+test wildcard-last /files/etc/hosts/*[position() = last()]
      /files/etc/hosts/2
+
+test wildcard-not-last /files/etc/hosts/*[position() != last()][ipaddr]
+     /files/etc/hosts/1
 
 test nodeset-nodeset-eq /files/etc/sysconfig/network-scripts/*[BRIDGE = /files/etc/sysconfig/network-scripts/ifcfg-br0/DEVICE]
      /files/etc/sysconfig/network-scripts/ifcfg-eth0

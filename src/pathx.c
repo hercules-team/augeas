@@ -221,10 +221,13 @@ struct func {
 };
 
 static void func_last(struct state *state);
+static void func_position(struct state *state);
 
 static const struct func builtin_funcs[] = {
     { .name = "last", .arity = 0, .type = T_NUMBER, .arg_types = NULL,
-      .impl = func_last }
+      .impl = func_last },
+    { .name = "position", .arity = 0, .type = T_NUMBER, .arg_types = NULL,
+      .impl = func_position }
 };
 
 #define CHECK_ERROR                                                     \
@@ -431,6 +434,15 @@ static void func_last(struct state *state) {
     vind = make_value(T_NUMBER, state);
     CHECK_ERROR;
     state->value_pool[vind].number = state->ctx_len;
+    push_value(vind, state);
+}
+
+static void func_position(struct state *state) {
+    value_ind_t vind;
+
+    vind = make_value(T_NUMBER, state);
+    CHECK_ERROR;
+    state->value_pool[vind].number = state->ctx_pos;
     push_value(vind, state);
 }
 
