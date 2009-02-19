@@ -62,6 +62,7 @@ struct fa {
    states so that we can free the list when we need to free the state */
 struct state {
     struct state *next;
+    hash_val_t    hash;
     unsigned int  accept : 1;
     unsigned int  live : 1;
     unsigned int  reachable : 1;
@@ -177,6 +178,8 @@ struct re {
 
 /* A map from a set of states to a state. */
 typedef hash_t state_set_hash;
+
+static hash_val_t ptr_hash(const void *p);
 
 static const int array_initial_size = 4;
 static const int array_max_expansion   = 128;
@@ -325,6 +328,7 @@ static struct state *make_state(void) {
     struct state *s;
     if (ALLOC(s) == -1)
         return NULL;
+    s->hash = ptr_hash(s);
     return s;
 }
 
@@ -659,18 +663,12 @@ static hash_val_t ptr_hash(const void *p) {
 typedef hash_t state_triple_hash;
 
 static hash_val_t pair_hash(const void *key) {
-    struct state *const *pair = key;
-    return ptr_hash(pair[0]) + ptr_hash(pair[1]);
+    register struct state *const *pair = key;
+    return pair[0]->hash + pair[1]->hash;
 }
 
 static int pair_cmp(const void *key1, const void *key2) {
-    struct state *const *pair1 = key1;
-    struct state *const *pair2 = key2;
-
-    if (pair1[0] < pair2[0] ||
-        (pair1[0] == pair2[0] && pair1[1] < pair2[1]))
-        return -1;
-    return pair1[1] == pair2[1] ? 0 : 1;
+    return memcmp(key1, key2, 2*sizeof(struct state *));
 }
 
 static void state_triple_node_free(hnode_t *node, ATTRIBUTE_UNUSED void *ctx) {
@@ -925,7 +923,7 @@ static hash_val_t set_hash(const void *key) {
     const struct state_set *set = key;
 
     for (int i = 0; i < set->used; i++) {
-        hash += ptr_hash(set->states[i]);
+        hash += set->states[i]->hash;
     }
     return hash;
 }
@@ -1957,6 +1955,7 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
             }
         }
     }
+    fa->deterministic = fa1->deterministic && fa2->deterministic;
  done:
     state_set_free(worklist);
     state_triple_free(newstates);
