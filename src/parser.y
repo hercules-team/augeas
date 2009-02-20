@@ -65,9 +65,6 @@ typedef struct info YYLTYPE;
 %token          KW_LENS
 %token          KW_TEST KW_GET KW_PUT KW_AFTER
 
-/* Conflicts caused by the binding let decl vs the let expression */
-%expect 3
-
 %union {
   struct term     *term;
   struct type    *type;
@@ -86,7 +83,7 @@ typedef struct info YYLTYPE;
 %type<quant> rep
 %type<term>  test_exp
 %type<intval> test_special_res
-%type<tree>  tree_const tree_branch
+%type<tree>  tree_const tree_const2 tree_branch
 %type<string> tree_label
 
 %{
@@ -282,18 +279,23 @@ atype: KW_STRING
      | '(' type ')'
        { $$ = $2; }
 
-tree_const: '{' tree_branch '}' tree_const
+tree_const: tree_const '{' tree_branch '}'
+            { $$ = tree_concat($1, $3); }
+          | '{' tree_branch '}'
+            { $$ = tree_concat($2, NULL); }
+
+tree_const2: tree_const2 '{' tree_branch '}'
             {
-              $$ = tree_concat($2, $4);
+              $$ = tree_concat($1, $3);
             }
           | /* empty */
             { $$ = NULL; }
 
-tree_branch: tree_label tree_const
+tree_branch: tree_label tree_const2
              {
                $$ = make_tree($1, NULL, NULL, $2);
              }
-           | tree_label '=' DQUOTED tree_const
+           | tree_label '=' DQUOTED tree_const2
              {
                $$ = make_tree($1, $3, NULL, $4);
              }
@@ -486,7 +488,8 @@ static struct term *make_tree_value(struct tree *tree, struct info *locp) {
 }
 
 static struct tree *tree_concat(struct tree *t1, struct tree *t2) {
-  list_append(t1, t2);
+  if (t2 != NULL)
+    list_append(t1, t2);
   return t1;
 }
 
