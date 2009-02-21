@@ -58,7 +58,6 @@ static void loc_update(YYLTYPE *yylloc, const char *s, int len) {
     if (s[i] == '\n') {
       LOCATION_LINES(*yylloc, 1);
     }
-    LOCATION_STEP(*yylloc);
   }
 }
 %}
