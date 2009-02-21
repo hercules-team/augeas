@@ -208,6 +208,7 @@ static void get_expected_error(struct state *state, struct lens *l) {
  */
 
 static char *token(struct state *state) {
+    assert(REG_MATCHED(state));
     return strndup(REG_POS(state), REG_SIZE(state));
 }
 
@@ -227,6 +228,23 @@ static void regexp_match_error(struct state *state, struct lens *lens,
     }
     free(pat);
     free(text);
+}
+
+static void no_match_error(struct state *state, struct lens *lens) {
+    assert(lens->tag == L_KEY || lens->tag == L_DEL
+           || lens->tag == L_STORE);
+    char *pat = regexp_escape(lens->ctype);
+    const char *lname;
+    if (lens->tag == L_KEY)
+        lname = "key";
+    else if (lens->tag == L_DEL)
+        lname = "del";
+    else if (lens->tag == L_STORE)
+        lname = "store";
+    else
+        assert(0);
+    get_error(state, lens, "no match for %s /%s/", lname, pat);
+    free(pat);
 }
 
 /* Modifies STATE->REGS and STATE->NREG. The caller must save these
@@ -316,10 +334,13 @@ static struct skel *parse_counter(struct lens *lens, struct state *state) {
     return make_skel(lens);
 }
 
-static struct tree *get_del(struct lens *lens,
-                            ATTRIBUTE_UNUSED struct state *state) {
+static struct tree *get_del(struct lens *lens, struct state *state) {
     assert(lens->tag == L_DEL);
-
+    if (! REG_MATCHED(state)) {
+        char *pat = regexp_escape(lens->ctype);
+        get_error(state, lens, "no match for del /%s/", pat);
+        free(pat);
+    }
     return NULL;
 }
 
@@ -328,7 +349,10 @@ static struct skel *parse_del(struct lens *lens, struct state *state) {
     struct skel *skel = NULL;
 
     skel = make_skel(lens);
-    skel->text = token(state);
+    if (! REG_MATCHED(state))
+        no_match_error(state, lens);
+    else
+        skel->text = token(state);
     return skel;
 }
 
@@ -337,11 +361,12 @@ static struct tree *get_store(struct lens *lens, struct state *state) {
     struct tree *tree = NULL;
 
     assert(state->value == NULL);
-    if (state->value != NULL) {
+    if (state->value != NULL)
         get_error(state, lens, "More than one store in a subtree");
-    } else {
+    else if (! REG_MATCHED(state))
+        no_match_error(state, lens);
+    else
         state->value = token(state);
-    }
     return tree;
 }
 
@@ -353,7 +378,10 @@ static struct skel *parse_store(struct lens *lens,
 
 static struct tree *get_key(struct lens *lens, struct state *state) {
     assert(lens->tag == L_KEY);
-    state->key = token(state);
+    if (! REG_MATCHED(state))
+        no_match_error(state, lens);
+    else
+        state->key = token(state);
     return NULL;
 }
 
