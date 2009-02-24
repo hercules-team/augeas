@@ -91,7 +91,11 @@ View: empty
 Variable: stdexcl
   Exclusion for files that are commonly not wanted/needed
 *)
-  let stdexcl = (excl "*~") . (excl "*.rpmnew") . (excl "*.rpmsave")
+  let stdexcl = (excl "*~") .
+    (excl "*.rpmnew") .
+    (excl "*.rpmsave") .
+    (excl "*.augsave") .
+    (excl "*.augnew")
 
 (* Local Variables: *)
 (* mode: caml       *)
