@@ -131,15 +131,17 @@ static int cmd_match(char *args[]) {
     const char *pattern = cleanpath(args[0]);
     char **matches;
     int filter = (args[1] != NULL) && (strlen(args[1]) > 0);
+    int result = 0;
 
     cnt = aug_match(aug, pattern, &matches);
     if (cnt < 0) {
         printf("  (error matching %s)\n", pattern);
-        return -1;
+        result = -1;
+        goto done;
     }
     if (cnt == 0) {
         printf("  (no matches)\n");
-        return 0;
+        goto done;
     }
 
     for (int i=0; i < cnt; i++) {
@@ -153,10 +155,12 @@ static int cmd_match(char *args[]) {
         } else {
             printf("%s = %s\n", matches[i], val);
         }
-        free((void *) matches[i]);
     }
+ done:
+    for (int i=0; i < cnt; i++)
+        free(matches[i]);
     free(matches);
-    return 0;
+    return result;
 }
 
 static int cmd_rm(char *args[]) {

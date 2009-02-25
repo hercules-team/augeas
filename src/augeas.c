@@ -72,8 +72,10 @@ static struct pathx *parse_user_pathx(const struct augeas *aug,
         return result;
 
     if (pathx_parse(aug->origin, AUGEAS_META_PATHX "/error", &err)
-        != PATHX_NOERROR)
+        != PATHX_NOERROR) {
+        free_pathx(result);
         return NULL;
+    }
     tree_set(err, pathx_error(result, NULL, &pos));
     free_pathx(err);
 
@@ -89,6 +91,7 @@ static struct pathx *parse_user_pathx(const struct augeas *aug,
         }
     }
     free_pathx(err);
+    free_pathx(result);
     return NULL;
 }
 
@@ -511,7 +514,7 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
     }
 
     if (matches == NULL)
-        return cnt;
+        goto done;
 
     if (ALLOC_N(*matches, cnt) < 0)
         goto error;
@@ -526,6 +529,7 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
         }
         i += 1;
     }
+ done:
     free_pathx(p);
     return cnt;
 
