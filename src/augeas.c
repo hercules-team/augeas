@@ -603,7 +603,6 @@ static int tree_save(struct augeas *aug, struct tree *tree,
                      const char *path) {
     int result = 0;
     // FIXME: We need to detect subtrees that aren't saved by anything
-    aug_rm(aug, AUGEAS_EVENTS_SAVED);
 
     list_for_each(t, tree) {
         if (t->dirty) {
@@ -679,6 +678,8 @@ int aug_save(struct augeas *aug) {
         return -1;
     }
     free_pathx(p);
+
+    aug_rm(aug, AUGEAS_EVENTS_SAVED);
 
     list_for_each(t, aug->origin->children) {
         tree_propagate_dirty(t);
