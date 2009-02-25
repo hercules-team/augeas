@@ -35,6 +35,7 @@
 #include "memory.h"
 #include "syntax.h"
 #include "augeas.h"
+#include "transform.h"
 
 /* Extension of source files */
 #define AUG_EXT ".aug"

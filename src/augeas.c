@@ -25,6 +25,7 @@
 #include "internal.h"
 #include "memory.h"
 #include "syntax.h"
+#include "transform.h"
 
 #include <fnmatch.h>
 #include <argz.h>

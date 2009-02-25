@@ -26,6 +26,7 @@
 
 #include "syntax.h"
 #include "memory.h"
+#include "transform.h"
 
 #define UNIMPL_BODY(name)                       \
     {                                           \

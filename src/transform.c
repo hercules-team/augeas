@@ -36,6 +36,7 @@
 #include "memory.h"
 #include "augeas.h"
 #include "syntax.h"
+#include "transform.h"
 
 static const int fnm_flags = FNM_PATHNAME;
 static const int glob_flags = GLOB_NOSORT;
