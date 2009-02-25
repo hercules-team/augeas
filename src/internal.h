@@ -313,6 +313,7 @@ struct tree  *make_tree_origin(struct tree *root);
 int tree_replace(struct tree *origin, const char *path, struct tree *sub);
 
 int tree_rm(struct pathx *p);
+int tree_unlink(struct tree *tree);
 struct tree *tree_set(struct pathx *p, const char *value);
 int tree_insert(struct pathx *p, const char *label, int before);
 int free_tree(struct tree *tree);

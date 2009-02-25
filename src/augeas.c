@@ -412,6 +412,17 @@ int free_tree(struct tree *tree) {
     return cnt;
 }
 
+int tree_unlink(struct tree *tree) {
+    int result = 0;
+
+    assert (tree->parent != NULL);
+    list_remove(tree, tree->parent->children);
+    tree->parent->dirty = 1;
+    result = free_tree(tree->children) + 1;
+    free_tree_node(tree);
+    return result;
+}
+
 int tree_rm(struct pathx *p) {
     struct tree *tree, **del;
     int cnt = 0, ndel = 0, i;
@@ -436,13 +447,8 @@ int tree_rm(struct pathx *p) {
         i += 1;
     }
 
-    for (i = 0; i < ndel; i++) {
-        assert (del[i]->parent != NULL);
-        list_remove(del[i], del[i]->parent->children);
-        del[i]->parent->dirty = 1;
-        cnt += free_tree(del[i]->children) + 1;
-        free_tree_node(del[i]);
-    }
+    for (i = 0; i < ndel; i++)
+        cnt += tree_unlink(del[i]);
     free(del);
 
     return cnt;
@@ -531,13 +537,8 @@ int aug_mv(struct augeas *aug, const char *src, const char *dst) {
     ts->value = NULL;
     ts->children = NULL;
 
-
-    list_remove(ts, ts->parent->children);
-
-    ts->parent->dirty = 1;
+    tree_unlink(ts);
     td->dirty = 1;
-
-    free_tree(ts);
 
     ret = 0;
  done:
