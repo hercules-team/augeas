@@ -663,21 +663,29 @@ static int update_save_flags(struct augeas *aug) {
     return 0;
 }
 
+static struct tree *tree_find(struct tree *origin, const char *path) {
+    struct pathx *px = NULL;
+    struct tree *result = NULL;
+
+    if (pathx_parse(origin, path, &px) != 0)
+        return NULL;
+
+    pathx_find_one(px, &result);
+    free_pathx(px);
+
+    return result;
+}
+
 int aug_save(struct augeas *aug) {
     int ret = 0;
     struct tree *files;
-    struct pathx *p = NULL;
 
     if (update_save_flags(aug) < 0)
         return -1;
 
-    if (pathx_parse(aug->origin, AUGEAS_FILES_TREE, &p) != 0)
+    files = tree_find(aug->origin, AUGEAS_FILES_TREE);
+    if (files == NULL)
         return -1;
-    if (pathx_find_one(p, &files) != 1) {
-        free_pathx(p);
-        return -1;
-    }
-    free_pathx(p);
 
     aug_rm(aug, AUGEAS_EVENTS_SAVED);
 
