@@ -66,6 +66,13 @@ int transform_applies(struct transform *transform, const char *path);
 int transform_save(struct augeas *aug, struct transform *transform,
                    const char *path, struct tree *tree);
 
+/* Remove the file for TREE, either by moving it to a .augsave file or by
+ * unlinking it, depending on aug->flags. TREE must be the node underneath
+ * /augeas/files corresponding to the file to be removed.
+ *
+ * Return 0 on success, -1 on failure
+ */
+int remove_file(struct augeas *aug, struct tree *tree);
 #endif
 
 

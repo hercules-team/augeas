@@ -618,6 +618,47 @@ static struct tree *tree_find(struct tree *origin, const char *path) {
     return result;
 }
 
+static struct tree *tree_child(struct tree *tree, const char *label) {
+    list_for_each(child, tree->children) {
+        if (streqv(label, child->label))
+            return child;
+    }
+    return NULL;
+}
+
+static int unlink_removed_files(struct augeas *aug,
+                                struct tree *files, struct tree *meta) {
+    int result = 0;
+
+    if (! files->dirty)
+        return 0;
+
+    for (struct tree *tm = meta->children; tm != NULL;) {
+        struct tree *tf = tree_child(files, tm->label);
+        struct tree *next = tm->next;
+        if (tf == NULL) {
+            /* Unlink all files in tm */
+            struct pathx *px = NULL;
+            if (pathx_parse(tm, "descendant-or-self::*[path]", &px)
+                != PATHX_NOERROR) {
+                result = -1;
+                continue;
+            }
+            for (struct tree *t = pathx_first(px);
+                 t != NULL;
+                 t = pathx_next(px)) {
+                remove_file(aug, t);
+            }
+            free_pathx(px);
+        } else if (tf->dirty && ! tree_child(tm, "path")) {
+            if (unlink_removed_files(aug, tf, tm) < 0)
+                result = -1;
+        }
+        tm = next;
+    }
+    return result;
+}
+
 int aug_save(struct augeas *aug) {
     int ret = 0;
     struct tree *files;
@@ -637,6 +678,14 @@ int aug_save(struct augeas *aug) {
     if (files->dirty) {
         list_for_each(t, files->children) {
             if (tree_save(aug, t, AUGEAS_FILES_TREE) == -1)
+                ret = -1;
+        }
+        /* Remove files whose entire subtree was removed. META
+         * will be NULL if all files are new
+         */
+        struct tree *meta = tree_find(aug->origin, AUGEAS_META_FILES);
+        if (meta != NULL) {
+            if (unlink_removed_files(aug, files, meta) < 0)
                 ret = -1;
         }
     }
