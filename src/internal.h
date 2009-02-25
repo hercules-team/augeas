@@ -319,6 +319,8 @@ int tree_insert(struct pathx *p, const char *label, int before);
 int free_tree(struct tree *tree);
 int dump_tree(FILE *out, struct tree *tree);
 int tree_equal(const struct tree *t1, const struct tree *t2);
+char *path_expand(struct tree *tree, const char *ppath);
+char *path_of_tree(struct tree *tree);
 
 /* Struct: memstream
  * Wrappers to simulate OPEN_MEMSTREAM where that's not available. The

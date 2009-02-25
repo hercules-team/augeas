@@ -305,7 +305,61 @@ int close_memstream(struct memstream *ms) {
     return 0;
 }
 
+char *path_expand(struct tree *tree, const char *ppath) {
+    struct tree *siblings = tree->parent->children;
 
+    char *path;
+    const char *label;
+    int cnt = 0, ind = 0, r;
+
+    list_for_each(t, siblings) {
+        if (streqv(t->label, tree->label)) {
+            cnt += 1;
+            if (t == tree)
+                ind = cnt;
+        }
+    }
+
+    if (ppath == NULL)
+        ppath = "";
+
+    if (tree == NULL)
+        label = "(no_tree)";
+    else if (tree->label == NULL)
+        label = "(none)";
+    else
+        label = tree->label;
+
+    if (cnt > 1) {
+        r = asprintf(&path, "%s/%s[%d]", ppath, label, ind);
+    } else {
+        r = asprintf(&path, "%s/%s", ppath, label);
+    }
+    if (r == -1)
+        return NULL;
+    return path;
+}
+
+char *path_of_tree(struct tree *tree) {
+    int depth, i;
+    struct tree *t, **anc;
+    char *path = NULL;
+
+    for (t = tree, depth = 1; ! ROOT_P(t); depth++, t = t->parent);
+    if (ALLOC_N(anc, depth) < 0)
+        return NULL;
+
+    for (t = tree, i = depth - 1; i >= 0; i--, t = t->parent)
+        anc[i] = t;
+
+    for (i = 0; i < depth; i++) {
+        char *p = path_expand(anc[i], path);
+        free(path);
+        path = p;
+    }
+    FREE(anc);
+    return path;
+}
 
 /*
  * Local variables:

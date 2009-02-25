@@ -44,64 +44,6 @@ static const char *const static_nodes[][2] = {
     { AUGEAS_META_TREE "/version/save/mode[4]", AUG_SAVE_OVERWRITE_TEXT }
 };
 
-static const char *pretty_label(const struct tree *tree) {
-    if (tree == NULL)
-        return "(no_tree)";
-    else if (tree->label == NULL)
-        return "(none)";
-    else
-        return tree->label;
-}
-
-static char *path_expand(struct tree *tree, const char *ppath) {
-    struct tree *siblings = tree->parent->children;
-
-    char *path;
-    const char *label;
-    int cnt = 0, ind = 0, r;
-
-    list_for_each(t, siblings) {
-        if (streqv(t->label, tree->label)) {
-            cnt += 1;
-            if (t == tree)
-                ind = cnt;
-        }
-    }
-
-    if (ppath == NULL)
-        ppath = "";
-
-    label = pretty_label(tree);
-    if (cnt > 1) {
-        r = asprintf(&path, "%s/%s[%d]", ppath, label, ind);
-    } else {
-        r = asprintf(&path, "%s/%s", ppath, label);
-    }
-    if (r == -1)
-        return NULL;
-    return path;
-}
-
-static char *format_path(struct tree *tree) {
-    int depth, i;
-    struct tree *t, **anc;
-    char *path = NULL;
-
-    for (t = tree, depth = 1; ! ROOT_P(t); depth++, t = t->parent);
-    if (ALLOC_N(anc, depth) < 0)
-        return NULL;
-
-    for (t = tree, i = depth - 1; i >= 0; i--, t = t->parent)
-        anc[i] = t;
-
-    for (i = 0; i < depth; i++) {
-        char *p = path_expand(anc[i], path);
-        free(path);
-        path = p;
-    }
-    return path;
-}
-
 /* Propagate dirty flags towards the root */
 static int tree_propagate_dirty(struct tree *tree) {
     if (tree->dirty)
@@ -578,7 +520,7 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
     for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
         if (TREE_HIDDEN(tree))
             continue;
-        (*matches)[i] = format_path(tree);
+        (*matches)[i] = path_of_tree(tree);
         if ((*matches)[i] == NULL) {
             goto error;
         }
@@ -761,7 +703,7 @@ static int print_tree(FILE *out, struct pathx *p, int pr_hidden) {
         if (TREE_HIDDEN(tree) && ! pr_hidden)
             continue;
 
-        path = format_path(tree);
+        path = path_of_tree(tree);
         if (path == NULL)
             goto error;
         r = print_one(out, path, tree->value);
