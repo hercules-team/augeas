@@ -520,6 +520,32 @@ static char *strappend(const char *s1, const char *s2) {
     return result;
 }
 
+static int file_saved_event(struct augeas *aug, const char *path) {
+    const char *saved = strrchr(AUGEAS_EVENTS_SAVED, SEP) + 1;
+    struct pathx *px;
+    struct tree *dummy;
+    int r;
+
+    r = pathx_parse(aug->origin, AUGEAS_EVENTS_SAVED "[last()]", &px);
+    if (r != PATHX_NOERROR)
+        return -1;
+
+    if (pathx_find_one(px, &dummy) == 1) {
+        r = tree_insert(px, saved, 0);
+        if (r < 0)
+            goto error;
+    }
+
+    if (! tree_set(px, path))
+        goto error;
+
+    free_pathx(px);
+    return 0;
+ error:
+    free_pathx(px);
+    return -1;
+}
+
 /*
  * Save TREE->CHILDREN into the file PATH using the lens from XFORM. Errors
  * are noted in the /augeas/files hierarchy in AUG->ORIGIN under
@@ -654,6 +680,13 @@ int transform_save(struct augeas *aug, struct transform *xform,
     result = 1;
 
  done:
+    if (result > 0) {
+        r = file_saved_event(aug, path);
+        if (r < 0) {
+            err_status = "saved_event";
+            result = -1;
+        }
+    }
     {
         const char *emsg =
             dyn_err_status == NULL ? err_status : dyn_err_status;
