@@ -21,6 +21,7 @@ root=$abs_top_builddir/build/test-events-saved
 rm -rf $root
 mkdir -p $root
 cp -pr $abs_top_srcdir/tests/root/* $root
+chmod -R u+w $root
 
 saved=$(run_augtool | grep ^/augeas/events/saved | cut -d ' ' -f 3 | sort | tr '\n' ' ')
 exp="/files/etc/grub.conf /files/etc/hosts /files/etc/inittab /files/etc/puppet/puppet.conf /files/etc/yum.repos.d/fedora.repo "
