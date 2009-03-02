@@ -66,7 +66,7 @@ AC_PROG_LIBTOOL
 AC_PROG_YACC
 AC_PROG_LEX
 
-AUGEAS_COMPILE_WARNINGS(error)
+AUGEAS_COMPILE_WARNINGS(maximum)
 
 ## Compiler flags to be used everywhere
 AUGEAS_CFLAGS=-std=gnu99
