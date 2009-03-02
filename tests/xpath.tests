@@ -167,3 +167,8 @@ test pred-and-or /files/etc/hosts/*[(canonical = 'localhost' or alias = 'localho
 test path-with-dot /files/etc/.notthere
 
 test str-neq /files/etc/*['foo' != 'foo']
+
+# label() returns the label of the context node as a string
+test label-neq /files/etc/hosts/*[label() != 'comment']
+     /files/etc/hosts/1
+     /files/etc/hosts/2

@@ -231,6 +231,7 @@ struct func {
 static void func_last(struct state *state);
 static void func_position(struct state *state);
 static void func_count(struct state *state);
+static void func_label(struct state *state);
 
 static const enum type const count_arg_types[] = { T_NODESET };
 
@@ -239,6 +240,8 @@ static const struct func builtin_funcs[] = {
       .impl = func_last },
     { .name = "position", .arity = 0, .type = T_NUMBER, .arg_types = NULL,
       .impl = func_position },
+    { .name = "label", .arity = 0, .type = T_STRING, .arg_types = NULL,
+      .impl = func_label },
     { .name = "count", .arity = 1, .type = T_NUMBER,
       .arg_types = count_arg_types,
       .impl = func_count }
@@ -467,6 +470,24 @@ static void func_count(struct state *state) {
     vind = make_value(T_NUMBER, state);
     CHECK_ERROR;
     state->value_pool[vind].number = ns->nodeset->used;
+    push_value(vind, state);
+}
+
+static void func_label(struct state *state) {
+    value_ind_t vind;
+    char *s;
+
+    vind = make_value(T_STRING, state);
+    CHECK_ERROR;
+    if (state->ctx->label)
+        s = strdup(state->ctx->label);
+    else
+        s = strdup("");
+    if (s == NULL) {
+        STATE_ENOMEM;
+        return;
+    }
+    state->value_pool[vind].string = s;
     push_value(vind, state);
 }
 
