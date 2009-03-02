@@ -160,3 +160,8 @@ test pred-or /files/etc/hosts/*[canonical = 'localhost' or alias = 'localhost']
 
 test pred-and-or /files/etc/hosts/*[(canonical = 'localhost' or alias = 'localhost') and ipaddr = '127.0.0.1']
      /files/etc/hosts/1
+
+# We used to parse this as '/files/etc/.' followed by garbage, that
+# was silently ignored. This path must not match anything, instead of
+# every child of /files/etc
+test path-with-dot /files/etc/.notthere
