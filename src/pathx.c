@@ -39,7 +39,8 @@ static const char *const errcodes[] = {
     "unmatched '('",
     "expected a '/'",
     "internal error",   /* PATHX_EINTERNAL */
-    "type error"        /* PATHX_ETYPE */
+    "type error",       /* PATHX_ETYPE */
+    "garbage at end of path expression" /* PATHX_EEND */
 };
 
 /*
@@ -1583,6 +1584,10 @@ int pathx_parse(const struct tree *tree, const char *txt,
     parse_expr(state);
     if (HAS_ERROR(state))
         goto done;
+    if (state->pos != state->txt + strlen(state->txt)) {
+        STATE_ERROR(state, PATHX_EEND);
+        goto done;
+    }
 
     if (state->exprs_used != 1) {
         STATE_ERROR(state, PATHX_EINTERNAL);
