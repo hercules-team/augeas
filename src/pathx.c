@@ -523,6 +523,8 @@ static void eval_eq(struct state *state, int neq) {
         assert(l->tag == T_STRING);
         assert(r->tag == T_STRING);
         res = streqx(l->string, r->string);
+        if (neq)
+            res = !res;
     }
     CHECK_ERROR;
 

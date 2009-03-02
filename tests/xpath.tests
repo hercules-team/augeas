@@ -165,3 +165,5 @@ test pred-and-or /files/etc/hosts/*[(canonical = 'localhost' or alias = 'localho
 # was silently ignored. This path must not match anything, instead of
 # every child of /files/etc
 test path-with-dot /files/etc/.notthere
+
+test str-neq /files/etc/*['foo' != 'foo']
