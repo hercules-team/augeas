@@ -15,23 +15,28 @@ module Postfix_Main =
  *************************************************************************)
 
 let eol        = Util.eol
-let spc        = Util.del_ws_spc
-let indent     = del /[ \t]*/ " "
+let indent     = del /[ \t]*(\n[ \t]+)?/ " "
 let comment    = Util.comment
 let empty      = Util.empty
 let eq         = del /[ \t]*=/ " ="
-
-let sto_to_eol = store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
-let sto_to_spc = store /[^ \t\n]+/
-
 let word       = /[A-Za-z0-9_.-]+/
-let value      = [ key word . spc . sto_to_eol . eol ]
+
+(* The value of a parameter, after the '=' sign. Postfix allows that
+ * lines are continued by starting continuation lines with spaces.
+ * The definition needs to make sure we don't add indented comment lines
+ * into values *)
+let value =
+  let chr = /[^# \t\n]/ in
+  let any = /.*/ in
+  let line = (chr . any* . chr | chr) in
+  let lines = line . (/\n[ \t]+/ . line)* in
+    store lines
 
 (************************************************************************
  *                               ENTRIES
  *************************************************************************)
 
-let entry     = [ key word . eq . (indent . sto_to_eol)? . eol ]
+let entry     = [ key word . eq . (indent . value)? . eol ]
 
 (************************************************************************
  *                                LENS
