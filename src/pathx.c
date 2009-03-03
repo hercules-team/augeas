@@ -1029,7 +1029,7 @@ static void push_new_binary_op(enum binary_op op, struct state *state) {
 }
 
 /*
- * Name ::= /[^/\[ \t\n]+/
+ * Name ::= /[^][/=) \t\n]+/
  */
 static char *parse_name(struct state *state) {
     const char *s = state->pos;
@@ -1498,7 +1498,7 @@ static void parse_additive_expr(struct state *state) {
 
 /*
  * RelationalExpr ::= AdditiveExpr (RelationalOp AdditiveExpr)?
- * EqualityOp ::= ">" | "<" | ">=" | "<="
+ * RelationalOp ::= ">" | "<" | ">=" | "<="
  */
 static void parse_relational_expr(struct state *state) {
     parse_additive_expr(state);
@@ -1567,7 +1567,7 @@ static void parse_or_expr(struct state *state) {
 }
 
 /*
- * Expr ::= EqualityExpr
+ * Expr ::= OrExpr
  */
 static void parse_expr(struct state *state) {
     skipws(state);
