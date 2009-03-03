@@ -1,4 +1,4 @@
-AC_INIT(augeas, 0.4.0)
+AC_INIT(augeas, 0.4.1)
 AC_CONFIG_SRCDIR([src/augeas.c])
 AC_CONFIG_AUX_DIR([build/aux])
 AM_CONFIG_HEADER([config.h])
@@ -46,7 +46,7 @@ AC_SUBST(PDFLATEX)
 AC_SUBST(PDFDOCS)
 
 dnl Version info in libtool's notation
-AC_SUBST([LIBAUGEAS_VERSION_INFO], [7:0:7])
+AC_SUBST([LIBAUGEAS_VERSION_INFO], [7:1:7])
 AC_SUBST([LIBFA_VERSION_INFO], [0:0:0])
 
 AC_GNU_SOURCE

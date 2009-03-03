@@ -1,3 +1,22 @@
+0.4.1 - 2009-03-02
+  - Remove files when their entire subtree under /files is deleted
+  - Various bug fixes and syntax enhancements for path expressions
+    (see tests/xpath.tests for details)
+  - Evaluate path expressions with multiple predicates correctly
+  - Fix incorrect setting of /augeas/events/saved
+  - Major cleanup of matching during get; drastically improves
+    performance for very large (on the order of 10k lines) config files
+  - Small performance improvement in the typechecker
+  - Reject invalid character sets like [x-u] during typecheck
+  - Build with compile warnings set to 'maximum' instead of 'error', so
+    that builds on platforms with broken headers will work out of the box
+  - Lens changes/additions
+    * Util.stdexcl now excludes .augsave and .augnew files
+    * Logrotate: allow 'yearly' schedule, spaces around braces
+    * Ntp: fix so that it processes ntp.conf on Fedora 10
+    * Services: lens for /etc/services (Raphael Pinson)
+    * Xorg: new lens and tests (Raphael Pinson)
+
 0.4.0 - 2009-02-06
   - Much improved and expanded support for path expressions in the public
     API. See doc/xpath.txt and tests/xpath.tests for details.
