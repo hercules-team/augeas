@@ -591,9 +591,9 @@ static void eval_rel(struct state *state, bool greater, bool equal) {
     }
     if (l->tag == T_NUMBER) {
         if (equal)
-            res = (l->number < r->number);
-        else
             res = (l->number <= r->number);
+        else
+            res = (l->number < r->number);
     } else if (l->tag == T_STRING) {
         int cmp = strcmp(l->string, r->string);
         if (equal)
