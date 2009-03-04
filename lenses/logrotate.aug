@@ -21,7 +21,7 @@ module Logrotate =
    
 
    (* define comments and empty lines *)
-   let comment (indent:string) = [ label "comment" . del /[ \t]*/ indent . del /#[ \t]*/ "# " .  store /([^ \t\n][^\n]*)?/ . eol ]
+   let comment (indent:string) = [ label "#comment" . del /[ \t]*/ indent . del /#[ \t]*/ "# " .  store /([^ \t\n][^\n]*)?/ . eol ]
    let empty   = [ del /[ \t]*\n/ "\n" ]
 
 

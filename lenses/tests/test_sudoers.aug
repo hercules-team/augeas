@@ -44,9 +44,9 @@ www-data +biglab=(rpinson)NOEXEC: ICAL \
               { "host" = "192.168.0.0/24" }
               { "host" = "localhost" } } }
       {}
-      { "comment" = "User alias specification" }
+      { "#comment" = "User alias specification" }
       {}
-      { "comment" = "Cmnd alias specification" }
+      { "#comment" = "Cmnd alias specification" }
       {}
       { "Cmnd_Alias"
           { "alias"
@@ -75,7 +75,7 @@ www-data +biglab=(rpinson)NOEXEC: ICAL \
           { "type"      = ":buildd" }
 	  { "parameter" = "env_keep+=\"APT_CONFIG DEBIAN_FRONTEND SHELL\"" } }
       {}
-      { "comment" = "User privilege specification" }
+      { "#comment" = "User privilege specification" }
       { "spec"
           { "user" = "root" }
           { "host_group"
@@ -83,7 +83,7 @@ www-data +biglab=(rpinson)NOEXEC: ICAL \
 	      { "command" = "ALL"
 	          { "runas_user"  = "ALL" } } } }
       {}
-      { "comment" = "Members of the admin group may gain root privileges" }
+      { "#comment" = "Members of the admin group may gain root privileges" }
       { "spec"
           { "user"    = "%admin" }
 	  { "host_group"

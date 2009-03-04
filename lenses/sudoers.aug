@@ -104,7 +104,7 @@ let sto_to_spc = store /[^() \t\n\\\\]+/
 Map comments in "#comment" nodes *)
 let comment =
   let sto_to_eol = store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ in
-  [ label "comment" . del /[ \t]*#[ \t]*/ "# " . sto_to_eol . eol ]
+  [ label "#comment" . del /[ \t]*#[ \t]*/ "# " . sto_to_eol . eol ]
 
 (* View: empty
 Map empty lines *)

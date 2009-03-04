@@ -20,7 +20,7 @@ module BBhosts =
     let url   = store /https?:[^;,# \n\t]+/
 
     (* Define comments and empty lines *)
-    let comment = [ label "comment" . del /#[ \t]*/ "# " .  store /([^ \t\n][^\n]*)?/ . eol_no_spc ]
+    let comment = [ label "#comment" . del /#[ \t]*/ "# " .  store /([^ \t\n][^\n]*)?/ . eol_no_spc ]
     let empty   = [ del /[ \t]*\n/ "\n" ]
 
 

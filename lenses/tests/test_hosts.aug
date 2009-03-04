@@ -16,7 +16,7 @@ module Test_hosts =
           { "canonical" = "foo" }
           { "alias" = "foo.example.com" }
     }
-    { "comment" = "comment" }
+    { "#comment" = "comment" }
     { "2" { "ipaddr" = "192.168.0.1" }
           { "canonical" = "pigiron.example.com" }
           { "alias" = "pigiron" }
@@ -55,7 +55,7 @@ module Test_hosts =
   test Hosts.lns get "127.0.0.1 localhost # must always be there \n" =
     { "1" { "ipaddr" = "127.0.0.1" }
           { "canonical" = "localhost" } 
-          { "comment" = "must always be there" } }
+          { "#comment" = "must always be there" } }
 
 (* Local Variables: *)
 (* mode: caml *)

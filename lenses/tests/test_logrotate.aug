@@ -61,25 +61,25 @@ include /etc/logrotate.d
 "
 
    test Logrotate.lns get conf = 
-      { "comment" = "see man logrotate for details" }
-      { "comment" = "rotate log files weekly" }
+      { "#comment" = "see man logrotate for details" }
+      { "#comment" = "rotate log files weekly" }
       { "schedule" = "weekly" }
       {}
-      { "comment" = "keep 4 weeks worth of backlogs" }
+      { "#comment" = "keep 4 weeks worth of backlogs" }
       { "rotate"   = "4" }
       {}
-      { "comment" = "create new (empty) log files after rotating old ones" }
+      { "#comment" = "create new (empty) log files after rotating old ones" }
       { "create" }
       {}
-      { "comment" = "uncomment this if you want your log files compressed" }
-      { "comment" = "compress" }
+      { "#comment" = "uncomment this if you want your log files compressed" }
+      { "#comment" = "compress" }
       {}
       { "tabooext" = "+"  { ".old" } { ".orig" } { ".ignore" } }
       {}
-      { "comment" = "packages drop log rotation information into this directory" }
+      { "#comment" = "packages drop log rotation information into this directory" }
       { "include" = "/etc/logrotate.d" }
       {}
-      { "comment" = "no packages own wtmp, or btmp -- we'll rotate them here" }
+      { "#comment" = "no packages own wtmp, or btmp -- we'll rotate them here" }
       { "rule"
            { "file"      = "/var/log/wtmp" }
            { "missingok" = "missingok" }
@@ -94,7 +94,7 @@ include /etc/logrotate.d
            { "file"      = "/var/log/btmp" }
 	   { "file"      = "/var/log/btmp*" }
            { "missingok" = "missingok" }
-	   { "comment"   = "ftpd doesn't handle SIGHUP properly" }
+	   { "#comment"   = "ftpd doesn't handle SIGHUP properly" }
            { "schedule"  = "monthly" }
            { "create"
                 { "mode"  = "0664" }
@@ -103,7 +103,7 @@ include /etc/logrotate.d
            { "rotate" = "1" } }
       { "rule"
            { "file"      = "/var/log/vsftpd.log" }
-           { "comment"   = "ftpd doesn't handle SIGHUP properly" }
+           { "#comment"   = "ftpd doesn't handle SIGHUP properly" }
            { "compress"  = "nocompress" }
            { "missingok" = "missingok" }
            { "ifempty"   = "notifempty" }

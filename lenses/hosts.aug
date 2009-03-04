@@ -9,7 +9,7 @@ module Hosts =
   let eol = del /[ \t]*\n/ "\n"
   let indent = del /[ \t]*/ ""
 
-  let comment = [ indent . label "comment" . del /#[ \t]*/ "# " . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ . eol ]
+  let comment = Util.comment
   let empty   = [ del /[ \t]*#?[ \t]*\n/ "\n" ]
 
   let word = /[^# \n\t]+/
@@ -22,9 +22,3 @@ module Hosts =
   let lns = ( empty | comment | record ) *
 
   let xfm = transform lns (incl "/etc/hosts")
-
-(* Local Variables: *)
-(* mode: caml *)
-(* End: *)
-
-

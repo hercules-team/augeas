@@ -26,7 +26,7 @@ group-compress My test
 
    test BBhosts.lns get conf = 
       {}
-      { "comment" = "A comment" }
+      { "#comment" = "A comment" }
       {}
       { "page" = "firstpage"
          { "title"          = "My first page" }
@@ -66,13 +66,13 @@ group-compress My test
 		   { "ssh" = "!" }
 		   { "dns" = ""
 		      { "url" = "mydnstocheck" } } } }
-	     { "comment" = "a comment in a group" }
+	     { "#comment" = "a comment in a group" }
 	     {}
 	     {} } }
        { "page" = "anotherpage"
           { "title" = "A new page" }
 	  {}
-	  { "comment" = "a comment in a page" }
+	  { "#comment" = "a comment in a page" }
 	  {}
 	  { "group-compress" = "My test"
 	     { "host"
