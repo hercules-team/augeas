@@ -73,7 +73,8 @@ module Sshd =
    let key_re = /[A-Za-z0-9]+/ 
          - /MACs|Match|AcceptEnv|Subsystem|(Allow|Deny)(Groups|Users)/
 
-   let comment = [ del /(#.*|[ \t]*)\n/ "\n" ]
+   let comment = Util.comment
+   let empty = Util.empty
 
    let array_entry (k:string) =
      let value = store /[^ \t\n]+/ in
@@ -113,14 +114,14 @@ module Sshd =
      [ label "Condition" . condition_entry+ . eol ]
 
    let match_entry = 
-     ( comment | (Util.indent . other_entry) )
+     ( comment | empty | (Util.indent . other_entry) )
 
    let match =
      [ key "Match" . match_cond
         . [ label "Settings" .  match_entry+ ]
      ]
 
-  let lns = (comment | accept_env | allow_groups | allow_users
+  let lns = (comment | empty | accept_env | allow_groups | allow_users
           | deny_groups | subsystem | deny_users | macs 
           | other_entry ) * . match*
 
