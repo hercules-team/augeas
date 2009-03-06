@@ -634,6 +634,13 @@ static struct tree *tree_child(struct tree *tree, const char *label) {
 
 static int unlink_removed_files(struct augeas *aug,
                                 struct tree *files, struct tree *meta) {
+    /* Find all nodes that correspond to a file and might have to be
+     * unlinked. A node corresponds to a file if it has a child labelled
+     * 'path', and we only consider it if there are no errors associated
+     * with it */
+    static const char *const file_nodes =
+        "descendant-or-self::*[path][count(error) = 0]";
+
     int result = 0;
 
     if (! files->dirty)
@@ -645,7 +652,7 @@ static int unlink_removed_files(struct augeas *aug,
         if (tf == NULL) {
             /* Unlink all files in tm */
             struct pathx *px = NULL;
-            if (pathx_parse(tm, "descendant-or-self::*[path]", &px)
+            if (pathx_parse(tm, file_nodes, &px)
                 != PATHX_NOERROR) {
                 result = -1;
                 continue;

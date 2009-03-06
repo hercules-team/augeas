@@ -12,7 +12,7 @@ valgrind: fatest
 check_SCRIPTS=test-lenses.sh test-interpreter.sh test-get.sh \
               test-put-symlink.sh test-save-empty.sh test-mv.sh \
               test-bug-1.sh test-idempotent.sh test-preserve.sh \
-	      test-events-saved.sh test-save-mode.sh
+	      test-events-saved.sh test-save-mode.sh test-unlink-error.sh
 
 EXTRA_DIST=augtest $(AUGTESTS) root \
 	   $(check_SCRIPTS) $(wildcard modules/*.aug) xpath.tests
