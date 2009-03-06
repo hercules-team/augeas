@@ -59,6 +59,18 @@ Banner /etc/welcome.txt
 	                { "Host"  = "white.house.*" } }
 	  { "Settings"  { "Banner" = "/etc/welcome.txt" } } }
 
+  test Sshd.lns put match_blocks after
+    insb "Subsystem" "/Match[1]";
+    set "/Subsystem/sftp" "/usr/libexec/openssh/sftp-server"
+  = "X11Forwarding yes
+Subsystem sftp /usr/libexec/openssh/sftp-server
+Match User sarko Group pres.*
+  Banner /etc/bienvenue.txt
+  X11Forwarding no
+Match User bush Group pres.* Host white.house.*
+Banner /etc/welcome.txt\n"
+
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
