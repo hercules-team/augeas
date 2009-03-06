@@ -2,7 +2,7 @@
 
 aug_mv() {
 opts='--nostdinc -r /dev/null'
-(augtool $opts | grep -v '/augeas\|augtool' | tr '\n' ' ') <<EOF
+(augtool $opts | grep -v '/augeas\|/files\|augtool' | tr '\n' ' ') <<EOF
 set /a/b/c value
 mv $1 $2
 print

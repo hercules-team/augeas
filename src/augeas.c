@@ -191,6 +191,8 @@ struct augeas *aug_init(const char *root, const char *loadpath,
     } else {
         aug_set(result, AUGEAS_META_SAVE_MODE, AUG_SAVE_OVERWRITE_TEXT);
     }
+    /* Make sure we always have /files */
+    aug_set(result, AUGEAS_FILES_TREE, NULL);
 
     if (interpreter_init(result) == -1)
         goto error;
