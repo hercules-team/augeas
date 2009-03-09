@@ -254,6 +254,11 @@ char *format_pos(const char *text, int pos);
  */
 char* read_file(const char *path);
 
+/* Get the error message for ERRNUM in a threadsafe way. Based on libvirt's
+ * virStrError
+ */
+const char *xstrerror(int errnum, char *buf, size_t len);
+
 /* Define: AUG_NO_DEFAULT_LOAD
  * A hidden flag used by augparse to suppress loading of all the modules
  * on the path */

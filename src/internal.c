@@ -361,6 +361,22 @@ char *path_of_tree(struct tree *tree) {
     return path;
 }
 
+const char *xstrerror(int errnum, char *buf, size_t len) {
+#ifdef HAVE_STRERROR_R
+# ifdef __USE_GNU
+    /* Annoying linux specific API contract */
+    return strerror_r(errnum, buf, len);
+# else
+    strerror_r(errnum, buf, len);
+    return buf;
+# endif
+#else
+    int n = snprintf(buf, len, "errno=%d", errnum);
+    return (0 < n && n < len
+            ? buf : "internal error: buffer too small in xstrerror");
+#endif
+}
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil
