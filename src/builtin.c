@@ -23,6 +23,8 @@
 #include <config.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <errno.h>
+#include <stdlib.h>
 
 #include "syntax.h"
 #include "memory.h"
@@ -355,6 +357,32 @@ static struct value *xform_transform(struct info *info, struct value *l,
     return v;
 }
 
+static struct value *sys_getenv(struct info *info, struct value *n) {
+    assert(n->tag == V_STRING);
+    struct value *v = make_value(V_STRING, ref(info));
+    v->string = dup_string(getenv(n->string->str));
+    return v;
+}
+
+static struct value *sys_read_file(struct info *info, struct value *n) {
+    assert(n->tag == V_STRING);
+    char *str = NULL;
+
+    str = read_file(n->string->str);
+    if (str == NULL) {
+        char error_buf[1024];
+        const char *errmsg;
+        errmsg = xstrerror(errno, error_buf, sizeof(error_buf));
+        struct value *exn = make_exn_value(ref(info),
+             "reading file %s failed:", n->string->str);
+        exn_printf_line(exn, "%s", errmsg);
+        return exn;
+    }
+    struct value *v = make_value(V_STRING, ref(info));
+    v->string = make_string(str);
+    return v;
+}
+
 struct module *builtin_init(void) {
     struct module *modl = module_create("Builtin");
     define_native(modl, "gensym", 1, gensym, T_STRING, T_STRING);
@@ -382,6 +410,11 @@ struct module *builtin_init(void) {
     define_native(modl, "excl", 1, xform_excl, T_STRING, T_FILTER);
     define_native(modl, "transform", 2, xform_transform, T_LENS, T_FILTER,
                                                          T_TRANSFORM);
+    /* System functions */
+    struct module *sys = module_create("Sys");
+    modl->next = sys;
+    define_native(sys, "getenv", 1, sys_getenv, T_STRING, T_STRING);
+    define_native(sys, "read_file", 1, sys_read_file, T_STRING, T_STRING);
     return modl;
 }
 
