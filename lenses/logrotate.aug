@@ -18,7 +18,7 @@ module Logrotate =
    let eol = Util.del_str "\n"
    let num = /[0-9]+/
    let word = /[^,# \n\t{}]+/
-   
+   let size = num . /[kMG]?/
 
    (* define comments and empty lines *)
    let comment (indent:string) = [ label "#comment" . del /[ \t]*/ indent . del /#[ \t]*/ "# " .  store /([^ \t\n][^\n]*)?/ . eol ]
@@ -54,7 +54,7 @@ module Logrotate =
 		| select_to_eol "delaycompress" /(no)?delaycompress/ indent
 		| select_to_eol "ifempty" /(not)?ifempty/ indent
 		| select_to_eol "sharedscripts" /(no)?sharedscripts/ indent
-		| value_to_eol "size" word indent
+		| value_to_eol "size" size indent
 		| tabooext indent
 		| value_to_eol "olddir" word indent
 		| flag_to_eol "noolddir" indent
@@ -72,7 +72,7 @@ module Logrotate =
 		| select_to_eol "copy" /(no)?copy/ indent
 		| select_to_eol "copytruncate" /(no)?copytruncate/ indent
 		| value_to_eol "maxage" num indent
-		| value_to_eol "minsize" num indent
+		| value_to_eol "minsize" size indent
 		| select_to_eol "shred" /(no)?shred/ indent
 		| value_to_eol "shredcycles" num indent
 		| value_to_eol "start" num indent

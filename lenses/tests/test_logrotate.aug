@@ -133,3 +133,8 @@ include /etc/logrotate.d
       { "file" = "/var/log/file" }
       { "dateext" = "dateext" } }
 
+  (* Make sure 'minsize 1M' works *)
+  test Logrotate.lns get "/avr/log/wtmp {\n minsize 1M\n}\n" =
+  { "rule"
+      { "file" = "/avr/log/wtmp" }
+      { "minsize" = "1M" } }
