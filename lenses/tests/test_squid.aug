@@ -42,3 +42,148 @@ test Squid.lns get conf =
    	        { "1" = "localhost" } } } }
   { "http_access"
      { "allow" = "local_network" } }
+
+(* 
+  This tests the Debian lenny default squid.conf
+  Comments were stripped out
+*)
+
+let debian_lenny_default = "acl all src all
+acl manager proto cache_object
+acl localhost src 127.0.0.1/32
+acl to_localhost dst 127.0.0.0/8
+acl purge method PURGE
+acl CONNECT method CONNECT
+http_access allow manager localhost
+http_access deny manager
+http_access allow purge localhost
+http_access deny purge
+http_access deny !Safe_ports
+http_access deny CONNECT !SSL_ports
+http_access allow localhost
+http_access deny all
+icp_access allow localnet
+icp_access deny all
+http_port 3128
+hierarchy_stoplist cgi-bin ?
+access_log /var/log/squid/access.log squid
+refresh_pattern ^ftp:           1440    20%     10080
+refresh_pattern ^gopher:        1440    0%      1440
+refresh_pattern -i (/cgi-bin/|\?) 0     0%      0
+refresh_pattern (Release|Package(.gz)*)$        0       20%     2880
+refresh_pattern .               0       20%     4320
+acl shoutcast rep_header X-HTTP09-First-Line ^ICY\s[0-9]
+upgrade_http0.9 deny shoutcast
+acl apache rep_header Server ^Apache
+broken_vary_encoding allow apache
+extension_methods REPORT MERGE MKACTIVITY CHECKOUT
+hosts_file /etc/hosts
+coredump_dir /var/spool/squid
+"
+
+test Squid.lns get debian_lenny_default = 
+  { "acl"
+    { "all"
+      { "type" = "src" }
+      { "setting" = "all" }
+    }
+  }
+  { "acl"
+    { "manager"
+      { "type" = "proto" }
+      { "setting" = "cache_object" }
+    }
+  }
+  { "acl"
+    { "localhost"
+      { "type" = "src" }
+      { "setting" = "127.0.0.1/32" }
+    }
+  }
+  { "acl"
+    { "to_localhost"
+      { "type" = "dst" }
+      { "setting" = "127.0.0.0/8" }
+    }
+  }
+  { "acl"
+    { "purge"
+      { "type" = "method" }
+      { "setting" = "PURGE" }
+    }
+  }
+  { "acl"
+    { "CONNECT"
+      { "type" = "method" }
+      { "setting" = "CONNECT" }
+    }
+  }
+  { "http_access"
+    { "allow" = "manager"
+      { "parameters"
+        { "1" = "localhost" }
+      }
+    }
+  }
+  { "http_access"
+    { "deny" = "manager" }
+  }
+  { "http_access"
+    { "allow" = "purge"
+      { "parameters"
+        { "1" = "localhost" }
+      }
+    }
+  }
+  { "http_access"
+    { "deny" = "purge" }
+  }
+  { "http_access"
+    { "deny" = "!Safe_ports" }
+  }
+  { "http_access"
+    { "deny" = "CONNECT"
+      { "parameters"
+        { "1" = "!SSL_ports" }
+      }
+    }
+  }
+  { "http_access"
+    { "allow" = "localhost" }
+  }
+  { "http_access"
+    { "deny" = "all" }
+  }
+  { "icp_access" = "allow localnet" }
+  { "icp_access" = "deny all" }
+  { "http_port" = "3128" }
+  { "hierarchy_stoplist" = "cgi-bin ?" }
+  { "access_log" = "/var/log/squid/access.log squid" }
+  { "refresh_pattern" = "^ftp:           1440    20%     10080" }
+  { "refresh_pattern" = "^gopher:        1440    0%      1440" }
+  { "refresh_pattern" = "-i (/cgi-bin/|\?) 0     0%      0" }
+  { "refresh_pattern" = "(Release|Package(.gz)*)$        0       20%     2880" }
+  { "refresh_pattern" = ".               0       20%     4320" }
+  { "acl"
+    { "shoutcast"
+      { "type" = "rep_header" }
+      { "setting" = "X-HTTP09-First-Line" }
+      { "parameters"
+        { "1" = "^ICY\s[0-9]" }
+      }
+    }
+  }
+  { "upgrade_http0.9" = "deny shoutcast" }
+  { "acl"
+    { "apache"
+      { "type" = "rep_header" }
+      { "setting" = "Server" }
+      { "parameters"
+        { "1" = "^Apache" }
+      }
+    }
+  }
+  { "broken_vary_encoding" = "allow apache" }
+  { "extension_methods" = "REPORT MERGE MKACTIVITY CHECKOUT" }
+  { "hosts_file" = "/etc/hosts" }
+  { "coredump_dir" = "/var/spool/squid" }
