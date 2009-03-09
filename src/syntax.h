@@ -320,6 +320,9 @@ struct term *make_app_term(struct term *func, struct term *arg,
                            struct info *info);
 struct term *make_app_ident(char *id, struct term *func, struct info *info);
 
+/* Duplicate a string; if STR is NULL, use the empty string "" */
+struct string *dup_string(const char *str);
+
 /* Make an EXN value
  * Receive ownership of INFO
  *

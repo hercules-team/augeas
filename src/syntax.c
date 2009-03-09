@@ -359,6 +359,18 @@ struct string *make_string(char *str) {
     return string;
 }
 
+struct string *dup_string(const char *str) {
+    struct string *string;
+    make_ref(string);
+    if (str == NULL)
+        string->str = strdup("");
+    else
+        string->str = strdup(str);
+    if (string->str == NULL)
+        unref(string, string);
+    return string;
+}
+
 struct term *make_app_term(struct term *lambda, struct term *arg,
                            struct info *info) {
   struct term *app = make_term(A_APP, info);
