@@ -80,6 +80,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/pkgconfig/augeas.pc
 
 %changelog
+* Mon Mar  9 2009 David Lutterkort <lutter@redhat.com> - 0.4.2-1
+- New version
+
 * Fri Feb 27 2009 David Lutterkort <lutter@redhat.com> - 0.4.1-1
 - New version
 

@@ -1,3 +1,18 @@
+0.4.2 - 2009-03-09
+  - Do not delete files that had an error upon parsing
+  - For Fedora/EPEL RPM's, BuildRequire libselinux-devel (bug #26)
+  - Bug fixes in path expressions
+    * for numbers, the meaning of '<' and '<=' was reversed
+  - Always create an entry /files in aug_init
+  - New builtin 'Sys' module with functions 'getenv' and 'read_file',
+    the latter reads a the contents of a file into a string
+  - Lens changes/additions
+    * Postfix_main: handle continuation lines
+    * Bbhosts, Hosts, Logrotate, Sudoers: label comment nodes as '#comment'
+    * Sshd: map comments as '#comment' nodes
+    * Squid: add all keywords from squid 2.7 and 3 (Francois Deppierraz)
+    * Logrotate: process unit suffixes for 'size' and 'minsize'
+
 0.4.1 - 2009-03-02
   - Remove files when their entire subtree under /files is deleted
   - Various bug fixes and syntax enhancements for path expressions
