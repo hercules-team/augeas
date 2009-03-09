@@ -75,16 +75,10 @@ test last-minus-one /files/etc/hosts/*[ipaddr = "127.0.0.1"]/alias[ last() - 1 ]
 test transparent-multi-node /files/etc/ssh/sshd_config/AcceptEnv/10
      /files/etc/ssh/sshd_config/AcceptEnv[2]/10 = LC_ADDRESS
 
-test abbrev-descendants /files/etc//1
-     /files/etc/apt/sources.list/1
-     /files/etc/ssh/sshd_config/AcceptEnv[1]/1 = LANG
-     /files/etc/aliases/1
-     /files/etc/fstab/1
+test abbrev-descendants /files/etc/pam.d//1
      /files/etc/pam.d/login/1
      /files/etc/pam.d/postgresql/1
      /files/etc/pam.d/newrole/1
-     /files/etc/hosts/1
-     /files/etc/inittab/1
 
 test descendant-or-self /files/descendant-or-self :: 4
      /files/etc/ssh/sshd_config/AcceptEnv[1]/4 = LC_TIME
