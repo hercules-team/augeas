@@ -5,7 +5,7 @@ Module: Util
 Author: David Lutterkort
 
 About: License
-  This file is licensed under the GPL.
+  This file is licensed under the LGPLv2+, like the rest of Augeas.
 *)
 
 
