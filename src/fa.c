@@ -2846,6 +2846,7 @@ static char *re_cset_as_string(const struct re *re) {
 
     static const char *const empty_set = "[]";
     static const char *const total_set = "(.|\n)";
+    static const char *const not_newline = ".";
 
     char *result = NULL, *s;
     int from, to, negate;
@@ -2867,6 +2868,15 @@ static char *re_cset_as_string(const struct re *re) {
         if (from > UCHAR_MAX) {
             /* Special case: the set matches every character */
             return strdup(total_set);
+        }
+        if (from == '\n') {
+            for (from += 1;
+                 from <= UCHAR_MAX && bitset_get(re->cset, from);
+                 from += 1);
+            if (from > UCHAR_MAX) {
+                /* Special case: the set matches everything but '\n' */
+                return strdup(not_newline);
+            }
         }
     }
 
