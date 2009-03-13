@@ -47,7 +47,7 @@ static const char *const tags[] = {
  * return an exception.
  */
 static struct value *str_to_fa(struct info *info, const char *pattern,
-                               fa_t *fa) {
+                               struct fa **fa) {
     int error;
     struct value *exn = NULL;
     size_t re_err_len;
@@ -75,7 +75,7 @@ static struct value *str_to_fa(struct info *info, const char *pattern,
     return exn;
 }
 
-static struct value *regexp_to_fa(struct regexp *regexp, fa_t *fa) {
+static struct value *regexp_to_fa(struct regexp *regexp, struct fa **fa) {
     return str_to_fa(regexp->info, regexp->pattern->str, fa);
 }
 
@@ -281,9 +281,9 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
                             struct regexp *regexp, struct string *string) {
     struct lens *lens = NULL;
     struct value *exn = NULL;
-    fa_t fa_slash = NULL;
-    fa_t fa_key = NULL;
-    fa_t fa_isect = NULL;
+    struct fa *fa_slash = NULL;
+    struct fa *fa_key = NULL;
+    struct fa *fa_isect = NULL;
 
     /* Typecheck */
     if (tag == L_KEY) {
@@ -357,9 +357,9 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
  */
 static struct value *disjoint_check(struct info *info, const char *msg,
                                     struct regexp *r1, struct regexp *r2) {
-    fa_t fa1 = NULL;
-    fa_t fa2 = NULL;
-    fa_t fa = NULL;
+    struct fa *fa1 = NULL;
+    struct fa *fa2 = NULL;
+    struct fa *fa = NULL;
     struct value *exn = NULL;
 
     exn = regexp_to_fa(r1, &fa1);
@@ -408,7 +408,7 @@ static struct value *typecheck_union(struct info *info,
     return exn;
 }
 
-static struct value *ambig_check(struct info *info, fa_t fa1, fa_t fa2,
+static struct value *ambig_check(struct info *info, struct fa *fa1, struct fa *fa2,
                                  const char *msg) {
     char *upv, *pv, *v;
     upv = fa_ambig_example(fa1, fa2, &pv, &v);
@@ -437,8 +437,8 @@ static struct value *ambig_check(struct info *info, fa_t fa1, fa_t fa2,
 
 static struct value *ambig_concat_check(struct info *info, const char *msg,
                                         struct regexp *r1, struct regexp *r2) {
-    fa_t fa1 = NULL;
-    fa_t fa2 = NULL;
+    struct fa *fa1 = NULL;
+    struct fa *fa2 = NULL;
     struct value *result = NULL;
 
     result = regexp_to_fa(r1, &fa1);
@@ -479,7 +479,7 @@ static struct value *typecheck_concat(struct info *info,
 
 static struct value *ambig_iter_check(struct info *info, const char *msg,
                                       struct regexp *r) {
-    fa_t fas = NULL, fa = NULL;
+    struct fa *fas = NULL, *fa = NULL;
     struct value *result = NULL;
 
     result = regexp_to_fa(r, &fa);

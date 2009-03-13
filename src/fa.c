@@ -1968,7 +1968,7 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
     goto done;
 }
 
-int fa_contains(fa_t fa1, fa_t fa2) {
+int fa_contains(struct fa *fa1, struct fa *fa2) {
     int result = 0;
     struct state_set *worklist;  /* List of pairs of states */
     struct state_set *visited;   /* List of pairs of states */
@@ -2131,7 +2131,7 @@ struct fa *fa_overlap(struct fa *fa1, struct fa *fa2) {
     return result;
 }
 
-int fa_equals(fa_t fa1, fa_t fa2) {
+int fa_equals(struct fa *fa1, struct fa *fa2) {
     return fa_contains(fa1, fa2) && fa_contains(fa2, fa1);
 }
 
@@ -2187,7 +2187,7 @@ static char pick_char(struct trans *t) {
 /* Generate an example string for FA. Traverse all transitions and record
  * at each turn the "best" word found for that state.
  */
-char *fa_example(fa_t fa) {
+char *fa_example(struct fa *fa) {
     /* Sort to avoid any ambiguity because of reordering of transitions */
     sort_transition_intervals(fa);
 
@@ -2286,14 +2286,14 @@ static struct fa *expand_alphabet(struct fa *fa, int add_marker,
 /* This algorithm is due to Anders Moeller, and can be found in class
  * AutomatonOperations in dk.brics.grammar
  */
-char *fa_ambig_example(fa_t fa1, fa_t fa2, char **pv, char **v) {
+char *fa_ambig_example(struct fa *fa1, struct fa *fa2, char **pv, char **v) {
     static const char X = '\001';
     static const char Y = '\002';
 
 #define Xs "\001"
 #define Ys "\002"
     /* These could become static constants */
-    fa_t mp, ms, sp, ss;
+    struct fa *mp, *ms, *sp, *ss;
     fa_compile( Ys Xs "(" Xs "(.|\n))+", &mp);
     fa_compile( Ys Xs "(" Xs "(.|\n))*", &ms);
     fa_compile( "(" Xs "(.|\n))+" Ys Xs, &sp);
@@ -2301,24 +2301,24 @@ char *fa_ambig_example(fa_t fa1, fa_t fa2, char **pv, char **v) {
 #undef Xs
 #undef Ys
 
-    fa_t a1f = expand_alphabet(fa1, 0, X, Y);
-    fa_t a1t = expand_alphabet(fa1, 1, X, Y);
-    fa_t a2f = expand_alphabet(fa2, 0, X, Y);
-    fa_t a2t = expand_alphabet(fa2, 1, X, Y);
+    struct fa *a1f = expand_alphabet(fa1, 0, X, Y);
+    struct fa *a1t = expand_alphabet(fa1, 1, X, Y);
+    struct fa *a2f = expand_alphabet(fa2, 0, X, Y);
+    struct fa *a2t = expand_alphabet(fa2, 1, X, Y);
 
     /* Compute b1 = ((a1f . mp) & a1t) . ms */
     concat_in_place(a1f, mp);
-    fa_t b1 = fa_intersect(a1f, a1t);
+    struct fa *b1 = fa_intersect(a1f, a1t);
     concat_in_place(b1, ms);
 
     /* Compute b2 = ss . ((sp . a2f) & a2t) */
     concat_in_place(sp, a2f);
-    fa_t b2 = fa_intersect(sp, a2t);
+    struct fa *b2 = fa_intersect(sp, a2t);
     concat_in_place(ss, b2);
     b2 = ss;
 
     /* The automaton we are really interested in */
-    fa_t amb = fa_intersect(b1, b2);
+    struct fa *amb = fa_intersect(b1, b2);
 
     /* Clean up intermediate automata */
     fa_free(sp);

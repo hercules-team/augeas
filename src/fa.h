@@ -27,7 +27,7 @@
 #include <regex.h>
 
 /* The type for a finite automaton. */
-typedef struct fa *fa_t;
+struct fa;
 
 /* Denote some basic automata, used by fa_is_basic and fa_make_basic */
 enum fa_basic {
@@ -68,48 +68,48 @@ extern int fa_minimization_algorithm;
  * RE, and the function returns REG_NOERROR. Otherwise, FA is NULL, and the
  * return value indicates the error.
  */
-int fa_compile(const char *re, fa_t *fa);
+int fa_compile(const char *re, struct fa **fa);
 
 /* Make a new automaton that accepts one of the basic languages defined in
  * the enum FA_BASIC.
  */
-fa_t fa_make_basic(unsigned int basic);
+struct fa *fa_make_basic(unsigned int basic);
 
 /* Return 1 if FA accepts the basic language BASIC, which must be one of
  * the constantsfrom enum FA_BASIC.
  */
-int fa_is_basic(fa_t fa, unsigned int basic);
+int fa_is_basic(struct fa *fa, unsigned int basic);
 
 /* Minimize FA using Brzozowski's algorithm. As a side-effect, the
  * automaton will also be deterministic after being minimized. Modifies the
  * automaton in place.
  */
-void fa_minimize(fa_t fa);
+void fa_minimize(struct fa *fa);
 
 /* Return a finite automaton that accepts the concatenation of the
  * languages for FA1 and FA2, i.e. L(FA1).L(FA2)
  */
-fa_t fa_concat(fa_t fa1, fa_t fa2);
+struct fa *fa_concat(struct fa *fa1, struct fa *fa2);
 
 /* Return a finite automaton that accepts the union of the languages that
  * FA1 and FA2 accept (the '|' operator in regular expressions).
  */
-fa_t fa_union(fa_t fa1, fa_t fa2);
+struct fa *fa_union(struct fa *fa1, struct fa *fa2);
 
 /* Return a finite automaton that accepts the intersection of the languages
  * of FA1 and FA2.
  */
-fa_t fa_intersect(fa_t fa1, fa_t fa2);
+struct fa *fa_intersect(struct fa *fa1, struct fa *fa2);
 
 /* Return a finite automaton that accepts the complement of the language of
  * FA, i.e. the set of all words not accepted by FA
  */
-fa_t fa_complement(fa_t fa);
+struct fa *fa_complement(struct fa *fa);
 
 /* Return a finite automaton that accepts the set difference of the
  * languages of FA1 and FA2, i.e. L(FA1)\L(FA2)
  */
-fa_t fa_minus(fa_t fa1, fa_t fa2);
+struct fa *fa_minus(struct fa *fa1, struct fa *fa2);
 
 /* Return a finite automaton that accepts a repetition of the language that
  * FA accepts. If MAX == -1, the returned automaton accepts arbitrarily
@@ -126,35 +126,35 @@ fa_t fa_minus(fa_t fa1, fa_t fa2);
  * - FA? = FA_ITER(FA, 0, 1)
  * - FA{n,m} = FA_ITER(FA, n, m) with 0 <= n and m = -1 or n <= m
  */
-fa_t fa_iter(fa_t fa, int min, int max);
+struct fa *fa_iter(struct fa *fa, int min, int max);
 
 /* Return 1 if the language of FA1 is contained in the language of FA2, 0
  * otherwise.
  */
-int fa_contains(fa_t fa1, fa_t fa2);
+int fa_contains(struct fa *fa1, struct fa *fa2);
 
 /* Return 1 if the language of FA1 equals the language of FA2 */
-int fa_equals(fa_t fa1, fa_t fa2);
+int fa_equals(struct fa *fa1, struct fa *fa2);
 
 /* Free all memory used by FA */
-void fa_free(fa_t fa);
+void fa_free(struct fa *fa);
 
 /* Print FA to OUT as a graphviz dot file */
-void fa_dot(FILE *out, fa_t fa);
+void fa_dot(FILE *out, struct fa *fa);
 
 /* Return a finite automaton that accepts the overlap of the languages of
  * FA1 and FA2. The overlap of two languages is the set of strings that can
  * be split in more than one way into a left part accepted by FA1 and a
  * right part accepted by FA2.
  */
-fa_t fa_overlap(fa_t fa1, fa_t fa2);
+struct fa *fa_overlap(struct fa *fa1, struct fa *fa2);
 
 /* Produce an example for the language of FA. The example is not
  * necessarily the shortest possible. The implementation works very hard to
  * have printable characters (preferrably alphanumeric) in the example, and
  * to avoid just an empty word.
  */
-char *fa_example(fa_t fa);
+char *fa_example(struct fa *fa);
 
 /* Produce an example of an ambiguous word for the concatenation of the
  * languages of FA1 and FA2. The return value is such a word (which must be
@@ -168,7 +168,7 @@ char *fa_example(fa_t fa);
  * characters '\001' and '\002', as they are used during construction of
  * the ambiguous word.
  */
-char *fa_ambig_example(fa_t fa1, fa_t fa2, char **pv, char **v);
+char *fa_ambig_example(struct fa *fa1, struct fa *fa2, char **pv, char **v);
 
 /* Convert the finite automaton FA into a regular expression and set REGEXP
  * to point to that. When REGEXP is compiled into another automaton, it is
@@ -181,7 +181,7 @@ char *fa_ambig_example(fa_t fa1, fa_t fa2, char **pv, char **v);
  * Return 0 on success, and a negative number on failure. The only reason
  * to fail for FA_AS_REGEXP is running out of memory.
  */
-int fa_as_regexp(fa_t fa, char **regexp);
+int fa_as_regexp(struct fa *fa, char **regexp);
 #endif
 
 

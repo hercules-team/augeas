@@ -32,7 +32,7 @@
 
 struct fa_list {
     struct fa_list *next;
-    fa_t fa;
+    struct fa *fa;
 };
 
 static struct fa_list *fa_list;
@@ -58,7 +58,7 @@ static void teardown(ATTRIBUTE_UNUSED CuTest *tc) {
     list_free(fa_list);
 }
 
-static fa_t mark(fa_t fa) {
+static struct fa *mark(struct fa *fa) {
     struct fa_list *fl;
 
     if (fa != NULL) {
@@ -69,10 +69,10 @@ static fa_t mark(fa_t fa) {
     return fa;
 }
 
-static void assertAsRegexp(CuTest *tc, fa_t fa) {
+static void assertAsRegexp(CuTest *tc, struct fa *fa) {
     char *re;
-    fa_t fa1, fa2;
-    fa_t empty = mark(fa_make_basic(FA_EPSILON));
+    struct fa *fa1, *fa2;
+    struct fa *empty = mark(fa_make_basic(FA_EPSILON));
     int r;
 
     /* Jump through some hoops to make FA1 a copy of FA */
@@ -93,8 +93,8 @@ static void assertAsRegexp(CuTest *tc, fa_t fa) {
     free(re);
 }
 
-static fa_t make_fa(CuTest *tc, const char *regexp, int exp_err) {
-    fa_t fa;
+static struct fa *make_fa(CuTest *tc, const char *regexp, int exp_err) {
+    struct fa *fa;
     int r;
 
     r = fa_compile(regexp, &fa);
@@ -112,7 +112,7 @@ static fa_t make_fa(CuTest *tc, const char *regexp, int exp_err) {
     return fa;
 }
 
-static fa_t make_good_fa(CuTest *tc, const char *regexp) {
+static struct fa *make_good_fa(CuTest *tc, const char *regexp) {
     return make_fa(tc, regexp, REG_NOERROR);
 }
 
@@ -161,7 +161,7 @@ static void testMonster(CuTest *tc) {
 #undef CWS
 #undef WORD
 
-    fa_t fa, fas;
+    struct fa *fa, *fas;
     char *upv, *pv, *v;
 
     fa = make_good_fa(tc, monster);
@@ -194,7 +194,7 @@ static void testMonster(CuTest *tc) {
 }
 
 static void testChars(CuTest *tc) {
-    fa_t fa1, fa2, fa3;
+    struct fa *fa1, *fa2, *fa3;
 
     fa1 = make_good_fa(tc, ".");
     fa2 = make_good_fa(tc, "[a-z]");
@@ -222,30 +222,30 @@ static void testManualAmbig(CuTest *tc) {
 
        This uses X and Y as the markers*/
 
-    fa_t a1f = make_good_fa(tc, "Xa|XaXb");
-    fa_t a1t = make_good_fa(tc, "(YX)*Xa|(YX)*Xa(YX)*Xb");
-    fa_t a2f = make_good_fa(tc, "Xa|XbXa");
-    fa_t a2t = make_good_fa(tc, "(YX)*Xa|((YX)*Xb(YX)*Xa)");
-    fa_t mp = make_good_fa(tc, "YX(X(.|\n))+");
-    fa_t ms = make_good_fa(tc, "YX(X(.|\n))*");
-    fa_t sp = make_good_fa(tc, "(X(.|\n))+YX");
-    fa_t ss = make_good_fa(tc, "(X(.|\n))*YX");
+    struct fa *a1f = make_good_fa(tc, "Xa|XaXb");
+    struct fa *a1t = make_good_fa(tc, "(YX)*Xa|(YX)*Xa(YX)*Xb");
+    struct fa *a2f = make_good_fa(tc, "Xa|XbXa");
+    struct fa *a2t = make_good_fa(tc, "(YX)*Xa|((YX)*Xb(YX)*Xa)");
+    struct fa *mp = make_good_fa(tc, "YX(X(.|\n))+");
+    struct fa *ms = make_good_fa(tc, "YX(X(.|\n))*");
+    struct fa *sp = make_good_fa(tc, "(X(.|\n))+YX");
+    struct fa *ss = make_good_fa(tc, "(X(.|\n))*YX");
 
-    fa_t a1f_mp = mark(fa_concat(a1f, mp));
-    fa_t a1f_mp$a1t = mark(fa_intersect(a1f_mp, a1t));
-    fa_t b1 = mark(fa_concat(a1f_mp$a1t, ms));
+    struct fa *a1f_mp = mark(fa_concat(a1f, mp));
+    struct fa *a1f_mp$a1t = mark(fa_intersect(a1f_mp, a1t));
+    struct fa *b1 = mark(fa_concat(a1f_mp$a1t, ms));
 
-    fa_t sp_a2f = mark(fa_concat(sp, a2f));
-    fa_t sp_a2f$a2t = mark(fa_intersect(sp_a2f, a2t));
-    fa_t b2 = mark(fa_concat(ss, sp_a2f$a2t));
+    struct fa *sp_a2f = mark(fa_concat(sp, a2f));
+    struct fa *sp_a2f$a2t = mark(fa_intersect(sp_a2f, a2t));
+    struct fa *b2 = mark(fa_concat(ss, sp_a2f$a2t));
 
-    fa_t amb = mark(fa_intersect(b1, b2));
-    fa_t exp = make_good_fa(tc, "XaYXXbYXXa");
+    struct fa *amb = mark(fa_intersect(b1, b2));
+    struct fa *exp = make_good_fa(tc, "XaYXXbYXXa");
     CuAssertTrue(tc, fa_equals(exp, amb));
 }
 
 static void testContains(CuTest *tc) {
-    fa_t fa1, fa2, fa3;
+    struct fa *fa1, *fa2, *fa3;
 
     fa1 = make_good_fa(tc, "ab*");
     fa2 = make_good_fa(tc, "ab+");
@@ -264,7 +264,7 @@ static void testContains(CuTest *tc) {
 }
 
 static void testIntersect(CuTest *tc) {
-    fa_t fa1, fa2, fa;
+    struct fa *fa1, *fa2, *fa;
 
     fa1 = make_good_fa(tc, "[a-zA-Z]*[.:=]([0-9]|[^A-Z])*");
     fa2 = make_good_fa(tc, "[a-z][:=][0-9a-z]+");
@@ -275,10 +275,10 @@ static void testIntersect(CuTest *tc) {
 }
 
 static void testComplement(CuTest *tc) {
-    fa_t fa1 = make_good_fa(tc, "[b-y]+");
-    fa_t fa2 = mark(fa_complement(fa1));
+    struct fa *fa1 = make_good_fa(tc, "[b-y]+");
+    struct fa *fa2 = mark(fa_complement(fa1));
     /* We use '()' to match the empty word explicitly */
-    fa_t fa3 = make_good_fa(tc, "(()|[b-y]*[^b-y](.|\n)*)");
+    struct fa *fa3 = make_good_fa(tc, "(()|[b-y]*[^b-y](.|\n)*)");
 
     CuAssertTrue(tc, fa_equals(fa2, fa3));
 
@@ -287,10 +287,10 @@ static void testComplement(CuTest *tc) {
 }
 
 static void testOverlap(CuTest *tc) {
-    fa_t fa1 = make_good_fa(tc, "a|ab");
-    fa_t fa2 = make_good_fa(tc, "a|ba");
-    fa_t p   = mark(fa_overlap(fa1, fa2));
-    fa_t exp = make_good_fa(tc, "b");
+    struct fa *fa1 = make_good_fa(tc, "a|ab");
+    struct fa *fa2 = make_good_fa(tc, "a|ba");
+    struct fa *p   = mark(fa_overlap(fa1, fa2));
+    struct fa *exp = make_good_fa(tc, "b");
 
     CuAssertTrue(tc, fa_equals(exp, p));
 
@@ -303,7 +303,7 @@ static void testOverlap(CuTest *tc) {
 }
 
 static void assertExample(CuTest *tc, const char *regexp, const char *exp) {
-    fa_t fa = make_good_fa(tc, regexp);
+    struct fa *fa = make_good_fa(tc, regexp);
     char *xmpl = fa_example(fa);
     CuAssertStrEquals(tc, exp, xmpl);
     free(xmpl);
@@ -327,7 +327,7 @@ static void testExample(CuTest *tc) {
     assertExample(tc, "\001((\002.)*\001)+\002", "\001\001\002");
     assertExample(tc, "\001((\001.)*\002)+\002", "\001\002\002");
 
-    fa_t fa1 = mark(fa_make_basic(FA_EMPTY));
+    struct fa *fa1 = mark(fa_make_basic(FA_EMPTY));
     CuAssertPtrEquals(tc, NULL, fa_example(fa1));
 
     fa1 = mark(fa_make_basic(FA_EPSILON));
@@ -340,8 +340,8 @@ static void assertAmbig(CuTest *tc, const char *regexp1, const char *regexp2,
                         const char *exp_upv,
                         const char *exp_pv, const char *exp_v) {
 
-    fa_t fa1 = make_good_fa(tc, regexp1);
-    fa_t fa2 = make_good_fa(tc, regexp2);
+    struct fa *fa1 = make_good_fa(tc, regexp1);
+    struct fa *fa2 = make_good_fa(tc, regexp2);
     char *pv, *v;
     char *upv = fa_ambig_example(fa1, fa2, &pv, &v);
     CuAssertPtrNotNull(tc, upv);
@@ -356,8 +356,8 @@ static void assertAmbig(CuTest *tc, const char *regexp1, const char *regexp2,
 
 static void assertNotAmbig(CuTest *tc, const char *regexp1,
                            const char *regexp2) {
-    fa_t fa1 = make_good_fa(tc, regexp1);
-    fa_t fa2 = make_good_fa(tc, regexp2);
+    struct fa *fa1 = make_good_fa(tc, regexp1);
+    struct fa *fa2 = make_good_fa(tc, regexp2);
     char *upv = fa_ambig_example(fa1, fa2, NULL, NULL);
     CuAssertPtrEquals(tc, NULL, upv);
 }
@@ -377,8 +377,8 @@ static void testAmbig(CuTest *tc) {
 
 static void assertFaAsRegexp(CuTest *tc, const char *regexp) {
     char *re;
-    fa_t fa1 = make_good_fa(tc, regexp);
-    fa_t fa2;
+    struct fa *fa1 = make_good_fa(tc, regexp);
+    struct fa *fa2;
     int r;
 
     r = fa_as_regexp(fa1, &re);
@@ -403,16 +403,16 @@ static void testAsRegexp(CuTest *tc) {
 }
 
 static void testAsRegexpMinus(CuTest *tc) {
-    fa_t fa1 = make_good_fa(tc, "[A-Za-z]+");
-    fa_t fa2 = make_good_fa(tc, "Deny(Users|Groups|Other)");
-    fa_t fa = mark(fa_minus(fa1, fa2));
+    struct fa *fa1 = make_good_fa(tc, "[A-Za-z]+");
+    struct fa *fa2 = make_good_fa(tc, "Deny(Users|Groups|Other)");
+    struct fa *fa = mark(fa_minus(fa1, fa2));
     char *re;
     int r;
 
     r = fa_as_regexp(fa, &re);
     CuAssertIntEquals(tc, 0, r);
 
-    fa_t far = make_good_fa(tc, re);
+    struct fa *far = make_good_fa(tc, re);
     CuAssertTrue(tc, fa_equals(fa, far));
 
     free(re);
@@ -451,7 +451,7 @@ int main(int argc, char **argv) {
     }
 
     for (int i=1; i<argc; i++) {
-        fa_t fa;
+        struct fa *fa;
         int r;
         if ((r = fa_compile(argv[i], &fa)) != REG_NOERROR) {
             print_regerror(r, argv[i]);

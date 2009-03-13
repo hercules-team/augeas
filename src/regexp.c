@@ -187,7 +187,7 @@ regexp_minus(struct info *info, struct regexp *r1, struct regexp *r2) {
     const char *p1 = r1->pattern->str;
     const char *p2 = r2->pattern->str;
     struct regexp *result = NULL;
-    fa_t fa = NULL, fa1 = NULL, fa2 = NULL;
+    struct fa *fa = NULL, *fa1 = NULL, *fa2 = NULL;
     int r;
     char *s = NULL;
 
