@@ -285,6 +285,12 @@ struct augeas {
  * standalone trees with a fake root, called origin. That root is generally
  * not referenced from anywhere. Standalone trees should be created with
  * MAKE_TREE_ORIGIN.
+ *
+ * The DIRTY flag is used to track which parts of the tree might need to be
+ * saved. For any node that is marked dirty, all of its ancestors must be
+ * marked dirty, too. Instead of setting this flag directly, the function
+ * TREE_MARK_DIRTY in augeas.c should be used (and only functions in that
+ * file should have a need to mark nodes as dirty)
  */
 struct tree {
     struct tree *next;

@@ -44,21 +44,20 @@ static const char *const static_nodes[][2] = {
     { AUGEAS_META_TREE "/version/save/mode[4]", AUG_SAVE_OVERWRITE_TEXT }
 };
 
-/* Propagate dirty flags towards the root */
-static int tree_propagate_dirty(struct tree *tree) {
-    if (tree->dirty)
-        return 1;
-    list_for_each(c, tree->children) {
-        tree->dirty |= tree_propagate_dirty(c);
-    }
-    return tree->dirty;
+static void tree_mark_dirty(struct tree *tree) {
+    do {
+        tree->dirty = 1;
+        tree = tree->parent;
+    } while (tree != tree->parent && !tree->dirty);
 }
 
 /* Clear the dirty flag in the whole TREE */
 static void tree_clean(struct tree *tree) {
+    if (tree->dirty) {
+        list_for_each(c, tree->children)
+            tree_clean(c);
+    }
     tree->dirty = 0;
-    list_for_each(c, tree->children)
-        tree_clean(c);
 }
 
 /* Parse a path expression. Report errors in /augeas/pathx/error */
@@ -203,9 +202,8 @@ struct augeas *aug_init(const char *root, const char *loadpath,
             continue;
         transform_load(result, xform);
     }
-    list_for_each(tree, result->origin->children) {
-        tree_clean(tree);
-    }
+    tree_clean(result->origin);
+
     return result;
 
  error:
@@ -250,7 +248,7 @@ struct tree *tree_set(struct pathx *p, const char *value) {
         if (tree->value == NULL)
             return NULL;
     }
-    tree->dirty = 1;
+    tree_mark_dirty(tree);
     return tree;
 }
 
@@ -319,7 +317,10 @@ struct tree *make_tree(char *label, char *value, struct tree *parent,
     tree->children = children;
     list_for_each(c, tree->children)
         c->parent = tree;
-    tree->dirty = 1;
+    if (parent != NULL)
+        tree_mark_dirty(tree);
+    else
+        tree->dirty = 1;
     return tree;
 }
 
@@ -364,7 +365,7 @@ int tree_unlink(struct tree *tree) {
 
     assert (tree->parent != NULL);
     list_remove(tree, tree->parent->children);
-    tree->parent->dirty = 1;
+    tree_mark_dirty(tree->parent);
     result = free_tree(tree->children) + 1;
     free_tree_node(tree);
     return result;
@@ -435,6 +436,8 @@ int tree_replace(struct tree *origin, const char *path, struct tree *sub) {
     list_for_each(s, sub) {
         s->parent = parent;
     }
+    if (sub->dirty)
+        tree_mark_dirty(parent);
     free_pathx(p);
     return 0;
  error:
@@ -485,7 +488,7 @@ int aug_mv(struct augeas *aug, const char *src, const char *dst) {
     ts->children = NULL;
 
     tree_unlink(ts);
-    td->dirty = 1;
+    tree_mark_dirty(td);
 
     ret = 0;
  done:
@@ -685,9 +688,6 @@ int aug_save(struct augeas *aug) {
 
     aug_rm(aug, AUGEAS_EVENTS_SAVED);
 
-    list_for_each(t, aug->origin->children) {
-        tree_propagate_dirty(t);
-    }
     if (files->dirty) {
         list_for_each(t, files->children) {
             if (tree_save(aug, t, AUGEAS_FILES_TREE) == -1)
@@ -703,7 +703,7 @@ int aug_save(struct augeas *aug) {
         }
     }
     if (!(aug->flags & AUG_SAVE_NOOP)) {
-        tree_clean(aug->origin->children);
+        tree_clean(aug->origin);
     }
     return ret;
 }
