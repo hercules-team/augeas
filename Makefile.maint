@@ -29,6 +29,6 @@ tag-release:
 
 # This is how I run autogen.sh locally
 autogen:
-	./autogen.sh CFLAGS=-g --prefix=/tmp/augeas-inst/ --gnulib-srcdir=${HOME}/code/gnulib/ --enable-compile-warnings=error
+	./autogen.sh CFLAGS=-g --prefix=/data/share/ --gnulib-srcdir=${HOME}/code/gnulib/ --enable-compile-warnings=error
 
 .PHONY: build-rpm
