@@ -55,6 +55,7 @@ Group: Specific Modules  {
 
    File: Dpkg  (dpkg.aug)
    File: Exports  (exports.aug)
+   File: Modprobe  (modprobe.aug)
    File: Services  (services.aug)
    File: Sshd  (sshd.aug)
    File: Sudoers  (sudoers.aug)
