@@ -499,11 +499,19 @@ static int clone_file(const char *from, const char *to,
         *err_status = "clone_read";
         goto done;
     }
-
+    if (fflush(to_fp) != 0) {
+        *err_status = "clone_flush";
+        goto done;
+    }
+    if (fsync(fileno(to_fp)) < 0) {
+        *err_status = "clone_sync";
+        goto done;
+    }
     result = 0;
  done:
     fclose(from_fp);
-    fclose(to_fp);
+    if (fclose(to_fp) != 0)
+        result = -1;
     if (result != 0)
         unlink(to);
     if (result == 0)
@@ -621,15 +629,35 @@ int transform_save(struct augeas *aug, struct transform *xform,
         }
     }
     if (augorig_exists) {
-        if (transfer_file_attrs(augorig_canon, augnew, &err_status) != 0)
+        if (transfer_file_attrs(augorig_canon, augnew, &err_status) != 0) {
+            err_status = "xfer_attrs";
             goto done;
+        }
     }
 
     if (tree != NULL)
         lns_put(fp, xform->lens, tree->children, text, &err);
 
-    if (ferror (fp) || fclose(fp) != 0)
+    if (ferror(fp)) {
+        err_status = "error_augnew";
         goto done;
+    }
+
+    if (fflush(fp) != 0) {
+        err_status = "flush_augnew";
+        goto done;
+    }
+
+    if (fsync(fileno(fp)) < 0) {
+        err_status = "sync_augnew";
+        goto done;
+    }
+
+    if (fclose(fp) != 0) {
+        err_status = "close_augnew";
+        goto done;
+    }
+
     fp = NULL;
 
     if (err != NULL) {

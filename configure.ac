@@ -82,7 +82,7 @@ AC_SUBST(VERSION_SCRIPT_FLAGS)
 
 gl_INIT
 
-AC_CHECK_FUNCS([strerror_r])
+AC_CHECK_FUNCS([strerror_r fsync])
 
 AC_OUTPUT(Makefile \
           gnulib/lib/Makefile \
