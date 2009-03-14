@@ -3211,12 +3211,13 @@ static int re_collapse_trans(struct state *s1, struct state *s2,
  *     the transition INI -> FIN
  * (5) Convert that STRUCT RE to a string with RE_AS_STRING
  */
-int fa_as_regexp(struct fa *fa, char **regexp) {
+int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len) {
     int r;
     struct state *fin = NULL, *ini = NULL;
     struct re *eps = make_re(EPSILON);
 
     *regexp = NULL;
+    *regexp_len = 0;
     fa = fa_clone(fa);
 
     fin = add_state(fa,1);
@@ -3280,6 +3281,8 @@ int fa_as_regexp(struct fa *fa, char **regexp) {
         }
     }
     fa_free(fa);
+    if (*regexp != NULL)
+        *regexp_len = strlen(*regexp);
 
     return 0;
  error:

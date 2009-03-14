@@ -191,10 +191,12 @@ int fa_ambig_example(struct fa *fa1, struct fa *fa2,
  * expression short; to guarantee reasonably short regexps, the automaton
  * should be minimized before passing it to this routine.
  *
+ * On success, REGEXP_LEN is set to the length of REGEXP
+ *
  * Return 0 on success, and a negative number on failure. The only reason
  * to fail for FA_AS_REGEXP is running out of memory.
  */
-int fa_as_regexp(struct fa *fa, char **regexp);
+int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len);
 #endif
 
 

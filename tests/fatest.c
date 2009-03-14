@@ -71,6 +71,7 @@ static struct fa *mark(struct fa *fa) {
 
 static void assertAsRegexp(CuTest *tc, struct fa *fa) {
     char *re;
+    size_t re_len;
     struct fa *fa1, *fa2;
     struct fa *empty = mark(fa_make_basic(FA_EPSILON));
     int r;
@@ -81,7 +82,7 @@ static void assertAsRegexp(CuTest *tc, struct fa *fa) {
     /* monster (~ 2MB) and fa_compile becomes incredibly slow          */
     fa_minimize(fa1);
 
-    r = fa_as_regexp(fa1, &re);
+    r = fa_as_regexp(fa1, &re, &re_len);
     CuAssertIntEquals(tc, 0, r);
 
     r = fa_compile(re, strlen(re), &fa2);
@@ -386,11 +387,12 @@ static void testAmbig(CuTest *tc) {
 
 static void assertFaAsRegexp(CuTest *tc, const char *regexp) {
     char *re;
+    size_t re_len;
     struct fa *fa1 = make_good_fa(tc, regexp);
     struct fa *fa2;
     int r;
 
-    r = fa_as_regexp(fa1, &re);
+    r = fa_as_regexp(fa1, &re, &re_len);
     CuAssertIntEquals(tc, 0, r);
 
     r = fa_compile(re, strlen(re), &fa2);
@@ -416,9 +418,10 @@ static void testAsRegexpMinus(CuTest *tc) {
     struct fa *fa2 = make_good_fa(tc, "Deny(Users|Groups|Other)");
     struct fa *fa = mark(fa_minus(fa1, fa2));
     char *re;
+    size_t re_len;
     int r;
 
-    r = fa_as_regexp(fa, &re);
+    r = fa_as_regexp(fa, &re, &re_len);
     CuAssertIntEquals(tc, 0, r);
 
     struct fa *far = make_good_fa(tc, re);
@@ -472,7 +475,8 @@ int main(int argc, char **argv) {
             printf("Example for %s: %s\n", argv[i], s);
             free(s);
             char *re;
-            r = fa_as_regexp(fa, &re);
+            size_t re_len;
+            r = fa_as_regexp(fa, &re, &re_len);
             if (r == 0) {
                 printf("/%s/ = /%s/\n", argv[i], re);
                 free(re);

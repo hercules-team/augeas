@@ -190,6 +190,7 @@ regexp_minus(struct info *info, struct regexp *r1, struct regexp *r2) {
     struct fa *fa = NULL, *fa1 = NULL, *fa2 = NULL;
     int r;
     char *s = NULL;
+    size_t s_len;
 
     r = fa_compile(p1, strlen(p1), &fa1);
     if (r != REG_NOERROR)
@@ -203,7 +204,7 @@ regexp_minus(struct info *info, struct regexp *r1, struct regexp *r2) {
     if (fa == NULL)
         goto error;
 
-    r = fa_as_regexp(fa, &s);
+    r = fa_as_regexp(fa, &s, &s_len);
     if (r < 0)
         goto error;
 
