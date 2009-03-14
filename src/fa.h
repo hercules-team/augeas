@@ -153,8 +153,14 @@ struct fa *fa_overlap(struct fa *fa1, struct fa *fa2);
  * necessarily the shortest possible. The implementation works very hard to
  * have printable characters (preferrably alphanumeric) in the example, and
  * to avoid just an empty word.
+ *
+ * *EXAMPLE will be the example, which may be NULL. If it is non-NULL,
+ *  EXAMPLE_LEN will hold the length of the example.
+ *
+ * Return 0 on success, and a negative numer on error. On error, *EXAMPLE
+ * will be NULL
  */
-char *fa_example(struct fa *fa);
+int fa_example(struct fa *fa, char **example, size_t *example_len);
 
 /* Produce an example of an ambiguous word for the concatenation of the
  * languages of FA1 and FA2. The return value is such a word (which must be

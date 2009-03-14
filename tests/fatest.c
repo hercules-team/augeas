@@ -304,7 +304,9 @@ static void testOverlap(CuTest *tc) {
 
 static void assertExample(CuTest *tc, const char *regexp, const char *exp) {
     struct fa *fa = make_good_fa(tc, regexp);
-    char *xmpl = fa_example(fa);
+    size_t xmpl_len;
+    char *xmpl;
+    fa_example(fa, &xmpl, &xmpl_len);
     CuAssertStrEquals(tc, exp, xmpl);
     free(xmpl);
 }
@@ -328,12 +330,15 @@ static void testExample(CuTest *tc) {
     assertExample(tc, "\001((\001.)*\002)+\002", "\001\002\002");
 
     struct fa *fa1 = mark(fa_make_basic(FA_EMPTY));
-    CuAssertPtrEquals(tc, NULL, fa_example(fa1));
+    size_t xmpl_len;
+    char *xmpl;
+    fa_example(fa1, &xmpl, &xmpl_len);
+    CuAssertPtrEquals(tc, NULL, xmpl);
 
     fa1 = mark(fa_make_basic(FA_EPSILON));
-    char *s = fa_example(fa1);
-    CuAssertStrEquals(tc, "", s);
-    free(s);
+    fa_example(fa1, &xmpl, &xmpl_len);
+    CuAssertStrEquals(tc, "", xmpl);
+    free(xmpl);
 }
 
 static void assertAmbig(CuTest *tc, const char *regexp1, const char *regexp2,
@@ -457,7 +462,9 @@ int main(int argc, char **argv) {
             print_regerror(r, argv[i]);
         } else {
             dot(fa);
-            char *s = fa_example(fa);
+            size_t s_len;
+            char *s;
+            fa_example(fa, &s, &s_len);
             printf("Example for %s: %s\n", argv[i], s);
             free(s);
             char *re;

@@ -372,7 +372,9 @@ static struct value *disjoint_check(struct info *info, const char *msg,
 
     fa = fa_intersect(fa1, fa2);
     if (! fa_is_basic(fa, FA_EMPTY)) {
-        char *xmpl = fa_example(fa);
+        size_t xmpl_len;
+        char *xmpl;
+        fa_example(fa, &xmpl, &xmpl_len);
         exn = make_exn_value(ref(info),
                              "overlapping lenses in %s", msg);
 

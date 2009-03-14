@@ -2187,7 +2187,10 @@ static char pick_char(struct trans *t) {
 /* Generate an example string for FA. Traverse all transitions and record
  * at each turn the "best" word found for that state.
  */
-char *fa_example(struct fa *fa) {
+int fa_example(struct fa *fa, char **example, size_t *example_len) {
+    *example = NULL;
+    *example_len = 0;
+
     /* Sort to avoid any ambiguity because of reordering of transitions */
     sort_transition_intervals(fa);
 
@@ -2230,7 +2233,11 @@ char *fa_example(struct fa *fa) {
     }
     state_set_free(path);
     state_set_free(worklist);
-    return word;
+    /* FIXME: handle embedded nul's */
+    if (word != NULL)
+        *example_len = strlen(word);
+    *example = word;
+    return 0;
 }
 
 /* Expand the automaton FA by replacing every transition s(c) -> p from
@@ -2336,7 +2343,9 @@ char *fa_ambig_example(struct fa *fa1, struct fa *fa2, char **pv, char **v) {
     fa_free(b1);
     fa_free(b2);
 
-    char *s = fa_example(amb);
+    size_t s_len = 0;
+    char *s = NULL;
+    fa_example(amb, &s, &s_len);
     fa_free(amb);
 
     if (s == NULL)
