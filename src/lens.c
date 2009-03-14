@@ -413,7 +413,8 @@ static struct value *typecheck_union(struct info *info,
 static struct value *ambig_check(struct info *info, struct fa *fa1, struct fa *fa2,
                                  const char *msg) {
     char *upv, *pv, *v;
-    upv = fa_ambig_example(fa1, fa2, &pv, &v);
+    size_t upv_len;
+    fa_ambig_example(fa1, fa2, &upv, &upv_len, &pv, &v);
     struct value *exn = NULL;
 
     if (upv != NULL) {

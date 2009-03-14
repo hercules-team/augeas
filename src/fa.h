@@ -173,8 +173,15 @@ int fa_example(struct fa *fa, char **example, size_t *example_len);
  * Neither the language of FA1 or of FA2 may contain words with the
  * characters '\001' and '\002', as they are used during construction of
  * the ambiguous word.
+ *
+ * UPV_LEN will be set to the length of the entire string UPV
+ *
+ * Returns 0 on success, and a negative number on failure. On failure, UPV,
+ * PV, and V will be NULL
  */
-char *fa_ambig_example(struct fa *fa1, struct fa *fa2, char **pv, char **v);
+int fa_ambig_example(struct fa *fa1, struct fa *fa2,
+                     char **upv, size_t *upv_len,
+                     char **pv, char **v);
 
 /* Convert the finite automaton FA into a regular expression and set REGEXP
  * to point to that. When REGEXP is compiled into another automaton, it is

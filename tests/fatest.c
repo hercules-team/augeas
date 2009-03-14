@@ -163,10 +163,11 @@ static void testMonster(CuTest *tc) {
 
     struct fa *fa, *fas;
     char *upv, *pv, *v;
+    size_t upv_len;
 
     fa = make_good_fa(tc, monster);
 
-    upv = fa_ambig_example(fa, fa, &pv, &v);
+    fa_ambig_example(fa, fa, &upv, &upv_len, &pv, &v);
 
     /* Monster can't be concatenated with itself */
     CuAssertStrEquals(tc, "AAA", upv);
@@ -185,7 +186,7 @@ static void testMonster(CuTest *tc) {
        incidental details like sorting of transitions.
      */
     fa_minimize(fas);
-    upv = fa_ambig_example(fas, fa, &pv, &v);
+    fa_ambig_example(fas, fa, &upv, &upv_len, &pv, &v);
 
     CuAssertStrEquals(tc, "AA", upv);
     CuAssertStrEquals(tc, "AA", pv);
@@ -347,8 +348,9 @@ static void assertAmbig(CuTest *tc, const char *regexp1, const char *regexp2,
 
     struct fa *fa1 = make_good_fa(tc, regexp1);
     struct fa *fa2 = make_good_fa(tc, regexp2);
-    char *pv, *v;
-    char *upv = fa_ambig_example(fa1, fa2, &pv, &v);
+    char *upv, *pv, *v;
+    size_t upv_len;
+    fa_ambig_example(fa1, fa2, &upv, &upv_len, &pv, &v);
     CuAssertPtrNotNull(tc, upv);
     CuAssertPtrNotNull(tc, pv);
     CuAssertPtrNotNull(tc, v);
@@ -363,7 +365,9 @@ static void assertNotAmbig(CuTest *tc, const char *regexp1,
                            const char *regexp2) {
     struct fa *fa1 = make_good_fa(tc, regexp1);
     struct fa *fa2 = make_good_fa(tc, regexp2);
-    char *upv = fa_ambig_example(fa1, fa2, NULL, NULL);
+    char *upv;
+    size_t upv_len;
+    fa_ambig_example(fa1, fa2, &upv, &upv_len, NULL, NULL);
     CuAssertPtrEquals(tc, NULL, upv);
 }
 

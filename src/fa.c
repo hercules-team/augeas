@@ -2293,9 +2293,18 @@ static struct fa *expand_alphabet(struct fa *fa, int add_marker,
 /* This algorithm is due to Anders Moeller, and can be found in class
  * AutomatonOperations in dk.brics.grammar
  */
-char *fa_ambig_example(struct fa *fa1, struct fa *fa2, char **pv, char **v) {
+int fa_ambig_example(struct fa *fa1, struct fa *fa2,
+                     char **upv, size_t *upv_len,
+                     char **pv, char **v) {
     static const char X = '\001';
     static const char Y = '\002';
+
+    *upv = NULL;
+    *upv_len = 0;
+    if (pv != NULL)
+        *pv = NULL;
+    if (v != NULL)
+        *v = NULL;
 
 #define Xs "\001"
 #define Ys "\002"
@@ -2349,7 +2358,7 @@ char *fa_ambig_example(struct fa *fa1, struct fa *fa2, char **pv, char **v) {
     fa_free(amb);
 
     if (s == NULL)
-        return NULL;
+        return -1;
 
     char *result, *t;
     CALLOC(result, (strlen(s)-1)/2 + 1);
@@ -2371,7 +2380,10 @@ char *fa_ambig_example(struct fa *fa1, struct fa *fa2, char **pv, char **v) {
         *t++ = s[2*i + 1];
 
     free(s);
-    return result;
+    *upv = result;
+    if (result != NULL)
+        *upv_len = strlen(result);
+    return 0;
 }
 
 /*
