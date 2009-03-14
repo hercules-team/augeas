@@ -2292,12 +2292,20 @@ char *fa_ambig_example(struct fa *fa1, struct fa *fa2, char **pv, char **v) {
 
 #define Xs "\001"
 #define Ys "\002"
+#define MPs Ys Xs "(" Xs "(.|\n))+"
+#define MSs Ys Xs "(" Xs "(.|\n))*"
+#define SPs "(" Xs "(.|\n))+" Ys Xs
+#define SSs "(" Xs "(.|\n))*" Ys Xs
     /* These could become static constants */
     struct fa *mp, *ms, *sp, *ss;
-    fa_compile( Ys Xs "(" Xs "(.|\n))+", &mp);
-    fa_compile( Ys Xs "(" Xs "(.|\n))*", &ms);
-    fa_compile( "(" Xs "(.|\n))+" Ys Xs, &sp);
-    fa_compile("(" Xs "(.|\n))*" Ys Xs, &ss);
+    fa_compile( MPs, strlen(MPs), &mp);
+    fa_compile( MSs, strlen(MSs), &ms);
+    fa_compile( SPs, strlen(SPs), &sp);
+    fa_compile( SSs, strlen(SSs), &ss);
+#undef SSs
+#undef SPs
+#undef MSs
+#undef MPs
 #undef Xs
 #undef Ys
 
@@ -2417,15 +2425,18 @@ static void free_re(struct re *re) {
     free(re);
 }
 
-int fa_compile(const char *regexp, struct fa **fa) {
+int fa_compile(const char *regexp, size_t size, struct fa **fa) {
     int ret = REG_NOERROR;
-    struct re *re = parse_regexp(&regexp, &ret);
+    struct re *re = NULL;
     *fa = NULL;
+
+    /* We don't handle embedded nul's yet */
+    if (strlen(regexp) != size)
+        return REG_ESIZE;
+
+    re = parse_regexp(&regexp, &ret);
     if (re == NULL)
         return ret;
-
-    //print_re(re);
-    //printf("\n");
 
     *fa = fa_from_re(re);
     re_unref(re);

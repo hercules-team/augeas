@@ -84,7 +84,7 @@ static void assertAsRegexp(CuTest *tc, struct fa *fa) {
     r = fa_as_regexp(fa1, &re);
     CuAssertIntEquals(tc, 0, r);
 
-    r = fa_compile(re, &fa2);
+    r = fa_compile(re, strlen(re), &fa2);
     CuAssertIntEquals(tc, REG_NOERROR, r);
 
     CuAssertTrue(tc, fa_equals(fa, fa2));
@@ -97,7 +97,7 @@ static struct fa *make_fa(CuTest *tc, const char *regexp, int exp_err) {
     struct fa *fa;
     int r;
 
-    r = fa_compile(regexp, &fa);
+    r = fa_compile(regexp, strlen(regexp), &fa);
     if (exp_err == REG_NOERROR) {
         if (r != REG_NOERROR)
             print_regerror(r, regexp);
@@ -384,7 +384,7 @@ static void assertFaAsRegexp(CuTest *tc, const char *regexp) {
     r = fa_as_regexp(fa1, &re);
     CuAssertIntEquals(tc, 0, r);
 
-    r = fa_compile(re, &fa2);
+    r = fa_compile(re, strlen(re), &fa2);
     CuAssertIntEquals(tc, REG_NOERROR, r);
 
     CuAssert(tc, regexp, fa_equals(fa1, fa2));
@@ -453,7 +453,7 @@ int main(int argc, char **argv) {
     for (int i=1; i<argc; i++) {
         struct fa *fa;
         int r;
-        if ((r = fa_compile(argv[i], &fa)) != REG_NOERROR) {
+        if ((r = fa_compile(argv[i], strlen(argv[i]), &fa)) != REG_NOERROR) {
             print_regerror(r, argv[i]);
         } else {
             dot(fa);

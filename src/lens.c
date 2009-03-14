@@ -53,7 +53,7 @@ static struct value *str_to_fa(struct info *info, const char *pattern,
     size_t re_err_len;
     char *re_str, *re_err;
 
-    error = fa_compile(pattern, fa);
+    error = fa_compile(pattern, strlen(pattern), fa);
     if (error == REG_NOERROR)
         return NULL;
 

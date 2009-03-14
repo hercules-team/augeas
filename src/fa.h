@@ -59,16 +59,16 @@ extern int fa_minimization_algorithm;
  */
 
 /*
- * Compile the regular expression RE into an automaton. The return value is
- * the same as the return value for the POSIX function regcomp. The syntax
- * for regular expressions is extended POSIX syntax, with the difference
- * that '.' does not match newlines.
+ * Compile the regular expression RE of length SIZE into an automaton. The
+ * return value is the same as the return value for the POSIX function
+ * regcomp. The syntax for regular expressions is extended POSIX syntax,
+ * with the difference that '.' does not match newlines.
  *
  * On success, FA points to the newly allocated automaton constructed for
  * RE, and the function returns REG_NOERROR. Otherwise, FA is NULL, and the
  * return value indicates the error.
  */
-int fa_compile(const char *re, struct fa **fa);
+int fa_compile(const char *re, size_t size, struct fa **fa);
 
 /* Make a new automaton that accepts one of the basic languages defined in
  * the enum FA_BASIC.
