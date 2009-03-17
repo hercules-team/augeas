@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
         { 0, 0, 0, 0}
     };
     int idx;
-    unsigned int flags = AUG_TYPE_CHECK|AUG_NO_DEFAULT_LOAD;
+    unsigned int flags = AUG_TYPE_CHECK|AUG_NO_MODL_AUTOLOAD;
     progname = argv[0];
 
     while ((opt = getopt_long(argc, argv, "hI:", options, &idx)) != -1) {

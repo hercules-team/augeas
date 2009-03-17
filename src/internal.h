@@ -259,10 +259,9 @@ char* read_file(const char *path);
  */
 const char *xstrerror(int errnum, char *buf, size_t len);
 
-/* Define: AUG_NO_DEFAULT_LOAD
- * A hidden flag used by augparse to suppress loading of all the modules
+/* A hidden flag used by augparse to suppress loading of all the modules
  * on the path */
-#define AUG_NO_DEFAULT_LOAD (1 << 15)
+#define AUG_NO_MODL_AUTOLOAD (1 << 15)
 
 /* Struct: augeas
  * The data structure representing a connection to Augeas. */

@@ -1897,7 +1897,7 @@ int interpreter_init(struct augeas *aug) {
 
     aug->modules = builtin_init();
 
-    if (aug->flags & AUG_NO_DEFAULT_LOAD)
+    if (aug->flags & AUG_NO_MODL_AUTOLOAD)
         return 0;
 
     // For now, we just load every file on the search path
