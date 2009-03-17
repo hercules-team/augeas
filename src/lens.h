@@ -30,6 +30,7 @@
 enum lens_tag {
     L_DEL = 42,    /* Shift tag values so we fail fast(er) on bad pointers */
     L_STORE,
+    L_VALUE,
     L_KEY,
     L_LABEL,
     L_SEQ,
@@ -84,7 +85,7 @@ struct lens {
         /* Primitive lenses */
         struct {                   /* L_DEL uses both */
             struct regexp *regexp; /* L_STORE, L_KEY */
-            struct string *string; /* L_LABEL, L_SEQ, L_COUNTER */
+            struct string *string; /* L_VALUE, L_LABEL, L_SEQ, L_COUNTER */
         };
         /* Combinators */
         struct lens *child;         /* L_SUBTREE, L_STAR, L_MAYBE */

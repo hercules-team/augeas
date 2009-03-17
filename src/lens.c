@@ -472,14 +472,15 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
     lens->regexp = regexp;
     lens->string = string;
     lens->key = (tag == L_KEY || tag == L_LABEL || tag == L_SEQ);
-    lens->value = (tag == L_STORE);
-    lens->consumes_value = (tag == L_STORE);
+    lens->value = (tag == L_STORE || tag == L_VALUE);
+    lens->consumes_value = (tag == L_STORE || tag == L_VALUE);
     lens->atype = regexp_make_empty(info);
     /* Set the ctype */
     if (tag == L_DEL || tag == L_STORE || tag == L_KEY) {
         lens->ctype = ref(regexp);
         lens->ctype_nullable = regexp_matches_empty(lens->ctype);
-    } else if (tag == L_LABEL || tag == L_SEQ || tag == L_COUNTER) {
+    } else if (tag == L_LABEL || tag == L_VALUE
+               || tag == L_SEQ || tag == L_COUNTER) {
         lens->ctype = regexp_make_empty(info);
         lens->ctype_nullable = 1;
     } else {
@@ -504,6 +505,8 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
     /* Set the vtype */
     if (tag == L_STORE) {
         lens->vtype = restrict_regexp(lens->regexp);
+    } else if (tag == L_VALUE) {
+        lens->vtype = make_regexp_literal(info, lens->string->str);
     }
 
     return make_lens_value(lens);
@@ -761,6 +764,7 @@ void free_lens(struct lens *lens) {
     case L_LABEL:
     case L_SEQ:
     case L_COUNTER:
+    case L_VALUE:
         unref(lens->string, string);
         break;
     case L_SUBTREE:
@@ -1027,6 +1031,7 @@ int lns_format_atype(struct lens *l, char **buf) {
     case L_STORE:
     case L_KEY:
     case L_LABEL:
+    case L_VALUE:
     case L_SEQ:
     case L_COUNTER:
         *buf = strdup("");

@@ -420,6 +420,18 @@ static struct skel *parse_store(struct lens *lens,
     return make_skel(lens);
 }
 
+static struct tree *get_value(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_VALUE);
+    state->value = strdup(lens->string->str);
+    return NULL;
+}
+
+static struct skel *parse_value(struct lens *lens,
+                                ATTRIBUTE_UNUSED struct state *state) {
+    assert(lens->tag == L_VALUE);
+    return make_skel(lens);
+}
+
 static struct tree *get_key(struct lens *lens, struct state *state) {
     assert(lens->tag == L_KEY);
     if (! REG_MATCHED(state))
@@ -1043,6 +1055,9 @@ static struct tree *get_lens(struct lens *lens, struct state *state) {
     case L_STORE:
         tree = get_store(lens, state);
         break;
+    case L_VALUE:
+        tree = get_value(lens, state);
+        break;
     case L_KEY:
         tree = get_key(lens, state);
         break;
@@ -1168,6 +1183,9 @@ static struct skel *parse_lens(struct lens *lens, struct state *state,
         break;
     case L_STORE:
         skel = parse_store(lens, state);
+        break;
+    case L_VALUE:
+        skel = parse_value(lens, state);
         break;
     case L_KEY:
         skel = parse_key(lens, state);

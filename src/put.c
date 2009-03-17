@@ -370,6 +370,8 @@ static int skel_instance_of(struct lens *lens, struct skel *skel) {
         return skel->tag == L_KEY;
     case L_LABEL:
         return skel->tag == L_LABEL;
+    case L_VALUE:
+        return skel->tag == L_VALUE;
     case L_SEQ:
         return skel->tag == L_SEQ;
     case L_COUNTER:
@@ -575,6 +577,7 @@ static void put_lens(struct lens *lens, struct state *state) {
         fprintf(state->out, "%s", state->key);
         break;
     case L_LABEL:
+    case L_VALUE:
         /* Nothing to do */
         break;
     case L_SEQ:
@@ -694,6 +697,7 @@ static void create_lens(struct lens *lens, struct state *state) {
         fprintf(state->out, "%s", state->key);
         break;
     case L_LABEL:
+    case L_VALUE:
         /* Nothing to do */
         break;
     case L_SEQ:

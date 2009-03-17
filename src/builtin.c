@@ -56,6 +56,12 @@ static struct value *lns_store(struct info *info, struct value *rxp) {
     return lns_make_prim(L_STORE, ref(info), ref(rxp->regexp), NULL);
 }
 
+/* V_STRING -> V_LENS */
+static struct value *lns_value(struct info *info, struct value *str) {
+    assert(str->tag == V_STRING);
+    return lns_make_prim(L_VALUE, ref(info), NULL, ref(str->string));
+}
+
 /* V_REGEXP -> V_LENS */
 static struct value *lns_key(struct info *info, struct value *rxp) {
     assert(rxp->tag == V_REGEXP);
@@ -456,6 +462,7 @@ struct module *builtin_init(struct error *error) {
     /* Primitive lenses */
     DEFINE_NATIVE(modl, "del",     2, lns_del, T_REGEXP, T_STRING, T_LENS);
     DEFINE_NATIVE(modl, "store",   1, lns_store, T_REGEXP, T_LENS);
+    DEFINE_NATIVE(modl, "value",   1, lns_value, T_STRING, T_LENS);
     DEFINE_NATIVE(modl, "key",     1, lns_key, T_REGEXP, T_LENS);
     DEFINE_NATIVE(modl, "label",   1, lns_label, T_STRING, T_LENS);
     DEFINE_NATIVE(modl, "seq",     1, lns_seq, T_STRING, T_LENS);
