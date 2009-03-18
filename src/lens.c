@@ -696,6 +696,8 @@ void free_lens(struct lens *lens) {
 }
 
 void lens_release(struct lens *lens) {
+    if (lens == NULL)
+        return;
     regexp_release(lens->ctype);
     regexp_release(lens->atype);
     if (lens->tag == L_KEY || lens->tag == L_STORE)
