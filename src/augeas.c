@@ -94,6 +94,27 @@ static struct pathx *parse_user_pathx(const struct augeas *aug,
     return NULL;
 }
 
+static struct tree *tree_find(struct tree *origin, const char *path) {
+    struct pathx *px = NULL;
+    struct tree *result = NULL;
+
+    if (pathx_parse(origin, path, &px) != 0)
+        return NULL;
+
+    pathx_find_one(px, &result);
+    free_pathx(px);
+
+    return result;
+}
+
+static struct tree *tree_child(struct tree *tree, const char *label) {
+    list_for_each(child, tree->children) {
+        if (streqv(label, child->label))
+            return child;
+    }
+    return NULL;
+}
+
 static const char *init_root(const char *root0) {
     char *root;
 
@@ -112,6 +133,55 @@ static const char *init_root(const char *root0) {
         strcat(root, "/");
     }
     return root;
+}
+
+static struct tree *tree_append(struct tree *parent,
+                                char *label, char *value) {
+    struct tree *result = make_tree(label, value, parent, NULL);
+    if (result != NULL)
+        list_append(parent->children, result);
+    return result;
+}
+
+static int tree_from_transform(struct augeas *aug,
+                               const char *modname,
+                               struct transform *xfm) {
+    struct tree *meta = tree_child(aug->origin, "augeas");
+    struct tree *load = NULL, *txfm = NULL;
+    char *m = NULL, *q = NULL;
+
+    if (meta == NULL)
+        return -1;
+
+    load = tree_child(meta, "load");
+    if (load == NULL) {
+        char *l = strdup("load");
+        load = tree_append(meta, l, NULL);
+        if (load == NULL)
+            return -1;
+    }
+    if (modname != NULL) {
+        m = strdup(modname);
+        if (m == NULL)
+            return -1;
+    } else {
+        m = strdup("_");
+    }
+    txfm = tree_append(load, m, NULL);
+    if (txfm == NULL)
+        return -1;
+
+    if (asprintf(&q, "@%s", modname) < 0)
+        return -1;
+
+    m = strdup("lens");
+    tree_append(txfm, m, q);
+    list_for_each(f, xfm->filter) {
+        char *glob = strdup(f->glob->str);
+        char *l = f->include ? strdup("incl") : strdup("excl");
+        tree_append(txfm, l, glob);
+    }
+    return 0;
 }
 
 struct augeas *aug_init(const char *root, const char *loadpath,
@@ -200,6 +270,7 @@ struct augeas *aug_init(const char *root, const char *loadpath,
         struct transform *xform = modl->autoload;
         if (xform == NULL)
             continue;
+        tree_from_transform(result, modl->name, xform);
         transform_load(result, xform);
     }
     tree_clean(result->origin);
@@ -612,27 +683,6 @@ static int update_save_flags(struct augeas *aug) {
     }
 
     return 0;
-}
-
-static struct tree *tree_find(struct tree *origin, const char *path) {
-    struct pathx *px = NULL;
-    struct tree *result = NULL;
-
-    if (pathx_parse(origin, path, &px) != 0)
-        return NULL;
-
-    pathx_find_one(px, &result);
-    free_pathx(px);
-
-    return result;
-}
-
-static struct tree *tree_child(struct tree *tree, const char *label) {
-    list_for_each(child, tree->children) {
-        if (streqv(label, child->label))
-            return child;
-    }
-    return NULL;
 }
 
 static int unlink_removed_files(struct augeas *aug,
