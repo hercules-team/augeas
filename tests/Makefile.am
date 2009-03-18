@@ -19,7 +19,7 @@ EXTRA_DIST=augtest $(AUGTESTS) root \
 
 noinst_SCRIPTS = $(check_SCRIPTS)
 
-check_PROGRAMS = fatest test-xpath
+check_PROGRAMS = fatest test-xpath test-load
 
 TESTS_ENVIRONMENT = \
   PATH='$(abs_top_builddir)/src$(PATH_SEPARATOR)'"$$PATH" \
@@ -35,3 +35,6 @@ fatest_LDADD = $(top_builddir)/src/libaugeas.la $(GNULIB)
 
 test_xpath_SOURCES = test-xpath.c
 test_xpath_LDADD = $(top_builddir)/src/libaugeas.la $(GNULIB)
+
+test_load_SOURCES = test-load.c cutest.c cutest.h
+test_load_LDADD = $(top_builddir)/src/libaugeas.la $(GNULIB)

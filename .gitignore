@@ -35,6 +35,7 @@ src/augtool
 src/augparse
 tests/fatest
 tests/test-xpath
+tests/test-load
 *.aux
 *.dvi
 *.log
