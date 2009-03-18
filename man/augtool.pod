@@ -49,6 +49,18 @@ directories set here are searched before any directories specified in the
 AUGEAS_LENS_LIB environment variable, and before the default directory
 F</usr/share/augeas/lenses>.
 
+=item B<--nostdinc>
+
+Do not search any of the default directories for modules. When this option
+is set, only directories specified explicitly with B<-I> or specified in
+B<AUGEAS_LENS_LIB> will be searched for modules.
+
+=item B<--noload>
+
+Do not load any files on startup. This is generally used to fine-tune which
+files to load by modifying the entries in C</augeas/load> and then issuing
+a C<load> command.
+
 =back
 
 =head1 COMMANDS
