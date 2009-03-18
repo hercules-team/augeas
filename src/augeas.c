@@ -274,19 +274,45 @@ struct augeas *aug_init(const char *root, const char *loadpath,
 
     list_for_each(modl, result->modules) {
         struct transform *xform = modl->autoload;
-        struct tree *txfm = NULL;
         if (xform == NULL)
             continue;
-        txfm = tree_from_transform(result, modl->name, xform);
-        transform_load(result, txfm);
+        tree_from_transform(result, modl->name, xform);
     }
-    tree_clean(result->origin);
+    if (aug_load(result) < 0)
+        goto error;
 
     return result;
 
  error:
     aug_close(result);
     return NULL;
+}
+
+static void tree_unlink_children(struct tree *tree) {
+    if (tree == NULL)
+        return;
+
+    while (tree->children != NULL)
+        tree_unlink(tree->children);
+}
+
+int aug_load(struct augeas *aug) {
+    struct tree *meta = tree_child(aug->origin, "augeas");
+    struct tree *meta_files = tree_child(meta, "files");
+    struct tree *files = tree_child(aug->origin, "files");
+    struct tree *load = tree_child(meta, "load");
+
+    if (load == NULL)
+        return 0;
+
+    tree_unlink_children(meta_files);
+    tree_unlink_children(files);
+
+    list_for_each(xfm, load->children) {
+        transform_load(aug, xfm);
+    }
+    tree_clean(aug->origin);
+    return 0;
 }
 
 int aug_get(const struct augeas *aug, const char *path, const char **value) {

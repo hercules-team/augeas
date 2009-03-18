@@ -9,6 +9,7 @@
       aug_mv;
       aug_match;
       aug_save;
+      aug_load;
       aug_print;
       # Symbols with __ are private
       __aug_load_module_file;
