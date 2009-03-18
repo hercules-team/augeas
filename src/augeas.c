@@ -108,6 +108,9 @@ static struct tree *tree_find(struct tree *origin, const char *path) {
 }
 
 static struct tree *tree_child(struct tree *tree, const char *label) {
+    if (tree == NULL)
+        return NULL;
+
     list_for_each(child, tree->children) {
         if (streqv(label, child->label))
             return child;
@@ -143,36 +146,36 @@ static struct tree *tree_append(struct tree *parent,
     return result;
 }
 
-static int tree_from_transform(struct augeas *aug,
-                               const char *modname,
-                               struct transform *xfm) {
+static struct tree *tree_from_transform(struct augeas *aug,
+                                        const char *modname,
+                                        struct transform *xfm) {
     struct tree *meta = tree_child(aug->origin, "augeas");
     struct tree *load = NULL, *txfm = NULL;
     char *m = NULL, *q = NULL;
 
     if (meta == NULL)
-        return -1;
+        goto error;
 
     load = tree_child(meta, "load");
     if (load == NULL) {
         char *l = strdup("load");
         load = tree_append(meta, l, NULL);
         if (load == NULL)
-            return -1;
+            goto error;
     }
     if (modname != NULL) {
         m = strdup(modname);
         if (m == NULL)
-            return -1;
+            goto error;
     } else {
         m = strdup("_");
     }
     txfm = tree_append(load, m, NULL);
     if (txfm == NULL)
-        return -1;
+        goto error;
 
     if (asprintf(&q, "@%s", modname) < 0)
-        return -1;
+        goto error;
 
     m = strdup("lens");
     tree_append(txfm, m, q);
@@ -181,7 +184,10 @@ static int tree_from_transform(struct augeas *aug,
         char *l = f->include ? strdup("incl") : strdup("excl");
         tree_append(txfm, l, glob);
     }
-    return 0;
+    return txfm;
+ error:
+    tree_unlink(txfm);
+    return NULL;
 }
 
 struct augeas *aug_init(const char *root, const char *loadpath,
@@ -268,10 +274,11 @@ struct augeas *aug_init(const char *root, const char *loadpath,
 
     list_for_each(modl, result->modules) {
         struct transform *xform = modl->autoload;
+        struct tree *txfm = NULL;
         if (xform == NULL)
             continue;
-        tree_from_transform(result, modl->name, xform);
-        transform_load(result, xform);
+        txfm = tree_from_transform(result, modl->name, xform);
+        transform_load(result, txfm);
     }
     tree_clean(result->origin);
 
@@ -624,23 +631,26 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
 static int tree_save(struct augeas *aug, struct tree *tree,
                      const char *path) {
     int result = 0;
+    struct tree *meta = tree_child(aug->origin, "augeas");
+    struct tree *load = tree_child(meta, "load");
+
     // FIXME: We need to detect subtrees that aren't saved by anything
+
+    if (load == NULL)
+        return -1;
 
     list_for_each(t, tree) {
         if (t->dirty) {
             char *tpath = NULL;
-            struct transform *transform = NULL;
+            struct tree *transform = NULL;
             if (asprintf(&tpath, "%s/%s", path, t->label) == -1) {
                 result = -1;
                 continue;
             }
-            list_for_each(modl, aug->modules) {
-                struct transform *xform = modl->autoload;
-                if (xform == NULL)
-                    continue;
-                if (transform_applies(xform, tpath)) {
-                    if (transform == NULL || transform == xform) {
-                        transform = xform;
+            list_for_each(xfm, load->children) {
+                if (transform_applies(xfm, tpath)) {
+                    if (transform == NULL || transform == xfm) {
+                        transform = xfm;
                     } else {
                         FIXME("Multiple transforms for %s", path);
                         result = -1;

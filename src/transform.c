@@ -31,6 +31,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <selinux/selinux.h>
+#include <stdbool.h>
 
 #include "internal.h"
 #include "memory.h"
@@ -92,7 +93,15 @@ static const char *pathbase(const char *path) {
     return (p == NULL) ? path : p + 1;
 }
 
-static int filter_generate(struct filter *filter, const char *root,
+static bool is_excl(struct tree *f) {
+    return streqv(f->label, "excl") && f->value != NULL;
+}
+
+static bool is_incl(struct tree *f) {
+    return streqv(f->label, "incl") && f->value != NULL;
+}
+
+static int filter_generate(struct tree *xfm, const char *root,
                            int *nmatches, char ***matches) {
     glob_t globbuf;
     int gl_flags = glob_flags;
@@ -102,11 +111,11 @@ static int filter_generate(struct filter *filter, const char *root,
     *nmatches = 0;
     *matches = NULL;
 
-    list_for_each(f, filter) {
+    list_for_each(f, xfm->children) {
         char *globpat = NULL;
-        if (! f->include)
+        if (! is_incl(f))
             continue;
-        pathjoin(&globpat, 2, root, f->glob->str);
+        pathjoin(&globpat, 2, root, f->value);
         r = glob(globpat, gl_flags, NULL, &globbuf);
         free(globpat);
 
@@ -122,14 +131,14 @@ static int filter_generate(struct filter *filter, const char *root,
     globbuf.gl_pathv = NULL;
     globbuf.gl_pathc = 0;
 
-    list_for_each(e, filter) {
-        if (e->include)
+    list_for_each(e, xfm->children) {
+        if (! is_excl(e))
             continue;
         for (int i=0; i < pathc;) {
             const char *path = pathv[i];
-            if (strchr(e->glob->str, SEP) == NULL)
+            if (strchr(e->value, SEP) == NULL)
                 path = pathbase(path);
-            if (fnmatch(e->glob->str, path, fnm_flags) == 0) {
+            if (fnmatch(e->value, path, fnm_flags) == 0) {
                 free(pathv[i]);
                 pathc -= 1;
                 if (i < pathc) {
@@ -152,16 +161,18 @@ static int filter_generate(struct filter *filter, const char *root,
     return ret;
 }
 
-static int filter_matches(struct filter *filter, const char *path) {
+static int filter_matches(struct tree *xfm, const char *path) {
     int found = 0;
-    list_for_each(f, filter) {
-        if (f->include)
-            found |= (fnmatch(f->glob->str, path, fnm_flags) == 0);
+    list_for_each(f, xfm->children) {
+        if (is_incl(f) && fnmatch(f->value, path, fnm_flags) == 0) {
+            found = 1;
+            break;
+        }
     }
     if (! found)
         return 0;
-    list_for_each(f, filter) {
-        if (!f->include && (fnmatch(f->glob->str, path, fnm_flags) == 0))
+    list_for_each(f, xfm->children) {
+        if (is_excl(f) && (fnmatch(f->value, path, fnm_flags) == 0))
             return 0;
     }
     return 1;
@@ -391,28 +402,61 @@ static int load_file(struct augeas *aug, struct lens *lens, char *filename) {
     return result;
 }
 
-int transform_load(struct augeas *aug, struct transform *xform) {
+static struct lens *xfm_lens(struct augeas *aug, struct tree *xfm) {
+    struct tree *l = NULL;
+
+    for (l = xfm->children;
+         l != NULL && !streqv("lens", l->label);
+         l = l->next);
+
+    if (l == NULL || l->value == NULL)
+        return NULL;
+
+    /* The lens for a transform can be referred to in one of two ways:
+     * either by a fully qualified name "Module.lens" or by the special
+     * syntax "@Module"; the latter means we should take the lens from the
+     * autoload transform for Module
+     */
+    if (l->value[0] == '@') {
+        struct module *modl = NULL;
+        for (modl = aug->modules;
+             modl != NULL && !streqv(modl->name, l->value + 1);
+             modl = modl->next);
+        if (modl == NULL || modl->autoload == NULL)
+            return NULL;
+        return modl->autoload->lens;
+    } else {
+        return lens_lookup(aug, l->value);
+    }
+}
+
+int transform_load(struct augeas *aug, struct tree *xfm) {
     int nmatches;
     char **matches;
+    struct lens *lens = xfm_lens(aug, xfm);
     int r;
 
-    r = filter_generate(xform->filter, aug->root, &nmatches, &matches);
+    if (lens == NULL) {
+        // FIXME: Record an error and return 0
+        return -1;
+    }
+    r = filter_generate(xfm, aug->root, &nmatches, &matches);
     if (r == -1)
         return -1;
     for (int i=0; i < nmatches; i++) {
-        load_file(aug, xform->lens, matches[i]);
+        load_file(aug, lens, matches[i]);
         free(matches[i]);
     }
-    lens_release(xform->lens);
+    lens_release(lens);
     free(matches);
     return 0;
 }
 
-int transform_applies(struct transform *xform, const char *path) {
+int transform_applies(struct tree *xfm, const char *path) {
     if (STRNEQLEN(path, AUGEAS_FILES_TREE, strlen(AUGEAS_FILES_TREE))
         || path[strlen(AUGEAS_FILES_TREE)] != SEP)
         return 0;
-    return filter_matches(xform->filter, path + strlen(AUGEAS_FILES_TREE));
+    return filter_matches(xfm, path + strlen(AUGEAS_FILES_TREE));
 }
 
 static int transfer_file_attrs(const char *from, const char *to,
@@ -570,7 +614,7 @@ static int file_saved_event(struct augeas *aug, const char *path) {
  *
  * Return 0 on success, -1 on failure.
  */
-int transform_save(struct augeas *aug, struct transform *xform,
+int transform_save(struct augeas *aug, struct tree *xfm,
                    const char *path, struct tree *tree) {
     FILE *fp = NULL;
     char *augnew = NULL, *augorig = NULL, *augsave = NULL;
@@ -582,7 +626,15 @@ int transform_save(struct augeas *aug, struct transform *xform,
     const char *err_status = NULL;
     char *dyn_err_status = NULL;
     struct lns_error *err = NULL;
+    struct lens *lens = xfm_lens(aug, xfm);
     int result = -1, r;
+
+    errno = 0;
+
+    if (lens == NULL) {
+        err_status = "lens_name";
+        goto done;
+    }
 
     copy_if_rename_fails =
         aug_get(aug, AUGEAS_COPY_IF_RENAME_FAILS, NULL) == 1;
@@ -636,7 +688,7 @@ int transform_save(struct augeas *aug, struct transform *xform,
     }
 
     if (tree != NULL)
-        lns_put(fp, xform->lens, tree->children, text, &err);
+        lns_put(fp, lens, tree->children, text, &err);
 
     if (ferror(fp)) {
         err_status = "error_augnew";
@@ -723,7 +775,7 @@ int transform_save(struct augeas *aug, struct transform *xform,
         store_error(aug, filename, path, emsg, errno, err);
     }
     free(dyn_err_status);
-    lens_release(xform->lens);
+    lens_release(lens);
     free(text);
     free(augnew);
     if (augorig_canon != augorig)

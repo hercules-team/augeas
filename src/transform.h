@@ -47,23 +47,30 @@ struct transform {
 struct transform *make_transform(struct lens *lens, struct filter *filter);
 void free_transform(struct transform *xform);
 
+/*
+ * When we pass a tree for a transform, the tree must have exactly one
+ * child with label "lens" whose value is the qualified name of the lens to
+ * use, and any number of children labelled "incl" or "excl" whose values
+ * are glob patterns used to filter which files to transform.
+ */
+
 /* Load all files matching the TRANSFORM's filter into the tree in AUG by
  * applying the TRANSFORM's lens to their contents and putting the
  * resulting tree under "/files" + filename. Also stores some information
  * about filename underneath "/augeas/files" + filename
  */
-int transform_load(struct augeas *aug, struct transform *transform);
+int transform_load(struct augeas *aug, struct tree *xfm);
 
 /* Return 1 if TRANSFORM applies to PATH, 0 otherwise. The TRANSFORM
  * applies to PATH if (1) PATH starts with "/files/" and (2) the rest of
  * PATH matches the transform's filter
 */
-int transform_applies(struct transform *transform, const char *path);
+int transform_applies(struct tree *xfm, const char *path);
 
 /* Save TREE into the file corresponding to PATH. It is assumed that the
  * TRANSFORM applies to that PATH
  */
-int transform_save(struct augeas *aug, struct transform *transform,
+int transform_save(struct augeas *aug, struct tree *xfm,
                    const char *path, struct tree *tree);
 
 /* Remove the file for TREE, either by moving it to a .augsave file or by
