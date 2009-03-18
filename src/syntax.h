@@ -368,6 +368,8 @@ struct module *builtin_init(void);
 int __aug_load_module_file(struct augeas *aug, const char *filename);
 
 int interpreter_init(struct augeas *aug);
+
+struct lens *lens_lookup(struct augeas *aug, const char *qname);
 #endif
 
 

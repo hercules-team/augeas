@@ -483,6 +483,59 @@ static struct binding *bnd_lookup(struct binding *bindings, const char *name) {
     return NULL;
 }
 
+static char *modname_of_qname(const char *qname) {
+    char *dot = strchr(qname, '.');
+    if (dot == NULL)
+        return NULL;
+
+    return strndup(qname, dot - qname);
+}
+
+static int lookup_internal(struct augeas *aug, const char *ctx_modname,
+                           const char *name, struct binding **bnd) {
+    char *modname = modname_of_qname(name);
+
+    *bnd = NULL;
+
+    if (modname == NULL) {
+        struct module *builtin =
+            module_find(aug->modules, builtin_module);
+        assert(builtin != NULL);
+        *bnd = bnd_lookup(builtin->bindings, name);
+        return 0;
+    }
+
+ qual_lookup:
+    list_for_each(module, aug->modules) {
+        if (STRCASEEQ(module->name, modname)) {
+            *bnd = bnd_lookup(module->bindings, name + strlen(modname) + 1);
+            free(modname);
+            return 0;
+        }
+    }
+    /* Try to load the module */
+    if (streqv(modname, ctx_modname)) {
+        free(modname);
+        return 0;
+    }
+    int loaded = load_module(aug, modname) == 0;
+    if (loaded)
+        goto qual_lookup;
+
+    free(modname);
+    return -1;
+}
+
+struct lens *lens_lookup(struct augeas *aug, const char *qname) {
+    struct binding *bnd = NULL;
+
+    if (lookup_internal(aug, NULL, qname, &bnd) < 0)
+        return NULL;
+    if (bnd == NULL || bnd->value->tag != V_LENS)
+        return NULL;
+    return bnd->value->lens;
+}
+
 static struct binding *ctx_lookup_bnd(struct info *info,
                                       struct ctx *ctx, const char *name) {
     struct binding *b = NULL;
@@ -496,35 +549,15 @@ static struct binding *ctx_lookup_bnd(struct info *info,
         return b;
 
     if (ctx->aug != NULL) {
-        char *dot = strchr(name, '.');
-        if (dot != NULL) {
-        qual_lookup:
-            list_for_each(module, ctx->aug->modules) {
-                if (STRCASEEQLEN(module->name, name, strlen(module->name))
-                    && dot - name == strlen(module->name))
-                    return bnd_lookup(module->bindings, dot + 1);
-            }
-            /* Try to load the module */
-            char *modname = strndup(name, dot - name);
-            if (STREQ(modname, ctx->name)) {
-                free(modname);
-                return NULL;
-            }
-            int loaded = load_module(ctx->aug, modname) == 0;
-            if (loaded) {
-                free(modname);
-                goto qual_lookup;
-            } else {
-                syntax_error(info, "Could not load module %s for %s",
-                             modname, name);
-                free(modname);
-            }
-        } else {
-            struct module *builtin =
-                module_find(ctx->aug->modules, builtin_module);
-            assert(builtin != NULL);
-            return bnd_lookup(builtin->bindings, name);
-        }
+        int r;
+        r = lookup_internal(ctx->aug, ctx->name, name, &b);
+        if (r == 0)
+            return b;
+        char *modname = modname_of_qname(name);
+        syntax_error(info, "Could not load module %s for %s",
+                     modname, name);
+        free(modname);
+        return NULL;
     }
     return NULL;
 }
