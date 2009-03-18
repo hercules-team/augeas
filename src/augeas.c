@@ -94,19 +94,6 @@ static struct pathx *parse_user_pathx(const struct augeas *aug,
     return NULL;
 }
 
-static struct tree *tree_find(struct tree *origin, const char *path) {
-    struct pathx *px = NULL;
-    struct tree *result = NULL;
-
-    if (pathx_parse(origin, path, &px) != 0)
-        return NULL;
-
-    pathx_find_one(px, &result);
-    free_pathx(px);
-
-    return result;
-}
-
 static struct tree *tree_child(struct tree *tree, const char *label) {
     if (tree == NULL)
         return NULL;
@@ -138,8 +125,8 @@ static const char *init_root(const char *root0) {
     return root;
 }
 
-static struct tree *tree_append(struct tree *parent,
-                                char *label, char *value) {
+struct tree *tree_append(struct tree *parent,
+                         char *label, char *value) {
     struct tree *result = make_tree(label, value, parent, NULL);
     if (result != NULL)
         list_append(parent->children, result);
@@ -310,7 +297,8 @@ int aug_load(struct augeas *aug) {
     tree_unlink_children(files);
 
     list_for_each(xfm, load->children) {
-        transform_load(aug, xfm);
+        if (transform_validate(aug, xfm) == 0)
+            transform_load(aug, xfm);
     }
     tree_clean(aug->origin);
     return 0;
@@ -764,28 +752,33 @@ static int unlink_removed_files(struct augeas *aug,
 
 int aug_save(struct augeas *aug) {
     int ret = 0;
-    struct tree *files;
+    struct tree *meta = tree_child(aug->origin, "augeas");
+    struct tree *meta_files = tree_child(meta, "files");
+    struct tree *files = tree_child(aug->origin, "files");
+    struct tree *load = tree_child(meta, "load");
 
     if (update_save_flags(aug) < 0)
         return -1;
 
-    files = tree_find(aug->origin, AUGEAS_FILES_TREE);
     if (files == NULL)
         return -1;
 
+    if (meta == NULL || load == NULL)
+        return 0;
+
     aug_rm(aug, AUGEAS_EVENTS_SAVED);
+
+    list_for_each(xfm, load->children)
+        transform_validate(aug, xfm);
 
     if (files->dirty) {
         list_for_each(t, files->children) {
             if (tree_save(aug, t, AUGEAS_FILES_TREE) == -1)
                 ret = -1;
         }
-        /* Remove files whose entire subtree was removed. META
-         * will be NULL if all files are new
-         */
-        struct tree *meta = tree_find(aug->origin, AUGEAS_META_FILES);
-        if (meta != NULL) {
-            if (unlink_removed_files(aug, files, meta) < 0)
+        /* Remove files whose entire subtree was removed. */
+        if (meta_files != NULL) {
+            if (unlink_removed_files(aug, files, meta_files) < 0)
                 ret = -1;
         }
     }

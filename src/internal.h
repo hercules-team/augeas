@@ -321,6 +321,8 @@ struct tree *make_tree(char *label, char *value,
 struct tree  *make_tree_origin(struct tree *root);
 
 int tree_replace(struct tree *origin, const char *path, struct tree *sub);
+/* Make a new tree node and append it to parent's children */
+struct tree *tree_append(struct tree *parent, char *label, char *value);
 
 int tree_rm(struct pathx *p);
 int tree_unlink(struct tree *tree);

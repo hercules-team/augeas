@@ -54,6 +54,13 @@ void free_transform(struct transform *xform);
  * are glob patterns used to filter which files to transform.
  */
 
+/* Verify that the tree XFM represents a valid transform. If it does not,
+ * add an 'error' child to it.
+ *
+ * Return 0 if XFM is a valid transform, -1 otherwise.
+ */
+int transform_validate(struct augeas *aug, struct tree *xfm);
+
 /* Load all files matching the TRANSFORM's filter into the tree in AUG by
  * applying the TRANSFORM's lens to their contents and putting the
  * resulting tree under "/files" + filename. Also stores some information

@@ -99,6 +99,40 @@ static void testNoLoad(CuTest *tc) {
     aug_close(aug);
 }
 
+static void invalidLens(CuTest *tc, augeas *aug, const char *lens) {
+    int r, nmatches;
+
+    r = aug_set(aug, "/augeas/load/Junk/lens", lens);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_set(aug, "/augeas/load/Junk/incl", "/dev/null");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    nmatches = aug_match(aug, "/augeas/load/Junk/error", NULL);
+    CuAssertIntEquals(tc, 1, nmatches);
+}
+
+static void testInvalidLens(CuTest *tc) {
+    augeas *aug = NULL;
+    int r;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+
+    r = aug_rm(aug, "/augeas/load/*");
+    CuAssertTrue(tc, r >= 0);
+
+    invalidLens(tc, aug, NULL);
+    invalidLens(tc, aug, "@Nomodule");
+    invalidLens(tc, aug, "@Util");
+    invalidLens(tc, aug, "Nomodule.noelns");
+
+    aug_close(aug);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -106,6 +140,7 @@ int main(void) {
 
     SUITE_ADD_TEST(suite, testDefault);
     SUITE_ADD_TEST(suite, testNoLoad);
+    SUITE_ADD_TEST(suite, testInvalidLens);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)

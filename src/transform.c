@@ -402,6 +402,25 @@ static int load_file(struct augeas *aug, struct lens *lens, char *filename) {
     return result;
 }
 
+/* The lens for a transform can be referred to in one of two ways:
+ * either by a fully qualified name "Module.lens" or by the special
+ * syntax "@Module"; the latter means we should take the lens from the
+ * autoload transform for Module
+ */
+static struct lens *lens_from_name(struct augeas *aug, const char *name) {
+    if (name[0] == '@') {
+        struct module *modl = NULL;
+        for (modl = aug->modules;
+             modl != NULL && !streqv(modl->name, name + 1);
+             modl = modl->next);
+        if (modl == NULL || modl->autoload == NULL)
+            return NULL;
+        return modl->autoload->lens;
+    } else {
+        return lens_lookup(aug, name);
+    }
+}
+
 static struct lens *xfm_lens(struct augeas *aug, struct tree *xfm) {
     struct tree *l = NULL;
 
@@ -411,23 +430,53 @@ static struct lens *xfm_lens(struct augeas *aug, struct tree *xfm) {
 
     if (l == NULL || l->value == NULL)
         return NULL;
+    return lens_from_name(aug, l->value);
+}
 
-    /* The lens for a transform can be referred to in one of two ways:
-     * either by a fully qualified name "Module.lens" or by the special
-     * syntax "@Module"; the latter means we should take the lens from the
-     * autoload transform for Module
-     */
-    if (l->value[0] == '@') {
-        struct module *modl = NULL;
-        for (modl = aug->modules;
-             modl != NULL && !streqv(modl->name, l->value + 1);
-             modl = modl->next);
-        if (modl == NULL || modl->autoload == NULL)
-            return NULL;
-        return modl->autoload->lens;
-    } else {
-        return lens_lookup(aug, l->value);
+static void xfm_error(struct tree *xfm, const char *msg) {
+    char *v = strdup(msg);
+    char *l = strdup("error");
+    struct tree *e = NULL;
+
+    if (l == NULL || v == NULL)
+        return;
+    e = tree_append(xfm, l, v);
+}
+
+int transform_validate(struct augeas *aug, struct tree *xfm) {
+    struct tree *l = NULL;
+
+    for (struct tree *t = xfm->children; t != NULL; ) {
+        if (streqv(t->label, "lens"))
+            l = t;
+        if (streqv(t->label, "error")) {
+            struct tree *del = t;
+            t = del->next;
+            tree_unlink(del);
+        } else {
+            t = t->next;
+        }
     }
+
+    if (l == NULL) {
+        xfm_error(xfm, "missing a child with label 'lens'");
+        return -1;
+    }
+    if (l->value == NULL) {
+        xfm_error(xfm, "the 'lens' node does not contain a lens name");
+        return -1;
+    }
+    if (lens_from_name(aug, l->value) == NULL) {
+        char *msg;
+        if (asprintf(&msg, "the lens '%s' does not exist", l->value) < 0) {
+            xfm_error(xfm, "the lens does not exist");
+        } else {
+            xfm_error(xfm, msg);
+            free(msg);
+        }
+        return -1;
+    }
+    return 0;
 }
 
 int transform_load(struct augeas *aug, struct tree *xfm) {
