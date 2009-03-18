@@ -239,6 +239,22 @@ static int cmd_save(ATTRIBUTE_UNUSED char *args[]) {
     return r;
 }
 
+static int cmd_load(ATTRIBUTE_UNUSED char *args[]) {
+    int r;
+    r = aug_load(aug);
+    if (r == -1) {
+        printf("Loading failed\n");
+    } else {
+        r = aug_match(aug, "/augeas/events/saved", NULL);
+        if (r > 0) {
+            printf("Saved %d file(s)\n", r);
+        } else if (r < 0) {
+            printf("Error during match: %d\n", r);
+        }
+    }
+    return r;
+}
+
 static int cmd_ins(char *args[]) {
     const char *label = args[0];
     const char *where = args[1];
@@ -372,6 +388,9 @@ static const struct command const commands[] = {
     { "save", 0, 0, cmd_save, "save",
       "Save all pending changes to disk. For now, files are not overwritten.\n"
       "        Instead, new files with extension .augnew are created"
+    },
+    { "load", 0, 0, cmd_load, "load",
+      "Load files accordig to the transforms in /augeas/load."
     },
     { "help", 0, 0, cmd_help, "help",
       "Print this help text"
