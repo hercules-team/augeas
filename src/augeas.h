@@ -44,8 +44,9 @@ enum aug_flags {
                                      expensive it is not done by default */
     AUG_NO_STDINC    = (1 << 3),   /* Do not use the builtin load path for
                                      modules */
-    AUG_SAVE_NOOP    = (1 << 4)   /* Make save a no-op process, just record
+    AUG_SAVE_NOOP    = (1 << 4),  /* Make save a no-op process, just record
                                      what would have changed */
+    AUG_NO_LOAD      = (1 << 5)   /* Do not load the tree from AUG_INIT */
 };
 
 /* Function: aug_init

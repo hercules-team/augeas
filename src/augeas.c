@@ -278,8 +278,9 @@ struct augeas *aug_init(const char *root, const char *loadpath,
             continue;
         tree_from_transform(result, modl->name, xform);
     }
-    if (aug_load(result) < 0)
-        goto error;
+    if (!(result->flags & AUG_NO_LOAD))
+        if (aug_load(result) < 0)
+            goto error;
 
     return result;
 
