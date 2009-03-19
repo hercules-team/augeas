@@ -598,7 +598,8 @@ static void create_concat(struct lens *lens, struct state *state) {
     set_split(state, split);
     for (int i=0; i < lens->nchildren; i++) {
         if (state->split == NULL) {
-            syntax_error(lens->info, "Short split for concat");
+            put_error(state, lens,
+                      "Not enough components in concat");
             list_free(split);
             return;
         }
