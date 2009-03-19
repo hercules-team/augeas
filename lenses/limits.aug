@@ -64,8 +64,6 @@ let entry      = [ domain . spc
 
 let lns        = (comment|empty|entry) *
 
-let filter
-               = incl "/etc/security/limits.conf"
-               . Util.stdexcl
+let filter     = incl "/etc/security/limits.conf"
 
 let xfm        = transform lns filter
