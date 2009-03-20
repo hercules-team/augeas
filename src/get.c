@@ -30,6 +30,10 @@
 #include "internal.h"
 #include "memory.h"
 
+/* Our favorite error message */
+static const char *const short_iteration =
+    "Iterated lens matched less than it should";
+
 #define assert_error(state, format, args ...) \
     assert_error_at(__FILE__, __LINE__, &(state->info), format, ## args)
 
@@ -521,7 +525,7 @@ static struct tree *get_quant_star(struct lens *lens, struct state *state) {
     state->regs = old_regs;
     state->nreg = old_nreg;
     if (size != 0) {
-        get_error(state, lens, "Short iteration");
+        get_error(state, lens, "%s", short_iteration);
         state->error->pos = start;
     }
     return tree;
@@ -554,7 +558,7 @@ static struct skel *parse_quant_star(struct lens *lens, struct state *state,
     state->regs = old_regs;
     state->nreg = old_nreg;
     if (size != 0) {
-        get_error(state, lens, "Short iteration");
+        get_error(state, lens, "%s", short_iteration);
     }
     return skel;
 }
