@@ -194,6 +194,17 @@ static int cmd_set(char *args[]) {
     return r;
 }
 
+static int cmd_defvar(char *args[]) {
+    const char *name = args[0];
+    const char *path = cleanpath(args[1]);
+    int r;
+
+    r = aug_defvar(aug, name, path);
+    if (r == -1)
+        printf ("Failed\n");
+    return r;
+}
+
 static int cmd_clear(char *args[]) {
     const char *path = cleanpath(args[0]);
     int r;
@@ -391,6 +402,11 @@ static const struct command const commands[] = {
     },
     { "load", 0, 0, cmd_load, "load",
       "Load files accordig to the transforms in /augeas/load."
+    },
+    { "defvar", 2, 2, cmd_defvar, "defvar <NAME> <EXPR>",
+      "Define the variable NAME to the result of evalutating EXPR. The\n"
+      "        variable can be used in path expressions as $NAME. Note that EXPR\n"
+      "        is evaluated when the variable is defined, not when it is used."
     },
     { "help", 0, 0, cmd_help, "help",
       "Print this help text"
