@@ -90,6 +90,7 @@ AC_OUTPUT(Makefile \
           src/Makefile \
           man/Makefile \
           tests/Makefile \
+          examples/Makefile \
 	  doc/Makefile \
 	  doc/naturaldocs/Makefile \
           augeas.pc augeas.spec)
