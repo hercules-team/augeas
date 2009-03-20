@@ -60,6 +60,34 @@ static void tree_clean(struct tree *tree) {
     tree->dirty = 0;
 }
 
+static struct tree *tree_child(struct tree *tree, const char *label) {
+    if (tree == NULL)
+        return NULL;
+
+    list_for_each(child, tree->children) {
+        if (streqv(label, child->label))
+            return child;
+    }
+    return NULL;
+}
+
+/* Get first existing child or create one */
+static struct tree *tree_child_cr(struct tree *tree, const char *label) {
+    static struct tree *child = NULL;
+
+    if (tree == NULL)
+        return NULL;
+
+    child = tree_child(tree, label);
+    if (child == NULL) {
+        char *l = strdup(label);
+        if (l == NULL)
+            return NULL;
+        child = tree_append(tree, l, NULL);
+    }
+    return child;
+}
+
 /* Parse a path expression. Report errors in /augeas/pathx/error */
 static struct pathx *parse_user_pathx(const struct augeas *aug,
                                       const char *path) {
@@ -94,17 +122,6 @@ static struct pathx *parse_user_pathx(const struct augeas *aug,
     return NULL;
 }
 
-static struct tree *tree_child(struct tree *tree, const char *label) {
-    if (tree == NULL)
-        return NULL;
-
-    list_for_each(child, tree->children) {
-        if (streqv(label, child->label))
-            return child;
-    }
-    return NULL;
-}
-
 static const char *init_root(const char *root0) {
     char *root;
 
@@ -136,20 +153,16 @@ struct tree *tree_append(struct tree *parent,
 static struct tree *tree_from_transform(struct augeas *aug,
                                         const char *modname,
                                         struct transform *xfm) {
-    struct tree *meta = tree_child(aug->origin, "augeas");
+    struct tree *meta = tree_child_cr(aug->origin, "augeas");
     struct tree *load = NULL, *txfm = NULL;
     char *m = NULL, *q = NULL;
 
     if (meta == NULL)
         goto error;
 
-    load = tree_child(meta, "load");
-    if (load == NULL) {
-        char *l = strdup("load");
-        load = tree_append(meta, l, NULL);
-        if (load == NULL)
+    load = tree_child_cr(meta, "load");
+    if (load == NULL)
             goto error;
-    }
     if (modname != NULL) {
         m = strdup(modname);
         if (m == NULL)
@@ -285,13 +298,13 @@ static void tree_unlink_children(struct tree *tree) {
 }
 
 int aug_load(struct augeas *aug) {
-    struct tree *meta = tree_child(aug->origin, "augeas");
-    struct tree *meta_files = tree_child(meta, "files");
-    struct tree *files = tree_child(aug->origin, "files");
-    struct tree *load = tree_child(meta, "load");
+    struct tree *meta = tree_child_cr(aug->origin, "augeas");
+    struct tree *meta_files = tree_child_cr(meta, "files");
+    struct tree *files = tree_child_cr(aug->origin, "files");
+    struct tree *load = tree_child_cr(meta, "load");
 
     if (load == NULL)
-        return 0;
+        return -1;
 
     tree_unlink_children(meta_files);
     tree_unlink_children(files);
@@ -646,8 +659,8 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
 static int tree_save(struct augeas *aug, struct tree *tree,
                      const char *path) {
     int result = 0;
-    struct tree *meta = tree_child(aug->origin, "augeas");
-    struct tree *load = tree_child(meta, "load");
+    struct tree *meta = tree_child_cr(aug->origin, "augeas");
+    struct tree *load = tree_child_cr(meta, "load");
 
     // FIXME: We need to detect subtrees that aren't saved by anything
 
@@ -752,19 +765,16 @@ static int unlink_removed_files(struct augeas *aug,
 
 int aug_save(struct augeas *aug) {
     int ret = 0;
-    struct tree *meta = tree_child(aug->origin, "augeas");
-    struct tree *meta_files = tree_child(meta, "files");
-    struct tree *files = tree_child(aug->origin, "files");
-    struct tree *load = tree_child(meta, "load");
+    struct tree *meta = tree_child_cr(aug->origin, "augeas");
+    struct tree *meta_files = tree_child_cr(meta, "files");
+    struct tree *files = tree_child_cr(aug->origin, "files");
+    struct tree *load = tree_child_cr(meta, "load");
 
     if (update_save_flags(aug) < 0)
         return -1;
 
-    if (files == NULL)
+    if (files == NULL || meta == NULL || load == NULL)
         return -1;
-
-    if (meta == NULL || load == NULL)
-        return 0;
 
     aug_rm(aug, AUGEAS_EVENTS_SAVED);
 
