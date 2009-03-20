@@ -58,15 +58,15 @@ static const int glob_flags = GLOB_NOSORT;
  *   error/path: path to tree node where error occurred (for put errors)
  *   error/message : human-readable error message
  */
-static const char *const path_node = "/path";
-static const char *const info_node = "/lens/info";
-static const char *const id_node = "/lens/id";
+static const char *const s_path = "path";
+static const char *const s_lens = "lens";
+static const char *const s_info = "info";
+static const char *const s_id   = "id";
 
-static const char *const err_node = "/error";
-/* These are all put underneath "/error" */
-static const char *const err_pos_node = "/pos";
-static const char *const err_path_node = "/path";
-static const char *const err_msg_node = "/message";
+static const char *const s_error = "error";
+/* These are all put underneath "error" */
+static const char *const s_pos     = "pos";
+static const char *const s_message = "message";
 
 /*
  * Filters
@@ -201,10 +201,37 @@ void free_transform(struct transform *xform) {
 static char *err_path(const char *filename) {
     char *result = NULL;
     if (filename == NULL)
-        pathjoin(&result, 2, AUGEAS_META_FILES, err_node);
+        pathjoin(&result, 2, AUGEAS_META_FILES, s_error);
     else
-        pathjoin(&result, 3, AUGEAS_META_FILES, filename, err_node);
+        pathjoin(&result, 3, AUGEAS_META_FILES, filename, s_error);
     return result;
+}
+
+ATTRIBUTE_FORMAT(printf, 4, 5)
+static int err_set(struct augeas *aug, char **ep, const char *sub,
+                   const char *format, ...) {
+    int r;
+    va_list ap;
+    size_t ep_len = strlen(*ep);
+    char *value = NULL;
+
+    r = pathjoin(ep, 1, sub);
+    if (r < 0)
+        goto error;
+
+    va_start(ap, format);
+    r = vasprintf(&value, format, ap);
+    va_end(ap);
+    if (r < 0) {
+        value = NULL;
+        goto error;
+    }
+
+    r = aug_set(aug, *ep, value);
+ error:
+    free(value);
+    (*ep)[ep_len] = '\0';
+    return (r < 0) ? -1 : 0;
 }
 
 /* Record an error in the tree. The error will show up underneath
@@ -217,13 +244,11 @@ static int store_error(struct augeas *aug,
                        const char *status, int errnum,
                        const struct lns_error *err) {
     char *ep = err_path(filename);
-    size_t ep_len;
     int r;
     int result = -1;
 
     if (ep == NULL)
         return -1;
-    ep_len = strlen(ep);
 
     aug_rm(aug, ep);
     if (status != NULL) {
@@ -233,45 +258,20 @@ static int store_error(struct augeas *aug,
 
         if (err != NULL) {
             if (err->pos > 0) {
-                char *pos;
-
-                r = pathjoin(&ep, 1, err_pos_node);
-                if (r < 0)
-                    goto done;
-                r = asprintf(&pos, "%d", err->pos);
-                if (r < 0)
-                    goto done;
-                r = aug_set(aug, ep, pos);
-                FREE(pos);
+                r = err_set(aug, &ep, s_pos, "%d", err->pos);
                 if (r < 0)
                     goto done;
             } else {
-                char *p;
-
-                r = pathjoin(&ep, 1, err_path_node);
-                if (r < 0)
-                    goto done;
-                r = asprintf(&p, "%s%s", path, err->path);
-                if (r < 0)
-                    goto done;
-                r = aug_set(aug, ep, p);
-                FREE(p);
+                r = err_set(aug, &ep, s_path, "%s%s", path, err->path);
                 if (r < 0)
                     goto done;
             }
-            ep[ep_len] = '\0';
-            r = pathjoin(&ep, 1, err_msg_node);
-            if (r < 0)
-                goto done;
-            r = aug_set(aug, ep, err->message);
+            r = err_set(aug, &ep, s_message, "%s", err->message);
             if (r < 0)
                 goto done;
         } else if (errnum != 0) {
             const char *msg = strerror(errnum);
-            r = pathjoin(&ep, 1, err_msg_node);
-            if (r < 0)
-                goto done;
-            r = aug_set(aug, ep, msg);
+            r = err_set(aug, &ep, s_message, "%s", msg);
             if (r < 0)
                 goto done;
         }
@@ -296,7 +296,7 @@ static int add_load_info(struct augeas *aug, const char *filename,
         goto done;
     end = strlen(p);
 
-    r = pathjoin(&p, 1, path_node);
+    r = pathjoin(&p, 1, s_path);
     if (r < 0)
         goto done;
 
@@ -305,7 +305,7 @@ static int add_load_info(struct augeas *aug, const char *filename,
         goto done;
     p[end] = '\0';
 
-    r = pathjoin(&p, 1, info_node);
+    r = pathjoin(&p, 2, s_lens, s_info);
     if (r < 0)
         goto done;
 
@@ -318,7 +318,7 @@ static int add_load_info(struct augeas *aug, const char *filename,
         goto done;
     p[end] = '\0';
 
-    r = pathjoin(&p, 1, id_node);
+    r = pathjoin(&p, 2, s_lens, s_id);
     if (r < 0)
         goto done;
 
