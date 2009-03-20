@@ -446,39 +446,36 @@ static struct value *expr_value(struct expr *expr, struct state *state) {
 static void eval_expr(struct expr *expr, struct state *state);
 
 static void func_last(struct state *state) {
-    value_ind_t vind;
-
-    vind = make_value(T_NUMBER, state);
+    value_ind_t vind = make_value(T_NUMBER, state);
     CHECK_ERROR;
+
     state->value_pool[vind].number = state->ctx_len;
     push_value(vind, state);
 }
 
 static void func_position(struct state *state) {
-    value_ind_t vind;
-
-    vind = make_value(T_NUMBER, state);
+    value_ind_t vind = make_value(T_NUMBER, state);
     CHECK_ERROR;
+
     state->value_pool[vind].number = state->ctx_pos;
     push_value(vind, state);
 }
 
 static void func_count(struct state *state) {
-    value_ind_t vind;
-    struct value *ns = pop_value(state);
-
-    vind = make_value(T_NUMBER, state);
+    value_ind_t vind = make_value(T_NUMBER, state);
     CHECK_ERROR;
+
+    struct value *ns = pop_value(state);
     state->value_pool[vind].number = ns->nodeset->used;
     push_value(vind, state);
 }
 
 static void func_label(struct state *state) {
-    value_ind_t vind;
+    value_ind_t vind = make_value(T_STRING, state);
     char *s;
 
-    vind = make_value(T_STRING, state);
     CHECK_ERROR;
+
     if (state->ctx->label)
         s = strdup(state->ctx->label);
     else
@@ -553,15 +550,14 @@ static void eval_eq(struct state *state, int neq) {
 }
 
 static void eval_arith(struct state *state, enum binary_op op) {
+    value_ind_t vind = make_value(T_NUMBER, state);
     struct value *r = pop_value(state);
     struct value *l = pop_value(state);
-    value_ind_t vind;
     int res;
 
     assert(l->tag == T_NUMBER);
     assert(r->tag == T_NUMBER);
 
-    vind = make_value(T_NUMBER, state);
     CHECK_ERROR;
 
     if (op == OP_PLUS)
