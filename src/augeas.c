@@ -31,8 +31,13 @@
 #include <argz.h>
 #include <string.h>
 
-/* We always have a toplevel entry for P_ROOT */
-#define P_ROOT   "augeas"
+/* Some popular labels that we use in /augeas */
+static const char *const s_augeas = "augeas";
+static const char *const s_files  = "files";
+static const char *const s_load   = "load";
+static const char *const s_pathx  = "pathx";
+static const char *const s_error  = "error";
+static const char *const s_pos    = "pos";
 
 #define TREE_HIDDEN(tree) ((tree)->label == NULL)
 
@@ -88,37 +93,57 @@ static struct tree *tree_child_cr(struct tree *tree, const char *label) {
     return child;
 }
 
+static struct tree *tree_path_cr(struct tree *tree, int n, ...) {
+    va_list ap;
+
+    va_start(ap, n);
+    for (int i=0; i < n; i++) {
+        const char *l = va_arg(ap, const char *);
+        tree = tree_child_cr(tree, l);
+    }
+    va_end(ap);
+    return tree;
+}
+
+static int tree_set_value(struct tree *tree, const char *value) {
+    if (tree->value != NULL) {
+        free(tree->value);
+        tree->value = NULL;
+    }
+    if (value != NULL) {
+        tree->value = strdup(value);
+        if (tree->value == NULL)
+            return -1;
+    }
+    tree_mark_dirty(tree);
+    return 0;
+}
+
 /* Parse a path expression. Report errors in /augeas/pathx/error */
 static struct pathx *parse_user_pathx(const struct augeas *aug,
                                       const char *path) {
     struct pathx *result;
-    struct pathx *err;
     int    pos;
 
     if (pathx_parse(aug->origin, path, &result) == PATHX_NOERROR)
         return result;
 
-    if (pathx_parse(aug->origin, AUGEAS_META_PATHX "/error", &err)
-        != PATHX_NOERROR) {
-        free_pathx(result);
+    struct tree *error =
+        tree_path_cr(aug->origin, 3, s_augeas, s_pathx, s_error);
+    if (error == NULL)
         return NULL;
-    }
-    tree_set(err, pathx_error(result, NULL, &pos));
-    free_pathx(err);
+    tree_set_value(error, pathx_error(result, NULL, &pos));
 
-    if (pathx_parse(aug->origin, AUGEAS_META_PATHX "/error/pos", &err)
-        == PATHX_NOERROR) {
-        char *msg;
-        if (ALLOC_N(msg, strlen(path) + 4) >= 0) {
-            strncpy(msg, path, pos);
-            strcat(msg, "|=|");
-            strcat(msg, path + pos);
-            tree_set(err, msg);
-            free(msg);
-        }
+    struct tree *tpos = tree_child_cr(error, s_pos);
+    if (tpos == NULL)
+        return NULL;
+
+    free(tpos->value);
+    if (ALLOC_N(tpos->value, strlen(path) + 4) >= 0) {
+        strncpy(tpos->value, path, pos);
+        strcat(tpos->value, "|=|");
+        strcat(tpos->value, path + pos);
     }
-    free_pathx(err);
-    free_pathx(result);
     return NULL;
 }
 
@@ -153,14 +178,14 @@ struct tree *tree_append(struct tree *parent,
 static struct tree *tree_from_transform(struct augeas *aug,
                                         const char *modname,
                                         struct transform *xfm) {
-    struct tree *meta = tree_child_cr(aug->origin, "augeas");
+    struct tree *meta = tree_child_cr(aug->origin, s_augeas);
     struct tree *load = NULL, *txfm = NULL;
     char *m = NULL, *q = NULL;
 
     if (meta == NULL)
         goto error;
 
-    load = tree_child_cr(meta, "load");
+    load = tree_child_cr(meta, s_load);
     if (load == NULL)
             goto error;
     if (modname != NULL) {
@@ -210,7 +235,7 @@ struct augeas *aug_init(const char *root, const char *loadpath,
 
     result->root = init_root(root);
 
-    result->origin->children->label = strdup(P_ROOT);
+    result->origin->children->label = strdup(s_augeas);
 
     result->modpathz = NULL;
     result->nmodpath = 0;
@@ -298,10 +323,10 @@ static void tree_unlink_children(struct tree *tree) {
 }
 
 int aug_load(struct augeas *aug) {
-    struct tree *meta = tree_child_cr(aug->origin, "augeas");
-    struct tree *meta_files = tree_child_cr(meta, "files");
-    struct tree *files = tree_child_cr(aug->origin, "files");
-    struct tree *load = tree_child_cr(meta, "load");
+    struct tree *meta = tree_child_cr(aug->origin, s_augeas);
+    struct tree *meta_files = tree_child_cr(meta, s_files);
+    struct tree *files = tree_child_cr(aug->origin, s_files);
+    struct tree *load = tree_child_cr(meta, s_load);
 
     if (load == NULL)
         return -1;
@@ -345,16 +370,9 @@ struct tree *tree_set(struct pathx *p, const char *value) {
     if (r == -1)
         return NULL;
 
-    if (tree->value != NULL) {
-        free(tree->value);
-        tree->value = NULL;
-    }
-    if (value != NULL) {
-        tree->value = strdup(value);
-        if (tree->value == NULL)
-            return NULL;
-    }
-    tree_mark_dirty(tree);
+    r = tree_set_value(tree, value);
+    if (r < 0)
+        return NULL;
     return tree;
 }
 
@@ -659,8 +677,8 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
 static int tree_save(struct augeas *aug, struct tree *tree,
                      const char *path) {
     int result = 0;
-    struct tree *meta = tree_child_cr(aug->origin, "augeas");
-    struct tree *load = tree_child_cr(meta, "load");
+    struct tree *meta = tree_child_cr(aug->origin, s_augeas);
+    struct tree *load = tree_child_cr(meta, s_load);
 
     // FIXME: We need to detect subtrees that aren't saved by anything
 
@@ -765,10 +783,10 @@ static int unlink_removed_files(struct augeas *aug,
 
 int aug_save(struct augeas *aug) {
     int ret = 0;
-    struct tree *meta = tree_child_cr(aug->origin, "augeas");
-    struct tree *meta_files = tree_child_cr(meta, "files");
-    struct tree *files = tree_child_cr(aug->origin, "files");
-    struct tree *load = tree_child_cr(meta, "load");
+    struct tree *meta = tree_child_cr(aug->origin, s_augeas);
+    struct tree *meta_files = tree_child_cr(meta, s_files);
+    struct tree *files = tree_child_cr(aug->origin, s_files);
+    struct tree *load = tree_child_cr(meta, s_load);
 
     if (update_save_flags(aug) < 0)
         return -1;
