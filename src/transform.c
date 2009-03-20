@@ -287,6 +287,13 @@ static int store_error(struct augeas *aug,
             if (err->path != NULL) {
                 err_set(aug, &ep, s_path, "%s%s", path, err->path);
             }
+            if (err->lens != NULL) {
+                char *fi = format_info(err->lens->info);
+                if (fi != NULL) {
+                    err_set(aug, &ep, s_lens, "%s", fi);
+                    free(fi);
+                }
+            }
             err_set(aug, &ep, s_message, "%s", err->message);
         } else if (errnum != 0) {
             const char *msg = strerror(errnum);
