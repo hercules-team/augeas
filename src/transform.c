@@ -67,6 +67,8 @@ static const char *const s_error = "error";
 /* These are all put underneath "error" */
 static const char *const s_pos     = "pos";
 static const char *const s_message = "message";
+static const char *const s_line    = "line";
+static const char *const s_char    = "char";
 
 /*
  * Filters
@@ -234,6 +236,20 @@ static int err_set(struct augeas *aug, char **ep, const char *sub,
     return (r < 0) ? -1 : 0;
 }
 
+static void
+calc_line_ofs(const char *text, size_t pos, size_t *line, size_t *ofs)
+{
+    *line = 1;
+    *ofs = 0;
+    for (const char *t = text; t < text + pos; t++) {
+        *ofs += 1;
+        if (*t == '\n') {
+            *ofs = 0;
+            *line += 1;
+        }
+    }
+}
+
 /* Record an error in the tree. The error will show up underneath
  * /augeas/FILENAME/error. PATH is the path to the toplevel node in the
  * tree where the lens application happened. When STATUS is NULL, just
@@ -242,7 +258,7 @@ static int err_set(struct augeas *aug, char **ep, const char *sub,
 static int store_error(struct augeas *aug,
                        const char *filename, const char *path,
                        const char *status, int errnum,
-                       const struct lns_error *err) {
+                       const struct lns_error *err, const char *text) {
     char *ep = err_path(filename);
     int r;
     int result = -1;
@@ -257,11 +273,22 @@ static int store_error(struct augeas *aug,
             goto done;
 
         if (err != NULL) {
-            if (err->pos > 0) {
+            if (err->pos >= 0) {
+                size_t line, ofs;
                 r = err_set(aug, &ep, s_pos, "%d", err->pos);
                 if (r < 0)
                     goto done;
-            } else {
+                if (text != NULL) {
+                    calc_line_ofs(text, err->pos, &line, &ofs);
+                    r = err_set(aug, &ep, s_line, "%zd", line);
+                    if (r < 0)
+                        goto done;
+                    r = err_set(aug, &ep, s_char, "%zd", ofs);
+                    if (r < 0)
+                        goto done;
+                }
+            }
+            if (err->path != NULL) {
                 r = err_set(aug, &ep, s_path, "%s%s", path, err->path);
                 if (r < 0)
                     goto done;
@@ -393,7 +420,7 @@ static int load_file(struct augeas *aug, struct lens *lens, char *filename) {
     result = 0;
  done:
     store_error(aug, filename + strlen(aug->root) - 1, path, err_status,
-                errno, err);
+                errno, err, text);
     free_lns_error(err);
     free(path);
     free_tree(tree);
@@ -821,7 +848,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
     {
         const char *emsg =
             dyn_err_status == NULL ? err_status : dyn_err_status;
-        store_error(aug, filename, path, emsg, errno, err);
+        store_error(aug, filename, path, emsg, errno, err, NULL);
     }
     free(dyn_err_status);
     lens_release(lens);
@@ -909,7 +936,7 @@ int remove_file(struct augeas *aug, struct tree *tree) {
     {
         const char *emsg =
             dyn_err_status == NULL ? err_status : dyn_err_status;
-        store_error(aug, filename, path, emsg, errno, NULL);
+        store_error(aug, filename, path, emsg, errno, NULL, NULL);
     }
     free(path);
     free(augorig);
