@@ -272,35 +272,25 @@ static int store_error(struct augeas *aug,
         if (r < 0)
             goto done;
 
+        /* Errors from err_set are ignored on purpose. We try
+         * to report as much as we can */
         if (err != NULL) {
             if (err->pos >= 0) {
                 size_t line, ofs;
-                r = err_set(aug, &ep, s_pos, "%d", err->pos);
-                if (r < 0)
-                    goto done;
+                err_set(aug, &ep, s_pos, "%d", err->pos);
                 if (text != NULL) {
                     calc_line_ofs(text, err->pos, &line, &ofs);
-                    r = err_set(aug, &ep, s_line, "%zd", line);
-                    if (r < 0)
-                        goto done;
-                    r = err_set(aug, &ep, s_char, "%zd", ofs);
-                    if (r < 0)
-                        goto done;
+                    err_set(aug, &ep, s_line, "%zd", line);
+                    err_set(aug, &ep, s_char, "%zd", ofs);
                 }
             }
             if (err->path != NULL) {
-                r = err_set(aug, &ep, s_path, "%s%s", path, err->path);
-                if (r < 0)
-                    goto done;
+                err_set(aug, &ep, s_path, "%s%s", path, err->path);
             }
-            r = err_set(aug, &ep, s_message, "%s", err->message);
-            if (r < 0)
-                goto done;
+            err_set(aug, &ep, s_message, "%s", err->message);
         } else if (errnum != 0) {
             const char *msg = strerror(errnum);
-            r = err_set(aug, &ep, s_message, "%s", msg);
-            if (r < 0)
-                goto done;
+            err_set(aug, &ep, s_message, "%s", msg);
         }
     }
 
