@@ -394,6 +394,49 @@ void free_pathx(struct pathx *pathx) {
 }
 
 /*
+ * Nodeset helpers
+ */
+static struct nodeset *make_nodeset(struct state *state) {
+    struct nodeset *result;
+    if (ALLOC(result) < 0)
+        STATE_ENOMEM;
+    return result;
+}
+
+static void ns_add(struct nodeset *ns, struct tree *node,
+                   struct state *state) {
+    if (ns->used >= ns->size) {
+        size_t size = 2 * ns->size;
+        if (size < 10) size = 10;
+        if (REALLOC_N(ns->nodes, size) < 0)
+            STATE_ENOMEM;
+        ns->size = size;
+    }
+    ns->nodes[ns->used] = node;
+    ns->used += 1;
+}
+
+static struct nodeset *
+clone_nodeset(struct nodeset *ns, struct state *state)
+{
+    struct nodeset *clone;
+    if (ALLOC(clone) < 0) {
+        STATE_ENOMEM;
+        return NULL;
+    }
+    if (ALLOC_N(clone->nodes, ns->used) < 0) {
+        free(clone);
+        STATE_ENOMEM;
+        return NULL;
+    }
+    clone->used = ns->used;
+    clone->size = ns->size;
+    for (int i=0; i < ns->used; i++)
+        clone->nodes[i] = ns->nodes[i];
+    return clone;
+}
+
+/*
  * Handling values
  */
 static value_ind_t make_value(enum type tag, struct state *state) {
@@ -413,6 +456,35 @@ static value_ind_t make_value(enum type tag, struct state *state) {
     }
     state->value_pool[state->value_pool_used].tag = tag;
     return state->value_pool_used++;
+}
+
+ATTRIBUTE_UNUSED
+static value_ind_t clone_value(struct value *v, struct state *state) {
+    value_ind_t vind = make_value(v->tag, state);
+    CHECK_ERROR_RET0;
+    struct value *clone = state->value_pool + vind;
+
+    switch (v->tag) {
+    case T_NODESET:
+        clone->nodeset = clone_nodeset(v->nodeset, state);
+        break;
+    case T_NUMBER:
+        clone->number = v->number;
+        break;
+    case T_STRING:
+        clone->string = strdup(v->string);
+        if (clone->string == NULL) {
+            FREE(clone);
+            STATE_ENOMEM;
+        }
+        break;
+    case T_BOOLEAN:
+        clone->boolval = v->boolval;
+        break;
+    default:
+        assert(0);
+    }
+    return vind;
 }
 
 static value_ind_t pop_value_ind(struct state *state) {
@@ -689,26 +761,6 @@ static int eval_pred(struct expr *expr, struct state *state) {
     default:
         assert(0);
     }
-}
-
-static struct nodeset *make_nodeset(struct state *state) {
-    struct nodeset *result;
-    if (ALLOC(result) < 0)
-        STATE_ENOMEM;
-    return result;
-}
-
-static void ns_add(struct nodeset *ns, struct tree *node,
-                   struct state *state) {
-    if (ns->used >= ns->size) {
-        size_t size = 2 * ns->size;
-        if (size < 10) size = 10;
-        if (REALLOC_N(ns->nodes, size) < 0)
-            STATE_ENOMEM;
-        ns->size = size;
-    }
-    ns->nodes[ns->used] = node;
-    ns->used += 1;
 }
 
 /* Return an array of nodesets, one for each step in the locpath.
