@@ -1715,6 +1715,22 @@ static struct tree *step_next(struct step *step, struct tree *ctx,
     return node;
 }
 
+static struct value *pathx_eval(struct pathx *pathx) {
+    struct state *state = pathx->state;
+    state->ctx = pathx->origin;
+    state->ctx_pos = 1;
+    state->ctx_len = 1;
+    eval_expr(state->exprs[0], state);
+    if (HAS_ERROR(state))
+        return NULL;
+
+    if (state->values_used != 1) {
+        STATE_ERROR(state, PATHX_EINTERNAL);
+        return NULL;
+    }
+    return pop_value(state);
+}
+
 struct tree *pathx_next(struct pathx *pathx) {
     if (pathx->node + 1 < pathx->nodeset->used)
         return pathx->nodeset->nodes[++pathx->node];
@@ -1724,20 +1740,11 @@ struct tree *pathx_next(struct pathx *pathx) {
 /* Find the first node in TREE matching PATH. */
 struct tree *pathx_first(struct pathx *pathx) {
     if (pathx->nodeset == NULL) {
-        /* Evaluate */
-        struct state *state = pathx->state;
-        state->ctx = pathx->origin;
-        state->ctx_pos = 1;
-        state->ctx_len = 1;
-        eval_expr(state->exprs[0], state);
-        if (HAS_ERROR(state))
-            return NULL;
+        struct value *v = pathx_eval(pathx);
 
-        if (state->values_used != 1) {
-            STATE_ERROR(state, PATHX_EINTERNAL);
+        if (HAS_ERROR(pathx->state))
             return NULL;
-        }
-        pathx->nodeset = pop_value(state)->nodeset;
+        pathx->nodeset = v->nodeset;
     }
     pathx->node = 0;
     if (pathx->nodeset->used == 0)
