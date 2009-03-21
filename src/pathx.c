@@ -123,7 +123,6 @@ static struct tree *step_next(struct step *step, struct tree *ctx,
 
 struct pathx {
     struct state   *state;
-    struct locpath *locpath;
     struct nodeset *nodeset;
     int             node;
     struct tree    *origin;
@@ -172,6 +171,12 @@ struct expr {
     };
 };
 
+struct locpath_trace {
+    unsigned int      maxns;
+    struct nodeset  **ns;
+    struct locpath   *lp;
+};
+
 /* Internal state of the evaluator/parser */
 struct state {
     pathx_errcode_t errcode;
@@ -204,6 +209,10 @@ struct state {
     struct expr  **exprs;
     size_t         exprs_used;
     size_t         exprs_size;
+    /* Trace of a locpath evaluation, needed by pathx_expand_tree.
+       Generally NULL, unless a trace is needed.
+     */
+    struct locpath_trace *locpath_trace;
 };
 
 /* We consider NULL and the empty string to be equal */
@@ -768,8 +777,10 @@ static void ns_from_locpath(struct locpath *lp, uint *maxns,
 
 static void eval_locpath(struct locpath *lp, struct state *state) {
     struct nodeset **ns = NULL;
+    struct locpath_trace *lpt = state->locpath_trace;
     uint maxns;
 
+    state->locpath_trace = NULL;
     ns_from_locpath(lp, &maxns, &ns, state);
     CHECK_ERROR;
 
@@ -778,9 +789,18 @@ static void eval_locpath(struct locpath *lp, struct state *state) {
     state->value_pool[vind].nodeset = ns[maxns];
     push_value(vind, state);
 
-    for (int i=0; i < maxns; i++)
-        free_nodeset(ns[i]);
-    FREE(ns);
+    if (lpt != NULL) {
+        assert(lpt->ns == NULL);
+        assert(lpt->lp == NULL);
+        lpt->maxns = maxns;
+        lpt->ns = ns;
+        lpt->lp = lp;
+        state->locpath_trace = lpt;
+    } else {
+        for (int i=0; i < maxns; i++)
+            free_nodeset(ns[i]);
+        FREE(ns);
+    }
 }
 
 static void eval_expr(struct expr *expr, struct state *state) {
@@ -1623,13 +1643,10 @@ int pathx_parse(const struct tree *tree, const char *txt,
     if (HAS_ERROR(state))
         goto done;
 
-    if (state->exprs[0]->type != T_NODESET
-        || state->exprs[0]->tag != E_LOCPATH) {
+    if (state->exprs[0]->type != T_NODESET) {
         STATE_ERROR(state, PATHX_ETYPE);
         goto done;
     }
-
-    (*pathx)->locpath = state->exprs[0]->locpath;
 
  done:
     return state->errcode;
@@ -1763,40 +1780,30 @@ struct tree *pathx_first(struct pathx *pathx) {
  * at the same depth match, TMATCH and SMATCH will be NULL. When exactly
  * one node matches, TMATCH will be that node, and SMATCH will be NULL.
  */
-static int locpath_search(struct locpath *lp, struct state *state,
+static int locpath_search(struct locpath_trace *lpt,
                           struct tree **tmatch, struct step **smatch) {
-    struct nodeset **ns = NULL;
-    uint maxns;
     int last;
     int result = -1;
 
-    state->ctx = *tmatch;
-    *tmatch = NULL;
-    *smatch = NULL;
-
-    ns_from_locpath(lp, &maxns, &ns, state);
-    if (HAS_ERROR(state))
-        goto done;
-
-    for (last=maxns; last >= 0 && ns[last]->used == 0; last--);
+    for (last=lpt->maxns; last >= 0 && lpt->ns[last]->used == 0; last--);
     if (last < 0) {
-        *smatch = lp->steps;
+        *smatch = lpt->lp->steps;
         result = 1;
         goto done;
     }
-    if (ns[last]->used > 1) {
+    if (lpt->ns[last]->used > 1) {
         result = -1;
         goto done;
     }
     result = 0;
-    *tmatch = ns[last]->nodes[0];
-    *smatch = lp->steps;
+    *tmatch = lpt->ns[last]->nodes[0];
+    *smatch = lpt->lp->steps;
     for (int i=0; i < last; i++)
         *smatch = (*smatch)->next;
  done:
-    for (int i=0; i <= maxns; i++)
-        free_nodeset(ns[i]);
-    FREE(ns);
+    for (int i=0; i < lpt->maxns; i++)
+        free_nodeset(lpt->ns[i]);
+    FREE(lpt->ns);
     return result;
 }
 
@@ -1809,9 +1816,17 @@ static int locpath_search(struct locpath *lp, struct state *state,
 int pathx_expand_tree(struct pathx *path, struct tree **tree) {
     int r;
     struct step *step;
+    struct locpath_trace lpt;
+
+    MEMZERO(&lpt, 1);
+    path->state->locpath_trace = &lpt;
+    pathx_eval(path);
+    path->state->locpath_trace = NULL;
+    if (HAS_ERROR(path->state))
+        goto error;
 
     *tree = path->origin;
-    r = locpath_search(path->locpath, path->state, tree, &step);
+    r = locpath_search(&lpt, tree, &step);
     if (r == -1)
         return -1;
 
