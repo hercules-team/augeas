@@ -351,6 +351,26 @@ static void free_nodeset(struct nodeset *ns) {
     }
 }
 
+/* Free all objects used by VALUE, but not VALUE itself */
+static void release_value(struct value *v) {
+    if (v == NULL)
+        return;
+
+    switch (v->tag) {
+    case T_NODESET:
+        free_nodeset(v->nodeset);
+        break;
+    case T_STRING:
+        free(v->string);
+        break;
+    case T_BOOLEAN:
+    case T_NUMBER:
+        break;
+    default:
+        assert(0);
+    }
+}
+
 static void free_state(struct state *state) {
     if (state == NULL)
         return;
@@ -359,22 +379,8 @@ static void free_state(struct state *state) {
         free_expr(state->exprs[i]);
     free(state->exprs);
 
-    for(int i=0; i < state->value_pool_used; i++) {
-        struct value *v = state->value_pool + i;
-        switch (v->tag) {
-        case T_NODESET:
-            free_nodeset(v->nodeset);
-            break;
-        case T_STRING:
-            free(v->string);
-            break;
-        case T_BOOLEAN:
-        case T_NUMBER:
-            break;
-        default:
-            assert(0);
-        }
-    }
+    for(int i=0; i < state->value_pool_used; i++)
+        release_value(state->value_pool + i);
     free(state->value_pool);
     free(state->values);
     free(state);
