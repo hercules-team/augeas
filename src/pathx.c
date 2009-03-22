@@ -405,6 +405,7 @@ static struct nodeset *make_nodeset(struct state *state) {
 
 static void ns_add(struct nodeset *ns, struct tree *node,
                    struct state *state) {
+    // FIXME: Need to uniquify NS
     if (ns->used >= ns->size) {
         size_t size = 2 * ns->size;
         if (size < 10) size = 10;
@@ -763,6 +764,38 @@ static int eval_pred(struct expr *expr, struct state *state) {
     }
 }
 
+/*
+ * Remove all nodes from NS for which one of PRED is false
+ */
+static void ns_filter(struct nodeset *ns, struct pred *predicates,
+                      struct state *state) {
+    if (predicates == NULL)
+        return;
+
+    struct tree *old_ctx = state->ctx;
+    uint old_ctx_len = state->ctx_len;
+    uint old_ctx_pos = state->ctx_pos;
+
+    for (int p=0; p < predicates->nexpr; p++) {
+        state->ctx_len = ns->used;
+        state->ctx_pos = 1;
+        for (int i=0; i < ns->used; state->ctx_pos++) {
+            state->ctx = ns->nodes[i];
+            if (eval_pred(predicates->exprs[p], state)) {
+                i+=1;
+            } else {
+                memmove(ns->nodes + i, ns->nodes + i+1,
+                        sizeof(ns->nodes[0]) * (ns->used - (i+1)));
+                ns->used -= 1;
+            }
+        }
+    }
+
+    state->ctx = old_ctx;
+    state->ctx_pos = old_ctx_pos;
+    state->ctx_len = old_ctx_len;
+}
+
 /* Return an array of nodesets, one for each step in the locpath.
  *
  * On return, (*NS)[0] will contain state->ctx, and (*NS)[*MAXNS] will
@@ -772,8 +805,6 @@ static void ns_from_locpath(struct locpath *lp, uint *maxns,
                             struct nodeset ***ns,
                             struct state *state) {
     struct tree *old_ctx = state->ctx;
-    uint old_ctx_len = state->ctx_len;
-    uint old_ctx_pos = state->ctx_pos;
 
     *maxns = 0;
     *ns = NULL;
@@ -800,29 +831,11 @@ static void ns_from_locpath(struct locpath *lp, uint *maxns,
                  node = step_next(step, work->nodes[i], node))
                 ns_add(next, node, state);
         }
-        // FIXME: Need to uniquify NS
-        if (step->predicates != NULL) {
-            for (int p=0; p < step->predicates->nexpr; p++) {
-                state->ctx_len = next->used;
-                state->ctx_pos = 1;
-                for (int i=0; i < next->used; state->ctx_pos++) {
-                    state->ctx = next->nodes[i];
-                    if (eval_pred(step->predicates->exprs[p], state)) {
-                        i+=1;
-                    } else {
-                        memmove(next->nodes + i, next->nodes + i+1,
-                                sizeof(next->nodes[0]) * (next->used - (i+1)));
-                        next->used -= 1;
-                    }
-                }
-            }
-        }
+        ns_filter(next, step->predicates, state);
         cur_ns += 1;
     }
 
     state->ctx = old_ctx;
-    state->ctx_pos = old_ctx_pos;
-    state->ctx_len = old_ctx_len;
     return;
  error:
     if (*ns != NULL) {
@@ -830,6 +843,7 @@ static void ns_from_locpath(struct locpath *lp, uint *maxns,
             free_nodeset((*ns)[i]);
         FREE(*ns);
     }
+    state->ctx = old_ctx;
     return;
 }
 
