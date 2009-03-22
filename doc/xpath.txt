@@ -105,7 +105,13 @@ AxisName ::= 'ancestor'
 NameTest     ::= '*' | Name
 Predicate    ::= "[" Expr "]" *
 
-PathExpr ::= LocationPath | PrimaryExpr
+PathExpr ::= LocationPath
+           | FilterExpr
+           | FilterExpr '/' RelativeLocationPath
+           | FilterExpr '//' RelativeLocationPath
+
+FilterExpr ::= PrimaryExpr Predicate
+
 PrimaryExpr ::= Literal
               | Number
               | FunctionCall

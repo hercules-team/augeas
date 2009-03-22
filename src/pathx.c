@@ -157,7 +157,11 @@ struct expr {
     enum expr_tag tag;
     enum type     type;
     union {
-        struct locpath  *locpath;      /* E_FILTER */
+        struct {                       /* E_FILTER */
+            struct expr     *primary;
+            struct pred     *predicates;
+            struct locpath  *locpath;
+        };
         struct {                       /* E_BINARY */
             enum binary_op op;
             struct expr *left;
@@ -326,6 +330,8 @@ static void free_expr(struct expr *expr) {
         return;
     switch (expr->tag) {
     case E_FILTER:
+        free_expr(expr->primary);
+        free_pred(expr->predicates);
         free_locpath(expr->locpath);
         break;
     case E_BINARY:
@@ -803,6 +809,7 @@ static void ns_filter(struct nodeset *ns, struct pred *predicates,
  */
 static void ns_from_locpath(struct locpath *lp, uint *maxns,
                             struct nodeset ***ns,
+                            const struct nodeset *root,
                             struct state *state) {
     struct tree *old_ctx = state->ctx;
 
@@ -819,7 +826,13 @@ static void ns_from_locpath(struct locpath *lp, uint *maxns,
         if (HAS_ERROR(state))
             goto error;
     }
-    ns_add((*ns)[0], state->ctx, state);
+    if (root == NULL) {
+        ns_add((*ns)[0], state->ctx, state);
+    } else {
+        for (int i=0; i < root->used; i++)
+            ns_add((*ns)[0], root->nodes[i], state);
+    }
+    CHECK_ERROR;
 
     uint cur_ns = 0;
     list_for_each(step, lp->steps) {
@@ -854,7 +867,16 @@ static void eval_filter(struct expr *expr, struct state *state) {
     uint maxns;
 
     state->locpath_trace = NULL;
-    ns_from_locpath(lp, &maxns, &ns, state);
+    if (expr->primary == NULL) {
+        ns_from_locpath(lp, &maxns, &ns, NULL, state);
+    } else {
+        eval_expr(expr->primary, state);
+        CHECK_ERROR;
+        struct value *primary = pop_value(state);
+        assert(primary->tag == T_NODESET);
+        ns_filter(primary->nodeset, expr->predicates, state);
+        ns_from_locpath(lp, &maxns, &ns, primary->nodeset, state);
+    }
     CHECK_ERROR;
 
     value_ind_t vind = make_value(T_NODESET, state);
@@ -910,6 +932,8 @@ static void check_expr(struct expr *expr, struct state *state);
  * T_BOOLEAN -> T_BOOLEAN
  */
 static void check_preds(struct pred *pred, struct state *state) {
+    if (pred == NULL)
+        return;
     for (int i=0; i < pred->nexpr; i++) {
         struct expr *e = pred->exprs[i];
         check_expr(e, state);
@@ -924,13 +948,20 @@ static void check_preds(struct pred *pred, struct state *state) {
 
 static void check_filter(struct expr *expr, struct state *state) {
     assert(expr->tag == E_FILTER);
-
     struct locpath *locpath = expr->locpath;
-    list_for_each(s, locpath->steps) {
-        if (s->predicates != NULL) {
-            check_preds(s->predicates, state);
-            CHECK_ERROR;
+
+    if (expr->primary != NULL) {
+        check_expr(expr->primary, state);
+        if (expr->primary->type != T_NODESET) {
+            STATE_ERROR(state, PATHX_ETYPE);
+            return;
         }
+        check_preds(expr->predicates, state);
+        CHECK_ERROR;
+    }
+    list_for_each(s, locpath->steps) {
+        check_preds(s->predicates, state);
+        CHECK_ERROR;
     }
     expr->type = T_NODESET;
 }
@@ -1538,7 +1569,12 @@ static int looking_at_primary_expr(struct state *state) {
 }
 
 /*
- * PathExpr ::= LocationPath | PrimaryExpr
+ * PathExpr ::= LocationPath
+ *            | FilterExpr
+ *            | FilterExpr '/' RelativeLocationPath
+ *            | FilterExpr '//' RelativeLocationPath
+ *
+ * FilterExpr ::= PrimaryExpr Predicate
  *
  * The grammar is ambiguous here: the expression '42' can either be the
  * number 42 (a PrimaryExpr) or the RelativeLocationPath 'child::42'. The
@@ -1548,11 +1584,64 @@ static int looking_at_primary_expr(struct state *state) {
  * RelativeLocationPath in a different form, e.g. 'child::42' or './42'.
  */
 static void parse_path_expr(struct state *state) {
+    struct expr *expr = NULL;
+    struct pred *predicates = NULL;
+    struct locpath *locpath = NULL;
+
     if (looking_at_primary_expr(state)) {
         parse_primary_expr(state);
+        CHECK_ERROR;
+        predicates = parse_predicates(state);
+        CHECK_ERROR;
+        if (match(state, '/')) {
+            if (match(state, '/')) {
+                locpath = parse_relative_location_path(state);
+                if (HAS_ERROR(state))
+                    goto error;
+
+                struct step *step = make_step(DESCENDANT_OR_SELF, state);
+                if (HAS_ERROR(state))
+                    return;
+                list_cons(locpath->steps, step);
+            } else {
+                if (*state->pos == '\0') {
+                    STATE_ERROR(state, PATHX_EEND);
+                    goto error;
+                }
+                locpath = parse_relative_location_path(state);
+            }
+        }
+        /* A PathExpr without predicates and locpath is
+         * just a PrimaryExpr
+         */
+        if (predicates == NULL && locpath == NULL)
+            return;
+        /* To make evaluation easier, we parse something like
+         *   $var[pred] as $var[pred]/.
+         */
+        if (locpath == NULL) {
+            if (ALLOC(locpath) < 0)
+                goto error;
+            if (ALLOC(locpath->steps) < 0)
+                goto error;
+            locpath->steps->axis = SELF;
+        }
+        if (ALLOC(expr) < 0)
+            goto error;
+        expr->tag = E_FILTER;
+        expr->predicates = predicates;
+        expr->primary    = pop_expr(state);
+        expr->locpath    = locpath;
+        push_expr(expr, state);
     } else {
         parse_location_path(state);
     }
+    return;
+ error:
+    free_expr(expr);
+    free_pred(predicates);
+    free_locpath(locpath);
+    return;
 }
 
 /*

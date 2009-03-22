@@ -205,6 +205,7 @@ static int run_tests(struct test *tests) {
     aug = aug_init(root, lensdir, AUG_NO_STDINC|AUG_SAVE_NEWFILE);
     if (aug == NULL)
         die("aug_init");
+    aug_pathvar(aug, "hosts", "/files/etc/hosts/*");
     list_for_each(t, tests) {
         if (run_one_test(aug, t) < 0)
             result = EXIT_FAILURE;

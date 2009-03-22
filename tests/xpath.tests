@@ -14,9 +14,16 @@
 # The MATCH XPath expression is matched against a fixed tree (the one from the
 # root/ subdirectory) and the result of the aug_match is compared with the
 # results listed in the test
+#
+# The test framework sets up variables:
+#   hosts   /files/etc/hosts/*
 
 # Very simple to warm up
 test wildcard /files/etc/hosts/*/ipaddr
+     /files/etc/hosts/1/ipaddr = 127.0.0.1
+     /files/etc/hosts/2/ipaddr = 172.31.122.14
+
+test wildcard-var $hosts/ipaddr
      /files/etc/hosts/1/ipaddr = 127.0.0.1
      /files/etc/hosts/2/ipaddr = 172.31.122.14
 
@@ -24,15 +31,27 @@ test wildcard /files/etc/hosts/*/ipaddr
 test self-value /files/etc/hosts/*/ipaddr[ . = '127.0.0.1' ]
      /files/etc/hosts/1/ipaddr = 127.0.0.1
 
+test self-value-var $hosts/ipaddr[ . = '127.0.0.1' ]
+     /files/etc/hosts/1/ipaddr = 127.0.0.1
+
 # Find nodes that have a child named 'ipaddr' with a fixed value
 test child-value /files/etc/hosts/*[ipaddr = '127.0.0.1']
+     /files/etc/hosts/1
+
+test child-value-var $hosts[ipaddr = '127.0.0.1']
      /files/etc/hosts/1
 
 # Find nodes that have a child 'ipaddr' that has no value
 test child-nil-value /files/etc/hosts/*[ipaddr = '']
 
+test child-nil-value-var $hosts[ipaddr = '']
+
 # Find nodes that have no value
 test self-nil-value /files/etc/hosts/*[. = '']
+     /files/etc/hosts/1
+     /files/etc/hosts/2
+
+test self-nil-value-var $hosts[. = '']
      /files/etc/hosts/1
      /files/etc/hosts/2
 
@@ -65,6 +84,9 @@ test pam-two-preds-control /files/etc/pam.d/*/*[module = 'system-auth'][type = '
 
 # last() gives the last node with a certain name
 test last /files/etc/hosts/*[ipaddr = "127.0.0.1"]/alias[last()]
+     /files/etc/hosts/1/alias[3] = galia
+
+test last-var $hosts[ipaddr = "127.0.0.1"]/alias[last()]
      /files/etc/hosts/1/alias[3] = galia
 
 # We can get nodes counting from the right with 'last()-N'
