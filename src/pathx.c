@@ -56,7 +56,7 @@ enum type {
 };
 
 enum expr_tag {
-    E_LOCPATH,
+    E_FILTER,
     E_BINARY,
     E_VALUE,
     E_APP
@@ -157,7 +157,7 @@ struct expr {
     enum expr_tag tag;
     enum type     type;
     union {
-        struct locpath  *locpath;      /* E_LOCPATH */
+        struct locpath  *locpath;      /* E_FILTER */
         struct {                       /* E_BINARY */
             enum binary_op op;
             struct expr *left;
@@ -325,7 +325,7 @@ static void free_expr(struct expr *expr) {
     if (expr == NULL)
         return;
     switch (expr->tag) {
-    case E_LOCPATH:
+    case E_FILTER:
         free_locpath(expr->locpath);
         break;
     case E_BINARY:
@@ -833,7 +833,8 @@ static void ns_from_locpath(struct locpath *lp, uint *maxns,
     return;
 }
 
-static void eval_locpath(struct locpath *lp, struct state *state) {
+static void eval_filter(struct expr *expr, struct state *state) {
+    struct locpath *lp = expr->locpath;
     struct nodeset **ns = NULL;
     struct locpath_trace *lpt = state->locpath_trace;
     uint maxns;
@@ -864,8 +865,8 @@ static void eval_locpath(struct locpath *lp, struct state *state) {
 static void eval_expr(struct expr *expr, struct state *state) {
     CHECK_ERROR;
     switch (expr->tag) {
-    case E_LOCPATH:
-        eval_locpath(expr->locpath, state);
+    case E_FILTER:
+        eval_filter(expr, state);
         break;
     case E_BINARY:
         eval_binary(expr, state);
@@ -907,8 +908,8 @@ static void check_preds(struct pred *pred, struct state *state) {
     }
 }
 
-static void check_locpath(struct expr *expr, struct state *state) {
-    assert(expr->tag == E_LOCPATH);
+static void check_filter(struct expr *expr, struct state *state) {
+    assert(expr->tag == E_FILTER);
 
     struct locpath *locpath = expr->locpath;
     list_for_each(s, locpath->steps) {
@@ -999,8 +1000,8 @@ static void check_binary(struct expr *expr, struct state *state) {
 static void check_expr(struct expr *expr, struct state *state) {
     CHECK_ERROR;
     switch(expr->tag) {
-    case E_LOCPATH:
-        check_locpath(expr, state);
+    case E_FILTER:
+        check_filter(expr, state);
         break;
     case E_BINARY:
         check_binary(expr, state);
@@ -1337,7 +1338,7 @@ static void parse_location_path(struct state *state) {
 
     if (ALLOC(expr) < 0)
         goto err_nomem;
-    expr->tag = E_LOCPATH;
+    expr->tag = E_FILTER;
     expr->locpath = locpath;
     push_expr(expr, state);
     return;
