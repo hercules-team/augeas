@@ -125,7 +125,7 @@ static struct pathx *parse_user_pathx(const struct augeas *aug,
     struct pathx *result;
     int    pos;
 
-    if (pathx_parse(aug->origin, path, &result) == PATHX_NOERROR)
+    if (pathx_parse(aug->origin, path, true, &result) == PATHX_NOERROR)
         return result;
 
     struct tree *error =
@@ -545,7 +545,7 @@ int tree_replace(struct tree *origin, const char *path, struct tree *sub) {
     struct pathx *p = NULL;
     int r;
 
-    if (pathx_parse(origin, path, &p) != PATHX_NOERROR)
+    if (pathx_parse(origin, path, true, &p) != PATHX_NOERROR)
         goto error;
 
     r = tree_rm(p);
@@ -761,7 +761,7 @@ static int unlink_removed_files(struct augeas *aug,
         if (tf == NULL) {
             /* Unlink all files in tm */
             struct pathx *px = NULL;
-            if (pathx_parse(tm, file_nodes, &px)
+            if (pathx_parse(tm, file_nodes, true, &px)
                 != PATHX_NOERROR) {
                 result = -1;
                 continue;
@@ -895,7 +895,7 @@ int dump_tree(FILE *out, struct tree *tree) {
     struct pathx *p;
     int result;
 
-    if (pathx_parse(tree, "/*", &p) != PATHX_NOERROR)
+    if (pathx_parse(tree, "/*", true, &p) != PATHX_NOERROR)
         return -1;
 
     result = print_tree(out, p, 1);

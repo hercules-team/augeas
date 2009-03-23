@@ -30,6 +30,7 @@
 #include <string.h>
 #include <strings.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <errno.h>
 #include <assert.h>
@@ -389,7 +390,17 @@ struct pathx;
 
 const char *pathx_error(struct pathx *pathx, const char **txt, int *pos);
 
-int pathx_parse(const struct tree *origin, const char *path, struct pathx **px);
+/* Parse the string PATH into a path expression PX that will be evaluated
+ * against the tree ORIGIN.
+ *
+ * If NEED_NODESET is true, the resulting path expression must evaluate toa
+ * nodeset, otherwise it can evaluate to a value of any type.
+ *
+ * Returns 0 on success, and -1 on error
+ */
+int pathx_parse(const struct tree *origin, const char *path,
+                bool need_nodeset,
+                struct pathx **px);
 struct tree *pathx_first(struct pathx *path);
 struct tree *pathx_next(struct pathx *path);
 int pathx_find_one(struct pathx *path, struct tree **match);

@@ -1664,7 +1664,7 @@ static void parse_expr(struct state *state) {
 }
 
 int pathx_parse(const struct tree *tree, const char *txt,
-                struct pathx **pathx) {
+                bool need_nodeset, struct pathx **pathx) {
     struct state *state = NULL;
 
     *pathx = NULL;
@@ -1716,7 +1716,7 @@ int pathx_parse(const struct tree *tree, const char *txt,
     if (HAS_ERROR(state))
         goto done;
 
-    if (state->exprs[0]->type != T_NODESET) {
+    if (need_nodeset && state->exprs[0]->type != T_NODESET) {
         STATE_ERROR(state, PATHX_ETYPE);
         goto done;
     }
@@ -1834,6 +1834,7 @@ struct tree *pathx_first(struct pathx *pathx) {
 
         if (HAS_ERROR(pathx->state))
             return NULL;
+        assert(v->tag == T_NODESET);
         pathx->nodeset = v->nodeset;
     }
     pathx->node = 0;
