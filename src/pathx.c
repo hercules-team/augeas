@@ -891,9 +891,12 @@ static void eval_filter(struct expr *expr, struct state *state) {
     } else {
         eval_expr(expr->primary, state);
         CHECK_ERROR;
-        struct value *primary = pop_value(state);
+        value_ind_t primary_ind = pop_value_ind(state);
+        struct value *primary = state->value_pool + primary_ind;
         assert(primary->tag == T_NODESET);
         ns_filter(primary->nodeset, expr->predicates, state);
+        /* Evaluating predicates might have reallocated the value_pool */
+        primary = state->value_pool + primary_ind;
         ns_from_locpath(lp, &maxns, &ns, primary->nodeset, state);
     }
     CHECK_ERROR;
