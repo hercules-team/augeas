@@ -85,6 +85,26 @@ augeas *aug_init(const char *root, const char *loadpath, unsigned int flags);
  */
 int aug_defvar(augeas *aug, const char *name, const char *expr);
 
+/* Function: aug_defnode
+ *
+ * Define a variable NAME whose value is the result of evaluating EXPR,
+ * which must be non-NULL and evaluate to a nodeset. If a variable NAME
+ * already exists, its name will be replaced with the result of evaluating
+ * EXPR.
+ *
+ * If EXPR evaluates to an empty nodeset, a node is created, equivalent to
+ * calling AUG_SET(AUG, EXPR, VALUE) and NAME will be the nodeset containing
+ * that single node.
+ *
+ * If CREATED is non-NULL, it is set to 1 if a node was created, and 0 if
+ * it already existed.
+ *
+ * Returns -1 on error; on success, returns the number of nodes in the
+ * nodeset
+ */
+int aug_defnode(augeas *aug, const char *name, const char *expr,
+                const char *value, int *created);
+
 /* Function: aug_get
  *
  * Lookup the value associated with PATH. VALUE can be NULL, in which case

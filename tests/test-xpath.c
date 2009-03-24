@@ -244,6 +244,43 @@ static int test_defvar_nonexistent(struct augeas *aug) {
     return -1;
 }
 
+static int test_defnode_nonexistent(struct augeas *aug) {
+    int r, created;
+
+    printf("%-30s ... ", "defnode_nonexistent");
+    r = aug_defnode(aug, "x", "/defnode/bar[. = 'foo']", "foo", &created);
+    if (r != 1)
+        die("aug_defnode failed");
+    if (created != 1) {
+        fprintf(stderr, "defnode did not create a node\n");
+        goto fail;
+    }
+
+    r = aug_defnode(aug, "x", "/defnode/bar", NULL, &created);
+    if (r != 1)
+        die("aug_defnode failed");
+    if (created != 0) {
+        fprintf(stderr, "defnode created node again\n");
+        goto fail;
+    }
+
+    // FIXME: get values and compare them, too
+
+    r = aug_set(aug, "$x", "baz");
+    if (r != 0)
+        goto fail;
+
+    r = aug_match(aug, "$x", NULL);
+    if (r != 1)
+        goto fail;
+
+    printf("PASS\n");
+    return 0;
+ fail:
+    printf("FAIL\n");
+    return -1;
+}
+
 static int run_tests(struct test *tests) {
     char *lensdir;
     struct augeas *aug = NULL;
@@ -256,10 +293,10 @@ static int run_tests(struct test *tests) {
     if (aug == NULL)
         die("aug_init");
     r = aug_defvar(aug, "hosts", "/files/etc/hosts/*");
-    if (r < 0)
+    if (r != 6)
         die("aug_defvar $hosts");
     r = aug_defvar(aug, "localhost", "'127.0.0.1'");
-    if (r < 0)
+    if (r != 0)
         die("aug_defvar $localhost");
 
     list_for_each(t, tests) {
@@ -271,6 +308,9 @@ static int run_tests(struct test *tests) {
         result = EXIT_FAILURE;
 
     if (test_defvar_nonexistent(aug) < 0)
+        result = EXIT_FAILURE;
+
+    if (test_defnode_nonexistent(aug) < 0)
         result = EXIT_FAILURE;
 
     aug_close(aug);

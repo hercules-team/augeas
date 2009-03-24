@@ -385,7 +385,8 @@ typedef enum {
     PATHX_EINTERNAL,
     PATHX_ETYPE,
     PATHX_ENOVAR,
-    PATHX_EEND
+    PATHX_EEND,
+    PATHX_ENONODES
 } pathx_errcode_t;
 
 struct pathx;

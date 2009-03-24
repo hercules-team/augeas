@@ -205,6 +205,22 @@ static int cmd_defvar(char *args[]) {
     return r;
 }
 
+static int cmd_defnode(char *args[]) {
+    const char *name = args[0];
+    const char *path = cleanpath(args[1]);
+    const char *value = args[2];
+    int r;
+
+    /* Our simple minded line parser treats non-existant and empty values
+     * the same. We choose to take the empty string to mean NULL */
+    if (value != NULL && strlen(value) == 0)
+        value = NULL;
+    r = aug_defnode(aug, name, path, value, NULL);
+    if (r == -1)
+        printf ("Failed\n");
+    return r;
+}
+
 static int cmd_clear(char *args[]) {
     const char *path = cleanpath(args[0]);
     int r;
@@ -407,6 +423,14 @@ static const struct command const commands[] = {
       "Define the variable NAME to the result of evalutating EXPR. The\n"
       "        variable can be used in path expressions as $NAME. Note that EXPR\n"
       "        is evaluated when the variable is defined, not when it is used."
+    },
+    { "defnode", 2, 3, cmd_defnode, "defnode <NAME> <EXPR> [<VALUE>]",
+      "Define the variable NAME to the result of evalutating EXPR, which\n"
+      "        must be a nodeset. If no node matching EXPR exists yet, one\n"
+      "        is created and NAME will refer to it. If VALUE is given, this\n"
+      "        is the same as 'set EXPR VALUE'; if VALUE is not given, the\n"
+      "        node is created as if with 'clear EXPR' would and NAME refers\n"
+      "        to that node."
     },
     { "help", 0, 0, cmd_help, "help",
       "Print this help text"

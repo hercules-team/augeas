@@ -382,6 +382,40 @@ int aug_defvar(augeas *aug, const char *name, const char *expr) {
     return result;
 }
 
+int aug_defnode(augeas *aug, const char *name, const char *expr,
+                const char *value, int *created) {
+    struct pathx *p;
+    int result = -1;
+    int r, cr;
+    struct tree *tree;
+
+    if (expr == NULL)
+        return -1;
+    if (created == NULL)
+        created = &cr;
+
+    p = parse_user_pathx((struct augeas *) aug, false, expr);
+    if (p == NULL)
+        goto done;
+
+    r = pathx_expand_tree(p, &tree);
+    if (r < 0)
+        goto done;
+
+    *created = r > 0;
+    if (*created) {
+        r = tree_set_value(tree, value);
+        if (r < 0)
+            goto done;
+    }
+
+    result = pathx_symtab_define(&(aug->symtab), name, p);
+
+ done:
+    free_pathx(p);
+    return result;
+}
+
 struct tree *tree_set(struct pathx *p, const char *value) {
     struct tree *tree;
     int r;
