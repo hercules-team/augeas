@@ -252,6 +252,7 @@ struct augeas *aug_init(const char *root, const char *loadpath,
     }
     if (!(flags & AUG_NO_STDINC)) {
         argz_add(&result->modpathz, &result->nmodpath, AUGEAS_LENS_DIR);
+        argz_add(&result->modpathz, &result->nmodpath, AUGEAS_LENS_DIST_DIR);
     }
     /* Clean up trailing slashes */
     if (result->nmodpath > 0) {

@@ -43,6 +43,9 @@
  * The default location for lens definitions */
 #define AUGEAS_LENS_DIR DATADIR "/augeas/lenses"
 
+/* The directory where we install lenses distribute with Augeas */
+#define AUGEAS_LENS_DIST_DIR DATADIR "/augeas/lenses/dist"
+
 /* Define: AUGEAS_ROOT_ENV
  * The env var that points to the chroot holding files we may modify.
  * Mostly useful for testing */

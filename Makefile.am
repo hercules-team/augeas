@@ -2,8 +2,8 @@ SUBDIRS=gnulib/lib src gnulib/tests tests man doc examples
 
 ACLOCAL_AMFLAGS = -I gnulib/m4
 
-lensdir=$(datadir)/augeas/lenses
-lenstestdir=$(datadir)/augeas/lenses/tests
+lensdir=$(datadir)/augeas/lenses/dist
+lenstestdir=$(datadir)/augeas/lenses/dist/tests
 
 dist_lens_DATA=$(wildcard lenses/*.aug)
 dist_lenstest_DATA=$(wildcard lenses/tests/*.aug)
