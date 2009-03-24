@@ -32,6 +32,7 @@
 #include <config.h>
 #include <limits.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 #include "internal.h"
 #include "memory.h"
@@ -112,6 +113,17 @@ static inline void bitset_set(bitset *bs, unsigned int bit) {
 ATTRIBUTE_PURE
 static inline int bitset_get(const bitset * const bs, unsigned int bit) {
     return (bs[bit/UINT_BIT] >> bit % UINT_BIT) & 1;
+}
+
+ATTRIBUTE_PURE
+static inline bool bitset_disjoint(const bitset *const bs1,
+                                   const bitset *const bs2,
+                                   size_t nbits) {
+    for (int i=0; i < (nbits + UINT_BIT) / UINT_BIT; i++) {
+        if (bs1[i] & bs2[i])
+            return false;
+    }
+    return true;
 }
 
 static void bitset_free(bitset *bs) {
@@ -2290,6 +2302,74 @@ static struct fa *expand_alphabet(struct fa *fa, int add_marker,
     return NULL;
 }
 
+static bitset *alphabet(struct fa *fa) {
+    bitset *bs = bitset_init(UCHAR_NUM);
+
+    list_for_each(s, fa->initial) {
+        for (int i=0; i < s->tused; i++) {
+            for (uint c = s->trans[i].min; c <= s->trans[i].max; c++)
+                bitset_set(bs, c);
+        }
+    }
+    return bs;
+}
+
+static bitset *last_chars(struct fa *fa) {
+    bitset *bs = bitset_init(UCHAR_NUM);
+
+    list_for_each(s, fa->initial) {
+        for (int i=0; i < s->tused; i++) {
+            if (s->trans[i].to->accept) {
+                for (uint c = s->trans[i].min; c <= s->trans[i].max; c++)
+                    bitset_set(bs, c);
+            }
+        }
+    }
+    return bs;
+}
+
+static bitset *first_chars(struct fa *fa) {
+    bitset *bs = bitset_init(UCHAR_NUM);
+    struct state *s = fa->initial;
+
+    for (int i=0; i < s->tused; i++) {
+        for (uint c = s->trans[i].min; c <= s->trans[i].max; c++)
+            bitset_set(bs, c);
+    }
+    return bs;
+}
+
+/* Return true if F1 and F2 are known to be unambiguously concatenable
+ * according to simple heuristics. Return false if they need to be checked
+ * further to decide ambiguity */
+static bool is_splittable(struct fa *fa1, struct fa *fa2) {
+    bitset *alpha1 = NULL;
+    bitset *alpha2 = NULL;
+    bitset *last1 = NULL;
+    bitset *first2 = NULL;
+    bool result = false;
+
+    alpha2 = alphabet(fa2);
+    last1 = last_chars(fa1);
+    if (bitset_disjoint(last1, alpha2, UCHAR_NUM)) {
+        result = true;
+        goto done;
+    }
+
+    alpha1 = alphabet(fa1);
+    first2 = first_chars(fa2);
+    if (bitset_disjoint(first2, alpha1, UCHAR_NUM)) {
+        result = true;
+        goto done;
+    }
+ done:
+    bitset_free(alpha1);
+    bitset_free(alpha2);
+    bitset_free(last1);
+    bitset_free(first2);
+    return result;
+}
+
 /* This algorithm is due to Anders Moeller, and can be found in class
  * AutomatonOperations in dk.brics.grammar
  */
@@ -2305,6 +2385,9 @@ int fa_ambig_example(struct fa *fa1, struct fa *fa2,
         *pv = NULL;
     if (v != NULL)
         *v = NULL;
+
+    if (is_splittable(fa1, fa2))
+        return 0;
 
 #define Xs "\001"
 #define Ys "\002"
