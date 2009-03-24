@@ -68,6 +68,23 @@ enum aug_flags {
  */
 augeas *aug_init(const char *root, const char *loadpath, unsigned int flags);
 
+/* Function: aug_defvar
+ *
+ * Define a variable NAME whose value is the result of evaluating EXPR. If
+ * a variable NAME already exists, its name will be replaced with the
+ * result of evaluating EXPR.
+ *
+ * If EXPR is NULL, the variable NAME will be removed if it is defined.
+ *
+ * Path variables can be used in path expressions later on by prefixing
+ * them with '$'.
+ *
+ * Returns -1 on error; on success, returns 0 if EXPR evaluates to anything
+ * other than a nodeset, and the number of nodes if EXPR evaluates to a
+ * nodeset
+ */
+int aug_defvar(augeas *aug, const char *name, const char *expr);
+
 /* Function: aug_get
  *
  * Lookup the value associated with PATH. VALUE can be NULL, in which case

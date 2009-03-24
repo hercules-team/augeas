@@ -40,6 +40,7 @@ static const char *const errcodes[] = {
     "expected a '/'",
     "internal error",   /* PATHX_EINTERNAL */
     "type error",       /* PATHX_ETYPE */
+    "undefined variable",               /* PATHX_ENOVAR */
     "garbage at end of path expression" /* PATHX_EEND */
 };
 
@@ -59,6 +60,7 @@ enum expr_tag {
     E_FILTER,
     E_BINARY,
     E_VALUE,
+    E_VAR,
     E_APP
 };
 
@@ -121,6 +123,12 @@ static struct tree *step_first(struct step *step, struct tree *ctx);
 static struct tree *step_next(struct step *step, struct tree *ctx,
                               struct tree *node);
 
+struct pathx_symtab {
+    struct pathx_symtab *next;
+    char                *name;
+    struct value        *value;
+};
+
 struct pathx {
     struct state   *state;
     struct nodeset *nodeset;
@@ -168,6 +176,7 @@ struct expr {
             struct expr *right;
         };
         value_ind_t      value_ind;    /* E_VALUE */
+        char            *ident;        /* E_VAR */
         struct {                       /* E_APP */
             const struct func *func;
             struct expr       *args[];
@@ -217,6 +226,8 @@ struct state {
        Generally NULL, unless a trace is needed.
      */
     struct locpath_trace *locpath_trace;
+    /* Symbol table for variable lookups */
+    struct pathx_symtab *symtab;
 };
 
 /* We consider NULL and the empty string to be equal */
@@ -339,6 +350,9 @@ static void free_expr(struct expr *expr) {
         free_expr(expr->right);
         break;
     case E_VALUE:
+        break;
+    case E_VAR:
+        free(expr->ident);
         break;
     case E_APP:
         for (int i=0; i < expr->func->arity; i++)
@@ -770,6 +784,12 @@ static int eval_pred(struct expr *expr, struct state *state) {
     }
 }
 
+static void ns_remove(struct nodeset *ns, int ind) {
+    memmove(ns->nodes + ind, ns->nodes + ind+1,
+            sizeof(ns->nodes[0]) * (ns->used - (ind+1)));
+    ns->used -= 1;
+}
+
 /*
  * Remove all nodes from NS for which one of PRED is false
  */
@@ -790,9 +810,7 @@ static void ns_filter(struct nodeset *ns, struct pred *predicates,
             if (eval_pred(predicates->exprs[p], state)) {
                 i+=1;
             } else {
-                memmove(ns->nodes + i, ns->nodes + i+1,
-                        sizeof(ns->nodes[0]) * (ns->used - (i+1)));
-                ns->used -= 1;
+                ns_remove(ns, i);
             }
         }
     }
@@ -898,6 +916,21 @@ static void eval_filter(struct expr *expr, struct state *state) {
     }
 }
 
+static struct value *lookup_var(const char *ident, struct state *state) {
+    list_for_each(tab, state->symtab) {
+        if (STREQ(ident, tab->name))
+            return tab->value;
+    }
+    return NULL;
+}
+
+static void eval_var(struct expr *expr, struct state *state) {
+    struct value *v = lookup_var(expr->ident, state);
+    value_ind_t vind = clone_value(v, state);
+    CHECK_ERROR;
+    push_value(vind, state);
+}
+
 static void eval_expr(struct expr *expr, struct state *state) {
     CHECK_ERROR;
     switch (expr->tag) {
@@ -909,6 +942,9 @@ static void eval_expr(struct expr *expr, struct state *state) {
         break;
     case E_VALUE:
         push_value(expr->value_ind, state);
+        break;
+    case E_VAR:
+        eval_var(expr, state);
         break;
     case E_APP:
         eval_app(expr, state);
@@ -1041,6 +1077,15 @@ static void check_binary(struct expr *expr, struct state *state) {
     }
 }
 
+static void check_var(struct expr *expr, struct state *state) {
+    struct value *v = lookup_var(expr->ident, state);
+    if (v == NULL) {
+        STATE_ERROR(state, PATHX_ENOVAR);
+        return;
+    }
+    expr->type = v->tag;
+}
+
 /* Typecheck an expression */
 static void check_expr(struct expr *expr, struct state *state) {
     CHECK_ERROR;
@@ -1053,6 +1098,9 @@ static void check_expr(struct expr *expr, struct state *state) {
         break;
     case E_VALUE:
         expr->type = expr_value(expr, state)->tag;
+        break;
+    case E_VAR:
+        check_var(expr, state);
         break;
     case E_APP:
         check_app(expr, state);
@@ -1531,6 +1579,39 @@ static void parse_function_call(struct state *state) {
 }
 
 /*
+ * VariableReference ::= '$' /[a-zA-Z_][a-zA-Z0-9_]* /
+ *
+ * The '$' is consumed by parse_primary_expr
+ */
+static void parse_var(struct state *state) {
+    const char *id = state->pos;
+    struct expr *expr = NULL;
+
+    if (!isalpha(*id) && *id != '_') {
+        STATE_ERROR(state, PATHX_ENAME);
+        return;
+    }
+    id++;
+    while (isalpha(*id) || isdigit(*id) || *id == '_')
+        id += 1;
+
+    if (ALLOC(expr) < 0)
+        goto err_nomem;
+    expr->tag = E_VAR;
+    expr->ident = strndup(state->pos, id - state->pos);
+    if (expr->ident == NULL)
+        goto err_nomem;
+
+    push_expr(expr, state);
+    state->pos = id;
+    return;
+ err_nomem:
+    STATE_ENOMEM;
+    free_expr(expr);
+    return;
+}
+
+/*
  * PrimaryExpr ::= Literal
  *               | Number
  *               | FunctionCall
@@ -1549,6 +1630,8 @@ static void parse_primary_expr(struct state *state) {
             STATE_ERROR(state, PATHX_EPAREN);
             return;
         }
+    } else if (match(state, '$')) {
+        parse_var(state);
     } else {
         parse_function_call(state);
     }
@@ -1556,8 +1639,8 @@ static void parse_primary_expr(struct state *state) {
 
 static int looking_at_primary_expr(struct state *state) {
     const char *s = state->pos;
-    /* Is it a Number or Literal ? */
-    if (peek(state, "'\"0123456789"))
+    /* Is it a Number, Literal or VariableReference ? */
+    if (peek(state, "$'\"0123456789"))
         return 1;
 
     /* Or maybe a function call, i.e. a word followed by a '(' ?
@@ -1753,7 +1836,9 @@ static void parse_expr(struct state *state) {
 }
 
 int pathx_parse(const struct tree *tree, const char *txt,
-                bool need_nodeset, struct pathx **pathx) {
+                bool need_nodeset,
+                struct pathx_symtab *symtab,
+                struct pathx **pathx) {
     struct state *state = NULL;
 
     *pathx = NULL;
@@ -1774,6 +1859,7 @@ int pathx_parse(const struct tree *tree, const char *txt,
     state->errcode = PATHX_NOERROR;
     state->txt = txt;
     state->pos = txt;
+    state->symtab = symtab;
 
     if (ALLOC_N(state->value_pool, 8) < 0) {
         STATE_ENOMEM;
@@ -2018,7 +2104,7 @@ int pathx_expand_tree(struct pathx *path, struct tree **tree) {
         first_child = first_child->children;
 
     *tree = first_child;
-    return 0;
+    return 1;
 
  error:
     if (first_child != NULL) {
@@ -2060,6 +2146,140 @@ const char *pathx_error(struct pathx *path, const char **txt, int *pos) {
     return errcodes[errcode];
 }
 
+/*
+ * Symbol tables
+ */
+static struct pathx_symtab
+*make_symtab(struct pathx_symtab *symtab, const char *name,
+             struct value *value)
+{
+    struct pathx_symtab *new;
+    char *n = NULL;
+
+    n = strdup(name);
+    if (n == NULL)
+        return NULL;
+
+    if (ALLOC(new) < 0) {
+        free(n);
+        return NULL;
+    }
+    new->name = n;
+    new->value = value;
+    if (symtab == NULL) {
+        return new;
+    } else {
+        new->next = symtab->next;
+        symtab->next = new;
+    }
+    return symtab;
+}
+
+void free_symtab(struct pathx_symtab *symtab) {
+
+    while (symtab != NULL) {
+        struct pathx_symtab *del = symtab;
+        symtab = del->next;
+        free(del->name);
+        release_value(del->value);
+        free(del->value);
+        free(del);
+    }
+}
+
+int pathx_symtab_init(struct pathx_symtab **symtab) {
+    struct value *v = NULL;
+
+    *symtab = NULL;
+
+    if (ALLOC(v) < 0)
+        goto error;
+    v->tag = T_BOOLEAN;
+
+    *symtab = make_symtab(NULL, " unused ", v);
+    if (*symtab == NULL)
+        goto error;
+    return 0;
+ error:
+    release_value(v);
+    free(v);
+    free_symtab(*symtab);
+    *symtab = NULL;
+    return -1;
+}
+
+int pathx_symtab_define(struct pathx_symtab **symtab,
+                        const char *name, struct pathx *px) {
+    struct pathx_symtab *new;
+    struct value *value = NULL, *v = NULL;
+
+    value = pathx_eval(px);
+    if (HAS_ERROR(px->state))
+        goto error;
+
+    if (ALLOC(v) < 0)
+        goto error;
+    *v = *value;
+    value->tag = T_BOOLEAN;
+
+    list_for_each(tab, *symtab) {
+        if (STREQ(tab->name, name)) {
+            release_value(tab->value);
+            free(tab->value);
+            tab->value = v;
+            goto done;
+        }
+    }
+
+    new = make_symtab(*symtab, name, v);
+    if (new == NULL)
+        goto error;
+
+    *symtab = new;
+ done:
+    if (v->tag == T_NODESET)
+        return v->nodeset->used;
+    else
+        return 0;
+ error:
+    release_value(value);
+    free(value);
+    release_value(v);
+    free(v);
+    return -1;
+}
+
+int pathx_symtab_undefine(struct pathx_symtab **symtab, const char *name) {
+    struct pathx_symtab *del = NULL;
+
+    for(del = *symtab;
+        del != NULL && !STREQ(del->name, name);
+        del = del->next);
+    if (del == NULL)
+        return 0;
+    list_remove(del, *symtab);
+    free_symtab(del);
+    return 0;
+}
+
+void pathx_symtab_remove_descendants(struct pathx *pathx,
+                                     const struct tree *tree) {
+    struct pathx_symtab *symtab = pathx->state->symtab;
+    list_for_each(tab, symtab) {
+        if (tab->value->tag != T_NODESET)
+            continue;
+        struct nodeset *ns = tab->value->nodeset;
+        for (int i=0; i < ns->used;) {
+            struct tree *t = ns->nodes[i];
+            while (t != t->parent && t != tree)
+                t = t->parent;
+            if (t == tree)
+                ns_remove(ns, i);
+            else
+                i += 1;
+        }
+    }
+}
 
 /*
  * Local variables:

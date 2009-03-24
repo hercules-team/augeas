@@ -275,6 +275,7 @@ struct augeas {
     size_t            nmodpath;
     char             *modpathz;   /* The search path for modules as a
                                      glibc argz vector */
+    struct pathx_symtab *symtab;
 };
 
 /* Struct: tree
@@ -383,10 +384,12 @@ typedef enum {
     PATHX_ESLASH,
     PATHX_EINTERNAL,
     PATHX_ETYPE,
+    PATHX_ENOVAR,
     PATHX_EEND
 } pathx_errcode_t;
 
 struct pathx;
+struct pathx_symtab;
 
 const char *pathx_error(struct pathx *pathx, const char **txt, int *pos);
 
@@ -400,6 +403,7 @@ const char *pathx_error(struct pathx *pathx, const char **txt, int *pos);
  */
 int pathx_parse(const struct tree *origin, const char *path,
                 bool need_nodeset,
+                struct pathx_symtab *symtab,
                 struct pathx **px);
 struct tree *pathx_first(struct pathx *path);
 struct tree *pathx_next(struct pathx *path);
@@ -407,6 +411,13 @@ int pathx_find_one(struct pathx *path, struct tree **match);
 int pathx_expand_tree(struct pathx *path, struct tree **tree);
 void free_pathx(struct pathx *path);
 
+int pathx_symtab_init(struct pathx_symtab **symtab);
+int pathx_symtab_define(struct pathx_symtab **symtab,
+                        const char *name, struct pathx *px);
+int pathx_symtab_undefine(struct pathx_symtab **symtab, const char *name);
+void pathx_symtab_remove_descendants(struct pathx *pathx,
+                                     const struct tree *tree);
+void free_symtab(struct pathx_symtab *symtab);
 #endif
 
 

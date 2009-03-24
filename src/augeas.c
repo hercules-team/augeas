@@ -46,7 +46,8 @@ static const char *const static_nodes[][2] = {
     { AUGEAS_META_TREE "/version/save/mode[1]", AUG_SAVE_BACKUP_TEXT },
     { AUGEAS_META_TREE "/version/save/mode[2]", AUG_SAVE_NEWFILE_TEXT },
     { AUGEAS_META_TREE "/version/save/mode[3]", AUG_SAVE_NOOP_TEXT },
-    { AUGEAS_META_TREE "/version/save/mode[4]", AUG_SAVE_OVERWRITE_TEXT }
+    { AUGEAS_META_TREE "/version/save/mode[4]", AUG_SAVE_OVERWRITE_TEXT },
+    { AUGEAS_META_TREE "/version/defvar", NULL }
 };
 
 static void tree_mark_dirty(struct tree *tree) {
@@ -126,7 +127,7 @@ static struct pathx *parse_user_pathx(const struct augeas *aug,
     struct pathx *result;
     int    pos;
 
-    if (pathx_parse(aug->origin, path, need_nodeset, &result)
+    if (pathx_parse(aug->origin, path, need_nodeset, aug->symtab, &result)
         == PATHX_NOERROR)
         return result;
 
@@ -349,7 +350,7 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
     struct tree *match;
     int r;
 
-    p = parse_user_pathx(aug, true, path);
+    p = parse_user_pathx((struct augeas *) aug, true, path);
     if (p == NULL)
         return -1;
 
@@ -362,6 +363,23 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
     free_pathx(p);
 
     return r;
+}
+
+int aug_defvar(augeas *aug, const char *name, const char *expr) {
+    struct pathx *p;
+    int result = -1;
+
+    if (expr == NULL) {
+        result = pathx_symtab_undefine(&(aug->symtab), name);
+    } else {
+        p = parse_user_pathx((struct augeas *) aug, false, expr);
+        if (p == NULL)
+            goto done;
+        result = pathx_symtab_define(&(aug->symtab), name, p);
+    }
+ done:
+    free_pathx(p);
+    return result;
 }
 
 struct tree *tree_set(struct pathx *p, const char *value) {
@@ -517,6 +535,7 @@ int tree_rm(struct pathx *p) {
     for (i = 0, tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
         if (TREE_HIDDEN(tree))
             continue;
+        pathx_symtab_remove_descendants(p, tree);
         del[i] = tree;
         i += 1;
     }
@@ -547,7 +566,7 @@ int tree_replace(struct tree *origin, const char *path, struct tree *sub) {
     struct pathx *p = NULL;
     int r;
 
-    if (pathx_parse(origin, path, true, &p) != PATHX_NOERROR)
+    if (pathx_parse(origin, path, true, NULL, &p) != PATHX_NOERROR)
         goto error;
 
     r = tree_rm(p);
@@ -635,7 +654,7 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
         pathin = "/*";
     }
 
-    p = parse_user_pathx(aug, true, pathin);
+    p = parse_user_pathx((struct augeas *) aug, true, pathin);
     if (p == NULL)
         return -1;
 
@@ -763,7 +782,7 @@ static int unlink_removed_files(struct augeas *aug,
         if (tf == NULL) {
             /* Unlink all files in tm */
             struct pathx *px = NULL;
-            if (pathx_parse(tm, file_nodes, true, &px)
+            if (pathx_parse(tm, file_nodes, true, NULL, &px)
                 != PATHX_NOERROR) {
                 result = -1;
                 continue;
@@ -897,7 +916,7 @@ int dump_tree(FILE *out, struct tree *tree) {
     struct pathx *p;
     int result;
 
-    if (pathx_parse(tree, "/*", true, &p) != PATHX_NOERROR)
+    if (pathx_parse(tree, "/*", true, NULL, &p) != PATHX_NOERROR)
         return -1;
 
     result = print_tree(out, p, 1);
@@ -913,7 +932,7 @@ int aug_print(const struct augeas *aug, FILE *out, const char *pathin) {
         pathin = "/*";
     }
 
-    p = parse_user_pathx(aug, true, pathin);
+    p = parse_user_pathx((struct augeas *) aug, true, pathin);
     if (p == NULL)
         return -1;
 
@@ -930,6 +949,7 @@ void aug_close(struct augeas *aug) {
     unref(aug->modules, module);
     free((void *) aug->root);
     free(aug->modpathz);
+    free_symtab(aug->symtab);
     free(aug);
 }
 
@@ -946,6 +966,7 @@ int tree_equal(const struct tree *t1, const struct tree *t2) {
     }
     return t1 == t2;
 }
+
 
 /*
  * Local variables:

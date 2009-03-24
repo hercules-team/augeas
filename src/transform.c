@@ -654,7 +654,8 @@ static int file_saved_event(struct augeas *aug, const char *path) {
     struct tree *dummy;
     int r;
 
-    r = pathx_parse(aug->origin, AUGEAS_EVENTS_SAVED "[last()]", true, &px);
+    r = pathx_parse(aug->origin, AUGEAS_EVENTS_SAVED "[last()]",
+                    true, NULL, &px);
     if (r != PATHX_NOERROR)
         return -1;
 

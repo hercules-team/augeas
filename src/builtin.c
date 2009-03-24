@@ -212,7 +212,7 @@ static struct value *tree_set_glue(struct info *info, struct value *path,
         fake = tree->origin->children;
     }
 
-    if (pathx_parse(tree->origin, path->string->str, true, &p)
+    if (pathx_parse(tree->origin, path->string->str, true, NULL, &p)
         != PATHX_NOERROR) {
         result = make_pathx_exn(ref(info), p);
         goto done;
@@ -249,7 +249,7 @@ static struct value *tree_insert_glue(struct info *info, struct value *label,
     struct pathx *p = NULL;
     struct value *result = NULL;
 
-    if (pathx_parse(tree->origin, path->string->str, true, &p)
+    if (pathx_parse(tree->origin, path->string->str, true, NULL, &p)
         != PATHX_NOERROR) {
         result = make_pathx_exn(ref(info), p);
         goto done;
@@ -296,7 +296,7 @@ static struct value *tree_rm_glue(struct info *info,
     struct pathx *p = NULL;
     struct value *result = NULL;
 
-    if (pathx_parse(tree->origin, path->string->str, true, &p)
+    if (pathx_parse(tree->origin, path->string->str, true, NULL, &p)
         != PATHX_NOERROR) {
         result = make_pathx_exn(ref(info), p);
         goto done;

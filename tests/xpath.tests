@@ -31,14 +31,14 @@ test wildcard-var $hosts/ipaddr
 test self-value /files/etc/hosts/*/ipaddr[ . = '127.0.0.1' ]
      /files/etc/hosts/1/ipaddr = 127.0.0.1
 
-test self-value-var $hosts/ipaddr[ . = '127.0.0.1' ]
+test self-value-var $hosts/ipaddr[ . = $localhost ]
      /files/etc/hosts/1/ipaddr = 127.0.0.1
 
 # Find nodes that have a child named 'ipaddr' with a fixed value
 test child-value /files/etc/hosts/*[ipaddr = '127.0.0.1']
      /files/etc/hosts/1
 
-test child-value-var $hosts[ipaddr = '127.0.0.1']
+test child-value-var $hosts[ipaddr = $localhost]
      /files/etc/hosts/1
 
 # Find nodes that have a child 'ipaddr' that has no value
@@ -86,7 +86,7 @@ test pam-two-preds-control /files/etc/pam.d/*/*[module = 'system-auth'][type = '
 test last /files/etc/hosts/*[ipaddr = "127.0.0.1"]/alias[last()]
      /files/etc/hosts/1/alias[3] = galia
 
-test last-var $hosts[ipaddr = "127.0.0.1"]/alias[last()]
+test last-var $hosts[ipaddr = $localhost]/alias[last()]
      /files/etc/hosts/1/alias[3] = galia
 
 # We can get nodes counting from the right with 'last()-N'

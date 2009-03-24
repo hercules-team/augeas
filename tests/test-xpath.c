@@ -194,10 +194,42 @@ static int run_one_test(struct augeas *aug, struct test *t) {
     return result;
 }
 
+static int test_rm_var(struct augeas *aug) {
+    int r;
+
+    printf("%-30s ... ", "rm_var");
+    r = aug_defvar(aug, "h", "/files/etc/hosts/2/ipaddr");
+    if (r < 0)
+        die("aug_defvar failed");
+
+    r = aug_match(aug, "$h", NULL);
+    if (r != 1) {
+        fprintf(stderr, "expected 1 match, got %d\n", r);
+        goto fail;
+    }
+
+    r = aug_rm(aug, "/files/etc/hosts/2");
+    if (r != 4) {
+        fprintf(stderr, "expected 4 nodes removed, got %d\n", r);
+        goto fail;
+    }
+
+    r = aug_match(aug, "$h", NULL);
+    if (r != 0) {
+        fprintf(stderr, "expected no match, got %d\n", r);
+        goto fail;
+    }
+    printf("PASS\n");
+    return 0;
+ fail:
+    printf("FAIL\n");
+    return -1;
+}
+
 static int run_tests(struct test *tests) {
     char *lensdir;
     struct augeas *aug = NULL;
-    int result = EXIT_SUCCESS;
+    int r, result = EXIT_SUCCESS;
 
     if (asprintf(&lensdir, "%s/lenses", abs_top_srcdir) < 0)
         die("asprintf lensdir failed");
@@ -205,11 +237,21 @@ static int run_tests(struct test *tests) {
     aug = aug_init(root, lensdir, AUG_NO_STDINC|AUG_SAVE_NEWFILE);
     if (aug == NULL)
         die("aug_init");
-    aug_pathvar(aug, "hosts", "/files/etc/hosts/*");
+    r = aug_defvar(aug, "hosts", "/files/etc/hosts/*");
+    if (r < 0)
+        die("aug_defvar $hosts");
+    r = aug_defvar(aug, "localhost", "'127.0.0.1'");
+    if (r < 0)
+        die("aug_defvar $localhost");
+
     list_for_each(t, tests) {
         if (run_one_test(aug, t) < 0)
             result = EXIT_FAILURE;
     }
+
+    if (test_rm_var(aug) < 0)
+        result = EXIT_FAILURE;
+
     aug_close(aug);
 
     return result;
