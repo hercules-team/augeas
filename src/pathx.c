@@ -41,7 +41,8 @@ static const char *const errcodes[] = {
     "internal error",   /* PATHX_EINTERNAL */
     "type error",       /* PATHX_ETYPE */
     "undefined variable",               /* PATHX_ENOVAR */
-    "garbage at end of path expression" /* PATHX_EEND */
+    "garbage at end of path expression",/* PATHX_EEND */
+    "can not expand tree from empty nodeset"  /* PATHX_ENONODES */
 };
 
 /*
@@ -2066,13 +2067,26 @@ int pathx_expand_tree(struct pathx *path, struct tree **tree) {
     int r;
     struct step *step;
     struct locpath_trace lpt;
+    struct tree *first_child = NULL;
+    struct value *v = NULL;
 
     MEMZERO(&lpt, 1);
     path->state->locpath_trace = &lpt;
-    pathx_eval(path);
+    v = pathx_eval(path);
     path->state->locpath_trace = NULL;
     if (HAS_ERROR(path->state))
         goto error;
+
+    if (lpt.maxns == 0) {
+        if (v->tag != T_NODESET || v->nodeset->used == 0) {
+            STATE_ERROR(path->state, PATHX_ENONODES);
+            goto error;
+        }
+        if (v->nodeset->used > 1)
+            goto error;
+        *tree = v->nodeset->nodes[0];
+        return 0;
+    }
 
     *tree = path->origin;
     r = locpath_search(&lpt, tree, &step);
@@ -2082,9 +2096,7 @@ int pathx_expand_tree(struct pathx *path, struct tree **tree) {
     if (step == NULL)
         return 0;
 
-    struct tree *first_child = NULL;
     struct tree *parent = *tree;
-
     if (parent == NULL)
         parent = path->origin;
 

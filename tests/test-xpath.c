@@ -226,6 +226,24 @@ static int test_rm_var(struct augeas *aug) {
     return -1;
 }
 
+static int test_defvar_nonexistent(struct augeas *aug) {
+    int r;
+
+    printf("%-30s ... ", "defvar_nonexistent");
+    r = aug_defvar(aug, "x", "/foo/bar");
+    if (r < 0)
+        die("aug_defvar failed");
+
+    r = aug_set(aug, "$x", "baz");
+    if (r != -1)
+        goto fail;
+    printf("PASS\n");
+    return 0;
+ fail:
+    printf("FAIL\n");
+    return -1;
+}
+
 static int run_tests(struct test *tests) {
     char *lensdir;
     struct augeas *aug = NULL;
@@ -250,6 +268,9 @@ static int run_tests(struct test *tests) {
     }
 
     if (test_rm_var(aug) < 0)
+        result = EXIT_FAILURE;
+
+    if (test_defvar_nonexistent(aug) < 0)
         result = EXIT_FAILURE;
 
     aug_close(aug);
