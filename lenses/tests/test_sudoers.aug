@@ -36,7 +36,7 @@ www-data +biglab=(rpinson)NOEXEC: ICAL \
 	+secretaries           ALPHA = /usr/bin/su [!-]*, !/usr/bin/su *root*
 "
 
-   test Sudoers.lns get conf = 
+   test Sudoers.lns get conf =
       {}
       { "Host_Alias"
           { "alias"
@@ -67,13 +67,17 @@ www-data +biglab=(rpinson)NOEXEC: ICAL \
       {}
       { "Defaults"
           { "type"      = "@LOCALNET" }
-	  { "parameter" = "!lecture" }
-          { "parameter" = "tty_tickets" }
-          { "parameter" = "!fqdn" } }
+	      { "lecture" { "negate" } }
+          { "tty_tickets" }
+          { "fqdn" { "negate" } } }
       {}
       { "Defaults"
           { "type"      = ":buildd" }
-	  { "parameter" = "env_keep+=\"APT_CONFIG DEBIAN_FRONTEND SHELL\"" } }
+	      { "env_keep"
+              { "append" }
+              { "var" = "APT_CONFIG" }
+              { "var" = "DEBIAN_FRONTEND" }
+              { "var" = "SHELL" } } }
       {}
       { "#comment" = "User privilege specification" }
       { "spec"
@@ -99,7 +103,7 @@ www-data +biglab=(rpinson)NOEXEC: ICAL \
 	      { "host" = "LOCALNET" }
 	      { "command" = "PBUILDER"
 	          { "tag" = "NOPASSWD" } } } }
-      { "spec" 
+      { "spec"
           { "user"    = "www-data" }
 	  { "host_group"
 	      { "host" = "+biglab" }

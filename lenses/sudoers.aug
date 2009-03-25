@@ -63,7 +63,7 @@ let sep_spc  = del /[ \t]+/ " "
 (* Variable: sep_cont *)
 let sep_cont = del /([ \t]+|[ \t]*\\\\\n[ \t]*)/ " "
 
-(* Variable: sep_conf_opt *)
+(* Variable: sep_cont_opt *)
 let sep_cont_opt = del /([ \t]*|[ \t]*\\\\\n[ \t]*)/ " "
 
 (* Variable: sep_com *)
@@ -74,6 +74,9 @@ let sep_eq   = sep_cont_opt . Util.del_str "=" . sep_cont_opt
 
 (* Variable: sep_col *)
 let sep_col  = sep_cont_opt . Util.del_str ":" . sep_cont_opt
+
+(* Variable: sep_dquote *)
+let sep_dquote   = Util.del_str "\""
 
 
 (* Group: Stores *)
@@ -91,11 +94,20 @@ let sto_to_com      = store /[^,=:#() \t\n\\\\]+/
 let sto_to_com_user = store ( /[^,=:#() \t\n]+/
                               - /(User|Runas|Host|Cmnd)_Alias|Defaults.*/ )
 
+(* Variable: sto_to_com_col *)
+let sto_to_com_col      = store /[^",=#() \t\n\\\\]+/
+
 (* Variable: sto_to_eq *)
 let sto_to_eq  = store /[^,=:#() \t\n\\\\]+/
 
 (* Variable: sto_to_spc *)
-let sto_to_spc = store /[^() \t\n\\\\]+/
+let sto_to_spc = store /[^", \t\n\\\\]+|"[^", \t\n\\\\]+"/
+
+(* Variable: sto_to_spc_no_dquote *)
+let sto_to_spc_no_dquote = store /[^", \t\n\\\\]+/ (* " relax emacs *)
+
+(* Variable: sto_integer *)
+let sto_integer = store /[0-9]+/
 
 
 (* Group: Comments and empty lines *)
@@ -221,6 +233,129 @@ let default_type     =
   [ label "type" . value ]
 
 (************************************************************************
+ * View: parameter_negate
+ *   Negation of boolean values for <defaults>
+ *************************************************************************)
+let parameter_negate = [ del "!" "!" . label "negate" ]
+
+(************************************************************************
+ * View: parameter_flag
+ *   A flag parameter for <defaults>
+ *
+ *   Flags are implicitly boolean and can be turned off via the '!'  operator.
+ *   Some integer, string and list parameters may also be used in a boolean
+ *     context to disable them.
+ *************************************************************************)
+let parameter_flag_kw    = "always_set_home" | "authenticate" | "env_editor"
+                         | "env_reset" | "fqdn" | "ignore_dot"
+                         | "ignore_local_sudoers" | "insults" | "log_host"
+                         | "log_year" | "long_otp_prompt" | "mail_always"
+                         | "mail_badpass" | "mail_no_host" | "mail_no_perms"
+                         | "mail_no_user" | "noexec" | "path_info"
+                         | "passprompt_override" | "preserve_groups"
+                         | "requiretty" | "root_sudo" | "rootpw" | "runaspw"
+                         | "set_home" | "set_logname" | "setenv"
+                         | "shell_noargs" | "stay_setuid" | "targetpw"
+                         | "tty_tickets"
+
+let parameter_flag       = [ parameter_negate?
+                           . key parameter_flag_kw ]
+
+(************************************************************************
+ * View: parameter_integer
+ *   An integer parameter for <defaults>
+ *************************************************************************)
+let parameter_integer_nobool_kw = "passwd_tries"
+
+let parameter_integer_nobool    = [ key parameter_integer_nobool_kw . sep_eq
+                                      . del /"?/ "" . sto_integer
+                                      . del /"?/ "" ]
+
+
+let parameter_integer_bool_kw   = "loglinelen" | "passwd_timeout"
+                                | "timestamp_timeout" | "umask"
+
+let parameter_integer_bool      = [ ( parameter_negate
+                                     . key parameter_integer_bool_kw )
+                                | ( key parameter_integer_bool_kw . sep_eq
+                                     . del /"?/ "" . sto_integer
+                                     . del /"?/ "" ) ]
+
+let parameter_integer           = parameter_integer_nobool
+                                | parameter_integer_bool
+
+(************************************************************************
+ * View: parameter_string
+ *   A string parameter for <defaults>
+ *
+ *   An odd number of '!' operators negate the value of the item;
+ *      an even number just cancel each other out.
+ *************************************************************************)
+let parameter_string_nobool_kw = "badpass_message" | "editor" | "mailsub"
+                               | "noexec_file" | "passprompt" | "runas_default"
+                               | "syslog_badpri" | "syslog_goodpri"
+                               | "timestampdir" | "timestampowner"
+
+let parameter_string_nobool    = [ key parameter_string_nobool_kw . sep_eq
+                                     . del /"?/ "" . sto_to_com_col
+                                     . del /"?/ "" ]
+
+let parameter_string_bool_kw   = "exempt_group" | "lecture" | "lecture_file"
+                               | "listpw" | "logfile" | "mailerflags"
+                               | "mailerpath" | "mailto" | "exempt_group"
+                               | "syslog" | "verifypw" | "logfile"
+                               | "mailerflags" | "mailerpath" | "mailto"
+                               | "syslog" | "verifypw"
+
+let parameter_string_bool      = [ ( parameter_negate
+                                         . ( parameter_negate
+                                                . parameter_negate )*
+                                         . key parameter_string_bool_kw )
+                               | ( ( parameter_negate . parameter_negate )*
+                                         . key parameter_string_bool_kw
+                                         . sep_eq . sto_to_com_col ) ]
+
+let parameter_string           = parameter_string_nobool
+                               | parameter_string_bool
+
+(************************************************************************
+ * View: parameter_lists
+ *   A single list parameter for <defaults>
+ *
+ *   All lists can be used in a boolean context
+ *   The argument may be a double-quoted, space-separated list or a single
+ *      value without double-quotes.
+ *   The list can be replaced, added to, deleted from, or disabled
+ *      by using the =, +=, -=, and ! operators respectively.
+ *   An odd number of '!' operators negate the value of the item;
+ *      an even number just cancel each other out.
+ *************************************************************************)
+let parameter_lists_kw           = "env_check" | "env_delete" | "env_keep"
+let parameter_lists_value        = [ label "var" . sto_to_spc_no_dquote ]
+let parameter_lists_value_dquote = [ label "var"
+                                     . del /"?/ "" . sto_to_spc_no_dquote
+                                     . del /"?/ "" ]
+
+let parameter_lists_values = parameter_lists_value_dquote
+                           | ( sep_dquote . parameter_lists_value
+                               . ( sep_cont . parameter_lists_value )+
+                               . sep_dquote )
+
+let parameter_lists_sep    = sep_cont_opt
+                             . ( [ del "+" "+" . label "append" ]
+                               | [ del "-" "-" . label "remove" ] )?
+                             . del "=" "=" . sep_cont_opt
+
+let parameter_lists        = [ ( parameter_negate
+                                         . ( parameter_negate
+                                                . parameter_negate )*
+                                         . key parameter_lists_kw )
+                             | ( ( parameter_negate . parameter_negate )*
+                                         . key parameter_lists_kw
+                                         . parameter_lists_sep
+                                         . parameter_lists_values ) ]
+
+(************************************************************************
  * View: parameter
  *   A single parameter for <defaults>
  *
@@ -229,10 +364,12 @@ let default_type     =
  *     >               Parameter '+=' Value |
  *     >               Parameter '-=' Value |
  *     >               '!'* Parameter
+ *
+ *     Parameters may be flags, integer values, strings, or lists.
+ *
  *************************************************************************)
-let parameter        =
-  let value = /([^,:= \t\n\\\\][^,\n\\\\]*[^, \t\n\\\\])|[^,:= \t\n\\\\]/ in
-  [ label "parameter" . store value ]
+let parameter        = parameter_flag | parameter_integer
+                     | parameter_string | parameter_lists
 
 (************************************************************************
  * View: paramater_list
@@ -343,5 +480,3 @@ let filter = (incl "/etc/sudoers")
     . Util.stdexcl
 
 let xfm = transform lns filter
-
-
