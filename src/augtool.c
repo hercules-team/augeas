@@ -391,7 +391,7 @@ static const struct command const commands[] = {
       "        exist yet. If DST exists already, it and all its descendants are\n"
       "        deleted. If DST does not exist yet, it and all its missing \n"
       "        ancestors are created." },
-    { "set", 2, 2, cmd_set, "set <PATH> <VALUE>",
+    { "set", 1, 2, cmd_set, "set <PATH> <VALUE>",
       "Associate VALUE with PATH. If PATH is not in the tree yet,\n"
       "        it and all its ancestors will be created. These new tree entries\n"
       "        will appear last amongst their siblings"
