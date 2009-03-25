@@ -1,9 +1,9 @@
-(* 
+(*
 Module: Sudoers
-  Parses /etc/sudoers     
+  Parses /etc/sudoers
 
-Author: Raphael Pinson <raphink@gmail.com> 
-                                            
+Author: Raphael Pinson <raphink@gmail.com>
+
 About: Reference
   This lens tries to keep as close as possible to `man sudoers` where possible.
 
@@ -95,7 +95,7 @@ let sto_to_com_user = store ( /[^,=:#() \t\n]+/
                               - /(User|Runas|Host|Cmnd)_Alias|Defaults.*/ )
 
 (* Variable: sto_to_com_col *)
-let sto_to_com_col      = store /[^",=#() \t\n\\\\]+/
+let sto_to_com_col      = store /[^",=#() \t\n\\\\]+/ (* " relax emacs *)
 
 (* Variable: sto_to_eq *)
 let sto_to_eq  = store /[^,=:#() \t\n\\\\]+/
@@ -233,10 +233,20 @@ let default_type     =
   [ label "type" . value ]
 
 (************************************************************************
- * View: parameter_negate
- *   Negation of boolean values for <defaults>
+ * View: del_negate
+ *   Delete an even number of '!' signs
  *************************************************************************)
-let parameter_negate = [ del "!" "!" . label "negate" ]
+let del_negate = del /(!!)*/ ""
+
+(************************************************************************
+ * View: negate_node
+ *   Negation of boolean values for <defaults>. Accept one optional '!'
+ *   and produce a 'negate' node if there is one.
+ *************************************************************************)
+let negate_node = [ del "!" "!" . label "negate" ]
+
+let negate_or_value (key:lens) (value:lens) =
+  [ del_negate . (negate_node . key | key . value) ]
 
 (************************************************************************
  * View: parameter_flag
@@ -258,8 +268,8 @@ let parameter_flag_kw    = "always_set_home" | "authenticate" | "env_editor"
                          | "shell_noargs" | "stay_setuid" | "targetpw"
                          | "tty_tickets"
 
-let parameter_flag       = [ parameter_negate?
-                           . key parameter_flag_kw ]
+let parameter_flag       = [ (del_negate . negate_node)?
+                               . key parameter_flag_kw ]
 
 (************************************************************************
  * View: parameter_integer
@@ -275,11 +285,10 @@ let parameter_integer_nobool    = [ key parameter_integer_nobool_kw . sep_eq
 let parameter_integer_bool_kw   = "loglinelen" | "passwd_timeout"
                                 | "timestamp_timeout" | "umask"
 
-let parameter_integer_bool      = [ ( parameter_negate
-                                     . key parameter_integer_bool_kw )
-                                | ( key parameter_integer_bool_kw . sep_eq
-                                     . del /"?/ "" . sto_integer
-                                     . del /"?/ "" ) ]
+let parameter_integer_bool      =
+  negate_or_value
+    (key parameter_integer_bool_kw)
+    (sep_eq . del /"?/ "" . sto_integer . del /"?/ "")
 
 let parameter_integer           = parameter_integer_nobool
                                 | parameter_integer_bool
@@ -307,13 +316,10 @@ let parameter_string_bool_kw   = "exempt_group" | "lecture" | "lecture_file"
                                | "mailerflags" | "mailerpath" | "mailto"
                                | "syslog" | "verifypw"
 
-let parameter_string_bool      = [ ( parameter_negate
-                                         . ( parameter_negate
-                                                . parameter_negate )*
-                                         . key parameter_string_bool_kw )
-                               | ( ( parameter_negate . parameter_negate )*
-                                         . key parameter_string_bool_kw
-                                         . sep_eq . sto_to_com_col ) ]
+let parameter_string_bool      =
+  negate_or_value
+    (key parameter_string_bool_kw)
+    (sep_eq . sto_to_com_col)
 
 let parameter_string           = parameter_string_nobool
                                | parameter_string_bool
@@ -346,14 +352,10 @@ let parameter_lists_sep    = sep_cont_opt
                                | [ del "-" "-" . label "remove" ] )?
                              . del "=" "=" . sep_cont_opt
 
-let parameter_lists        = [ ( parameter_negate
-                                         . ( parameter_negate
-                                                . parameter_negate )*
-                                         . key parameter_lists_kw )
-                             | ( ( parameter_negate . parameter_negate )*
-                                         . key parameter_lists_kw
-                                         . parameter_lists_sep
-                                         . parameter_lists_values ) ]
+let parameter_lists        =
+  negate_or_value
+    (key parameter_lists_kw)
+    (parameter_lists_sep . parameter_lists_values)
 
 (************************************************************************
  * View: parameter
