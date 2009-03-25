@@ -1,8 +1,6 @@
-{
+AUGEAS_0.1.0 {
     global:
       aug_init;
-      aug_defvar;
-      aug_defnode;
       aug_close;
       aug_get;
       aug_set;
@@ -11,9 +9,15 @@
       aug_mv;
       aug_match;
       aug_save;
-      aug_load;
       aug_print;
       # Symbols with __ are private
       __aug_load_module_file;
     local: *;
 };
+
+AUGEAS_0.8.0 {
+    global:
+      aug_defvar;
+      aug_defnode;
+      aug_load;
+} AUGEAS_0.1.0;

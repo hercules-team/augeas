@@ -1,3 +1,35 @@
+0.5.0 - 2009-03-27
+  - Clean up interface for libfa; the interface is now considered stable
+  - New aug_load API call; allows controlling which files to load by
+    modifying /augeas/load and then calling aug_load; on startup, the
+    transforms marked with autoload are reported under /augeas/load
+  - New flag AUG_NO_LOAD for aug_init to keep it from loading files on
+    startup; add --noload option to augtool
+  - New API calls aug_defvar and aug_defnode to define variables for
+    path expressions; exposed as 'defvar' and 'defnode' in augtool
+  - Lenses distributed with Augeas are now installed in
+    /usr/share/augeas/lenses/dist, which is searched after
+    /usr/share/augeas/lenses, so that lenses installed by other packages
+    take precedence
+  - New program examples/fadot to draw various finite automata (Francis
+    Giraldeau)
+  - Report line number and character offset in the tree when parsing a
+    file with a lens fails
+  - Fix error in propagation of dirty flag, which could lead to only
+    parts of a tree being saved when multiple files were modified
+  - Flush files to disk before moving them
+  - Fix a number of memory corruptions in the XPath evaluator
+  - Several performance improvements in libfa
+  - Lens changes/additions
+    * Grub: process embedded comments for update-grub (Raphael Pinson)
+    * Iptables: new lens for /etc/sysconfig/iptables
+    * Krb5: new lens for /etc/krb5.conf
+    * Limits: map dpmain as value of 'domain' node, not as label
+              (Raphael Pinson)
+    * Lokkit: new lens for /etc/sysconfig/system-config-firewall
+    * Modprobe: new lens for /etc/modprobe.d/*
+    * Sudoers: more finegrained parsing (ticket #48) (Raphael Pinson)
+
 0.4.2 - 2009-03-09
   - Do not delete files that had an error upon parsing
   - For Fedora/EPEL RPM's, BuildRequire libselinux-devel (bug #26)

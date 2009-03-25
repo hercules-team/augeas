@@ -64,6 +64,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %{_bindir}/augtool
 %{_bindir}/augparse
+%{_bindir}/fadot
 %doc %{_mandir}/man1/*
 
 %files libs
@@ -80,6 +81,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/pkgconfig/augeas.pc
 
 %changelog
+* Tue Mar 24 2009 David Lutterkort <lutter@redhat.com> - 0.5.0-1
+- New program /usr/bin/fadot
+
 * Mon Mar  9 2009 David Lutterkort <lutter@redhat.com> - 0.4.2-1
 - New version
 
