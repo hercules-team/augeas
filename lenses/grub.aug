@@ -5,9 +5,9 @@ module Grub =
     (* expanded to cover more (and more esoteric) directives        *)
     (* It is good enough to handle the grub.conf on my Fedora 8 box *)
 
-    let value_to_eol = store /[^= \t][^\n]*/
-    let eol = Util.del_str "\n"
-    let del_to_eol = del /[^\n]*/ ""
+    let value_to_eol = store /[^= \t\n][^\n]*[^= \t\n]|[^= \t\n]/
+    let eol = Util.eol
+    let del_to_eol = del /[^ \t\n]*/ ""
     let opt_ws = Util.del_opt_ws ""
     let value_sep (dflt:string) = del /[ \t]*[ \t=][ \t]*/ dflt
 
@@ -60,13 +60,56 @@ module Grub =
                      | kw_boot_arg "initrd"
                      | kw_boot_arg "rootnoverify"
                      | kw_boot_arg "chainloader"
+                     | kw_boot_arg "uuid"
                      | kw_pres "quiet"  (* Seems to be a Ubuntu extension *)
                      | kw_pres "savedefault"
                      | module_lines
 
     let boot = [ label "title" . title . boot_setting* ]
 
-    let comment = [ del /(#.*|[ \t]*)\n/ "#\n" ]
+    let comment_re = /([^ \t\n].*[^ \t\n]|[^ \t\n])/
+                       - "# ## Start Default Options ##"
+                       - "# ## End Default Options ##"
 
-    let lns = (comment | menu_setting | boot)*
+    let comment    =
+        [ Util.indent . label "#comment" . del /#[ \t]*/ "# "
+            . store comment_re . eol ]
+    let empty   = Util.empty
+
+
+    let debian_header  = "## ## Start Default Options ##\n"
+    let debian_footer  = "## ## End Default Options ##\n"
+    let debian_comment_re = /([^ \t\n].*[^ \t\n]|[^ \t\n])/
+                            - "## End Default Options ##"
+    let debian_comment =
+        [ Util.indent . label "#comment" . del /##[ \t]*/ "## "
+            . store debian_comment_re . eol ]
+    let debian_value_sep = del /[ \t]*=/ "="
+    let debian_kw_arg (kw:regexp) =
+      [ Util.del_opt_ws "" . key kw . debian_value_sep
+          . value_to_eol? . eol ]
+
+    let debian_setting_re = "kopt"
+                          | "groot"
+                          | "alternative"
+                          | "lockalternative"
+                          | "defoptions"
+                          | "lockold"
+                          | "xenhopt"
+                          | "xenkopt"
+                          | "altoptions"
+                          | "howmany"
+                          | "memtest86"
+                          | "updatedefaultentry"
+                          | "savedefault"
+
+    let debian_setting = debian_kw_arg debian_setting_re
+
+    let debian_entry   = del "#" "#" . debian_setting
+    let debian         = [ label "debian"
+                    . del debian_header debian_header
+                    . (debian_comment|empty|debian_entry)*
+                    . del debian_footer debian_footer ]
+
+    let lns = (comment | empty | menu_setting | boot | debian)*
     let xfm = transform lns (incl "/etc/grub.conf")
