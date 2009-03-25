@@ -1014,6 +1014,68 @@ static const struct command_def cmd_insert_def = {
     .help = cmd_ins_help
 };
 
+static void cmd_store(struct command *cmd) {
+    const char *lens = arg_value(cmd, "lens");
+    const char *path = arg_value(cmd, "path");
+    const char *node = arg_value(cmd, "node");
+
+    aug_text_store(cmd->aug, lens, node, path);
+}
+
+static const struct command_opt_def cmd_store_opts[] = {
+    { .type = CMD_STR, .name = "lens", .optional = false,
+      .help = "the name of the lens" },
+    { .type = CMD_PATH, .name = "node", .optional = false,
+      .help = "where to find the input text" },
+    { .type = CMD_PATH, .name = "path", .optional = false,
+      .help = "where to store parsed text" },
+    CMD_OPT_DEF_LAST
+};
+
+static const char const cmd_store_help[] =
+    "Parse NODE using LENS and store the resulting tree at PATH.";
+
+static const struct command_def cmd_store_def = {
+    .name = "store",
+    .opts = cmd_store_opts,
+    .handler = cmd_store,
+    .synopsis = "parse text into tree",
+    .help = cmd_store_help
+};
+
+static void cmd_retrieve(struct command *cmd) {
+    const char *lens = arg_value(cmd, "lens");
+    const char *node_in = arg_value(cmd, "node_in");
+    const char *path = arg_value(cmd, "path");
+    const char *node_out = arg_value(cmd, "node_out");
+
+    aug_text_retrieve(cmd->aug, lens, node_in, path, node_out);
+}
+
+static const struct command_opt_def cmd_retrieve_opts[] = {
+    { .type = CMD_STR, .name = "lens", .optional = false,
+      .help = "the name of the lens" },
+    { .type = CMD_PATH, .name = "node_in", .optional = false,
+      .help = "the node containing the initial text (path expression)" },
+    { .type = CMD_PATH, .name = "path", .optional = false,
+      .help = "the tree to transform (path expression)" },
+    { .type = CMD_PATH, .name = "node_out", .optional = false,
+      .help = "where to store the resulting text (path expression)" },
+    CMD_OPT_DEF_LAST
+};
+
+static const char const cmd_retrieve_help[] =
+    "Transform tree at PATH back into text using lens LENS and store the resulting string at NODE_OUT. Assume that the tree was initially read in with the\n"
+    " same lens and the string stored at NODE_IN as input.";
+
+static const struct command_def cmd_retrieve_def = {
+    .name = "retrieve",
+    .opts = cmd_retrieve_opts,
+    .handler = cmd_retrieve,
+    .synopsis = "transform tree into text",
+    .help = cmd_retrieve_help
+};
+
 static const struct command_def const *commands[] = {
     &cmd_quit_def,
     &cmd_clear_def,
@@ -1035,6 +1097,8 @@ static const struct command_def const *commands[] = {
     &cmd_setm_def,
     &cmd_clearm_def,
     &cmd_span_def,
+    &cmd_store_def,
+    &cmd_retrieve_def,
     &cmd_touch_def,
     &cmd_help_def,
     &cmd_def_last
