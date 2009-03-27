@@ -533,7 +533,7 @@ void hash_insert(hash_t *hash, hnode_t *node, const void *key)
     assert (hash_val_t_bit != 0);
     assert (node->next == NULL);
     assert (hash->nodecount < hash->maxcount);	/* 1 */
-    assert (hash_lookup(hash, key) == NULL);	/* 2 */
+    expensive_assert (hash_lookup(hash, key) == NULL);	/* 2 */
 
     if (hash->dynamic && hash->nodecount >= hash->highmark)	/* 3 */
 	grow_table(hash);
@@ -603,7 +603,7 @@ hnode_t *hash_delete(hash_t *hash, hnode_t *node)
     hash_val_t chain;
     hnode_t *hptr;
 
-    assert (hash_lookup(hash, node->key) == node);	/* 1 */
+    expensive_assert (hash_lookup(hash, node->key) == node);	/* 1 */
     assert (hash_val_t_bit != 0);
 
     if (hash->dynamic && hash->nodecount <= hash->lowmark
@@ -659,7 +659,7 @@ hnode_t *hash_scan_delete(hash_t *hash, hnode_t *node)
     hash_val_t chain;
     hnode_t *hptr;
 
-    assert (hash_lookup(hash, node->key) == node);
+    expensive_assert (hash_lookup(hash, node->key) == node);
     assert (hash_val_t_bit != 0);
 
     chain = node->hkey & hash->mask;
