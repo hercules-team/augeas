@@ -367,7 +367,7 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
 }
 
 int aug_defvar(augeas *aug, const char *name, const char *expr) {
-    struct pathx *p;
+    struct pathx *p = NULL;
     int result = -1;
 
     if (expr == NULL) {

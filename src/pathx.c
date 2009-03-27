@@ -2068,7 +2068,7 @@ static int locpath_search(struct locpath_trace *lpt,
  */
 int pathx_expand_tree(struct pathx *path, struct tree **tree) {
     int r;
-    struct step *step;
+    struct step *step = NULL;
     struct locpath_trace lpt;
     struct tree *first_child = NULL;
     struct value *v = NULL;
