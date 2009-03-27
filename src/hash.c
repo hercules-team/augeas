@@ -357,12 +357,17 @@ void hash_set_allocator(hash_t *hash, hnode_alloc_t al,
 
 void hash_free_nodes(hash_t *hash)
 {
-    hscan_t hs;
-    hnode_t *node;
-    hash_scan_begin(&hs, hash);
-    while ((node = hash_scan_next(&hs))) {
-	hash_scan_delete(hash, node);
-	hash->freenode(node, hash->context);
+    hnode_t *node, *next;
+    hash_val_t chain;
+
+    for (chain = 0; chain < hash->nchains; chain ++) {
+      node = hash->table[chain];
+      while (node != NULL) {
+        next = node->next;
+        hash->freenode(node, hash->context);
+        node = next;
+      }
+      hash->table[chain] = NULL;
     }
     hash->nodecount = 0;
     clear_table(hash);
