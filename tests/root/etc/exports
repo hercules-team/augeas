@@ -1,0 +1,4 @@
+/local 207.46.0.0/16(rw,sync)
+/home 207.46.0.0/16(rw,root_squash,sync) 192.168.50.2/32(rw,root_squash,sync)
+/tmp 207.46.0.0/16(rw,root_squash,sync)
+/pub            *(ro,insecure,all_squash)
