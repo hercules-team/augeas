@@ -267,6 +267,7 @@ static int match(struct state *state, struct lens *lens,
     count = regexp_match(re, state->text, size, start, regs);
     if (count < -1) {
         regexp_match_error(state, lens, count, re);
+        FREE(regs);
         return -1;
     }
     state->regs = regs;
@@ -512,6 +513,7 @@ static struct tree *get_quant_star(struct lens *lens, struct state *state) {
     uint start = REG_START(state);
     uint size = end - start;
 
+    state->regs = NULL;
     while (size > 0 && match(state, child, child->ctype, end, start) > 0) {
         struct tree *t = NULL;
 
@@ -522,6 +524,7 @@ static struct tree *get_quant_star(struct lens *lens, struct state *state) {
         size -= REG_SIZE(state);
         free_regs(state);
     }
+    free_regs(state);
     state->regs = old_regs;
     state->nreg = old_nreg;
     if (size != 0) {
@@ -543,6 +546,7 @@ static struct skel *parse_quant_star(struct lens *lens, struct state *state,
     uint size = end - start;
 
     *dict = NULL;
+    state->regs = NULL;
     while (size > 0 && match(state, child, child->ctype, end, start) > 0) {
         struct skel *sk;
         struct dict *di = NULL;
@@ -555,6 +559,7 @@ static struct skel *parse_quant_star(struct lens *lens, struct state *state,
         size -= REG_SIZE(state);
         free_regs(state);
     }
+    free_regs(state);
     state->regs = old_regs;
     state->nreg = old_nreg;
     if (size != 0) {
