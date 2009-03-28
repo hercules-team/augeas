@@ -81,6 +81,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/pkgconfig/augeas.pc
 
 %changelog
+* Fri Mar 27 2009 David Lutterkort <lutter@redhat.com> - 0.5.0-2
+- fadot isn't being installed just yet
+
 * Tue Mar 24 2009 David Lutterkort <lutter@redhat.com> - 0.5.0-1
 - New program /usr/bin/fadot
 
