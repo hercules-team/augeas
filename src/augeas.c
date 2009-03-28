@@ -30,6 +30,7 @@
 #include <fnmatch.h>
 #include <argz.h>
 #include <string.h>
+#include <stdarg.h>
 
 /* Some popular labels that we use in /augeas */
 static const char *const s_augeas = "augeas";

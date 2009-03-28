@@ -29,6 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <getopt.h>
+#include <stdlib.h>
 
 #include "fa.h"
 
