@@ -16,11 +16,12 @@ let eol = Util.eol
 let spc = Util.del_ws_spc
 let dels = Util.del_str
 
+let chain_name = store /[A-Za-z0-9-]+/
 let chain =
-  let policy = [ label "policy" . store /ACCEPT|DROP|REJECT/ ] in
+  let policy = [ label "policy" . store /ACCEPT|DROP|REJECT|-/ ] in
   let counters_eol = del /[ \t]*(\[[0-9:]+\])?[ \t]*\n/ "\n" in
     [ label "chain" .
-        dels ":" . store /[A-Za-z]+/ . spc . policy . counters_eol ]
+        dels ":" . chain_name . spc . policy . counters_eol ]
 
 let param (long:string) (short:string) =
   [ label long .
@@ -48,11 +49,11 @@ let add_rule =
   let chain_action (n:string) (o:string) =
     [ label n .
         del (/--/ . n | o) o .
-        spc . store /[A-Z]+/ . ipt_match . eol ] in
+        spc . chain_name . ipt_match . eol ] in
     chain_action "append" "-A" | chain_action "insert" "-I"
 
 let table = [ del /\*/ "*" . label "table" . store /[a-z]+/ . eol .
-                chain* . add_rule* .
+                (chain|comment)* . (add_rule . comment*)* .
                 dels "COMMIT" . eol ]
 
 let lns = (comment|empty|table)*
