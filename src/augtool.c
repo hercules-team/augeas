@@ -47,13 +47,18 @@ static unsigned int flags = AUG_NONE;
 const char *root = NULL;
 char *loadpath = NULL;
 
-static char *cleanpath(char *path) {
+
+static char *cleanstr(char *path, const char sep) {
     if (path == NULL || strlen(path) == 0)
         return path;
     char *e = path + strlen(path) - 1;
-    while (e != path && (*e == SEP || isspace(*e)))
+    while (e >= path && (*e == sep || isspace(*e)))
         *e-- = '\0';
     return path;
+}
+
+static char *cleanpath(char *path) {
+    return cleanstr(path, SEP);
 }
 
 /*
@@ -622,11 +627,17 @@ static int main_loop(void) {
     char *line;
     char *cmd, *args[maxargs];
     int ret = 0;
+    size_t len = 0;
 
     while(1) {
         char *dup_line;
 
-        line = readline("augtool> ");
+        if (isatty(fileno(stdin))) {
+            line = readline("augtool> ");
+        } else if (getline(&line, &len, stdin) == -1) {
+            return ret;
+        }
+        cleanstr(line, '\n');
         if (line == NULL) {
             printf("\n");
             return ret;
@@ -644,7 +655,8 @@ static int main_loop(void) {
             r = run_command(cmd, maxargs, args);
             if (r < 0)
                 ret = -1;
-            add_history(line);
+            if (isatty(fileno(stdin)))
+                add_history(line);
         }
         free(dup_line);
     }
