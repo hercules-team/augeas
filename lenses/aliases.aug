@@ -6,18 +6,19 @@ module Aliases =
    let name = /([^ \t\n#:@]+|"[^"\n]*")/ (* " make emacs calm down *)
 
    let colon = del /:[ \t]+/ ":\t"
-   let eol = del /[ \t]*\n/ "\n"
+   let eol   = Util.eol
 
-   let comment = [ del /^[ \t]*(#.*)?\n/ "#\n" ]
+   let comment = Util.comment
+   let empty   = Util.empty
 
    let comma = del /,[ \t]*(\n[ \t]+)?/ ", "
-   let alias =  [ seq "alias" .
+   let value_list = Build.opt_list ([ label "value" . store word]) comma
+   let alias = [ seq "alias" .
                     [ label "name" . store name ] . colon .
-                    [ label "value" . store word ] .
-                        ([comma . label "value" . store word])*
+                    value_list
                 ] . eol
 
-  let lns = (comment | alias)*
+  let lns = (comment | empty | alias)*
 
   let xfm = transform lns (incl "/etc/aliases")
 

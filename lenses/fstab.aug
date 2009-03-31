@@ -3,17 +3,20 @@
 module Fstab =
   autoload xfm
 
-  let sep_tab = Util.del_ws_tab
-  let sep_spc = Util.del_ws_spc
-  let comma = Util.del_str ","
-  let eol = del /[ \t]*\n/ "\n"
+  let sep_tab = Sep.tab
+  let sep_spc = Sep.space
+  let comma   = Sep.comma
+  let eol     = Util.eol
 
   let comment = Util.comment
   let empty   = Util.empty 
 
-  let word = /[^,# \n\t]+/
+  let word    = Rx.neg1
+
   let comma_sep_list (l:string) =
-    [ label l . store word ] . ([comma . label l . store word])*
+    let lns = [ label l . store word ] in
+       Build.opt_list lns comma
+
   let record = [ seq "mntent" . 
                    [ label "spec" . store  word ] . sep_tab .
                    [ label "file" . store word ] . sep_tab .

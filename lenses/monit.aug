@@ -33,29 +33,28 @@ module Monit =
  *                           USEFUL PRIMITIVES
  *************************************************************************)
 
-let eol        = Util.eol
-let spc        = Util.del_ws_spc
+let spc        = Sep.space
 let comment    = Util.comment
 let empty      = Util.empty
 
-let sto_to_eol = store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
-let sto_to_spc = store /[^ \t\n]+/
+let sto_to_spc = store Rx.space_in
+let sto_no_spc = store Rx.no_spaces
 
-let word       = /[A-Za-z0-9_.-]+/
-let value      = [ key word . spc . sto_to_eol . eol ]
+let word       = Rx.word
+let value      = Build.key_value_line word spc sto_to_spc
 
 (************************************************************************
  *                               ENTRIES
  *************************************************************************)
 
 (* set statement *)
-let set        = [ key "set" . spc . value  ]
+let set        = Build.key_value "set" spc value
 
 (* include statement *)
-let include    = [ key "include" . spc . sto_to_eol . eol ]
+let include    = Build.key_value_line "include" spc sto_to_spc
 
 (* service statement *)
-let service    = [ key "check" . spc . value . (spc . value)+ ]
+let service    = Build.key_value "check" spc (Build.list value spc)
 
 let entry      = (set|include|service)
 

@@ -78,19 +78,20 @@ module Exports =
 
   let client_re = /[a-zA-Z0-9\-\.@\*\?\/]+/
 
-  let eol = del /[ \t]*\n/ "\n"
+  let eol = Util.eol
+  let lbracket  = Util.del_str "("
+  let rbracket  = Util.del_str ")"
+  let sep_com   = Sep.comma
+  let sep_spc   = Sep.space
   
   let option = [ label "option" . store /[^,)]+/ ]
 
-  let client = [ label "client" . store client_re .
-                    ( Util.del_str "(" . 
-                        option .
-                        ( Util.del_str "," . option ) * .
-                      Util.del_str ")" )? ]
+  let client    = [ label "client" . store client_re .
+                    ( Build.brackets lbracket rbracket
+                         ( Build.opt_list option sep_com ) )? ]
 
-  let entry = [ label "dir" . store /\/[^ \t]*/ .
-                Util.del_ws_spc .
-                client . (Util.del_ws_spc . client)* . eol ]
+  let entry = [ label "dir" . store /\/[^ \t]*/
+                . sep_spc . Build.opt_list client sep_spc . eol ]
 
   let lns = (Hosts.empty | Hosts.comment | entry)*
 

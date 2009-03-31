@@ -17,25 +17,24 @@ let eol        = Util.eol
 let comment    = Util.comment
 let empty      = Util.empty
 
-let colon      = del ":" ":"
-let comma      = del "," ","
+let colon      = Sep.colon
+let comma      = Sep.comma
 
-let sto_to_eol = store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
+let sto_to_spc = store Rx.space_in
 
-let word       = /[A-Za-z0-9_.-]+/
-let integer    = /[0-9]+/
+let word    = Rx.word
+let integer = Rx.integer
 
 (************************************************************************
  *                               ENTRIES
  *************************************************************************)
 
-let user      = [ label "user"     . store word ]
-let entry     = [ key word
-                . colon
-                . [ label "password" . store word    . colon ]
+let user      = [ label "user" . store word ]
+let user_list = Build.opt_list user comma
+let params    = [ label "password" . store word    . colon ]
                 . [ label "gid"      . store integer . colon ]
-                . (user . (comma . user)*)?
-                . eol ]
+                . user_list?
+let entry     = Build.key_value_line word colon params
 
 (************************************************************************
  *                                LENS

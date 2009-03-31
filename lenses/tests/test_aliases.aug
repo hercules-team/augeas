@@ -14,12 +14,17 @@ daemon:		root
 adm:		root
 "
   test Aliases.lns get file =
-    {} {} {} {} {}                           (* The comments *)
+    { }
+    { "#comment" = "Aliases in this file will NOT be expanded in the header from" }
+    { "#comment" = "Mail, but WILL be visible over networks or from /bin/mail." }
+    {}
+    { "#comment" = "Basic system aliases -- these MUST be present." }
     { "1" { "name" = "mailer-daemon" }
           { "value" = "postmaster" } }
     { "2" { "name" = "postmaster" }
           { "value" = "root" } }
-    {} {}
+    {}
+    { "#comment" = "General redirections for pseudo accounts." }
     { "3" { "name" = "bin" }
           { "value" = "root" }
           { "value" = "adm" } }
