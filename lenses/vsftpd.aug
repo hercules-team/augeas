@@ -5,6 +5,8 @@ module Vsftpd =
 (* The code in parseconf.c does not seem to allow for trailing whitespace *)
 (* in the config file                                                     *)
 let eol = Util.del_str "\n"
+let empty = Util.empty
+let comment = Util.comment
 
 let bool_option_re = /anonymous_enable|local_enable|pasv_enable|port_enable|chroot_local_user|write_enable|anon_upload_enable|anon_mkdir_write_enable|anon_other_write_enable|chown_uploads|connect_from_port_20|xferlog_enable|dirmessage_enable|anon_world_readable_only|async_abor_enable|ascii_upload_enable|ascii_download_enable|one_process_model|xferlog_std_format|pasv_promiscuous|deny_email_enable|chroot_list_enable|setproctitle_enable|text_userdb_names|ls_recurse_enable|log_ftp_protocol|guest_enable|userlist_enable|userlist_deny|use_localtime|check_shell|hide_ids|listen|port_promiscuous|passwd_chroot_enable|no_anon_password|tcp_wrappers|use_sendfile|force_dot_files|listen_ipv6|dual_log_enable|syslog_enable|background|virtual_use_local_privs|session_support|download_enable|dirlist_enable|chmod_enable|secure_email_list_enable|run_as_launching_user|no_log_lock|ssl_enable|allow_anon_ssl|force_local_logins_ssl|force_local_data_ssl|ssl_sslv2|ssl_sslv3|ssl_tlsv1|tilde_user_enable|force_anon_logins_ssl|force_anon_data_ssl|mdtm_write|lock_upload_files|pasv_addr_resolve|debug_ssl|require_cert|validate_cert/
 
@@ -22,8 +24,8 @@ let str_option = option str_option_re /[^\n]+/
 
 let uint_option = option uint_option_re /[0-9]+/
 
-let comment = [ del /#.*\n/ "#\n" ]
+let lns = (bool_option|str_option|uint_option|comment|empty)*
 
-let lns = (bool_option|str_option|uint_option|comment)*
+let filter = (incl "/etc/vsftpd.conf") . (incl "/etc/vsftpd/vsftpd.conf")
 
-let xfm = transform lns (incl "/etc/vsftpd.conf")
+let xfm = transform lns filter
