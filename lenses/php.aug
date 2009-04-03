@@ -44,6 +44,8 @@ let record_anon = [ label ".anon" . ( entry | empty )+ ]
 let lns    = record_anon? . record*
 
 let filter = (incl "/etc/php*/*/*.ini")
+             . (incl "/etc/php.ini")
+             . (incl "/etc/php.d/*.ini")
              . Util.stdexcl
 
 let xfm = transform lns filter
