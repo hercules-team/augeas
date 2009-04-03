@@ -99,6 +99,31 @@ static void testNoLoad(CuTest *tc) {
     aug_close(aug);
 }
 
+static void testNoAutoload(CuTest *tc) {
+    augeas *aug = NULL;
+    int nmatches, r;
+
+    aug = aug_init(root, loadpath, AUG_NO_MODL_AUTOLOAD);
+    CuAssertPtrNotNull(tc, aug);
+
+    nmatches = aug_match(aug, "/augeas/load/*", NULL);
+    CuAssertZero(tc, nmatches);
+
+    r = aug_set(aug, "/augeas/load/Hosts/lens", "Hosts.lns");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_set(aug, "/augeas/load/Hosts/incl", "/etc/hosts");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    nmatches = aug_match(aug, "/files/etc/hosts/*[ipaddr]", NULL);
+    CuAssertIntEquals(tc, 2, nmatches);
+
+    aug_close(aug);
+}
+
 static void invalidLens(CuTest *tc, augeas *aug, const char *lens) {
     int r, nmatches;
 
@@ -140,6 +165,7 @@ int main(void) {
 
     SUITE_ADD_TEST(suite, testDefault);
     SUITE_ADD_TEST(suite, testNoLoad);
+    SUITE_ADD_TEST(suite, testNoAutoload);
     SUITE_ADD_TEST(suite, testInvalidLens);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
