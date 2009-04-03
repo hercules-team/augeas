@@ -112,6 +112,7 @@ static int filter_generate(struct tree *xfm, const char *root,
 
     *nmatches = 0;
     *matches = NULL;
+    MEMZERO(&globbuf, 1);
 
     list_for_each(f, xfm->children) {
         char *globpat = NULL;
