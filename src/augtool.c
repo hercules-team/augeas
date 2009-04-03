@@ -564,6 +564,7 @@ static void usage(void) {
     fprintf(stderr, "  -I, --include DIR  search DIR for modules; can be given mutiple times\n");
     fprintf(stderr, "  --nostdinc         do not search the builtin default directories for modules\n");
     fprintf(stderr, "  --noload           do not load any files into the tree on startup\n");
+    fprintf(stderr, "  --noautoload       do not autoload modules from the search path\n");
 
     exit(EXIT_FAILURE);
 }
@@ -573,7 +574,8 @@ static void parse_opts(int argc, char **argv) {
     size_t loadpathlen = 0;
     enum {
         VAL_NO_STDINC = CHAR_MAX + 1,
-        VAL_NO_LOAD = VAL_NO_STDINC + 1
+        VAL_NO_LOAD = VAL_NO_STDINC + 1,
+        VAL_NO_AUTOLOAD = VAL_NO_LOAD + 1
     };
     struct option options[] = {
         { "help",      0, 0, 'h' },
@@ -584,6 +586,7 @@ static void parse_opts(int argc, char **argv) {
         { "include",   1, 0, 'I' },
         { "nostdinc",  0, 0, VAL_NO_STDINC },
         { "noload",    0, 0, VAL_NO_LOAD },
+        { "noautoload", 0, 0, VAL_NO_AUTOLOAD },
         { 0, 0, 0, 0}
     };
     int idx;
@@ -613,6 +616,9 @@ static void parse_opts(int argc, char **argv) {
             break;
         case VAL_NO_LOAD:
             flags |= AUG_NO_LOAD;
+            break;
+        case VAL_NO_AUTOLOAD:
+            flags |= AUG_NO_MODL_AUTOLOAD;
             break;
         default:
             usage();
