@@ -735,6 +735,8 @@ int transform_save(struct augeas *aug, struct tree *xfm,
         goto done;
     }
 
+    text = append_newline(text, strlen(text));
+
     // FIXME: We might have to create intermediary directories
     // to be able to write augnew, but we have no idea what permissions
     // etc. they should get. Just the process default ?
