@@ -30,6 +30,12 @@ module Ntp =
                    | [ sep_spc . key "dynamic" ]
     let server_record   = record "server" server_opt?
 
+
+    (* Define a fudge record *)
+    let fudge_opt_re = "refid" | "stratum"
+    let fudge_opt  = [ sep_spc . key fudge_opt_re . sep_spc . store word ]
+    let fudge_record = record "fudge" fudge_opt?
+
     (* Define simple settings *)
     let simple_setting (kw:string) = [ key kw . sep_spc . store word . eol ]
 
@@ -73,7 +79,9 @@ module Ntp =
 
     (* Define lens *)
 
-    let lns = ( comment | empty | server_record | restrict_record | simple_settings | statistics_record | filegen_record | files)*
+    let lns = ( comment | empty | server_record | fudge_record
+              | restrict_record | simple_settings | statistics_record
+              | filegen_record | files)*
 
     let filter = (incl "/etc/ntp.conf")
         . Util.stdexcl

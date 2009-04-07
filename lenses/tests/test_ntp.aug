@@ -112,3 +112,6 @@ filegen clockstats file clockstats type day enable nolink
   test Ntp.lns get
     "includefile /etc/ntp/crypto/pw\n" =
     { "includefile" = "/etc/ntp/crypto/pw" }
+
+  test Ntp.lns get "fudge  127.127.1.0 stratum 10\n" =
+    { "fudge" = "127.127.1.0" { "stratum" = "10" } }
