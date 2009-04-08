@@ -15,9 +15,10 @@ module Logrotate =
    autoload xfm
 
    let sep_spc = Util.del_ws_spc
+   let sep_val = del /[ \t]*=[ \t]*|[ \t]+/ " "
    let eol = Util.del_str "\n"
    let num = /[0-9]+/
-   let word = /[^,# \n\t{}]+/
+   let word = /[^,#= \n\t{}]+/
    let size = num . /[kMG]?/
 
    (* define comments and empty lines *)
@@ -29,7 +30,7 @@ module Logrotate =
 
    let list_item = [ sep_spc . key /[^\/+,# \n\t{}]+/ ]
    let select_to_eol (kw:string) (select:regexp) (indent:string) = [ del /[ \t]*/ indent . label kw . store select . eol ]
-   let value_to_eol (kw:string) (value:regexp) (indent:string )  = [ del /[ \t]*/ indent . key kw . sep_spc . store value . eol ]
+   let value_to_eol (kw:string) (value:regexp) (indent:string )  = [ del /[ \t]*/ indent . key kw . sep_val . store value . eol ]
    let flag_to_eol (kw:string) (indent:string)                   = [ del /[ \t]*/ indent . key kw . eol ]
    let list_to_eol (kw:string) (indent:string)                   = [ del /[ \t]*/ indent . key kw . list_item+ . eol ]
 

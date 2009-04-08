@@ -1,0 +1,8 @@
+/var/log/acpid {
+     missingok
+     notifempty
+     size=64k
+     postrotate
+         /etc/init.d/acpid condrestart >/dev/null || :
+     endscript
+ }
