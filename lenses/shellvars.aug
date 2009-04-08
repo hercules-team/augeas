@@ -7,7 +7,8 @@ module Shellvars =
 
   let key_re = /[A-Za-z0-9_]+(\[[0-9]+\])?/ - "unset" - "export"
   let eq = Util.del_str "="
-  let comment = [ del /(#.*)?[ \t]*\n/ "# \n" ]
+  let comment = Util.comment
+  let empty   = Util.empty
 
   let char  = /[^() '"\t\n]|\\\\"/   
   let dquot = /"([^"\\\n]|\\\\.)*"/                    (* " Emacs, relax *)
@@ -40,7 +41,7 @@ module Shellvars =
       Util.del_ws_spc . store /[^= \t\n]+/ . eol 
     ]
 
-  let lns = (comment | source | kv | unset) *
+  let lns = (comment | empty | source | kv | unset) *
 
   let sc_incl (n:string) = (incl ("/etc/sysconfig/" . n))
   let filter_sysconfig = 

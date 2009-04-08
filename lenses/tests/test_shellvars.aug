@@ -17,14 +17,14 @@ unset ONBOOT
   let key_brack = "SOME_KEY[1]=\nDEVICE=eth0\n"
 
   test Shellvars.lns get eth_static =
-    { }
+    { "#comment" = "Intel Corporation PRO/100 VE Network Connection" }
     { "DEVICE" = "eth0" }
     { "BOOTPROTO" = "static" }
     { "BROADCAST" = "172.31.0.255" }
     { "HWADDR" = "ab:cd:ef:12:34:56" }
     { "IPADDR" = "172.31.0.31"
         { "export" } }
-    { }
+    { "#comment" = "DHCP_HOSTNAME=host.example.com" }
     { "NETMASK" = "255.255.255.0" }
     { "NETWORK" = "172.31.0.0" }
     { "unset"   = "ONBOOT" }

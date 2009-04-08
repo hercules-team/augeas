@@ -146,7 +146,7 @@ test ipaddr-sibling //*[../ipaddr]
      /files/etc/hosts/2/canonical = orange.watzmann.net
      /files/etc/hosts/2/alias = orange
 
-test lircd-ancestor //*[ancestor::kudzu]
+test lircd-ancestor //*[ancestor::kudzu][label() != '#comment']
      /augeas/files/etc/sysconfig/kudzu/path = /files/etc/sysconfig/kudzu
      /augeas/files/etc/sysconfig/kudzu/lens
      /augeas/files/etc/sysconfig/kudzu/lens/info = ...
