@@ -115,3 +115,22 @@ filegen clockstats file clockstats type day enable nolink
 
   test Ntp.lns get "fudge  127.127.1.0 stratum 10\n" =
     { "fudge" = "127.127.1.0" { "stratum" = "10" } }
+
+  test Ntp.lns get "broadcast 192.168.1.255 key 42\n" =
+    { "broadcast" = "192.168.1.255" { "key" = "42" } }
+
+
+  test Ntp.lns get "multicastclient 224.0.1.1\n" =
+     { "multicastclient" = "224.0.1.1" }
+
+  test Ntp.lns put "broadcastclient\tnovolley # broadcast\n" 
+     after rm "/*/novolley" = "broadcastclient # broadcast\n" 
+
+  test Ntp.auth_command get "trustedkey 4 8 42\n" = 
+     { "trustedkey"
+         { "key" = "4" }
+         { "key" = "8" }
+         { "key" = "42" } }
+
+  test Ntp.auth_command get "trustedkey 42\n" = 
+     { "trustedkey" { "key" = "42" } }

@@ -23,13 +23,19 @@ module Ntp =
 
 
     (* Define generic record *)
-    let record (kw:string) (value:lens) = [ key kw . sep_spc . store word . value . eol ]
+    let record (kw:regexp) (value:lens) =
+      [ key kw . sep_spc . store word . value . eol ]
 
-    (* Define a server record *)
-    let server_opt = [ sep_spc . key "version" . sep_spc . store word ]
-                   | [ sep_spc . key "dynamic" ]
-    let server_record   = record "server" server_opt?
+    (* Define a command record; see confopt.html#cfg in the ntp docs *)
+    let command_record =
+      let opt = [ sep_spc . key /version|key/ . sep_spc . store word ]
+        | [ sep_spc . key "dynamic" ] in
+      let cmd = /server|peer|broadcast|manycastclient/
+        | /multicastclient|manycastserver/ in
+        record cmd opt*
 
+    let broadcastclient =
+      [ key "broadcastclient" . [ sep_spc . key "novolley" ]? . eol ]
 
     (* Define a fudge record *)
     let fudge_opt_re = "refid" | "stratum"
@@ -74,14 +80,22 @@ module Ntp =
 
     let filegen_record = [ label "filegen" . filegen . filegen_opts* . eol ]
 
-    (* Includefile/keys *)
-    let files = [ key /includefile|keys/ . sep_spc . store word . eol ]
+    (* Authentication commands, see authopt.html#cmd; incomplete *)
+    let auth_command =
+      [ key /controlkey|keys|keysdir|requestkey/ . 
+            sep_spc . store word . eol ]
+     | [ key /autokey|revoke/ . [sep_spc . store word]? . eol ]
+     | [ key /trustedkey/ . [ sep_spc . label "key" . store word ]+ . eol ]
+
+    (* Includefile *)
+    let files = [ key /includefile/ . sep_spc . store word . eol ]
 
     (* Define lens *)
 
-    let lns = ( comment | empty | server_record | fudge_record
+    let lns = ( comment | empty | command_record | fudge_record
               | restrict_record | simple_settings | statistics_record
-              | filegen_record | files)*
+              | filegen_record | files | broadcastclient
+              | auth_command )*
 
     let filter = (incl "/etc/ntp.conf")
         . Util.stdexcl
