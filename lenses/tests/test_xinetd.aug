@@ -3,9 +3,9 @@ module Test_xinetd =
 let eol_ws = "defaults \t \n{\n  enabled = cvs echo  \n}\n\n"
 
 let cvs = "# default: off
-# description: The CVS service can record the history of your source \
-#              files. CVS stores all the versions of a file in a single \
-#              file in a clever way that only stores the differences \
+# description: The CVS service can record the history of your source
+#              files. CVS stores all the versions of a file in a single
+#              file in a clever way that only stores the differences
 #              between versions.
 service cvspserver
 {
@@ -40,7 +40,11 @@ test Xinetd.lns put eol_ws after rm "/defaults/enabled/value[last()]" =
   "defaults \t \n{\n  enabled = cvs  \n}\n\n"
 
 test Xinetd.lns get cvs =
-  {} {} {} {} {}
+  { "#comment" = "default: off" }
+  { "#comment" = "description: The CVS service can record the history of your source" }
+  { "#comment" = "files. CVS stores all the versions of a file in a single" }
+  { "#comment" = "file in a clever way that only stores the differences" }
+  { "#comment" = "between versions." }
   { "cvspserver"
       { "disable" = "yes" }
       { "port" = "2401" }
@@ -55,7 +59,7 @@ test Xinetd.lns get cvs =
           { "value" = "-f" }
           { "value" = "--allow-root=/var/cvs" }
           { "value" = "pserver" } }
-      {}
+      { "#comment" = "bind                    = 127.0.0.1" }
       { "log_on_failure" { "add" } { "value" = "HOST" } } }
 
 (* Switch the '+=' to a simple '=' *)

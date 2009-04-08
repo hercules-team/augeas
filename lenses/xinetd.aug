@@ -17,7 +17,8 @@
 module Xinetd =
   autoload xfm
 
-  let comment = [ del /[ \t]*(#.*|[ \t]*)\n/ "#\n" ]
+  let comment = Util.comment
+  let empty   = Util.empty
 
   let name = key /[^ \t\n\/+-=]+/
   let bol_spc = del /[ \t]*/ "\t"
@@ -86,7 +87,7 @@ module Xinetd =
    *       would simply be prohibitively large. 
    *)
   let body (attr:lens) = Util.del_str "\n{\n"
-                       . (comment|attr)*
+                       . (empty|comment|attr)*
                        . del /[ \t]*}[ \t]*\n/ "}\n"
 
   (* View: includes
@@ -101,12 +102,12 @@ module Xinetd =
                      . Util.del_ws_spc . store /[^ \t\n]+/ . eol ]
 
   let service = 
-     let key_re = /[^ \t\n\/]+/ - /include|includedir|defaults/ in
+     let key_re = /[^# \t\n\/]+/ - /include|includedir|defaults/ in
      [ del /service[ \t]+/ "service " . key key_re . body service_attr ]
 
   let defaults = [ key "defaults" . del /[ \t]*/ "" . body default_attr ]
 
-  let lns = ( comment | includes | defaults | service )*
+  let lns = ( empty | comment | includes | defaults | service )*
 
   let filter = incl "/etc/xinetd.d/*"
              . incl "/etc/xinetd.conf"
