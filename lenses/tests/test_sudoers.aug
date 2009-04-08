@@ -5,6 +5,9 @@ module Test_sudoers =
 
    # User alias specification
 
+User_Alias EXAMPLE_ADMINS = cslack, EXAMPLE\\\\cslack,\
+          EXAMPLE\\\\jmalstrom
+
 # Cmnd alias specification
 
 Cmnd_Alias \
@@ -45,6 +48,13 @@ www-data +biglab=(rpinson)NOEXEC: ICAL \
               { "host" = "localhost" } } }
       {}
       { "#comment" = "User alias specification" }
+      {}
+      { "User_Alias"
+          { "alias"
+              { "name" = "EXAMPLE_ADMINS" }
+              { "user" = "cslack" }
+              { "user" = "EXAMPLE\\\\cslack" }
+              { "user" = "EXAMPLE\\\\jmalstrom" } } }
       {}
       { "#comment" = "Cmnd alias specification" }
       {}

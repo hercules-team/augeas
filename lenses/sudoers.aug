@@ -84,11 +84,13 @@ let sep_dquote   = Util.del_str "\""
 (* Variable: sto_to_com_cmnd
 sto_to_com_cmnd does not begin or end with a space
 
-TODO: there could be a \ in the middle of a command... *)
-let sto_to_com_cmnd = store /([^,=:#() \t\n\\\\][^,=:#()\n\\\\]*[^,=:#() \t\n\\\\])|[^,=:#() \t\n\\\\]/
+There could be a \ in the middle of a command *)
+let sto_to_com_cmnd = store /([^,=:#() \t\n\\\\][^,=:#()\n]*[^,=:#() \t\n\\\\])|[^,=:#() \t\n\\\\]/
 
-(* Variable: sto_to_com *)
-let sto_to_com      = store /[^,=:#() \t\n\\\\]+/
+(* Variable: sto_to_com
+
+There could be a \ in the middle of a command *)
+let sto_to_com      = store /([^,=:#() \t\n\\\\][^,=:#()\n]*[^,=:#() \t\n\\\\])|[^,=:#() \t\n\\\\]/
 
 (* Variable: sto_to_com_user *)
 let sto_to_com_user = store ( /[^,=:#() \t\n]+/
