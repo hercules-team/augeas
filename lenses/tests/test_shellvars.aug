@@ -6,11 +6,11 @@ DEVICE=eth0
 BOOTPROTO=static
 BROADCAST=172.31.0.255
 HWADDR=ab:cd:ef:12:34:56
-IPADDR=172.31.0.31
+export IPADDR=172.31.0.31
 #DHCP_HOSTNAME=host.example.com
 NETMASK=255.255.255.0
 NETWORK=172.31.0.0
-ONBOOT=yes
+unset ONBOOT
 "
   let empty_val = "EMPTY=\nDEVICE=eth0\n"
 
@@ -22,11 +22,12 @@ ONBOOT=yes
     { "BOOTPROTO" = "static" }
     { "BROADCAST" = "172.31.0.255" }
     { "HWADDR" = "ab:cd:ef:12:34:56" }
-    { "IPADDR" = "172.31.0.31" }
+    { "IPADDR" = "172.31.0.31"
+        { "export" } }
     { }
     { "NETMASK" = "255.255.255.0" }
     { "NETWORK" = "172.31.0.0" }
-    { "ONBOOT" = "yes" }
+    { "unset"   = "ONBOOT" }
 
   test Shellvars.lns put eth_static after
       set "BOOTPROTO" "dhcp" ;
@@ -39,7 +40,7 @@ DEVICE=eth0
 BOOTPROTO=dhcp
 HWADDR=ab:cd:ef:12:34:56
 #DHCP_HOSTNAME=host.example.com
-ONBOOT=yes
+unset ONBOOT
 "
   test Shellvars.lns get empty_val =
     { "EMPTY" = "" } { "DEVICE" = "eth0" }

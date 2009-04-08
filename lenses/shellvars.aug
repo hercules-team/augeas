@@ -5,7 +5,7 @@ module Shellvars =
 
   let eol = Util.eol
 
-  let key_re = /[A-Za-z0-9_]+(\[[0-9]+\])?/
+  let key_re = /[A-Za-z0-9_]+(\[[0-9]+\])?/ - "unset" - "export"
   let eq = Util.del_str "="
   let comment = [ del /(#.*)?[ \t]*\n/ "# \n" ]
 
@@ -29,7 +29,10 @@ module Shellvars =
     let empty_array = /\([ \t]*\)/ in
    store (char* | dquot | squot | empty_array)
 
-  let kv = [ key key_re . eq . (simple_value | array) . eol ]
+  let export = [ key "export" . Util.del_ws_spc ]
+  let kv = [ export? . key key_re . eq . (simple_value | array) . eol ]
+
+  let unset = [ key "unset" . Util.del_ws_spc . store key_re . eol ]
 
   let source = 
     [ 
@@ -37,7 +40,7 @@ module Shellvars =
       Util.del_ws_spc . store /[^= \t\n]+/ . eol 
     ]
 
-  let lns = (comment | source | kv) *
+  let lns = (comment | source | kv | unset) *
 
   let sc_incl (n:string) = (incl ("/etc/sysconfig/" . n))
   let filter_sysconfig = 
