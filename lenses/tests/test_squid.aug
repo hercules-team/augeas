@@ -6,7 +6,7 @@ auth_param negotiate children 5
 acl many_spaces rep_header Content-Disposition -i [[:space:]]{3,}
 acl CONNECT method CONNECT
 # comment in the middle
-acl local_network src 192.168.1.0/24
+  acl local_network src 192.168.1.0/24
 
 http_access allow manager localhost
 http_access allow local_network

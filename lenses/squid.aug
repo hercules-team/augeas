@@ -14,6 +14,7 @@ module Squid =
 
 let eol         = Util.eol
 let spc         = Util.del_ws_spc
+let indent      = Util.indent
 
 let word        =  /[A-Za-z0-9!_.-]+(\[[0-9]+\])?/
 let sto_to_spc  = store /[^# \t\n]+/
@@ -341,14 +342,15 @@ let entry_re =    "accept_filter"
                 | "zph_option"
                 | "zph_parent"
                 | "zph_sibling"
-let entry       = Spacevars.entry entry_re
+let entry       = indent . Spacevars.entry entry_re
 
 (************************************************************************
  *                                AUTH
  *************************************************************************)
 
 let auth_re     = "auth_param"
-let auth        = [ key "auth_param"
+let auth        = indent
+                  . [ key "auth_param"
                   . value "scheme"
                   . value "parameter"
                   . (value "setting") ?
@@ -359,7 +361,8 @@ let auth        = [ key "auth_param"
  *************************************************************************)
 
 let acl_re     = "acl"
-let acl        = [ key acl_re . spc
+let acl        = indent
+                 . [ key acl_re . spc
                  . [ key word
                    . value "type"
                    . value "setting"
@@ -373,7 +376,8 @@ let acl        = [ key acl_re . spc
 let http_access_re
                = "http_access"
 let http_access
-               = [ key http_access_re
+               = indent
+                 . [ key http_access_re
                  . spc
                  . [ key /allow|deny/
                    . spc
