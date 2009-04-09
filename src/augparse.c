@@ -37,6 +37,7 @@ static void usage(void) {
     fprintf(stderr, "\nOptions:\n\n");
     fprintf(stderr, "  -I, --include DIR  search DIR for modules; can be given mutiple times\n");
     fprintf(stderr, "  --nostdinc         do not search the builtin default directories for modules\n");
+    fprintf(stderr, "  --notyupecheck     do not typecheck lenses\n");
 
     exit(EXIT_FAILURE);
 }
@@ -47,12 +48,14 @@ int main(int argc, char **argv) {
     char *loadpath = NULL;
     size_t loadpathlen = 0;
     enum {
-        VAL_NO_STDINC = CHAR_MAX + 1
+        VAL_NO_STDINC = CHAR_MAX + 1,
+        VAL_NO_TYPECHECK = VAL_NO_STDINC + 1
     };
     struct option options[] = {
         { "help",      0, 0, 'h' },
         { "include",   1, 0, 'I' },
         { "nostdinc",  0, 0, VAL_NO_STDINC },
+        { "notypecheck",  0, 0, VAL_NO_TYPECHECK },
         { 0, 0, 0, 0}
     };
     int idx;
@@ -69,6 +72,9 @@ int main(int argc, char **argv) {
             break;
         case VAL_NO_STDINC:
             flags |= AUG_NO_STDINC;
+            break;
+        case VAL_NO_TYPECHECK:
+            flags &= ~(AUG_TYPE_CHECK);
             break;
         default:
             usage();

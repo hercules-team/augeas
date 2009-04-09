@@ -27,6 +27,14 @@ Do not search any of the default directories for modules. When this option
 is set, only directories specified explicitly with B<-I> or specified in
 B<AUGEAS_LENS_LIB> will be searched for modules.
 
+=item B<--notypecheck>
+
+Do not perform lens type checks. Only use this option during lens
+development and make sure you typecheck lenses when you are done developing
+- you should never use a lens that hasn't been typechecked. This option is
+sometimes useful when you are working on unit tests for a lens to speed up
+the time it takes to repeatedly run and fix tests.
+
 =item B<-h>
 
 Display this help and exit
