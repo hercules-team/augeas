@@ -50,13 +50,19 @@ module Grub =
         [ spc . switch_arg /unit|port|speed|word|parity|stop|device/ ]* .
         eol ]
 
+    let terminal =
+      [ command "terminal" "" .
+          ([ spc . switch /dumb|no-echo|no-edit|silent/ ]
+          |[ spc . switch_arg /timeout|lines/ ])* .
+          [ spc . key /console|serial|hercules/ ]* . eol ]
+
     let menu_setting = kw_menu_arg "default"
                      | kw_menu_arg "fallback"
                      | kw_pres "hiddenmenu"
                      | kw_menu_arg "timeout"
                      | kw_menu_arg "splashimage"
                      | serial
-                     | kw_menu_arg "terminal"
+                     | terminal
                      | password_arg
                      | color
 

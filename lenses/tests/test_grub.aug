@@ -124,6 +124,13 @@ initrd\t\t/boot/initrd.img-2.6.18-6-vserver-686
         { "parity" = "no" }
         { "stop" = "1" } }
 
+  test Grub.lns get
+      "terminal --timeout=10 serial console\n" =
+    { "terminal"
+        { "timeout" = "10" }
+        { "serial" }
+        { "console" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
