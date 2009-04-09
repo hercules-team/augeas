@@ -8,19 +8,25 @@ module Grub =
     let value_to_eol = store /[^= \t\n][^\n]*[^= \t\n]|[^= \t\n]/
     let eol = Util.eol
     let del_to_eol = del /[^ \t\n]*/ ""
+    let spc = Util.del_ws_spc
     let opt_ws = Util.del_opt_ws ""
+    let dels (s:string) = Util.del_str s
+    let eq = dels "="
+    let switch (n:string) = dels ("--" . n) . label n
     let value_sep (dflt:string) = del /[ \t]*[ \t=][ \t]*/ dflt
 
+    let command (kw:string) (indent:string) =
+      Util.del_opt_ws indent . key kw
+
     let kw_arg (kw:string) (indent:string) (dflt_sep:string) =
-      [ Util.del_opt_ws indent . key kw . value_sep dflt_sep
-          . value_to_eol . eol ]
+      [ command kw indent . value_sep dflt_sep . value_to_eol . eol ]
 
     let kw_boot_arg (kw:string) = kw_arg kw "\t" " "
     let kw_menu_arg (kw:string) = kw_arg kw "" "="
     let password_arg = [ key "password" .
-      (Util.del_ws_spc . [ Util.del_str "--md5" . label "md5" ])? .
-      Util.del_ws_spc . store (/[^ \t\n]+/ - "--md5") .
-      (Util.del_ws_spc . [ label "file" . store /[^ \t\n]+/ ])? .
+      (spc . [ switch "md5" ])? .
+      spc . store (/[^ \t\n]+/ - "--md5") .
+      (spc . [ label "file" . store /[^ \t\n]+/ ])? .
       eol ]
 
     let kw_pres (kw:string) = [ opt_ws . key kw . del_to_eol . eol ]
@@ -31,11 +37,11 @@ module Grub =
       let color_name = store /[A-Za-z-]+/ in
       let color_spec =
         [ label "foreground" . color_name] .
-        Util.del_str "/" .
+        dels "/" .
         [ label "background" . color_name ] in
       [ opt_ws . key "color" .
-        Util.del_ws_spc . [ label "normal" . color_spec ] .
-        (Util.del_ws_spc . [ label "highlight" . color_spec ])? .
+        spc . [ label "normal" . color_spec ] .
+        (spc . [ label "highlight" . color_spec ])? .
         eol ]
 
     let menu_setting = kw_menu_arg "default"
@@ -50,20 +56,31 @@ module Grub =
 
     let title = del /title[ \t]+/ "title " . value_to_eol . eol
 
-    let module_lines = [ label "modules" .
-                            Util.del_ws "\t" .
-                             Util.del_str "module" . Util.del_ws_spc
-                             . value_to_eol . eol ]
+    (* Parse the file name and args on a kernel or module line *)
+    let kernel_args =
+      let arg = Rx.word - /type|no-mem-option/ in
+      store /\/[^ \t\n]*/ .
+            (spc . [ key arg . (eq . store Rx.no_spaces)?])* . eol
+
+    let module_line =
+      [ command "module" "\t" . spc . kernel_args ]
+
+    let kernel =
+        [ command "kernel" "\t" .
+          (spc .
+             ([switch "type" . eq . store /[a-z]+/]
+             |[switch "no-mem-option"]))* .
+          spc . kernel_args ]
 
     let boot_setting = kw_boot_arg "root"
-                     | kw_boot_arg "kernel"
+                     | kernel
                      | kw_boot_arg "initrd"
                      | kw_boot_arg "rootnoverify"
                      | kw_boot_arg "chainloader"
                      | kw_boot_arg "uuid"
                      | kw_pres "quiet"  (* Seems to be a Ubuntu extension *)
                      | kw_pres "savedefault"
-                     | module_lines
+                     | module_line
 
     let boot = [ label "title" . title . boot_setting* ]
 

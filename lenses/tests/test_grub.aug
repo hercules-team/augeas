@@ -51,20 +51,24 @@ title Fedora (2.6.24.3-34.fc8)
     { "hiddenmenu" }
     { "title" = "Fedora (2.6.24.4-64.fc8)"
         { "root" = "(hd0,0)" }
-        { "kernel" = "/vmlinuz-2.6.24.4-64.fc8 ro root=/dev/vg00/lv00" }
+        { "kernel" = "/vmlinuz-2.6.24.4-64.fc8"
+            { "ro" }  { "root" = "/dev/vg00/lv00" } }
         { "initrd" = "/initrd-2.6.24.4-64.fc8.img" } }
     { "title" = "Fedora (2.6.24.3-50.fc8)"
         { "root" = "(hd0,0)" }
-        { "kernel" = "/vmlinuz-2.6.24.3-50.fc8 ro root=/dev/vg00/lv00" }
+        { "kernel" = "/vmlinuz-2.6.24.3-50.fc8"
+            { "ro" } { "root" = "/dev/vg00/lv00" } }
         { "initrd" = "/initrd-2.6.24.3-50.fc8.img" } }
     { "title" = "Fedora (2.6.21.7-3.fc8xen)"
         { "root" = "(hd0,0)" }
         { "kernel" = "/xen.gz-2.6.21.7-3.fc8" }
-        { "modules" = "/vmlinuz-2.6.21.7-3.fc8xen ro root=/dev/vg00/lv00" }
-        { "modules" = "/initrd-2.6.21.7-3.fc8xen.img" } }
+        { "module" = "/vmlinuz-2.6.21.7-3.fc8xen"
+            { "ro" } { "root" = "/dev/vg00/lv00" } }
+        { "module" = "/initrd-2.6.21.7-3.fc8xen.img" } }
     { "title" = "Fedora (2.6.24.3-34.fc8)"
         { "root" = "(hd0,0)" }
-        { "kernel" = "/vmlinuz-2.6.24.3-34.fc8 ro root=/dev/vg00/lv00" }
+        { "kernel" = "/vmlinuz-2.6.24.3-34.fc8"
+            { "ro" } { "root" = "/dev/vg00/lv00" } }
         { "initrd" = "/initrd-2.6.24.3-34.fc8.img" } }
 
   test Grub.lns put conf after set "default" "0" = conf
@@ -105,7 +109,8 @@ initrd\t\t/boot/initrd.img-2.6.18-6-vserver-686
   test Grub.lns get boot_savedefault =
     { "title" = "Debian GNU/Linux, kernel 2.6.18-6-vserver-686"
       { "root" = "(hd0,0)" }
-      { "kernel" = "/boot/vmlinuz-2.6.18-6-vserver-686 root=/dev/md0 ro" }
+      { "kernel" = "/boot/vmlinuz-2.6.18-6-vserver-686"
+          { "root" = "/dev/md0" } { "ro" } }
       { "initrd" = "/boot/initrd.img-2.6.18-6-vserver-686" }
       { "savedefault" } }
 
