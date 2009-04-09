@@ -131,6 +131,9 @@ initrd\t\t/boot/initrd.img-2.6.18-6-vserver-686
         { "serial" }
         { "console" } }
 
+  test Grub.boot_setting get
+      "chainloader --force +1 \n" = { "chainloader" = "+1" { "force" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

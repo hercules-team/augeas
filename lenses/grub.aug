@@ -84,11 +84,15 @@ module Grub =
              |[switch "no-mem-option"]))* .
           spc . kernel_args ]
 
+    let chainloader =
+      [ command "chainloader" "\t" .
+          [ spc . switch "force" ]? . spc . store Rx.no_spaces . eol ]
+
     let boot_setting = kw_boot_arg "root"
                      | kernel
                      | kw_boot_arg "initrd"
                      | kw_boot_arg "rootnoverify"
-                     | kw_boot_arg "chainloader"
+                     | chainloader
                      | kw_boot_arg "uuid"
                      | kw_pres "quiet"  (* Seems to be a Ubuntu extension *)
                      | kw_pres "savedefault"
