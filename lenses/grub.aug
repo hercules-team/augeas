@@ -88,6 +88,9 @@ module Grub =
       [ command "chainloader" "\t" .
           [ spc . switch "force" ]? . spc . store Rx.no_spaces . eol ]
 
+    let savedefault =
+      [ command "savedefault" "\t" . (spc . store Rx.integer)? . eol ]
+
     let boot_setting = kw_boot_arg "root"
                      | kernel
                      | kw_boot_arg "initrd"
@@ -95,7 +98,7 @@ module Grub =
                      | chainloader
                      | kw_boot_arg "uuid"
                      | kw_pres "quiet"  (* Seems to be a Ubuntu extension *)
-                     | kw_pres "savedefault"
+                     | savedefault
                      | module_line
 
     let boot = [ label "title" . title . boot_setting* ]

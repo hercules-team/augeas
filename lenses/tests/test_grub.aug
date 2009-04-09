@@ -134,6 +134,9 @@ initrd\t\t/boot/initrd.img-2.6.18-6-vserver-686
   test Grub.boot_setting get
       "chainloader --force +1 \n" = { "chainloader" = "+1" { "force" } }
 
+  test Grub.savedefault put "savedefault\n" after
+    set "/savedefault" "3" = "savedefault 3\n"
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
