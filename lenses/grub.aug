@@ -12,7 +12,8 @@ module Grub =
     let opt_ws = Util.del_opt_ws ""
     let dels (s:string) = Util.del_str s
     let eq = dels "="
-    let switch (n:string) = dels ("--" . n) . label n
+    let switch (n:regexp) = dels "--" . key n
+    let switch_arg (n:regexp) = switch n . eq . store Rx.no_spaces
     let value_sep (dflt:string) = del /[ \t]*[ \t=][ \t]*/ dflt
 
     let command (kw:string) (indent:string) =
@@ -44,12 +45,17 @@ module Grub =
         (spc . [ label "highlight" . color_spec ])? .
         eol ]
 
+    let serial =
+      [ command "serial" "" .
+        [ spc . switch_arg /unit|port|speed|word|parity|stop|device/ ]* .
+        eol ]
+
     let menu_setting = kw_menu_arg "default"
                      | kw_menu_arg "fallback"
                      | kw_pres "hiddenmenu"
                      | kw_menu_arg "timeout"
                      | kw_menu_arg "splashimage"
-                     | kw_menu_arg "serial"
+                     | serial
                      | kw_menu_arg "terminal"
                      | password_arg
                      | color

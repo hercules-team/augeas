@@ -114,6 +114,15 @@ initrd\t\t/boot/initrd.img-2.6.18-6-vserver-686
       { "initrd" = "/boot/initrd.img-2.6.18-6-vserver-686" }
       { "savedefault" } }
 
+  test Grub.lns get
+      "serial --unit=0 --speed=9600 --word=8 --parity=no --stop=1\n"
+    =
+    { "serial"
+        { "unit" = "0" }
+        { "speed" = "9600" }
+        { "word" = "8" }
+        { "parity" = "no" }
+        { "stop" = "1" } }
 
 (* Local Variables: *)
 (* mode: caml       *)
