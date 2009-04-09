@@ -68,8 +68,7 @@ module Grub =
     let boot = [ label "title" . title . boot_setting* ]
 
     let comment_re = /([^ \t\n].*[^ \t\n]|[^ \t\n])/
-                       - "# ## Start Default Options ##"
-                       - "# ## End Default Options ##"
+                       - /# ## (Start|End) Default Options ##/
 
     let comment    =
         [ Util.indent . label "#comment" . del /#[ \t]*/ "# "
