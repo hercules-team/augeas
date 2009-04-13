@@ -95,16 +95,14 @@ let dayofweek  = [ label "dayofweek"  . store alphanum ]
 (* View: user *)
 let user       = [ label "user"         . store Rx.word ]
 
-(* View: command *)
-let command    = [ label "command"      . store Rx.space_in ]
-
 
 (************************************************************************
  * View: time
  *   Time in the format "minute hour dayofmonth month dayofweek"
  *************************************************************************)
-let time        = minute . sep_spc . hour  . sep_spc . dayofmonth
-                         . sep_spc . month . sep_spc . dayofweek
+let time        = [ label "time" .
+                  minute . sep_spc . hour  . sep_spc . dayofmonth
+                         . sep_spc . month . sep_spc . dayofweek ]
 
 (* Variable: the valid values for schedules *)
 let schedule_re = "reboot" | "yearly" | "annually" | "monthly"
@@ -126,7 +124,7 @@ let schedule    = [ label "schedule" . Util.del_str "@"
 let entry       = [ label "entry" . indent
                    . ( time | schedule )
                    . sep_spc . user
-                   . sep_spc . command . eol ]
+                   . sep_spc . store Rx.space_in . eol ]
 
 
 (*

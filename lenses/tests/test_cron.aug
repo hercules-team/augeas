@@ -16,24 +16,23 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
       { "SHELL" = "/bin/sh" }
       { "PATH"  = "/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin" }
       {}
-      { "entry"
-          { "minute"       = "30"   }
-          { "hour"         = "7"    }
-          { "dayofmonth"   = "*"    }
-          { "month"        = "*"    }
-          { "dayofweek"    = "*"    }
-          { "user"         = "root" }
-          { "command"      = "test -x /etc/init.d/anacron && /usr/sbin/invoke-rc.d anacron start >/dev/null" } }
-      { "entry"
-          { "minute"       = "00"      }
-          { "hour"         = "*/3"     }
-          { "dayofmonth"   = "15-25/2" }
-          { "month"        = "May"     }
-          { "dayofweek"    = "1-5"     }
-          { "user"         = "user"    }
-          { "command"      = "somecommand" } }
+      { "entry" = "test -x /etc/init.d/anacron && /usr/sbin/invoke-rc.d anacron start >/dev/null"
+          { "time"
+              { "minute"       = "30"   }
+              { "hour"         = "7"    }
+              { "dayofmonth"   = "*"    }
+              { "month"        = "*"    }
+              { "dayofweek"    = "*"    } }
+          { "user"         = "root" } }
+      { "entry" = "somecommand"
+          { "time"
+              { "minute"       = "00"      }
+              { "hour"         = "*/3"     }
+              { "dayofmonth"   = "15-25/2" }
+              { "month"        = "May"     }
+              { "dayofweek"    = "1-5"     } }
+          { "user"         = "user"    } }
       { "#comment" = "a comment" }
-      { "entry"
+      { "entry" = "a command"
           { "schedule"     = "yearly"  }
-          { "user"         = "foo"     }
-          { "command"      = "a command" } }
+          { "user"         = "foo"     } }
