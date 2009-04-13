@@ -111,7 +111,12 @@ int aug_defnode(augeas *aug, const char *name, const char *expr,
  * Lookup the value associated with PATH. VALUE can be NULL, in which case
  * it is ignored. If VALUE is not NULL, it is used to return a pointer to
  * the value associated with PATH if PATH matches exactly one node. If PATH
- * matches no nodes or more than one node, *VALUE is set to NULL.
+ * matches no nodes or more than one node, *VALUE is set to NULL. Note that
+ * it is perfectly legal for nodes to have a NULL value, and that that by
+ * itself does not indicate an error.
+ *
+ * The string *VALUE must not be freed by the caller, and is valid as long
+ * as its node remains unchanged.
  *
  * Returns:
  * 1 if there is exactly one node matching PATH, 0 if there is none,
@@ -123,8 +128,8 @@ int aug_get(const augeas *aug, const char *path, const char **value);
 /* Function: aug_set
  *
  * Set the value associated with PATH to VALUE. VALUE is copied into the
- * internal data structure. Intermediate entries are created if they don't
- * exist.
+ * internal data structure, and the caller is responsible for freeing
+ * it. Intermediate entries are created if they don't exist.
  *
  * Returns:
  * 0 on success, -1 on error. It is an error if more than one node
