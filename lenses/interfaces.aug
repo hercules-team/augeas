@@ -40,8 +40,8 @@ let stanza_param (l:string) = [ sep_spc . label l . sto_to_spc ]
 let stanza_word = /(iface|auto|allow-[a-z-]+|mapping)/
 
 (* Define additional lines for mluti-line stanzas *)
-let stanza_option = [  del /[ \t]*/ "   " 
-                     . key  ( /[a-z-]+/ - stanza_word )
+let stanza_option = [  del /[ \t]*/ "   "
+                     . key  ( /[a-z_-]+/ - stanza_word )
                      . sep_spc
                      . sto_to_eol
                      . eol ]
@@ -102,4 +102,3 @@ let stanza_multi  = iface|mapping
               . Util.stdexcl
 
    let xfm = transform lns filter
-
