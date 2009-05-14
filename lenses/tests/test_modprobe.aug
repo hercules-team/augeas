@@ -71,3 +71,7 @@ test Modprobe.lns get conf =
   { "remove" = "bar echo Removing bar" }
   { "remove" = "foo echo Removing foo" }
   { "remove" = "export_nodep-$BITNESS echo Removing export_nodep" }
+
+test Modprobe.lns get "blacklist brokenmodule # never worked\n" =
+  { "blacklist" = "brokenmodule"
+    { "#comment" = "never worked" } }
