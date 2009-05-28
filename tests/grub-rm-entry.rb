@@ -23,5 +23,5 @@ diff["/etc/grub.conf"] = <<TXT
  \tkernel /vmlinuz-2.6.24.3-34.fc8 ro root=/dev/vg00/lv00
  \tinitrd /initrd-2.6.24.3-34.fc8.img
 -        savedefault
-+savedefault
++\tsavedefault
 TXT
