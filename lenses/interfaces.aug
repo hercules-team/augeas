@@ -17,12 +17,12 @@ let eol        = Util.eol
 (* Define separators *)
 
 (* a line can be extended across multiple lines by making the last  *)
-(*  character a backslash, unless the line is a comment (see below) *)
+(*  character a backslash *)
 let sep_spc    =  del /([ \t]+|[ \t]*\\\\\n[ \t]*)/ " "
 
 (* Define fields *)
-let sto_to_eol = store /([^\\# \t\n].*[^\\ \t\n]|[^\\ \t\n])/
-let sto_to_spc = store /[^\\# \t\n]+/
+let sto_to_eol = store /([^\\ \t\n].*[^\\ \t\n]|[^\\ \t\n])/ . eol
+let sto_to_spc = store /[^\\ \t\n]+/
 
 (* Define comments and empty lines *)
 
@@ -39,12 +39,11 @@ let stanza_param (l:string) = [ sep_spc . label l . sto_to_spc ]
 (* Define reseverved words *)
 let stanza_word = /(iface|auto|allow-[a-z-]+|mapping)/
 
-(* Define additional lines for mluti-line stanzas *)
+(* Define additional lines for multi-line stanzas *)
 let stanza_option = [  del /[ \t]*/ "   "
                      . key  ( /[a-z_-]+/ - stanza_word )
                      . sep_spc
-                     . sto_to_eol
-                     . eol ]
+                     . sto_to_eol ]
 
 (************************************************************************
  *                              AUTO
@@ -52,22 +51,24 @@ let stanza_option = [  del /[ \t]*/ "   "
 
 let array (r:regexp) (t:string) =  del r t . label t . counter t
    . [ sep_spc . seq t . sto_to_spc ]+
-let auto = [ array /(allow-)?auto/ "auto" . (comment|eol) ]
+let auto = [ array /(allow-)?auto/ "auto" . eol ]
 
 (************************************************************************
- *                              HOTPLUG
+ *                              GENERIC ALLOW
  *************************************************************************)
 
-let hotplug = [ stanza_id "allow-hotplug" . (comment|eol) ]
+let allow = [ key ( /allow-[a-z-]+/ - "allow-auto" )
+             . counter "allow_seq"
+             . [ sep_spc . seq "allow_seq" . sto_to_spc ]+
+             . eol ]
 
 (************************************************************************
  *                              MAPPING
  *************************************************************************)
 
 let mapping = [ stanza_id "mapping"
-               . (comment|empty)+
-               . stanza_option
-               . (stanza_option|comment|empty)* ]
+               . eol
+               . (stanza_option|comment|empty)+ ]
 
 (************************************************************************
  *                              IFACE
@@ -76,8 +77,8 @@ let mapping = [ stanza_id "mapping"
 let iface   = [ stanza_id    "iface"
               . stanza_param "family"
               . stanza_param "method"
-              . (comment|empty)+
-              . ( stanza_option . (stanza_option|comment|empty)* )? ]
+              . eol
+              . (stanza_option|comment|empty)* ]
 
 (************************************************************************
  *                              STANZAS
@@ -89,7 +90,7 @@ let iface   = [ stanza_id    "iface"
    come after an auto or hotplug stanza, otherwise they are considered part
    of a iface or mapping block *)
 
-let stanza_single = (auto|hotplug) . (comment|empty)*
+let stanza_single = (auto|allow) . (comment|empty)*
 let stanza_multi  = iface|mapping
 
 (************************************************************************
