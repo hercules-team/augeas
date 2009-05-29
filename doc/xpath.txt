@@ -116,6 +116,7 @@ PrimaryExpr ::= Literal
               | Number
               | FunctionCall
               | VariableReference
+              | '(' Expr ')'
 
 FunctionCall ::= Name '(' ( Expr ( ',' Expr )* )? ')'
 

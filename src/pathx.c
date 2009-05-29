@@ -1619,6 +1619,7 @@ static void parse_var(struct state *state) {
  * PrimaryExpr ::= Literal
  *               | Number
  *               | FunctionCall
+ *               | VariableReference
  *               | '(' Expr ')'
  *
  */
