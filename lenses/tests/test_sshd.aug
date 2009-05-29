@@ -34,7 +34,7 @@ HostKey /etc/ssh/ssh_host_dsa_key\n" =
     { "AuthorizedKeysFile" = "%h/.ssh/authorized_keys" }
 
   test Sshd.lns get "Subsystem sftp /usr/lib/openssh/sftp-server\n" =
-    { "Subsystem" 
+    { "Subsystem"
 	{ "sftp" = "/usr/lib/openssh/sftp-server" } }
 
 

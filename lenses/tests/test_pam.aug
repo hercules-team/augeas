@@ -13,7 +13,7 @@ session    optional     pam_keyinit.so force revoke
     { "2" { "type" = "session" }
           { "control" = "optional" }
           { "module" = "pam_keyinit.so" }
-          { "argument" = "force" } 
+          { "argument" = "force" }
           { "argument" = "revoke" } }
 
   test Pam.lns put example after
@@ -30,7 +30,7 @@ session    optional     pam_keyinit.so force revoke
     set "/1/type" "auth"
   = trailing_ws
 
-  test Pam.lns get "@include common-password\n" = 
+  test Pam.lns get "@include common-password\n" =
     { "include" = "common-password" }
 
 (* Local Variables: *)

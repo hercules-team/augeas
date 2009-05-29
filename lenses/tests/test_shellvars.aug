@@ -48,35 +48,35 @@ unset ONBOOT
   test Shellvars.lns get key_brack =
     { "SOME_KEY[1]" = "" } { "DEVICE" = "eth0" }
 
-  test Shellvars.lns get "smartd_opts=\"-q never\"\n" = 
+  test Shellvars.lns get "smartd_opts=\"-q never\"\n" =
     { "smartd_opts" = "\"-q never\"" }
 
   test Shellvars.lns get "var=val  \n" = { "var" = "val" }
 
-  test Shellvars.lns get ". /etc/java/java.conf\n" = 
+  test Shellvars.lns get ". /etc/java/java.conf\n" =
     { ".source" = "/etc/java/java.conf" }
 
   (* Quoted strings and other oddities *)
-  test Shellvars.lns get "var=\"foo 'bar'\"\n" = 
+  test Shellvars.lns get "var=\"foo 'bar'\"\n" =
     { "var" = "\"foo 'bar'\"" }
 
   test Shellvars.lns get "var='Some \"funny\" value'\n" =
     { "var" = "'Some \"funny\" value'" }
 
-  test Shellvars.lns get "var=\"\\\"\"\n" = 
+  test Shellvars.lns get "var=\"\\\"\"\n" =
     { "var" = "\"\\\"\"" }
 
   test Shellvars.lns get "var=\\\"\n" =
     { "var" = "\\\"" }
 
-  test Shellvars.lns get "var=ab#c\n" = 
+  test Shellvars.lns get "var=ab#c\n" =
     { "var" = "ab#c" }
 
   (* We don't handle comments at the end of a line yet *)
   test Shellvars.lns get "var=ab #c\n" = *
 
   (* Handling of arrays *)
-  test Shellvars.lns get "var=(val1 \"val\\\"2\\\"\" val3)\n" = 
+  test Shellvars.lns get "var=(val1 \"val\\\"2\\\"\" val3)\n" =
     { "var"
         { "1" = "val1" }
         { "2" = "\"val\\\"2\\\"\"" }
@@ -92,11 +92,11 @@ unset ONBOOT
       rm "var/*" ;
       set "var" "value"
   = "var=value\n"
-  
+
   test Shellvars.lns put "var=(v1 v2)\n" after
     set "var/3" "v3"
   = "var=(v1 v2 v3)\n"
-  
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

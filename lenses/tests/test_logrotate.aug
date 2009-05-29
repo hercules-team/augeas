@@ -1,4 +1,4 @@
-module Test_logrotate = 
+module Test_logrotate =
 
    let conf = "# see man logrotate for details
 # rotate log files weekly
@@ -19,7 +19,7 @@ tabooext + .old .orig .ignore
 include /etc/logrotate.d
 
 # no packages own wtmp, or btmp -- we'll rotate them here
-/var/log/wtmp 	   
+/var/log/wtmp
 {
     missingok
     monthly
@@ -60,7 +60,7 @@ include /etc/logrotate.d
 }
 "
 
-   test Logrotate.lns get conf = 
+   test Logrotate.lns get conf =
       { "#comment" = "see man logrotate for details" }
       { "#comment" = "rotate log files weekly" }
       { "schedule" = "weekly" }
@@ -126,7 +126,7 @@ include /etc/logrotate.d
            { "prerotate" = "                if [ -f /var/run/apache2.pid ]; then
                         /etc/init.d/apache2 restart > /dev/null
                 fi
-" } } 
+" } }
 
   test Logrotate.lns get "/var/log/file {\n dateext\n}\n" =
     { "rule"

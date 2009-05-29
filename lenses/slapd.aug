@@ -31,7 +31,7 @@ let what        = [ spc . label "what"    . sto_to_spc ]
 (* TODO: parse the control field, see man slapd.access (5) *)
 let control     = [ spc . label "control" . sto_to_by  ]
 let by          = [ sep . key "by". who . what. control? ]
-         
+
 let access      = [ key access_re . spc. sto_to_spc . by+ . eol ]
 
 (************************************************************************
@@ -96,7 +96,7 @@ let global_re   = "allow"
                 | "TLSVerifyClient"
                 | "TLSCRLCheck"
                 | "backend"
-  
+
 let global     = Spacevars.entry global_re
 
 (************************************************************************

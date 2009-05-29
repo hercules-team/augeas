@@ -57,7 +57,7 @@ post_upload_command = /usr/bin/mini-dinstall --batch
 
 "
 
-   test Dput.lns get conf = 
+   test Dput.lns get conf =
       { "#comment" = "Example dput.cf that defines the host that can be used" }
       { "#comment" = "with dput for uploading." }
       {}
@@ -77,21 +77,21 @@ post_upload_command = /usr/bin/mini-dinstall --batch
          { "default_host_main" = "hebex" }
          { "allowed_distributions" = "(?!UNRELEASED)" }
          {} }
-      { "target" = "hebex" 
+      { "target" = "hebex"
          { "fqdn" = "condor.infra.s1.p.fti.net" }
 	 { "login" = "anonymous" }
 	 { "method" = "ftp" }
 	 { "incoming" = "/incoming/hebex" }
 	 { "passive_ftp" = "0" }
          {} }
-      { "target" = "dop/desktop" 
+      { "target" = "dop/desktop"
          { "fqdn" = "condor.infra.s1.p.fti.net" }
 	 { "login" = "anonymous" }
 	 { "method" = "ftp" }
 	 { "incoming" = "/incoming/dop/desktop" }
 	 { "passive_ftp" = "0" }
          {} }
-      { "target" = "jp-non-us" 
+      { "target" = "jp-non-us"
          { "fqdn" = "hp.debian.or.jp" }
 	 { "incoming" = "/pub/Incoming/upload-non-US" }
 	 { "login" = "anonymous" }
@@ -102,7 +102,7 @@ post_upload_command = /usr/bin/mini-dinstall --batch
          { "#comment" = "incoming = /public/pub/Linux/debian/UploadQueue/" }
          { "#comment" = "login = anonymous" }
          {} }
-      { "target" = "ftp-master" 
+      { "target" = "ftp-master"
          { "fqdn" = "ftp-master.debian.org" }
 	 { "incoming" = "/pub/UploadQueue/" }
 	 { "login" = "anonymous" }

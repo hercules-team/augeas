@@ -29,7 +29,7 @@ test Monit.lns get conf =
    {}
    { "check"
      { "process" = "httpd with pidfile /usr/local/apache2/logs/httpd.pid" }
-     { "group"   = "www-data" } 
+     { "group"   = "www-data" }
      { "start"   = "program \"/usr/local/apache2/bin/apachectl start\"" }
      { "stop"    = "program \"/usr/local/apache2/bin/apachectl stop\"" }
 }

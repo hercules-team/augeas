@@ -62,14 +62,14 @@ Variable: indent
 (* Group: Comment and empty
      This is a general definition of comment and empty.
      It allows indentation for comments, removes the leading and trailing spaces
-     of comments and stores them in nodes, except for empty comments which are 
+     of comments and stores them in nodes, except for empty comments which are
      ignored together with empty lines
 
 View: comment
   Map comments into "#comment" nodes
 *)
-  let comment = 
-    [ indent . label "#comment" . del /#[ \t]*/ "# " 
+  let comment =
+    [ indent . label "#comment" . del /#[ \t]*/ "# "
         . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ . eol ]
 
 (*

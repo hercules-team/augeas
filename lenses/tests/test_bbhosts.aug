@@ -1,4 +1,4 @@
-module Test_bbhosts = 
+module Test_bbhosts =
 
    let conf = "
 # A comment
@@ -24,7 +24,7 @@ group-compress My test
 192.168.0.3	myhost2 # !imap2 telnet dns
 "
 
-   test BBhosts.lns get conf = 
+   test BBhosts.lns get conf =
       {}
       { "#comment" = "A comment" }
       {}
@@ -35,7 +35,7 @@ group-compress My test
 	    { "host"
 	       { "ip"   = "1.2.3.4" }
 	       { "fqdn" = "amachine" }
-	       { "probes" 
+	       { "probes"
 	          { "url" = "http://url.to/monitor" }
 		  { "url" = "https://another.url/to/monitor" }
 		  { "cont" = ""
@@ -44,7 +44,7 @@ group-compress My test
 	    { "host"
 	       { "ip"   = "1.2.3.5" }
 	       { "fqdn" = "amachine2" }
-	       { "probes" 
+	       { "probes"
 	          { "url" = "http://url.to/monitor" }
 		  { "url" = "https://another.url/to/monitor" }
 		  { "cont" = "!"

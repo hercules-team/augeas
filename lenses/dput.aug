@@ -1,5 +1,5 @@
-(* Dput module for Augeas 
-   Author: Raphael Pinson <raphink@gmail.com> 
+(* Dput module for Augeas
+   Author: Raphael Pinson <raphink@gmail.com>
 
 
    Reference: dput uses Python's ConfigParser:
@@ -44,7 +44,7 @@ let setting = "allow_non-us_software"
  * "name=value" is also accepted
  * leading whitespace is removed from values
  *************************************************************************)
-let entry = IniFile.entry setting sep comment 
+let entry = IniFile.entry setting sep comment
 
 
 (************************************************************************
@@ -56,7 +56,7 @@ let entry = IniFile.entry setting sep comment
  * because augeas doesn't like '/' keys (although it is legal in INI Files)
  *************************************************************************)
 let title   = IniFile.title_label "target" IniFile.record_label_re
-let record  = IniFile.record title entry 
+let record  = IniFile.record title entry
 
 let lns    = IniFile.lns record comment
 

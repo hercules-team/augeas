@@ -58,7 +58,7 @@ bin:		root, ruth
   (* Don't have to have whitespace after a comma *)
   let nocomma = "alias: target1,target2\n"
 
-  test Aliases.lns get nocomma = 
+  test Aliases.lns get nocomma =
     { "1"
         { "name" = "alias" }
         { "value" = "target1" }

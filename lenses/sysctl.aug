@@ -9,7 +9,7 @@ module Sysctl =
   let eq = del /[ \t]*=[ \t]*/ " = "
   let value_re = /[^ \t\n](.*[^ \t\n])?/
 
-  let comment = [ indent . label "#comment" . del /[#;][ \t]*/ "# " 
+  let comment = [ indent . label "#comment" . del /[#;][ \t]*/ "# "
         . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ . eol ]
 
   let empty = Util.empty

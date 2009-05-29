@@ -6,7 +6,7 @@ module Test_exports =
 # Yes, we export /tmp
 /tmp 172.31.0.0/16(rw,root_squash,sync)\n"
 
-  test Exports.lns get s = 
+  test Exports.lns get s =
     { "dir" = "/local"
         { "client" = "172.31.0.0/16"
             { "option" = "rw" }

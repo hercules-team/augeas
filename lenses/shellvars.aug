@@ -10,7 +10,7 @@ module Shellvars =
   let comment = Util.comment
   let empty   = Util.empty
 
-  let char  = /[^() '"\t\n]|\\\\"/   
+  let char  = /[^() '"\t\n]|\\\\"/
   let dquot = /"([^"\\\n]|\\\\.)*"/                    (* " Emacs, relax *)
   let squot = /'[^'\n]*'/
 
@@ -23,10 +23,10 @@ module Shellvars =
       [ seq "values" . array_value ] .
       [ del /[ \t]+/ " " . seq "values" . array_value ] *
       . del ")" ")"
-  
+
   (* Treat an empty list () as a value '()'; that's not quite correct *)
   (* but fairly close.                                                *)
-  let simple_value = 
+  let simple_value =
     let empty_array = /\([ \t]*\)/ in
    store (char* | dquot | squot | empty_array)
 
@@ -35,16 +35,16 @@ module Shellvars =
 
   let unset = [ key "unset" . Util.del_ws_spc . store key_re . eol ]
 
-  let source = 
-    [ 
-      del /\.|source/ "." . label ".source" . 
-      Util.del_ws_spc . store /[^= \t\n]+/ . eol 
+  let source =
+    [
+      del /\.|source/ "." . label ".source" .
+      Util.del_ws_spc . store /[^= \t\n]+/ . eol
     ]
 
   let lns = (comment | empty | source | kv | unset) *
 
   let sc_incl (n:string) = (incl ("/etc/sysconfig/" . n))
-  let filter_sysconfig = 
+  let filter_sysconfig =
       sc_incl "atd" .
       sc_incl "authconfig" .
       sc_incl "autofs" .

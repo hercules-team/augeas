@@ -6,7 +6,7 @@ module Test_samba =
 #
 # This is the main Samba configuration file. You should read the
 # smb.conf(5) manual page in order to understand the options listed
-# here. Samba has a huge number of configurable options most of which 
+# here. Samba has a huge number of configurable options most of which
 # are not shown in this example
 #
 
@@ -41,7 +41,7 @@ module Test_samba =
    printing = cups
 "
 
-   test Samba.lns get conf = 
+   test Samba.lns get conf =
       { "#comment" }
       { "#comment" = "Sample configuration file for the Samba suite for Debian GNU/Linux." }
       { "#comment" }

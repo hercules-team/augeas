@@ -1,6 +1,6 @@
 module Test_vsftpd =
 
-test Vsftpd.lns get "listen=YES\nmdtm_write=false\n" = 
+test Vsftpd.lns get "listen=YES\nmdtm_write=false\n" =
   { "listen" = "YES" }
   { "mdtm_write" = "false" }
 

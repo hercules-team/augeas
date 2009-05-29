@@ -6,7 +6,7 @@
 (* Todo :                                     *)
 (*                                            *)
 
-module BBhosts = 
+module BBhosts =
     autoload xfm
 
     (* Define useful shortcuts *)
@@ -29,8 +29,8 @@ module BBhosts =
     let host_fqdn = [ label "fqdn" . sep_spc . word ]
 
     let host_test_url  = [ label "url" . sep_spc . url ]
-    let host_test_cont (kw:string) = [ sep_spc . store /!?/ . key kw . 
-                             (Util.del_str ";" . 
+    let host_test_cont (kw:string) = [ sep_spc . store /!?/ . key kw .
+                             (Util.del_str ";" .
                                 [ label "url" . word ] .
 			        (Util.del_str ";" . [ label "keyword" . word ])?
 			     )?
@@ -53,7 +53,7 @@ module BBhosts =
 		  | host_test_flag "BBNET"
 		  | host_test_flag "BBPAGER"
                   | host_test_url
-  
+
 
     let host_opts = [ label "probes" . sep_spc . Util.del_str "#" . host_test* ]
 
@@ -61,7 +61,7 @@ module BBhosts =
 
     (* Define group-compress and group-only *)
     let group_compress = [ key "group-compress" . sep_spc . value_to_eol . eol_no_spc .
-                  ( comment | empty | host)* 
+                  ( comment | empty | host)*
 		  ]
 
     let group_only_col  = [ label "col" . word ]
@@ -70,7 +70,7 @@ module BBhosts =
                   ( comment | empty | host)*
 		  ]
 
-    
+
     (* Define page *)
     let page_title = [ label "title" . sep_spc . value_to_eol . eol_no_spc ]
     let page = [ key "page" . sep_spc . word . page_title .

@@ -1,7 +1,7 @@
 module Test_php =
 
    let conf = "
-safe_mode = Off  
+safe_mode = Off
 [PHP]
 ; Enable the PHP scripting language engine under Apache.
 engine = On
@@ -16,7 +16,7 @@ sqlite.assoc_case = 0
 "
 
 
-   test PHP.lns get conf = 
+   test PHP.lns get conf =
       { ".anon"
          {}
          { "safe_mode" = "Off" } }

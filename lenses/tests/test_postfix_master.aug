@@ -14,7 +14,7 @@ test Postfix_Master.lns get conf =
      { "unpriviliged" = "-" }
      { "chroot" = "-" }
      { "wakeup" = "10?" }
-     { "limit" = "-" } 
+     { "limit" = "-" }
      { "command" = "smtpd" } }
    { "maildrop"
      { "type" = "unix" }
@@ -22,5 +22,5 @@ test Postfix_Master.lns get conf =
      { "unpriviliged" = "n" }
      { "chroot" = "n" }
      { "wakeup" = "-" }
-     { "limit" = "-" } 
+     { "limit" = "-" }
      { "command" = "pipe\n  flags=DRhu user=vmail argv=/usr/bin/maildrop -d ${recipient}" } }

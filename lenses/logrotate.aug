@@ -11,7 +11,7 @@
 (* Todo :                                     *)
 (*                                            *)
 
-module Logrotate = 
+module Logrotate =
    autoload xfm
 
    let sep_spc = Util.del_ws_spc
@@ -81,8 +81,8 @@ module Logrotate =
    (* Define hooks *)
 
 
-   let hook_lines = store ( ( /.*/ . "\n") - /[ \t]*endscript[ \t]*\n/ )* 
-   
+   let hook_lines = store ( ( /.*/ . "\n") - /[ \t]*endscript[ \t]*\n/ )*
+
    let hook_func (func_type:string) = [
        del /[ \t]*/ "\t" . key func_type . eol .
        hook_lines .
@@ -99,8 +99,8 @@ module Logrotate =
                        . ( comment "\t" | attrs "\t" | hooks | empty )*
                        . del /[ \t]*\}[ \t]*\n/ "}\n"
 
-   let rule = 
-     [ label "rule" . 
+   let rule =
+     [ label "rule" .
          [ label "file" . store word ] .
 	 [ del /[ \t]+/ " " . label "file" . store word ]* .
 	 del /[ \t\n]*/ " " . body ]

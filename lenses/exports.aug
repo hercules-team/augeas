@@ -83,7 +83,7 @@ module Exports =
   let rbracket  = Util.del_str ")"
   let sep_com   = Sep.comma
   let sep_spc   = Sep.space
-  
+
   let option = [ label "option" . store /[^,)]+/ ]
 
   let client    = [ label "client" . store client_re .

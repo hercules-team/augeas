@@ -1,18 +1,18 @@
-module Test_dhclient = 
+module Test_dhclient =
 
     let conf ="  # Sample dhclient.conf
     # Protocol timing
 timeout 3; # Expect a fast server
-retry 
+retry
       10;
 # Lease requirements and requests
 request
-	subnet-mask, 
+	subnet-mask,
   broadcast-address,
 	ntp-servers;
 # Dynamic DNS
 send
-	fqdn.fqdn 
+	fqdn.fqdn
 	  \"grosse.fugue.com.\";
 
 interface ep0 {
@@ -53,21 +53,21 @@ lease {
            { "#comment" = "Expect a fast server" } }
         { "retry" = "10" }
         { "#comment" = "Lease requirements and requests" }
-        { "request" 
+        { "request"
            { "1" = "subnet-mask" }
            { "2" = "broadcast-address" }
            { "3" = "ntp-servers" } }
         { "#comment" = "Dynamic DNS" }
-        { "send" 
+        { "send"
            { "fqdn.fqdn" = "\"grosse.fugue.com.\"" } }
         {}
         { "interface" = "ep0"
            { "script" = "/sbin/dhclient-script" }
-           { "send" 
-               { "dhcp-client-identifier" = "1:0:a0:24:ab:fb:9c" } } 
-           { "send" 
-               { "dhcp-lease-time" = "3600" } } 
-           { "request" 
+           { "send"
+               { "dhcp-client-identifier" = "1:0:a0:24:ab:fb:9c" } }
+           { "send"
+               { "dhcp-lease-time" = "3600" } }
+           { "request"
                { "1" = "subnet-mask" }
                { "2" = "broadcast-address" }
                { "3" = "time-offset" }
@@ -75,7 +75,7 @@ lease {
                { "5" = "domain-name" }
                { "6" = "domain-name-servers" }
                { "7" = "host-name" } }
-           { "media" 
+           { "media"
                { "1" = "media10baseT/UTP" }
                { "2" = "\"media10base2/BNC\"" } } }
         {}

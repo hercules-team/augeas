@@ -134,7 +134,7 @@ let stmt_block_date   = [ key stmt_block_date_re
 
 let stmt_block_arg    = sep_spc . sto_to_spc
 
-let stmt_block_entry  = sep_spc 
+let stmt_block_entry  = sep_spc
                       . ( stmt_array
                         | stmt_hash
                         | stmt_block_opt

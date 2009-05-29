@@ -1,4 +1,4 @@
-module Test_spacevars = 
+module Test_spacevars =
 
     let conf ="# This a spaced key/value configuration file.
 keyword value
@@ -6,7 +6,7 @@ keyword value
 # I like comments
 very.useful-key my=value
 
-		
+
 "
 
     let lns = Spacevars.lns (Spacevars.entry Spacevars.entry_re)

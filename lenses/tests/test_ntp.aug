@@ -26,7 +26,7 @@ filegen peerstats file peerstats type day disable
 filegen clockstats file clockstats type day enable nolink
 "
 
-   test Ntp.lns get conf = 
+   test Ntp.lns get conf =
       { "#comment" = "" }
       { "#comment" = "Fichier genere par puppet" }
       { "#comment" = "Environnement: development" }
@@ -38,7 +38,7 @@ filegen clockstats file clockstats type day enable nolink
       {}
       { "driftfile" = "/var/lib/ntp/ntp.drift" }
       {}
-      { "restrict"  = "default" 
+      { "restrict"  = "default"
          { "action" = "ignore" } }
       {}
       { "#comment" = "server dns01.echo-net.net" }
@@ -123,16 +123,16 @@ filegen clockstats file clockstats type day enable nolink
   test Ntp.lns get "multicastclient 224.0.1.1\n" =
      { "multicastclient" = "224.0.1.1" }
 
-  test Ntp.lns put "broadcastclient\tnovolley # broadcast\n" 
-     after rm "/*/novolley" = "broadcastclient # broadcast\n" 
+  test Ntp.lns put "broadcastclient\tnovolley # broadcast\n"
+     after rm "/*/novolley" = "broadcastclient # broadcast\n"
 
-  test Ntp.auth_command get "trustedkey 4 8 42\n" = 
+  test Ntp.auth_command get "trustedkey 4 8 42\n" =
      { "trustedkey"
          { "key" = "4" }
          { "key" = "8" }
          { "key" = "42" } }
 
-  test Ntp.auth_command get "trustedkey 42\n" = 
+  test Ntp.auth_command get "trustedkey 42\n" =
      { "trustedkey" { "key" = "42" } }
 
   test Ntp.lns get "broadcastdelay 0.008\n" =

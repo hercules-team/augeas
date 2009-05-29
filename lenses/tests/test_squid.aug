@@ -43,7 +43,7 @@ test Squid.lns get conf =
   { "http_access"
      { "allow" = "local_network" } }
 
-(* 
+(*
   This tests the Debian lenny default squid.conf
   Comments were stripped out
 *)
@@ -81,7 +81,7 @@ hosts_file /etc/hosts
 coredump_dir /var/spool/squid
 "
 
-test Squid.lns get debian_lenny_default = 
+test Squid.lns get debian_lenny_default =
   { "acl"
     { "all"
       { "type" = "src" }

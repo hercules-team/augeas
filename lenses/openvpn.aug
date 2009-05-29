@@ -126,7 +126,7 @@ let flag_words = "client-to-client"
 	       | "mute-replay-warnings"
 	       | "http-proxy-retry"
 
-let flag_entry (kw:regexp) 
+let flag_entry (kw:regexp)
                = [ key kw . (eol|comment) ]
 
 let flag       = flag_entry flag_words

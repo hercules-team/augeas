@@ -22,7 +22,7 @@ test_ace =
 ; comment with colon
 
 "
-  test lns_ace get conf_ace = 
+  test lns_ace get conf_ace =
       { "#comment" = "comment with sharp" }
       {}
       { "section1"
@@ -42,12 +42,12 @@ test_ace =
   let lns_acf     = IniFile.lns_noempty record_acf comment_acf
   let conf_acf   = "# comment with sharp
 [section1]
-test_acf = value 
+test_acf = value
 test_acf =
 test_acf : value2 # end of line comment
 ; comment with colon
 "
-  test lns_acf get conf_acf = 
+  test lns_acf get conf_acf =
       { "#comment" = "comment with sharp" }
       { "section1"
          { "test_acf" = "value" }
@@ -95,7 +95,7 @@ test_ade =
 test_adf = value
 test_adf : value2 ; end of line comment
 ; comment with colon
-test_adf =   
+test_adf =
 "
    test lns_adf get conf_adf =
       { "#comment" = "a first comment with colon" }
@@ -122,7 +122,7 @@ test_bce = value # end of line comment
 
 test_bce =
 "
-  test lns_bce get conf_bce = 
+  test lns_bce get conf_bce =
       { "#comment" = "comment with sharp" }
       {}
       { "section1"
@@ -146,7 +146,7 @@ test_bcf = value # end of line comment
 ; comment with colon
 test_bcf =
 "
-  test lns_bcf get conf_bcf = 
+  test lns_bcf get conf_bcf =
       { "#comment" = "comment with sharp" }
       { "section1"
           { "test_bcf" = "value"
@@ -168,9 +168,9 @@ test_bcf =
 test_bde = value ; end of line comment
 ; comment with colon
 
-test_bde =   
+test_bde =
 "
-  test lns_bde get conf_bde = 
+  test lns_bde get conf_bde =
       { "#comment" = "first comment with colon" }
       {}
       { "section1"
@@ -192,9 +192,9 @@ test_bde =
 [section1]
 test_bdf = value ; end of line comment
 ; comment with colon
-test_bdf = 
+test_bdf =
 "
-  test lns_bdf get conf_bdf = 
+  test lns_bdf get conf_bdf =
       { "#comment" = "first comment with colon" }
       { "section1"
           { "test_bdf" = "value"

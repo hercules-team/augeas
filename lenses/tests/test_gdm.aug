@@ -10,7 +10,7 @@ AutomaticLogin=
 0=Standard device=/dev/console
 "
 
-   test Gdm.lns get conf = 
+   test Gdm.lns get conf =
       { "daemon"
          { "#comment" = "Automatic login, if true the first attached screen will automatically logged" }
          { "#comment" = "in as user as set with AutomaticLogin key." }

@@ -2,7 +2,7 @@ module Test_fstab =
 
   let simple = "/dev/vg00/lv00\t /\t ext3\t    defaults        1 1\n"
 
-  let simple_tree = 
+  let simple_tree =
     { "1"
         { "spec" = "/dev/vg00/lv00" }
         { "file" = "/" }
@@ -13,11 +13,11 @@ module Test_fstab =
 
   let trailing_ws = "/dev/vg00/lv00\t /\t ext3\t    defaults        1 1  \t\n"
 
-  let gen_no_passno(passno:string) = 
+  let gen_no_passno(passno:string) =
     "LABEL=/boot\t /boot\t ext3\t    defaults        1" . passno . "  \t\n"
   let no_passno = gen_no_passno ""
 
-  let no_passno_tree = 
+  let no_passno_tree =
     { "1"
         { "spec" = "LABEL=/boot" }
         { "file" = "/boot" }
@@ -27,17 +27,17 @@ module Test_fstab =
 
   let no_dump = "/dev/vg00/lv00\t /\t ext3\t    defaults\n"
 
-  let no_dump_tree = 
+  let no_dump_tree =
     { "1"
         { "spec" = "/dev/vg00/lv00" }
         { "file" = "/" }
         { "vfstype" = "ext3" }
         { "opt" = "defaults" } }
 
-  
+
   let multi_opts = "devpts\t /dev/pts\t devpts  gid=5,mode=620  0 0\n"
 
-  let multi_opts_tree = 
+  let multi_opts_tree =
     { "1"
         { "spec" = "devpts" }
         { "file" = "/dev/pts" }
@@ -46,7 +46,7 @@ module Test_fstab =
         { "opt" = "mode=620" }
         { "dump" = "0" }
         { "passno" = "0" } }
-  
+
   test Fstab.lns get simple = simple_tree
 
   test Fstab.lns get trailing_ws = simple_tree

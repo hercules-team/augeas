@@ -23,7 +23,7 @@ module Pam =
   (* Not mentioned in the man page, but Debian uses the syntax             *)
   (*   @include module                                                     *)
   (* quite a bit                                                           *)
-  let include = [ indent . Util.del_str "@" . key "include" . 
+  let include = [ indent . Util.del_str "@" . key "include" .
                   Util.del_ws_spc . store word . eol ]
 
   let record = [ seq "record" . indent .

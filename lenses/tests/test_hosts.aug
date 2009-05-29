@@ -43,18 +43,18 @@ module Test_hosts =
 
   (* Make sure blank and indented lines get through *)
   test Hosts.lns get " \t 127.0.0.1\tlocalhost  \n \n\n
-127.0.1.1\tetch.example.com\tetch\n" = 
+127.0.1.1\tetch.example.com\tetch\n" =
     { "1" { "ipaddr" = "127.0.0.1" }
           { "canonical" = "localhost" } }
     {} {} {}
     { "2" { "ipaddr" = "127.0.1.1" }
-          { "canonical" = "etch.example.com" } 
+          { "canonical" = "etch.example.com" }
           { "alias" = "etch" } }
 
   (* Comment at the end of a line *)
   test Hosts.lns get "127.0.0.1 localhost # must always be there \n" =
     { "1" { "ipaddr" = "127.0.0.1" }
-          { "canonical" = "localhost" } 
+          { "canonical" = "localhost" }
           { "#comment" = "must always be there" } }
 
 (* Local Variables: *)

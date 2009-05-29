@@ -2,7 +2,7 @@
 Module: IniFile
   Generic module to create INI files lenses
 
-Author: Raphael Pinson <raphink@gmail.com> 
+Author: Raphael Pinson <raphink@gmail.com>
 
 About: License
   This file is licensed under the GPL.
@@ -48,11 +48,11 @@ let empty              = [ eol ]
 Variable: sep
   Generic separator
 
-  Parameters: 
+  Parameters:
     pat:regexp - the pattern to delete
     default:string - the default string to use
 *)
-let sep (pat:regexp) (default:string) 
+let sep (pat:regexp) (default:string)
                        = Util.del_opt_ws "" . del pat default
 
 (*
@@ -168,7 +168,7 @@ let entry_re           = ( /[A-Za-z][A-Za-z0-9\._-]+/ )
 
 
 (************************************************************************
- * Group:                      RECORD 
+ * Group:                      RECORD
  *************************************************************************)
 
 (* Group: Title definition *)
@@ -222,7 +222,7 @@ let title_label (name:string) (kw:regexp)
 Variable: record_re
   Default regexp for <title> keyword pattern
 *)
-let record_re          = ( /[^]\n\/]+/ - /#comment/ ) 
+let record_re          = ( /[^]\n\/]+/ - /#comment/ )
 
 (*
 Variable: record_label_re
@@ -285,7 +285,7 @@ let lns_noempty (record:lens) (comment:lens)
 (*
 View: lns
   Generic INI File lens
-  
+
   Parameters:
     record:lens  - record lens to use. See <record>.
     comment:lens - comment lens to use. See <comment>.

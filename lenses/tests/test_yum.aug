@@ -76,7 +76,7 @@ installonly_limit=100
   test Yum.lns get "[repo]\nbaseurl=url1\nbaseurl=url2\n" = *
 
   (* This checks that we take the right branch in the section lens.     *)
-  test Yum.section get "[repo]\nname=A name\nbaseurl=url1\n" = 
+  test Yum.section get "[repo]\nname=A name\nbaseurl=url1\n" =
     { "repo"
         { "name" = "A name" }
         { "baseurl" = "url1" } }

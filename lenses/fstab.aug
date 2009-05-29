@@ -9,7 +9,7 @@ module Fstab =
   let eol     = Util.eol
 
   let comment = Util.comment
-  let empty   = Util.empty 
+  let empty   = Util.empty
 
   let word    = Rx.neg1
 
@@ -17,7 +17,7 @@ module Fstab =
     let lns = [ label l . store word ] in
        Build.opt_list lns comma
 
-  let record = [ seq "mntent" . 
+  let record = [ seq "mntent" .
                    [ label "spec" . store  word ] . sep_tab .
                    [ label "file" . store word ] . sep_tab .
                    comma_sep_list "vfstype" . sep_tab .

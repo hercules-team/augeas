@@ -1,4 +1,4 @@
-(* Samba module for Augeas 
+(* Samba module for Augeas
    Author: Free Ekanayaka <free@64studio.com>
 
    Reference: man smb.conf(5)
@@ -20,7 +20,7 @@ let indent   = del /[ \t]*/ "   "
 (* Import useful INI File primitives *)
 let eol      = IniFile.eol
 let empty    = IniFile.empty
-let sto_to_comment 
+let sto_to_comment
              = Util.del_opt_ws " "
              . store /[^;# \t\n][^;#\n]*[^;# \t\n]|[^;# \t\n]/
 
@@ -43,7 +43,7 @@ let entry    = let kw = entry_re in
  *************************************************************************)
 
 let title    = IniFile.title_label "target" IniFile.record_label_re
-let record   = IniFile.record title entry 
+let record   = IniFile.record title entry
 
 (************************************************************************
  *                         LENS & FILTER

@@ -1,4 +1,4 @@
-module Test_interfaces = 
+module Test_interfaces =
 
     let conf ="# This file describes the network interfaces available on your system
 # and how to activate them. For more information, see interfaces(5).
@@ -53,7 +53,7 @@ mapping eth1
         { "mapping" = "eth0"
             { "script" = "/usr/local/sbin/map-scheme"}
             { "map" = "HOME eth0-home"}
-            { "map" = "WORK eth0-work"} 
+            { "map" = "WORK eth0-work"}
             {} }
         { "iface" = "eth0-home"
             { "family" = "inet"}
