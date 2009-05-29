@@ -134,3 +134,14 @@ filegen clockstats file clockstats type day enable nolink
 
   test Ntp.auth_command get "trustedkey 42\n" = 
      { "trustedkey" { "key" = "42" } }
+
+  test Ntp.lns get "broadcastdelay 0.008\n" =
+     { "broadcastdelay" = "0.008" }
+
+  test Ntp.lns get "enable auth calibrate\ndisable kernel stats\n" =
+     { "enable"
+         { "flag" = "auth" }
+         { "flag" = "calibrate" } }
+     { "disable"
+         { "flag" = "kernel" }
+         { "flag" = "stats" } }

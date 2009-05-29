@@ -22,6 +22,9 @@ module Ntp =
     let empty   = [ del /[ \t]*\n/ "\n" ]
 
 
+    let kv (k:regexp) (v:regexp) =
+      [ key k . sep_spc. store v . eol ]
+
     (* Define generic record *)
     let record (kw:regexp) (value:lens) =
       [ key kw . sep_spc . store word . value . eol ]
@@ -42,13 +45,24 @@ module Ntp =
     let fudge_opt  = [ sep_spc . key fudge_opt_re . sep_spc . store word ]
     let fudge_record = record "fudge" fudge_opt?
 
-    (* Define simple settings *)
-    let simple_setting (kw:string) = [ key kw . sep_spc . store word . eol ]
+    (* Define simple settings, see miscopt.html in ntp docs *)
+    let flags =
+      let flags_re = /auth|bclient|calibrate|kernel|monitor|ntp|pps|stats/ in
+      let flag = [ label "flag" . store flags_re ] in
+        [ key /enable|disable/ . (sep_spc . flag)* . eol ]
 
-    let simple_settings = simple_setting "driftfile"
-                        | simple_setting "logfile"
-			| simple_setting "statsdir"
-    
+    let simple_setting (k:regexp) = kv k word
+
+    (* Still incomplete, misses logconfig, phone, setvar, tinker, tos,
+       trap, ttl *)
+    let simple_settings =
+        kv "broadcastdelay" Rx.decimal
+      | flags
+      | simple_setting /driftfile|leapfile|logfile|includefile/
+	  | simple_setting "statsdir"
+
+    (* Misc commands, see miscopt.html in ntp docs *)
+
     (* Define restrict *)
     let restrict_record   =
       let action    = [ label "action" . sep_spc . store word ] in
@@ -82,19 +96,16 @@ module Ntp =
 
     (* Authentication commands, see authopt.html#cmd; incomplete *)
     let auth_command =
-      [ key /controlkey|keys|keysdir|requestkey/ . 
+      [ key /controlkey|keys|keysdir|requestkey/ .
             sep_spc . store word . eol ]
      | [ key /autokey|revoke/ . [sep_spc . store word]? . eol ]
      | [ key /trustedkey/ . [ sep_spc . label "key" . store word ]+ . eol ]
-
-    (* Includefile *)
-    let files = [ key /includefile/ . sep_spc . store word . eol ]
 
     (* Define lens *)
 
     let lns = ( comment | empty | command_record | fudge_record
               | restrict_record | simple_settings | statistics_record
-              | filegen_record | files | broadcastclient
+              | filegen_record | broadcastclient
               | auth_command )*
 
     let filter = (incl "/etc/ntp.conf")
