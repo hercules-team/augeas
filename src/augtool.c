@@ -648,6 +648,8 @@ static int main_loop(void) {
             printf("\n");
             return ret;
         }
+        if (line[0] == '#')
+            continue;
 
         dup_line = strdup(line);
         if (dup_line == NULL) {
