@@ -85,15 +85,11 @@ module Logrotate =
      let line_re = /.*/ - /[ \t]*endscript[ \t]*/ in
        store ( line_re . ("\n" . line_re)* )? . del "\n" "\n"
 
-   let hook_func (func_type:string) = [
-       del /[ \t]*/ "\t" . key func_type . eol .
+   let hooks =
+     let hook_names = /(pre|post)rotate|(first|last)action/ in
+     [ del /[ \t]*/ "\t" . key hook_names . eol .
        hook_lines .
        del /[ \t]*endscript\n/ "\tendscript\n" ]
-
-   let hooks = hook_func "postrotate"
-             | hook_func "prerotate"
-             | hook_func "firstaction"
-             | hook_func "lastaction"
 
    (* Define rule *)
 
