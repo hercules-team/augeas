@@ -89,7 +89,7 @@ ARROW  ->
                return DQUOTED;
   }
 
-  \/([^/]|\\\/)+\/ {
+  \/([^/]|\\\/)*\/ {
                loc_update(yylloc, yytext, yyleng);
                yylval->string = unescape(yytext+1, yyleng-2);
                return REGEXP;
