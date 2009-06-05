@@ -125,8 +125,7 @@ include /etc/logrotate.d
            { "sharedscripts" = "sharedscripts" }
            { "prerotate" = "                if [ -f /var/run/apache2.pid ]; then
                         /etc/init.d/apache2 restart > /dev/null
-                fi
-" } }
+                fi" } }
 
   test Logrotate.lns get "/var/log/file {\n dateext\n}\n" =
     { "rule"
@@ -144,3 +143,22 @@ include /etc/logrotate.d
      { "rule"
          { "file" = "/file" }
          { "size" = "5M" } }
+
+  (* The newline at the end of a script is optional *)
+  test Logrotate.lns put "/file {\n size=5M\n}\n" after
+    set "/rule/prerotate" "\tfoobar"
+  =
+"/file {
+ size=5M
+\tprerotate
+\tfoobar
+\tendscript\n}\n"
+
+  test Logrotate.lns put "/file {\n size=5M\n}\n" after
+    set "/rule/prerotate" "\tfoobar\n"
+  =
+"/file {
+ size=5M
+\tprerotate
+\tfoobar\n
+\tendscript\n}\n"

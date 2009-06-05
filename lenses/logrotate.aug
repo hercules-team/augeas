@@ -81,7 +81,9 @@ module Logrotate =
    (* Define hooks *)
 
 
-   let hook_lines = store ( ( /.*/ . "\n") - /[ \t]*endscript[ \t]*\n/ )*
+   let hook_lines =
+     let line_re = /.*/ - /[ \t]*endscript[ \t]*/ in
+       store ( line_re . ("\n" . line_re)* )? . del "\n" "\n"
 
    let hook_func (func_type:string) = [
        del /[ \t]*/ "\t" . key func_type . eol .
