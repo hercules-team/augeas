@@ -188,3 +188,12 @@ test str-neq /files/etc/*['foo' != 'foo']
 test label-neq /files/etc/hosts/*[label() != '#comment']
      /files/etc/hosts/1
      /files/etc/hosts/2
+
+# 'and' and 'or' need to coerce types to boolean
+test coerce-or /files[/files/etc/hosts/*[ipaddr = '127.0.0.1'] or /files/etc/aliases/*[name = 'root'] ]
+     /files
+
+test coerce-and-true /files['foo' and count(/files/etc/hosts/*) ]
+     /files
+
+test coerce-and-false /files['' and count(/none) and /none]

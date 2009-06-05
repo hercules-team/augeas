@@ -597,6 +597,26 @@ static void func_label(struct state *state) {
     push_value(vind, state);
 }
 
+static bool coerce_to_bool(struct value *v) {
+    switch (v->tag) {
+    case T_NODESET:
+        return v->nodeset->used > 0;
+        break;
+    case T_BOOLEAN:
+        return v->boolval;
+        break;
+    case T_NUMBER:
+        return v->number > 0;
+        break;
+    case T_STRING:
+        return strlen(v->string) > 0;
+        break;
+    default:
+        assert(0);
+    }
+    assert(0);
+}
+
 static int calc_eq_nodeset_nodeset(struct nodeset *ns1, struct nodeset *ns2,
                                    int neq) {
     for (int i1=0; i1 < ns1->used; i1++) {
@@ -715,11 +735,14 @@ static void eval_rel(struct state *state, bool greater, bool equal) {
 static void eval_and_or(struct state *state, enum binary_op op) {
     struct value *r = pop_value(state);
     struct value *l = pop_value(state);
+    bool left = coerce_to_bool(l);
+    bool right = coerce_to_bool(r);
+
 
     if (op == OP_AND)
-        push_boolean_value(l->boolval && r->boolval, state);
+        push_boolean_value(left && right, state);
     else
-        push_boolean_value(l->boolval || r->boolval, state);
+        push_boolean_value(left || right, state);
 }
 
 static void eval_binary(struct expr *expr, struct state *state) {
@@ -1033,6 +1056,7 @@ static void check_app(struct expr *expr, struct state *state) {
  *
  * 'and', 'or': T_BOOLEAN -> T_BOOLEAN -> T_BOOLEAN
  *
+ * Any type can be coerced to T_BOOLEAN (see coerce_to_bool)
  */
 static void check_binary(struct expr *expr, struct state *state) {
     check_expr(expr->left, state);
@@ -1068,7 +1092,7 @@ static void check_binary(struct expr *expr, struct state *state) {
         break;
     case OP_AND:
     case OP_OR:
-        ok = (l == T_BOOLEAN && r == T_BOOLEAN);
+        ok = 1;
         res = T_BOOLEAN;
         break;
     default:
