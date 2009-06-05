@@ -39,6 +39,9 @@ let entry      = [ key entry_re . (sep_eq . sto_to_eol)? . eol ]
 let lns = (comment|empty|entry) *
 
 let filter            = incl "/etc/dnsmasq.conf"
+                      . incl "/etc/dnsmasq.d/*"
+                      . excl "#*#"
+                      . excl ".*"
                       . Util.stdexcl
 
 let xfm                = transform lns filter
