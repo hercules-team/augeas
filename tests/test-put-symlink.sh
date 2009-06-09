@@ -3,6 +3,7 @@
 # Test that we correctly preserve symlinks when saving a file
 
 ROOT=$abs_top_builddir/build/test-put-symlink
+LENSES=$abs_top_srcdir/lenses
 HOSTS=$ROOT/etc/hosts
 REAL_HOSTS=$ROOT/other/hosts
 
@@ -16,13 +17,13 @@ EOF
 
 (cd $(dirname $HOSTS) && ln -s ../other/hosts $(basename $HOSTS))
 
-augtool --nostdinc -b -r $ROOT > /dev/null <<EOF
+augtool --nostdinc -I $LENSES -b -r $ROOT > /dev/null <<EOF
 set /files/etc/hosts/1/alias myhost
 save
 EOF
 
 HOSTS_AUGSAVE=${HOSTS}.augsave
-if [ ! -f $HOSTS_AGSAVE ] ; then
+if [ ! -f $HOSTS_AUGSAVE ] ; then
     echo "Missing /etc/hosts.augsave"
     exit 1
 fi
