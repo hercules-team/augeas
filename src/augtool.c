@@ -630,7 +630,7 @@ static void parse_opts(int argc, char **argv) {
 
 static int main_loop(void) {
     static const int maxargs = 3;
-    char *line;
+    char *line = NULL;
     char *cmd, *args[maxargs];
     int ret = 0;
     size_t len = 0;
