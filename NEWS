@@ -1,3 +1,36 @@
+0.5.1 - 2009-06-09
+  - augeas.h: flag AUG_NO_MODL_AUTOLOAD suppresses initial loading
+              of modules; exposed as --noautoload in augtool
+  - augtool: don't prompt when input is not from tty (Raphael Pinson)
+  - augparse: add --notypecheck option
+  - path expressions: allow things like '/foo and /bar[3]' in predicates
+  - Lens changes/additions
+    * Aliases: map comments as #comment (Raphael Pinson)
+    * Build, Rx, Sep: new utility modules (Raphael Pinson)
+    * Cron: new lens (Raphael Pinson)
+    * Dnsmasq: process files in /etc/dnsmasq.d/* (ticket #65)
+    * Grub: parse kernel and module args into separate nodes; parse
+            arguments for 'serial', 'terminal', and 'chainloader'; allow
+            optional argument for 'savedefault'
+    * Interfaces: make compliant with actual Debian spec (Matt Palmer)
+    * Iptables: relax regexp for chain names; allow comment lines mixed
+                in with chains and rules (ticket #51)
+    * Logrotate: allow '=' as separator (ticket #61); make newline at end
+                 of scriptlet optional
+    * Modprobe: handle comments at end of line
+    * Ntp: parse fudge record (Raphael Pinson); parse all directives in
+           default Fedora ntp.conf; process 'broadcastdelay', 'leapfile',
+           and enable/disable flags (ticket #62)
+    * Pbuilder: new lens for Debian's personal builder (Raphael Pinson)
+    * Php: add default path on Fedora/RHEL (Marc Fournier)
+    * Squid: handle indented entries (Raphael Pinson)
+    * Shellvars: map 'export' and 'unset'; map comments as #comment
+                 (Raphael Pinson)
+    * Sudoers: allow backslashes inside values (ticket #60) (Raphael Pinson)
+    * Vsftpd: map comments as #comment; handle empty lines; find
+              vsftpd.conf on Fedora/RHEL
+    * Xinetd: map comments as #comment (Raphael Pinson)
+
 0.5.0 - 2009-03-27
   - Clean up interface for libfa; the interface is now considered stable
   - New aug_load API call; allows controlling which files to load by
