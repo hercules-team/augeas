@@ -533,6 +533,14 @@ static char *readline_command_generator(const char *text, int state) {
     return NULL;
 }
 
+#ifndef HAVE_RL_COMPLETION_MATCHES
+typedef char *rl_compentry_func_t(const char *, int);
+static char **rl_completion_matches(ATTRIBUTE_UNUSED const char *text,
+                           ATTRIBUTE_UNUSED rl_compentry_func_t *func) {
+    return NULL;
+}
+#endif
+
 static char **readline_completion(const char *text, int start,
                                   ATTRIBUTE_UNUSED int end) {
     if (start == 0)

@@ -91,6 +91,7 @@ AC_DEFUN([AUGEAS_COMPILE_WARNINGS],[
 
 dnl
 dnl Determine readline linker flags in a way that works on RHEL 5
+dnl Check for rl_completion_matches (missing on OS/X)
 dnl
 AC_DEFUN([AUGEAS_CHECK_READLINE], [
   AC_CHECK_HEADERS([readline/readline.h])
@@ -129,4 +130,11 @@ AC_DEFUN([AUGEAS_CHECK_READLINE], [
   fi
 
   AC_SUBST(READLINE_LIBS)
+
+  if test $use_readline = yes; then
+      saved_libs=$LIBS
+      LIBS=$READLINE_LIBS
+      AC_CHECK_FUNCS([rl_completion_matches])
+      LIBS=$saved_libs
+  fi
 ])
