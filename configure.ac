@@ -75,10 +75,13 @@ AC_SUBST(AUGEAS_CFLAGS)
 AUGEAS_CHECK_READLINE
 AC_CHECK_FUNCS([open_memstream])
 
-VERSION_SCRIPT_FLAGS=-Wl,--version-script=
-$(/usr/bin/ld --help 2>&1 | grep -- --version-script >/dev/null) || \
+VERSION_SCRIPT_FLAGS=
+$(/usr/bin/ld --help 2>&1 | grep -- --version-script >/dev/null) && \
+    VERSION_SCRIPT_FLAGS=-Wl,--version-script=
+test "`uname`" == "SunOS" && \
     VERSION_SCRIPT_FLAGS="-Wl,-M -Wl,"
 AC_SUBST(VERSION_SCRIPT_FLAGS)
+AM_CONDITIONAL([USE_VERSION_SCRIPT], [test -n "$VERSION_SCRIPT_FLAGS"])
 
 gl_INIT
 

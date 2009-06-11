@@ -24,8 +24,14 @@ libaugeas_la_SOURCES = augeas.h augeas.c pathx.c \
 	memory.h memory.c ref.h \
     syntax.c syntax.h parser.y builtin.c lens.c lens.h regexp.c \
 	transform.h transform.c ast.c get.c put.c list.h
-libaugeas_la_LDFLAGS = $(VERSION_SCRIPT_FLAGS)$(srcdir)/augeas_sym.version \
-        -version-info $(LIBAUGEAS_VERSION_INFO)
+
+if USE_VERSION_SCRIPT
+  VERSION_SCRIPT = $(VERSION_SCRIPT_FLAGS)$(srcdir)/augeas_sym.version
+else
+  VERSION_SCRIPT =
+endif
+
+libaugeas_la_LDFLAGS = $(VERSION_SCRIPT) -version-info $(LIBAUGEAS_VERSION_INFO)
 libaugeas_la_LIBADD = liblexer.la libfa.la $(LIB_SELINUX) $(GNULIB)
 
 augtool_SOURCES = augtool.c
