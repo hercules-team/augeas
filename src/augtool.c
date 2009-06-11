@@ -29,6 +29,7 @@
 #include <argz.h>
 #include <getopt.h>
 #include <limits.h>
+#include <ctype.h>
 
 struct command {
     const char *name;
