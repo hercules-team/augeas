@@ -1943,11 +1943,18 @@ int interpreter_init(struct augeas *aug) {
     while ((dir = argz_next(aug->modpathz, aug->nmodpath, dir)) != NULL) {
         char *globpat;
         r = asprintf(&globpat, "%s/*.aug", dir);
-        if (r == -1)
-            return -1;
+        ERR_NOMEM(r < 0, aug);
+
         r = glob(globpat, gl_flags, NULL, &globbuf);
-        if (r != 0 && r != GLOB_NOMATCH)
-            FIXME("glob failure for %s", globpat);
+        if (r != 0 && r != GLOB_NOMATCH) {
+            /* This really has to be an allocation failure; glob is not
+             * supposed to return GLOB_ABORTED here */
+            aug_errcode_t code =
+                r == GLOB_NOSPACE ? AUG_ENOMEM : AUG_EINTERNAL;
+            ERR_REPORT(aug, code, "glob failure for %s", globpat);
+            free(globpat);
+            goto error;
+        }
         gl_flags |= GLOB_APPEND;
         free(globpat);
     }
