@@ -1969,7 +1969,7 @@ int interpreter_init(struct augeas *aug) {
     globfree(&globbuf);
     return 0;
  error:
-    FIXME("Cleanup loaded modules");
+    globfree(&globbuf);
     return -1;
 }
 
