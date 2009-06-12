@@ -51,6 +51,13 @@ static const char *const static_nodes[][2] = {
     { AUGEAS_META_TREE "/version/defvar", NULL }
 };
 
+static const char *const errcodes[] = {
+    "No error",                                         /* AUG_NOERROR */
+    "Cannot allocate memory",                           /* AUG_ENOMEM */
+    "Internal error (please file a bug)",               /* AUG_EINTERNAL */
+    "Invalid path expression"                           /* AUG_EPATHX */
+};
+
 static void tree_mark_dirty(struct tree *tree) {
     do {
         tree->dirty = 1;
@@ -991,6 +998,7 @@ void aug_close(struct augeas *aug) {
     free((void *) aug->root);
     free(aug->modpathz);
     free_symtab(aug->symtab);
+    free(aug->error.details);
     free(aug);
 }
 
@@ -1008,6 +1016,28 @@ int tree_equal(const struct tree *t1, const struct tree *t2) {
     return t1 == t2;
 }
 
+/*
+ * Error reporting API
+ */
+int aug_error(struct augeas *aug) {
+    return aug->error.code;
+}
+
+const char *aug_error_message(struct augeas *aug) {
+    aug_errcode_t errcode = aug->error.code;
+
+    if (errcode > ARRAY_CARDINALITY(errcodes))
+        errcode = AUG_EINTERNAL;
+    return errcodes[errcode];
+}
+
+const char *aug_error_minor_message(struct augeas *aug) {
+    return aug->error.minor_details;
+}
+
+const char *aug_error_details(struct augeas *aug) {
+    return aug->error.details;
+}
 
 /*
  * Local variables:

@@ -272,6 +272,33 @@ int aug_print(const augeas *aug, FILE *out, const char *path);
  */
 void aug_close(augeas *aug);
 
+/*
+ * Error reporting
+ */
+
+typedef enum {
+    AUG_NOERROR,        /* No error */
+    AUG_ENOMEM,         /* Out of memory */
+    AUG_EINTERNAL,      /* Internal error (bug) */
+    AUG_EPATHX          /* Invalid path expression */
+} aug_errcode_t;
+
+/* Return the error code from the last API call */
+int aug_error(augeas *aug);
+
+/* Return a human-readable message for the error code */
+const char *aug_error_message(augeas *aug);
+
+/* Return a human-readable message elaborating the error code; might be
+ * NULL. For example, when the error code is AUG_EPATHX, this will explain
+ * how the path expression is invalid */
+const char *aug_error_minor_message(augeas *aug);
+
+/* Return details about the error, which might be NULL. For example, for
+ * AUG_EPATHX, indicates where in the path expression the error
+ * occurred. The returned value can only be used until the next API call
+ */
+const char *aug_error_details(augeas *aug);
 #endif
 
 

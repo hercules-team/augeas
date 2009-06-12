@@ -23,6 +23,7 @@
 #include <config.h>
 
 #include <ctype.h>
+#include <stdio.h>
 #include <stdarg.h>
 
 #include "internal.h"
@@ -389,6 +390,28 @@ int xasprintf(char **strp, const char *format, ...) {
   return result;
 }
 
+static void vreport_error(struct error *err, aug_errcode_t errcode,
+                   const char *format, va_list ap) {
+    /* We only remember the first error */
+    if (err->code != AUG_NOERROR)
+        return;
+    assert(err->details == NULL);
+
+    err->code = errcode;
+    if (format != NULL) {
+        if (vasprintf(&err->details, format, ap) < 0)
+            err->details = NULL;
+    }
+}
+
+void report_error(struct error *err, aug_errcode_t errcode,
+                  const char *format, ...) {
+    va_list ap;
+
+    va_start(ap, format);
+    vreport_error(err, errcode, format, ap);
+    va_end(ap);
+}
 /*
  * Local variables:
  *  indent-tabs-mode: nil

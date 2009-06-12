@@ -21,3 +21,11 @@ AUGEAS_0.8.0 {
       aug_defnode;
       aug_load;
 } AUGEAS_0.1.0;
+
+AUGEAS_0.10.0 {
+    global:
+      aug_error;
+      aug_error_message;
+      aug_error_minor_message;
+      aug_error_details;
+} AUGEAS_0.8.0;
