@@ -26,12 +26,15 @@ libaugeas_la_SOURCES = augeas.h augeas.c pathx.c \
 	transform.h transform.c ast.c get.c put.c list.h
 
 if USE_VERSION_SCRIPT
-  VERSION_SCRIPT = $(VERSION_SCRIPT_FLAGS)$(srcdir)/augeas_sym.version
+  AUGEAS_VERSION_SCRIPT = $(VERSION_SCRIPT_FLAGS)$(srcdir)/augeas_sym.version
+  FA_VERSION_SCRIPT = $(VERSION_SCRIPT_FLAGS)$(srcdir)/fa_sym.version
 else
-  VERSION_SCRIPT =
+  AUGEAS_VERSION_SCRIPT =
+  FA_VERSION_SCRIPT =
 endif
 
-libaugeas_la_LDFLAGS = $(VERSION_SCRIPT) -version-info $(LIBAUGEAS_VERSION_INFO)
+libaugeas_la_LDFLAGS = $(AUGEAS_VERSION_SCRIPT) \
+    -version-info $(LIBAUGEAS_VERSION_INFO)
 libaugeas_la_LIBADD = liblexer.la libfa.la $(LIB_SELINUX) $(GNULIB)
 
 augtool_SOURCES = augtool.c
@@ -41,7 +44,7 @@ augparse_SOURCES = augparse.c
 augparse_LDADD = libaugeas.la $(GNULIB)
 
 libfa_la_SOURCES = fa.c fa.h hash.c hash.h memory.c memory.h ref.h
-libfa_la_LDFLAGS = -version-info $(LIBFA_VERSION_INFO)
+libfa_la_LDFLAGS = $(FA_VERSION_SCRIPT) -version-info $(LIBFA_VERSION_INFO)
 
 liblexer_la_SOURCES = lexer.l
 liblexer_la_CFLAGS = $(AM_CFLAGS) -Wno-error

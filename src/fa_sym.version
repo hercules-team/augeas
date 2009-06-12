@@ -1,0 +1,23 @@
+FA_1.0.0 {
+    global:
+      fa_minimization_algorithm;
+      fa_compile;
+      fa_make_basic;
+      fa_is_basic;
+      fa_minimize;
+      fa_concat;
+      fa_union;
+      fa_intersect;
+      fa_complement;
+      fa_minus;
+      fa_iter;
+      fa_contains;
+      fa_equals;
+      fa_free;
+      fa_dot;
+      fa_overlap;
+      fa_example;
+      fa_ambig_example;
+      fa_as_regexp;
+    local: *;
+};
