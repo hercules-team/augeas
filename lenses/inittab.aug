@@ -5,17 +5,17 @@ module Inittab =
    let sep = Util.del_str ":"
    let eol = Util.del_str "\n"
 
+   let id = /[^\/#:\n]{1,4}/
    let value = /[^#:\n]*/
 
-   let comment = [ del /[ \t]*(#.*)?\n/ "# \n" ]
+   let comment = Util.comment|Util.empty
 
    let field (name:string) = [ label name . store value ]
-   let record = [ seq "record" .
-                    field("id") . sep .
-                    field("runlevels") . sep .
-                    field("action") . sep .
-                    field("process") .
-                    eol
+   let record = [ key id . sep .
+                  field("runlevels") . sep .
+                  field("action") . sep .
+                  field("process") .
+                  eol
                 ]
 
    let lns = ( comment | record ) *

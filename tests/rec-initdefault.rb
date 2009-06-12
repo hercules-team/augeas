@@ -5,15 +5,8 @@
 # mostly because the testing framework and augtool are too simplistic to do
 # that. Would be easy with a shell script
 
-# Query for the record that holds the initdefault
-record=""
-`augtool -n match '/files/etc/inittab/*/action' initdefault`.each do |l|
-    if l =~ %r{^(/files/etc/inittab/[0-9]+)}
-        record = $1
-    end
-end
 commands="
-set #{record}/runlevels 3
+set /files/etc/inittab/id/runlevels 3
 save
 "
 
