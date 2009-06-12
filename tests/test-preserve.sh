@@ -39,7 +39,7 @@ if [ $? != 0 ] ; then
     exit 1
 fi
 
-act_group=$(ls -l $hosts | cut -d ' ' -f 4)
+act_group=$(ls -l $hosts | sed -e 's/  */ /g' | cut -d ' ' -f 4)
 act_mode=$(ls -l $hosts | cut -b 1-10)
 if [ $selinux = yes ] ; then
   act_con=$(ls -lZ $hosts | cut -d ' ' -f 5 | cut -d ':' -f 3)
