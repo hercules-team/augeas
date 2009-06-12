@@ -68,7 +68,7 @@ args.each do |test|
         success=$?.success?
         msgs = []
         diff.each do |file, exp|
-            file = File::join(AUGEAS_ROOT, file)
+            file = File::join(AUGEAS_ROOT, file).gsub(%r{//}, '/')
             if ! File::exist?("#{file}.augnew")
                 msgs << "Expected file #{file}.augnew"
                 success=false
@@ -87,7 +87,7 @@ args.each do |test|
                 end
             end
         end
-        files = diff.keys.collect { |f| File::join(AUGEAS_ROOT, "#{f}.augnew") }
+        files = diff.keys.collect { |f| File::join(AUGEAS_ROOT, "#{f}.augnew").gsub(%r{//}, '/') }
         Find.find(AUGEAS_ROOT) do |path|
             if augnew?(path) && ! files.include?(path)
                 success=false
