@@ -10,13 +10,12 @@ module Inittab =
 
    let comment = Util.comment|Util.empty
 
-   let field (name:string) = [ label name . store value ]
-   let record = [ key id . sep .
-                  field("runlevels") . sep .
-                  field("action") . sep .
-                  field("process") .
-                  eol
-                ]
+   let record =
+     let field (name:string) = [ label name . store value ] in
+       [ key id . sep .
+           field "runlevels" . sep .
+           field "action" . sep .
+           field "process" . eol ]
 
    let lns = ( comment | record ) *
 
