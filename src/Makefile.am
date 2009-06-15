@@ -6,7 +6,7 @@ AM_CFLAGS = @AUGEAS_CFLAGS@ @WARN_CFLAGS@ $(GNULIB_CFLAGS)
 
 AM_YFLAGS=-d -p spec_
 
-EXTRA_DIST=try augeas_sym.version
+EXTRA_DIST = try augeas_sym.version fa_sym.version
 
 BUILT_SOURCES = datadir.h
 
