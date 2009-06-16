@@ -47,7 +47,7 @@ static const char *const progname = "augtool";
 static unsigned int flags = AUG_NONE;
 const char *root = NULL;
 char *loadpath = NULL;
-
+int echo = 0;
 
 static char *cleanstr(char *path, const char sep) {
     if (path == NULL || strlen(path) == 0)
@@ -571,6 +571,7 @@ static void usage(void) {
                     "                     leave original unchanged\n");
     fprintf(stderr, "  -r, --root ROOT    use ROOT as the root of the filesystem\n");
     fprintf(stderr, "  -I, --include DIR  search DIR for modules; can be given mutiple times\n");
+    fprintf(stderr, "  -e, --echo         echo commands when reading from a file\n");
     fprintf(stderr, "  --nostdinc         do not search the builtin default directories for modules\n");
     fprintf(stderr, "  --noload           do not load any files into the tree on startup\n");
     fprintf(stderr, "  --noautoload       do not autoload modules from the search path\n");
@@ -593,6 +594,7 @@ static void parse_opts(int argc, char **argv) {
         { "new",       0, 0, 'n' },
         { "root",      1, 0, 'r' },
         { "include",   1, 0, 'I' },
+        { "echo",      0, 0, 'e' },
         { "nostdinc",  0, 0, VAL_NO_STDINC },
         { "noload",    0, 0, VAL_NO_LOAD },
         { "noautoload", 0, 0, VAL_NO_AUTOLOAD },
@@ -600,7 +602,7 @@ static void parse_opts(int argc, char **argv) {
     };
     int idx;
 
-    while ((opt = getopt_long(argc, argv, "hnbcr:I:", options, &idx)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hnbcr:I:e", options, &idx)) != -1) {
         switch(opt) {
         case 'c':
             flags |= AUG_TYPE_CHECK;
@@ -619,6 +621,9 @@ static void parse_opts(int argc, char **argv) {
             break;
         case 'I':
             argz_add(&loadpath, &loadpathlen, optarg);
+            break;
+        case 'e':
+            echo = 1;
             break;
         case VAL_NO_STDINC:
             flags |= AUG_NO_STDINC;
@@ -649,8 +654,11 @@ static int main_loop(void) {
 
         if (isatty(fileno(stdin))) {
             line = readline("augtool> ");
-        } else if (getline(&line, &len, stdin) == -1) {
-            return ret;
+        } else {
+            if (getline(&line, &len, stdin) == -1)
+                return ret;
+            if (echo)
+                printf("augtool> %s", line);
         }
         cleanstr(line, '\n');
         if (line == NULL) {

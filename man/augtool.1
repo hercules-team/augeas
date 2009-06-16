@@ -132,7 +132,7 @@
 .\" ========================================================================
 .\"
 .IX Title "AUGTOOL 1"
-.TH AUGTOOL 1 "2009-03-18" "Augeas 0.4.2" "Augeas"
+.TH AUGTOOL 1 "2009-06-16" "Augeas 0.5.1" "Augeas"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -177,6 +177,10 @@ Add \s-1DIR\s0 to the module loadpath. Can be given multiple times. The
 directories set here are searched before any directories specified in the
 \&\s-1AUGEAS_LENS_LIB\s0 environment variable, and before the default directory
 \&\fI/usr/share/augeas/lenses\fR.
+.IP "\fB\-e\fR" 4
+.IX Item "-e"
+When reading commands from a file via stdin, echo the commands before
+printing their output.
 .IP "\fB\-\-nostdinc\fR" 4
 .IX Item "--nostdinc"
 Do not search any of the default directories for modules. When this option

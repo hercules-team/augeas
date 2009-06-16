@@ -49,6 +49,11 @@ directories set here are searched before any directories specified in the
 AUGEAS_LENS_LIB environment variable, and before the default directory
 F</usr/share/augeas/lenses>.
 
+=item B<-e>
+
+When reading commands from a file via stdin, echo the commands before
+printing their output.
+
 =item B<--nostdinc>
 
 Do not search any of the default directories for modules. When this option
