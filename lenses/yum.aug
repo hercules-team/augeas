@@ -42,7 +42,9 @@ module Yum =
 
   let lns = (comment) * . (section) *
 
-  let filter = (incl "/etc/yum.conf") . (incl "/etc/yum.repos.d/*")
+  let filter = (incl "/etc/yum.conf")
+      . (incl "/etc/yum.repos.d/*")
+      . (incl "/etc/yum/pluginconf.d/*")
       . Util.stdexcl
 
   let xfm = transform lns filter
