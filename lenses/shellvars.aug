@@ -13,6 +13,7 @@ module Shellvars =
   let char  = /[^() '"\t\n]|\\\\"/
   let dquot = /"([^"\\\n]|\\\\.)*"/                    (* " Emacs, relax *)
   let squot = /'[^'\n]*'/
+  let bquot = /`[^`\n]*`/
 
   (* Array values of the form '(val1 val2 val3)'. We do not handle empty *)
   (* arrays here because of typechecking headaches. Instead, they are    *)
@@ -28,7 +29,7 @@ module Shellvars =
   (* but fairly close.                                                *)
   let simple_value =
     let empty_array = /\([ \t]*\)/ in
-   store (char* | dquot | squot | empty_array)
+      store (char* | dquot | squot | bquot | empty_array)
 
   let export = [ key "export" . Util.del_ws_spc ]
   let kv = [ export? . key key_re . eq . (simple_value | array) . eol ]

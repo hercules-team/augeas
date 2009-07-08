@@ -72,6 +72,9 @@ unset ONBOOT
   test Shellvars.lns get "var=ab#c\n" =
     { "var" = "ab#c" }
 
+  test Shellvars.lns get "var=`grep nameserver /etc/resolv.conf | head -1`\n" =
+    { "var" = "`grep nameserver /etc/resolv.conf | head -1`" }
+
   (* We don't handle comments at the end of a line yet *)
   test Shellvars.lns get "var=ab #c\n" = *
 
