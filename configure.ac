@@ -54,7 +54,7 @@ AC_GNU_SOURCE
 
 AC_PROG_CC
 gl_EARLY
-
+AC_SYS_LARGEFILE
 
 dnl gl_INIT uses m4_foreach_w, yet that is not defined in autoconf-2.59.
 dnl In order to accommodate developers with such old tools, here's a
