@@ -138,8 +138,8 @@ include /etc/logrotate.d
       { "file" = "/avr/log/wtmp" }
       { "minsize" = "1M" } }
 
-  (* '=' is a legal seaprator *)
-   test Logrotate.lns get "/file {\n size=5M\n}\n" =
+  (* '=' is a legal separator, file names can be indented *)
+   test Logrotate.lns get " \t /file {\n size=5M\n}\n" =
      { "rule"
          { "file" = "/file" }
          { "size" = "5M" } }

@@ -100,7 +100,7 @@ module Logrotate =
                        . del /[ \t]*\}[ \t]*\n/ "}\n"
 
    let rule =
-     [ label "rule" .
+     [ label "rule" . Util.indent .
          [ label "file" . store word ] .
 	 [ del /[ \t]+/ " " . label "file" . store word ]* .
 	 del /[ \t\n]*/ " " . body ]
@@ -112,4 +112,3 @@ module Logrotate =
 	      . Util.stdexcl
 
    let xfm = transform lns filter
-
