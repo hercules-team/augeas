@@ -156,7 +156,7 @@ static const char *init_root(const char *root0) {
 
     if (root0 == NULL)
         root0 = getenv(AUGEAS_ROOT_ENV);
-    if (root0 == NULL)
+    if (root0 == NULL || root0[0] == '\0')
         root0 = "/";
     root = strdup(root0);
     if (root == NULL)
