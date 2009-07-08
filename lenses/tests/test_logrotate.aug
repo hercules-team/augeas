@@ -144,6 +144,18 @@ include /etc/logrotate.d
          { "file" = "/file" }
          { "size" = "5M" } }
 
+  (* Can leave owner/group off a create statement *)
+  test Logrotate.lns get "/file {
+	create 600\n}\n" =
+     { "rule"
+         { "file" = "/file" }
+         { "create"
+             { "mode" = "600" } } }
+
+  test Logrotate.lns put "/file {\n	create 600\n}\n" after
+    set "/rule/create/owner" "user"
+  = "/file {\n	create 600 user\n}\n"
+
   (* The newline at the end of a script is optional *)
   test Logrotate.lns put "/file {\n size=5M\n}\n" after
     set "/rule/prerotate" "\tfoobar"

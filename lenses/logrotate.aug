@@ -37,10 +37,12 @@ module Logrotate =
 
    (* Defaults *)
 
-   let create (indent:string ) = [ del /[ \t]*/ indent . key "create" .
-                       ( sep_spc . [ label "mode" . store num ] . sep_spc .
-		       [ label "owner" . store word ] . sep_spc .
-		       [ label "group" . store word ])?
+   let create (indent:string ) =
+     let mode = sep_spc . [ label "mode" . store num ] in
+     let owner = sep_spc . [ label "owner" . store word ] in
+     let group = sep_spc . [ label "group" . store word ] in
+     [ del /[ \t]*/ indent . key "create" .
+         ( mode | mode . owner | mode . owner . group )?
 		    . eol ]
 
    let tabooext (indent:string) = [ del /[ \t]*/ indent . key "tabooext" . ( sep_spc . store /\+/ )? . list_item+ . eol ]
