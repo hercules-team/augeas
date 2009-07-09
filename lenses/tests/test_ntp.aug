@@ -77,8 +77,8 @@ filegen clockstats file clockstats type day enable nolink
       { "#comment" = "# added by /sbin/dhclient-script" } }
 
   test Ntp.lns get
-    "server 0.fedora.pool.ntp.org dynamic\n" =
-    { "server" = "0.fedora.pool.ntp.org" { "dynamic" } }
+    "server 0.fedora.pool.ntp.org iburst dynamic\n" =
+    { "server" = "0.fedora.pool.ntp.org" { "iburst" } { "dynamic" } }
 
   test Ntp.lns get
     "restrict 127.0.0.1 \n" =
