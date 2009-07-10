@@ -56,6 +56,7 @@ static void tree_mark_dirty(struct tree *tree) {
         tree->dirty = 1;
         tree = tree->parent;
     } while (tree != tree->parent && !tree->dirty);
+    tree->dirty = 1;
 }
 
 /* Clear the dirty flag in the whole TREE */
