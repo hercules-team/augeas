@@ -1,3 +1,18 @@
+0.5.2 - 2009-07-13
+  - Make Augeas work on Mac OS/X (bug #66) (Anders Bjoerklund)
+  - reduce symbols exported from libfa with linker script
+  - add --echo option to augtool
+  - require Automake 1.11 (Jim Meyering)
+  - avoid spurious save attempts for freshly read files
+  - Lens changes/additions
+    * Inittab: schema change: use 'id' field as name of subtree for a line,
+      instead of a generated number. Map comments as '#comment' (Matt Palmer)
+    * Logrotate: make owner/group in create statement optional, allow
+      filenames to be indented
+    * Ntp: allow additional options for server etc. (bug #72)
+    * Shellvars: allow backticks as quote characters (bug #74)
+    * Yum: also read files in /etc/yum/pluginconf.d (Marc Fournier)
+
 0.5.1 - 2009-06-09
   - augeas.h: flag AUG_NO_MODL_AUTOLOAD suppresses initial loading
               of modules; exposed as --noautoload in augtool
