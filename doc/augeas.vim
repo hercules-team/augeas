@@ -36,8 +36,7 @@ if exists("augeas_no_tabs")
   syn match augeasShowTab "\t"
 endif
 
-syn region augeasComment	start="(\*\|{"  end="\*)\|}"
-contains=augeasTodo,augeasSpaceError
+syn region augeasComment	start="(\*\|{"  end="\*)\|}" contains=augeasTodo,augeasSpaceError
 
 
 if !exists("augeas_no_functions")
