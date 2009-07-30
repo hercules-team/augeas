@@ -2,7 +2,8 @@
 Module: Xorg
  Parses /etc/X11/xorg.conf
 
-Author: Raphael Pinson <raphink@gmail.com>
+Authors: Raphael Pinson <raphink@gmail.com>
+         Matthew Booth <mbooth@redhat.com>
 
 About: Reference
  This lens tries to keep as close as possible to `man xorg.conf` where
@@ -44,6 +45,11 @@ module Xorg =
 (* Variable: eol *)
 let eol     = Util.eol
 
+(* Variable: to_eol
+ * Match everything from here to eol, cropping whitespace at both ends
+ *)
+let to_eol  = /[^ \t\n](.*[^ \t\n])?/
+
 (* Variable: indent *)
 let indent  = Util.indent
 
@@ -65,29 +71,28 @@ let sep_dquote  = Util.del_str "\""
 
 (* Group: Fields and values *)
 
-(* Variable: entry_re *)
-let entry_re    = /[^# \t\n\/]+/ - "Option"
+(* Variable: entries_re *)
+let entries_re  = /(Option|Screen|InputDevice|SubSection|Display)/
 
+(* Variable: generic_entry_re *)
+let generic_entry_re = /[^# \t\n\/]+/ - entries_re
 
-(* Variable: word_space
- *  TODO: refine possible values by Section
- *  words with spaces require quotes
- *)
-let word_space  = /"[^"\n]+"/
 
 (*
- * Variable: word
+ * Variable: unquoted_word
  *   Words without spaces may have quotes or not
  *   the quotes are then part of the value
  *)
-let word        = /[^" \t\n]+/
+let unquoted_word = /[^" \t\n]+/                   (* " relax Emacs *)
 
 (* Variable: quoted_word *)
-let quoted_word = /"[^" \t\n]+"/   (* " relax Emacs *)
+let quoted_word = /"[^"\n]+"/                     (* " relax Emacs *)
 
 (* Variable: word_all *)
-let word_all = word_space | word | quoted_word
+let word_all = unquoted_word | quoted_word
 
+(* Variable: int *)
+let int = /[0-9]+/
 
 
 (************************************************************************
@@ -95,21 +100,114 @@ let word_all = word_space | word | quoted_word
  *************************************************************************)
 
 
-(* View: entry *)
-let entry  = [ indent . key entry_re
-                . sep_spc . store word_all . eol ]
+(* View: entry_int
+ * This matches an entry which takes a single integer for an argument
+ *)
+let entry_int (canon:string) (re:regexp) =
+        [ indent . del re canon . label canon . sep_spc . store int . eol ]
 
-(* View: option_value *)
-let option_value =
-                [ label "value" . store word_all ]
+(* View: entry_rgb
+ * This matches an entry which takes 3 integers as arguments representing red,
+ * green and blue components
+ *)
+let entry_rgb (canon:string) (re:regexp) =
+        [ indent . del re canon . label canon
+          . [ label "red"   . sep_spc . store int ]
+          . [ label "green" . sep_spc . store int ]
+          . [ label "blue"  . sep_spc . store int ]
+          . eol ]
+
+(* View: entry_xy
+ * This matches an entry which takes 2 integers as arguments representing X and
+ * Y coordinates
+ *)
+let entry_xy (canon:string) (re:regexp) =
+        [ indent . del re canon . label canon
+          . [ label "x" . sep_spc . store int ]
+          . [ label "y" . sep_spc . store int ]
+          . eol ]
+
+(* View: entry_str
+ * This matches an entry which takes a single, possibly quoted, string
+ *)
+let entry_str (canon:string) (re:regexp) =
+        [ indent . del re canon . label canon
+          . sep_spc . store word_all . eol ]
+
+(* View: entry_generic
+ * An entry without a specific handler. Store everything after the keyword,
+ * cropping whitespace at both ends.
+ *)
+let entry_generic  = [ indent . key generic_entry_re
+                       . sep_spc . store to_eol . eol ]
 
 (* View: option *)
 let option = [ indent . key "Option" . sep_spc
-                . store word_all
-                . (sep_spc . option_value)* . eol ]
+               . store word_all
+               . [ label "value" . sep_spc . store word_all ]*
+               . eol ]
 
-(* View: section_entry *)
-let section_entry = empty | comment | entry | option
+(* View: screen
+ * The Screen entry of ServerLayout
+ *)
+let screen = [ indent . key "Screen" . sep_spc
+               . [ label "num" . store int . sep_spc ]?
+               . store quoted_word . sep_spc
+               . [ label "position" . store to_eol ]
+               . eol ]
+
+(* View: input_device *)
+let input_device = [ indent . key "InputDevice" . sep_spc . store word_all
+                     . [ label "option" . sep_spc . store word_all ]*
+                     . eol ]
+
+
+(************************************************************************
+ * Group:                          DISPLAY SUBSECTION
+ *************************************************************************)
+
+
+(* View: display_modes *)
+let display_modes = [ indent . del /[mM]odes/ "Modes" . label "Modes"
+                      . [ label "mode" . sep_spc . store quoted_word ]+
+                      . eol ]
+
+(*************************************************************************
+ * View: display_entry
+ *   Known values for entries in the Display subsection
+ *
+ *   Definition:
+ *     > Depth    depth
+ *     > FbBpp    bpp
+ *     > Weight   red-weight green-weight blue-weight
+ *     > Virtual  xdim ydim
+ *     > ViewPort x0 y0
+ *     > Modes    "mode-name" ...
+ *     > Visual   "visual-name"
+ *     > Black    red green blue
+ *     > White    red green blue
+ *     > Options
+ *)
+
+let display_entry = entry_int "Depth"    /[dD]epth/ |
+                    entry_int "FbBpp"    /[fF]b[bB]pp/ |
+                    entry_rgb "Weight"   /[wW]eight/ |
+                    entry_xy  "Virtual"  /[vV]irtual/ |
+                    entry_xy  "ViewPort" /[vV]iew[pP]ort/ |
+                    display_modes |
+                    entry_str "Visual"   /[vV]isual/ |
+                    entry_rgb "Black"    /[bB]lack/ |
+                    entry_rgb "White"    /[wW]hite/ |
+                    entry_str "Options"  /[oO]ptions/ |
+                    empty |
+                    comment
+
+(* View: display *)
+let display = [ indent . del "SubSection" "SubSection" . sep_spc
+                       . sep_dquote . key "Display" . sep_dquote
+                       . eol
+                       . display_entry*
+                       . indent . del "EndSubSection" "EndSubSection" . eol ]
 
 
 (************************************************************************
@@ -152,6 +250,11 @@ let section_re = /(Files|ServerFlags|Module|InputDevice|Device|VideoAdaptor
  *     >  Pointer        Pointer/mouse configuration
  *************************************************************************)
 let section_re_obsolete = /(Keyboard|Pointer)/
+
+(* View: section_entry *)
+let section_entry = empty | comment |
+                    option | screen | display | input_device |
+                    entry_generic
 
 (************************************************************************
  * View: section
