@@ -71,8 +71,11 @@ let sep_dquote  = Util.del_str "\""
 
 (* Group: Fields and values *)
 
-(* Variable: entries_re *)
-let entries_re  = /(Option|Screen|InputDevice|SubSection|Display)/
+(* Variable: entries_re
+ * This is a list of all patterns which have specific handlers, and should
+ * therefore not be matched by the generic handler
+ *)
+let entries_re  = /([oO]ption|[sS]creen|[iI]nput[dD]evice|[dD]river|[sS]ub[sS]ection|[dD]isplay|[iI]dentifier|[vV]ideo[rR]am|[dD]efault[dD]epth)/
 
 (* Variable: generic_entry_re *)
 let generic_entry_re = /[^# \t\n\/]+/ - entries_re
@@ -128,11 +131,11 @@ let entry_xy (canon:string) (re:regexp) =
           . eol ]
 
 (* View: entry_str
- * This matches an entry which takes a single, possibly quoted, string
+ * This matches an entry which takes a single quoted string
  *)
 let entry_str (canon:string) (re:regexp) =
         [ indent . del re canon . label canon
-          . sep_spc . store word_all . eol ]
+          . sep_spc . store quoted_word . eol ]
 
 (* View: entry_generic
  * An entry without a specific handler. Store everything after the keyword,
@@ -142,25 +145,37 @@ let entry_generic  = [ indent . key generic_entry_re
                        . sep_spc . store to_eol . eol ]
 
 (* View: option *)
-let option = [ indent . key "Option" . sep_spc
-               . store word_all
-               . [ label "value" . sep_spc . store word_all ]*
+let option = [ indent . del /[oO]ption/ "Option" . label "Option" . sep_spc
+               . store quoted_word
+               . [ label "value" . sep_spc . store quoted_word ]*
                . eol ]
 
 (* View: screen
  * The Screen entry of ServerLayout
  *)
-let screen = [ indent . key "Screen" . sep_spc
+let screen = [ indent . del /[sS]creen/ "Screen" . label "Screen" . sep_spc
                . [ label "num" . store int . sep_spc ]?
                . store quoted_word . sep_spc
                . [ label "position" . store to_eol ]
                . eol ]
 
 (* View: input_device *)
-let input_device = [ indent . key "InputDevice" . sep_spc . store word_all
-                     . [ label "option" . sep_spc . store word_all ]*
+let input_device = [ indent . del /[iI]nput[dD]evice/ "InputDevice"
+                     . label "InputDevice" . sep_spc . store quoted_word
+                     . [ label "option" . sep_spc . store quoted_word ]*
                      . eol ]
 
+(* View: driver *)
+let driver = entry_str "Driver" /[dD]river/
+
+(* View: identifier *)
+let identifier = entry_str "Identifier" /[iI]dentifier/
+
+(* View: videoram *)
+let videoram = entry_int "VideoRam" /[vV]ideo[rR]am/
+
+(* View: default_depth *)
+let default_depth = entry_int "DefaultDepth" /[dD]efault[dD]epth/
 
 (************************************************************************
  * Group:                          DISPLAY SUBSECTION
@@ -235,8 +250,7 @@ let display = [ indent . del "SubSection" "SubSection" . sep_spc
  *     >   DRI            DRI-specific configuration
  *     >   Vendor         Vendor-specific configuration
  *************************************************************************)
-let section_re = /(Files|ServerFlags|Module|InputDevice|Device|VideoAdaptor
-                        |Monitor|Modes|Screen|ServerLayout|DRI|Vendor)/
+let section_re = /(Files|ServerFlags|Module|InputDevice|Device|VideoAdaptor|Monitor|Modes|Screen|ServerLayout|DRI|Vendor)/
 
 
 (************************************************************************
@@ -252,9 +266,16 @@ let section_re = /(Files|ServerFlags|Module|InputDevice|Device|VideoAdaptor
 let section_re_obsolete = /(Keyboard|Pointer)/
 
 (* View: section_entry *)
-let section_entry = empty | comment |
-                    option | screen | display | input_device |
-                    entry_generic
+let section_entry = option |
+                    screen |
+                    display |
+                    input_device |
+                    driver |
+                    identifier |
+                    videoram |
+                    default_depth |
+                    entry_generic |
+                    empty | comment
 
 (************************************************************************
  * View: section
