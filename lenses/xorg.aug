@@ -21,14 +21,6 @@ About: Lens Usage
     * Get the identifier of the devices with a "Clone" option:
       > match "/files/etc/X11/xorg.conf/Device[Option = 'Clone']/Identifier"
 
-About: Quotes in values
-  In this file, values may or may not be quoted (with double quotes) unless
-they contain spaces or tabulations. For this reason, the quotes are
-included in the parsed values when present. New values with no spaces will
-not have quotes by default, unless you type the quotes yourself around
-them. New values with spaces will not be accepted unless they are
-explicitely surrounded by double qutoes.
-
 About: Configuration files
   This lens applies to /etc/X11/xorg.conf. See <filter>.
 *)
@@ -75,24 +67,14 @@ let sep_dquote  = Util.del_str "\""
  * This is a list of all patterns which have specific handlers, and should
  * therefore not be matched by the generic handler
  *)
-let entries_re  = /([oO]ption|[sS]creen|[iI]nput[dD]evice|[dD]river|[sS]ub[sS]ection|[dD]isplay|[iI]dentifier|[vV]ideo[rR]am|[dD]efault[dD]epth)/
+let entries_re  = /([oO]ption|[sS]creen|[iI]nput[dD]evice|[dD]river|[sS]ub[sS]ection|[dD]isplay|[iI]dentifier|[vV]ideo[rR]am|[dD]efault[dD]epth|[dD]evice)/
 
 (* Variable: generic_entry_re *)
 let generic_entry_re = /[^# \t\n\/]+/ - entries_re
 
-
-(*
- * Variable: unquoted_word
- *   Words without spaces may have quotes or not
- *   the quotes are then part of the value
- *)
-let unquoted_word = /[^" \t\n]+/                   (* " relax Emacs *)
-
-(* Variable: quoted_word *)
-let quoted_word = /"[^"\n]+"/                     (* " relax Emacs *)
-
-(* Variable: word_all *)
-let word_all = unquoted_word | quoted_word
+(* Variable: quoted_string_val *)
+let quoted_string_val = del "\"" "\"" . store /[^"\n]+/ . del "\"" "\""
+                                              (* " relax, emacs *)
 
 (* Variable: int *)
 let int = /[0-9]+/
@@ -135,7 +117,7 @@ let entry_xy (canon:string) (re:regexp) =
  *)
 let entry_str (canon:string) (re:regexp) =
         [ indent . del re canon . label canon
-          . sep_spc . store quoted_word . eol ]
+          . sep_spc . quoted_string_val . eol ]
 
 (* View: entry_generic
  * An entry without a specific handler. Store everything after the keyword,
@@ -146,8 +128,8 @@ let entry_generic  = [ indent . key generic_entry_re
 
 (* View: option *)
 let option = [ indent . del /[oO]ption/ "Option" . label "Option" . sep_spc
-               . store quoted_word
-               . [ label "value" . sep_spc . store quoted_word ]*
+               . quoted_string_val
+               . [ label "value" . sep_spc . quoted_string_val ]*
                . eol ]
 
 (* View: screen
@@ -155,14 +137,14 @@ let option = [ indent . del /[oO]ption/ "Option" . label "Option" . sep_spc
  *)
 let screen = [ indent . del /[sS]creen/ "Screen" . label "Screen" . sep_spc
                . [ label "num" . store int . sep_spc ]?
-               . store quoted_word . sep_spc
+               . quoted_string_val . sep_spc
                . [ label "position" . store to_eol ]
                . eol ]
 
 (* View: input_device *)
 let input_device = [ indent . del /[iI]nput[dD]evice/ "InputDevice"
-                     . label "InputDevice" . sep_spc . store quoted_word
-                     . [ label "option" . sep_spc . store quoted_word ]*
+                     . label "InputDevice" . sep_spc . quoted_string_val
+                     . [ label "option" . sep_spc . quoted_string_val ]*
                      . eol ]
 
 (* View: driver *)
@@ -177,6 +159,9 @@ let videoram = entry_int "VideoRam" /[vV]ideo[rR]am/
 (* View: default_depth *)
 let default_depth = entry_int "DefaultDepth" /[dD]efault[dD]epth/
 
+(* View: device *)
+let device = entry_str "Device" /[dD]evice/
+
 (************************************************************************
  * Group:                          DISPLAY SUBSECTION
  *************************************************************************)
@@ -184,7 +169,7 @@ let default_depth = entry_int "DefaultDepth" /[dD]efault[dD]epth/
 
 (* View: display_modes *)
 let display_modes = [ indent . del /[mM]odes/ "Modes" . label "Modes"
-                      . [ label "mode" . sep_spc . store quoted_word ]+
+                      . [ label "mode" . sep_spc . quoted_string_val ]+
                       . eol ]
 
 (*************************************************************************
@@ -274,6 +259,7 @@ let section_entry = option |
                     identifier |
                     videoram |
                     default_depth |
+                    device |
                     entry_generic |
                     empty | comment
 

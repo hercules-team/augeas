@@ -42,30 +42,30 @@ EndSection
      { "#comment" = "xorg.conf" }
      { }
      { "ServerLayout"
-        { "Identifier" = "\"single head configuration\"" }
-        { "Screen"     = "\"Screen0\""
+        { "Identifier" = "single head configuration" }
+        { "Screen"     = "Screen0"
            { "num"      = "0" }
            { "position" = "0 0" } }
-        { "InputDevice" = "\"Generic Keyboard\""
-           { "option"   = "\"CoreKeyboard\"" } } }
+        { "InputDevice" = "Generic Keyboard"
+           { "option"   = "CoreKeyboard" } } }
      { }
      { "InputDevice"
-        { "Identifier" = "\"Generic Keyboard\"" }
+        { "Identifier" = "Generic Keyboard" }
         { "#comment"   = "that's a driver" }
-        { "Driver"     = "\"kbd\"" }
-        { "Option"     = "\"XkbOptions\""
-             { "value"  = "\"lv3:ralt_switch\"" } } }
+        { "Driver"     = "kbd" }
+        { "Option"     = "XkbOptions"
+             { "value"  = "lv3:ralt_switch" } } }
      { }
      { "Device"
-        { "Identifier" = "\"Configured Video Device\"" }
-        { "Option"     = "\"MonitorLayout\""
-             { "value"  = "\"LVDS,VGA\"" } }
+        { "Identifier" = "Configured Video Device" }
+        { "Option"     = "MonitorLayout"
+             { "value"  = "LVDS,VGA" } }
         { "VideoRam"   = "229376" }
-        { "Option"     = "\"NoAccel\"" } }
+        { "Option"     = "NoAccel" } }
      { }
      { "Screen"
-        { "Identifier" = "\"Screen0\"" }
-        { "Device"     = "\"Configured Video Device\"" }
+        { "Identifier" = "Screen0" }
+        { "Device"     = "Configured Video Device" }
         { "DefaultDepth" = "24" }
         { "Display"
            { "ViewPort"
@@ -73,6 +73,6 @@ EndSection
               { "y" = "0" } }
            { "Depth"    = "24" }
            { "Modes"
-              { "mode" = "\"1280x1024\"" }
-              { "mode" = "\"1280x960\"" }
-              { "mode" = "\"1280x800\"" } } } }
+              { "mode" = "1280x1024" }
+              { "mode" = "1280x960" }
+              { "mode" = "1280x800" } } } }
