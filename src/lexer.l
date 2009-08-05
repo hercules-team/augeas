@@ -79,6 +79,7 @@ ARROW  ->
 {
   [ \t]*        LOCATION_STEP(*yylloc);
   \n+           LOCATION_LINES(*yylloc, yyleng); LOCATION_STEP(*yylloc);
+  (\r\n)+       LOCATION_LINES(*yylloc, yyleng/2); LOCATION_STEP(*yylloc);
 }
 
 <INITIAL>
