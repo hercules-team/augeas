@@ -60,8 +60,6 @@ static const int glob_flags = GLOB_NOSORT;
  */
 static const char *const s_path = "path";
 static const char *const s_lens = "lens";
-static const char *const s_info = "info";
-static const char *const s_id   = "id";
 
 static const char *const s_error = "error";
 /* These are all put underneath "error" */
@@ -338,7 +336,7 @@ static int add_file_info(struct augeas *aug,
         goto done;
     p[end] = '\0';
 
-    r = pathjoin(&p, 2, s_lens, s_info);
+    r = pathjoin(&p, 1, s_lens);
     if (r < 0)
         goto done;
 
@@ -349,19 +347,6 @@ static int add_file_info(struct augeas *aug,
     FREE(tmp);
     if (r < 0)
         goto done;
-    p[end] = '\0';
-
-    r = pathjoin(&p, 2, s_lens, s_id);
-    if (r < 0)
-        goto done;
-
-    r = asprintf(&tmp, "%p", lens);
-    if (r >= 0) {
-        r = aug_set(aug, p, tmp);
-        FREE(tmp);
-        if (r < 0)
-            goto done;
-    }
 
     result = 0;
  done:
