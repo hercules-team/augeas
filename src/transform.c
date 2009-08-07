@@ -308,7 +308,15 @@ static int store_error(struct augeas *aug,
     return result;
 }
 
-static int add_load_info(struct augeas *aug, const char *filename,
+/* Set up the file information in the /augeas tree.
+ *
+ * NODE must be the path to the file contents, and start with /files.
+ * LENS is the lens used to transform the file.
+ * Create entries under /augeas/NODE with some metadata about the file.
+ *
+ * Returns 0 on success, -1 on error
+ */
+static int add_file_info(struct augeas *aug,
                          const char *node, struct lens *lens) {
     char *tmp = NULL;
     int r;
@@ -316,7 +324,7 @@ static int add_load_info(struct augeas *aug, const char *filename,
     int end = 0;
     int result = -1;
 
-    r = pathjoin(&p, 2, AUGEAS_META_FILES, filename + strlen(aug->root) - 1);
+    r = pathjoin(&p, 2, AUGEAS_META_TREE, node);
     if (r < 0)
         goto done;
     end = strlen(p);
@@ -385,7 +393,7 @@ static int load_file(struct augeas *aug, struct lens *lens, char *filename) {
 
     pathjoin(&path, 2, AUGEAS_FILES_TREE, filename + strlen(aug->root) - 1);
 
-    r = add_load_info(aug, filename, path, lens);
+    r = add_file_info(aug, path, lens);
     if (r < 0)
         goto done;
 
