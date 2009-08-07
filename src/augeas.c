@@ -410,9 +410,10 @@ int aug_defnode(augeas *aug, const char *name, const char *expr,
         r = tree_set_value(tree, value);
         if (r < 0)
             goto done;
+        result = pathx_symtab_assign_tree(&(aug->symtab), name, tree);
+    } else {
+        result = pathx_symtab_define(&(aug->symtab), name, p);
     }
-
-    result = pathx_symtab_define(&(aug->symtab), name, p);
 
  done:
     free_pathx(p);

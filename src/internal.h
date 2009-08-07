@@ -414,6 +414,8 @@ void free_pathx(struct pathx *path);
 int pathx_symtab_init(struct pathx_symtab **symtab);
 int pathx_symtab_define(struct pathx_symtab **symtab,
                         const char *name, struct pathx *px);
+int pathx_symtab_assign_tree(struct pathx_symtab **symtab, const char *name,
+                             struct tree *tree);
 int pathx_symtab_undefine(struct pathx_symtab **symtab, const char *name);
 void pathx_symtab_remove_descendants(struct pathx *pathx,
                                      const struct tree *tree);

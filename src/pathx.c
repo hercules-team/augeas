@@ -2248,9 +2248,36 @@ int pathx_symtab_init(struct pathx_symtab **symtab) {
     return -1;
 }
 
+static int pathx_symtab_set(struct pathx_symtab **symtab,
+                            const char *name, struct value *v) {
+    int found = 0;
+
+    list_for_each(tab, *symtab) {
+        if (STREQ(tab->name, name)) {
+            release_value(tab->value);
+            free(tab->value);
+            tab->value = v;
+            found = 1;
+            break;
+        }
+    }
+
+    if (!found) {
+        struct pathx_symtab *new = NULL;
+
+        new = make_symtab(*symtab, name, v);
+        if (new == NULL)
+            goto error;
+        *symtab = new;
+    }
+    return 0;
+ error:
+    return -1;
+}
+
 int pathx_symtab_define(struct pathx_symtab **symtab,
                         const char *name, struct pathx *px) {
-    struct pathx_symtab *new;
+    int r;
     struct value *value = NULL, *v = NULL;
 
     value = pathx_eval(px);
@@ -2262,21 +2289,10 @@ int pathx_symtab_define(struct pathx_symtab **symtab,
     *v = *value;
     value->tag = T_BOOLEAN;
 
-    list_for_each(tab, *symtab) {
-        if (STREQ(tab->name, name)) {
-            release_value(tab->value);
-            free(tab->value);
-            tab->value = v;
-            goto done;
-        }
-    }
-
-    new = make_symtab(*symtab, name, v);
-    if (new == NULL)
+    r = pathx_symtab_set(symtab, name, v);
+    if (r < 0)
         goto error;
 
-    *symtab = new;
- done:
     if (v->tag == T_NODESET)
         return v->nodeset->used;
     else
@@ -2300,6 +2316,33 @@ int pathx_symtab_undefine(struct pathx_symtab **symtab, const char *name) {
     list_remove(del, *symtab);
     free_symtab(del);
     return 0;
+}
+
+int pathx_symtab_assign_tree(struct pathx_symtab **symtab,
+                             const char *name, struct tree *tree) {
+    struct value *v = NULL;
+    int r;
+
+    if (ALLOC(v) < 0)
+        goto error;
+
+    v->tag = T_NODESET;
+    if (ALLOC(v->nodeset) < 0)
+        goto error;
+    if (ALLOC_N(v->nodeset->nodes, 1) < 0)
+        goto error;
+    v->nodeset->used = 1;
+    v->nodeset->size = 1;
+    v->nodeset->nodes[0] = tree;
+
+    r = pathx_symtab_set(symtab, name, v);
+    if (r < 0)
+        goto error;
+    return 1;
+ error:
+    release_value(v);
+    free(v);
+    return -1;
 }
 
 void pathx_symtab_remove_descendants(struct pathx *pathx,

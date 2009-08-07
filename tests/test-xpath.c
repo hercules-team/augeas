@@ -248,11 +248,16 @@ static int test_defnode_nonexistent(struct augeas *aug) {
     int r, created;
 
     printf("%-30s ... ", "defnode_nonexistent");
-    r = aug_defnode(aug, "x", "/defnode/bar[. = 'foo']", "foo", &created);
+    r = aug_defnode(aug, "x", "/defnode/bar[0 = 1]", "foo", &created);
     if (r != 1)
         die("aug_defnode failed");
     if (created != 1) {
         fprintf(stderr, "defnode did not create a node\n");
+        goto fail;
+    }
+    r = aug_match(aug, "$x", NULL);
+    if (r != 1) {
+        fprintf(stderr, "$x must have exactly one entry, but has %d\n", r);
         goto fail;
     }
 
