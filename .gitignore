@@ -37,6 +37,7 @@ tests/fatest
 tests/lens-*.sh
 tests/test-xpath
 tests/test-load
+tests/test-save
 *.aux
 *.dvi
 *.log

@@ -104,7 +104,7 @@ EXTRA_DIST = \
 
 noinst_SCRIPTS = $(check_SCRIPTS)
 
-check_PROGRAMS = fatest test-xpath test-load
+check_PROGRAMS = fatest test-xpath test-load test-save
 
 TESTS_ENVIRONMENT = \
   PATH='$(abs_top_builddir)/src$(PATH_SEPARATOR)'"$$PATH" \
@@ -123,3 +123,6 @@ test_xpath_LDADD = $(top_builddir)/src/libaugeas.la $(GNULIB)
 
 test_load_SOURCES = test-load.c cutest.c cutest.h
 test_load_LDADD = $(top_builddir)/src/libaugeas.la $(GNULIB)
+
+test_save_SOURCES = test-save.c cutest.c cutest.h
+test_save_LDADD = $(top_builddir)/src/libaugeas.la $(GNULIB)

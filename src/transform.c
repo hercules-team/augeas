@@ -832,6 +832,11 @@ int transform_save(struct augeas *aug, struct tree *xfm,
     result = 1;
 
  done:
+    r = add_file_info(aug, path, lens);
+    if (r < 0) {
+        err_status = "file_info";
+        result = -1;
+    }
     if (result > 0) {
         r = file_saved_event(aug, path);
         if (r < 0) {
