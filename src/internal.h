@@ -412,12 +412,13 @@ int pathx_expand_tree(struct pathx *path, struct tree **tree);
 void free_pathx(struct pathx *path);
 
 int pathx_symtab_init(struct pathx_symtab **symtab);
+struct pathx_symtab *pathx_get_symtab(struct pathx *pathx);
 int pathx_symtab_define(struct pathx_symtab **symtab,
                         const char *name, struct pathx *px);
 int pathx_symtab_assign_tree(struct pathx_symtab **symtab, const char *name,
                              struct tree *tree);
 int pathx_symtab_undefine(struct pathx_symtab **symtab, const char *name);
-void pathx_symtab_remove_descendants(struct pathx *pathx,
+void pathx_symtab_remove_descendants(struct pathx_symtab *symtab,
                                      const struct tree *tree);
 void free_symtab(struct pathx_symtab *symtab);
 #endif

@@ -573,7 +573,7 @@ int tree_rm(struct pathx *p) {
     for (i = 0, tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
         if (TREE_HIDDEN(tree))
             continue;
-        pathx_symtab_remove_descendants(p, tree);
+        pathx_symtab_remove_descendants(pathx_get_symtab(p), tree);
         del[i] = tree;
         i += 1;
     }
