@@ -122,44 +122,55 @@ static int filter_generate(struct tree *xfm, const char *root,
 
         if (r != 0 && r != GLOB_NOMATCH) {
             ret = -1;
-            goto done;
+            goto error;
         }
         gl_flags |= GLOB_APPEND;
     }
 
-    char **pathv = globbuf.gl_pathv;
-    int pathc = globbuf.gl_pathc;
-    globbuf.gl_pathv = NULL;
-    globbuf.gl_pathc = 0;
+    char **pathv = NULL;
+    int pathc = globbuf.gl_pathc, pathind = 0;
 
-    list_for_each(e, xfm->children) {
-        if (! is_excl(e))
-            continue;
-        for (int i=0; i < pathc;) {
-            const char *path = pathv[i];
+    if (ALLOC_N(pathv, pathc) < 0)
+        goto error;
+
+    for (int i=0; i < pathc; i++) {
+        const char *path = globbuf.gl_pathv[i];
+        bool include = true;
+
+        list_for_each(e, xfm->children) {
+            if (! is_excl(e))
+                continue;
+
             if (strchr(e->value, SEP) == NULL)
                 path = pathbase(path);
-            if (fnmatch(e->value, path, fnm_flags) == 0) {
-                free(pathv[i]);
-                pathc -= 1;
-                if (i < pathc) {
-                    pathv[i] = pathv[pathc];
-                }
-            } else {
-                i += 1;
+            if ((r = fnmatch(e->value, path, fnm_flags)) == 0) {
+                include = false;
             }
         }
+        if (include) {
+            pathv[pathind] = strdup(globbuf.gl_pathv[i]);
+            if (pathv[pathind] == NULL)
+                goto error;
+            pathind += 1;
+        }
     }
-    if (REALLOC_N(pathv, pathc) == -1) {
-        FREE(pathv);
-        pathc = 0;
-        ret = -1;
-    }
+    pathc = pathind;
+
+    if (REALLOC_N(pathv, pathc) == -1)
+        goto error;
+
     *matches = pathv;
     *nmatches = pathc;
  done:
     globfree(&globbuf);
     return ret;
+ error:
+    if (pathv != NULL)
+        for (int i=0; i < pathc; i++)
+            free(pathv[i]);
+    free(pathv);
+    ret = -1;
+    goto done;
 }
 
 static int filter_matches(struct tree *xfm, const char *path) {
