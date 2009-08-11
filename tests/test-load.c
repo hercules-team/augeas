@@ -190,6 +190,26 @@ static void testLoadSave(CuTest *tc) {
     aug_close(aug);
 }
 
+/* Tests bug #79 */
+static void testLoadDefined(CuTest *tc) {
+    augeas *aug = NULL;
+    int r;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC);
+    CuAssertPtrNotNull(tc, aug);
+
+    r = aug_defvar(aug, "v", "/files/etc/hosts/*/ipaddr");
+    CuAssertIntEquals(tc, 2, r);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_match(aug, "$v", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    aug_close(aug);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -200,6 +220,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testNoAutoload);
     SUITE_ADD_TEST(suite, testInvalidLens);
     SUITE_ADD_TEST(suite, testLoadSave);
+    SUITE_ADD_TEST(suite, testLoadDefined);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)

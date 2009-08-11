@@ -320,9 +320,11 @@ struct augeas *aug_init(const char *root, const char *loadpath,
     return NULL;
 }
 
-static void tree_unlink_children(struct tree *tree) {
+static void tree_unlink_children(struct augeas *aug, struct tree *tree) {
     if (tree == NULL)
         return;
+
+    pathx_symtab_remove_descendants(aug->symtab, tree);
 
     while (tree->children != NULL)
         tree_unlink(tree->children);
@@ -337,8 +339,8 @@ int aug_load(struct augeas *aug) {
     if (load == NULL)
         return -1;
 
-    tree_unlink_children(meta_files);
-    tree_unlink_children(files);
+    tree_unlink_children(aug, meta_files);
+    tree_unlink_children(aug, files);
 
     list_for_each(xfm, load->children) {
         if (transform_validate(aug, xfm) == 0)
