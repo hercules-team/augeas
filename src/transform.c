@@ -101,6 +101,16 @@ static bool is_incl(struct tree *f) {
     return streqv(f->label, "incl") && f->value != NULL;
 }
 
+static bool is_regular_file(const char *path) {
+    int r;
+    struct stat st;
+
+    r = stat(path, &st);
+    if (r < 0)
+        return false;
+    return S_ISREG(st.st_mode);
+}
+
 static int filter_generate(struct tree *xfm, const char *root,
                            int *nmatches, char ***matches) {
     glob_t globbuf;
@@ -147,6 +157,10 @@ static int filter_generate(struct tree *xfm, const char *root,
                 include = false;
             }
         }
+
+        if (include)
+            include = is_regular_file(globbuf.gl_pathv[i]);
+
         if (include) {
             pathv[pathind] = strdup(globbuf.gl_pathv[i]);
             if (pathv[pathind] == NULL)
