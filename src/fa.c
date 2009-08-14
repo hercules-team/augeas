@@ -1,7 +1,7 @@
 /*
  * fa.c: finite automata
  *
- * Copyright (C) 2007, 2008 Red Hat Inc.
+ * Copyright (C) 2007-2009 Red Hat Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -174,7 +174,7 @@ struct re {
             struct re *exp2;
         };
         struct {                  /* CSET */
-            int       negate;
+            bool    negate;
             bitset *cset;
         };
         struct {                  /* CHAR */
@@ -187,6 +187,15 @@ struct re {
         };
     };
 };
+
+/* Used to keep state of the regex parse; RX may contain NUL's */
+struct re_parse {
+    const char *rx;          /* Current position in regex */
+    const char *rend;        /* Last char of rx+ 1 */
+    int         error;       /* error code */
+};
+
+static struct re *parse_regexp(struct re_parse *parse);
 
 /* A map from a set of states to a state. */
 typedef hash_t state_set_hash;
@@ -215,8 +224,6 @@ struct state_set_list {
     struct state_set_list *next;
     struct state_set      *set;
 };
-
-static struct re *parse_regexp(const char **regexp, int *error);
 
 /* Clean up FA by removing dead transitions and states and reducing
  * transitions. Unreachable states are freed. The return value is the same
@@ -2530,23 +2537,24 @@ static void free_re(struct re *re) {
 }
 
 int fa_compile(const char *regexp, size_t size, struct fa **fa) {
-    int ret = REG_NOERROR;
     struct re *re = NULL;
+    struct re_parse parse;
+
     *fa = NULL;
 
-    /* We don't handle embedded nul's yet */
-    if (strlen(regexp) != size)
-        return REG_ESIZE;
+    parse.rx = regexp;
+    parse.rend = regexp + size;
+    parse.error = REG_NOERROR;
 
-    re = parse_regexp(&regexp, &ret);
+    re = parse_regexp(&parse);
     if (re == NULL)
-        return ret;
+        return parse.error;
 
     *fa = fa_from_re(re);
     re_unref(re);
 
     collect(*fa);
-    return ret;
+    return parse.error;
 }
 
 /*
@@ -2593,7 +2601,7 @@ static struct re *make_re_char(uchar c) {
     return re;
 }
 
-static struct re *make_re_char_set(int negate) {
+static struct re *make_re_char_set(bool negate) {
     struct re *re = make_re(CSET);
     if (re) {
         re->negate = negate;
@@ -2604,37 +2612,40 @@ static struct re *make_re_char_set(int negate) {
     return re;
 }
 
-static int more(const char **regexp) {
-    return (*regexp) != '\0';
+static bool more(struct re_parse *parse) {
+    return parse->rx < parse->rend;
 }
 
-static int match(const char **regexp, char m) {
-    if (!more(regexp))
-        return 0;
-    if (**regexp == m) {
-        (*regexp) += 1;
-        return 1;
+static bool match(struct re_parse *parse, char m) {
+    if (!more(parse))
+        return false;
+    if (*parse->rx == m) {
+        parse->rx += 1;
+        return true;
     }
-    return 0;
+    return false;
 }
 
-static int peek(const char **regexp, const char *chars) {
-    return strchr(chars, **regexp) != NULL;
+static bool peek(struct re_parse *parse, const char *chars) {
+    return strchr(chars, *parse->rx) != NULL;
 }
 
-static char next(const char **regexp) {
-    char c = **regexp;
-    if (c != '\0')
-        *regexp += 1;
-    return c;
+static bool next(struct re_parse *parse, char *c) {
+    if (!more(parse))
+        return false;
+    *c = *parse->rx;
+    parse->rx += 1;
+    return true;
 }
 
-static char parse_char(const char **regexp, int quoted) {
-    if (quoted && **regexp == '\\') {
-        next(regexp);
-        return next(regexp);
+static bool parse_char(struct re_parse *parse, int quoted, char *c) {
+    if (!more(parse))
+        return false;
+    if (quoted && *parse->rx == '\\') {
+        parse->rx += 1;
+        return next(parse, c);
     } else {
-        return next(regexp);
+        return next(parse, c);
     }
 }
 
@@ -2644,33 +2655,34 @@ static void add_re_char(struct re *re, uchar from, uchar to) {
         bitset_set(re->cset, c);
 }
 
-static void parse_char_class(const char **regexp, struct re *re,
-                             int *error) {
-    if (! more(regexp)) {
-        *error = REG_EBRACK;
+static void parse_char_class(struct re_parse *parse, struct re *re) {
+    if (! more(parse)) {
+        parse->error = REG_EBRACK;
         goto error;
     }
-    char from = parse_char(regexp, 0);
-    char to = from;
-    if (match(regexp, '-')) {
-        if (! more(regexp)) {
-            *error = REG_EBRACK;
+    char from, to;
+    parse_char(parse, 0, &from);
+    to = from;
+    if (match(parse, '-')) {
+        if (! more(parse)) {
+            parse->error = REG_EBRACK;
             goto error;
         }
-        if (peek(regexp, "]")) {
+        if (peek(parse, "]")) {
             if (from > to) {
-                *error = REG_ERANGE;
+                parse->error = REG_ERANGE;
                 goto error;
             }
             add_re_char(re, from, to);
             add_re_char(re, '-', '-');
             return;
-        } else {
-            to = parse_char(regexp, 0);
+        } else if (!parse_char(parse, 0, &to)) {
+            parse->error = REG_ERANGE;
+            goto error;
         }
     }
     if (from > to) {
-        *error = REG_ERANGE;
+        parse->error = REG_ERANGE;
         goto error;
     }
     add_re_char(re, from, to);
@@ -2678,45 +2690,53 @@ static void parse_char_class(const char **regexp, struct re *re,
     return;
 }
 
-static struct re *parse_simple_exp(const char **regexp, int *error) {
+static struct re *parse_simple_exp(struct re_parse *parse) {
     struct re *re = NULL;
 
-    if (match(regexp, '[')) {
-        int negate = match(regexp, '^');
+    if (match(parse, '[')) {
+        bool negate = match(parse, '^');
         re = make_re_char_set(negate);
-        if (re == NULL)
+        if (re == NULL) {
+            parse->error = REG_ESPACE;
             goto error;
-        parse_char_class(regexp, re, error);
-        if (*error != REG_NOERROR)
+        }
+        parse_char_class(parse, re);
+        if (parse->error != REG_NOERROR)
             goto error;
-        while (more(regexp) && ! peek(regexp, "]")) {
-            parse_char_class(regexp, re, error);
-            if (*error != REG_NOERROR)
+        while (more(parse) && ! peek(parse, "]")) {
+            parse_char_class(parse, re);
+            if (parse->error != REG_NOERROR)
                 goto error;
         }
-        if (! match(regexp, ']')) {
-            *error = REG_EBRACK;
+        if (! match(parse, ']')) {
+            parse->error = REG_EBRACK;
             goto error;
         }
-    } else if (match(regexp, '(')) {
-        if (match(regexp, ')')) {
+    } else if (match(parse, '(')) {
+        if (match(parse, ')')) {
             return make_re(EPSILON);
         }
-        re = parse_regexp(regexp, error);
+        re = parse_regexp(parse);
         if (re == NULL)
             goto error;
-        if (! match(regexp, ')')) {
-            *error = REG_EPAREN;
+        if (! match(parse, ')')) {
+            parse->error = REG_EPAREN;
             goto error;
         }
-    } else if (match(regexp, '.')) {
+    } else if (match(parse, '.')) {
         re = make_re_char_set(1);
-        if (re == NULL)
+        if (re == NULL) {
+            parse->error = REG_ESPACE;
             goto error;
+        }
         add_re_char(re, '\n', '\n');
     } else {
-        if (more(regexp)) {
-            char c = parse_char(regexp, 1);
+        if (more(parse)) {
+            char c;
+            if (!parse_char(parse, 1, &c)) {
+                parse->error = REG_EESCAPE;
+                goto error;
+            }
             re = make_re_char(c);
         }
     }
@@ -2726,50 +2746,70 @@ static struct re *parse_simple_exp(const char **regexp, int *error) {
     return NULL;
 }
 
-static int parse_int(const char **regexp, int *error) {
+static int parse_int(struct re_parse *parse) {
+    const char *lim;
     char *end;
-    long l = strtoul(*regexp, &end, 10);
-    *regexp = end;
+    size_t used;
+    long l;
+
+    /* We need to be careful that strtoul will never access
+     * memory beyond parse->rend
+     */
+    for (lim = parse->rx; lim < parse->rend && *lim >= '0' && *lim <= '9';
+         lim++);
+    if (lim < parse->rend) {
+        l = strtoul(parse->rx, &end, 10);
+        used = end - parse->rx;
+    } else {
+        char *s = strndup(parse->rx, parse->rend - parse->rx);
+        if (s == NULL) {
+            parse->error = REG_ESPACE;
+            return -1;
+        }
+        l = strtoul(s, &end, 10);
+        used = end - s;
+        free(s);
+    }
+
+    parse->rx += used;
     if ((l<0) || (l > INT_MAX)) {
-        *error = REG_BADBR;
+        parse->error = REG_BADBR;
         return -1;
     }
     return (int) l;
 }
 
-static struct re *parse_repeated_exp(const char **regexp, int *error) {
-    struct re *re = parse_simple_exp(regexp, error);
+static struct re *parse_repeated_exp(struct re_parse *parse) {
+    struct re *re = parse_simple_exp(parse);
     if (re == NULL)
         goto error;
-    if (match(regexp, '?')) {
+    if (match(parse, '?')) {
         re = make_re_rep(re, 0, 1);
-    } else if (match(regexp, '*')) {
+    } else if (match(parse, '*')) {
         re = make_re_rep(re, 0, -1);
-    } else if (match(regexp, '+')) {
+    } else if (match(parse, '+')) {
         re = make_re_rep(re, 1, -1);
-    } else if (match(regexp, '{')) {
+    } else if (match(parse, '{')) {
         int min, max;
-        min = parse_int(regexp, error);
-        if (min == -1) {
-            *error = REG_BADBR;
+        min = parse_int(parse);
+        if (min == -1)
             goto error;
-        }
-        if (match(regexp, ',')) {
-            max = parse_int(regexp, error);
+        if (match(parse, ',')) {
+            max = parse_int(parse);
             if (max == -1)
                 goto error;
-            if (! match(regexp, '}')) {
-                *error = REG_EBRACE;
+            if (! match(parse, '}')) {
+                parse->error = REG_EBRACE;
                 goto error;
             }
-        } else if (match(regexp, '}')) {
+        } else if (match(parse, '}')) {
             max = min;
         } else {
-            *error = REG_EBRACE;
+            parse->error = REG_EBRACE;
             goto error;
         }
         if (min > max) {
-            *error = REG_BADBR;
+            parse->error = REG_BADBR;
             goto error;
         }
         re = make_re_rep(re, min, max);
@@ -2780,13 +2820,13 @@ static struct re *parse_repeated_exp(const char **regexp, int *error) {
     return NULL;
 }
 
-static struct re *parse_concat_exp(const char **regexp, int *error) {
-    struct re *re = parse_repeated_exp(regexp, error);
+static struct re *parse_concat_exp(struct re_parse *parse) {
+    struct re *re = parse_repeated_exp(parse);
     if (re == NULL)
         goto error;
 
-    if (more(regexp) && ! peek(regexp, ")|")) {
-        struct re *re2 = parse_concat_exp(regexp, error);
+    if (more(parse) && ! peek(parse, ")|")) {
+        struct re *re2 = parse_concat_exp(parse);
         if (re2 == NULL)
             goto error;
         return make_re_binop(CONCAT, re, re2);
@@ -2798,13 +2838,13 @@ static struct re *parse_concat_exp(const char **regexp, int *error) {
     return NULL;
 }
 
-static struct re *parse_regexp(const char **regexp, int *error) {
-    struct re *re = parse_concat_exp(regexp, error);
+static struct re *parse_regexp(struct re_parse *parse) {
+    struct re *re = parse_concat_exp(parse);
     if (re == NULL)
         goto error;
 
-    if (match(regexp, '|')) {
-        struct re *re2 = parse_regexp(regexp, error);
+    if (match(parse, '|')) {
+        struct re *re2 = parse_regexp(parse);
         if (re2 == NULL)
             goto error;
         return make_re_binop(UNION, re, re2);

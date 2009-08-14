@@ -94,11 +94,13 @@ static void assertAsRegexp(CuTest *tc, struct fa *fa) {
     free(re);
 }
 
-static struct fa *make_fa(CuTest *tc, const char *regexp, int exp_err) {
+static struct fa *make_fa(CuTest *tc,
+                          const char *regexp, size_t reglen,
+                          int exp_err) {
     struct fa *fa;
     int r;
 
-    r = fa_compile(regexp, strlen(regexp), &fa);
+    r = fa_compile(regexp, reglen, &fa);
     if (exp_err == REG_NOERROR) {
         if (r != REG_NOERROR)
             print_regerror(r, regexp);
@@ -114,7 +116,7 @@ static struct fa *make_fa(CuTest *tc, const char *regexp, int exp_err) {
 }
 
 static struct fa *make_good_fa(CuTest *tc, const char *regexp) {
-    return make_fa(tc, regexp, REG_NOERROR);
+    return make_fa(tc, regexp, strlen(regexp), REG_NOERROR);
 }
 
 static void dot(struct fa *fa) {
@@ -143,8 +145,10 @@ static void dot(struct fa *fa) {
 }
 
 static void testBadRegexps(CuTest *tc) {
-    make_fa(tc, "(x", REG_EPAREN);
-    make_fa(tc, "a{5,3}", REG_BADBR);
+    const char *const re1 = "(x";
+    const char *const re2 = "a{5,3}";
+    make_fa(tc, re1, strlen(re1), REG_EPAREN);
+    make_fa(tc, re2, strlen(re2), REG_BADBR);
 }
 
 /* Stress test, mostly good to check that allocation is clean */
@@ -431,7 +435,8 @@ static void testAsRegexpMinus(CuTest *tc) {
 }
 
 static void testRangeEnd(CuTest *tc) {
-    make_fa(tc, "[1-0]", REG_ERANGE);
+    const char *const re = "[1-0]";
+    make_fa(tc, re, strlen(re), REG_ERANGE);
 }
 
 int main(int argc, char **argv) {
