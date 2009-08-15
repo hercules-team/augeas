@@ -133,7 +133,7 @@ static void bitset_free(bitset *bs) {
 
 /*
  * Representation of a parsed regular expression. The regular expression is
- * parsed according to the following grammar by RE_PARSE:
+ * parsed according to the following grammar by PARSE_REGEXP:
  *
  * regexp:        concat_exp ('|' regexp)?
  * concat_exp:    repeated_exp concat_exp?
@@ -151,8 +151,6 @@ static void bitset_free(bitset *bs) {
  * char_exp:   CHAR '-' CHAR
  *           | CHAR
  */
-
-static const char * const special_chars = ".()[]{}*+?";
 
 enum re_type {
     UNION,
@@ -193,6 +191,12 @@ struct re_parse {
     const char *rx;          /* Current position in regex */
     const char *rend;        /* Last char of rx+ 1 */
     int         error;       /* error code */
+};
+
+/* String with explicit length, used when converting re to string */
+struct re_str {
+    char  *rx;
+    size_t len;
 };
 
 static struct re *parse_regexp(struct re_parse *parse);
@@ -2627,7 +2631,7 @@ static bool match(struct re_parse *parse, char m) {
 }
 
 static bool peek(struct re_parse *parse, const char *chars) {
-    return strchr(chars, *parse->rx) != NULL;
+    return *parse->rx != '\0' && strchr(chars, *parse->rx) != NULL;
 }
 
 static bool next(struct re_parse *parse, char *c) {
@@ -2730,15 +2734,15 @@ static struct re *parse_simple_exp(struct re_parse *parse) {
             goto error;
         }
         add_re_char(re, '\n', '\n');
-    } else {
-        if (more(parse)) {
-            char c;
-            if (!parse_char(parse, 1, &c)) {
-                parse->error = REG_EESCAPE;
-                goto error;
-            }
-            re = make_re_char(c);
+    } else if (more(parse)) {
+        char c;
+        if (!parse_char(parse, 1, &c)) {
+            parse->error = REG_EESCAPE;
+            goto error;
         }
+        re = make_re_char(c);
+    } else {
+        re = make_re(EPSILON);
     }
     return re;
  error:
@@ -2861,7 +2865,18 @@ static struct re *parse_regexp(struct re_parse *parse) {
  * we try to be clever and avoid unneeded parens and concatenation with
  * epsilon etc.
  */
-static char *re_as_string(const struct re *re);
+static int re_as_string(const struct re *re, struct re_str *str);
+
+static void release_re_str(struct re_str *str) {
+    if (str == NULL)
+        return;
+    FREE(str->rx);
+    str->len = 0;
+}
+
+static int re_str_alloc(struct re_str *str) {
+    return ALLOC_N(str->rx, str->len + 1);
+}
 
 static int re_binop_count(enum re_type type, const struct re *re) {
     assert(type == CONCAT || type == UNION);
@@ -2885,13 +2900,13 @@ static int re_binop_store(enum re_type type, const struct re *re,
     return pos;
 }
 
-static char *re_union_as_string(const struct re *re) {
+static int re_union_as_string(const struct re *re, struct re_str *str) {
     assert(re->type == UNION);
 
+    int result = -1;
     const struct re **res = NULL;
-    char **strings = NULL;
+    struct re_str *strings = NULL;
     int nre = 0, r;
-    char *result = NULL;
 
     nre = re_binop_count(re->type, re);
     r = ALLOC_N(res, nre);
@@ -2902,34 +2917,41 @@ static char *re_union_as_string(const struct re *re) {
 
     r = ALLOC_N(strings, nre);
     if (r < 0)
-        goto done;
+        goto error;
 
-    int len = 0;
+    str->len = 0;
     for (int i=0; i < nre; i++) {
-        strings[i] = re_as_string(res[i]);
-        len += strlen(strings[i]);
+        if (re_as_string(res[i], strings + i) < 0)
+            goto error;
+        str->len += strings[i].len;
     }
-    len += (nre-1) + 1;
+    str->len += nre-1;
 
-    r = ALLOC_N(result, len);
+    r = re_str_alloc(str);
     if (r < 0)
-        goto done;
+        goto error;
 
-    char *p = result;
+    char *p = str->rx;
     for (int i=0; i < nre; i++) {
         if (i>0)
             *p++ = '|';
-        p = stpcpy(p, strings[i]);
+        memcpy(p, strings[i].rx, strings[i].len);
+        p += strings[i].len;
     }
 
+    result = 0;
  done:
     free(res);
     if (strings != NULL) {
         for (int i=0; i < nre; i++)
-            free(strings[i]);
+            release_re_str(strings + i);
     }
     free(strings);
     return result;
+ error:
+    release_re_str(str);
+    result = -1;
+    goto done;
 }
 
 ATTRIBUTE_PURE
@@ -2940,61 +2962,67 @@ static int re_needs_parens_in_concat(const struct re *re) {
     return (re->type != CHAR && re->type != CSET);
 }
 
-static char *re_concat_as_string(const struct re *re) {
+static int re_concat_as_string(const struct re *re, struct re_str *str) {
     assert(re->type == CONCAT);
 
     const struct re **res = NULL;
-    char **strings = NULL;
+    struct re_str *strings = NULL;
     int nre = 0, r;
-    char *result = NULL;
+    int result = -1;
 
     nre = re_binop_count(re->type, re);
     r = ALLOC_N(res, nre);
     if (r < 0)
-        goto done;
+        goto error;
     re_binop_store(re->type, re, res);
 
     r = ALLOC_N(strings, nre);
     if (r < 0)
-        goto done;
+        goto error;
 
-    int len = 0;
+    str->len = 0;
     for (int i=0; i < nre; i++) {
         if (res[i]->type == EPSILON)
             continue;
-        strings[i] = re_as_string(res[i]);
-        len += strlen(strings[i]);
+        if (re_as_string(res[i], strings + i) < 0)
+            goto error;
+        str->len += strings[i].len;
         if (re_needs_parens_in_concat(res[i]))
-            len += 2;
+            str->len += 2;
     }
-    len += 1;
 
-    r = ALLOC_N(result, len);
+    r = re_str_alloc(str);
     if (r < 0)
-        goto done;
+        goto error;
 
-    char *p = result;
+    char *p = str->rx;
     for (int i=0; i < nre; i++) {
         if (res[i]->type == EPSILON)
             continue;
         if (re_needs_parens_in_concat(res[i]))
             *p++ = '(';
-        p = stpcpy(p, strings[i]);
+        p = memcpy(p, strings[i].rx, strings[i].len);
+        p += strings[i].len;
         if (re_needs_parens_in_concat(res[i]))
             *p++ = ')';
     }
 
+    result = 0;
  done:
     free(res);
     if (strings != NULL) {
         for (int i=0; i < nre; i++)
-            free(strings[i]);
+            release_re_str(strings + i);
     }
     free(strings);
     return result;
+ error:
+    release_re_str(str);
+    result = -1;
+    goto done;
 }
 
-static char *re_cset_as_string(const struct re *re) {
+static int re_cset_as_string(const struct re *re, struct re_str *str) {
     const uchar rbrack = ']';
     const uchar dash = '-';
     const uchar nul = '\0';
@@ -3003,13 +3031,13 @@ static char *re_cset_as_string(const struct re *re) {
     static const char *const total_set = "(.|\n)";
     static const char *const not_newline = ".";
 
-    char *result = NULL, *s;
+    char *s;
     int from, to, negate;
-    size_t set_len, len;
+    size_t len;
     int incl_rbrack, incl_dash;
     int r;
 
-    set_len = strlen(empty_set);
+    str->len = strlen(empty_set);
 
     /* We can not include NUL explicitly in a CSET since we use ordinary
        NUL delimited strings to represent them. That means that we need to
@@ -3022,7 +3050,8 @@ static char *re_cset_as_string(const struct re *re) {
              from += 1);
         if (from > UCHAR_MAX) {
             /* Special case: the set matches every character */
-            return strdup(total_set);
+            str->rx = strdup(total_set);
+            goto done;
         }
         if (from == '\n') {
             for (from += 1;
@@ -3030,7 +3059,8 @@ static char *re_cset_as_string(const struct re *re) {
                  from += 1);
             if (from > UCHAR_MAX) {
                 /* Special case: the set matches everything but '\n' */
-                return strdup(not_newline);
+                str->rx = strdup(not_newline);
+                goto done;
             }
         }
     }
@@ -3064,17 +3094,17 @@ static char *re_cset_as_string(const struct re *re) {
             incl_rbrack = 0;
         if (from < dash && dash < to)
             incl_dash = 0;
-        set_len += len;
+        str->len += len;
     }
-    set_len += incl_rbrack + incl_dash;
+    str->len += incl_rbrack + incl_dash;
     if (negate)
-        set_len += 1;        /* For the ^ */
+        str->len += 1;        /* For the ^ */
 
-    r = ALLOC_N(result, set_len + 1);
+    r = re_str_alloc(str);
     if (r < 0)
-        return NULL;
+        goto error;
 
-    s = result;
+    s = str->rx;
     *s++ = '[';
     if (negate)
         *s++ = '^';
@@ -3112,18 +3142,23 @@ static char *re_cset_as_string(const struct re *re) {
         *s++ = dash;
 
     *s = ']';
-
-    return result;
+ done:
+    if (str->rx == NULL)
+        goto error;
+    str->len = strlen(str->rx);
+    return 0;
+ error:
+    release_re_str(str);
+    return -1;
 }
 
-static char *re_iter_as_string(const struct re *re) {
+static int re_iter_as_string(const struct re *re, struct re_str *str) {
     const char *quant = NULL;
-    char *result, *exp;
-    int r;
+    char *iter = NULL;
+    int r, result = -1;
 
-    exp = re_as_string(re->exp);
-    if (exp == NULL)
-        return NULL;
+    if (re_as_string(re->exp, str) < 0)
+        return -1;
 
     if (re->min == 0 && re->max == -1) {
         quant = "*";
@@ -3131,57 +3166,76 @@ static char *re_iter_as_string(const struct re *re) {
         quant = "+";
     } else if (re->min == 0 && re->max == 1) {
         quant = "?";
+    } else {
+        r = asprintf(&iter, "{%d,%d}", re->min, re->max);
+        if (r < 0)
+            return -1;
+        quant = iter;
     }
 
     if (re->exp->type == CHAR || re->exp->type == CSET) {
-        if (quant == NULL) {
-            r = asprintf(&result, "%s{%d,%d}", exp, re->min, re->max);
-        } else {
-            r = asprintf(&result, "%s%s", exp, quant);
-        }
+        if (REALLOC_N(str->rx, str->len + strlen(quant) + 1) < 0)
+            goto error;
+        strcpy(str->rx + str->len, quant);
+        str->len += strlen(quant);
     } else {
-        if (quant == NULL) {
-            r = asprintf(&result, "(%s){%d,%d}", exp, re->min, re->max);
-        } else {
-            r = asprintf(&result, "(%s)%s", exp, quant);
-        }
+        /* Format '(' + str->rx ')' + quant */
+        if (REALLOC_N(str->rx, str->len + strlen(quant) + 1 + 2) < 0)
+            goto error;
+        memmove(str->rx + 1, str->rx, str->len);
+        str->rx[0] = '(';
+        str->rx[str->len + 1] = ')';
+        str->len += 2;
+        strcpy(str->rx + str->len, quant);
+        str->len += strlen(quant);
     }
-    FREE(exp);
 
-    return (r < 0) ? NULL : result;
+    result = 0;
+ done:
+    FREE(iter);
+    return result;
+ error:
+    release_re_str(str);
+    goto done;
 }
 
-static char *re_as_string(const struct re *re) {
-    char *result = NULL;
+static int re_as_string(const struct re *re, struct re_str *str) {
+    /* Characters that must be escaped */
+    static const char * const special_chars = ".()[]{}*+?\\";
+    int result = 0;
+
     switch(re->type) {
     case UNION:
-        result = re_union_as_string(re);
+        result = re_union_as_string(re, str);
         break;
     case CONCAT:
-        result = re_concat_as_string(re);
+        result = re_concat_as_string(re, str);
         break;
     case CSET:
-        result = re_cset_as_string(re);
+        result = re_cset_as_string(re, str);
         break;
     case CHAR:
-        if (re->c != '\\' && strchr(special_chars, re->c) == NULL) {
-            if (ALLOC_N(result, 2) == 0) {
-                result[0] = re->c;
-            }
+        if (re->c == '\0' || strchr(special_chars, re->c) == NULL) {
+            if (ALLOC_N(str->rx, 2) < 0)
+                goto error;
+            str->rx[0] = re->c;
+            str->len = 1;
         } else {
-            if (ALLOC_N(result, 3) == 0) {
-                result[0] = '\\';
-                result[1] = re->c;
-            }
+            if (ALLOC_N(str->rx, 3) < 0)
+                goto error;
+            str->rx[0] = '\\';
+            str->rx[1] = re->c;
+            str->len = strlen(str->rx);
         }
         break;
     case ITER:
-        result = re_iter_as_string(re);
+        result = re_iter_as_string(re, str);
         break;
     case EPSILON:
-        if (ALLOC_N(result, 3) == 0) {
-            strcpy(result, "()");
-        }
+        if (ALLOC_N(str->rx, 3) < 0)
+            goto error;
+        strcpy(str->rx, "()");
+        str->len = strlen(str->rx);
         break;
     default:
         assert(0);
@@ -3189,6 +3243,9 @@ static char *re_as_string(const struct re *re) {
         break;
     }
     return result;
+ error:
+    release_re_str(str);
+    return -1;
 }
 
 static int convert_trans_to_re(struct state *s) {
@@ -3394,7 +3451,12 @@ int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len) {
 
     for_each_trans(t, fa->initial) {
         if (t->to == fin) {
-            *regexp = re_as_string(t->re);
+            struct re_str str;
+            MEMZERO(&str, 1);
+            if (re_as_string(t->re, &str) < 0)
+                goto error;
+            *regexp = str.rx;
+            *regexp_len = str.len;
         }
     }
 
@@ -3404,8 +3466,6 @@ int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len) {
         }
     }
     fa_free(fa);
-    if (*regexp != NULL)
-        *regexp_len = strlen(*regexp);
 
     return 0;
  error:

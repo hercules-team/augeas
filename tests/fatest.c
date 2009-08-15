@@ -85,7 +85,10 @@ static void assertAsRegexp(CuTest *tc, struct fa *fa) {
     r = fa_as_regexp(fa1, &re, &re_len);
     CuAssertIntEquals(tc, 0, r);
 
-    r = fa_compile(re, strlen(re), &fa2);
+    r = fa_compile(re, re_len, &fa2);
+    if (r != REG_NOERROR) {
+        print_regerror(r, re);
+    }
     CuAssertIntEquals(tc, REG_NOERROR, r);
 
     CuAssertTrue(tc, fa_equals(fa, fa2));
@@ -439,6 +442,24 @@ static void testRangeEnd(CuTest *tc) {
     make_fa(tc, re, strlen(re), REG_ERANGE);
 }
 
+static void testNul(CuTest *tc) {
+    static const char *const re0 = "a\0b";
+    int re0_len = 3;
+
+    struct fa *fa1 = make_fa(tc, "a\0b", re0_len, REG_NOERROR);
+    struct fa *fa2 = make_good_fa(tc, "a.b");
+    char *re;
+    size_t re_len;
+    int r;
+
+    CuAssertTrue(tc, fa_contains(fa1, fa2));
+
+    r = fa_as_regexp(fa1, &re, &re_len);
+    CuAssertIntEquals(tc, 0, r);
+    CuAssertIntEquals(tc, re0_len, re_len);
+    CuAssertIntEquals(tc, 0, memcmp(re0, re, re0_len));
+}
+
 int main(int argc, char **argv) {
     if (argc == 1) {
         char *output = NULL;
@@ -458,6 +479,7 @@ int main(int argc, char **argv) {
         SUITE_ADD_TEST(suite, testAsRegexp);
         SUITE_ADD_TEST(suite, testAsRegexpMinus);
         SUITE_ADD_TEST(suite, testRangeEnd);
+        SUITE_ADD_TEST(suite, testNul);
 
         CuSuiteRun(suite);
         CuSuiteSummary(suite, &output);
