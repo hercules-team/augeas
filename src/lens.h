@@ -96,6 +96,10 @@ struct value *lns_make_plus(struct info *, struct lens *,
 struct value *lns_make_maybe(struct info *, struct lens *,
                              int check);
 
+/* Pretty-print the atype of a lens. Allocates BUF, which must be freed by
+ * the caller */
+int lns_format_atype(struct lens *, char **buf);
+
 /* Auxiliary data structures used during get/put/create */
 struct skel {
     struct skel *next;

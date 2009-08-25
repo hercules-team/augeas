@@ -107,22 +107,26 @@ static char *encpcpy(char *e, const char *key, const char *value) {
 }
 
 static void regexp_match_error(struct state *state, struct lens *lens,
-                               int count, struct split *split,
-                               struct regexp *r) {
+                               int count, struct split *split) {
     // FIXME: Split the regexp and encoding back
     // into something resembling a tree level
-    char *text = strndup(split->enc + split->start,
-                         split->end - split->start);
-    char *pat = regexp_escape(r);
+    char *text = NULL;
+    char *pat = NULL;
+
+    lns_format_atype(lens, &pat);
+    text = enc_format(split->enc + split->start, split->end - split->start);
 
     if (count == -1) {
-        put_error(state, lens, "Failed to match /%s/ with %s", pat, enc_format(text, strlen(text)));
+        put_error(state, lens,
+                  "Failed to match \n    %s\n  with tree\n   %s",
+                  pat, text);
     } else if (count == -2) {
-        put_error(state, lens, "Internal error matching /%s/ with %s",
+        put_error(state, lens,
+                  "Internal error matching\n    %s\n  with tree\n   %s",
                   pat, text);
     } else if (count == -3) {
         /* Should have been caught by the typechecker */
-        put_error(state, lens, "Syntax error in regexp /%s/", pat);
+        put_error(state, lens, "Syntax error in tree schema\n    %s", pat);
     }
     free(pat);
     free(text);
@@ -219,7 +223,7 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
     if (count >= 0 && count != outer->end - outer->start)
         count = -1;
     if (count < 0) {
-        regexp_match_error(state, lens, count, outer, atype);
+        regexp_match_error(state, lens, count, outer);
         return NULL;
     }
 
@@ -260,7 +264,7 @@ static struct split *split_iter(struct state *state, struct lens *lens) {
         if (count == -1) {
             break;
         } else if (count < -1) {
-            regexp_match_error(state, lens, count, outer, atype);
+            regexp_match_error(state, lens->child, count, outer);
             goto error;
         }
 
@@ -288,7 +292,7 @@ static int applies(struct lens *lens, struct state *state) {
     count = regexp_match(lens->atype, split->enc, split->end,
                          split->start, NULL);
     if (count < -1) {
-        regexp_match_error(state, lens, count, split, lens->atype);
+        regexp_match_error(state, lens, count, split);
         return 0;
     }
 

@@ -716,6 +716,188 @@ char *enc_format(const char *e, size_t len) {
     return result;
 }
 
+static int lns_format_subtree_atype(struct lens *l, char **buf) {
+    char *k = NULL, *v = NULL;
+    const struct regexp *ktype = l->child->ktype;
+    const struct regexp *vtype = l->child->vtype;
+    int r, result = -1;
+
+    if (ktype != NULL) {
+        k = regexp_escape(ktype);
+        if (k == NULL)
+            goto done;
+    }
+    if (vtype != NULL) {
+        v = regexp_escape(vtype);
+        if (v == NULL)
+            goto done;
+        if (k == NULL)
+            r = xasprintf(buf, "{ = /%s/ }", k, v);
+        else
+            r = xasprintf(buf, "{ /%s/ = /%s/ }", k, v);
+    } else {
+        if (k == NULL)
+            r = xasprintf(buf, "{ }", k);
+        else
+            r = xasprintf(buf, "{ /%s/ }", k);
+    }
+    if (r < 0)
+        goto done;
+
+    result = 0;
+ done:
+    FREE(v);
+    FREE(k);
+    return result;
+}
+
+static int lns_format_rep_atype(struct lens *l, char **buf, char quant) {
+    char *a = NULL;
+    int r, result = -1;
+
+    r = lns_format_atype(l->child, &a);
+    if (r < 0)
+        goto done;
+    if (strlen(a) == 0) {
+        *buf = a;
+        a = NULL;
+        result = 0;
+        goto done;
+    }
+
+    if (l->child->tag == L_CONCAT || l->child->tag == L_UNION)
+        r = xasprintf(buf, "(%s)%c", a, quant);
+    else
+        r = xasprintf(buf, "%s%c", a, quant);
+
+    if (r < 0)
+        goto done;
+
+    result = 0;
+ done:
+    FREE(a);
+    return result;
+}
+
+static int lns_format_concat_atype(struct lens *l, char **buf) {
+    char **c = NULL, *s = NULL, *p;
+    int r, result = -1;
+    size_t len = 0, nconc = 0;
+
+    if (ALLOC_N(c, l->nchildren) < 0)
+        goto done;
+
+    for (int i=0; i < l->nchildren; i++) {
+        r = lns_format_atype(l->children[i], c+i);
+        if (r < 0)
+            goto done;
+        len += strlen(c[i]) + 2;
+        if (strlen(c[i]) > 0)
+            nconc += 1;
+        if (l->children[i]->tag == L_UNION)
+            len += 2;
+    }
+
+    if (ALLOC_N(s, len+1) < 0)
+        goto done;
+    p = s;
+    for (int i=0; i < l->nchildren; i++) {
+        bool needs_parens = nconc > 1 && l->children[i]->tag == L_UNION;
+        if (strlen(c[i]) == 0)
+            continue;
+        if (needs_parens)
+            *p++ = '(';
+        p = stpcpy(p, c[i]);
+        if (needs_parens)
+            *p++ = ')';
+    }
+
+    *buf = s;
+    s = NULL;
+    result = 0;
+ done:
+    if (c != NULL)
+        for (int i=0; i < l->nchildren; i++)
+            FREE(c[i]);
+    FREE(c);
+    FREE(s);
+    return result;
+}
+
+static int lns_format_union_atype(struct lens *l, char **buf) {
+    char **c = NULL, *s = NULL, *p;
+    int r, result = -1;
+    size_t len = 0;
+
+    if (ALLOC_N(c, l->nchildren) < 0)
+        goto done;
+
+    for (int i=0; i < l->nchildren; i++) {
+        r = lns_format_atype(l->children[i], c+i);
+        if (r < 0)
+            goto done;
+        len += strlen(c[i]) + 2;
+    }
+    len += l->nchildren - 1;
+
+    if (ALLOC_N(s, len+1) < 0)
+        goto done;
+
+    p = s;
+    for (int i=0; i < l->nchildren; i++) {
+        if (i > 0)
+            p = stpcpy(p, " | ");
+        if (strlen(c[i]) == 0)
+            p = stpcpy(p, "()");
+        else
+            p = stpcpy(p, c[i]);
+    }
+    *buf = s;
+    s = NULL;
+    result = 0;
+ done:
+    if (c != NULL)
+        for (int i=0; i < l->nchildren; i++)
+            FREE(c[i]);
+    FREE(c);
+    FREE(s);
+    return result;
+}
+
+int lns_format_atype(struct lens *l, char **buf) {
+    *buf = NULL;
+
+    switch(l->tag) {
+    case L_DEL:
+    case L_STORE:
+    case L_KEY:
+    case L_LABEL:
+    case L_SEQ:
+    case L_COUNTER:
+        *buf = strdup("");
+        return (*buf == NULL) ? -1 : 0;
+        break;
+    case L_SUBTREE:
+        return lns_format_subtree_atype(l, buf);
+        break;
+    case L_STAR:
+        return lns_format_rep_atype(l, buf, '*');
+        break;
+    case L_MAYBE:
+        return lns_format_rep_atype(l, buf, '?');
+        break;
+    case L_CONCAT:
+        return lns_format_concat_atype(l, buf);
+        break;
+    case L_UNION:
+        return lns_format_union_atype(l, buf);
+        break;
+    default:
+        assert(0);
+        break;
+    };
+}
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil
