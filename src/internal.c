@@ -377,6 +377,18 @@ const char *xstrerror(int errnum, char *buf, size_t len) {
 #endif
 }
 
+int xasprintf(char **strp, const char *format, ...) {
+  va_list args;
+  int result;
+
+  va_start (args, format);
+  result = vasprintf (strp, format, args);
+  va_end (args);
+  if (result < 0)
+      *strp = NULL;
+  return result;
+}
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil

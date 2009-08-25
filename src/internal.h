@@ -263,6 +263,9 @@ char* read_file(const char *path);
  */
 const char *xstrerror(int errnum, char *buf, size_t len);
 
+/* Like asprintf, but set *STRP to NULL on error */
+int xasprintf(char **strp, const char *format, ...);
+
 /* Struct: augeas
  * The data structure representing a connection to Augeas. */
 struct augeas {
