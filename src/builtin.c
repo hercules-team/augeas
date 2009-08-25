@@ -235,6 +235,47 @@ static struct value *tree_set_glue(struct info *info, struct value *path,
     return result;
 }
 
+/* V_STRING -> V_TREE -> V_TREE */
+static struct value *tree_clear_glue(struct info *info, struct value *path,
+                                     struct value *tree) {
+    // FIXME: This only works if TREE is not referenced more than once;
+    // otherwise we'll have some pretty weird semantics, and would really
+    // need to copy TREE first
+    assert(path->tag == V_STRING);
+    assert(tree->tag == V_TREE);
+
+    struct tree *fake = NULL;
+    struct pathx *p = NULL;
+    struct value *result = NULL;
+
+    if (tree->origin->children == NULL) {
+        tree->origin->children = make_tree(NULL, NULL, tree->origin, NULL);
+        fake = tree->origin->children;
+    }
+
+    if (pathx_parse(tree->origin, path->string->str, true, NULL, &p)
+        != PATHX_NOERROR) {
+        result = make_pathx_exn(ref(info), p);
+        goto done;
+    }
+
+    if (tree_set(p, NULL) == NULL) {
+        result = make_exn_value(ref(info),
+                                "Tree set of %s to NULL failed",
+                                path->string->str);
+        goto done;
+    }
+    if (fake != NULL) {
+        list_remove(fake, tree->origin->children);
+        free_tree(fake);
+    }
+    result = ref(tree);
+
+ done:
+    free_pathx(p);
+    return result;
+}
+
 static struct value *tree_insert_glue(struct info *info, struct value *label,
                                       struct value *path, struct value *tree,
                                       int before) {
@@ -402,6 +443,8 @@ struct module *builtin_init(void) {
                                                T_STRING);
     /* Tree manipulation used by the PUT tests */
     define_native(modl, "set", 3, tree_set_glue, T_STRING, T_STRING, T_TREE,
+                                                 T_TREE);
+    define_native(modl, "clear", 2, tree_clear_glue, T_STRING, T_TREE,
                                                  T_TREE);
     define_native(modl, "rm", 2, tree_rm_glue, T_STRING, T_TREE, T_TREE);
     define_native(modl, "insa", 3, tree_insa_glue, T_STRING, T_STRING, T_TREE,
