@@ -31,7 +31,7 @@ static const struct string empty_pattern_string = {
 
 static const struct string *const empty_pattern = &empty_pattern_string;
 
-char *regexp_escape(struct regexp *r) {
+char *regexp_escape(const struct regexp *r) {
     char *pat = escape(r->pattern->str, -1);
 
     if (pat == NULL)
@@ -47,6 +47,10 @@ char *regexp_escape(struct regexp *r) {
             }
         }
     }
+
+    if (pat[0] == '(' && pat[strlen(pat)-1] == ')')
+        memmove(pat, pat+1, strlen(pat+1)+1);
+    pat[strlen(pat)-1] = '\0';
 
     return pat;
 }

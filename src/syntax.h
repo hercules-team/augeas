@@ -211,7 +211,7 @@ struct regexp *regexp_make_empty(struct info *);
 void regexp_release(struct regexp *regexp);
 
 /* Produce a printable representation of R */
-char *regexp_escape(struct regexp *r);
+char *regexp_escape(const struct regexp *r);
 
 struct native {
     unsigned int argc;
