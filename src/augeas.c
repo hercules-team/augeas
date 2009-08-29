@@ -260,7 +260,8 @@ struct augeas *aug_init(const char *root, const char *loadpath,
     if (result->nmodpath > 0) {
         argz_stringify(result->modpathz, result->nmodpath, PATH_SEP_CHAR);
         char *s, *t;
-        for (s = result->modpathz, t = result->modpathz; *s != '\0'; s++) {
+        const char *e = result->modpathz + strlen(result->modpathz);
+        for (s = result->modpathz, t = result->modpathz; s < e; s++) {
             char *p = s;
             if (*p == '/') {
                 while (*p == '/') p += 1;
