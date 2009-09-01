@@ -26,6 +26,7 @@ lens_tests =			\
   lens-gdm.sh			\
   lens-group.sh			\
   lens-hosts.sh			\
+  lens-inetd.sh         \
   lens-inifile.sh		\
   lens-inittab.sh		\
   lens-interfaces.sh		\
