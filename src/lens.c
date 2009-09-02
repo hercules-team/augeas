@@ -417,12 +417,13 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
 /*
  * Typechecking of lenses
  */
-static struct value *disjoint_check(struct info *info, const char *msg,
+static struct value *disjoint_check(struct info *info, bool is_get,
                                     struct regexp *r1, struct regexp *r2) {
     struct fa *fa1 = NULL;
     struct fa *fa2 = NULL;
     struct fa *fa = NULL;
     struct value *exn = NULL;
+    const char *const msg = is_get ? "union.get" : "tree union.put";
 
     exn = regexp_to_fa(r1, &fa1);
     if (exn != NULL)
@@ -437,10 +438,20 @@ static struct value *disjoint_check(struct info *info, const char *msg,
         size_t xmpl_len;
         char *xmpl;
         fa_example(fa, &xmpl, &xmpl_len);
+        if (! is_get) {
+            char *fmt = enc_format(xmpl, xmpl_len);
+            if (fmt != NULL) {
+                FREE(xmpl);
+                xmpl = fmt;
+            }
+        }
         exn = make_exn_value(ref(info),
                              "overlapping lenses in %s", msg);
 
-        exn_printf_line(exn, "Example matched by both: '%s'", xmpl);
+        if (is_get)
+            exn_printf_line(exn, "Example matched by both: '%s'", xmpl);
+        else
+            exn_printf_line(exn, "Example matched by both: %s", xmpl);
         free(xmpl);
     }
 
@@ -456,9 +467,9 @@ static struct value *typecheck_union(struct info *info,
                                      struct lens *l1, struct lens *l2) {
     struct value *exn = NULL;
 
-    exn = disjoint_check(info, "union.get", l1->ctype, l2->ctype);
+    exn = disjoint_check(info, true, l1->ctype, l2->ctype);
     if (exn == NULL) {
-        exn = disjoint_check(info, "tree union.put", l1->atype, l2->atype);
+        exn = disjoint_check(info, false, l1->atype, l2->atype);
     }
     if (exn != NULL) {
         char *fi = format_info(l1->info);
