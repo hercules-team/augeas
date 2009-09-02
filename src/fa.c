@@ -327,6 +327,43 @@ static void print_re(struct re *re) {
 }
 
 /*
+ * struct re_str
+ */
+static void release_re_str(struct re_str *str) {
+    if (str == NULL)
+        return;
+    FREE(str->rx);
+    str->len = 0;
+}
+
+static void free_re_str(struct re_str *str) {
+    if (str == NULL)
+        return;
+    release_re_str(str);
+    FREE(str);
+}
+
+static struct re_str *make_re_str(const char *s) {
+    struct re_str *str;
+
+    if (ALLOC(str) < 0)
+        return NULL;
+    if (s != NULL) {
+        str->rx = strdup(s);
+        str->len = strlen(s);
+        if (str->rx == NULL) {
+            FREE(str);
+            return NULL;
+        }
+    }
+    return str;
+}
+
+static int re_str_alloc(struct re_str *str) {
+    return ALLOC_N(str->rx, str->len + 1);
+}
+
+/*
  * Memory management
  */
 
@@ -2169,15 +2206,17 @@ static unsigned int chr_score(char c) {
         return 3;
     } else if (isprint(c)) {
         return 7;
+    } else if (c == '\0') {
+        return 10000;
     } else {
         return 100;
     }
 }
 
-static unsigned int str_score(const char *s) {
+static unsigned int str_score(const struct re_str *str) {
     unsigned int score = 0;
-    for ( ;*s; s++) {
-        score += chr_score(*s);
+    for (int i=0; i < str->len; i++) {
+        score += chr_score(str->rx[i]);
     }
     return score;
 }
@@ -2185,18 +2224,23 @@ static unsigned int str_score(const char *s) {
 /* See if we get a better string for DST by appending C to SRC. If DST is
  * NULL or empty, always use SRC + C
  */
-static char *string_extend(char *dst, const char *src, char c) {
+static struct re_str *string_extend(struct re_str *dst,
+                                    const struct re_str *src,
+                                    char c) {
     if (dst == NULL
-        || *dst == '\0'
+        || dst->len == 0
         || str_score(src) + chr_score(c) < str_score(dst)) {
-        int slen = strlen(src);
-        char *new_dst = realloc(dst, slen + 2);
-        if (new_dst) {
-            dst = new_dst;
-            strncpy(dst, src, slen);
-            dst[slen] = c;
-            dst[slen + 1] = '\0';
-        }
+        int slen = src->len;
+        if (dst == NULL)
+            dst = make_re_str(NULL);
+        if (dst == NULL)
+            return NULL;
+        if (REALLOC_N(dst->rx, slen+2) < 0)
+            return NULL;
+        memcpy(dst->rx, src->rx, slen);
+        dst->rx[slen] = c;
+        dst->rx[slen + 1] = '\0';
+        dst->len = slen + 1;
     }
     return dst;
 }
@@ -2223,7 +2267,8 @@ int fa_example(struct fa *fa, char **example, size_t *example_len) {
 
     /* Map from state to string */
     struct state_set *path = state_set_init(-1, S_DATA|S_SORTED);
-    state_set_push_data(path, fa->initial,(void*) strdup(""));
+    struct re_str *str = make_re_str("");
+    state_set_push_data(path, fa->initial, str);
 
     /* List of states still to visit */
     struct state_set *worklist = state_set_init(-1, S_NONE);
@@ -2231,39 +2276,40 @@ int fa_example(struct fa *fa, char **example, size_t *example_len) {
 
     while (worklist->used) {
         struct state *s = state_set_pop(worklist);
-        char *ps = state_set_find_data(path, s);
+        struct re_str *ps = state_set_find_data(path, s);
         for_each_trans(t, s) {
             char c = pick_char(t);
             int toind = state_set_index(path, t->to);
             if (toind == -1) {
-                char *w = string_extend(NULL, ps, c);
+                struct re_str *w = string_extend(NULL, ps, c);
                 state_set_push(worklist, t->to);
-                state_set_push_data(path, t->to, (void *) w);
+                state_set_push_data(path, t->to, w);
             } else {
                 path->data[toind] = string_extend(path->data[toind], ps, c);
             }
         }
     }
 
-    char *word = NULL;
+    struct re_str *word = NULL;
     for (int i=0; i < path->used; i++) {
         struct state *p = path->states[i];
-        char *ps = path->data[i];
+        struct re_str *ps = path->data[i];
         if (p->accept &&
-            (word == NULL || *word == '\0'
-             || (*ps != '\0' && str_score(word) > str_score(ps)))) {
-            free(word);
+            (word == NULL || word->len == 0
+             || (ps->len > 0 && str_score(word) > str_score(ps)))) {
+            free_re_str(word);
             word = ps;
         } else {
-            free(ps);
+            free_re_str(ps);
         }
     }
     state_set_free(path);
     state_set_free(worklist);
-    /* FIXME: handle embedded nul's */
-    if (word != NULL)
-        *example_len = strlen(word);
-    *example = word;
+    if (word != NULL) {
+        *example_len = word->len;
+        *example = word->rx;
+        free(word);
+    }
     return 0;
 }
 
@@ -2870,17 +2916,6 @@ static struct re *parse_regexp(struct re_parse *parse) {
  * epsilon etc.
  */
 static int re_as_string(const struct re *re, struct re_str *str);
-
-static void release_re_str(struct re_str *str) {
-    if (str == NULL)
-        return;
-    FREE(str->rx);
-    str->len = 0;
-}
-
-static int re_str_alloc(struct re_str *str) {
-    return ALLOC_N(str->rx, str->len + 1);
-}
 
 static int re_binop_count(enum re_type type, const struct re *re) {
     assert(type == CONCAT || type == UNION);

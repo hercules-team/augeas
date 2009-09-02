@@ -338,6 +338,8 @@ static void testExample(CuTest *tc) {
     assertExample(tc, "\001((\002.)*\001)+\002", "\001\001\002");
     assertExample(tc, "\001((\001.)*\002)+\002", "\001\002\002");
 
+    assertExample(tc, "a[^\001-\004]+b", "aAb");
+
     struct fa *fa1 = mark(fa_make_basic(FA_EMPTY));
     size_t xmpl_len;
     char *xmpl;
