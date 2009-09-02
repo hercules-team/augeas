@@ -699,7 +699,7 @@ char *enc_format(const char *e, size_t len) {
         assert(eq != NULL && slash != NULL);
         v = eq + 1;
 
-        r = stpcpy(r, " { \"");
+        r = stpcpy(r, " { ");
         if (k != eq) {
             r = stpcpy(r, "\"");
             r = stpncpy(r, k, eq - k);
