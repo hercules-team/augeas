@@ -737,11 +737,6 @@ int transform_save(struct augeas *aug, struct tree *xfm,
         goto done;
     }
 
-    if (asprintf(&augnew, "%s%s" EXT_AUGNEW, aug->root, filename) == -1) {
-        augnew = NULL;
-        goto done;
-    }
-
     if (access(augorig, R_OK) == 0) {
         text = read_file(augorig);
     } else {
@@ -755,15 +750,6 @@ int transform_save(struct augeas *aug, struct tree *xfm,
 
     text = append_newline(text, strlen(text));
 
-    // FIXME: We might have to create intermediary directories
-    // to be able to write augnew, but we have no idea what permissions
-    // etc. they should get. Just the process default ?
-    fp = fopen(augnew, "w");
-    if (fp == NULL) {
-        err_status = "open_augnew";
-        goto done;
-    }
-
     augorig_canon = canonicalize_file_name(augorig);
     augorig_exists = 1;
     if (augorig_canon == NULL) {
@@ -775,6 +761,30 @@ int transform_save(struct augeas *aug, struct tree *xfm,
             goto done;
         }
     }
+
+    /* Figure out where to put the .augnew file. If we need to rename it
+       later on, put it next to augorig_canon */
+    if (aug->flags & AUG_SAVE_NEWFILE) {
+        if (xasprintf(&augnew, "%s" EXT_AUGNEW, augorig) < 0) {
+            err_status = "augnew_oom";
+            goto done;
+        }
+    } else {
+        if (xasprintf(&augnew, "%s" EXT_AUGNEW, augorig_canon) < 0) {
+            err_status = "augnew_oom";
+            goto done;
+        }
+    }
+
+    // FIXME: We might have to create intermediate directories
+    // to be able to write augnew, but we have no idea what permissions
+    // etc. they should get. Just the process default ?
+    fp = fopen(augnew, "w");
+    if (fp == NULL) {
+        err_status = "open_augnew";
+        goto done;
+    }
+
     if (augorig_exists) {
         if (transfer_file_attrs(augorig_canon, augnew, &err_status) != 0) {
             err_status = "xfer_attrs";
