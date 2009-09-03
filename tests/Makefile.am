@@ -38,6 +38,7 @@ lens_tests =			\
   lens-lokkit.sh		\
   lens-modprobe.sh		\
   lens-monit.sh			\
+  lens-multipath.sh     \
   lens-ntp.sh			\
   lens-openvpn.sh		\
   lens-pam.sh			\
