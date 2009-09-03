@@ -652,6 +652,25 @@ static void dump_ctx(struct ctx *ctx) {
 /*
  * Values
  */
+static void print_tree(FILE *out, int indent, struct tree *tree) {
+    list_for_each(t, tree) {
+        for (int i=0; i < indent; i++) fputc(' ', out);
+        fprintf(out, "{ ");
+        if (t->label != NULL)
+            fprintf(out, "\"%s\"", t->label);
+        if (t->value != NULL)
+            fprintf(out, " = \"%s\"", t->value);
+        if (t->children != NULL) {
+            fputc('\n', out);
+            print_tree(out, indent + 2, t->children);
+            for (int i=0; i < indent; i++) fputc(' ', out);
+        } else {
+            fputc(' ', out);
+        }
+        fprintf(out, "}\n");
+    }
+}
+
 static void print_value(FILE *out, struct value *v) {
     if (v == NULL) {
         fprintf(out, "<null>");
@@ -671,7 +690,7 @@ static void print_value(FILE *out, struct value *v) {
         fprintf(out, ">");
         break;
     case V_TREE:
-        dump_tree(stdout, v->origin);
+        print_tree(stdout, 0, v->origin);
         break;
     case V_FILTER:
         fprintf(out, "<filter:");
@@ -1640,25 +1659,6 @@ static struct value *compile_exp(struct info *info,
     }
 
     return v;
-}
-
-static void print_tree(FILE *out, int indent, struct tree *tree) {
-    list_for_each(t, tree) {
-        for (int i=0; i < indent; i++) fputc(' ', out);
-        fprintf(out, "{ ");
-        if (t->label != NULL)
-            fprintf(out, "\"%s\"", t->label);
-        if (t->value != NULL)
-            fprintf(out, " = \"%s\"", t->value);
-        if (t->children != NULL) {
-            fputc('\n', out);
-            print_tree(out, indent + 2, t->children);
-            for (int i=0; i < indent; i++) fputc(' ', out);
-        } else {
-            fputc(' ', out);
-        }
-        fprintf(out, "}\n");
-    }
 }
 
 static int compile_test(struct term *term, struct ctx *ctx) {
