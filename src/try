@@ -18,7 +18,7 @@ EOF
 fi
 
 cat > $GDBCMDS <<EOF
-set annotate 1
+set annotate 3
 run --nostdinc -I $AUGEAS_LENS_LIB -r $AUGEAS_ROOT < $AUGCMDS
 EOF
 
