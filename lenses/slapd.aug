@@ -149,7 +149,7 @@ let database    = [ key "database"
 
 let lns         = Spacevars.lns (global|access) . (database)*
 
-let filter      = Util.stdexcl
-                . incl "/etc/ldap/slapd.conf"
+let filter      = incl "/etc/ldap/slapd.conf"
+                . incl "/etc/openldap/slapd.conf"
 
 let xfm         = transform lns filter
