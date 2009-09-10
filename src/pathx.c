@@ -42,7 +42,8 @@ static const char *const errcodes[] = {
     "type error",       /* PATHX_ETYPE */
     "undefined variable",               /* PATHX_ENOVAR */
     "garbage at end of path expression",/* PATHX_EEND */
-    "can not expand tree from empty nodeset"  /* PATHX_ENONODES */
+    "can not expand tree from empty nodeset",  /* PATHX_ENONODES */
+    "wrong number of arguments in function call" /* PATHX_EARITY */
 };
 
 /*
@@ -1585,7 +1586,7 @@ static void parse_function_call(struct state *state) {
     }
 
     if (nargs != func->arity) {
-        STATE_ERROR(state, PATHX_EDELIM);
+        STATE_ERROR(state, PATHX_EARITY);
         return;
     }
 
