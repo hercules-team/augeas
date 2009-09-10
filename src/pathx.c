@@ -92,7 +92,9 @@ enum axis {
     DESCENDANT_OR_SELF,
     PARENT,
     ANCESTOR,
-    ROOT
+    ROOT,
+    PRECEDING_SIBLING,
+    FOLLOWING_SIBLING
 };
 
 /* This array is indexed by enum axis */
@@ -103,7 +105,9 @@ static const char *const axis_names[] = {
     "descendant-or-self",
     "parent",
     "ancestor",
-    "root"
+    "root",
+    "preceding-sibling",
+    "following-sibling"
 };
 
 static const char *const axis_sep = "::";
@@ -427,7 +431,9 @@ static struct nodeset *make_nodeset(struct state *state) {
 
 static void ns_add(struct nodeset *ns, struct tree *node,
                    struct state *state) {
-    // FIXME: Need to uniquify NS
+    for (int i=0; i < ns->used; i++)
+        if (ns->nodes[i] == node)
+            return;
     if (ns->used >= ns->size) {
         size_t size = 2 * ns->size;
         if (size < 10) size = 10;
@@ -1938,6 +1944,16 @@ static bool step_matches(struct step *step, struct tree *tree) {
     return (step->name == NULL || streqx(step->name, tree->label));
 }
 
+static struct tree *tree_prev(struct tree *pos) {
+    struct tree *node = NULL;
+    if (pos != pos->parent->children) {
+        for (node = pos->parent->children;
+             node->next != pos;
+             node = node->next);
+    }
+    return node;
+}
+
 static struct tree *step_first(struct step *step, struct tree *ctx) {
     struct tree *node = NULL;
     switch (step->axis) {
@@ -1957,6 +1973,12 @@ static struct tree *step_first(struct step *step, struct tree *ctx) {
         while (ctx->parent != ctx)
             ctx = ctx->parent;
         node = ctx;
+        break;
+    case PRECEDING_SIBLING:
+        node = tree_prev(ctx);
+        break;
+    case FOLLOWING_SIBLING:
+        node = ctx->next;
         break;
     default:
         assert(0);
@@ -2000,6 +2022,12 @@ static struct tree *step_next(struct step *step, struct tree *ctx,
                 node = NULL;
             else
                 node = node->parent;
+            break;
+        case PRECEDING_SIBLING:
+            node = tree_prev(node);
+            break;
+        case FOLLOWING_SIBLING:
+            node = node->next;
             break;
         default:
             assert(0);
