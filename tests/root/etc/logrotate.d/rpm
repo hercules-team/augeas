@@ -1,0 +1,6 @@
+/var/log/rpmpkgs {
+    weekly
+    notifempty
+    missingok
+	create 0640 root root
+}
