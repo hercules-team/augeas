@@ -66,6 +66,18 @@ Do not load any files on startup. This is generally used to fine-tune which
 files to load by modifying the entries in C</augeas/load> and then issuing
 a C<load> command.
 
+=item B<--noautoload>
+
+Do not load any lens modules, and therefore no files, on startup. This
+creates no entries under C</augeas/load> whatsoever; to read any files,
+they need to be set up manually and loading must be initiated with a
+C<load> command. Using this option gives the fastest startup.
+
+=item B<--version>
+
+Print version information and exit. The version is also in the tree under
+C</augeas/version>.
+
 =back
 
 =head1 COMMANDS
@@ -99,6 +111,13 @@ paths whose value equals VALUE are printed
 
 Delete PATH and all its children from the tree
 
+=item B<mv> E<lt>SRCE<gt> E<lt>DSTE<gt>
+
+Move node SRC to DST. SRC must match exactly one node in the tree.  DST
+must either match exactly one node in the tree, or may not exist yet. If
+DST exists already, it and all its descendants are deleted. If DST does not
+exist yet, it and all its missing ancestors are created.
+
 =item B<set> E<lt>PATHE<gt> E<lt>VALUEE<gt>
 
 Associate VALUE with PATH. If PATH is not in the tree yet,
@@ -127,6 +146,24 @@ tree. WHERE must be either 'before' or 'after'.
 
 Save all pending changes to disk. Unless either the B<-b> or B<-n>
 command line options are given, files are changed in place.
+
+=item B<load>
+
+Load files accordig to the transforms in C</augeas/load>.
+
+=item B<defvar> E<lt>NAMEE<gt> E<lt>EXPRE<gt>
+
+Define the variable NAME to the result of evalutating EXPR. The variable
+can be used in path expressions as $NAME. Note that EXPR is evaluated when
+the variable is defined, not when it is used.
+
+=item B<defnode> E<lt>NAMEE<gt> E<lt>EXPRE<gt> [E<lt>VALUEE<gt>]
+
+Define the variable NAME to the result of evalutating EXPR, which must be a
+nodeset. If no node matching EXPR exists yet, one is created and NAME will
+refer to it. If VALUE is given, this is the same as 'set EXPR VALUE'; if
+VALUE is not given, the node is created as if with 'clear EXPR' would and
+NAME refers to that node.
 
 =item B<help>
 

@@ -35,6 +35,10 @@ development and make sure you typecheck lenses when you are done developing
 sometimes useful when you are working on unit tests for a lens to speed up
 the time it takes to repeatedly run and fix tests.
 
+=item B<--version>
+
+Print version information and exit.
+
 =item B<-h>
 
 Display this help and exit

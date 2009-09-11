@@ -132,7 +132,7 @@
 .\" ========================================================================
 .\"
 .IX Title "AUGTOOL 1"
-.TH AUGTOOL 1 "2009-06-16" "Augeas 0.5.1" "Augeas"
+.TH AUGTOOL 1 "2009-09-11" "Augeas 0.5.2" "Augeas"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -191,6 +191,16 @@ is set, only directories specified explicitly with \fB\-I\fR or specified in
 Do not load any files on startup. This is generally used to fine-tune which
 files to load by modifying the entries in \f(CW\*(C`/augeas/load\*(C'\fR and then issuing
 a \f(CW\*(C`load\*(C'\fR command.
+.IP "\fB\-\-noautoload\fR" 4
+.IX Item "--noautoload"
+Do not load any lens modules, and therefore no files, on startup. This
+creates no entries under \f(CW\*(C`/augeas/load\*(C'\fR whatsoever; to read any files,
+they need to be set up manually and loading must be initiated with a
+\&\f(CW\*(C`load\*(C'\fR command. Using this option gives the fastest startup.
+.IP "\fB\-\-version\fR" 4
+.IX Item "--version"
+Print version information and exit. The version is also in the tree under
+\&\f(CW\*(C`/augeas/version\*(C'\fR.
 .SH "COMMANDS"
 .IX Header "COMMANDS"
 In interactive mode, commands and paths can be completed by pressing \f(CW\*(C`TAB\*(C'\fR.
@@ -215,6 +225,12 @@ paths whose value equals \s-1VALUE\s0 are printed
 .IP "\fBrm\fR <\s-1PATH\s0>" 4
 .IX Item "rm <PATH>"
 Delete \s-1PATH\s0 and all its children from the tree
+.IP "\fBmv\fR <\s-1SRC\s0> <\s-1DST\s0>" 4
+.IX Item "mv <SRC> <DST>"
+Move node \s-1SRC\s0 to \s-1DST\s0. \s-1SRC\s0 must match exactly one node in the tree.  \s-1DST\s0
+must either match exactly one node in the tree, or may not exist yet. If
+\&\s-1DST\s0 exists already, it and all its descendants are deleted. If \s-1DST\s0 does not
+exist yet, it and all its missing ancestors are created.
 .IP "\fBset\fR <\s-1PATH\s0> <\s-1VALUE\s0>" 4
 .IX Item "set <PATH> <VALUE>"
 Associate \s-1VALUE\s0 with \s-1PATH\s0. If \s-1PATH\s0 is not in the tree yet,
@@ -238,6 +254,21 @@ tree. \s-1WHERE\s0 must be either 'before' or 'after'.
 .IX Item "save"
 Save all pending changes to disk. Unless either the \fB\-b\fR or \fB\-n\fR
 command line options are given, files are changed in place.
+.IP "\fBload\fR" 4
+.IX Item "load"
+Load files accordig to the transforms in \f(CW\*(C`/augeas/load\*(C'\fR.
+.IP "\fBdefvar\fR <\s-1NAME\s0> <\s-1EXPR\s0>" 4
+.IX Item "defvar <NAME> <EXPR>"
+Define the variable \s-1NAME\s0 to the result of evalutating \s-1EXPR\s0. The variable
+can be used in path expressions as \f(CW$NAME\fR. Note that \s-1EXPR\s0 is evaluated when
+the variable is defined, not when it is used.
+.IP "\fBdefnode\fR <\s-1NAME\s0> <\s-1EXPR\s0> [<\s-1VALUE\s0>]" 4
+.IX Item "defnode <NAME> <EXPR> [<VALUE>]"
+Define the variable \s-1NAME\s0 to the result of evalutating \s-1EXPR\s0, which must be a
+nodeset. If no node matching \s-1EXPR\s0 exists yet, one is created and \s-1NAME\s0 will
+refer to it. If \s-1VALUE\s0 is given, this is the same as 'set \s-1EXPR\s0 \s-1VALUE\s0'; if
+\&\s-1VALUE\s0 is not given, the node is created as if with 'clear \s-1EXPR\s0' would and
+\&\s-1NAME\s0 refers to that node.
 .IP "\fBhelp\fR" 4
 .IX Item "help"
 Print this help text
