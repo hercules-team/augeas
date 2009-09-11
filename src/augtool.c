@@ -48,6 +48,7 @@ static unsigned int flags = AUG_NONE;
 const char *root = NULL;
 char *loadpath = NULL;
 int echo = 0;
+bool print_version = false;
 
 static char *cleanstr(char *path, const char sep) {
     if (path == NULL || strlen(path) == 0)
@@ -575,6 +576,7 @@ static void usage(void) {
     fprintf(stderr, "  --nostdinc         do not search the builtin default directories for modules\n");
     fprintf(stderr, "  --noload           do not load any files into the tree on startup\n");
     fprintf(stderr, "  --noautoload       do not autoload modules from the search path\n");
+    fprintf(stderr, "  --version          print version information and exit.\n");
 
     exit(EXIT_FAILURE);
 }
@@ -585,7 +587,8 @@ static void parse_opts(int argc, char **argv) {
     enum {
         VAL_NO_STDINC = CHAR_MAX + 1,
         VAL_NO_LOAD = VAL_NO_STDINC + 1,
-        VAL_NO_AUTOLOAD = VAL_NO_LOAD + 1
+        VAL_NO_AUTOLOAD = VAL_NO_LOAD + 1,
+        VAL_VERSION = VAL_NO_AUTOLOAD + 1
     };
     struct option options[] = {
         { "help",      0, 0, 'h' },
@@ -598,6 +601,7 @@ static void parse_opts(int argc, char **argv) {
         { "nostdinc",  0, 0, VAL_NO_STDINC },
         { "noload",    0, 0, VAL_NO_LOAD },
         { "noautoload", 0, 0, VAL_NO_AUTOLOAD },
+        { "version",   0, 0, VAL_VERSION },
         { 0, 0, 0, 0}
     };
     int idx;
@@ -634,12 +638,36 @@ static void parse_opts(int argc, char **argv) {
         case VAL_NO_AUTOLOAD:
             flags |= AUG_NO_MODL_AUTOLOAD;
             break;
+        case VAL_VERSION:
+            flags |= AUG_NO_MODL_AUTOLOAD;
+            print_version = true;
+            break;
         default:
             usage();
             break;
         }
     }
     argz_stringify(loadpath, loadpathlen, PATH_SEP_CHAR);
+}
+
+static void print_version_info(void) {
+    const char *version;
+    int r;
+
+    r = aug_get(aug, "/augeas/version", &version);
+    if (r != 1)
+        goto error;
+
+    fprintf(stderr, "augtool %s <http://augeas.net/>\n", version);
+    fprintf(stderr, "Copyright (C) 2009 Red Hat, Inc.\n");
+    fprintf(stderr, "License LGPLv2+: GNU LGPL version 2.1 or later\n");
+    fprintf(stderr, "                 <http://www.gnu.org/licenses/lgpl-2.1.html>\n");
+    fprintf(stderr, "This is free software: you are free to change and redistribute it.\n");
+    fprintf(stderr, "There is NO WARRANTY, to the extent permitted by law.\n\n");
+    fprintf(stderr, "Written by David Lutterkort\n");
+    return;
+ error:
+    fprintf(stderr, "Something went terribly wrong internally - please file a bug\n");
 }
 
 static int main_loop(void) {
@@ -696,6 +724,10 @@ int main(int argc, char **argv) {
     if (aug == NULL) {
         fprintf(stderr, "Failed to initialize Augeas\n");
         exit(EXIT_FAILURE);
+    }
+    if (print_version) {
+        print_version_info();
+        return EXIT_SUCCESS;
     }
     readline_init();
     if (optind < argc) {
