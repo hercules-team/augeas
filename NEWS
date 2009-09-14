@@ -1,3 +1,28 @@
+0.5.3 - 2009-09-14
+  - Match trees on label + value, not just label; see
+    tests/modules/pass_strip_quotes.aug for how that enables stripping
+    quotes
+  - Do not trip over symlinks to files on a different device during save;
+    fixes problems with writing to /etc/grub.conf on Fedora/RHEL
+  - API (defnode): always add the newly created node into the resulting
+    nodeset
+  - Add preceding-sibling and following-sibling axes to path expressions
+  - augtool, augparse: add --version option (bug #88)
+  - Change file info recorded under /augeas/files/FILE/*: remove lens/id
+    and move lens/info to lens
+  - Properly record new files under /augeas/files (bug #78)
+  - aug_load: clean up variables to avoid dangling references (bug #79)
+  - Make Augeas work on AIX
+  - Ignore anything but regular files when globbing
+  - Add 'clear' function to language for use in unit tests
+  - typechecker: print example trees in tree format
+  - libfa: properly support regexps with embedded NUL's
+  - Lens changes/additions
+    * Xorg: revamped, fixes various parse failures (Matt Booth)
+    * Inetd: new lens and test (Matt Palmer)
+    * Multipath: new lens and test
+    * Slapd: also read /etc/openldap.slapd.conf (bug #85)
+
 0.5.2 - 2009-07-13
   - Make Augeas work on Mac OS/X (bug #66) (Anders Bjoerklund)
   - reduce symbols exported from libfa with linker script
