@@ -25,10 +25,12 @@
 #include <regex.h>
 #include <stdarg.h>
 
-#include "syntax.h"
+#include "regexp.h"
 #include "list.h"
 #include "internal.h"
 #include "memory.h"
+#include "info.h"
+#include "lens.h"
 
 /* Our favorite error message */
 static const char *const short_iteration =

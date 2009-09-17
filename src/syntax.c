@@ -75,47 +75,6 @@ struct ctx {
     struct binding *local;
 };
 
-char *format_info(struct info *info) {
-    const char *fname;
-    char *result;
-    int r = 0;
-    int fl = info->first_line, ll = info->last_line;
-    int fc = info->first_column, lc = info->last_column;
-    fname = (info->filename != NULL) ? info->filename->str : "(unknown file)";
-
-    if (fl > 0) {
-        if (fl == ll) {
-            if (fc == lc) {
-                r = asprintf(&result, "%s:%d.%d", fname, fl, fc);
-            } else {
-                r = asprintf(&result, "%s:%d.%d-.%d", fname, fl, fc, lc);
-            }
-        } else {
-            r = asprintf(&result, "%s:%d.%d-%d.%d", fname, fl, fc, ll, lc);
-        }
-    }
-    return (r == -1) ? NULL : result;
-}
-
-void print_info(FILE *out, struct info *info) {
-    fprintf(out, "%s:",
-            info->filename != NULL ? info->filename->str : "(unknown file)");
-    if (info->first_line > 0) {
-        if (info->first_line == info->last_line) {
-            if (info->first_column == info->last_column) {
-                fprintf(out, "%d.%d:", info->first_line, info->first_column);
-            } else {
-                fprintf(out, "%d.%d-.%d:", info->first_line,
-                        info->first_column, info->last_column);
-            }
-        } else {
-            fprintf(out, "%d.%d-%d.%d:",
-                    info->first_line, info->first_column,
-                    info->last_line, info->last_column);
-        }
-    }
-}
-
 void syntax_error(struct info *info, const char *format, ...) {
     va_list ap;
 
@@ -149,22 +108,6 @@ void assert_error_at(const char *srcfile, int srclineno, struct info *info,
     vfprintf(stderr, format, ap);
     va_end(ap);
     fprintf(stderr, "\n");
-}
-
-void free_string(struct string *string) {
-    if (string == NULL)
-        return;
-    assert(string->ref == 0);
-    free(string->str);
-    free(string);
-}
-
-void free_info(struct info *info) {
-    if (info == NULL)
-        return;
-    assert(info->ref == 0);
-    unref(info->filename, string);
-    free(info);
 }
 
 static void free_param(struct param *param) {
@@ -350,25 +293,6 @@ struct value *make_value(enum value_tag tag, struct info *info) {
     value->tag = tag;
     value->info = info;
     return value;
-}
-
-struct string *make_string(char *str) {
-    struct string *string;
-    make_ref(string);
-    string->str = str;
-    return string;
-}
-
-struct string *dup_string(const char *str) {
-    struct string *string;
-    make_ref(string);
-    if (str == NULL)
-        string->str = strdup("");
-    else
-        string->str = strdup(str);
-    if (string->str == NULL)
-        unref(string, string);
-    return string;
 }
 
 struct term *make_app_term(struct term *lambda, struct term *arg,

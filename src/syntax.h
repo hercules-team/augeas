@@ -23,25 +23,13 @@
 #ifndef SYNTAX_H_
 #define SYNTAX_H_
 
-#include <regex.h>
 #include <limits.h>
 #include "internal.h"
 #include "lens.h"
 #include "ref.h"
 #include "fa.h"
-
-struct info {
-    unsigned int ref;
-    struct string *filename;
-    unsigned int first_line;
-    unsigned int first_column;
-    unsigned int last_line;
-    unsigned int last_column;
-};
-
-/* syntax.c */
-char *format_info(struct info *info);
-void print_info(FILE *out, struct info *info);
+#include "regexp.h"
+#include "info.h"
 
 void syntax_error(struct info *info, const char *format, ...)
     ATTRIBUTE_FORMAT(printf, 2, 3);
@@ -127,91 +115,6 @@ struct param {
     struct string *name;
     struct type   *type;
 };
-
-struct string {
-    unsigned int   ref;
-    char          *str;
-};
-
-struct regexp {
-    unsigned int              ref;
-    struct info              *info;
-    struct string            *pattern;
-    struct re_pattern_buffer *re;
-};
-
-/* Defined in regexp.c */
-
-void print_regexp(FILE *out, struct regexp *regexp);
-
-/* Make a regexp with pattern PAT, which is not copied. Ownership
- * of INFO is taken.
- */
-struct regexp *make_regexp(struct info *info, char *pat);
-
-/* Return 1 if R is an empty pattern, i.e. one consisting of nothing but
-   '(' and ')' characters, 0 otherwise */
-int regexp_is_empty_pattern(struct regexp *r);
-
-/* Make a regexp that matches TEXT literally; the string TEXT
- * is not used by the returned rgexp and must be freed by the caller
- */
-struct regexp *make_regexp_literal(struct info *info, const char *text);
-
-/* Do not call directly, use UNREF instead */
-void free_regexp(struct regexp *regexp);
-
-/* Compile R->PATTERN into R->RE; return -1 and print an error
- * if compilation fails. Return 0 otherwise
- */
-int regexp_compile(struct regexp *r);
-
-/* Call RE_MATCH on R->RE and return its result; if R hasn't been compiled
- * yet, compile it. Return -3 if compilation fails
- */
-int regexp_match(struct regexp *r, const char *string, const int size,
-                 const int start, struct re_registers *regs);
-
-/* Return 1 if R matches the empty string, 0 otherwise */
-int regexp_matches_empty(struct regexp *r);
-
-/* Return the number of subexpressions (parentheses) inside R. May cause
- * compilation of R; return -1 if compilation fails.
- */
-int regexp_nsub(struct regexp *r);
-
-struct regexp *
-regexp_union(struct info *, struct regexp *r1, struct regexp *r2);
-
-struct regexp *
-regexp_concat(struct info *, struct regexp *r1, struct regexp *r2);
-
-struct regexp *
-regexp_union_n(struct info *, int n, struct regexp **r);
-
-struct regexp *
-regexp_concat_n(struct info *, int n, struct regexp **r);
-
-struct regexp *
-regexp_iter(struct info *info, struct regexp *r, int min, int max);
-
-/* Return a new REGEXP that matches all the words matched by R1 but
- * not by R2
- */
-struct regexp *
-regexp_minus(struct info *info, struct regexp *r1, struct regexp *r2);
-
-struct regexp *
-regexp_maybe(struct info *info, struct regexp *r);
-
-struct regexp *regexp_make_empty(struct info *);
-
-/* Free up temporary data structures, most importantly compiled
-   regular expressions */
-void regexp_release(struct regexp *regexp);
-
-/* Produce a printable representation of R */
-char *regexp_escape(const struct regexp *r);
 
 struct native {
     unsigned int argc;
@@ -315,13 +218,9 @@ void free_type(struct type *type);
 struct term *make_term(enum term_tag tag, struct info *info);
 struct term *make_param(char *name, struct type *type, struct info *info);
 struct value *make_value(enum value_tag tag, struct info *info);
-struct string *make_string(char *str);
 struct term *make_app_term(struct term *func, struct term *arg,
                            struct info *info);
 struct term *make_app_ident(char *id, struct term *func, struct info *info);
-
-/* Duplicate a string; if STR is NULL, use the empty string "" */
-struct string *dup_string(const char *str);
 
 /* Make an EXN value
  * Receive ownership of INFO
@@ -343,8 +242,6 @@ void exn_printf_line(struct value *exn, const char *format, ...)
     ATTRIBUTE_FORMAT(printf, 2, 3);
 
 /* Do not call these directly, use UNREF instead */
-void free_info(struct info *info);
-void free_string(struct string *string);
 void free_value(struct value *v);
 void free_module(struct module *module);
 

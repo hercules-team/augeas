@@ -23,8 +23,9 @@
 #include <config.h>
 
 #include <stdarg.h>
-#include "syntax.h"
+#include "regexp.h"
 #include "memory.h"
+#include "lens.h"
 
 /* Data structure to keep track of where we are in the tree. The split
  * describes a sublist of the list of siblings in the current tree. The

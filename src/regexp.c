@@ -21,7 +21,9 @@
  */
 
 #include <config.h>
+#include <regex.h>
 
+#include "internal.h"
 #include "syntax.h"
 #include "memory.h"
 

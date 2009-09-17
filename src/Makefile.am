@@ -22,8 +22,9 @@ include_HEADERS = augeas.h fa.h
 libaugeas_la_SOURCES = augeas.h augeas.c pathx.c \
 	internal.h internal.c \
 	memory.h memory.c ref.h \
-    syntax.c syntax.h parser.y builtin.c lens.c lens.h regexp.c \
-	transform.h transform.c ast.c get.c put.c list.h
+    syntax.c syntax.h parser.y builtin.c lens.c lens.h regexp.c regexp.h \
+	transform.h transform.c ast.c get.c put.c list.h \
+    info.c info.h
 
 if USE_VERSION_SCRIPT
   AUGEAS_VERSION_SCRIPT = $(VERSION_SCRIPT_FLAGS)$(srcdir)/augeas_sym.version
