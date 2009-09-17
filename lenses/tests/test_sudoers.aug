@@ -37,6 +37,8 @@ www-data +biglab=(rpinson)NOEXEC: ICAL \
         localhost = NOPASSWD: 	/usr/bin/test
 
 	+secretaries           ALPHA = /usr/bin/su [!-]*, !/usr/bin/su *root*
+
+someuser ALL=(root) NOPASSWD: /usr/bin/python /usr/local/sbin/filterlog -iu\\=www /var/log/something.log
 "
 
    test Sudoers.lns get conf =
@@ -131,6 +133,17 @@ www-data +biglab=(rpinson)NOEXEC: ICAL \
 	      { "host" = "ALPHA" }
 	      { "command" = "/usr/bin/su [!-]*" }
 	      { "command" = "!/usr/bin/su *root*" } } }
+      {}
+      { "spec"
+          { "user"    = "someuser" }
+          { "host_group"
+              { "host" = "ALL" }
+              { "command" = "/usr/bin/python /usr/local/sbin/filterlog -iu\\=www /var/log/something.log"
+                  { "runas_user" = "root" }
+                  { "tag" = "NOPASSWD" }
+              }
+          }
+      }
 
 test Sudoers.parameter_integer_bool
     put "umask = 022"
