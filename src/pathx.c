@@ -27,6 +27,9 @@
 #include <memory.h>
 #include <ctype.h>
 
+#include "ref.h"
+#include "regexp.h"
+
 static const char *const errcodes[] = {
     "no error",
     "empty name",
@@ -43,7 +46,8 @@ static const char *const errcodes[] = {
     "undefined variable",               /* PATHX_ENOVAR */
     "garbage at end of path expression",/* PATHX_EEND */
     "can not expand tree from empty nodeset",  /* PATHX_ENONODES */
-    "wrong number of arguments in function call" /* PATHX_EARITY */
+    "wrong number of arguments in function call", /* PATHX_EARITY */
+    "invalid regular expression"        /* PATHX_EREGEXP */
 };
 
 /*
@@ -55,7 +59,8 @@ enum type {
     T_NODESET,
     T_BOOLEAN,
     T_NUMBER,
-    T_STRING
+    T_STRING,
+    T_REGEXP
 };
 
 enum expr_tag {
@@ -77,7 +82,8 @@ enum binary_op {
     OP_MINUS,      /* '-'  */
     OP_STAR,       /* '*'  */
     OP_AND,        /* 'and' */
-    OP_OR          /* 'or' */
+    OP_OR,         /* 'or' */
+    OP_RE_MATCH     /* '=~' */
 };
 
 struct pred {
@@ -164,6 +170,7 @@ struct value {
         int              number;      /* T_NUMBER  */
         char            *string;      /* T_STRING  */
         bool             boolval;     /* T_BOOLEAN */
+        struct regexp   *regexp;      /* T_REGEXP  */
     };
 };
 
@@ -265,8 +272,10 @@ static void func_last(struct state *state);
 static void func_position(struct state *state);
 static void func_count(struct state *state);
 static void func_label(struct state *state);
+static void func_regexp(struct state *state);
 
 static const enum type const count_arg_types[] = { T_NODESET };
+static const enum type const regexp_arg_types[] = { T_STRING };
 
 static const struct func builtin_funcs[] = {
     { .name = "last", .arity = 0, .type = T_NUMBER, .arg_types = NULL,
@@ -277,7 +286,10 @@ static const struct func builtin_funcs[] = {
       .impl = func_label },
     { .name = "count", .arity = 1, .type = T_NUMBER,
       .arg_types = count_arg_types,
-      .impl = func_count }
+      .impl = func_count },
+    { .name = "regexp", .arity = 1, .type = T_REGEXP,
+      .arg_types = regexp_arg_types,
+      .impl =func_regexp }
 };
 
 #define CHECK_ERROR                                                     \
@@ -394,6 +406,9 @@ static void release_value(struct value *v) {
         break;
     case T_BOOLEAN:
     case T_NUMBER:
+        break;
+    case T_REGEXP:
+        unref(v->regexp, regexp);
         break;
     default:
         assert(0);
@@ -513,6 +528,9 @@ static value_ind_t clone_value(struct value *v, struct state *state) {
     case T_BOOLEAN:
         clone->boolval = v->boolval;
         break;
+    case T_REGEXP:
+        clone->regexp = ref(v->regexp);
+        break;
     default:
         assert(0);
     }
@@ -607,6 +625,35 @@ static void func_label(struct state *state) {
     push_value(vind, state);
 }
 
+static void func_regexp(struct state *state) {
+    value_ind_t vind = make_value(T_REGEXP, state);
+
+    CHECK_ERROR;
+
+    struct value *str = pop_value(state);
+    assert(str->tag == T_STRING);
+
+    char *pat = strdup(str->string);
+    if (pat == NULL) {
+        STATE_ENOMEM;
+        return;
+    }
+
+    struct regexp *rx = make_regexp(NULL, pat);
+    if (rx == NULL) {
+        FREE(pat);
+        STATE_ENOMEM;
+        return;
+    }
+    if (regexp_compile(rx) < 0) {
+        STATE_ERROR(state, PATHX_EREGEXP);
+        unref(rx, regexp);
+        return;
+    }
+    state->value_pool[vind].regexp = rx;
+    push_value(vind, state);
+}
+
 static bool coerce_to_bool(struct value *v) {
     switch (v->tag) {
     case T_NODESET:
@@ -621,6 +668,8 @@ static bool coerce_to_bool(struct value *v) {
     case T_STRING:
         return strlen(v->string) > 0;
         break;
+    case T_REGEXP:
+        return true;
     default:
         assert(0);
     }
@@ -755,6 +804,43 @@ static void eval_and_or(struct state *state, enum binary_op op) {
         push_boolean_value(left || right, state);
 }
 
+static bool eval_re_match_str(struct state *state, struct regexp *rx,
+                              const char *str) {
+    int r;
+
+    if (str == NULL)
+        str = "";
+
+    r = regexp_match(rx, str, strlen(str), 0, NULL);
+    if (r == -2) {
+        STATE_ERROR(state, PATHX_EINTERNAL);
+    } else if (r == -3) {
+        /* We should never get this far; func_regexp should catch
+         * invalid regexps */
+        assert(false);
+    }
+    return r == strlen(str);
+}
+
+static void eval_re_match(struct state *state) {
+    struct value *rx  = pop_value(state);
+    struct value *v = pop_value(state);
+
+    bool result = false;
+
+    if (v->tag == T_STRING) {
+        result = eval_re_match_str(state, rx->regexp, v->string);
+        CHECK_ERROR;
+    } else if (v->tag == T_NODESET) {
+        for (int i=0; i < v->nodeset->used && result == false; i++) {
+            struct tree *t = v->nodeset->nodes[i];
+            result = eval_re_match_str(state, rx->regexp, t->value);
+            CHECK_ERROR;
+        }
+    }
+    push_boolean_value(result, state);
+}
+
 static void eval_binary(struct expr *expr, struct state *state) {
     eval_expr(expr->left, state);
     eval_expr(expr->right, state);
@@ -787,6 +873,9 @@ static void eval_binary(struct expr *expr, struct state *state) {
     case OP_AND:
     case OP_OR:
         eval_and_or(state, expr->op);
+        break;
+    case OP_RE_MATCH:
+        eval_re_match(state);
         break;
     default:
         assert(0);
@@ -1070,6 +1159,8 @@ static void check_app(struct expr *expr, struct state *state) {
  * '+', '-', '*': T_NUMBER -> T_NUMBER -> T_NUMBER
  *
  * 'and', 'or': T_BOOLEAN -> T_BOOLEAN -> T_BOOLEAN
+ * '=~'       : T_STRING  -> T_REGEXP  -> T_BOOLEAN
+ *              T_NODESET -> T_REGEXP  -> T_BOOLEAN
  *
  * Any type can be coerced to T_BOOLEAN (see coerce_to_bool)
  */
@@ -1108,6 +1199,10 @@ static void check_binary(struct expr *expr, struct state *state) {
     case OP_AND:
     case OP_OR:
         ok = 1;
+        res = T_BOOLEAN;
+        break;
+    case OP_RE_MATCH:
+        ok = ((l == T_STRING || l == T_NODESET) && r == T_REGEXP);
         res = T_BOOLEAN;
         break;
     default:
@@ -1823,13 +1918,20 @@ static void parse_relational_expr(struct state *state) {
 }
 
 /*
- * EqualityExpr ::= RelationalExpr (EqualityOp RelationalExpr)?
+ * EqualityExpr ::= RelationalExpr (EqualityOp RelationalExpr)? | ReMatchExpr
  * EqualityOp ::= "=" | "!="
+ * ReMatchExpr ::= RelationalExpr "=~" RelationalExpr
  */
 static void parse_equality_expr(struct state *state) {
     parse_relational_expr(state);
     CHECK_ERROR;
-    if (*state->pos == '=' ||
+    if (*state->pos == '=' && state->pos[1] == '~') {
+        state->pos += 2;
+        skipws(state);
+        parse_relational_expr(state);
+        CHECK_ERROR;
+        push_new_binary_op(OP_RE_MATCH, state);
+    } else if (*state->pos == '=' ||
         (*state->pos == '!' && state->pos[1] == '=')) {
         enum binary_op op = (*state->pos == '=') ? OP_EQ : OP_NEQ;
         state->pos += (op == OP_EQ) ? 1 : 2;

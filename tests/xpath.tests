@@ -215,3 +215,9 @@ test following-sibling-pred /files/etc/hosts/1/*[following-sibling::alias]
      /files/etc/hosts/1/canonical = localhost.localdomain
      /files/etc/hosts/1/alias[1] = localhost
      /files/etc/hosts/1/alias[2] = galia.watzmann.net
+
+test regexp1 /files/etc/sysconfig/network-scripts/*[label() =~ regexp('.*-eth0')]
+     /files/etc/sysconfig/network-scripts/ifcfg-eth0
+
+test regexp2 /files/etc/hosts/*[* =~ regexp('127\..*')]
+     /files/etc/hosts/1

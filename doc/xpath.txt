@@ -121,8 +121,11 @@ PrimaryExpr ::= Literal
 FunctionCall ::= Name '(' ( Expr ( ',' Expr )* )? ')'
 
 Expr ::= EqualityExpr
-EqualityExpr ::= AdditiveExpr (EqualityOp AdditiveExpr)?
+EqualityExpr ::= RelationalExpr (EqualityOp RelationalExpr)? | ReMatchExpr
+ReMatchExpr ::= RelationalExpr "=~" RelationalExpr
 EqualityOp ::= "=" | "!="
+RelationalExpr ::= AdditiveExpr (RelationalOp AdditiveExpr)?
+RelationalOp ::= ">" | "<" | ">=" | "<="
 AdditiveExpr ::= MultiplicativeExpr (AdditiveOp MultiplicativeExpr)*
 AdditiveOp   ::= '+' | '-'
 MultiplicativeExpr ::= PathExpr ('*' PathExpr)*
