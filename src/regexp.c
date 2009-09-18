@@ -315,12 +315,8 @@ int regexp_compile(struct regexp *r) {
     re_syntax_options = old_syntax;
 
     r->re->regs_allocated = REGS_REALLOCATE;
-    if (c != NULL) {
-        char *p = escape(r->pattern->str, -1);
-        syntax_error(r->info, "invalid regexp /%s/: %s", p, c);
-        free(p);
+    if (c != NULL)
         return -1;
-    }
     return 0;
 }
 
