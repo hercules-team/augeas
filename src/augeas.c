@@ -232,6 +232,8 @@ struct augeas *aug_init(const char *root, const char *loadpath,
     struct augeas *result;
     struct tree *tree_root = make_tree(NULL, NULL, NULL, NULL);
 
+    /* There's no point in bothering with api_entry/api_exit here */
+
     if (tree_root == NULL)
         return NULL;
 
@@ -338,14 +340,40 @@ static void tree_unlink_children(struct augeas *aug, struct tree *tree) {
         tree_unlink(tree->children);
 }
 
+/* Clean up old error messages every time we enter through the public
+ * API. Since we make internal calls through the public API, we keep a
+ * count of how many times a public API call was made, and only reset when
+ * that count is 0. That requires that all public functions enclose their
+ * work within a matching pair of api_entry/api_exit calls.
+ */
+static void api_entry(const struct augeas *aug) {
+    struct error *err = &((struct augeas *) aug)->error;
+
+    ((struct augeas *) aug)->api_entries += 1;
+
+    if (aug->api_entries > 1)
+        return;
+
+    err->code = AUG_NOERROR;
+    err->minor = 0;
+    FREE(err->details);
+    err->minor_details = NULL;
+}
+
+static void api_exit(const struct augeas *aug) {
+    assert(aug->api_entries > 0);
+    ((struct augeas *) aug)->api_entries -= 1;
+}
+
 int aug_load(struct augeas *aug) {
     struct tree *meta = tree_child_cr(aug->origin, s_augeas);
     struct tree *meta_files = tree_child_cr(meta, s_files);
     struct tree *files = tree_child_cr(aug->origin, s_files);
     struct tree *load = tree_child_cr(meta, s_load);
 
-    if (load == NULL)
-        return -1;
+    api_entry(aug);
+
+    ERR_NOMEM(load == NULL, aug);
 
     tree_unlink_children(aug, meta_files);
     tree_unlink_children(aug, files);
@@ -355,7 +383,12 @@ int aug_load(struct augeas *aug) {
             transform_load(aug, xfm);
     }
     tree_clean(aug->origin);
+
+    api_exit(aug);
     return 0;
+ error:
+    api_exit(aug);
+    return -1;
 }
 
 int aug_get(const struct augeas *aug, const char *path, const char **value) {
@@ -363,9 +396,11 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
     struct tree *match;
     int r;
 
+    api_entry(aug);
+
     p = parse_user_pathx((struct augeas *) aug, true, path);
     if (p == NULL)
-        return -1;
+        goto error;
 
     if (value != NULL)
         *value = NULL;
@@ -375,12 +410,18 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
         *value = match->value;
     free_pathx(p);
 
+    api_exit(aug);
     return r;
+ error:
+    api_exit(aug);
+    return -1;
 }
 
 int aug_defvar(augeas *aug, const char *name, const char *expr) {
     struct pathx *p = NULL;
     int result = -1;
+
+    api_entry(aug);
 
     if (expr == NULL) {
         result = pathx_symtab_undefine(&(aug->symtab), name);
@@ -392,6 +433,7 @@ int aug_defvar(augeas *aug, const char *name, const char *expr) {
     }
  done:
     free_pathx(p);
+    api_exit(aug);
     return result;
 }
 
@@ -402,8 +444,10 @@ int aug_defnode(augeas *aug, const char *name, const char *expr,
     int r, cr;
     struct tree *tree;
 
+    api_entry(aug);
+
     if (expr == NULL)
-        return -1;
+        goto error;
     if (created == NULL)
         created = &cr;
 
@@ -427,7 +471,11 @@ int aug_defnode(augeas *aug, const char *name, const char *expr,
 
  done:
     free_pathx(p);
+    api_exit(aug);
     return result;
+ error:
+    api_exit(aug);
+    return -1;
 }
 
 struct tree *tree_set(struct pathx *p, const char *value) {
@@ -448,13 +496,20 @@ int aug_set(struct augeas *aug, const char *path, const char *value) {
     struct pathx *p;
     int result;
 
+    api_entry(aug);
+
     p = parse_user_pathx(aug, true, path);
     if (p == NULL)
-        return -1;
+        goto error;
 
     result = tree_set(p, value) == NULL ? -1 : 0;
     free_pathx(p);
+
+    api_exit(aug);
     return result;
+ error:
+    api_exit(aug);
+    return -1;
 }
 
 int tree_insert(struct pathx *p, const char *label, int before) {
@@ -487,6 +542,8 @@ int aug_insert(struct augeas *aug, const char *path, const char *label,
     struct pathx *p = NULL;
     int result = -1;
 
+    api_entry(aug);
+
     p = parse_user_pathx(aug, true, path);
     if (p == NULL)
         goto done;
@@ -494,6 +551,7 @@ int aug_insert(struct augeas *aug, const char *path, const char *label,
     result = tree_insert(p, label, before);
  done:
     free_pathx(p);
+    api_exit(aug);
     return result;
 }
 
@@ -599,14 +657,20 @@ int aug_rm(struct augeas *aug, const char *path) {
     struct pathx *p = NULL;
     int result;
 
+    api_entry(aug);
+
     p = parse_user_pathx(aug, true, path);
     if (p == NULL)
-        return -1;
+        goto error;
 
     result = tree_rm(p);
     free_pathx(p);
 
+    api_exit(aug);
     return result;
+ error:
+    api_exit(aug);
+    return -1;
 }
 
 int tree_replace(struct tree *origin, const char *path, struct tree *sub) {
@@ -642,6 +706,8 @@ int aug_mv(struct augeas *aug, const char *src, const char *dst) {
     struct pathx *s = NULL, *d = NULL;
     struct tree *ts, *td, *t;
     int r, ret;
+
+    api_entry(aug);
 
     ret = -1;
     s = parse_user_pathx(aug, true, src);
@@ -687,6 +753,7 @@ int aug_mv(struct augeas *aug, const char *src, const char *dst) {
  done:
     free_pathx(s);
     free_pathx(d);
+    api_exit(aug);
     return ret;
 }
 
@@ -694,6 +761,8 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
     struct pathx *p = NULL;
     struct tree *tree;
     int cnt = 0;
+
+    api_entry(aug);
 
     if (matches != NULL)
         *matches = NULL;
@@ -704,7 +773,7 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
 
     p = parse_user_pathx((struct augeas *) aug, true, pathin);
     if (p == NULL)
-        return -1;
+        goto error;
 
     for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
         if (! TREE_HIDDEN(tree))
@@ -729,6 +798,7 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
     }
  done:
     free_pathx(p);
+    api_exit(aug);
     return cnt;
 
  error:
@@ -740,6 +810,7 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
         }
     }
     free_pathx(p);
+    api_exit(aug);
     return -1;
 }
 
@@ -857,11 +928,13 @@ int aug_save(struct augeas *aug) {
     struct tree *files = tree_child_cr(aug->origin, s_files);
     struct tree *load = tree_child_cr(meta, s_load);
 
+    api_entry(aug);
+
     if (update_save_flags(aug) < 0)
-        return -1;
+        goto error;
 
     if (files == NULL || meta == NULL || load == NULL)
-        return -1;
+        goto error;
 
     aug_rm(aug, AUGEAS_EVENTS_SAVED);
 
@@ -882,7 +955,12 @@ int aug_save(struct augeas *aug) {
     if (!(aug->flags & AUG_SAVE_NOOP)) {
         tree_clean(aug->origin);
     }
+
+    api_exit(aug);
     return ret;
+ error:
+    api_exit(aug);
+    return -1;
 }
 
 static int print_one(FILE *out, const char *path, const char *value) {
@@ -976,23 +1054,31 @@ int aug_print(const struct augeas *aug, FILE *out, const char *pathin) {
     struct pathx *p;
     int result;
 
+    api_entry(aug);
+
     if (pathin == NULL || strlen(pathin) == 0) {
         pathin = "/*";
     }
 
     p = parse_user_pathx((struct augeas *) aug, true, pathin);
     if (p == NULL)
-        return -1;
+        goto error;
 
     result = print_tree(out, p, 0);
     free_pathx(p);
 
+    api_exit(aug);
     return result;
+ error:
+    api_exit(aug);
+    return -1;
 }
 
 void aug_close(struct augeas *aug) {
     if (aug == NULL)
         return;
+
+    /* There's no point in bothering with api_entry/api_exit here */
     free_tree(aug->origin);
     unref(aug->modules, module);
     free((void *) aug->root);

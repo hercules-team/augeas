@@ -290,6 +290,8 @@ struct augeas {
                                      glibc argz vector */
     struct pathx_symtab *symtab;
     struct error        error;
+    uint                api_entries;  /* Number of entries through a public
+                                       * API, 0 when called from outside */
 };
 
 void report_error(struct error *err, aug_errcode_t errcode,
