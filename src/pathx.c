@@ -803,8 +803,10 @@ static void eval_app(struct expr *expr, struct state *state) {
     expr->func->impl(state);
 }
 
-static int eval_pred(struct expr *expr, struct state *state) {
+static bool eval_pred(struct expr *expr, struct state *state) {
     eval_expr(expr, state);
+    CHECK_ERROR_RET0;
+
     struct value *v = pop_value(state);
     switch(v->tag) {
     case T_BOOLEAN:
@@ -841,7 +843,9 @@ static void ns_filter(struct nodeset *ns, struct pred *predicates,
         state->ctx_pos = 1;
         for (int i=0; i < ns->used; state->ctx_pos++) {
             state->ctx = ns->nodes[i];
-            if (eval_pred(predicates->exprs[p], state)) {
+            bool match = eval_pred(predicates->exprs[p], state);
+            CHECK_ERROR;
+            if (match) {
                 i+=1;
             } else {
                 ns_remove(ns, i);
@@ -897,6 +901,7 @@ static void ns_from_locpath(struct locpath *lp, uint *maxns,
                 ns_add(next, node, state);
         }
         ns_filter(next, step->predicates, state);
+        CHECK_ERROR;
         cur_ns += 1;
     }
 
@@ -2105,7 +2110,7 @@ struct tree *pathx_first(struct pathx *pathx) {
         struct value *v = pathx_eval(pathx);
 
         if (HAS_ERROR(pathx->state))
-            return NULL;
+            goto error;
         assert(v->tag == T_NODESET);
         pathx->nodeset = v->nodeset;
     }
@@ -2114,6 +2119,9 @@ struct tree *pathx_first(struct pathx *pathx) {
         return NULL;
     else
         return pathx->nodeset->nodes[0];
+ error:
+    store_error(pathx);
+    return NULL;
 }
 
 /* Find a node in the tree that matches the longest prefix of PATH.
@@ -2220,11 +2228,14 @@ int pathx_expand_tree(struct pathx *path, struct tree **tree) {
         free_tree(first_child);
     }
     *tree = NULL;
+    store_error(path);
     return -1;
 }
 
 int pathx_find_one(struct pathx *path, struct tree **tree) {
     *tree = pathx_first(path);
+    if (HAS_ERROR(path->state))
+        return -1;
     if (*tree == NULL)
         return 0;
 
@@ -2330,19 +2341,25 @@ int pathx_symtab_define(struct pathx_symtab **symtab,
                         const char *name, struct pathx *px) {
     int r;
     struct value *value = NULL, *v = NULL;
+    struct state *state = px->state;
 
     value = pathx_eval(px);
     if (HAS_ERROR(px->state))
         goto error;
 
-    if (ALLOC(v) < 0)
+    if (ALLOC(v) < 0) {
+        STATE_ENOMEM;
         goto error;
+    }
+
     *v = *value;
     value->tag = T_BOOLEAN;
 
     r = pathx_symtab_set(symtab, name, v);
-    if (r < 0)
+    if (r < 0) {
+        STATE_ENOMEM;
         goto error;
+    }
 
     if (v->tag == T_NODESET)
         return v->nodeset->used;
@@ -2353,6 +2370,7 @@ int pathx_symtab_define(struct pathx_symtab **symtab,
     free(value);
     release_value(v);
     free(v);
+    store_error(px);
     return -1;
 }
 

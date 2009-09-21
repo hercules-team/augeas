@@ -461,6 +461,7 @@ void free_pathx(struct pathx *path);
 struct pathx_symtab *pathx_get_symtab(struct pathx *pathx);
 int pathx_symtab_define(struct pathx_symtab **symtab,
                         const char *name, struct pathx *px);
+/* Returns 1 on success, and -1 when out of memory */
 int pathx_symtab_assign_tree(struct pathx_symtab **symtab, const char *name,
                              struct tree *tree);
 int pathx_symtab_undefine(struct pathx_symtab **symtab, const char *name);
