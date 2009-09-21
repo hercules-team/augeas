@@ -63,6 +63,19 @@ static char *cleanpath(char *path) {
     return cleanstr(path, SEP);
 }
 
+static void err_check(void) {
+    if (aug_error(aug) != AUG_NOERROR) {
+        const char *minor = aug_error_minor_message(aug);
+        const char *details = aug_error_details(aug);
+
+        fprintf(stderr, "error: %s\n", aug_error_message(aug));
+        if (minor != NULL)
+            fprintf(stderr, "error: %s\n", minor);
+        if (details != NULL)
+            fprintf(stderr, "error: %s\n", details);
+    }
+}
+
 /*
  * Dup PATH and split it into a directory and basename. The returned value
  * points to the copy of PATH. Adding strlen(PATH)+1 to it gives the
@@ -103,6 +116,7 @@ static int child_count(const char *path) {
     if (q == NULL)
         return 0;
     cnt = aug_match(aug, q, NULL);
+    err_check();
     free(q);
     return cnt;
 }
@@ -116,11 +130,13 @@ static int cmd_ls(char *args[]) {
     if (path == NULL)
         return -1;
     cnt = aug_match(aug, path, &paths);
+    err_check();
     for (int i=0; i < cnt; i++) {
         const char *val;
         const char *basnam = strrchr(paths[i], SEP);
         int dir = child_count(paths[i]);
         aug_get(aug, paths[i], &val);
+        err_check();
         basnam = (basnam == NULL) ? paths[i] : basnam + 1;
         if (val == NULL)
             val = "(none)";
@@ -141,6 +157,7 @@ static int cmd_match(char *args[]) {
     int result = 0;
 
     cnt = aug_match(aug, pattern, &matches);
+    err_check();
     if (cnt < 0) {
         printf("  (error matching %s)\n", pattern);
         result = -1;
@@ -154,6 +171,7 @@ static int cmd_match(char *args[]) {
     for (int i=0; i < cnt; i++) {
         const char *val;
         aug_get(aug, matches[i], &val);
+        err_check();
         if (val == NULL)
             val = "(none)";
         if (filter) {
@@ -175,6 +193,7 @@ static int cmd_rm(char *args[]) {
     const char *path = cleanpath(args[0]);
     printf("rm : %s", path);
     cnt = aug_rm(aug, path);
+    err_check();
     printf(" %d\n", cnt);
     return 0;
 }
@@ -185,6 +204,7 @@ static int cmd_mv(char *args[]) {
     int r;
 
     r = aug_mv(aug, src, dst);
+    err_check();
     if (r == -1)
         printf("Failed\n");
     return r;
@@ -196,6 +216,7 @@ static int cmd_set(char *args[]) {
     int r;
 
     r = aug_set(aug, path, val);
+    err_check();
     if (r == -1)
         printf ("Failed\n");
     return r;
@@ -207,6 +228,7 @@ static int cmd_defvar(char *args[]) {
     int r;
 
     r = aug_defvar(aug, name, path);
+    err_check();
     if (r == -1)
         printf ("Failed\n");
     return r;
@@ -223,6 +245,7 @@ static int cmd_defnode(char *args[]) {
     if (value != NULL && strlen(value) == 0)
         value = NULL;
     r = aug_defnode(aug, name, path, value, NULL);
+    err_check();
     if (r == -1)
         printf ("Failed\n");
     return r;
@@ -233,6 +256,7 @@ static int cmd_clear(char *args[]) {
     int r;
 
     r = aug_set(aug, path, NULL);
+    err_check();
     if (r == -1)
         printf ("Failed\n");
     return r;
@@ -250,11 +274,14 @@ static int cmd_get(char *args[]) {
     } else {
         printf(" = %s\n", val);
     }
+    err_check();
     return 0;
 }
 
 static int cmd_print(char *args[]) {
-    return aug_print(aug, stdout, cleanpath(args[0]));
+    int r = aug_print(aug, stdout, cleanpath(args[0]));
+    err_check();
+    return r;
 }
 
 static int cmd_save(ATTRIBUTE_UNUSED char *args[]) {
@@ -262,6 +289,7 @@ static int cmd_save(ATTRIBUTE_UNUSED char *args[]) {
     r = aug_save(aug);
     if (r == -1) {
         printf("Saving failed\n");
+        err_check();
     } else {
         r = aug_match(aug, "/augeas/events/saved", NULL);
         if (r > 0) {
@@ -278,6 +306,7 @@ static int cmd_load(ATTRIBUTE_UNUSED char *args[]) {
     r = aug_load(aug);
     if (r == -1) {
         printf("Loading failed\n");
+        err_check();
     } else {
         r = aug_match(aug, "/augeas/events/saved", NULL);
         if (r > 0) {
@@ -306,8 +335,7 @@ static int cmd_ins(char *args[]) {
     }
 
     r = aug_insert(aug, path, label, before);
-    if (r == -1)
-        printf ("Failed\n");
+    err_check();
     return r;
 }
 
