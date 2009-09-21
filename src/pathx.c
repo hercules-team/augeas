@@ -234,6 +234,9 @@ struct state {
     struct locpath_trace *locpath_trace;
     /* Symbol table for variable lookups */
     struct pathx_symtab *symtab;
+    /* Error structure, used to communicate errors to struct augeas;
+     * we never own this structure, and therefore never free it */
+    struct error        *error;
 };
 
 /* We consider NULL and the empty string to be equal */
@@ -1871,7 +1874,38 @@ static void parse_expr(struct state *state) {
     parse_or_expr(state);
 }
 
-int pathx_parse(const struct tree *tree, const char *txt,
+static void store_error(struct pathx *pathx) {
+    const char *pathx_msg = NULL;
+    const char *path = pathx->state->txt;
+    const pathx_errcode_t errcode = pathx->state->errcode;
+    struct error *err = pathx->state->error;
+
+    char *pos_str = NULL;
+    int pos;
+
+    if (err == NULL || errcode == PATHX_NOERROR || err->code != AUG_NOERROR)
+        return;
+
+    pathx_msg = pathx_error(pathx, NULL, &pos);
+
+    if (ALLOC_N(pos_str, strlen(path) + 4) >= 0) {
+        strncpy(pos_str, path, pos);
+        strcat(pos_str, "|=|");
+        strcat(pos_str, path + pos);
+    }
+
+    err->code = errcode == PATHX_ENOMEM ? AUG_ENOMEM : AUG_EPATHX;
+    err->minor = errcode;
+    err->details = pos_str;
+    pos_str = NULL;
+    err->minor_details = pathx_msg;
+
+    FREE(pos_str);
+}
+
+int pathx_parse(const struct tree *tree,
+                struct error *err,
+                const char *txt,
                 bool need_nodeset,
                 struct pathx_symtab *symtab,
                 struct pathx **pathx) {
@@ -1880,22 +1914,20 @@ int pathx_parse(const struct tree *tree, const char *txt,
     *pathx = NULL;
 
     if (ALLOC(*pathx) < 0)
-        return PATHX_ENOMEM;
+        goto oom;
 
     (*pathx)->origin = (struct tree *) tree;
 
     /* Set up state */
-    if (ALLOC((*pathx)->state) < 0) {
-        free_pathx(*pathx);
-        *pathx = NULL;
-        return PATHX_ENOMEM;
-    }
+    if (ALLOC((*pathx)->state) < 0)
+        goto oom;
     state = (*pathx)->state;
 
     state->errcode = PATHX_NOERROR;
     state->txt = txt;
     state->pos = txt;
     state->symtab = symtab;
+    state->error = err;
 
     if (ALLOC_N(state->value_pool, 8) < 0) {
         STATE_ENOMEM;
@@ -1933,7 +1965,14 @@ int pathx_parse(const struct tree *tree, const char *txt,
     }
 
  done:
+    store_error(*pathx);
     return state->errcode;
+ oom:
+    free_pathx(*pathx);
+    *pathx = NULL;
+    if (err != NULL)
+        err->code = AUG_ENOMEM;
+    return PATHX_ENOMEM;
 }
 
 /*************************************************************************

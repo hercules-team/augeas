@@ -298,6 +298,10 @@ void report_error(struct error *err, aug_errcode_t errcode,
                   const char *format, ...)
     ATTRIBUTE_FORMAT(printf, 3, 4);
 
+static inline struct error *err_of_aug(const struct augeas *aug) {
+    return &((struct augeas *) aug)->error;
+}
+
 #define ERR_BAIL(aug) if ((aug)->error.code != AUG_NOERROR) goto error;
 
 #define ERR_NOMEM(cond, aug)                             \
@@ -442,7 +446,9 @@ const char *pathx_error(struct pathx *pathx, const char **txt, int *pos);
  *
  * Returns 0 on success, and -1 on error
  */
-int pathx_parse(const struct tree *origin, const char *path,
+int pathx_parse(const struct tree *origin,
+                struct error *err,
+                const char *path,
                 bool need_nodeset,
                 struct pathx_symtab *symtab,
                 struct pathx **px);
