@@ -55,7 +55,9 @@ static const char *const errcodes[] = {
     "No error",                                         /* AUG_NOERROR */
     "Cannot allocate memory",                           /* AUG_ENOMEM */
     "Internal error (please file a bug)",               /* AUG_EINTERNAL */
-    "Invalid path expression"                           /* AUG_EPATHX */
+    "Invalid path expression",                          /* AUG_EPATHX */
+    "No match for path expression",                     /* AUG_ENOMATCH */
+    "Too many matches for path expression"              /* AUG_EMMATCH */
 };
 
 static void tree_mark_dirty(struct tree *tree) {
@@ -392,6 +394,23 @@ int aug_load(struct augeas *aug) {
     return -1;
 }
 
+static int find_one_node(struct pathx *p, struct tree **match) {
+    struct error *err = err_of_pathx(p);
+    int r = pathx_find_one(p, match);
+
+    if (r == 1)
+        return 0;
+
+    if (r == 0) {
+        report_error(err, AUG_ENOMATCH, NULL);
+    } else {
+        /* r > 1 */
+        report_error(err, AUG_EMMATCH, NULL);
+    }
+
+    return -1;
+}
+
 int aug_get(const struct augeas *aug, const char *path, const char **value) {
     struct pathx *p;
     struct tree *match;
@@ -515,7 +534,7 @@ int tree_insert(struct pathx *p, const char *label, int before) {
     if (strchr(label, SEP) != NULL)
         return -1;
 
-    if (pathx_find_one(p, &match) != 1)
+    if (find_one_node(p, &match) < 0)
         goto error;
 
     new = make_tree(strdup(label), NULL, match->parent, NULL);
@@ -711,8 +730,8 @@ int aug_mv(struct augeas *aug, const char *src, const char *dst) {
     d = parse_user_pathx(aug, true, dst);
     ERR_BAIL(aug);
 
-    r = pathx_find_one(s, &ts);
-    if (r != 1)
+    r = find_one_node(s, &ts);
+    if (r < 0)
         goto error;
 
     r = pathx_expand_tree(d, &td);

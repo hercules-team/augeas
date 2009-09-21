@@ -2236,14 +2236,11 @@ int pathx_find_one(struct pathx *path, struct tree **tree) {
     *tree = pathx_first(path);
     if (HAS_ERROR(path->state))
         return -1;
-    if (*tree == NULL)
-        return 0;
+    return path->nodeset->used;
+}
 
-    if (pathx_next(path) != NULL) {
-        *tree = NULL;
-        return -1;
-    }
-    return 1;
+struct error *err_of_pathx(struct pathx *px) {
+    return px->state->error;
 }
 
 const char *pathx_error(struct pathx *path, const char **txt, int *pos) {

@@ -452,8 +452,13 @@ int pathx_parse(const struct tree *origin,
                 bool need_nodeset,
                 struct pathx_symtab *symtab,
                 struct pathx **px);
+/* Return the error struct that was passed into pathx_parse */
+struct error *err_of_pathx(struct pathx *px);
 struct tree *pathx_first(struct pathx *path);
 struct tree *pathx_next(struct pathx *path);
+/* Return -1 if evalutating PATH runs into trouble, otherwise return the
+ * number of nodes matching PATH and set MATCH to the first matching
+ * node */
 int pathx_find_one(struct pathx *path, struct tree **match);
 int pathx_expand_tree(struct pathx *path, struct tree **tree);
 void free_pathx(struct pathx *path);
