@@ -679,6 +679,7 @@ int aug_rm(struct augeas *aug, const char *path) {
 
     result = tree_rm(p);
     free_pathx(p);
+    ERR_BAIL(aug);
 
     api_exit(aug);
     return result;
@@ -790,6 +791,7 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
         if (! TREE_HIDDEN(tree))
             cnt += 1;
     }
+    ERR_BAIL(aug);
 
     if (matches == NULL)
         goto done;
@@ -807,6 +809,7 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
         }
         i += 1;
     }
+    ERR_BAIL(aug);
  done:
     free_pathx(p);
     api_exit(aug);
