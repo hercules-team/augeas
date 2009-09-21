@@ -2256,27 +2256,6 @@ void free_symtab(struct pathx_symtab *symtab) {
     }
 }
 
-int pathx_symtab_init(struct pathx_symtab **symtab) {
-    struct value *v = NULL;
-
-    *symtab = NULL;
-
-    if (ALLOC(v) < 0)
-        goto error;
-    v->tag = T_BOOLEAN;
-
-    *symtab = make_symtab(NULL, " unused ", v);
-    if (*symtab == NULL)
-        goto error;
-    return 0;
- error:
-    release_value(v);
-    free(v);
-    free_symtab(*symtab);
-    *symtab = NULL;
-    return -1;
-}
-
 struct pathx_symtab *pathx_get_symtab(struct pathx *pathx) {
     return pathx->state->symtab;
 }
