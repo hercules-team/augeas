@@ -22,8 +22,6 @@
 
 #include <config.h>
 
-#include "canonicalize.h"
-
 #include <fnmatch.h>
 #include <glob.h>
 
