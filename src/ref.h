@@ -24,6 +24,7 @@
 #define REF_H_
 
 #include <limits.h>
+#include <stddef.h>
 
 /* Reference counting for pointers to structs with a REF field of type ref_t
  *
@@ -41,11 +42,10 @@
 
 typedef unsigned int ref_t;
 
-#define make_ref(var)                                                   \
-    do {                                                                \
-        CALLOC(var, 1);                                                 \
-        if (var) var->ref = 1;                                          \
-    } while(0)
+int ref_make_ref(void *ptrptr, size_t size, size_t ref_ofs);
+
+#define make_ref(var)                                           \
+    ref_make_ref(&(var), sizeof(*(var)), offsetof(typeof(*(var)), ref))
 
 #define ref(s) (((s) == NULL || (s)->ref == REF_MAX) ? (s) : ((s)->ref++, (s)))
 

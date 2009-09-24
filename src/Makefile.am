@@ -20,7 +20,7 @@ include_HEADERS = augeas.h fa.h
 
 libaugeas_la_SOURCES = augeas.h augeas.c pathx.c \
 	internal.h internal.c \
-	memory.h memory.c ref.h \
+	memory.h memory.c ref.h ref.c \
     syntax.c syntax.h parser.y builtin.c lens.c lens.h regexp.c regexp.h \
 	transform.h transform.c ast.c get.c put.c list.h \
     info.c info.h
@@ -43,7 +43,7 @@ augtool_LDADD = libaugeas.la $(READLINE_LIBS) $(GNULIB)
 augparse_SOURCES = augparse.c
 augparse_LDADD = libaugeas.la $(GNULIB)
 
-libfa_la_SOURCES = fa.c fa.h hash.c hash.h memory.c memory.h ref.h
+libfa_la_SOURCES = fa.c fa.h hash.c hash.h memory.c memory.h ref.h ref.c
 libfa_la_LIBADD = $(GNULIB)
 libfa_la_LDFLAGS = $(FA_VERSION_SCRIPT) -version-info $(LIBFA_VERSION_INFO)
 
