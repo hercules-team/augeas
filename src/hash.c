@@ -641,11 +641,11 @@ int hash_alloc_insert(hash_t *hash, const void *key, void *data)
     hnode_t *node = hash->allocnode(hash->context);
 
     if (node) {
-	hnode_init(node, data);
-	hash_insert(hash, node, key);
-	return 1;
+      hnode_init(node, data);
+      hash_insert(hash, node, key);
+      return 0;
     }
-    return 0;
+    return -1;
 }
 
 void hash_delete_free(hash_t *hash, hnode_t *node)
@@ -974,7 +974,7 @@ int main(void)
                     break;
 		}
 
-		if (!hash_alloc_insert(h, key, val)) {
+		if (hash_alloc_insert(h, key, val) < 0) {
 		    puts("hash_alloc_insert failed");
 		    free((void *) key);
 		    free(val);
