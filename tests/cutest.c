@@ -36,9 +36,8 @@
 #include <math.h>
 
 #include "cutest.h"
+#include "memory.h"
 
-
-#define CU_ALLOC(TYPE)		((TYPE*) malloc(sizeof(TYPE)))
 #define HUGE_STRING_LEN	8192
 #define STRING_MAX		256
 
@@ -47,6 +46,11 @@
         fprintf(stderr, "Fatal error (probably out of memory)\n");      \
         abort();                                                        \
     }
+
+void die_oom(void) {
+    printf("Ran out of memory. Send more\n");
+    exit(2);
+}
 
 /*-------------------------------------------------------------------------*
  * CuTest
@@ -62,7 +66,9 @@ void CuTestInit(CuTest* t, const char* name, TestFunction function) {
 }
 
 CuTest* CuTestNew(const char* name, TestFunction function) {
-	CuTest* tc = CU_ALLOC(CuTest);
+	CuTest* tc = NULL;
+    if (ALLOC(tc) < 0)
+        die_oom();
 	CuTestInit(tc, name, function);
 	return tc;
 }
@@ -180,7 +186,9 @@ void CuSuiteInit(CuSuite* testSuite) {
 }
 
 CuSuite* CuSuiteNew(void) {
-	CuSuite* testSuite = CU_ALLOC(CuSuite);
+	CuSuite* testSuite = NULL;
+    if (ALLOC(testSuite) < 0)
+        die_oom();
 	CuSuiteInit(testSuite);
 	return testSuite;
 }
@@ -222,6 +230,8 @@ static void string_append(char **s, const char *p) {
     } else {
         int len = strlen(*s) + strlen(p) + 1;
         *s = realloc(*s, len);
+        if (*s == NULL)
+            die_oom();
         strcat(*s, p);
     }
 }

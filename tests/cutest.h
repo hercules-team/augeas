@@ -33,6 +33,8 @@
 #include <setjmp.h>
 #include <stdarg.h>
 
+void die_oom(void);
+
 /* CuTest */
 
 typedef struct CuTest CuTest;
