@@ -44,7 +44,13 @@ static void print_regerror(int err, const char *regexp) {
     size = regerror(err, NULL, NULL, 0);
     errbuf = alloca(size);
     regerror(err, NULL, errbuf, size);
-    fprintf(stderr, "Error building fa from %s:\n", regexp);
+    if (strlen(regexp) > 40) {
+        char *s = strndup(regexp, 40);
+        fprintf(stderr, "Error building fa from %s...:\n", s);
+        free(s);
+    } else {
+        fprintf(stderr, "Error building fa from %s:\n", regexp);
+    }
     fprintf(stderr, "  %s\n", errbuf);
 }
 
