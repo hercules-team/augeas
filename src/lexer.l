@@ -45,15 +45,6 @@ int augl_get_column  (yyscan_t yyscanner);
 static void augl_set_column (int  column_no , yyscan_t yyscanner);
 int augl_init_lexer(struct info *info, yyscan_t * scanner);
 
-static int to_int(const char *str) {
-  int v;
-  if (sscanf(str, "%d", &v) != 1) {
-    fprintf(stderr, "Weird: failed to convert int\n");
-    v = -1;
-  }
-  return v;
-}
-
 static void loc_update(YYLTYPE *yylloc, const char *s, int len) {
   for (int i=0; i < len; i++) {
     if (s[i] == '\n') {
