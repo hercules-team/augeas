@@ -29,6 +29,7 @@
 
 #include "ref.h"
 #include "regexp.h"
+#include "errcode.h"
 
 static const char *const errcodes[] = {
     "no error",

@@ -5,6 +5,7 @@
 #include "internal.h"
 #include "syntax.h"
 #include "list.h"
+#include "errcode.h"
 #include <stdio.h>
 
 /* Work around a problem on FreeBSD where Bison looks for _STDLIB_H

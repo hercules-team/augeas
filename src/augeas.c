@@ -26,6 +26,7 @@
 #include "memory.h"
 #include "syntax.h"
 #include "transform.h"
+#include "errcode.h"
 
 #include <fnmatch.h>
 #include <argz.h>
@@ -133,19 +134,19 @@ static int tree_set_value(struct tree *tree, const char *value) {
 
 /* Report pathx errors in /augeas/pathx/error */
 static void store_pathx_error(const struct augeas *aug) {
-    if (aug->error.code != AUG_EPATHX)
+    if (aug->error->code != AUG_EPATHX)
         return;
 
     struct tree *error =
         tree_path_cr(aug->origin, 3, s_augeas, s_pathx, s_error);
     if (error == NULL)
         return;
-    tree_set_value(error, aug->error.minor_details);
+    tree_set_value(error, aug->error->minor_details);
 
     struct tree *tpos = tree_child_cr(error, s_pos);
     if (tpos == NULL)
         return;
-    tree_set_value(tpos, aug->error.details);
+    tree_set_value(tpos, aug->error->details);
 }
 
 static struct pathx *parse_user_pathx(const struct augeas *aug,
@@ -238,6 +239,8 @@ struct augeas *aug_init(const char *root, const char *loadpath,
         return NULL;
 
     if (ALLOC(result) < 0)
+        goto error;
+    if (ALLOC(result->error) < 0)
         goto error;
     result->origin = make_tree_origin(tree_root);
     if (result->origin == NULL) {
@@ -347,7 +350,7 @@ static void tree_unlink_children(struct augeas *aug, struct tree *tree) {
  * work within a matching pair of api_entry/api_exit calls.
  */
 static void api_entry(const struct augeas *aug) {
-    struct error *err = &((struct augeas *) aug)->error;
+    struct error *err = ((struct augeas *) aug)->error;
 
     ((struct augeas *) aug)->api_entries += 1;
 
@@ -1097,7 +1100,8 @@ void aug_close(struct augeas *aug) {
     free((void *) aug->root);
     free(aug->modpathz);
     free_symtab(aug->symtab);
-    free(aug->error.details);
+    free(aug->error->details);
+    free(aug->error);
     free(aug);
 }
 
@@ -1119,11 +1123,11 @@ int tree_equal(const struct tree *t1, const struct tree *t2) {
  * Error reporting API
  */
 int aug_error(struct augeas *aug) {
-    return aug->error.code;
+    return aug->error->code;
 }
 
 const char *aug_error_message(struct augeas *aug) {
-    aug_errcode_t errcode = aug->error.code;
+    aug_errcode_t errcode = aug->error->code;
 
     if (errcode > ARRAY_CARDINALITY(errcodes))
         errcode = AUG_EINTERNAL;
@@ -1131,11 +1135,11 @@ const char *aug_error_message(struct augeas *aug) {
 }
 
 const char *aug_error_minor_message(struct augeas *aug) {
-    return aug->error.minor_details;
+    return aug->error->minor_details;
 }
 
 const char *aug_error_details(struct augeas *aug) {
-    return aug->error.details;
+    return aug->error->details;
 }
 
 /*

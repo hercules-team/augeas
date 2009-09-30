@@ -23,7 +23,7 @@ libaugeas_la_SOURCES = augeas.h augeas.c pathx.c \
 	memory.h memory.c ref.h ref.c \
     syntax.c syntax.h parser.y builtin.c lens.c lens.h regexp.c regexp.h \
 	transform.h transform.c ast.c get.c put.c list.h \
-    info.c info.h
+    info.c info.h errcode.c errcode.h
 
 if USE_VERSION_SCRIPT
   AUGEAS_VERSION_SCRIPT = $(VERSION_SCRIPT_FLAGS)$(srcdir)/augeas_sym.version

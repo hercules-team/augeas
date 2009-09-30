@@ -267,16 +267,6 @@ const char *xstrerror(int errnum, char *buf, size_t len);
 /* Like asprintf, but set *STRP to NULL on error */
 int xasprintf(char **strp, const char *format, ...);
 
-/*
- * Error details in a separate struct that we can pass around
- */
-struct error {
-    aug_errcode_t  code;
-    int            minor;
-    char          *details;       /* Human readable explanation */
-    const char    *minor_details; /* Human readable version of MINOR */
-};
-
 /* Struct: augeas
  * The data structure representing a connection to Augeas. */
 struct augeas {
@@ -289,37 +279,14 @@ struct augeas {
     char             *modpathz;   /* The search path for modules as a
                                      glibc argz vector */
     struct pathx_symtab *symtab;
-    struct error        error;
+    struct error        *error;
     uint                api_entries;  /* Number of entries through a public
                                        * API, 0 when called from outside */
 };
 
-void report_error(struct error *err, aug_errcode_t errcode,
-                  const char *format, ...)
-    ATTRIBUTE_FORMAT(printf, 3, 4);
-
 static inline struct error *err_of_aug(const struct augeas *aug) {
-    return &((struct augeas *) aug)->error;
+    return ((struct augeas *) aug)->error;
 }
-
-#define ERR_BAIL(aug) if ((aug)->error.code != AUG_NOERROR) goto error;
-
-#define ERR_NOMEM(cond, aug)                             \
-    if (cond) {                                          \
-        report_error(&((aug)->error), AUG_ENOMEM, NULL); \
-        goto error;                                      \
-    }
-
-#define ERR_REPORT(aug, code, fmt ...)          \
-    report_error(&((aug)->error), code, ## fmt)
-
-#define ERR_THROW(cond, aug, code, fmt ...)             \
-    do {                                                \
-        if (cond) {                                     \
-            report_error(&(aug)->error, code, ## fmt);  \
-            goto error;                                 \
-        }                                               \
-    } while(0)
 
 /* Struct: tree
  * An entry in the global config tree. The data structure allows associating
