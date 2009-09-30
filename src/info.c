@@ -60,7 +60,7 @@ void free_string(struct string *string) {
  */
 char *format_info(struct info *info) {
     const char *fname;
-    char *result;
+    char *result = NULL;
     int r = 0;
     int fl = info->first_line, ll = info->last_line;
     int fc = info->first_column, lc = info->last_column;
@@ -69,13 +69,15 @@ char *format_info(struct info *info) {
     if (fl > 0) {
         if (fl == ll) {
             if (fc == lc) {
-                r = asprintf(&result, "%s:%d.%d", fname, fl, fc);
+                r = xasprintf(&result, "%s:%d.%d:", fname, fl, fc);
             } else {
-                r = asprintf(&result, "%s:%d.%d-.%d", fname, fl, fc, lc);
+                r = xasprintf(&result, "%s:%d.%d-.%d:", fname, fl, fc, lc);
             }
         } else {
-            r = asprintf(&result, "%s:%d.%d-%d.%d", fname, fl, fc, ll, lc);
+            r = xasprintf(&result, "%s:%d.%d-%d.%d:", fname, fl, fc, ll, lc);
         }
+    } else {
+        r = xasprintf(&result, "%s:", fname);
     }
     return (r == -1) ? NULL : result;
 }
