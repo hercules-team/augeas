@@ -84,7 +84,7 @@ int fa_is_basic(struct fa *fa, unsigned int basic);
  * automaton will also be deterministic after being minimized. Modifies the
  * automaton in place.
  */
-void fa_minimize(struct fa *fa);
+int fa_minimize(struct fa *fa);
 
 /* Return a finite automaton that accepts the concatenation of the
  * languages for FA1 and FA2, i.e. L(FA1).L(FA2)

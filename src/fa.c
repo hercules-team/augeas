@@ -44,6 +44,10 @@
 #define UCHAR_MIN 0
 typedef unsigned char uchar;
 
+#define _E(cond) if (cond) goto error
+#define _F(expr) if ((expr) < 0) goto error
+#define _N(expr) if ((expr) == NULL) goto error
+
 /* Which algorithm to use in FA_MINIMIZE */
 int fa_minimization_algorithm = FA_MIN_HOPCROFT;
 
@@ -239,8 +243,10 @@ struct state_set_list {
  *
  * Only automata in this state should be returned to the user
  */
-static struct fa *collect(struct fa *fa);
+ATTRIBUTE_RETURN_CHECK
+static int collect(struct fa *fa);
 
+ATTRIBUTE_RETURN_CHECK
 static int totalize(struct fa *fa);
 
 /* Print an FA into a (fairly) fixed file if the environment variable
@@ -419,6 +425,8 @@ static struct state *add_state(struct fa *fa, int accept) {
 ATTRIBUTE_RETURN_CHECK
 static int add_new_trans(struct state *from, struct state *to,
                          uchar min, uchar max) {
+    assert(to != NULL);
+
     if (from->tused == from->tsize) {
         size_t tsize = from->tsize;
         if (tsize == 0)
@@ -459,18 +467,29 @@ static void set_initial(struct fa *fa, struct state *s) {
 /* Merge automaton FA2 into FA1. This simply adds FA2's states to FA1
    and then frees FA2. It has no influence on the language accepted by FA1
 */
-static void fa_merge(struct fa *fa1, struct fa *fa2) {
-    list_append(fa1->initial, fa2->initial);
-    free(fa2);
+static void fa_merge(struct fa *fa1, struct fa **fa2) {
+    list_append(fa1->initial, (*fa2)->initial);
+    free(*fa2);
+    *fa2 = NULL;
 }
 
 /*
  * Operations on STATE_SET
  */
-static void state_set_init_data(struct state_set *set) {
+static void state_set_free(struct state_set *set) {
+    if (set == NULL)
+        return;
+    free(set->states);
+    free(set->data);
+    free(set);
+}
+
+static int state_set_init_data(struct state_set *set) {
     set->with_data = 1;
     if (set->data == NULL)
-        CALLOC(set->data, set->size);
+        return ALLOC_N(set->data, set->size);
+    else
+        return 0;
 }
 
 /* Create a new STATE_SET with an initial size of SIZE. If SIZE is -1, use
@@ -484,37 +503,43 @@ static void state_set_init_data(struct state_set *set) {
      with the size of the STATES array.
 */
 static struct state_set *state_set_init(int size, int flags) {
-    struct state_set *set;
-    CALLOC(set, 1);
+    struct state_set *set = NULL;
+
+    _F(ALLOC(set));
+
     set->sorted = (flags & S_SORTED) ? 1 : 0;
     set->with_data = (flags & S_DATA) ? 1 : 0;
     if (size > 0) {
         set->size = size;
-        CALLOC(set->states, set->size);
+        _F(ALLOC_N(set->states, set->size));
         if (set->with_data)
-            state_set_init_data(set);
+            _F(state_set_init_data(set));
     }
     return set;
+ error:
+    state_set_free(set);
+    return NULL;
 }
 
-static void state_set_free(struct state_set *set) {
-    if (set == NULL)
-        return;
-    free(set->states);
-    free(set->data);
-    free(set);
-}
-
-static void state_set_expand(struct state_set *set) {
+ATTRIBUTE_RETURN_CHECK
+static int state_set_expand(struct state_set *set) {
     if (set->size == 0)
         set->size = array_initial_size;
     else if (set->size > array_max_expansion)
         set->size += array_max_expansion;
     else
         set->size *= 2;
-    set->states = realloc(set->states, set->size * sizeof(* set->states));
+    if (REALLOC_N(set->states, set->size) < 0)
+        goto error;
     if (set->with_data)
-        set->data = realloc(set->data, set->size * sizeof(* set->data));
+        if (REALLOC_N(set->data, set->size) < 0)
+            goto error;
+    return 0;
+ error:
+    /* We do this to provoke a SEGV as early as possible */
+    FREE(set->states);
+    FREE(set->data);
+    return -1;
 }
 
 /* Return the index where S belongs in SET->STATES to keep it sorted.  S
@@ -536,13 +561,16 @@ static int state_set_pos(const struct state_set *set, const struct state *s) {
     return l;
 }
 
+ATTRIBUTE_RETURN_CHECK
 static int state_set_push(struct state_set *set, struct state *s) {
     if (set->size == set->used)
-        state_set_expand(set);
+        if (state_set_expand(set) < 0)
+            return -1;
     if (set->sorted) {
         int p = state_set_pos(set, s);
         if (set->size == set->used)
-            state_set_expand(set);
+            if (state_set_expand(set) < 0)
+                return -1;
         while (p < set->used && set->states[p] <= s)
             p += 1;
         if (p < set->used) {
@@ -561,9 +589,12 @@ static int state_set_push(struct state_set *set, struct state *s) {
     }
 }
 
+ATTRIBUTE_RETURN_CHECK
 static int state_set_push_data(struct state_set *set, struct state *s,
                                void *d) {
     int i = state_set_push(set, s);
+    if (i == -1)
+        return -1;
     set->data[i] = d;
     return i;
 }
@@ -601,14 +632,16 @@ static void state_set_remove(struct state_set *set,
 }
 
 /* Only add S if it's not in SET yet. Return 1 if S was added, 0 if it was
-   already in the set. */
+   already in the set and -1 on error. */
+ATTRIBUTE_RETURN_CHECK
 static int state_set_add(struct state_set *set, struct state *s) {
     if (set->sorted) {
         int p = state_set_pos(set, s);
         if (p < set->used && set->states[p] == s)
             return 0;
         if (set->size == set->used)
-            state_set_expand(set);
+            if (state_set_expand(set) < 0)
+                return -1;
         while (p < set->used && set->states[p] <= s)
             p += 1;
         if (p < set->used) {
@@ -623,9 +656,15 @@ static int state_set_add(struct state_set *set, struct state *s) {
     } else {
         if (state_set_index(set, s) >= 0)
             return 0;
-        state_set_push(set, s);
+        if (state_set_push(set, s) < 0)
+            goto error;
     }
     return 1;
+ error:
+    /* We do this to provoke a SEGV as early as possible */
+    FREE(set->states);
+    FREE(set->data);
+    return -1;
 }
 
 static struct state *state_set_pop(struct state_set *set) {
@@ -687,15 +726,19 @@ static void state_set_compact(struct state_set *set) {
 /* Add an entry (FST, SND) to SET. FST is stored in SET->STATES, and SND is
    stored in SET->DATA at the same index.
 */
-static struct state_set *state_pair_push(struct state_set *set,
-                                         struct state *fst,
-                                         struct state *snd) {
-    if (set == NULL)
-        set = state_set_init(-1, S_DATA);
-    int i = state_set_push(set, fst);
-    set->data[i] = snd;
+ATTRIBUTE_RETURN_CHECK
+static int state_pair_push(struct state_set **set,
+                           struct state *fst, struct state *snd) {
+    if (*set == NULL)
+        *set = state_set_init(-1, S_DATA);
+    if (*set == NULL)
+        return -1;
+    int i = state_set_push(*set, fst);
+    if (i == -1)
+        return -1;
+    (*set)->data[i] = snd;
 
-    return set;
+    return 0;
 }
 
 /* Return the index of the pair (FST, SND) in SET, or -1 if SET contains no
@@ -750,15 +793,17 @@ static state_triple_hash *state_triple_init(void) {
     return hash;
 }
 
-static void state_triple_push(state_triple_hash *hash,
-                              struct state *s1,
-                              struct state *s2,
-                              struct state *s3) {
+ATTRIBUTE_RETURN_CHECK
+static int state_triple_push(state_triple_hash *hash,
+                             struct state *s1,
+                             struct state *s2,
+                             struct state *s3) {
     struct state **pair;
-    CALLOC(pair, 2);
+    if (ALLOC_N(pair, 2) < 0)
+        return -1;
     pair[0] = s1;
     pair[1] = s2;
-    hash_alloc_insert(hash, pair, s3);
+    return hash_alloc_insert(hash, pair, s3);
 }
 
 static struct state * state_triple_thd(state_triple_hash *hash,
@@ -782,9 +827,12 @@ static void state_triple_free(state_triple_hash *hash) {
 /*
  * State operations
  */
-
-static void mark_reachable(struct fa *fa) {
+ATTRIBUTE_RETURN_CHECK
+static int mark_reachable(struct fa *fa) {
     struct state_set *worklist = state_set_init(-1, S_NONE);
+    int result = -1;
+
+    _E(worklist == NULL);
 
     list_for_each(s, fa->initial) {
         s->reachable = 0;
@@ -797,11 +845,15 @@ static void mark_reachable(struct fa *fa) {
         for_each_trans(t, s) {
             if (! t->to->reachable) {
                 t->to->reachable = 1;
-                state_set_push(worklist, t->to);
+                _F(state_set_push(worklist, t->to));
             }
         }
     }
+    result = 0;
+
+ error:
     state_set_free(worklist);
+    return result;
 }
 
 /* Return all reachable states. As a sideeffect, all states have their
@@ -809,13 +861,19 @@ static void mark_reachable(struct fa *fa) {
  */
 static struct state_set *fa_states(struct fa *fa) {
     struct state_set *visited = state_set_init(-1, S_NONE);
+    int r;
 
-    mark_reachable(fa);
+    r = mark_reachable(fa);
+    _E(visited == NULL || r < 0);
+
     list_for_each(s, fa->initial) {
         if (s->reachable)
-            state_set_push(visited, s);
+            _F(state_set_push(visited, s));
     }
     return visited;
+ error:
+    state_set_free(visited);
+    return NULL;
 }
 
 /* Return all reachable accepting states. As a sideeffect, all states have
@@ -823,23 +881,28 @@ static struct state_set *fa_states(struct fa *fa) {
  */
 static struct state_set *fa_accept_states(struct fa *fa) {
     struct state_set *accept = state_set_init(-1, S_NONE);
+    int r;
 
-    mark_reachable(fa);
+    r = mark_reachable(fa);
     list_for_each(s, fa->initial) {
         if (s->reachable && s->accept)
-            state_set_push(accept, s);
+            _F(state_set_push(accept, s));
     }
     return accept;
+ error:
+    return NULL;
 }
 
 /* Mark all live states, i.e. states from which an accepting state can be
    reached. All states have their REACHABLE and LIVE flags set
    appropriately.
  */
-static void mark_live(struct fa *fa) {
+ATTRIBUTE_RETURN_CHECK
+static int mark_live(struct fa *fa) {
     int changed;
 
-    mark_reachable(fa);
+    _F(mark_reachable(fa));
+
     list_for_each(s, fa->initial) {
         s->live = s->reachable && s->accept;
     }
@@ -858,6 +921,9 @@ static void mark_live(struct fa *fa) {
             }
         }
     } while (changed);
+    return 0;
+ error:
+    return -1;
 }
 
 /*
@@ -868,18 +934,18 @@ static void mark_live(struct fa *fa) {
  * be freed by the caller.
  */
 static struct state_set *fa_reverse(struct fa *fa) {
-    struct state_set *all;
-    struct state_set *accept;
+    struct state_set *all = NULL;
+    struct state_set *accept = NULL;
     int r;
 
     all = fa_states(fa);
     accept = fa_accept_states(fa);
 
-    state_set_init_data(all);
+    _F(state_set_init_data(all));
 
     /* Reverse all transitions */
     int *tused;
-    CALLOC(tused, all->used);
+    _F(ALLOC_N(tused, all->used));
     for (int i=0; i < all->used; i++) {
         all->data[i] = all->states[i]->trans;
         tused[i] = all->states[i]->tused;
@@ -926,8 +992,9 @@ static struct state_set *fa_reverse(struct fa *fa) {
  */
 static uchar* start_points(struct fa *fa, int *npoints) {
     char pointset[UCHAR_NUM];
+    uchar *points = NULL;
 
-    mark_reachable(fa);
+    _F(mark_reachable(fa));
     MEMZERO(pointset, UCHAR_NUM);
     list_for_each(s, fa->initial) {
         if (! s->reachable)
@@ -943,14 +1010,16 @@ static uchar* start_points(struct fa *fa, int *npoints) {
     *npoints = 0;
     for(int i=0; i < UCHAR_NUM; *npoints += pointset[i], i++);
 
-    uchar *points;
-    CALLOC(points, *npoints+1);
+    _F(ALLOC_N(points, *npoints+1));
     for (int i=0, n=0; i < UCHAR_NUM; i++) {
         if (pointset[i])
             points[n++] = (uchar) i;
     }
 
     return points;
+ error:
+    free(points);
+    return NULL;
 }
 
 /*
@@ -1005,17 +1074,20 @@ static void set_destroy(hnode_t *node, ATTRIBUTE_UNUSED void *ctx) {
     free(node);
 }
 
-static state_set_hash *state_set_hash_add(state_set_hash *smap,
-                                  struct state_set *set,
-                                  struct fa *fa) {
-    if (smap == NULL) {
-        smap = hash_create(HASHCOUNT_T_MAX, set_cmp, set_hash);
-        if (smap == NULL)
-            return NULL;
-        hash_set_allocator(smap, NULL, set_destroy, NULL);
+ATTRIBUTE_RETURN_CHECK
+static int state_set_hash_add(state_set_hash **smap,
+                              struct state_set *set, struct fa *fa) {
+    if (*smap == NULL) {
+        *smap = hash_create(HASHCOUNT_T_MAX, set_cmp, set_hash);
+        _E(*smap == NULL);
+        hash_set_allocator(*smap, NULL, set_destroy, NULL);
     }
-    hash_alloc_insert(smap, set, add_state(fa, 0));
-    return smap;
+    struct state *s = add_state(fa, 0);
+    _E(s == NULL);
+    _F(hash_alloc_insert(*smap, set, s));
+    return 0;
+ error:
+    return -1;
 }
 
 static void state_set_hash_free(state_set_hash *smap,
@@ -1030,13 +1102,14 @@ static void state_set_hash_free(state_set_hash *smap,
     hash_destroy(smap);
 }
 
-static struct state_set_list *state_set_list_add(struct state_set_list *list,
-                                                 struct state_set *set) {
+static int state_set_list_add(struct state_set_list **list,
+                              struct state_set *set) {
     struct state_set_list *elt;
-    CALLOC(elt, 1);
+    if (ALLOC(elt) < 0)
+        return -1;
     elt->set = set;
-    list_cons(list, elt);
-    return list;
+    list_cons(*list, elt);
+    return 0;
 }
 
 static struct state_set *state_set_list_pop(struct state_set_list **list) {
@@ -1162,8 +1235,8 @@ static void collect_dead_states(struct fa *fa) {
     }
 }
 
-static struct fa *collect(struct fa *fa) {
-    mark_live(fa);
+static int collect(struct fa *fa) {
+    _F(mark_live(fa));
 
     if (! fa->initial->live) {
         /* This automaton accepts nothing, make it the canonical
@@ -1179,7 +1252,9 @@ static struct fa *collect(struct fa *fa) {
         collect_dead_states(fa);
     }
     reduce(fa);
-    return fa;
+    return 0;
+ error:
+    return -1;
 }
 
 static void swap_initial(struct fa *fa) {
@@ -1200,21 +1275,23 @@ static int determinize(struct fa *fa, struct state_set *ini) {
     int npoints;
     int make_ini = (ini == NULL);
     const uchar *points = NULL;
-    state_set_hash *newstate;
-    struct state_set_list *worklist;
+    state_set_hash *newstate = NULL;
+    struct state_set_list *worklist = NULL;
     int ret = 0;
 
     if (fa->deterministic)
         return 0;
 
     points = start_points(fa, &npoints);
+    _E(points == NULL);
     if (make_ini) {
         ini = state_set_init(-1, S_NONE);
-        state_set_push(ini, fa->initial);
+        if (ini == NULL || state_set_push(ini, fa->initial) < 0)
+            goto error;
     }
 
-    worklist = state_set_list_add(NULL, ini);
-    newstate = state_set_hash_add(NULL, ini, fa);
+    _F(state_set_list_add(&worklist, ini));
+    _F(state_set_hash_add(&newstate, ini, fa));
     // Make the new state the initial state
     swap_initial(fa);
     while (worklist != NULL) {
@@ -1225,16 +1302,17 @@ static int determinize(struct fa *fa, struct state_set *ini) {
         }
         for (int n=0; n < npoints; n++) {
             struct state_set *pset = state_set_init(-1, S_SORTED);
+            _E(pset == NULL);
             for(int q=0 ; q < sset->used; q++) {
                 for_each_trans(t, sset->states[q]) {
                     if (t->min <= points[n] && points[n] <= t->max) {
-                        state_set_add(pset, t->to);
+                        _F(state_set_add(pset, t->to));
                     }
                 }
             }
             if (!state_set_hash_contains(newstate, pset)) {
-                worklist = state_set_list_add(worklist, pset);
-                newstate = state_set_hash_add(newstate, pset, fa);
+                _F(state_set_list_add(&worklist, pset));
+                _F(state_set_hash_add(&newstate, pset, fa));
             }
             pset = state_set_hash_uniq(newstate, pset);
 
@@ -1243,19 +1321,22 @@ static int determinize(struct fa *fa, struct state_set *ini) {
             uchar max = UCHAR_MAX;
             if (n+1 < npoints)
                 max = points[n+1] - 1;
-            if (add_new_trans(r, q, min, max) < 0) {
-                ret = -1;
-                goto done;
-            }
+            if (add_new_trans(r, q, min, max) < 0)
+                goto error;
         }
     }
     fa->deterministic = 1;
 
  done:
-    state_set_hash_free(newstate, make_ini ? NULL : ini);
+    if (newstate)
+        state_set_hash_free(newstate, make_ini ? NULL : ini);
     free((void *) points);
-    collect(fa);
+    if (collect(fa) < 0)
+        ret = -1;
     return ret;
+ error:
+    ret = -1;
+    goto done;
 }
 
 /*
@@ -1284,16 +1365,13 @@ struct state_list_node {
     struct state           *state;
 };
 
-static struct state_list *state_list_init(void) {
-    struct state_list *sl;
-    CALLOC(sl, 1);
-    return sl;
-}
-
 static struct state_list_node *state_list_add(struct state_list *sl,
                                               struct state *s) {
     struct state_list_node *n;
-    CALLOC(n, 1);
+
+    if (ALLOC(n) < 0)
+        return NULL;
+
     n->state = s;
     n->sl = sl;
 
@@ -1324,88 +1402,98 @@ static void state_list_remove(struct state_list_node *n) {
 }
 
 static void state_list_free(struct state_list *sl) {
-    list_free(sl->first);
+    if (sl)
+        list_free(sl->first);
     free(sl);
 }
 
 /* The linear index of element (q,c) in an NSTATES * NSIGMA matrix */
 #define INDEX(q, c) (q * nsigma + c)
 
-/* This macro is a terrible kludge; we use it to abort when allocation     */
-/* fails during Hopcroft minimization. Bailing out of that routine         */
-/* needs some serious thought to make sure we do not leave dangling memory */
-/* behind. So, for now, we abort                                           */
-#define ABORT_ALLOC_FAILURE                     \
-    do {                                        \
-        FIXME("Handle allocation failure");     \
-        abort();                                \
-    } while(0)
+static int minimize_hopcroft(struct fa *fa) {
+    struct state_set *states = NULL;
+    uchar *sigma = NULL;
+    struct state_set **reverse = NULL;
+    bitset *reverse_nonempty = NULL;
+    struct state_set **partition = NULL;
+    unsigned int *block = NULL;
+    struct state_list **active = NULL;
+    struct state_list_node **active2 = NULL;
+    int *pending = NULL;
+    bitset *pending2 = NULL;
+    struct state_set *split = NULL;
+    bitset *split2 = NULL;
+    int *refine = NULL;
+    bitset *refine2 = NULL;
+    struct state_set **splitblock = NULL;
+    struct state_set *newstates = NULL;
+    int *nsnum = NULL;
+    int *nsind = NULL;
+    int result = -1;
 
-static void minimize_hopcroft(struct fa *fa) {
-    determinize(fa, NULL);
+    _F(determinize(fa, NULL));
 
     /* Total automaton, nothing to do */
     if (fa->initial->tused == 1
         && fa->initial->trans[0].to == fa->initial
         && fa->initial->trans[0].min == UCHAR_MIN
         && fa->initial->trans[0].max == UCHAR_MAX)
-        return;
+        return 0;
 
-    totalize(fa);
+    _F(totalize(fa));
 
     /* make arrays for numbered states and effective alphabet */
-    struct state_set *states = state_set_init(-1, S_NONE);
+    states = state_set_init(-1, S_NONE);
+    _E(states == NULL);
+
     list_for_each(s, fa->initial) {
-        state_set_push(states, s);
+        _F(state_set_push(states, s));
     }
     unsigned int nstates = states->used;
 
     int nsigma;
-    uchar *sigma = start_points(fa, &nsigma);
+    sigma = start_points(fa, &nsigma);
+    _E(sigma == NULL);
 
     /* initialize data structures */
 
     /* An ss->used x nsigma matrix of lists of states */
-    struct state_set **reverse;
-    CALLOC(reverse, nstates * nsigma);
-    bitset *reverse_nonempty = bitset_init(nstates * nsigma);
+    _F(ALLOC_N(reverse, nstates * nsigma));
+    reverse_nonempty = bitset_init(nstates * nsigma);
+    _E(reverse_nonempty == NULL);
+    _F(ALLOC_N(partition, nstates));
+    _F(ALLOC_N(block, nstates));
 
-    struct state_set **partition;
-    CALLOC(partition, nstates);
-
-    unsigned int *block;
-    CALLOC(block, nstates);
-
-    struct state_list **active;
-    CALLOC(active, nstates * nsigma);
-    struct state_list_node **active2;
-    CALLOC(active2, nstates * nsigma);
+    _F(ALLOC_N(active, nstates * nsigma));
+    _F(ALLOC_N(active2, nstates * nsigma));
 
     /* PENDING is an array of pairs of ints. The i'th pair is stored in
      * PENDING[2*i] and PENDING[2*i + 1]. There are NPENDING pairs in
      * PENDING at any time. SPENDING is the maximum number of pairs
      * allocated for PENDING.
      */
-    int *pending = NULL;
     size_t npending = 0, spending = 0;
-    bitset *pending2 = bitset_init(nstates * nsigma);
+    pending2 = bitset_init(nstates * nsigma);
+    _E(pending2 == NULL);
 
-    struct state_set *split = state_set_init(-1, S_NONE);
-    bitset *split2 = bitset_init(nstates);
+    split = state_set_init(-1, S_NONE);
+    split2 = bitset_init(nstates);
+    _E(split == NULL || split2 == NULL);
 
-    int *refine;
-    CALLOC(refine, nstates);
-    bitset *refine2 = bitset_init(nstates);
+    _F(ALLOC_N(refine, nstates));
+    refine2 = bitset_init(nstates);
+    _E(refine2 == NULL);
 
-    struct state_set **splitblock;
-    CALLOC(splitblock, nstates);
+    _F(ALLOC_N(splitblock, nstates));
 
     for (int q = 0; q < nstates; q++) {
         splitblock[q] = state_set_init(-1, S_NONE);
         partition[q] = state_set_init(-1, S_NONE);
+        _E(splitblock[q] == NULL || partition[q] == NULL);
         for (int x = 0; x < nsigma; x++) {
             reverse[INDEX(q, x)] = state_set_init(-1, S_NONE);
-            active[INDEX(q, x)] = state_list_init();
+            _E(reverse[INDEX(q, x)] == NULL);
+            _F(ALLOC_N(active[INDEX(q, x)], 1));
         }
     }
 
@@ -1417,13 +1505,15 @@ static void minimize_hopcroft(struct fa *fa) {
             j = 0;
         else
             j = 1;
-        state_set_push(partition[j], qq);
+        _F(state_set_push(partition[j], qq));
         block[q] = j;
         for (int x = 0; x < nsigma; x++) {
             uchar y = sigma[x];
             struct state *p = step(qq, y);
+            assert(p != NULL);
             int pn = state_set_index(states, p);
-            state_set_push(reverse[INDEX(pn, x)], qq);
+            assert(pn >= 0);
+            _F(state_set_push(reverse[INDEX(pn, x)], qq));
             bitset_set(reverse_nonempty, INDEX(pn, x));
         }
     }
@@ -1434,13 +1524,15 @@ static void minimize_hopcroft(struct fa *fa) {
             for (int q = 0; q < partition[j]->used; q++) {
                 struct state *qq = partition[j]->states[q];
                 int qn = state_set_index(states, qq);
-                if (bitset_get(reverse_nonempty, INDEX(qn, x)))
+                if (bitset_get(reverse_nonempty, INDEX(qn, x))) {
                     active2[INDEX(qn, x)] =
                         state_list_add(active[INDEX(j, x)], qq);
+                    _E(active2[INDEX(qn, x)] == NULL);
+                }
             }
 
     /* initialize pending */
-    CALLOC(pending, 2*nsigma);
+    _F(ALLOC_N(pending, 2*nsigma));
     npending = nsigma;
     spending = nsigma;
     for (int x = 0; x < nsigma; x++) {
@@ -1473,9 +1565,9 @@ static void minimize_hopcroft(struct fa *fa) {
                 int s = state_set_index(states, rs);
                 if (! bitset_get(split2, s)) {
                     bitset_set(split2, s);
-                    state_set_push(split, rs);
+                    _F(state_set_push(split, rs));
                     int j = block[s];
-                    state_set_push(splitblock[j], rs);
+                    _F(state_set_push(splitblock[j], rs));
                     if (!bitset_get(refine2, j)) {
                         bitset_set(refine2, j);
                         refine[ref++] = j;
@@ -1492,7 +1584,7 @@ static void minimize_hopcroft(struct fa *fa) {
                 struct state_set *b2 = partition[k];
                 for (int s = 0; s < sp->used; s++) {
                     state_set_remove(b1, sp->states[s]);
-                    state_set_push(b2, sp->states[s]);
+                    _F(state_set_push(b2, sp->states[s]));
                     int snum = state_set_index(states, sp->states[s]);
                     block[snum] = k;
                     for (int c = 0; c < nsigma; c++) {
@@ -1502,6 +1594,7 @@ static void minimize_hopcroft(struct fa *fa) {
                             active2[INDEX(snum, c)] =
                                 state_list_add(active[INDEX(k, c)],
                                                sp->states[s]);
+                            _E(active2[INDEX(snum, c)] == NULL);
                         }
                     }
                 }
@@ -1511,9 +1604,7 @@ static void minimize_hopcroft(struct fa *fa) {
                     int ak = active[INDEX(k, c)]->size;
                     if (npending + 1 > spending) {
                         spending *= 2;
-                        if (REALLOC_N(pending, 2 * spending) == -1) {
-                            ABORT_ALLOC_FAILURE;
-                        }
+                        _F(REALLOC_N(pending, 2 * spending));
                     }
                     pending[2*npending + 1] = c;
                     if (!bitset_get(pending2, INDEX(j, c))
@@ -1539,17 +1630,14 @@ static void minimize_hopcroft(struct fa *fa) {
     }
 
     /* make a new state for each equivalence class, set initial state */
-    struct state_set *newstates = state_set_init(k, S_NONE);
-    int *nsnum;
-    CALLOC(nsnum, k);
-    int *nsind;
-    CALLOC(nsind, nstates);
+    newstates = state_set_init(k, S_NONE);
+    _E(newstates == NULL);
+    _F(ALLOC_N(nsnum, k));
+    _F(ALLOC_N(nsind, nstates));
 
     for (int n = 0; n < k; n++) {
         struct state *s = make_state();
-        if (s == NULL) {
-            ABORT_ALLOC_FAILURE;
-        }
+        _E(s == NULL);
         newstates->states[n] = s;
         struct state_set *partn = partition[n];
         for (int q=0; q < partn->used; q++) {
@@ -1569,13 +1657,9 @@ static void minimize_hopcroft(struct fa *fa) {
         for_each_trans(t, states->states[nsnum[n]]) {
             int toind = state_set_index(states, t->to);
             struct state *nto = newstates->states[nsind[toind]];
-            if (add_new_trans(s, nto, t->min, t->max) < 0) {
-                ABORT_ALLOC_FAILURE;
-            }
+            _F(add_new_trans(s, nto, t->min, t->max));
         }
     }
-    free(nsind);
-    free(nsnum);
 
     /* Get rid of old states and transitions and turn NEWTSTATES into
        a linked list */
@@ -1590,14 +1674,21 @@ static void minimize_hopcroft(struct fa *fa) {
         newstates->states[n]->next = newstates->states[n+1];
     fa->initial = newstates->states[0];
 
+    result = 0;
+
     /* clean up */
+ done:
+    free(nsind);
+    free(nsnum);
     state_set_free(states);
     free(sigma);
     bitset_free(reverse_nonempty);
     free(block);
     for (int i=0; i < nstates*nsigma; i++) {
-        state_set_free(reverse[i]);
-        state_list_free(active[i]);
+        if (reverse)
+            state_set_free(reverse[i]);
+        if (active)
+            state_list_free(active[i]);
     }
     free(reverse);
     free(active);
@@ -1609,40 +1700,58 @@ static void minimize_hopcroft(struct fa *fa) {
     free(refine);
     bitset_free(refine2);
     for (int q=0; q < nstates; q++) {
-        state_set_free(splitblock[q]);
-        state_set_free(partition[q]);
+        if (splitblock)
+            state_set_free(splitblock[q]);
+        if (partition)
+            state_set_free(partition[q]);
     }
     free(splitblock);
     free(partition);
     state_set_free(newstates);
 
-    collect(fa);
+    if (collect(fa) < 0)
+        result = -1;
+    return result;
+ error:
+    result = -1;
+    goto done;
 }
 
-static void minimize_brzozowski(struct fa *fa) {
+static int minimize_brzozowski(struct fa *fa) {
     struct state_set *set;
 
     /* Minimize using Brzozowski's algorithm */
     set = fa_reverse(fa);
-    determinize(fa, set);
+    _E(set == NULL);
+    _F(determinize(fa, set));
     state_set_free(set);
 
     set = fa_reverse(fa);
-    determinize(fa, set);
+    _E(set == NULL);
+    _F(determinize(fa, set));
     state_set_free(set);
+    return 0;
+ error:
+    return -1;
 }
 
-void fa_minimize(struct fa *fa) {
+int fa_minimize(struct fa *fa) {
+    int r;
+
+    if (fa == NULL)
+        return -1;
     if (fa->minimal)
-        return;
+        return 0;
 
     if (fa_minimization_algorithm == FA_MIN_BRZOZOWSKI) {
-        minimize_brzozowski(fa);
+        r = minimize_brzozowski(fa);
     } else {
-        minimize_hopcroft(fa);
+        r = minimize_hopcroft(fa);
     }
 
-    fa->minimal = 1;
+    if (r == 0)
+        fa->minimal = 1;
+    return r;
 }
 
 /*
@@ -1652,8 +1761,12 @@ void fa_minimize(struct fa *fa) {
 static struct fa *fa_make_empty(void) {
     struct fa *fa;
 
-    CALLOC(fa, 1);
-    add_state(fa, 0);
+    if (ALLOC(fa) < 0)
+        return NULL;
+    if (add_state(fa, 0) == NULL) {
+        fa_free(fa);
+        return NULL;
+    }
     fa->deterministic = 1;
     fa->minimal = 1;
     return fa;
@@ -1661,26 +1774,35 @@ static struct fa *fa_make_empty(void) {
 
 static struct fa *fa_make_epsilon(void) {
     struct fa *fa = fa_make_empty();
-    fa->initial->accept = 1;
-    fa->deterministic= 1;
-    fa->minimal = 1;
+    if (fa) {
+        fa->initial->accept = 1;
+        fa->deterministic= 1;
+        fa->minimal = 1;
+    }
     return fa;
 }
 
 static struct fa *fa_make_char(uchar c) {
     struct fa *fa = fa_make_empty();
+    if (! fa)
+        return NULL;
+
     struct state *s = fa->initial;
     struct state *t = add_state(fa, 1);
     int r;
 
+    if (t == NULL)
+        goto error;
+
     r = add_new_trans(s, t, c, c);
-    if (r < 0) {
-        fa_free(fa);
-        return NULL;
-    }
+    if (r < 0)
+        goto error;
     fa->deterministic = 1;
     fa->minimal = 1;
     return fa;
+ error:
+    fa_free(fa);
+    return NULL;
 }
 
 struct fa *fa_make_basic(unsigned int basic) {
@@ -1722,12 +1844,18 @@ static struct fa *fa_clone(struct fa *fa) {
     struct state_set *set = state_set_init(-1, S_DATA|S_SORTED);
     int r;
 
-    CALLOC(result, 1);
+    if (fa == NULL || set == NULL || ALLOC(result) < 0)
+        goto error;
+
     result->deterministic = fa->deterministic;
     result->minimal = fa->minimal;
     list_for_each(s, fa->initial) {
         int i = state_set_push(set, s);
+        _E(i < 0);
+
         struct state *q = add_state(result, s->accept);
+        if (q == NULL)
+            goto error;
         set->data[i] = q;
         q->live = s->live;
         q->reachable = s->reachable;
@@ -1753,15 +1881,18 @@ static struct fa *fa_clone(struct fa *fa) {
 }
 
 /* Compute FA1|FA2 and set FA1 to that automaton. FA2 is freed */
-static int union_in_place(struct fa *fa1, struct fa *fa2) {
+ATTRIBUTE_RETURN_CHECK
+static int union_in_place(struct fa *fa1, struct fa **fa2) {
     struct state *s;
     int r;
 
     s = add_state(fa1, 0);
+    if (s == NULL)
+        return -1;
     r = add_epsilon_trans(s, fa1->initial);
     if (r < 0)
         return -1;
-    r = add_epsilon_trans(s, fa2->initial);
+    r = add_epsilon_trans(s, (*fa2)->initial);
     if (r < 0)
         return -1;
 
@@ -1777,20 +1908,27 @@ static int union_in_place(struct fa *fa1, struct fa *fa2) {
 struct fa *fa_union(struct fa *fa1, struct fa *fa2) {
     fa1 = fa_clone(fa1);
     fa2 = fa_clone(fa2);
+    if (fa1 == NULL || fa2 == NULL)
+        goto error;
 
-    union_in_place(fa1, fa2);
+    _F(union_in_place(fa1, &fa2));
 
     return fa1;
+ error:
+    fa_free(fa1);
+    fa_free(fa2);
+    return NULL;
 }
 
 /* Concat FA2 onto FA1; frees FA2 and changes FA1 to FA1.FA2 */
-static int concat_in_place(struct fa *fa1, struct fa *fa2) {
+ATTRIBUTE_RETURN_CHECK
+static int concat_in_place(struct fa *fa1, struct fa **fa2) {
     int r;
 
     list_for_each(s, fa1->initial) {
         if (s->accept) {
             s->accept = 0;
-            r = add_epsilon_trans(s, fa2->initial);
+            r = add_epsilon_trans(s, (*fa2)->initial);
             if (r < 0)
                 return -1;
         }
@@ -1806,17 +1944,34 @@ static int concat_in_place(struct fa *fa1, struct fa *fa2) {
 struct fa *fa_concat(struct fa *fa1, struct fa *fa2) {
     fa1 = fa_clone(fa1);
     fa2 = fa_clone(fa2);
-    concat_in_place(fa1, fa2);
 
-    return collect(fa1);
+    if (fa1 == NULL || fa2 == NULL)
+        goto error;
+
+    _F(concat_in_place(fa1, &fa2));
+
+    _F(collect(fa1));
+
+    return fa1;
+
+ error:
+    fa_free(fa1);
+    fa_free(fa2);
+    return NULL;
 }
 
 static struct fa *fa_make_char_set(bitset *cset, int negate) {
     struct fa *fa = fa_make_empty();
+    if (!fa)
+        return NULL;
+
     struct state *s = fa->initial;
     struct state *t = add_state(fa, 1);
     int from = 0;
     int r;
+
+    if (t == NULL)
+        goto error;
 
     while (from <= UCHAR_MAX) {
         while (from <= UCHAR_MAX && bitset_get(cset, from) == negate)
@@ -1891,7 +2046,11 @@ static struct fa *repeat(struct fa *fa, int n) {
                 fa_free(cfa);
                 return NULL;
             }
-            concat_in_place(cfa, tfa);
+            if (concat_in_place(cfa, &tfa) < 0) {
+                fa_free(cfa);
+                fa_free(tfa);
+                return NULL;
+            }
             n -= 1;
         }
         return cfa;
@@ -1911,8 +2070,18 @@ struct fa *fa_iter(struct fa *fa, int min, int max) {
         struct fa *sfa = fa_star(fa);
         if (min == 0)
             return sfa;
+        if (! sfa)
+            return NULL;
         struct fa *cfa = repeat(fa, min);
-        concat_in_place(cfa, sfa);
+        if (! cfa) {
+            fa_free(sfa);
+            return NULL;
+        }
+        if (concat_in_place(cfa, &sfa) < 0) {
+            fa_free(sfa);
+            fa_free(cfa);
+            return NULL;
+        }
         return cfa;
     } else {
         struct fa *cfa = NULL;
@@ -1923,8 +2092,17 @@ struct fa *fa_iter(struct fa *fa, int min, int max) {
             return NULL;
         if (max > 0) {
             struct fa *cfa2 = fa_clone(fa);
+            if (cfa2 == NULL) {
+                fa_free(cfa);
+                return NULL;
+            }
             while (max > 1) {
                 struct fa *cfa3 = fa_clone(fa);
+                if (cfa3 == NULL) {
+                    fa_free(cfa);
+                    fa_free(cfa2);
+                    return NULL;
+                }
                 list_for_each(s, cfa3->initial) {
                     if (s->accept) {
                         r = add_epsilon_trans(s, cfa2->initial);
@@ -1936,7 +2114,7 @@ struct fa *fa_iter(struct fa *fa, int min, int max) {
                         }
                     }
                 }
-                fa_merge(cfa3, cfa2);
+                fa_merge(cfa3, &cfa2);
                 cfa2 = cfa3;
                 max -= 1;
             }
@@ -1950,11 +2128,15 @@ struct fa *fa_iter(struct fa *fa, int min, int max) {
                     }
                 }
             }
-            fa_merge(cfa, cfa2);
+            fa_merge(cfa, &cfa2);
             cfa->deterministic = 0;
             cfa->minimal = 0;
         }
-        return collect(cfa);
+        if (collect(cfa) < 0) {
+            fa_free(cfa);
+            cfa = NULL;
+        }
+        return cfa;
     }
 }
 
@@ -1976,14 +2158,17 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
     struct fa *fa = fa_make_empty();
     struct state_set *worklist = state_set_init(-1, S_NONE);
     state_triple_hash *newstates = state_triple_init();
+    if (fa == NULL || worklist == NULL || newstates == NULL)
+        goto error;
 
     sort_transition_intervals(fa1);
     sort_transition_intervals(fa2);
 
-    state_set_push(worklist, fa1->initial);
-    state_set_push(worklist, fa2->initial);
-    state_set_push(worklist, fa->initial);
-    state_triple_push(newstates, fa1->initial, fa2->initial, fa->initial);
+    _F(state_set_push(worklist, fa1->initial));
+    _F(state_set_push(worklist, fa2->initial));
+    _F(state_set_push(worklist, fa->initial));
+    _F(state_triple_push(newstates,
+                         fa1->initial, fa2->initial, fa->initial));
     while (worklist->used) {
         struct state *s  = state_set_pop(worklist);
         struct state *p2 = state_set_pop(worklist);
@@ -2003,10 +2188,12 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
                                                        t1[n1].to, t2[n2].to);
                     if (r == NULL) {
                         r = add_state(fa, 0);
-                        state_set_push(worklist, t1[n1].to);
-                        state_set_push(worklist, t2[n2].to);
-                        state_set_push(worklist, r);
-                        state_triple_push(newstates, t1[n1].to, t2[n2].to, r);
+                        _N(r);
+                        _F(state_set_push(worklist, t1[n1].to));
+                        _F(state_set_push(worklist, t2[n2].to));
+                        _F(state_set_push(worklist, r));
+                        _F(state_triple_push(newstates,
+                                             t1[n1].to, t2[n2].to, r));
                     }
                     char min = t1[n1].min > t2[n2].min
                         ? t1[n1].min : t2[n2].min;
@@ -2023,7 +2210,12 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
  done:
     state_set_free(worklist);
     state_triple_free(newstates);
-    collect(fa);
+    if (fa != NULL) {
+        if (collect(fa) < 0) {
+            fa_free(fa);
+            fa = NULL;
+        }
+    }
 
     return fa;
  error:
@@ -2034,8 +2226,11 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
 
 int fa_contains(struct fa *fa1, struct fa *fa2) {
     int result = 0;
-    struct state_set *worklist;  /* List of pairs of states */
-    struct state_set *visited;   /* List of pairs of states */
+    struct state_set *worklist = NULL;  /* List of pairs of states */
+    struct state_set *visited = NULL;   /* List of pairs of states */
+
+    if (fa1 == NULL || fa2 == NULL)
+        return -1;
 
     if (fa1 == fa2)
         return 1;
@@ -2044,8 +2239,8 @@ int fa_contains(struct fa *fa1, struct fa *fa2) {
     sort_transition_intervals(fa1);
     sort_transition_intervals(fa2);
 
-    worklist = state_pair_push(NULL, fa1->initial, fa2->initial);
-    visited  = state_pair_push(NULL, fa1->initial, fa2->initial);
+    _F(state_pair_push(&worklist, fa1->initial, fa2->initial));
+    _F(state_pair_push(&visited, fa1->initial, fa2->initial));
     while (worklist->used) {
         struct state *p1, *p2;
         void *v2;
@@ -2073,8 +2268,8 @@ int fa_contains(struct fa *fa1, struct fa *fa2) {
                     max1 = UCHAR_MIN;
                 }
                 if (state_pair_find(visited, t1[n1].to, t2[n2].to) == -1) {
-                    worklist = state_pair_push(worklist, t1[n1].to, t2[n2].to);
-                    visited  = state_pair_push(visited, t1[n1].to, t2[n2].to);
+                    _F(state_pair_push(&worklist, t1[n1].to, t2[n2].to));
+                    _F(state_pair_push(&visited, t1[n1].to, t2[n2].to));
                 }
             }
             if (min1 <= max1)
@@ -2087,13 +2282,17 @@ int fa_contains(struct fa *fa1, struct fa *fa2) {
     state_set_free(worklist);
     state_set_free(visited);
     return result;
+ error:
+    result = -1;
+    goto done;
 }
 
 static int totalize(struct fa *fa) {
     int r;
     struct state *crash = add_state(fa, 0);
 
-    mark_reachable(fa);
+    _E(crash == NULL);
+    _F(mark_reachable(fa));
     sort_transition_intervals(fa);
 
     r = add_new_trans(crash, crash, UCHAR_MIN, UCHAR_MAX);
@@ -2120,27 +2319,39 @@ static int totalize(struct fa *fa) {
         }
     }
     return 0;
+ error:
+    return -1;
 }
 
 struct fa *fa_complement(struct fa *fa) {
     fa = fa_clone(fa);
-    determinize(fa, NULL);
-    totalize(fa);
+    _E(fa == NULL);
+    _F(determinize(fa, NULL));
+    _F(totalize(fa));
     list_for_each(s, fa->initial)
         s->accept = ! s->accept;
 
-    return collect(fa);
+    _F(collect(fa));
+    return fa;
+ error:
+    fa_free(fa);
+    return NULL;
 }
 
 struct fa *fa_minus(struct fa *fa1, struct fa *fa2) {
+    if (fa1 == NULL || fa2 == NULL)
+        return NULL;
+
     if (fa_is_basic(fa1, FA_EMPTY) || fa1 == fa2)
         return fa_make_empty();
     if (fa_is_basic(fa2, FA_EMPTY))
         return fa_clone(fa1);
 
     struct fa *cfa2 = fa_complement(fa2);
-    struct fa *result = fa_intersect(fa1, cfa2);
+    if (cfa2 == NULL)
+        return NULL;
 
+    struct fa *result = fa_intersect(fa1, cfa2);
     fa_free(cfa2);
     return result;
 }
@@ -2151,7 +2362,7 @@ static int accept_to_accept(struct fa *fa) {
     if (s == NULL)
         return -1;
 
-    mark_reachable(fa);
+    _F(mark_reachable(fa));
     list_for_each(a, fa->initial) {
         if (a->accept && a->reachable) {
             r = add_epsilon_trans(s, a);
@@ -2163,40 +2374,69 @@ static int accept_to_accept(struct fa *fa) {
     set_initial(fa, s);
     fa->deterministic = fa->minimal = 0;
     return 0;
+ error:
+    return -1;
 }
 
 struct fa *fa_overlap(struct fa *fa1, struct fa *fa2) {
-    struct fa *fa;
-    struct state_set *map;
+    struct fa *fa = NULL, *eps = NULL, *result = NULL;
+    struct state_set *map = NULL;
+
+    if (fa1 == NULL || fa2 == NULL)
+        return NULL;
 
     fa1 = fa_clone(fa1);
     fa2 = fa_clone(fa2);
+    if (fa1 == NULL || fa2 == NULL)
+        goto error;
 
-    determinize(fa1, NULL);
-    accept_to_accept(fa1);
+    if (determinize(fa1, NULL) < 0)
+        goto error;
+    if (accept_to_accept(fa1) < 0)
+        goto error;
 
     map = fa_reverse(fa2);
     state_set_free(map);
-    determinize(fa2, NULL);
-    accept_to_accept(fa2);
+    if (determinize(fa2, NULL) < 0)
+        goto error;
+    if (accept_to_accept(fa2) < 0)
+        goto error;
     map = fa_reverse(fa2);
     state_set_free(map);
-    determinize(fa2, NULL);
+    if (determinize(fa2, NULL) < 0)
+        goto error;
 
     fa = fa_intersect(fa1, fa2);
+    if (fa == NULL)
+        goto error;
+
+    eps = fa_make_epsilon();
+    if (eps == NULL)
+        goto error;
+
+    result = fa_minus(fa, eps);
+    if (result == NULL)
+        goto error;
+
+ error:
     fa_free(fa1);
     fa_free(fa2);
-
-    struct fa *eps = fa_make_epsilon();
-    struct fa *result = fa_minus(fa, eps);
-
     fa_free(fa);
     fa_free(eps);
     return result;
 }
 
 int fa_equals(struct fa *fa1, struct fa *fa2) {
-    return fa_contains(fa1, fa2) && fa_contains(fa2, fa1);
+    if (fa1 == NULL || fa2 == NULL)
+        return -1;
+
+    /* fa_contains(fa1, fa2) && fa_contains(fa2, fa1) with error checking */
+    int c1 = fa_contains(fa1, fa2);
+    if (c1 < 0)
+        return -1;
+    if (c1 == 0)
+        return 0;
+    return fa_contains(fa2, fa1);
 }
 
 static unsigned int chr_score(char c) {
@@ -2259,6 +2499,10 @@ static char pick_char(struct trans *t) {
  * at each turn the "best" word found for that state.
  */
 int fa_example(struct fa *fa, char **example, size_t *example_len) {
+    struct re_str *word = NULL;
+    struct state_set *path = NULL, *worklist = NULL;
+    struct re_str *str = NULL;
+
     *example = NULL;
     *example_len = 0;
 
@@ -2266,13 +2510,17 @@ int fa_example(struct fa *fa, char **example, size_t *example_len) {
     sort_transition_intervals(fa);
 
     /* Map from state to string */
-    struct state_set *path = state_set_init(-1, S_DATA|S_SORTED);
-    struct re_str *str = make_re_str("");
-    state_set_push_data(path, fa->initial, str);
+    path = state_set_init(-1, S_DATA|S_SORTED);
+    str = make_re_str("");
+    if (path == NULL || str == NULL)
+        goto error;
+    _F(state_set_push_data(path, fa->initial, str));
 
     /* List of states still to visit */
-    struct state_set *worklist = state_set_init(-1, S_NONE);
-    state_set_push(worklist, fa->initial);
+    worklist = state_set_init(-1, S_NONE);
+    if (worklist == NULL)
+        goto error;
+    _F(state_set_push(worklist, fa->initial));
 
     while (worklist->used) {
         struct state *s = state_set_pop(worklist);
@@ -2282,15 +2530,15 @@ int fa_example(struct fa *fa, char **example, size_t *example_len) {
             int toind = state_set_index(path, t->to);
             if (toind == -1) {
                 struct re_str *w = string_extend(NULL, ps, c);
-                state_set_push(worklist, t->to);
-                state_set_push_data(path, t->to, w);
+                _N(w);
+                _F(state_set_push(worklist, t->to));
+                _F(state_set_push_data(path, t->to, w));
             } else {
                 path->data[toind] = string_extend(path->data[toind], ps, c);
             }
         }
     }
 
-    struct re_str *word = NULL;
     for (int i=0; i < path->used; i++) {
         struct state *p = path->states[i];
         struct re_str *ps = path->data[i];
@@ -2311,6 +2559,11 @@ int fa_example(struct fa *fa, char **example, size_t *example_len) {
         free(word);
     }
     return 0;
+ error:
+    state_set_free(path);
+    state_set_free(worklist);
+    free_re_str(word);
+    return -1;
 }
 
 /* Expand the automaton FA by replacing every transition s(c) -> p from
@@ -2333,7 +2586,7 @@ static struct fa *expand_alphabet(struct fa *fa, int add_marker,
     if (fa == NULL)
         return NULL;
 
-    mark_reachable(fa);
+    _F(mark_reachable(fa));
     list_for_each(p, fa->initial) {
         if (! p->reachable)
             continue;
@@ -2439,6 +2692,11 @@ int fa_ambig_example(struct fa *fa1, struct fa *fa2,
                      char **pv, char **v) {
     static const char X = '\001';
     static const char Y = '\002';
+    char *result = NULL, *s = NULL;
+    int ret = -1, r;
+    struct fa *mp = NULL, *ms = NULL, *sp = NULL, *ss = NULL, *amb = NULL;
+    struct fa *a1f = NULL, *a1t = NULL, *a2f = NULL, *a2t = NULL;
+    struct fa *b1 = NULL, *b2 = NULL;
 
     *upv = NULL;
     *upv_len = 0;
@@ -2457,11 +2715,18 @@ int fa_ambig_example(struct fa *fa1, struct fa *fa2,
 #define SPs "(" Xs "(.|\n))+" Ys Xs
 #define SSs "(" Xs "(.|\n))*" Ys Xs
     /* These could become static constants */
-    struct fa *mp, *ms, *sp, *ss;
-    fa_compile( MPs, strlen(MPs), &mp);
-    fa_compile( MSs, strlen(MSs), &ms);
-    fa_compile( SPs, strlen(SPs), &sp);
-    fa_compile( SSs, strlen(SSs), &ss);
+    r = fa_compile( MPs, strlen(MPs), &mp);
+    if (r != REG_NOERROR)
+        goto error;
+    r = fa_compile( MSs, strlen(MSs), &ms);
+    if (r != REG_NOERROR)
+        goto error;
+    r = fa_compile( SPs, strlen(SPs), &sp);
+    if (r != REG_NOERROR)
+        goto error;
+    r = fa_compile( SSs, strlen(SSs), &ss);
+    if (r != REG_NOERROR)
+        goto error;
 #undef SSs
 #undef SPs
 #undef MSs
@@ -2469,43 +2734,48 @@ int fa_ambig_example(struct fa *fa1, struct fa *fa2,
 #undef Xs
 #undef Ys
 
-    struct fa *a1f = expand_alphabet(fa1, 0, X, Y);
-    struct fa *a1t = expand_alphabet(fa1, 1, X, Y);
-    struct fa *a2f = expand_alphabet(fa2, 0, X, Y);
-    struct fa *a2t = expand_alphabet(fa2, 1, X, Y);
+    a1f = expand_alphabet(fa1, 0, X, Y);
+    a1t = expand_alphabet(fa1, 1, X, Y);
+    a2f = expand_alphabet(fa2, 0, X, Y);
+    a2t = expand_alphabet(fa2, 1, X, Y);
+    if (a1f == NULL || a1t == NULL || a2f == NULL || a2t == NULL)
+        goto error;
 
     /* Compute b1 = ((a1f . mp) & a1t) . ms */
-    concat_in_place(a1f, mp);
-    struct fa *b1 = fa_intersect(a1f, a1t);
-    concat_in_place(b1, ms);
+    if (concat_in_place(a1f, &mp) < 0)
+        goto error;
+    b1 = fa_intersect(a1f, a1t);
+    if (b1 == NULL)
+        goto error;
+    if (concat_in_place(b1, &ms) < 0)
+        goto error;
 
     /* Compute b2 = ss . ((sp . a2f) & a2t) */
-    concat_in_place(sp, a2f);
-    struct fa *b2 = fa_intersect(sp, a2t);
-    concat_in_place(ss, b2);
+    if (concat_in_place(sp, &a2f) < 0)
+        goto error;
+    b2 = fa_intersect(sp, a2t);
+    if (b2 == NULL)
+        goto error;
+    if (concat_in_place(ss, &b2) < 0)
+        goto error;
     b2 = ss;
+    ss = NULL;
 
     /* The automaton we are really interested in */
-    struct fa *amb = fa_intersect(b1, b2);
-
-    /* Clean up intermediate automata */
-    fa_free(sp);
-    fa_free(a1f);
-    fa_free(a1t);
-    fa_free(a2t);
-    fa_free(b1);
-    fa_free(b2);
+    amb = fa_intersect(b1, b2);
+    if (amb == NULL)
+        goto error;
 
     size_t s_len = 0;
-    char *s = NULL;
-    fa_example(amb, &s, &s_len);
-    fa_free(amb);
+    r = fa_example(amb, &s, &s_len);
+    if (r < 0)
+        goto error;
 
     if (s == NULL)
-        return -1;
+        goto error;
 
-    char *result, *t;
-    CALLOC(result, (strlen(s)-1)/2 + 1);
+    char *t;
+    _F(ALLOC_N(result, (strlen(s)-1)/2 + 1));
     t = result;
     int i = 0;
     for (i=0; s[2*i] == X; i++)
@@ -2523,11 +2793,31 @@ int fa_ambig_example(struct fa *fa1, struct fa *fa2,
     for (; 2*i+1 < strlen(s); i++)
         *t++ = s[2*i + 1];
 
-    free(s);
+    ret = 0;
+
+ done:
+    /* Clean up intermediate automata */
+    fa_free(mp);
+    fa_free(ms);
+    fa_free(ss);
+    fa_free(sp);
+    fa_free(a1f);
+    fa_free(a1t);
+    fa_free(a2f);
+    fa_free(a2t);
+    fa_free(b1);
+    fa_free(b2);
+    fa_free(amb);
+
+    FREE(s);
     *upv = result;
     if (result != NULL)
         *upv_len = strlen(result);
-    return 0;
+    return ret;
+ error:
+    FREE(result);
+    ret = -1;
+    goto done;
 }
 
 /*
@@ -2540,15 +2830,25 @@ static struct fa *fa_from_re(struct re *re) {
     case UNION:
         {
             result = fa_from_re(re->exp1);
+            if (result == NULL)
+                goto error;
             struct fa *fa2 = fa_from_re(re->exp2);
-            union_in_place(result, fa2);
+            if (fa2 == NULL)
+                goto error;
+            if (union_in_place(result, &fa2) < 0)
+                goto error;
         }
         break;
     case CONCAT:
         {
             result = fa_from_re(re->exp1);
+            if (result == NULL)
+                goto error;
             struct fa *fa2 = fa_from_re(re->exp2);
-            concat_in_place(result, fa2);
+            if (fa2 == NULL)
+                goto error;
+            if (concat_in_place(result, &fa2) < 0)
+                goto error;
         }
         break;
     case CSET:
@@ -2557,6 +2857,8 @@ static struct fa *fa_from_re(struct re *re) {
     case ITER:
         {
             struct fa *fa = fa_from_re(re->exp);
+            if (fa == NULL)
+                goto error;
             result = fa_iter(fa, re->min, re->max);
             fa_free(fa);
         }
@@ -2572,6 +2874,9 @@ static struct fa *fa_from_re(struct re *re) {
         break;
     }
     return result;
+ error:
+    fa_free(result);
+    return NULL;
 }
 
 static void free_re(struct re *re) {
@@ -2607,7 +2912,8 @@ int fa_compile(const char *regexp, size_t size, struct fa **fa) {
     *fa = fa_from_re(re);
     re_unref(re);
 
-    collect(*fa);
+    if (*fa == NULL || collect(*fa) < 0)
+        parse.error = REG_ESPACE;
     return parse.error;
 }
 
@@ -2617,8 +2923,7 @@ int fa_compile(const char *regexp, size_t size, struct fa **fa) {
 
 static struct re *make_re(enum re_type type) {
     struct re *re;
-    make_ref(re);
-    if (re)
+    if (make_ref(re) == 0)
         re->type = type;
     return re;
 }
@@ -2768,14 +3073,19 @@ static struct re *parse_simple_exp(struct re_parse *parse) {
         }
     } else if (match(parse, '(')) {
         if (match(parse, ')')) {
-            return make_re(EPSILON);
-        }
-        re = parse_regexp(parse);
-        if (re == NULL)
-            goto error;
-        if (! match(parse, ')')) {
-            parse->error = REG_EPAREN;
-            goto error;
+            re = make_re(EPSILON);
+            if (re == NULL) {
+                parse->error = REG_ESPACE;
+                goto error;
+            }
+        } else {
+            re = parse_regexp(parse);
+            if (re == NULL)
+                goto error;
+            if (! match(parse, ')')) {
+                parse->error = REG_EPAREN;
+                goto error;
+            }
         }
     } else if (match(parse, '.')) {
         re = make_re_char_set(1);
@@ -2791,8 +3101,16 @@ static struct re *parse_simple_exp(struct re_parse *parse) {
             goto error;
         }
         re = make_re_char(c);
+        if (re == NULL) {
+            parse->error = REG_ESPACE;
+            goto error;
+        }
     } else {
         re = make_re(EPSILON);
+        if (re == NULL) {
+            parse->error = REG_ESPACE;
+            goto error;
+        }
     }
     return re;
  error:
@@ -2868,6 +3186,8 @@ static struct re *parse_repeated_exp(struct re_parse *parse) {
         }
         re = make_re_rep(re, min, max);
     }
+    if (re == NULL)
+        parse->error = REG_ESPACE;
     return re;
  error:
     re_unref(re);
@@ -2883,7 +3203,11 @@ static struct re *parse_concat_exp(struct re_parse *parse) {
         struct re *re2 = parse_concat_exp(parse);
         if (re2 == NULL)
             goto error;
-        return make_re_binop(CONCAT, re, re2);
+        re = make_re_binop(CONCAT, re, re2);
+        if (re == NULL) {
+            parse->error = REG_ESPACE;
+            goto error;
+        }
     }
     return re;
 
@@ -2901,7 +3225,11 @@ static struct re *parse_regexp(struct re_parse *parse) {
         struct re *re2 = parse_regexp(parse);
         if (re2 == NULL)
             goto error;
-        return make_re_binop(UNION, re, re2);
+        re = make_re_binop(UNION, re, re2);
+        if (re == NULL) {
+            parse->error = REG_ESPACE;
+            goto error;
+        }
     }
     return re;
 
@@ -3339,6 +3667,8 @@ static int convert_trans_to_re(struct state *s) {
         if (cnt == 1) {
             re_unref(trans[t].re);
             trans[t].re = make_re_char(chr);
+            if (trans[t].re == NULL)
+                goto error;
         }
     }
     free_trans(s);
@@ -3347,13 +3677,16 @@ static int convert_trans_to_re(struct state *s) {
     return 0;
 
  error:
-    for (int i=0; i < nto; i++)
-        free_re(trans[i].re);
+    if (trans)
+        for (int i=0; i < nto; i++)
+            unref(trans[i].re, re);
     free(trans);
     return -1;
 }
 
-static int add_new_re_trans(struct state *s1, struct state *s2, struct re *re) {
+ATTRIBUTE_RETURN_CHECK
+static int add_new_re_trans(struct state *s1, struct state *s2,
+                            struct re *re) {
     int r;
     r = add_new_trans(s1, s2, 0, 0);
     if (r < 0)
@@ -3370,6 +3703,8 @@ static int re_collapse_trans(struct state *s1, struct state *s2,
 
     if (loop->type != EPSILON) {
         loop = make_re_rep(ref(loop), 0, -1);
+        if (loop == NULL)
+            goto error;
     }
 
     if (r1->type == EPSILON) {
@@ -3393,20 +3728,26 @@ static int re_collapse_trans(struct state *s1, struct state *s2,
         }
     }
     if (re == NULL)
-        return -1;
+        goto error;
 
     struct trans *t = NULL;
     for (t = s1->trans; t <= last_trans(s1) && t->to != s2; t += 1);
     if (t > last_trans(s1)) {
-        add_new_re_trans(s1, s2, re);
+        if (add_new_re_trans(s1, s2, re) < 0)
+            goto error;
     } else {
         if (t->re == NULL) {
             t->re = re;
         } else {
             t->re = make_re_binop(UNION, re, t->re);
+            if (t->re == NULL)
+                goto error;
         }
     }
     return 0;
+ error:
+    // FIXME: make sure we don't leak loop
+    return -1;
 }
 
 /* Convert an FA to a regular expression.
@@ -3433,11 +3774,17 @@ static int re_collapse_trans(struct state *s1, struct state *s2,
 int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len) {
     int r;
     struct state *fin = NULL, *ini = NULL;
-    struct re *eps = make_re(EPSILON);
+    struct re *eps = NULL;
 
     *regexp = NULL;
     *regexp_len = 0;
     fa = fa_clone(fa);
+    if (fa == NULL)
+        goto error;
+
+    eps = make_re(EPSILON);
+    if (eps == NULL)
+        goto error;
 
     fin = add_state(fa,1);
     if (fin == NULL)
@@ -3448,7 +3795,9 @@ int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len) {
         if (r < 0)
             goto error;
         if (s->accept) {
-            add_new_re_trans(s, fin, ref(eps));
+            r = add_new_re_trans(s, fin, ref(eps));
+            if (r < 0)
+                goto error;
         }
     }
 
@@ -3456,7 +3805,9 @@ int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len) {
     if (ini == NULL)
         goto error;
 
-    add_new_re_trans(ini, fa->initial, ref(eps));
+    r = add_new_re_trans(ini, fa->initial, ref(eps));
+    if (r < 0)
+        goto error;
     set_initial(fa, ini);
 
     list_for_each(s, fa->initial->next) {
@@ -3476,10 +3827,12 @@ int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len) {
                     for (int t = 0; t < s->tused; t++) {
                         if (s->trans[t].to == s)
                             continue;
-                        re_collapse_trans(s1, s->trans[t].to,
-                                          s1->trans[t1].re,
-                                          loop,
-                                          s->trans[t].re);
+                        r = re_collapse_trans(s1, s->trans[t].to,
+                                              s1->trans[t1].re,
+                                              loop,
+                                              s->trans[t].re);
+                        if (r < 0)
+                            goto error;
                     }
                 }
             }
