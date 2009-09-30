@@ -30,19 +30,20 @@ typedef struct info YYLTYPE;
   (Loc).first_line = (Loc).last_line;
 
 /* The lack of reference counting for filename is intentional */
-#define YY_USER_ACTION                                  \
-   do {                                                 \
-     yylloc->last_column += yyleng;                     \
-     yylloc->filename = augl_get_extra(yyscanner);      \
+#define YY_USER_ACTION                                            \
+  do {                                                            \
+     yylloc->last_column += yyleng;                               \
+     yylloc->filename = augl_get_extra(yyscanner)->filename;      \
+     yylloc->error = augl_get_extra(yyscanner)->error;            \
    } while(0);
 
 #define YY_USER_INIT LOCATION_STEP(*yylloc)
 
-#define YY_EXTRA_TYPE struct string *
+#define YY_EXTRA_TYPE struct info *
 
 int augl_get_column  (yyscan_t yyscanner);
 static void augl_set_column (int  column_no , yyscan_t yyscanner);
-int augl_init_lexer(struct string *name, yyscan_t * scanner);
+int augl_init_lexer(struct info *info, yyscan_t * scanner);
 
 static int to_int(const char *str) {
   int v;
@@ -131,7 +132,7 @@ ARROW  ->
                    BEGIN(COMMENT);
                 }
   .             {
-    fprintf(stderr, "%s:%d:%d: Unexpected character %c\n", augl_get_extra(yyscanner)->str, yylineno, yylloc->first_column, yytext[0]);
+    fprintf(stderr, "%s:%d:%d: Unexpected character %c\n", augl_get_extra(yyscanner)->filename->str, yylineno, yylloc->first_column, yytext[0]);
                 }
 
   <<EOF>>       {
@@ -153,14 +154,15 @@ ARROW  ->
                 }
   .             /* Skip */;
   <<EOF>>       {
-                  fprintf(stderr, "%s:%d:%d: Missing *)\n", augl_get_extra(yyscanner)->str, yylineno, yylloc->first_column);
+                  fprintf(stderr, "%s:%d:%d: Missing *)\n", augl_get_extra(yyscanner)->filename->str, yylineno, yylloc->first_column);
                   yyterminate();
                 }
 }
 %%
 
-int augl_init_lexer(struct string *name, yyscan_t *scanner) {
+int augl_init_lexer(struct info *info, yyscan_t *scanner) {
   FILE *f;
+  struct string *name = info->filename;
 
   f = fopen(name->str, "r");
   if (f == NULL)
@@ -170,7 +172,7 @@ int augl_init_lexer(struct string *name, yyscan_t *scanner) {
     fprintf(stderr, "Failed to init scanner\n");
     return -1;
   }
-  augl_set_extra(name, *scanner);
+  augl_set_extra(info, *scanner);
   augl_set_in(f, *scanner);
   return 0;
 }

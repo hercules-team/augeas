@@ -26,19 +26,20 @@ typedef struct info YYLTYPE;
 #define YYLTYPE_IS_DECLARED 1
 #define YYLTYPE_IS_TRIVIAL 1
 /* The lack of reference counting on filename is intentional */
-# define YYLLOC_DEFAULT(Current, Rhs, N)				\
-  do {									\
-    (Current).filename = augl_get_extra(scanner);                       \
+# define YYLLOC_DEFAULT(Current, Rhs, N)                                \
+  do {                                                                  \
+    (Current).filename = augl_get_extra(scanner)->filename;             \
+    (Current).error = augl_get_extra(scanner)->error;                   \
     if (YYID (N)) {                                                     \
         (Current).first_line   = YYRHSLOC (Rhs, 1).first_line;          \
-        (Current).first_column = YYRHSLOC (Rhs, 1).first_column;	\
-        (Current).last_line    = YYRHSLOC (Rhs, N).last_line;		\
+        (Current).first_column = YYRHSLOC (Rhs, 1).first_column;        \
+        (Current).last_line    = YYRHSLOC (Rhs, N).last_line;           \
         (Current).last_column  = YYRHSLOC (Rhs, N).last_column;         \
     } else {                                                            \
-        (Current).first_line   = (Current).last_line   =		\
-	    YYRHSLOC (Rhs, 0).last_line;				\
-	  (Current).first_column = (Current).last_column =		\
-	    YYRHSLOC (Rhs, 0).last_column;				\
+      (Current).first_line   = (Current).last_line   =                  \
+	    YYRHSLOC (Rhs, 0).last_line;                                    \
+	  (Current).first_column = (Current).last_column =                  \
+	    YYRHSLOC (Rhs, 0).last_column;                                  \
     }                                                                   \
   } while (0)
 
@@ -90,11 +91,11 @@ typedef struct info YYLTYPE;
 %{
 /* Lexer */
 extern int augl_lex (YYSTYPE * yylval_param,struct info * yylloc_param ,yyscan_t yyscanner);
- int augl_init_lexer(struct string *name, yyscan_t * scanner);
+ int augl_init_lexer(struct info *info, yyscan_t * scanner);
 int augl_lex_destroy (yyscan_t yyscanner );
 int augl_get_lineno (yyscan_t yyscanner );
 int augl_get_column  (yyscan_t yyscanner);
-struct string *augl_get_extra (yyscan_t yyscanner );
+struct info *augl_get_extra (yyscan_t yyscanner );
 char *augl_get_text (yyscan_t yyscanner );
 
 static void augl_error(struct info *locp, struct term **term,
@@ -140,6 +141,7 @@ static void augl_error(struct info *locp, struct term **term,
    (a).first_column = (b).first_column;                                 \
    (a).last_line    = (c).last_line;                                    \
    (a).last_column  = (c).last_column;                                  \
+   (a).error        = (b).error;                                        \
  } while(0);
 
 %}
@@ -324,7 +326,8 @@ int augl_parse_file(struct augeas *aug, const char *name,
   MEMZERO(&info, 1);
   info.ref = UINT_MAX;
   info.filename = sname;
-  if (augl_init_lexer(sname, &scanner) != 0) {
+  info.error = aug->error;
+  if (augl_init_lexer(&info, &scanner) != 0) {
     fprintf(stderr, "file name: %s [%s]\n", sname->str, name);
     augl_error(&info, term, NULL, "file not found");
     goto error;
@@ -357,6 +360,7 @@ static struct info *clone_info(struct info *locp) {
   info->first_column = locp->first_column;
   info->last_line    = locp->last_line;
   info->last_column  = locp->last_column;
+  info->error        = locp->error;
   return info;
 }
 
@@ -509,6 +513,7 @@ void augl_error(struct info *locp,
   MEMZERO(&info, 1);
   info.ref = string.ref = UINT_MAX;
   info.filename = &string;
+  info.error = locp->error;
 
   if (locp != NULL) {
     info.first_line   = locp->first_line;
@@ -521,7 +526,7 @@ void augl_error(struct info *locp,
     info.first_column = augl_get_column(scanner);
     info.last_line    = augl_get_lineno(scanner);
     info.last_column  = augl_get_column(scanner);
-    info.filename     = augl_get_extra(scanner);
+    info.filename     = augl_get_extra(scanner)->filename;
   } else if (*term != NULL && (*term)->info != NULL) {
     memcpy(&info, (*term)->info, sizeof(info));
   } else {

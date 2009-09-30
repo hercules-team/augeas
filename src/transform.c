@@ -416,6 +416,7 @@ static int load_file(struct augeas *aug, struct lens *lens, char *filename) {
     make_ref(info);
     make_ref(info->filename);
     info->filename->str = filename;
+    info->error = aug->error;
     info->first_line = 1;
 
     tree = lns_get(info, lens, text, &err);

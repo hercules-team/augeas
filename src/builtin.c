@@ -427,12 +427,12 @@ static struct value *sys_read_file(struct info *info, struct value *n) {
     return v;
 }
 
-struct module *builtin_init(void) {
+struct module *builtin_init(struct error *error) {
     struct module *modl = module_create("Builtin");
     int r;
 
 #define DEFINE_NATIVE(modl, name, nargs, impl, types ...)               \
-    r = define_native(modl, name, nargs, impl, ##types);                \
+    r = define_native(error, modl, name, nargs, impl, ##types);         \
     if (r < 0) goto error;
 
     DEFINE_NATIVE(modl, "gensym", 1, gensym, T_STRING, T_STRING);

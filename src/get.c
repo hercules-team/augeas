@@ -805,6 +805,7 @@ struct skel *lns_parse(struct lens *lens, const char *text, struct dict **dict,
 
     MEMZERO(&state, 1);
     state.info.ref = UINT_MAX;
+    state.info.error = lens->info->error;
     state.text = text;
 
     state.text = text;

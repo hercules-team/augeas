@@ -43,6 +43,8 @@ void free_string(struct string *string);
 
 /* File information */
 struct info {
+    /* There is only one struct error for each Augeas instance */
+    struct error  *error;
     struct string *filename;
     uint16_t first_line;
     uint16_t first_column;

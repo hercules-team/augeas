@@ -1723,12 +1723,14 @@ static struct module *compile(struct term *term, struct augeas *aug) {
 /*
  * Defining native functions
  */
-static struct info *make_native_info(const char *fname, int line) {
+static struct info *
+make_native_info(struct error *error, const char *fname, int line) {
     struct info *info;
     if (make_ref(info) < 0)
         goto error;
     info->first_line = info->last_line = line;
     info->first_column = info->last_column = 0;
+    info->error = error;
     if (make_ref(info->filename) < 0)
         goto error;
     info->filename->str = strdup(fname);
@@ -1739,6 +1741,7 @@ static struct info *make_native_info(const char *fname, int line) {
 }
 
 int define_native_intl(const char *file, int line,
+                       struct error *error,
                        struct module *module, const char *name,
                        int argc, void *impl, ...) {
     assert(argc > 0);  /* We have no unit type */
@@ -1751,7 +1754,7 @@ int define_native_intl(const char *file, int line,
     struct info *info = NULL;
     struct ctx ctx;
 
-    info = make_native_info(file, line);
+    info = make_native_info(error, file, line);
     if (info == NULL)
         goto error;
 
@@ -1906,7 +1909,7 @@ static int load_module(struct augeas *aug, const char *name) {
 int interpreter_init(struct augeas *aug) {
     int r;
 
-    aug->modules = builtin_init();
+    aug->modules = builtin_init(aug->error);
 
     if (aug->flags & AUG_NO_MODL_AUTOLOAD)
         return 0;

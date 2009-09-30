@@ -252,15 +252,17 @@ struct term *build_func(struct term *params, struct term *exp);
 
 struct module *module_create(const char *name);
 
-#define define_native(module, name, argc, impl, types ...)       \
-    define_native_intl(__FILE__, __LINE__, module, name, argc, impl, ## types)
+#define define_native(error, module, name, argc, impl, types ...)       \
+    define_native_intl(__FILE__, __LINE__, error, module, name,         \
+                       argc, impl, ## types)
 
 ATTRIBUTE_RETURN_CHECK
 int define_native_intl(const char *fname, int line,
+                       struct error *error,
                        struct module *module, const char *name,
                        int argc, void *impl, ...);
 
-struct module *builtin_init(void);
+struct module *builtin_init(struct error *);
 
 /* Used by augparse for some testing */
 int __aug_load_module_file(struct augeas *aug, const char *filename);
