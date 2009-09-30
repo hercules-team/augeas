@@ -25,6 +25,7 @@
 #include "fa.h"
 #include "cutest.h"
 #include "internal.h"
+#include "memory.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -62,7 +63,8 @@ static struct fa *mark(struct fa *fa) {
     struct fa_list *fl;
 
     if (fa != NULL) {
-        CALLOC(fl, 1);
+        if (ALLOC(fl) < 0)
+            die_oom();
         fl->fa = fa;
         list_cons(fa_list, fl);
     }
@@ -80,7 +82,9 @@ static void assertAsRegexp(CuTest *tc, struct fa *fa) {
     fa1 = mark(fa_concat(fa, empty));
     /* Minimize FA1, otherwise the regexp returned is enormous for the */
     /* monster (~ 2MB) and fa_compile becomes incredibly slow          */
-    fa_minimize(fa1);
+    r = fa_minimize(fa1);
+    if (r < 0)
+        die_oom();
 
     r = fa_as_regexp(fa1, &re, &re_len);
     CuAssertIntEquals(tc, 0, r);
@@ -90,7 +94,6 @@ static void assertAsRegexp(CuTest *tc, struct fa *fa) {
         print_regerror(r, re);
     }
     CuAssertIntEquals(tc, REG_NOERROR, r);
-
     CuAssertTrue(tc, fa_equals(fa, fa2));
 
     fa_free(fa2);
@@ -104,6 +107,8 @@ static struct fa *make_fa(CuTest *tc,
     int r;
 
     r = fa_compile(regexp, reglen, &fa);
+    if (r == REG_ESPACE)
+        die_oom();
     if (exp_err == REG_NOERROR) {
         if (r != REG_NOERROR)
             print_regerror(r, regexp);
@@ -515,7 +520,10 @@ int main(int argc, char **argv) {
         CuSuiteDetails(suite, &output);
         printf("%s\n", output);
         free(output);
-        return suite->failCount;
+        if (getenv("FAILMALLOC_INTERVAL") != NULL)
+            return EXIT_SUCCESS;
+        else
+            return suite->failCount;
     }
 
     for (int i=1; i<argc; i++) {
