@@ -271,43 +271,63 @@ void free_value(struct value *v) {
  */
 struct term *make_term(enum term_tag tag, struct info *info) {
   struct term *term;
-  if (make_ref(term) < 0)
-      return NULL;
-  term->tag = tag;
-  if (info != NULL)
+  if (make_ref(term) < 0) {
+      unref(info, info);
+  } else {
+      term->tag = tag;
       term->info = info;
+  }
   return term;
 }
 
 struct term *make_param(char *name, struct type *type, struct info *info) {
   struct term *term = make_term(A_FUNC, info);
-  make_ref(term->param);
+  if (term == NULL)
+      goto error;
+  make_ref_err(term->param);
   term->param->info = ref(term->info);
-  make_ref(term->param->name);
+  make_ref_err(term->param->name);
   term->param->name->str = name;
   term->param->type = type;
   return term;
+ error:
+  unref(term, term);
+  return NULL;
 }
 
 struct value *make_value(enum value_tag tag, struct info *info) {
-    struct value *value;
-    make_ref(value);
-    value->tag = tag;
-    value->info = info;
+    struct value *value = NULL;
+    if (make_ref(value) < 0) {
+        unref(info, info);
+    } else {
+        value->tag = tag;
+        value->info = info;
+    }
     return value;
 }
 
 struct term *make_app_term(struct term *lambda, struct term *arg,
                            struct info *info) {
   struct term *app = make_term(A_APP, info);
-  app->left = lambda;
-  app->right = arg;
+  if (app == NULL) {
+      unref(lambda, term);
+      unref(arg, term);
+  } else {
+      app->left = lambda;
+      app->right = arg;
+  }
   return app;
 }
 
 struct term *make_app_ident(char *id, struct term *arg, struct info *info) {
     struct term *ident = make_term(A_IDENT, ref(info));
     ident->ident = make_string(id);
+    if (ident->ident == NULL) {
+        unref(arg, term);
+        unref(info, info);
+        unref(ident, term);
+        return NULL;
+    }
     return make_app_term(ident, arg, info);
 }
 
@@ -323,12 +343,13 @@ struct term *build_func(struct term *params, struct term *exp) {
 
 /* Ownership is taken as needed */
 static struct value *make_closure(struct term *func, struct binding *bnds) {
-    struct value *v;
-    make_ref(v);
-    v->tag  = V_CLOS;
-    v->info = ref(func->info);
-    v->func = ref(func);
-    v->bindings = ref(bnds);
+    struct value *v = NULL;
+    if (make_ref(v) == 0) {
+        v->tag  = V_CLOS;
+        v->info = ref(func->info);
+        v->func = ref(func);
+        v->bindings = ref(bnds);
+    }
     return v;
 }
 
@@ -1703,12 +1724,17 @@ static struct module *compile(struct term *term, struct augeas *aug) {
  */
 static struct info *make_native_info(const char *fname, int line) {
     struct info *info;
-    make_ref(info);
+    if (make_ref(info) < 0)
+        goto error;
     info->first_line = info->last_line = line;
     info->first_column = info->last_column = 0;
-    make_ref(info->filename);
+    if (make_ref(info->filename) < 0)
+        goto error;
     info->filename->str = strdup(fname);
     return info;
+ error:
+    unref(info, info);
+    return NULL;
 }
 
 int define_native_intl(const char *file, int line,
@@ -1721,8 +1747,12 @@ int define_native_intl(const char *file, int line,
     struct term *params = NULL, *body = NULL, *func = NULL;
     struct type *type;
     struct value *v = NULL;
-    struct info *info = make_native_info(file, line);
+    struct info *info = NULL;
     struct ctx ctx;
+
+    info = make_native_info(file, line);
+    if (info == NULL)
+        goto error;
 
     va_start(ap, impl);
     for (int i=0; i < argc; i++) {
@@ -1744,6 +1774,7 @@ int define_native_intl(const char *file, int line,
         goto error;
     v->tag = V_NATIVE;
     v->info = info;
+    info = NULL;
 
     if (ALLOC(v->native) < 0)
         goto error;
