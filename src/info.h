@@ -24,11 +24,13 @@
 #define INFO_H_
 
 #include <stdio.h>
+#include <stdint.h>
+#include "ref.h"
 
 /* Reference-counted strings */
 struct string {
-    unsigned int   ref;
-    char          *str;
+    ref_t   ref;
+    char   *str;
 };
 
 struct string *make_string(char *str);
@@ -41,12 +43,12 @@ void free_string(struct string *string);
 
 /* File information */
 struct info {
-    unsigned int ref;
     struct string *filename;
-    unsigned int first_line;
-    unsigned int first_column;
-    unsigned int last_line;
-    unsigned int last_column;
+    uint16_t first_line;
+    uint16_t first_column;
+    uint16_t last_line;
+    uint16_t last_column;
+    ref_t    ref;
 };
 
 char *format_info(struct info *info);
