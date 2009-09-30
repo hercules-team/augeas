@@ -271,7 +271,8 @@ void free_value(struct value *v) {
  */
 struct term *make_term(enum term_tag tag, struct info *info) {
   struct term *term;
-  make_ref(term);
+  if (make_ref(term) < 0)
+      return NULL;
   term->tag = tag;
   if (info != NULL)
       term->info = info;
@@ -1793,7 +1794,7 @@ int define_native_intl(const char *file, int line,
 
 
 /* Defined in parser.y */
-int augl_parse_file(const char *name, struct term **term);
+int augl_parse_file(struct augeas *aug, const char *name, struct term **term);
 
 static char *module_basename(const char *modname) {
     char *fname;
@@ -1831,7 +1832,7 @@ int __aug_load_module_file(struct augeas *aug, const char *filename) {
     struct term *term = NULL;
     int result = -1;
 
-    if (augl_parse_file(filename, &term) == -1)
+    if (augl_parse_file(aug, filename, &term) == -1)
         goto error;
 
     if (! typecheck(term, aug))

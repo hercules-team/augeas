@@ -18,7 +18,7 @@
 
 #define YYDEBUG 1
 
-int augl_parse_file(const char *name, struct term **term);
+int augl_parse_file(struct augeas *aug, const char *name, struct term **term);
 
 typedef void *yyscan_t;
 typedef struct info YYLTYPE;
@@ -304,7 +304,8 @@ tree_label: DQUOTED
             { $$ = NULL; }
 %%
 
-int augl_parse_file(const char *name, struct term **term) {
+int augl_parse_file(struct augeas *aug, const char *name,
+                    struct term **term) {
   yyscan_t       scanner;
   struct string  *sname = NULL;
   struct info    info;
@@ -313,14 +314,19 @@ int augl_parse_file(const char *name, struct term **term) {
 
   *term = NULL;
 
-  make_ref(sname);
+  r = make_ref(sname);
+  ERR_NOMEM(r < 0, aug);
+
   sname->str = strdup(name);
-  memset(&info, '\0', sizeof(info));
+  ERR_NOMEM(sname->str == NULL, aug);
+
+  MEMZERO(&info, 1);
   info.ref = UINT_MAX;
   info.filename = sname;
   if (augl_init_lexer(sname, &scanner) != 0) {
+    fprintf(stderr, "file name: %s [%s]\n", sname->str, name);
     augl_error(&info, term, NULL, "file not found");
-    goto done;
+    goto error;
   }
 
   yydebug = getenv("YYDEBUG") != NULL;
@@ -328,14 +334,14 @@ int augl_parse_file(const char *name, struct term **term) {
   augl_lex_destroy(scanner);
   if (r == 1) {
     augl_error(&info, term, NULL, "syntax error");
-    goto done;
+    goto error;
   } else if (r == 2) {
     augl_error(&info, term, NULL, "parser ran out of memory");
-    goto done;
+    ERR_NOMEM(1, aug);
   }
   result = 0;
 
- done:
+ error:
   unref(sname, string);
   // free TERM
   return result;
