@@ -58,7 +58,8 @@ static const char *const errcodes[] = {
     "Internal error (please file a bug)",               /* AUG_EINTERNAL */
     "Invalid path expression",                          /* AUG_EPATHX */
     "No match for path expression",                     /* AUG_ENOMATCH */
-    "Too many matches for path expression"              /* AUG_EMMATCH */
+    "Too many matches for path expression",             /* AUG_EMMATCH */
+    "Syntax error in lens definition"                   /* AUG_ESYNTAX */
 };
 
 static void tree_mark_dirty(struct tree *tree) {

@@ -282,7 +282,8 @@ typedef enum {
     AUG_EINTERNAL,      /* Internal error (bug) */
     AUG_EPATHX,         /* Invalid path expression */
     AUG_ENOMATCH,       /* No match for path expression */
-    AUG_EMMATCH         /* Too many matches for path expression */
+    AUG_EMMATCH,        /* Too many matches for path expression */
+    AUG_ESYNTAX         /* Syntax error in lens file */
 } aug_errcode_t;
 
 /* Return the error code from the last API call */
