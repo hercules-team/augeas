@@ -76,26 +76,60 @@ struct ctx {
     struct binding *local;
 };
 
+static void format_error(struct info *info, aug_errcode_t code,
+                         const char *format, va_list ap) {
+    struct error *error = info->error;
+    char *si = NULL, *sf = NULL, *sd = NULL;
+    int r;
+
+    error->code = code;
+    /* Only syntax errors are cumulative */
+    if (code != AUG_ESYNTAX)
+        FREE(error->details);
+
+    si = format_info(info);
+    r = vasprintf(&sf, format, ap);
+    if (r < 0)
+        sf = NULL;
+    if (error->details != NULL) {
+        r = xasprintf(&sd, "%s\n%s%s", error->details,
+                      (si == NULL) ? "(no location)" : si,
+                      (sf == NULL) ? "(no details)" : sf);
+    } else {
+        r = xasprintf(&sd, "%s%s",
+                      (si == NULL) ? "(no location)" : si,
+                      (sf == NULL) ? "(no details)" : sf);
+    }
+    if (r >= 0) {
+        free(error->details);
+        error->details = sd;
+    }
+    free(si);
+    free(sf);
+}
+
 void syntax_error(struct info *info, const char *format, ...) {
+    struct error *error = info->error;
     va_list ap;
 
-    print_info(stderr, info);
+    if (error->code != AUG_NOERROR && error->code != AUG_ESYNTAX)
+        return;
+
 	va_start(ap, format);
-    vfprintf(stderr, format, ap);
+    format_error(info, AUG_ESYNTAX, format, ap);
     va_end(ap);
-    fprintf(stderr, "\n");
 }
 
 void fatal_error(struct info *info, const char *format, ...) {
+    struct error *error = info->error;
     va_list ap;
 
-    fprintf(stderr, "Fatal internal error. Aborting. Details:\n");
-    print_info(stderr, info);
+    if (error->code == AUG_EINTERNAL)
+        return;
+
 	va_start(ap, format);
-    vfprintf(stderr, format, ap);
+    format_error(info, AUG_EINTERNAL, format, ap);
     va_end(ap);
-    fprintf(stderr, "\n");
-    abort();
 }
 
 void assert_error_at(const char *srcfile, int srclineno, struct info *info,
@@ -634,11 +668,11 @@ static void print_value(FILE *out, struct value *v) {
         break;
     case V_LENS:
         fprintf(out, "<lens:");
-        print_info(stdout, v->lens->info);
+        print_info(out, v->lens->info);
         fprintf(out, ">");
         break;
     case V_TREE:
-        print_tree(stdout, 0, v->origin);
+        print_tree(out, 0, v->origin);
         break;
     case V_FILTER:
         fprintf(out, "<filter:");
@@ -649,21 +683,21 @@ static void print_value(FILE *out, struct value *v) {
         break;
     case V_TRANSFORM:
         fprintf(out, "<transform:");
-        print_info(stdout, v->transform->lens->info);
+        print_info(out, v->transform->lens->info);
         fprintf(out, ">");
         break;
     case V_NATIVE:
         fprintf(out, "<native:");
-        print_info(stdout, v->info);
+        print_info(out, v->info);
         fprintf(out, ">");
         break;
     case V_CLOS:
         fprintf(out, "<closure:");
-        print_info(stdout, v->func->info);
+        print_info(out, v->func->info);
         fprintf(out, ">");
         break;
     case V_EXN:
-        print_info(stdout, v->exn->info);
+        print_info(out, v->exn->info);
         fprintf(out, "exception: %s\n", v->exn->message);
         for (int i=0; i < v->exn->nlines; i++) {
             fprintf(out, "    %s\n", v->exn->lines[i]);
@@ -895,8 +929,8 @@ static struct value *coerce(struct value *v, struct type *t) {
         unref(vt, type);
         return rxp;
     }
-    fatal_error(v->info, "Failed to coerce %s to %s",
-                type_name(vt), type_name(t));
+    return make_exn_value(v->info, "Type %s can not be coerced to %s",
+                          type_name(vt), type_name(t));
 }
 
 /* Return one of the expected types (passed as ...).
@@ -1314,10 +1348,17 @@ static struct value *compile_union(struct term *exp, struct ctx *ctx) {
 
     struct type *t = exp->type;
     struct info *info = exp->info;
-    struct value *v;
+    struct value *v = NULL;
 
     v1 = coerce(v1, t);
+    if (EXN(v1))
+        return v1;
     v2 = coerce(v2, t);
+    if (EXN(v2)) {
+        unref(v1, value);
+        return v2;
+    }
+
     if (t->tag == T_REGEXP) {
         v = make_value(V_REGEXP, ref(info));
         v->regexp = regexp_union(info, v1->regexp, v2->regexp);
@@ -1669,11 +1710,20 @@ static int compile_decl(struct term *term, struct ctx *ctx) {
         bind(&ctx->local, term->bname, term->type, v);
 
         if (EXN(v) && !v->exn->seen) {
+            struct error *error = term->info->error;
+            struct memstream ms;
+
+            init_memstream(&ms);
+
             syntax_error(term->info, "Failed to compile %s",
                          term->bname);
-            print_value(stdout, v);
-            printf("\n");
+            fprintf(ms.stream, "%s\n", error->details);
+            print_value(ms.stream, v);
+            close_memstream(&ms);
+
             v->exn->seen = 1;
+            free(error->details);
+            error->details = ms.buf;
         }
         result = ! EXN(v);
         unref(v, value);
@@ -1867,8 +1917,8 @@ int __aug_load_module_file(struct augeas *aug, const char *filename) {
     struct term *term = NULL;
     int result = -1;
 
-    if (augl_parse_file(aug, filename, &term) == -1)
-        goto error;
+    augl_parse_file(aug, filename, &term);
+    ERR_BAIL(aug);
 
     if (! typecheck(term, aug))
         goto error;

@@ -34,8 +34,8 @@
 void syntax_error(struct info *info, const char *format, ...)
     ATTRIBUTE_FORMAT(printf, 2, 3);
 
-__attribute__((noreturn))
-void fatal_error(struct info *info, const char *format, ...);
+void fatal_error(struct info *info, const char *format, ...)
+    ATTRIBUTE_FORMAT(printf, 2, 3);
 
 void assert_error_at(const char *srcfile, int srclineno, struct info *info,
                      const char *format, ...)
