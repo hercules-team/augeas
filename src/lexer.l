@@ -123,7 +123,10 @@ ARROW  ->
                    BEGIN(COMMENT);
                 }
   .             {
-    fprintf(stderr, "%s:%d:%d: Unexpected character %c\n", augl_get_extra(yyscanner)->filename->str, yylineno, yylloc->first_column, yytext[0]);
+    report_error(augl_get_extra(yyscanner)->error, AUG_ESYNTAX,
+                 "%s:%d:%d: Unexpected character %c",
+                 augl_get_extra(yyscanner)->filename->str,
+                 yylineno, yylloc->first_column, yytext[0]);
                 }
 
   <<EOF>>       {
@@ -145,7 +148,10 @@ ARROW  ->
                 }
   .             /* Skip */;
   <<EOF>>       {
-                  fprintf(stderr, "%s:%d:%d: Missing *)\n", augl_get_extra(yyscanner)->filename->str, yylineno, yylloc->first_column);
+                  report_error(augl_get_extra(yyscanner)->error, AUG_ESYNTAX,
+                               "%s:%d:%d: Missing *)",
+                               augl_get_extra(yyscanner)->filename->str,
+                               yylineno, yylloc->first_column, yytext[0]);
                   yyterminate();
                 }
 }
@@ -159,10 +165,8 @@ int augl_init_lexer(struct info *info, yyscan_t *scanner) {
   if (f == NULL)
     return -1;
 
-  if (augl_lex_init(scanner) != 0) {
-    fprintf(stderr, "Failed to init scanner\n");
+  if (augl_lex_init(scanner) != 0)
     return -1;
-  }
   augl_set_extra(info, *scanner);
   augl_set_in(f, *scanner);
   return 0;
