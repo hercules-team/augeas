@@ -116,6 +116,10 @@ int main(int argc, char **argv) {
 
     argz_stringify(loadpath, loadpathlen, PATH_SEP_CHAR);
     aug = aug_init(NULL, loadpath, flags);
+    if (aug == NULL) {
+        fprintf(stderr, "Memory exhausted\n");
+        return 2;
+    }
 
     if (print_version) {
         print_version_info(aug);
@@ -123,9 +127,14 @@ int main(int argc, char **argv) {
     }
 
     if (__aug_load_module_file(aug, argv[optind]) == -1) {
-        fprintf(stderr, "%s: error: Loading failed\n", argv[optind]);
+        fprintf(stderr, "%s\n", aug_error_message(aug));
+        const char *s = aug_error_details(aug);
+        if (s != NULL) {
+            fprintf(stderr, "%s\n", s);
+        }
         exit(EXIT_FAILURE);
     }
+
     aug_close(aug);
     free(loadpath);
 }
