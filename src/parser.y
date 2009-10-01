@@ -327,8 +327,7 @@ int augl_parse_file(struct augeas *aug, const char *name,
   info.ref = UINT_MAX;
   info.filename = sname;
   info.error = aug->error;
-  if (augl_init_lexer(&info, &scanner) != 0) {
-    fprintf(stderr, "file name: %s [%s]\n", sname->str, name);
+  if (augl_init_lexer(&info, &scanner) < 0) {
     augl_error(&info, term, NULL, "file not found");
     goto error;
   }
@@ -533,5 +532,5 @@ void augl_error(struct info *locp,
     info.first_line = info.last_line = 0;
     info.first_column = info.last_column = 0;
   }
-  syntax_error(&info, "%s\n", s);
+  syntax_error(&info, "%s", s);
 }
