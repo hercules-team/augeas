@@ -61,7 +61,7 @@ let forward_port =
       elem "port" token . colon .
       elem "proto" token .
       (colon . elem "toport" token)? .
-      (colon . elem "toaddr" ipaddr)? ]
+      (colon . elem "toaddr" ipaddr)? . eol ]
 
 let entry =
   long_opt /selinux|selinuxtype|addmodule|removemodule|block-icmp/

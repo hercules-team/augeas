@@ -55,7 +55,6 @@ test Lokkit.lns get conf =
     { "proto" = "tcp" }
     { "toport" = "42" }
     { "toaddr" = "192.168.0.42" } }
-  { }
   { "selinux" = "permissive" }
 
 test Lokkit.custom_rules get
