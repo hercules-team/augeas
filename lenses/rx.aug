@@ -65,3 +65,9 @@ let ipv6 =
   | /(([0-9A-Fa-f]{1,4}:){1,7}:)/
 
 let ip        = ipv4 | ipv6
+
+(*
+ * A Linux device name like eth0 or i2c-0. Might still be too restrictive
+ *)
+
+let device_name = /[a-zA-Z0-9_?.+:-]+/

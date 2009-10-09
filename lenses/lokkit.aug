@@ -26,6 +26,12 @@ let option (l:string) (s:string) =
 let opt (l:string) (s:string) =
   [ option l s . token . eol ]
 
+(* trust directive
+   -t <interface>, --trust=<interface>
+*)
+let trust =
+  [ option "trust" "t" . store Rx.device_name . eol ]
+
 (* port directive
    -p <port>[-<port>]:<protocol>, --port=<port>[-<port>]:<protocol>
 *)
@@ -68,7 +74,7 @@ let entry =
  |flag /enabled|disabled/
  |opt "service" "s"
  |port
- |opt "trust" "t"
+ |trust
  |opt "masq" "m"
  |custom_rules
  |forward_port

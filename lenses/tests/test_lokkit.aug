@@ -76,3 +76,9 @@ test Lokkit.custom_rules get
 test Lokkit.custom_rules get
 "--custom-rules=/some/file\n" =
   { "custom-rules" = "/some/file" }
+
+test Lokkit.lns get
+"--trust=tun+\n--trust=eth0.42\n--trust=eth0:1\n" =
+  { "trust" = "tun+" }
+  { "trust" = "eth0.42" }
+  { "trust" = "eth0:1" }
