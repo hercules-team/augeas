@@ -70,4 +70,4 @@ let ip        = ipv4 | ipv6
  * A Linux device name like eth0 or i2c-0. Might still be too restrictive
  *)
 
-let device_name = /[a-zA-Z0-9_?.+:-]+/
+let device_name = /[a-zA-Z0-9_?.+:!-]+/
