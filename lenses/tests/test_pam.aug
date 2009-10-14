@@ -33,6 +33,14 @@ session    optional     pam_keyinit.so force revoke
   test Pam.lns get "@include common-password\n" =
     { "include" = "common-password" }
 
+  test Pam.lns get "-password   optional	pam_gnome_keyring.so\n" =
+    { "1"
+      { "optional" }
+      { "type" = "password" }
+      { "control" = "optional" }
+      { "module" = "pam_gnome_keyring.so" }
+    }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

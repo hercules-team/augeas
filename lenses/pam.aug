@@ -27,6 +27,7 @@ module Pam =
                   Util.del_ws_spc . store word . eol ]
 
   let record = [ seq "record" . indent .
+                   [ label "optional" . del "-" "-" ]? .
                    [ label "type" . store types ] .
                    Util.del_ws_tab .
                    [ label "control" . store control] .
