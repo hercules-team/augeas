@@ -862,3 +862,8 @@ test Krb5.instance_mapping get "[instancemapping]
               { "value" = "" } }
           { "mapping" = "e898/*"
               { "value" = "" } } } }
+
+test Krb5.kdc get "[kdc]
+ profile = /var/kerberos/krb5kdc/kdc.conf\n" =
+  { "kdc"
+    { "profile" = "/var/kerberos/krb5kdc/kdc.conf" } }

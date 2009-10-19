@@ -113,8 +113,11 @@ let instance_mapping =
                      eq_openbr . (mapping|comment)* . closebr . eol ] in
     record "instancemapping" instance
 
+let kdc =
+  simple_section "kdc" /profile/
+
 let lns = (comment|empty)* .
   (libdefaults|login|appdefaults|realms|domain_realm
-  |logging|capaths|dbdefaults|dbmodules|instance_mapping)*
+  |logging|capaths|dbdefaults|dbmodules|instance_mapping|kdc)*
 
 let xfm = transform lns (incl "/etc/krb5.conf")
