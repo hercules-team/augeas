@@ -203,7 +203,7 @@ char *escape(const char *text, int cnt) {
             *e++ = '\\';
             *e++ = escape_names[p - escape_chars];
         } else if (! isprint(text[i])) {
-            sprintf(e, "\\%03o", text[i]);
+            sprintf(e, "\\%03o", (unsigned char) text[i]);
             e += 4;
         } else {
             *e++ = text[i];
