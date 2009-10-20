@@ -21,6 +21,7 @@ lens_tests =			\
   lens-dnsmasq.sh		\
   lens-dpkg.sh			\
   lens-dput.sh			\
+  lens-ethers.sh		\
   lens-exports.sh		\
   lens-fstab.sh			\
   lens-gdm.sh			\
