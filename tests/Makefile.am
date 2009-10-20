@@ -63,6 +63,7 @@ lens_tests =			\
   lens-sysctl.sh		\
   lens-vsftpd.sh		\
   lens-webmin.sh		\
+  lens-wine.sh			\
   lens-xinetd.sh		\
   lens-xorg.sh			\
   lens-grub.sh			\
