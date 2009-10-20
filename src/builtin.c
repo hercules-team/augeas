@@ -92,9 +92,11 @@ static struct value *make_exn_lns_error(struct info *info,
     }
     if (err->pos >= 0) {
         char *pos = format_pos(text, err->pos);
+        size_t line, ofs;
+        calc_line_ofs(text, err->pos, &line, &ofs);
         exn_printf_line(v,
-                        "Error encountered here (%d characters into string)",
-                        err->pos);
+                     "Error encountered at %d:%d (%d characters into string)",
+                        (int) line, (int) ofs, err->pos);
         if (pos != NULL)
             exn_printf_line(v, "%s", pos);
         free(pos);

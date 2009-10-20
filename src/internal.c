@@ -390,6 +390,18 @@ int xasprintf(char **strp, const char *format, ...) {
   return result;
 }
 
+void calc_line_ofs(const char *text, size_t pos, size_t *line, size_t *ofs) {
+    *line = 1;
+    *ofs = 0;
+    for (const char *t = text; t < text + pos; t++) {
+        *ofs += 1;
+        if (*t == '\n') {
+            *ofs = 0;
+            *line += 1;
+        }
+    }
+}
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil

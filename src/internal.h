@@ -267,6 +267,9 @@ const char *xstrerror(int errnum, char *buf, size_t len);
 /* Like asprintf, but set *STRP to NULL on error */
 int xasprintf(char **strp, const char *format, ...);
 
+/* Calculate line and column number of character POS in TEXT */
+void calc_line_ofs(const char *text, size_t pos, size_t *line, size_t *ofs);
+
 /* Struct: augeas
  * The data structure representing a connection to Augeas. */
 struct augeas {

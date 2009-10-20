@@ -258,20 +258,6 @@ static int err_set(struct augeas *aug, char **ep, const char *sub,
     return (r < 0) ? -1 : 0;
 }
 
-static void
-calc_line_ofs(const char *text, size_t pos, size_t *line, size_t *ofs)
-{
-    *line = 1;
-    *ofs = 0;
-    for (const char *t = text; t < text + pos; t++) {
-        *ofs += 1;
-        if (*t == '\n') {
-            *ofs = 0;
-            *line += 1;
-        }
-    }
-}
-
 /* Record an error in the tree. The error will show up underneath
  * /augeas/FILENAME/error. PATH is the path to the toplevel node in the
  * tree where the lens application happened. When STATUS is NULL, just
