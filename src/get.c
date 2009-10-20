@@ -101,7 +101,7 @@ static void get_error(struct state *state, struct lens *lens,
     CALLOC(state->error, 1);
     state->error->lens = ref(lens);
     if (REG_MATCHED(state))
-        state->error->pos  = REG_START(state);
+        state->error->pos  = REG_END(state);
     else
         state->error->pos = 0;
     va_start(ap, format);
