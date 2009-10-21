@@ -478,7 +478,7 @@ clone_nodeset(struct nodeset *ns, struct state *state)
         return NULL;
     }
     clone->used = ns->used;
-    clone->size = ns->size;
+    clone->size = ns->used;
     for (int i=0; i < ns->used; i++)
         clone->nodes[i] = ns->nodes[i];
     return clone;
