@@ -151,14 +151,16 @@ regexp_union_n(struct info *info, int n, struct regexp **r) {
         return NULL;
 
     p = pat;
+    int added = 0;
     for (int i=0; i < n; i++) {
         if (r[i] == NULL)
             continue;
-        if (i > 0)
+        if (added > 0)
             *p++ = '|';
         *p++ = '(';
         p = stpcpy(p, r[i]->pattern->str);
         *p++ = ')';
+        added += 1;
     }
     return make_regexp(info, pat);
 }
