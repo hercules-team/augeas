@@ -84,7 +84,8 @@ enum binary_op {
     OP_STAR,       /* '*'  */
     OP_AND,        /* 'and' */
     OP_OR,         /* 'or' */
-    OP_RE_MATCH     /* '=~' */
+    OP_RE_MATCH,   /* '=~' */
+    OP_UNION       /* '|' */
 };
 
 struct pred {
@@ -823,6 +824,27 @@ static bool eval_re_match_str(struct state *state, struct regexp *rx,
     return r == strlen(str);
 }
 
+static void eval_union(struct state *state) {
+    value_ind_t vind = make_value(T_NODESET, state);
+    struct value *r = pop_value(state);
+    struct value *l = pop_value(state);
+    struct nodeset *res = NULL;
+
+    assert(l->tag == T_NODESET);
+    assert(r->tag == T_NODESET);
+
+    CHECK_ERROR;
+
+    res = clone_nodeset(l->nodeset, state);
+    CHECK_ERROR;
+    for (int i=0; i < r->nodeset->used; i++) {
+        ns_add(res, r->nodeset->nodes[i], state);
+        CHECK_ERROR;
+    }
+    state->value_pool[vind].nodeset = res;
+    push_value(vind, state);
+}
+
 static void eval_re_match(struct state *state) {
     struct value *rx  = pop_value(state);
     struct value *v = pop_value(state);
@@ -874,6 +896,9 @@ static void eval_binary(struct expr *expr, struct state *state) {
     case OP_AND:
     case OP_OR:
         eval_and_or(state, expr->op);
+        break;
+    case OP_UNION:
+        eval_union(state);
         break;
     case OP_RE_MATCH:
         eval_re_match(state);
@@ -1163,6 +1188,8 @@ static void check_app(struct expr *expr, struct state *state) {
  * '=~'       : T_STRING  -> T_REGEXP  -> T_BOOLEAN
  *              T_NODESET -> T_REGEXP  -> T_BOOLEAN
  *
+ * '|'        : T_NODESET -> T_NODESET -> T_NODESET
+ *
  * Any type can be coerced to T_BOOLEAN (see coerce_to_bool)
  */
 static void check_binary(struct expr *expr, struct state *state) {
@@ -1196,6 +1223,10 @@ static void check_binary(struct expr *expr, struct state *state) {
     case OP_STAR:
         ok =  (l == T_NUMBER && r == T_NUMBER);
         res = T_NUMBER;
+        break;
+    case OP_UNION:
+        ok = (l == T_NODESET && r == T_NODESET);
+        res = T_NODESET;
         break;
     case OP_AND:
     case OP_OR:
@@ -1868,13 +1899,26 @@ static void parse_path_expr(struct state *state) {
 }
 
 /*
- * MultiplicativeExpr ::= PathExpr ('*' PathExpr)*
+ * UnionExpr ::= PathExpr ('|' PathExpr)*
  */
-static void parse_multiplicative_expr(struct state *state) {
+static void parse_union_expr(struct state *state) {
     parse_path_expr(state);
     CHECK_ERROR;
-    while (match(state, '*')) {
+    while (match(state, '|')) {
         parse_path_expr(state);
+        CHECK_ERROR;
+        push_new_binary_op(OP_UNION, state);
+    }
+}
+
+/*
+ * MultiplicativeExpr ::= UnionExpr ('*' UnionExpr)*
+ */
+static void parse_multiplicative_expr(struct state *state) {
+    parse_union_expr(state);
+    CHECK_ERROR;
+    while (match(state, '*')) {
+        parse_union_expr(state);
         CHECK_ERROR;
         push_new_binary_op(OP_STAR, state);
     }

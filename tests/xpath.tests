@@ -221,3 +221,15 @@ test regexp1 /files/etc/sysconfig/network-scripts/*[label() =~ regexp('.*-eth0')
 
 test regexp2 /files/etc/hosts/*[* =~ regexp('127\..*')]
      /files/etc/hosts/1
+
+# Union of nodesets
+test union (/files/etc/yum.conf | /files/etc/yum.repos.d/*)/*/gpgcheck
+     /files/etc/yum.conf/main/gpgcheck = 1
+     /files/etc/yum.repos.d/fedora-updates.repo/updates/gpgcheck = 1
+     /files/etc/yum.repos.d/fedora-updates.repo/updates-debuginfo/gpgcheck = 1
+     /files/etc/yum.repos.d/fedora-updates.repo/updates-source/gpgcheck = 1
+     /files/etc/yum.repos.d/fedora.repo/fedora/gpgcheck = 1
+     /files/etc/yum.repos.d/fedora.repo/fedora-debuginfo/gpgcheck = 1
+     /files/etc/yum.repos.d/fedora.repo/fedora-source/gpgcheck = 1
+     /files/etc/yum.repos.d/remi.repo/remi/gpgcheck = 1
+     /files/etc/yum.repos.d/remi.repo/remi-test/gpgcheck = 1

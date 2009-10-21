@@ -128,7 +128,8 @@ RelationalExpr ::= AdditiveExpr (RelationalOp AdditiveExpr)?
 RelationalOp ::= ">" | "<" | ">=" | "<="
 AdditiveExpr ::= MultiplicativeExpr (AdditiveOp MultiplicativeExpr)*
 AdditiveOp   ::= '+' | '-'
-MultiplicativeExpr ::= PathExpr ('*' PathExpr)*
+MultiplicativeExpr ::= UnionExpr ('*' UnionExpr)*
+UnionExpr ::= PathExpr ("|" PathExpr)*
 
 Literal ::= '"' /[^"]* / '"' | "'" /[^']* / "'"
 Number       ::= /[0-9]+/
