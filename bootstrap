@@ -65,6 +65,8 @@ gitlog-to-changelog
 canonicalize-lgpl
 regex
 selinux-h
+stpcpy
+stpncpy
 strndup
 vasprintf
 '
