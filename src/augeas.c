@@ -1136,6 +1136,13 @@ void aug_close(struct augeas *aug) {
     free(aug);
 }
 
+int __aug_load_module_file(struct augeas *aug, const char *filename) {
+    api_entry(aug);
+    int r = load_module_file(aug, filename);
+    api_exit(aug);
+    return r;
+}
+
 int tree_equal(const struct tree *t1, const struct tree *t2) {
     while (t1 != NULL && t2 != NULL) {
         if (!streqv(t1->label, t2->label))

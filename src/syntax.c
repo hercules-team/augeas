@@ -1913,7 +1913,7 @@ static char *module_filename(struct augeas *aug, const char *modname) {
     return filename;
 }
 
-int __aug_load_module_file(struct augeas *aug, const char *filename) {
+int load_module_file(struct augeas *aug, const char *filename) {
     struct term *term = NULL;
     int result = -1;
 
@@ -1945,7 +1945,7 @@ static int load_module(struct augeas *aug, const char *name) {
     if ((filename = module_filename(aug, name)) == NULL)
         return -1;
 
-    if (__aug_load_module_file(aug, filename) == -1)
+    if (load_module_file(aug, filename) == -1)
         goto error;
 
     free(filename);

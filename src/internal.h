@@ -302,6 +302,9 @@ static inline struct error *err_of_aug(const struct augeas *aug) {
     return ((struct augeas *) aug)->error;
 }
 
+/* Used by augparse for loading tests */
+int __aug_load_module_file(struct augeas *aug, const char *filename);
+
 /* Struct: tree
  * An entry in the global config tree. The data structure allows associating
  * values with interior nodes, but the API currently marks that as an error.

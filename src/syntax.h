@@ -264,8 +264,7 @@ int define_native_intl(const char *fname, int line,
 
 struct module *builtin_init(struct error *);
 
-/* Used by augparse for some testing */
-int __aug_load_module_file(struct augeas *aug, const char *filename);
+int load_module_file(struct augeas *aug, const char *filename);
 
 int interpreter_init(struct augeas *aug);
 
