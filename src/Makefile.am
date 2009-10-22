@@ -44,7 +44,7 @@ augparse_SOURCES = augparse.c
 augparse_LDADD = libaugeas.la $(GNULIB)
 
 libfa_la_SOURCES = fa.c fa.h hash.c hash.h memory.c memory.h ref.h ref.c
-libfa_la_LIBADD = $(GNULIB)
+libfa_la_LIBADD = $(LIB_SELINUX) $(GNULIB)
 libfa_la_LDFLAGS = $(FA_VERSION_SCRIPT) -version-info $(LIBFA_VERSION_INFO)
 
 liblexer_la_SOURCES = lexer.l

@@ -8,4 +8,4 @@ AM_CFLAGS = @AUGEAS_CFLAGS@ @WARN_CFLAGS@ $(GNULIB_CFLAGS) \
 bin_PROGRAMS = fadot
 
 fadot_SOURCES = fadot.c
-fadot_LDADD = $(top_builddir)/src/libfa.la $(GNULIB)
+fadot_LDADD = $(top_builddir)/src/libfa.la
