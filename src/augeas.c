@@ -32,6 +32,7 @@
 #include <argz.h>
 #include <string.h>
 #include <stdarg.h>
+#include <locale.h>
 
 /* Some popular labels that we use in /augeas */
 static const char *const s_augeas = "augeas";
@@ -229,12 +230,65 @@ static struct tree *tree_from_transform(struct augeas *aug,
     return NULL;
 }
 
+/* Save user locale and switch to C locale */
+#if HAVE_USELOCALE
+static void save_locale(struct augeas *aug) {
+    if (aug->c_locale == NULL) {
+        aug->c_locale = newlocale(LC_ALL_MASK, "C", NULL);
+        ERR_NOMEM(aug->c_locale == NULL, aug);
+    }
+
+    aug->user_locale = uselocale(aug->c_locale);
+ error:
+    return;
+}
+#else
+static void save_locale(ATTRIBUTE_UNUSED struct augeas *aug) { }
+#endif
+
+#if HAVE_USELOCALE
+static void restore_locale(struct augeas *aug) {
+    uselocale(aug->user_locale);
+    aug->user_locale = NULL;
+}
+#else
+static void restore_locale(ATTRIBUTE_UNUSED struct augeas *aug) { }
+#endif
+
+/* Clean up old error messages every time we enter through the public
+ * API. Since we make internal calls through the public API, we keep a
+ * count of how many times a public API call was made, and only reset when
+ * that count is 0. That requires that all public functions enclose their
+ * work within a matching pair of api_entry/api_exit calls.
+ */
+static void api_entry(const struct augeas *aug) {
+    struct error *err = ((struct augeas *) aug)->error;
+
+    ((struct augeas *) aug)->api_entries += 1;
+
+    if (aug->api_entries > 1)
+        return;
+
+    err->code = AUG_NOERROR;
+    err->minor = 0;
+    FREE(err->details);
+    err->minor_details = NULL;
+    save_locale((struct augeas *) aug);
+}
+
+static void api_exit(const struct augeas *aug) {
+    assert(aug->api_entries > 0);
+    ((struct augeas *) aug)->api_entries -= 1;
+    if (aug->api_entries == 0) {
+        store_pathx_error(aug);
+        restore_locale((struct augeas *) aug);
+    }
+}
+
 struct augeas *aug_init(const char *root, const char *loadpath,
                         unsigned int flags) {
     struct augeas *result;
     struct tree *tree_root = make_tree(NULL, NULL, NULL, NULL);
-
-    /* There's no point in bothering with api_entry/api_exit here */
 
     if (tree_root == NULL)
         return NULL;
@@ -248,6 +302,8 @@ struct augeas *aug_init(const char *root, const char *loadpath,
         free_tree(tree_root);
         goto error;
     }
+
+    api_entry(result);
 
     result->flags = flags;
 
@@ -327,9 +383,11 @@ struct augeas *aug_init(const char *root, const char *loadpath,
         if (aug_load(result) < 0)
             goto error;
 
+    api_exit(result);
     return result;
 
  error:
+    api_exit(result);
     aug_close(result);
     return NULL;
 }
@@ -342,34 +400,6 @@ static void tree_unlink_children(struct augeas *aug, struct tree *tree) {
 
     while (tree->children != NULL)
         tree_unlink(tree->children);
-}
-
-/* Clean up old error messages every time we enter through the public
- * API. Since we make internal calls through the public API, we keep a
- * count of how many times a public API call was made, and only reset when
- * that count is 0. That requires that all public functions enclose their
- * work within a matching pair of api_entry/api_exit calls.
- */
-static void api_entry(const struct augeas *aug) {
-    struct error *err = ((struct augeas *) aug)->error;
-
-    ((struct augeas *) aug)->api_entries += 1;
-
-    if (aug->api_entries > 1)
-        return;
-
-    err->code = AUG_NOERROR;
-    err->minor = 0;
-    FREE(err->details);
-    err->minor_details = NULL;
-}
-
-static void api_exit(const struct augeas *aug) {
-    assert(aug->api_entries > 0);
-    ((struct augeas *) aug)->api_entries -= 1;
-    if (aug->api_entries == 0) {
-        store_pathx_error(aug);
-    }
 }
 
 int aug_load(struct augeas *aug) {

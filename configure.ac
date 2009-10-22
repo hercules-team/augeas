@@ -83,7 +83,7 @@ AUGEAS_CFLAGS=-std=gnu99
 AC_SUBST(AUGEAS_CFLAGS)
 
 AUGEAS_CHECK_READLINE
-AC_CHECK_FUNCS([open_memstream])
+AC_CHECK_FUNCS([open_memstream uselocale])
 
 VERSION_SCRIPT_FLAGS=
 $(/usr/bin/ld --help 2>&1 | grep -- --version-script >/dev/null) && \

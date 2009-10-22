@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <assert.h>
+#include <locale.h>
 
 /*
  * Various parameters about env vars, special tree nodes etc.
@@ -285,6 +286,16 @@ struct augeas {
     struct error        *error;
     uint                api_entries;  /* Number of entries through a public
                                        * API, 0 when called from outside */
+#if HAVE_USELOCALE
+    /* On systems that have a uselocale call, we switch to the C locale
+     * on entry into API functions, and back to the old user locale
+     * on exit.
+     * FIXME: We need some solution for systems without uselocale, like
+     * setlocale + critical section, though that is very heavy-handed
+     */
+    locale_t            c_locale;
+    locale_t            user_locale;
+#endif
 };
 
 static inline struct error *err_of_aug(const struct augeas *aug) {
