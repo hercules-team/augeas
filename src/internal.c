@@ -25,9 +25,11 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <locale.h>
 
 #include "internal.h"
 #include "memory.h"
+#include "fa.h"
 
 #ifndef MIN
 # define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -401,6 +403,40 @@ void calc_line_ofs(const char *text, size_t pos, size_t *line, size_t *ofs) {
         }
     }
 }
+
+#if HAVE_USELOCALE
+int regexp_c_locale(ATTRIBUTE_UNUSED char **u, ATTRIBUTE_UNUSED size_t *len) {
+    /* On systems with uselocale, we are ok, since we make sure that we
+     * switch to the "C" locale any time we enter through the public API
+     */
+    return 0;
+}
+#else
+int regexp_c_locale(char **u, size_t *len) {
+    /* Without uselocale, we need to expand character ranges */
+    int r;
+    char *s = *u;
+    size_t s_len, u_len;
+    if (len == NULL) {
+        len = &u_len;
+        s_len = strlen(s);
+    } else {
+        s_len = *len;
+    }
+    r = fa_expand_char_ranges(s, s_len, u, len);
+    if (r != 0) {
+        *u = s;
+        *len = s_len;
+    }
+    if (r < 0)
+        return -1;
+    /* Syntax errors will be caught when the result is compiled */
+    if (r > 0)
+        return 0;
+    free(s);
+    return 1;
+}
+#endif
 
 /*
  * Local variables:

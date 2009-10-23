@@ -50,7 +50,7 @@ static const char *const tags[] = {
 };
 
 static const struct string digits_string = {
-    .ref = REF_MAX, .str = (char *) "[0-9]+"
+    .ref = REF_MAX, .str = (char *) "[0123456789]+"
 };
 static const struct string *const digits_pat = &digits_string;
 
@@ -311,6 +311,12 @@ static struct regexp *restrict_regexp(struct regexp *r) {
     // FIXME: Tell the user what's wrong
     if (ret != 0)
         return NULL;
+
+    ret = regexp_c_locale(&nre, &nre_len);
+    if (ret < 0) {
+        free(nre);
+        return NULL;
+    }
 
     r = make_regexp(r->info, nre);
     if (regexp_compile(r) != 0)

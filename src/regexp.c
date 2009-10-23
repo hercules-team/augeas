@@ -34,7 +34,25 @@ static const struct string empty_pattern_string = {
 static const struct string *const empty_pattern = &empty_pattern_string;
 
 char *regexp_escape(const struct regexp *r) {
-    char *pat = escape(r->pattern->str, -1);
+    char *pat = NULL;
+
+#if !HAVE_USELOCALE
+    char *nre = NULL;
+    int ret;
+    size_t nre_len;
+
+    /* Use a range with from > to to force conversion of ranges into
+     * short form */
+    ret = fa_restrict_alphabet(r->pattern->str, strlen(r->pattern->str),
+                               &nre, &nre_len, 2, 1);
+    if (ret == 0) {
+        pat = escape(nre, nre_len);
+        free(nre);
+    }
+#endif
+
+    if (pat == NULL)
+        pat = escape(r->pattern->str, -1);
 
     if (pat == NULL)
         return NULL;
@@ -232,6 +250,9 @@ regexp_minus(struct info *info, struct regexp *r1, struct regexp *r2) {
         /* FA is the empty set, which we can't represent as a regexp */
         goto error;
     }
+
+    if (regexp_c_locale(&s, NULL) < 0)
+        goto error;
 
     result = make_regexp(info, s);
     s = NULL;

@@ -52,6 +52,18 @@ static void loc_update(YYLTYPE *yylloc, const char *s, int len) {
     }
   }
 }
+
+static char *regexp_literal(const char *s, int len) {
+  char *u = unescape(s, len);
+  size_t u_len = strlen(u);
+
+  if (u == NULL)
+    return NULL;
+
+  regexp_c_locale(&u, &u_len);
+
+  return u;
+}
 %}
 
 DIGIT [0-9]
@@ -84,7 +96,7 @@ ARROW  ->
 
   \/([^/]|\\\/)*\/ {
                loc_update(yylloc, yytext, yyleng);
-               yylval->string = unescape(yytext+1, yyleng-2);
+               yylval->string = regexp_literal(yytext+1, yyleng-2);
                return REGEXP;
   }
 

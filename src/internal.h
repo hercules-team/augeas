@@ -271,6 +271,16 @@ int xasprintf(char **strp, const char *format, ...);
 /* Calculate line and column number of character POS in TEXT */
 void calc_line_ofs(const char *text, size_t pos, size_t *line, size_t *ofs);
 
+/* Take the first LEN characters from the regexp *U and expand any
+ * character ranges in it. The expanded regexp, if expansion is necessary,
+ * is in U, and the old string is freed. If expansion is not needed or an
+ * error happens, U will be unchanged.
+ *
+ * Return 0 if expansion is not necessary, -1 if an error occurs, and 1 if
+ * expansion was needed.
+ */
+int regexp_c_locale(char **u, size_t *len);
+
 /* Struct: augeas
  * The data structure representing a connection to Augeas. */
 struct augeas {
