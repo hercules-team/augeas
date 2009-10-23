@@ -3389,6 +3389,10 @@ static int re_concat_as_string(const struct re *re, struct re_str *str) {
     goto done;
 }
 
+static bool cset_contains(const struct re *cset, int c) {
+    return bitset_get(cset->cset, c) != cset->negate;
+}
+
 static int re_cset_as_string(const struct re *re, struct re_str *str) {
     const uchar rbrack = ']';
     const uchar dash = '-';
@@ -3410,10 +3414,10 @@ static int re_cset_as_string(const struct re *re, struct re_str *str) {
        NUL delimited strings to represent them. That means that we need to
        use negated representation if NUL is to be included (and vice versa)
     */
-    negate = bitset_get(re->cset, nul);
+    negate = cset_contains(re, nul);
     if (negate) {
         for (from = UCHAR_MIN;
-             from <= UCHAR_MAX && bitset_get(re->cset, from);
+             from <= UCHAR_MAX && cset_contains(re, from);
              from += 1);
         if (from > UCHAR_MAX) {
             /* Special case: the set matches every character */
@@ -3422,7 +3426,7 @@ static int re_cset_as_string(const struct re *re, struct re_str *str) {
         }
         if (from == '\n') {
             for (from += 1;
-                 from <= UCHAR_MAX && bitset_get(re->cset, from);
+                 from <= UCHAR_MAX && cset_contains(re, from);
                  from += 1);
             if (from > UCHAR_MAX) {
                 /* Special case: the set matches everything but '\n' */
@@ -3436,16 +3440,16 @@ static int re_cset_as_string(const struct re *re, struct re_str *str) {
        (INCL_RBRACK, INCL_DASH) As we loop over the character set, we reset
        these flags if they are in the set, but not mentioned explicitly
     */
-    incl_rbrack = bitset_get(re->cset, rbrack) != negate;
-    incl_dash = bitset_get(re->cset, dash) != negate;
+    incl_rbrack = cset_contains(re, rbrack) != negate;
+    incl_dash = cset_contains(re, dash) != negate;
 
     for (from = UCHAR_MIN; from <= UCHAR_MAX; from = to+1) {
-        while (from <= UCHAR_MAX && bitset_get(re->cset, from) == negate)
+        while (from <= UCHAR_MAX && cset_contains(re, from) == negate)
             from += 1;
         if (from > UCHAR_MAX)
             break;
         for (to = from;
-             to < UCHAR_MAX && (bitset_get(re->cset, to+1) != negate);
+             to < UCHAR_MAX && (cset_contains(re, to+1) != negate);
              to++);
 
         if (to == from && (from == rbrack || from == dash))
@@ -3479,12 +3483,12 @@ static int re_cset_as_string(const struct re *re, struct re_str *str) {
         *s++ = rbrack;
 
     for (from = UCHAR_MIN; from <= UCHAR_MAX; from = to+1) {
-        while (from <= UCHAR_MAX && bitset_get(re->cset, from) == negate)
+        while (from <= UCHAR_MAX && cset_contains(re, from) == negate)
             from += 1;
         if (from > UCHAR_MAX)
             break;
         for (to = from;
-             to < UCHAR_MAX && (bitset_get(re->cset, to+1) != negate);
+             to < UCHAR_MAX && (cset_contains(re, to+1) != negate);
              to++);
 
         if (to == from && (from == rbrack || from == dash))
