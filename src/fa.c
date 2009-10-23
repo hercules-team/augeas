@@ -3912,6 +3912,7 @@ int fa_restrict_alphabet(const char *regexp, size_t regexp_len,
     struct re_str str;
 
     *newregexp = NULL;
+    MEMZERO(&parse, 1);
     parse.rx = regexp;
     parse.rend = regexp + regexp_len;
     parse.error = REG_NOERROR;
