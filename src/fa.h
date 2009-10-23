@@ -212,11 +212,22 @@ int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len);
  * outside of a character set.
  *
  * Return a positive value if REGEXP is not syntactically valid; the value
- * returned is one of the REG_ERRCODE_T POSIX error codes.
+ * returned is one of the REG_ERRCODE_T POSIX error codes. Return 0 on
+ * success and -1 if an allocation fails.
  */
 int fa_restrict_alphabet(const char *regexp, size_t regexp_len,
                          char **newregexp, size_t *newregexp_len,
                          char from, char to);
+
+/* Convert REGEXP into one that does not use ranges inside character
+ * classes.
+ *
+ * Return a positive value if REGEXP is not syntactically valid; the value
+ * returned is one of the REG_ERRCODE_T POSIX error codes. Return 0 on
+ * success and -1 if an allocation fails.
+ */
+int fa_expand_char_ranges(const char *regexp, size_t regexp_len,
+                          char **newregexp, size_t *newregexp_len);
 #endif
 
 

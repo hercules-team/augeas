@@ -182,6 +182,9 @@ struct re {
         struct {                  /* CSET */
             bool    negate;
             bitset *cset;
+            /* Whether we can use character ranges when converting back
+             * to a string */
+            unsigned int no_ranges:1;
         };
         struct {                  /* CHAR */
             uchar c;
@@ -199,6 +202,8 @@ struct re_parse {
     const char *rx;          /* Current position in regex */
     const char *rend;        /* Last char of rx+ 1 */
     int         error;       /* error code */
+    /* Whether new CSET's should have the no_ranges flag set */
+    unsigned int no_ranges:1;
 };
 
 /* String with explicit length, used when converting re to string */
@@ -2960,10 +2965,11 @@ static struct re *make_re_char(uchar c) {
     return re;
 }
 
-static struct re *make_re_char_set(bool negate) {
+static struct re *make_re_char_set(bool negate, bool no_ranges) {
     struct re *re = make_re(CSET);
     if (re) {
         re->negate = negate;
+        re->no_ranges = no_ranges;
         re->cset = bitset_init(UCHAR_NUM);
         if (re->cset == NULL)
             re_unref(re);
@@ -3054,7 +3060,7 @@ static struct re *parse_simple_exp(struct re_parse *parse) {
 
     if (match(parse, '[')) {
         bool negate = match(parse, '^');
-        re = make_re_char_set(negate);
+        re = make_re_char_set(negate, parse->no_ranges);
         if (re == NULL) {
             parse->error = REG_ESPACE;
             goto error;
@@ -3088,7 +3094,7 @@ static struct re *parse_simple_exp(struct re_parse *parse) {
             }
         }
     } else if (match(parse, '.')) {
-        re = make_re_char_set(1);
+        re = make_re_char_set(1, parse->no_ranges);
         if (re == NULL) {
             parse->error = REG_ESPACE;
             goto error;
@@ -3440,31 +3446,37 @@ static int re_cset_as_string(const struct re *re, struct re_str *str) {
     incl_rbrack = cset_contains(re, rbrack) != negate;
     incl_dash = cset_contains(re, dash) != negate;
 
-    for (from = UCHAR_MIN; from <= UCHAR_MAX; from = to+1) {
-        while (from <= UCHAR_MAX && cset_contains(re, from) == negate)
-            from += 1;
-        if (from > UCHAR_MAX)
-            break;
-        for (to = from;
-             to < UCHAR_MAX && (cset_contains(re, to+1) != negate);
-             to++);
+    if (re->no_ranges) {
+        for (from = UCHAR_MIN; from <= UCHAR_MAX; from++)
+            if (cset_contains(re, from) != negate)
+                str->len += 1;
+    } else {
+        for (from = UCHAR_MIN; from <= UCHAR_MAX; from = to+1) {
+            while (from <= UCHAR_MAX && cset_contains(re, from) == negate)
+                from += 1;
+            if (from > UCHAR_MAX)
+                break;
+            for (to = from;
+                 to < UCHAR_MAX && (cset_contains(re, to+1) != negate);
+                 to++);
 
-        if (to == from && (from == rbrack || from == dash))
-            continue;
-        if (from == rbrack || from == dash)
-            from += 1;
-        if (to == rbrack || to == dash)
-            to -= 1;
+            if (to == from && (from == rbrack || from == dash))
+                continue;
+            if (from == rbrack || from == dash)
+                from += 1;
+            if (to == rbrack || to == dash)
+                to -= 1;
 
-        len = (to == from) ? 1 : ((to == from + 1) ? 2 : 3);
+            len = (to == from) ? 1 : ((to == from + 1) ? 2 : 3);
 
-        if (from < rbrack && rbrack < to)
-            incl_rbrack = 0;
-        if (from < dash && dash < to)
-            incl_dash = 0;
-        str->len += len;
+            if (from < rbrack && rbrack < to)
+                incl_rbrack = 0;
+            if (from < dash && dash < to)
+                incl_dash = 0;
+            str->len += len;
+        }
+        str->len += incl_rbrack + incl_dash;
     }
-    str->len += incl_rbrack + incl_dash;
     if (negate)
         str->len += 1;        /* For the ^ */
 
@@ -3479,31 +3491,40 @@ static int re_cset_as_string(const struct re *re, struct re_str *str) {
     if (incl_rbrack)
         *s++ = rbrack;
 
-    for (from = UCHAR_MIN; from <= UCHAR_MAX; from = to+1) {
-        while (from <= UCHAR_MAX && cset_contains(re, from) == negate)
-            from += 1;
-        if (from > UCHAR_MAX)
-            break;
-        for (to = from;
-             to < UCHAR_MAX && (cset_contains(re, to+1) != negate);
-             to++);
+    if (re->no_ranges) {
+        for (from = UCHAR_MIN; from <= UCHAR_MAX; from++) {
+            if (from == rbrack || from == dash)
+                continue;
+            if (cset_contains(re, from) != negate)
+                *s++ = from;
+        }
+    } else {
+        for (from = UCHAR_MIN; from <= UCHAR_MAX; from = to+1) {
+            while (from <= UCHAR_MAX && cset_contains(re, from) == negate)
+                from += 1;
+            if (from > UCHAR_MAX)
+                break;
+            for (to = from;
+                 to < UCHAR_MAX && (cset_contains(re, to+1) != negate);
+                 to++);
 
-        if (to == from && (from == rbrack || from == dash))
-            continue;
-        if (from == rbrack || from == dash)
-            from += 1;
-        if (to == rbrack || to == dash)
-            to -= 1;
+            if (to == from && (from == rbrack || from == dash))
+                continue;
+            if (from == rbrack || from == dash)
+                from += 1;
+            if (to == rbrack || to == dash)
+                to -= 1;
 
-        if (to == from) {
-            *s++ = from;
-        } else if (to == from + 1) {
-            *s++ = from;
-            *s++ = to;
-        } else {
-            *s++ = from;
-            *s++ = '-';
-            *s++ = to;
+            if (to == from) {
+                *s++ = from;
+            } else if (to == from + 1) {
+                *s++ = from;
+                *s++ = to;
+            } else {
+                *s++ = from;
+                *s++ = '-';
+                *s++ = to;
+            }
         }
     }
     if (incl_dash)
@@ -3645,7 +3666,7 @@ static int convert_trans_to_re(struct state *s) {
             to = t->to;
         }
         if (re == NULL) {
-            re = make_re_char_set(0);
+            re = make_re_char_set(0, 0);
             if (re == NULL)
                 goto error;
         }
@@ -3931,6 +3952,31 @@ int fa_restrict_alphabet(const char *regexp, size_t regexp_len,
     *newregexp = str.rx;
     *newregexp_len = str.len;
  done:
+    re_unref(re);
+    return result;
+}
+
+int fa_expand_char_ranges(const char *regexp, size_t regexp_len,
+                          char **newregexp, size_t *newregexp_len) {
+    int result;
+    struct re *re = NULL;
+    struct re_parse parse;
+    struct re_str str;
+
+    *newregexp = NULL;
+    MEMZERO(&parse, 1);
+    parse.rx = regexp;
+    parse.rend = regexp + regexp_len;
+    parse.error = REG_NOERROR;
+    parse.no_ranges = 1;
+    re = parse_regexp(&parse);
+    if (parse.error != REG_NOERROR)
+        return parse.error;
+
+    MEMZERO(&str, 1);
+    result = re_as_string(re, &str);
+    *newregexp = str.rx;
+    *newregexp_len = str.len;
     re_unref(re);
     return result;
 }

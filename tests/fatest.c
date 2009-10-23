@@ -499,6 +499,18 @@ static void testRestrictAlphabet(CuTest *tc) {
     CuAssertIntEquals(tc, REG_EBRACE, r);
 }
 
+static void testExpandCharRanges(CuTest *tc) {
+    const char *re = "[1-3]*|[a-b]([^\nU-X][^\n])*";
+    char *nre;
+    size_t nre_len;
+    int r;
+
+    r = fa_expand_char_ranges(re, strlen(re), &nre, &nre_len);
+    CuAssertIntEquals(tc, 0, r);
+    CuAssertStrEquals(tc, "[123]*|[ab]([^\nUVWX].)*", nre);
+    CuAssertIntEquals(tc, strlen(nre), nre_len);
+}
+
 int main(int argc, char **argv) {
     if (argc == 1) {
         char *output = NULL;
@@ -520,6 +532,7 @@ int main(int argc, char **argv) {
         SUITE_ADD_TEST(suite, testRangeEnd);
         SUITE_ADD_TEST(suite, testNul);
         SUITE_ADD_TEST(suite, testRestrictAlphabet);
+        SUITE_ADD_TEST(suite, testExpandCharRanges);
 
         CuSuiteRun(suite);
         CuSuiteSummary(suite, &output);
