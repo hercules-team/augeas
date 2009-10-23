@@ -39,6 +39,22 @@ l0:0:wait:/etc/rc.d/rc 0
   test Inittab.lns put simple after set "/id/runlevels" "3" =
     "id:3:initdefault:\n"
 
+  test Inittab.lns get
+    "co:2345:respawn:/usr/bin/command # End of line comment\n" =
+    { "co"
+        { "runlevels" = "2345" }
+        { "action" = "respawn" }
+        { "process" = "/usr/bin/command " }
+        { "#comment" = "End of line comment" } }
+
+  test Inittab.lns get
+    "co:2345:respawn:/usr/bin/blank_comment # \t \n" =
+    { "co"
+        { "runlevels" = "2345" }
+        { "action" = "respawn" }
+        { "process" = "/usr/bin/blank_comment " }
+        { "#comment" = "" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

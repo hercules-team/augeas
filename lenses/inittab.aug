@@ -12,10 +12,13 @@ module Inittab =
 
    let record =
      let field (name:string) = [ label name . store value ] in
+     let eolcomment =
+       [ label "#comment" . del /#[ \t]*/ "# "
+           . store /([^ \t\n].*[^ \t\n]|[^ \t\n]?)/ ] in
        [ key id . sep .
            field "runlevels" . sep .
            field "action" . sep .
-           field "process" . eol ]
+           field "process" . eolcomment? . eol ]
 
    let lns = ( comment | record ) *
 
