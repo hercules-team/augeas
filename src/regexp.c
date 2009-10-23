@@ -52,7 +52,7 @@ char *regexp_escape(const struct regexp *r) {
 
     if (pat[0] == '(' && pat[strlen(pat)-1] == ')')
         memmove(pat, pat+1, strlen(pat+1)+1);
-    pat[strlen(pat)-1] = '\0';
+    pat[strlen(pat)] = '\0';
 
     return pat;
 }
