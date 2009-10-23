@@ -113,7 +113,8 @@ check_PROGRAMS = fatest test-xpath test-load test-save
 TESTS_ENVIRONMENT = \
   PATH='$(abs_top_builddir)/src$(PATH_SEPARATOR)'"$$PATH" \
   abs_top_builddir='$(abs_top_builddir)' \
-  abs_top_srcdir='$(abs_top_srcdir)'
+  abs_top_srcdir='$(abs_top_srcdir)' \
+  LANG=en_US
 
 TESTS = augtest $(check_SCRIPTS) $(check_PROGRAMS)
 
