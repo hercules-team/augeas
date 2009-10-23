@@ -3323,10 +3323,7 @@ static int re_union_as_string(const struct re *re, struct re_str *str) {
 
 ATTRIBUTE_PURE
 static int re_needs_parens_in_concat(const struct re *re) {
-    if (re->type == ITER)
-        re = re->exp;
-
-    return (re->type != CHAR && re->type != CSET);
+    return (re->type != CHAR && re->type != CSET && re->type != ITER);
 }
 
 static int re_concat_as_string(const struct re *re, struct re_str *str) {
