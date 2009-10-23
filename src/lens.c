@@ -360,7 +360,7 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
         cnt = regexp_match(regexp, dflt, strlen(dflt), 0, NULL);
         if (cnt != strlen(dflt)) {
             char *s = escape(dflt, -1);
-            char *r = escape(regexp->pattern->str, -1);
+            char *r = regexp_escape(regexp);
             exn = make_exn_value(info,
                    "del: the default value '%s' does not match /%s/",
                    s, r);
@@ -498,9 +498,11 @@ static struct value *ambig_check(struct info *info,
         char *e_upv = escape(upv, -1);
         char *e_pv = escape(pv, -1);
         char *e_v = escape(v, -1);
+        char *s1 = regexp_escape(r1);
+        char *s2 = regexp_escape(r2);
         exn = make_exn_value(ref(info), "%s", msg);
-        exn_printf_line(exn, "  First regexp: /%s/", escape(r1->pattern->str, -1));
-        exn_printf_line(exn, "  Second regexp: /%s/", escape(r2->pattern->str, -1));
+        exn_printf_line(exn, "  First regexp: /%s/", s1);
+        exn_printf_line(exn, "  Second regexp: /%s/", s2);
         exn_printf_line(exn, "  '%s' can be split into", e_upv);
         exn_printf_line(exn, "  '%s|=|%s'\n", e_u, e_pv);
         exn_printf_line(exn, " and");
@@ -510,6 +512,8 @@ static struct value *ambig_check(struct info *info,
         free(e_upv);
         free(e_pv);
         free(e_v);
+        free(s1);
+        free(s2);
     }
     free(upv);
     return exn;
