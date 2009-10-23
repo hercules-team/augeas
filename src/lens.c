@@ -222,7 +222,7 @@ struct value *lns_make_subtree(struct info *info, struct lens *l) {
     const char *vpat = (l->vtype == NULL) ? ENC_NULL : l->vtype->pattern->str;
     char *pat;
 
-    if (asprintf(&pat, "%s%s%s%s", kpat, ENC_EQ, vpat, ENC_SLASH) < 0)
+    if (asprintf(&pat, "(%s)%s(%s)%s", kpat, ENC_EQ, vpat, ENC_SLASH) < 0)
         return NULL;
 
     lens = make_lens_unop(L_SUBTREE, info, l);
