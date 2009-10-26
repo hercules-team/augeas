@@ -216,6 +216,16 @@ struct value *lns_make_concat(struct info *info,
     return make_lens_value(lens);
 }
 
+/*
+ * A subtree lens l1 = [ l ]
+ *
+ * Types are assigned as follows:
+ *
+ * l1->ctype = l->ctype
+ * l1->atype = encode(l->ktype, l->vtype)
+ * l1->ktype = NULL
+ * l1->vtype = NULL
+ */
 struct value *lns_make_subtree(struct info *info, struct lens *l) {
     struct lens *lens;
     const char *kpat = (l->ktype == NULL) ? ENC_NULL : l->ktype->pattern->str;
