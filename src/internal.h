@@ -214,6 +214,10 @@ int pathjoin(char **path, int nseg, ...);
 
 #define MEMZERO(ptr, n) memset((ptr), 0, (n) * sizeof(*(ptr)));
 
+#define MEMCPY(dest, src, n) memcpy((dest), (src), (n) * sizeof(*(src)))
+
+#define MEMMOVE(dest, src, n) memmove((dest), (src), (n) * sizeof(*(src)))
+
 /**
  * TODO:
  *
