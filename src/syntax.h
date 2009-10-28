@@ -122,10 +122,16 @@ struct native {
     struct value *(*impl)(void);
 };
 
-/* An exception in the interpreter */
+/* An exception in the interpreter. Some exceptions are reported directly
+ * into the central struct error; an exception for those is only generated
+ * to follow the control flow for exceptions. Such exceptions have both
+ * seen and error set to 1. They are the only exceptions with error == 1.
+ * When error == 1, none of the other fields in the exn will be usable.
+ */
 struct exn {
     struct info *info;
     unsigned int seen : 1;      /* Whether the user has seen this EXN */
+    unsigned int error : 1;
     char        *message;
     size_t       nlines;
     char       **lines;
@@ -167,6 +173,9 @@ struct value {
         };
     };
 };
+
+/* Return an exception value with error == 1 (and seen == 1) */
+struct value *exn_error(void);
 
 /* All types except for T_ARROW (functions) are simple. Subtype relations
  * for the simple types:

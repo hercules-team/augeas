@@ -436,6 +436,18 @@ void exn_printf_line(struct value *exn, const char *format, ...) {
         exn_add_lines(exn, 1, line);
 }
 
+struct value *exn_error(void) {
+    static const struct exn exn = {
+        .info = NULL, .seen = 1, .error = 1,
+        .message = (char *) "Error during evaluation",
+        .nlines = 0, .lines = NULL };
+    static const struct value value = {
+        .ref = REF_MAX, /* Protect against being freed */
+        .info = NULL, .tag = V_EXN,
+        { .exn = (struct exn *) &exn } };
+    return (struct value *) &value;
+}
+
 /*
  * Modules
  */
