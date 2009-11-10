@@ -83,6 +83,10 @@ char *format_info(struct info *info) {
 }
 
 void print_info(FILE *out, struct info *info) {
+    if (info == NULL) {
+        fprintf(out, "(no file info):");
+        return;
+    }
     fprintf(out, "%s:",
             info->filename != NULL ? info->filename->str : "(unknown file)");
     if (info->first_line > 0) {
