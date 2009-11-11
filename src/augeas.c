@@ -333,6 +333,8 @@ struct augeas *aug_init(const char *root, const char *loadpath,
         goto error;
     if (ALLOC(result->error) < 0)
         goto error;
+    result->error->aug = result;
+
     result->origin = make_tree_origin(tree_root);
     if (result->origin == NULL) {
         free_tree(tree_root);
