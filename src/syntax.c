@@ -709,10 +709,13 @@ static void print_value(FILE *out, struct value *v) {
         fprintf(out, ">");
         break;
     case V_EXN:
-        print_info(out, v->exn->info);
-        fprintf(out, "exception: %s\n", v->exn->message);
-        for (int i=0; i < v->exn->nlines; i++) {
-            fprintf(out, "    %s\n", v->exn->lines[i]);
+        if (! v->exn->seen) {
+            print_info(out, v->exn->info);
+            fprintf(out, "exception: %s\n", v->exn->message);
+            for (int i=0; i < v->exn->nlines; i++) {
+                fprintf(out, "    %s\n", v->exn->lines[i]);
+            }
+            v->exn->seen = 1;
         }
         break;
     default:
@@ -1676,7 +1679,8 @@ static int compile_test(struct term *term, struct ctx *ctx) {
         }
     } else {
         if (EXN(actual)) {
-            printf("Test run encountered exception:\n");
+            print_info(stdout, term->info);
+            printf("exception thrown in test\n");
             print_value(stdout, actual);
             printf("\n");
             ret = 0;
