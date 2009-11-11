@@ -683,7 +683,9 @@ static int init_regs(struct state *state, struct lens *lens, uint size) {
 
     if (lens->tag != L_STAR) {
         r = match(state, lens, lens->ctype, size, 0);
-        if (r < -1)
+        if (r == -1)
+            get_error(state, lens, "Input string does not match at all");
+        if (r <= -1)
             return -1;
         return r != size;
     }
@@ -721,8 +723,8 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
      * fails, we throw our arms in the air and say 'something went wrong'
      */
     partial = init_regs(&state, lens, size);
-
-    tree = get_lens(lens, &state);
+    if (partial >= 0)
+        tree = get_lens(lens, &state);
 
     free_seqs(state.seqs);
     if (state.key != NULL) {
