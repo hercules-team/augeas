@@ -31,6 +31,7 @@
 #include "memory.h"
 #include "info.h"
 #include "lens.h"
+#include "errcode.h"
 
 /* Our favorite error message */
 static const char *const short_iteration =
@@ -69,11 +70,41 @@ struct state {
     uint                 nreg;
 };
 
+/* Used by recursive lenses to stack intermediate results */
+struct frame {
+    struct lens     *lens;
+    char            *key;
+    union {
+        struct {
+            char        *value;
+            struct tree *tree;
+        };
+        struct {
+            struct skel *skel;
+            struct dict *dict;
+        };
+    };
+};
+
+/* Used by recursive lenses in get_rec and parse_rec */
+enum mode_t { M_GET, M_PARSE };
+
+struct rec_state {
+    enum mode_t          mode;
+    struct state        *state;
+    uint                 fsize;
+    uint                 fused;
+    struct frame        *frames;
+    size_t               start;
+    uint                 lvl;  /* Debug only */
+};
+
 #define REG_START(state) ((state)->regs->start[(state)->nreg])
 #define REG_END(state)   ((state)->regs->end[(state)->nreg])
 #define REG_SIZE(state) (REG_END(state) - REG_START(state))
 #define REG_POS(state) ((state)->text + REG_START(state))
-#define REG_VALID(state) ((state)->nreg < (state)->regs->num_regs)
+#define REG_VALID(state) ((state)->regs != NULL &&                      \
+                          (state)->nreg < (state)->regs->num_regs)
 #define REG_MATCHED(state) (REG_VALID(state)                            \
                             && (state)->regs->start[(state)->nreg] >= 0)
 
@@ -90,10 +121,8 @@ void free_lns_error(struct lns_error *err) {
     free(err);
 }
 
-static void get_error(struct state *state, struct lens *lens,
-                      const char *format, ...)
-{
-    va_list ap;
+static void vget_error(struct state *state, struct lens *lens,
+                       const char *format, va_list ap) {
     int r;
 
     if (state->error != NULL)
@@ -104,11 +133,19 @@ static void get_error(struct state *state, struct lens *lens,
         state->error->pos  = REG_END(state);
     else
         state->error->pos = 0;
-    va_start(ap, format);
     r = vasprintf(&state->error->message, format, ap);
-    va_end(ap);
     if (r == -1)
         state->error->message = NULL;
+}
+
+static void get_error(struct state *state, struct lens *lens,
+                      const char *format, ...)
+{
+    va_list ap;
+
+    va_start(ap, format);
+    vget_error(state, lens, format, ap);
+    va_end(ap);
 }
 
 static struct skel *make_skel(struct lens *lens) {
@@ -631,6 +668,371 @@ static struct skel *parse_subtree(struct lens *lens, struct state *state,
     return make_skel(lens);
 }
 
+/*
+ * Helpers for recursive lenses
+ */
+
+ATTRIBUTE_UNUSED
+static void print_frames(struct rec_state *state) {
+    for (int j = state->fused - 1; j >=0; j--) {
+        struct frame *f = state->frames + j;
+        for (int i=0; i < state->lvl; i++) fputc(' ', stderr);
+        fprintf(stderr, "%2d %s %s", j, f->key, f->value);
+        if (f->tree == NULL) {
+            fprintf(stderr, " - ");
+        } else {
+            fprintf(stderr, " { %s = %s } ", f->tree->label, f->tree->value);
+        }
+        fprintf(stderr, "%s\n", format_lens(f->lens));
+    }
+}
+
+ATTRIBUTE_PURE
+static struct frame *top_frame(struct rec_state *state) {
+    assert(state->fsize > 0);
+    return state->frames + state->fused - 1;
+}
+
+/* The nth frame from the top of the stack, where 0th frame is the top */
+ATTRIBUTE_PURE
+static struct frame *nth_frame(struct rec_state *state, uint n) {
+    assert(state->fsize > n);
+    return state->frames + state->fused - (n+1);
+}
+
+static struct frame *push_frame(struct rec_state *state, struct lens *lens) {
+    int r;
+
+    if (state->fused >= state->fsize) {
+        uint expand = state->fsize;
+        if (expand < 8)
+            expand = 8;
+        r = REALLOC_N(state->frames, state->fsize + expand);
+        ERR_NOMEM(r < 0, &state->state->info);
+        state->fsize += expand;
+    }
+
+    state->fused += 1;
+
+    struct frame *top = top_frame(state);
+    MEMZERO(top, 1);
+    top->lens = lens;
+    return top;
+ error:
+    return NULL;
+}
+
+static struct frame *pop_frame(struct rec_state *state) {
+    assert(state->fused > 0);
+
+    state->fused -= 1;
+    if (state->fused > 0)
+        return top_frame(state);
+    else
+        return NULL;
+}
+
+static void dbg_visit(struct lens *lens, char action, size_t start, size_t end,
+                      int fused, int lvl) {
+
+    for (int i=0; i < lvl; i++)
+        fputc(' ', stderr);
+    fprintf(stderr, "%c %zd..%zd %d %s\n", action, start, end,
+            fused, format_lens(lens));
+}
+
+static void get_terminal(struct frame *top, struct lens *lens,
+                         struct state *state) {
+    top->tree = get_lens(lens, state);
+    top->key = state->key;
+    top->value = state->value;
+    state->key = NULL;
+    state->value = NULL;
+}
+
+static void parse_terminal(struct frame *top, struct lens *lens,
+                           struct state *state) {
+    top->dict = NULL;
+    top->skel = parse_lens(lens, state, &top->dict);
+    top->key = state->key;
+    state->key = NULL;
+}
+
+static void visit_terminal(struct lens *lens, size_t start, size_t end,
+                           void *data) {
+    struct rec_state *rec_state = data;
+    struct state *state = rec_state->state;
+    struct re_registers *old_regs = state->regs;
+    uint old_nreg = state->nreg;
+
+    if (state->error != NULL)
+        return;
+
+    if (debugging("cf.get"))
+        dbg_visit(lens, 'T', start, end, rec_state->fused, rec_state->lvl);
+    match(state, lens, lens->ctype, end, start);
+    struct frame *top = push_frame(rec_state, lens);
+    if (rec_state->mode == M_GET)
+        get_terminal(top, lens, state);
+    else
+        parse_terminal(top, lens, state);
+    free_regs(state);
+    state->regs = old_regs;
+    state->nreg = old_nreg;
+}
+
+static void visit_enter(struct lens *lens,
+                        ATTRIBUTE_UNUSED size_t start,
+                        ATTRIBUTE_UNUSED size_t end,
+                        void *data) {
+    struct rec_state *rec_state = data;
+    struct state *state = rec_state->state;
+
+    if (state->error != NULL)
+        return;
+
+    if (debugging("cf.get"))
+        dbg_visit(lens, '{', start, end, rec_state->fused, rec_state->lvl);
+    rec_state->lvl += 1;
+    if (lens->tag == L_SUBTREE) {
+        /* Same for parse and get */
+        struct frame *f = push_frame(rec_state, lens);
+        f->key = state->key;
+        f->value = state->value;
+        state->key = NULL;
+        state->value = NULL;
+    }
+}
+
+static void get_combine(struct rec_state *rec_state,
+                        struct lens *lens, uint n) {
+    struct tree *tree = NULL, *tail = NULL;
+    char *key = NULL, *value = NULL;
+    struct frame *top = NULL;
+
+    if (n > 0)
+        top = top_frame(rec_state);
+
+    for (int i=0; i < n; i++, top = pop_frame(rec_state)) {
+        list_tail_cons(tree, tail, top->tree);
+        /* top->tree might have more than one node, update tail */
+        if (tail != NULL)
+            while (tail->next != NULL) tail = tail->next;
+
+        if (top->key != NULL) {
+            assert(key == NULL);
+            key = top->key;
+        }
+        if (top->value != NULL) {
+            assert(value == NULL);
+            value = top->value;
+        }
+    }
+    top = push_frame(rec_state, lens);
+    top->tree = tree;
+    top->key = key;
+    top->value = value;
+}
+
+static void parse_combine(struct rec_state *rec_state,
+                          struct lens *lens, uint n) {
+    struct skel *skel = make_skel(lens), *tail = NULL;
+    struct dict *dict = NULL;
+    char *key = NULL;
+    struct frame *top = NULL;
+
+    if (n > 0)
+        top = top_frame(rec_state);
+
+    for (int i=0; i < n; i++, top = pop_frame(rec_state)) {
+        list_tail_cons(skel->skels, tail, top->skel);
+        /* top->skel might have more than one node, update skel */
+        if (tail != NULL)
+            while (tail->next != NULL) tail = tail->next;
+        dict_append(&dict, top->dict);
+        if (top->key != NULL) {
+            assert(key == NULL);
+            key = top->key;
+        }
+    }
+    top = push_frame(rec_state, lens);
+    top->skel = skel;
+    top->dict = dict;
+    top->key = key;
+}
+
+static void visit_exit(struct lens *lens,
+                       ATTRIBUTE_UNUSED size_t start,
+                       ATTRIBUTE_UNUSED size_t end,
+                       void *data) {
+    struct rec_state *rec_state = data;
+    struct state *state = rec_state->state;
+
+    if (state->error != NULL)
+        return;
+
+    rec_state->lvl -= 1;
+    if (debugging("cf.get"))
+        dbg_visit(lens, '}', start, end, rec_state->fused, rec_state->lvl);
+
+    ERR_BAIL(lens->info);
+
+    if (lens->tag == L_SUBTREE) {
+        struct frame *top = top_frame(rec_state);
+        if (rec_state->mode == M_GET) {
+            struct tree *tree;
+            tree = make_tree(top->key, top->value, NULL, top->tree);
+            ERR_NOMEM(tree == NULL, lens->info);
+            top = pop_frame(rec_state);
+            assert(lens == top->lens);
+            state->key = top->key;
+            state->value = top->value;
+            pop_frame(rec_state);
+            top = push_frame(rec_state, lens);
+            top->tree = tree;
+        } else {
+            struct skel *skel;
+            struct dict *dict;
+            skel = make_skel(lens);
+            ERR_NOMEM(skel == NULL, lens->info);
+            dict = make_dict(top->key, top->skel, top->dict);
+            ERR_NOMEM(dict == NULL, lens->info);
+            top = pop_frame(rec_state);
+            assert(lens == top->lens);
+            state->key = top->key;
+            pop_frame(rec_state);
+            top = push_frame(rec_state, lens);
+            top->skel = skel;
+            top->dict = dict;
+        }
+    } else if (lens->tag == L_CONCAT) {
+        assert(rec_state->fused >= lens->nchildren);
+        for (int i = 0; i < lens->nchildren; i++) {
+            struct frame *fr = nth_frame(rec_state, i);
+            BUG_ON(lens->children[i] != fr->lens,
+                    lens->info,
+             "Unexpected lens in concat %zd..%zd\n  Expected: %s\n  Actual: %s",
+                    start, end,
+                    format_lens(lens->children[i]),
+                    format_lens(fr->lens));
+        }
+        if (rec_state->mode == M_GET)
+            get_combine(rec_state, lens, lens->nchildren);
+        else
+            parse_combine(rec_state, lens, lens->nchildren);
+    } else if (lens->tag == L_STAR) {
+        uint n = 0;
+        while (n < rec_state->fused &&
+               nth_frame(rec_state, n)->lens == lens->child)
+            n++;
+        if (rec_state->mode == M_GET)
+            get_combine(rec_state, lens, n);
+        else
+            parse_combine(rec_state, lens, n);
+    } else {
+        top_frame(rec_state)->lens = lens;
+    }
+ error:
+    return;
+}
+
+static void visit_error(struct lens *lens, void *data, size_t pos,
+                        const char *format, ...) {
+    struct rec_state *rec_state = data;
+    va_list ap;
+
+    va_start(ap, format);
+    vget_error(rec_state->state, lens, format, ap);
+    va_end(ap);
+    rec_state->state->error->pos = rec_state->start + pos;
+}
+
+static struct frame *rec_process(enum mode_t mode, struct lens *lens,
+                                 struct state *state) {
+    assert(lens->tag == L_REC && lens->jmt != NULL);
+
+    uint end = REG_END(state);
+    uint start = REG_START(state);
+    size_t len;
+    struct re_registers *old_regs = state->regs;
+    uint old_nreg = state->nreg;
+    struct jmt_visitor visitor;
+    struct rec_state rec_state;
+
+    MEMZERO(&rec_state, 1);
+    MEMZERO(&visitor, 1);
+
+    state->regs = NULL;
+    state->nreg = 0;
+
+    rec_state.mode  = mode;
+    rec_state.state = state;
+    rec_state.fused = 0;
+    rec_state.lvl   = 0;
+    rec_state.start = start;
+
+    visitor.parse = jmt_parse(lens->jmt, state->text + start, end - start);
+    ERR_BAIL(lens->info);
+    visitor.terminal = visit_terminal;
+    visitor.enter = visit_enter;
+    visitor.exit = visit_exit;
+    visitor.error = visit_error;
+    visitor.data = &rec_state;
+    jmt_visit(&visitor, &len);
+    ERR_BAIL(lens->info);
+    if (len < end - start || (len == 0 && rec_state.fused == 0)) {
+        get_error(state, lens, "Syntax error");
+        state->error->pos = start + len;
+    }
+    if (rec_state.fused == 0) {
+        get_error(state, lens,
+                  "Parse did not leave a result on the stack");
+        goto error;
+    } else if (rec_state.fused > 1) {
+        get_error(state, lens,
+                  "Parse left additional garbage on the stack");
+        goto error;
+    }
+
+ done:
+    state->regs = old_regs;
+    state->nreg = old_nreg;
+    jmt_free_parse(visitor.parse);
+    return rec_state.frames;
+ error:
+    FREE(rec_state.frames);
+    goto done;
+}
+
+static struct tree *get_rec(struct lens *lens, struct state *state) {
+    struct frame *fr;
+    struct tree *tree = NULL;
+
+    fr = rec_process(M_GET, lens, state);
+    if (fr != NULL) {
+        tree = fr->tree;
+        state->key = fr->key;
+        state->value = fr->value;
+        FREE(fr);
+    }
+    return tree;
+}
+
+static struct skel *parse_rec(struct lens *lens, struct state *state,
+                              struct dict **dict) {
+    struct skel *skel = NULL;
+    struct frame *fr;
+
+    fr = rec_process(M_PARSE, lens, state);
+    if (fr != NULL) {
+        skel = fr->skel;
+        *dict = fr->dict;
+        state->key = fr->key;
+        FREE(fr);
+    }
+    return skel;
+}
+
 static struct tree *get_lens(struct lens *lens, struct state *state) {
     struct tree *tree = NULL;
 
@@ -668,6 +1070,9 @@ static struct tree *get_lens(struct lens *lens, struct state *state) {
     case L_MAYBE:
         tree = get_quant_maybe(lens, state);
         break;
+    case L_REC:
+        tree = get_rec(lens, state);
+        break;
     default:
         assert_error(state, "illegal lens tag %d", lens->tag);
         break;
@@ -681,7 +1086,7 @@ static struct tree *get_lens(struct lens *lens, struct state *state) {
 static int init_regs(struct state *state, struct lens *lens, uint size) {
     int r;
 
-    if (lens->tag != L_STAR) {
+    if (lens->tag != L_STAR && lens->tag != L_REC) {
         r = match(state, lens, lens->ctype, size, 0);
         if (r == -1)
             get_error(state, lens, "Input string does not match at all");
@@ -790,6 +1195,9 @@ static struct skel *parse_lens(struct lens *lens, struct state *state,
         break;
     case L_MAYBE:
         skel = parse_quant_maybe(lens, state, dict);
+        break;
+    case L_REC:
+        skel = parse_rec(lens, state, dict);
         break;
     default:
         assert_error(state, "illegal lens tag %d", lens->tag);
