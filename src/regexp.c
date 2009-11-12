@@ -68,9 +68,21 @@ char *regexp_escape(const struct regexp *r) {
         }
     }
 
-    if (pat[0] == '(' && pat[strlen(pat)-1] == ')')
-        memmove(pat, pat+1, strlen(pat+1)+1);
-    pat[strlen(pat)] = '\0';
+    if (pat[0] == '(' && pat[strlen(pat)-1] == ')') {
+        int level = 1;
+        for (int i=1; i < strlen(pat)-1; i++) {
+            if (pat[i] == '(')
+                level += 1;
+            if (pat[i] == ')')
+                level -= 1;
+            if (level == 0)
+                break;
+        }
+        if (level == 1) {
+            memmove(pat, pat+1, strlen(pat+1)+1);
+            pat[strlen(pat)-1] = '\0';
+        }
+    }
 
     return pat;
 }
