@@ -502,7 +502,7 @@ static struct value *typecheck_union(struct info *info,
 static struct value *ambig_check(struct info *info,
                                  struct fa *fa1, struct fa *fa2,
                                  struct regexp *r1, struct regexp *r2,
-                                 const char *msg) {
+                                 const char *msg, bool iterated) {
     char *upv, *pv, *v;
     size_t upv_len;
     fa_ambig_example(fa1, fa2, &upv, &upv_len, &pv, &v);
@@ -517,8 +517,12 @@ static struct value *ambig_check(struct info *info,
         char *s1 = regexp_escape(r1);
         char *s2 = regexp_escape(r2);
         exn = make_exn_value(ref(info), "%s", msg);
-        exn_printf_line(exn, "  First regexp: /%s/", s1);
-        exn_printf_line(exn, "  Second regexp: /%s/", s2);
+        if (iterated) {
+            exn_printf_line(exn, "  Iterated regexp: /%s/", s1);
+        } else {
+            exn_printf_line(exn, "  First regexp: /%s/", s1);
+            exn_printf_line(exn, "  Second regexp: /%s/", s2);
+        }
         exn_printf_line(exn, "  '%s' can be split into", e_upv);
         exn_printf_line(exn, "  '%s|=|%s'\n", e_u, e_pv);
         exn_printf_line(exn, " and");
@@ -549,7 +553,7 @@ static struct value *ambig_concat_check(struct info *info, const char *msg,
     if (result != NULL)
         goto done;
 
-    result = ambig_check(info, fa1, fa2, r1, r2, msg);
+    result = ambig_check(info, fa1, fa2, r1, r2, msg, false);
  done:
     fa_free(fa1);
     fa_free(fa2);
@@ -588,7 +592,7 @@ static struct value *ambig_iter_check(struct info *info, const char *msg,
 
     fas = fa_iter(fa, 0, -1);
 
-    result = ambig_check(info, fa, fas, r, r, msg);
+    result = ambig_check(info, fa, fas, r, r, msg, true);
 
  done:
     fa_free(fa);
