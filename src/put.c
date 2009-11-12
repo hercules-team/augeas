@@ -409,6 +409,8 @@ static int skel_instance_of(struct lens *lens, struct skel *skel) {
                 return 0;
         }
         return 1;
+    case L_REC:
+        return skel_instance_of(lens->body, skel);
     default:
         assert_error_at(__FILE__, __LINE__, lens->info,
                         "illegal lens tag %d", lens->tag);
@@ -554,6 +556,10 @@ static void put_store(struct lens *lens, struct state *state) {
     }
 }
 
+static void put_rec(struct lens *lens, struct state *state) {
+    put_lens(lens->body, state);
+}
+
 static void put_lens(struct lens *lens, struct state *state) {
     if (state->error != NULL)
         return;
@@ -591,6 +597,9 @@ static void put_lens(struct lens *lens, struct state *state) {
         break;
     case L_MAYBE:
         put_quant_maybe(lens, state);
+        break;
+    case L_REC:
+        put_rec(lens, state);
         break;
     default:
         assert(0);
@@ -667,6 +676,10 @@ static void create_quant_maybe(struct lens *lens, struct state *state) {
     }
 }
 
+static void create_rec(struct lens *lens, struct state *state) {
+    create_lens(lens->body, state);
+}
+
 static void create_lens(struct lens *lens, struct state *state) {
     if (state->error != NULL)
         return;
@@ -703,6 +716,9 @@ static void create_lens(struct lens *lens, struct state *state) {
         break;
     case L_MAYBE:
         create_quant_maybe(lens, state);
+        break;
+    case L_REC:
+        create_rec(lens, state);
         break;
     default:
         assert(0);
