@@ -100,8 +100,14 @@ void print_regexp(FILE *out, struct regexp *r) {
     fputc('/', out);
     if (r->pattern == NULL)
         fprintf(out, "%p", r);
-    else
-        print_chars(out, r->pattern->str, -1);
+    else {
+        char *rx;
+        size_t rx_len;
+        fa_restrict_alphabet(r->pattern->str, strlen(r->pattern->str),
+                             &rx, &rx_len, 2, 1);
+        print_chars(out, rx, rx_len);
+        FREE(rx);
+    }
     fputc('/', out);
 }
 
