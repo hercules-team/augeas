@@ -36,6 +36,9 @@ static const struct string *const empty_pattern = &empty_pattern_string;
 char *regexp_escape(const struct regexp *r) {
     char *pat = NULL;
 
+    if (r == NULL)
+        return strdup("");
+
 #if !HAVE_USELOCALE
     char *nre = NULL;
     int ret;
