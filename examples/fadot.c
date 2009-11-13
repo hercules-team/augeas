@@ -35,15 +35,19 @@
 
 const char *progname;
 
+static const char *const escape_chars    = "\"\a\b\t\n\v\f\r\\";
+static const char *const escape_names = "\"abtnvfr\\";
+
 __attribute__((noreturn))
 static void usage(void) {
   fprintf(stderr, "\nUsage: %s [OPTIONS] REGEXP\n", progname);
-  fprintf(stderr, "Compile REGEXP and apply operation on them.\n");
+  fprintf(stderr, "\nCompile REGEXP and apply operation to them. By default, just print\n");
+  fprintf(stderr, "the minimized regexp.\n");
   fprintf(stderr, "\nOptions:\n\n");
   fprintf(stderr, "  -o OPERATION       one of : show concat union intersect\n");
   fprintf(stderr, "                              complement minus example\n");
   fprintf(stderr, "  -f DOT_FILE        Path of output .dot file\n");
-  fprintf(stderr, "  -n                 do not reduce resulting finite automaton\n");
+  fprintf(stderr, "  -n                 do not minimize resulting finite automaton\n");
 
   exit(EXIT_FAILURE);
 }
@@ -54,8 +58,7 @@ int main (int argc, char **argv) {
 
   int reduce = 1;
   char *file_output = NULL;
-  char *operation = NULL;
-  int i;
+  const char *operation = NULL;
   FILE *fd;
   int c;
   int nb_regexp = 0;
@@ -93,17 +96,10 @@ int main (int argc, char **argv) {
   //printf ("reduce = %d, file_output = %s, operation = %s\n",
   //        reduce, file_output, operation);
 
-  if (!file_output) {
-    printf("\nPlease specify file output with option -f.\n");
-    usage();
-  }
+  if (operation == NULL)
+    operation = "show";
 
-  if (!operation) {
-    printf("\nPlease specify an operation with option -o.\n");
-    usage();
-  }
-
-  for (i = optind; i < argc; i++) {
+  for (int i = optind; i < argc; i++) {
     nb_regexp++;
   }
 
@@ -125,7 +121,7 @@ int main (int argc, char **argv) {
 
     fa_result = fa_make_basic(FA_EPSILON);
     struct fa* fa_tmp;
-    for (i = optind; i < argc; i++) {
+    for (int i = optind; i < argc; i++) {
       fa_compile(argv[i], strlen(argv[i]), &fa_tmp);
       fa_result = fa_concat(fa_result, fa_tmp);
     }
@@ -140,7 +136,7 @@ int main (int argc, char **argv) {
     fa_result = fa_make_basic(FA_EMPTY);
 
     struct fa* fa_tmp;
-    for (i = optind; i < argc; i++) {
+    for (int i = optind; i < argc; i++) {
       fa_compile(argv[i], strlen(argv[i]), &fa_tmp);
       fa_result = fa_union(fa_result, fa_tmp);
     }
@@ -155,7 +151,7 @@ int main (int argc, char **argv) {
     fa_compile(argv[optind], strlen(argv[optind]), &fa_result);
     struct fa* fa_tmp;
 
-    for (i = optind+1; i < argc; i++) {
+    for (int i = optind+1; i < argc; i++) {
       fa_compile(argv[i], strlen(argv[i]), &fa_tmp);
       fa_result = fa_intersect(fa_result, fa_tmp);
     }
@@ -198,16 +194,41 @@ int main (int argc, char **argv) {
 
   }
 
-  if ((fd = fopen(file_output, "w")) == NULL) {
-    fprintf(stderr, "Error while opening file %s \n", file_output);
-    return 1;
-  }
-
   if (reduce) {
     fa_minimize(fa_result);
   }
 
-  fa_dot(fd, fa_result);
+  if (file_output != NULL) {
+    if ((fd = fopen(file_output, "w")) == NULL) {
+      fprintf(stderr, "Error while opening file %s \n", file_output);
+      return 1;
+    }
+
+    fa_dot(fd, fa_result);
+    fclose(fd);
+  } else {
+    int r;
+    char *rx;
+    size_t rx_len;
+
+    r = fa_as_regexp(fa_result, &rx, &rx_len);
+    if (r < 0) {
+      fprintf(stderr, "Converting FA to regexp failed\n");
+      return 1;
+    }
+
+    for (size_t i=0; i < rx_len; i++) {
+      char *p;
+      if (rx[i] && ((p = strchr(escape_chars, rx[i])) != NULL)) {
+        printf("\\%c", escape_names[p - escape_chars]);
+      } else if (! isprint(rx[i])) {
+        printf("\\%030o", (unsigned char) rx[i]);
+      } else {
+        putchar(rx[i]);
+      }
+    }
+    putchar('\n');
+  }
 
   return 0;
 }
