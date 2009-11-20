@@ -54,6 +54,15 @@ static const struct string digits_string = {
 };
 static const struct string *const digits_pat = &digits_string;
 
+char *format_lens(struct lens *l) {
+    char *inf = format_info(l->info);
+    char *result;
+
+    xasprintf(&result, "%s[%s]", tags[l->tag - L_DEL], inf);
+    free(inf);
+    return result;
+}
+
 /* Construct a finite automaton from REGEXP and return it in *FA.
  *
  * Return NULL if REGEXP is valid, if the regexp REGEXP has syntax errors,
