@@ -27,7 +27,10 @@ module AptPreferences =
                 | key_value "o"
                 | key_value "v"
 
-   let pin = [ key "Pin" . colon . value_to_spc . spc . pin_keys . ( comma . pin_keys )*. eol ]
+   let pin_options = store /(origin|release)/ . spc . pin_keys . ( comma . pin_keys )*
+   let version_pin = store /version/ . [ label "version" . spc . store /[^ \t\n]+/ ]
+
+   let pin = [ key "Pin" . colon . (pin_options | version_pin) . eol ]
 
    let entries = simple_entry "Explanation"
                | simple_entry "Package"
