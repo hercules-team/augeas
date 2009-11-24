@@ -47,6 +47,7 @@ lens_tests =			\
   lens-pbuilder.sh		\
   lens-php.sh			\
   lens-phpvars.sh		\
+  lens-postfix_access.sh \
   lens-postfix_main.sh		\
   lens-postfix_master.sh	\
   lens-puppet.sh		\
