@@ -29,7 +29,6 @@ Pin-Priority: 600
               { "l" = "Raphink" }
               { "v" = "3.0"     } }
           { "Pin-Priority" = "700" } }
-       {}
        { "3"
           { "Package"      = "liferea-data" }
           { "Pin"          = "version"
