@@ -41,7 +41,15 @@ void report_error(struct error *err, aug_errcode_t errcode,
                   const char *format, ...)
     ATTRIBUTE_FORMAT(printf, 3, 4);
 
+void bug_on(struct error *err, const char *srcfile, int srclineno,
+            const char *format, ...)
+    ATTRIBUTE_FORMAT(printf, 4, 5);
+
+#define HAS_ERR(obj) ((obj)->error->code != AUG_NOERROR)
+
 #define ERR_BAIL(obj) if ((obj)->error->code != AUG_NOERROR) goto error;
+
+#define ERR_RET(obj) if ((obj)->error->code != AUG_NOERROR) return;
 
 #define ERR_NOMEM(cond, obj)                             \
     if (cond) {                                          \
@@ -59,6 +67,12 @@ void report_error(struct error *err, aug_errcode_t errcode,
             goto error;                                 \
         }                                               \
     } while(0)
+
+#define BUG_ON(cond, obj, fmt ...)                                  \
+    if (cond) {                                                     \
+        bug_on((obj)->error, __FILE__, __LINE__, ## fmt);           \
+        goto error;                                                 \
+    }
 
 #endif
 
