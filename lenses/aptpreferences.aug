@@ -40,7 +40,7 @@ module AptPreferences =
    let record = [ seq "record" . entries+ ]
 
    (* Define lens *)
-   let lns = eol* . ( record . eol+ )* . record . eol*
+   let lns = (eol* . ( record . eol+ )* . record . eol* ) | eol
 
    let filter = incl "/etc/apt/preferences"
               . Util.stdexcl
