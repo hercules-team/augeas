@@ -57,6 +57,12 @@ void free_regexp(struct regexp *regexp);
  */
 int regexp_compile(struct regexp *r);
 
+/* Check the syntax of R->PATTERN; return -1 if the pattern has a syntax
+ * error, and a string indicating the error in *C. Return 0 if the pattern
+ * is a valid regular expression.
+ */
+int regexp_check(struct regexp *r, const char **msg);
+
 /* Call RE_MATCH on R->RE and return its result; if R hasn't been compiled
  * yet, compile it. Return -3 if compilation fails
  */

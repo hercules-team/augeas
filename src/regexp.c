@@ -26,6 +26,7 @@
 #include "internal.h"
 #include "syntax.h"
 #include "memory.h"
+#include "errcode.h"
 
 static const struct string empty_pattern_string = {
     .ref = REF_MAX, .str = (char *) "()"
@@ -331,7 +332,7 @@ struct regexp *regexp_make_empty(struct info *info) {
     return regexp;
 }
 
-int regexp_compile(struct regexp *r) {
+static int regexp_compile_internal(struct regexp *r, const char **c) {
     /* See the GNU regex manual or regex.h in gnulib for
      * an explanation of these flags. They are set so that the regex
      * matcher interprets regular expressions the same way that libfa
@@ -343,19 +344,30 @@ int regexp_compile(struct regexp *r) {
         |RE_NO_BK_VBAR|RE_NO_EMPTY_RANGES
         |RE_NO_POSIX_BACKTRACKING|RE_CONTEXT_INVALID_DUP|RE_NO_GNU_OPS;
     reg_syntax_t old_syntax = re_syntax_options;
-    const char *c = NULL;
+
+    *c = NULL;
 
     if (r->re == NULL)
         CALLOC(r->re, 1);
 
     re_syntax_options = syntax;
-    c = re_compile_pattern(r->pattern->str, strlen(r->pattern->str), r->re);
+    *c = re_compile_pattern(r->pattern->str, strlen(r->pattern->str), r->re);
     re_syntax_options = old_syntax;
 
     r->re->regs_allocated = REGS_REALLOCATE;
-    if (c != NULL)
+    if (*c != NULL)
         return -1;
     return 0;
+}
+
+int regexp_compile(struct regexp *r) {
+    const char *c;
+
+    return regexp_compile_internal(r, &c);
+}
+
+int regexp_check(struct regexp *r, const char **msg) {
+    return regexp_compile_internal(r, msg);
 }
 
 int regexp_match(struct regexp *r,

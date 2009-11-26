@@ -1147,9 +1147,13 @@ static int check_binop(const char *opname, struct term *term,
 }
 
 static int check_value(struct value *v) {
+    const char *msg;
+
     if (v->tag == V_REGEXP) {
-        if (regexp_compile(v->regexp) == -1)
+        if (regexp_check(v->regexp, &msg) == -1) {
+            syntax_error(v->info, "Invalid regular expression: %s", msg);
             return 0;
+        }
     }
     return 1;
 }
@@ -1158,7 +1162,7 @@ static int check_value(struct value *v) {
 static int check_exp(struct term *term, struct ctx *ctx) {
     int result = 1;
     assert(term->type == NULL || term->tag == A_VALUE || term->ref > 1);
-    if (term->type != NULL)
+    if (term->type != NULL && term->tag != A_VALUE)
         return 1;
 
     switch (term->tag) {
