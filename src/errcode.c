@@ -23,6 +23,7 @@
 #include <config.h>
 
 #include "errcode.h"
+#include <stdarg.h>
 
 static void vreport_error(struct error *err, aug_errcode_t errcode,
                    const char *format, va_list ap) {
