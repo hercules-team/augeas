@@ -4,6 +4,7 @@ module Test_cron =
 
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+CRON_TZ=America/Los_Angeles
 
 	30 7      * * *   root	test -x /etc/init.d/anacron && /usr/sbin/invoke-rc.d anacron start >/dev/null
   00 */3    15-25/2 May 1-5   user   somecommand
@@ -15,6 +16,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
       {}
       { "SHELL" = "/bin/sh" }
       { "PATH"  = "/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin" }
+      { "CRON_TZ" = "America/Los_Angeles" }
       {}
       { "entry" = "test -x /etc/init.d/anacron && /usr/sbin/invoke-rc.d anacron start >/dev/null"
           { "time"

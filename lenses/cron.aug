@@ -72,8 +72,9 @@ let sep_eq  = Util.del_str "="
  *   A shell variable in crontab
  *************************************************************************)
 
-let shellvar = [ key /[A-Z][A-Za-z0-9]*/ . sep_eq
-                 . Shellvars.simple_value . eol ]
+let shellvar =
+  let key_re = Shellvars.key_re - "entry" in
+  [ key key_re . sep_eq . Shellvars.simple_value . eol ]
 
 
 (* View: minute *)
