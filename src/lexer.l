@@ -13,6 +13,7 @@
 
 %{
 #include "syntax.h"
+#include "errcode.h"
 
 typedef struct info YYLTYPE;
 #define YYLTYPE_IS_DECLARED 1
@@ -163,7 +164,7 @@ ARROW  ->
                   report_error(augl_get_extra(yyscanner)->error, AUG_ESYNTAX,
                                "%s:%d:%d: Missing *)",
                                augl_get_extra(yyscanner)->filename->str,
-                               yylineno, yylloc->first_column, yytext[0]);
+                               yylineno, yylloc->first_column);
                   yyterminate();
                 }
 }
