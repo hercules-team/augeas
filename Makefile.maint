@@ -21,11 +21,12 @@ build-rpm:
 
 upload:
 	@gpg -q --batch --verify $(tarball).sig > /dev/null 2>&1 || \
-	  gpg --output $(tarball).sig --detach-sig $(tarball);     \
-	rsync -v $(tarball) $(tarball).sig $(et_rel_dir)
+	  gpg --output $(tarball).sig --detach-sig $(tarball);      \
+	rsync -v $(tarball) $(tarball).sig $(et_rel_dir);           \
+	git push --tags
 
 tag-release:
-	@git-tag release-$(VERSION)
+	@git tag -s release-$(VERSION)
 
 # This is how I run autogen.sh locally
 autogen:
