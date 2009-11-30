@@ -70,6 +70,17 @@ module Test_fstab =
         { "dump" = "0" }
         { "passno" = "0" } }
 
+  (* Allow # in the spec *)
+  test Fstab.lns get "sshfs#jon@10.0.0.2:/home    /media/server    fuse    uid=1000,gid=100,port=1022 0 0\n" =
+  { "1"
+    { "spec" = "sshfs#jon@10.0.0.2:/home" }
+    { "file" = "/media/server" }
+    { "vfstype" = "fuse" }
+    { "opt" = "uid=1000" }
+    { "opt" = "gid=100" }
+    { "opt" = "port=1022" }
+    { "dump" = "0" }
+    { "passno" = "0" } }
 
 (* Local Variables: *)
 (* mode: caml       *)

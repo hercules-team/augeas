@@ -12,13 +12,14 @@ module Fstab =
   let empty   = Util.empty
 
   let word    = Rx.neg1
+  let spec    = /[^,# \n\t][^ \n\t]*/
 
   let comma_sep_list (l:string) =
     let lns = [ label l . store word ] in
        Build.opt_list lns comma
 
   let record = [ seq "mntent" .
-                   [ label "spec" . store  word ] . sep_tab .
+                   [ label "spec" . store spec ] . sep_tab .
                    [ label "file" . store word ] . sep_tab .
                    comma_sep_list "vfstype" . sep_tab .
                    comma_sep_list "opt" .
@@ -33,5 +34,3 @@ module Fstab =
 (* Local Variables: *)
 (* mode: caml *)
 (* End: *)
-
-
