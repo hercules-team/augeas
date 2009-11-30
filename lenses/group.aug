@@ -23,6 +23,7 @@ let comma      = Sep.comma
 let sto_to_spc = store Rx.space_in
 
 let word    = Rx.word
+let password = /[A-Za-z0-9_.-]*/
 let integer = Rx.integer
 
 (************************************************************************
@@ -31,7 +32,7 @@ let integer = Rx.integer
 
 let user      = [ label "user" . store word ]
 let user_list = Build.opt_list user comma
-let params    = [ label "password" . store word    . colon ]
+let params    = [ label "password" . store password  . colon ]
                 . [ label "gid"      . store integer . colon ]
                 . user_list?
 let entry     = Build.key_value_line word colon params

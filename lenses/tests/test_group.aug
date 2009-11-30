@@ -18,3 +18,10 @@ test Group.lns get conf =
      { "gid" = "113" }
      { "user" = "bill"}
      { "user" = "martha"} }
+
+(* Password field can be empty *)
+test Group.lns get "root::0:root\n" =
+  { "root"
+    { "password" = "" }
+    { "gid" = "0" }
+    { "user" = "root" } }
