@@ -1,3 +1,33 @@
+0.6.0 - 2009-11-30
+  - Add error reporting API (aug_error and related calls); use to report
+    error details in a variety of places
+  - Path expressions: add regexp matching; add operator '|' to form union
+    of nodesets (ticket #89)
+  - Tolerate non-C locales from the environment (ticket #35); it is no
+    longer necessary to set the locale to C from the outside
+  - use stpcpy/stpncpy from gnulib (needed for building on Solaris)
+  - Properly check regexp literals for syntax errors (ticket #93)
+  - Distribute and install vim syntax files (ticket #97)
+  - many more bugfixes
+  - Lens changes/additions
+    * Apt_preferences: support version pin; filter out empty lines (Matt
+      Palmer)
+    * Cron: variables can contain '_' etc. (ticket #94)
+    * Ethers: new lens for /etc/ethers (Satoru SATOH)
+    * Fstab: allow '#' in spec (ticket #95)
+    * Group: allow empty password field (ticket #95)
+    * Inittab: parse end-of-line comments into a #comment
+    * Krb5: support kdc section; add v4_name_convert subsection to
+      libdefaults (ticket #95)
+    * Lokkit: add mising eol to forward_port; make argument for --trust
+      more permissive
+    * Pam: allow '-' before type
+    * Postfix_access: new lens for /etc/postfix/access (Partha Aji)
+    * Rx: allow '!' in device_name
+    * Sudoers: allow certain backslash-quoted characters in a command (Matt
+      Palmer)
+    * Wine: new lens to read Windows registry files
+
 0.5.3 - 2009-09-14
   - Match trees on label + value, not just label; see
     tests/modules/pass_strip_quotes.aug for how that enables stripping

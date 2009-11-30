@@ -83,6 +83,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/pkgconfig/augeas.pc
 
 %changelog
+* Mon Nov 30 2009 David Lutterkort <lutter@redhat.com> - 0.6.0-1
+- Install vim syntax files
+
 * Mon Sep 14 2009 David Lutterkort <lutter@redhat.com> - 0.5.3-1
 - New version
 

@@ -1,4 +1,4 @@
-AC_INIT(augeas, 0.5.3)
+AC_INIT(augeas, 0.6.0)
 AC_CONFIG_SRCDIR([src/augeas.c])
 AC_CONFIG_AUX_DIR([build/aux])
 AM_CONFIG_HEADER([config.h])
@@ -56,8 +56,8 @@ AC_ARG_WITH([failmalloc],
 AM_CONDITIONAL([WITH_FAILMALLOC], [test x$with_failmalloc != xno])
 
 dnl Version info in libtool's notation
-AC_SUBST([LIBAUGEAS_VERSION_INFO], [9:2:9])
-AC_SUBST([LIBFA_VERSION_INFO], [2:0:1])
+AC_SUBST([LIBAUGEAS_VERSION_INFO], [10:0:10])
+AC_SUBST([LIBFA_VERSION_INFO], [3:0:2])
 
 AC_GNU_SOURCE
 
