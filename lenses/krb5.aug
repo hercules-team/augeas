@@ -38,7 +38,12 @@ let record (t:string) (e:lens) =
     Inifile.record title e
 
 let libdefaults =
-    simple_section "libdefaults" /[a-zA-Z0-9_]+/
+  let option = entry (name_re - "v4_name_convert") eq comment in
+  let subsec = [ indent . key /host|plain/ . eq_openbr .
+                   (entry name_re eq comment)* . closebr . eol ] in
+  let v4_name_convert = [ indent . key "v4_name_convert" . eq_openbr .
+                          subsec* . closebr . eol ] in
+  record "libdefaults" (option|v4_name_convert)
 
 let login =
   let keys = /krb[45]_get_tickets|krb4_convert|krb_run_aklog/

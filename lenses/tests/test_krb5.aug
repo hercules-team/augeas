@@ -867,3 +867,26 @@ test Krb5.kdc get "[kdc]
  profile = /var/kerberos/krb5kdc/kdc.conf\n" =
   { "kdc"
     { "profile" = "/var/kerberos/krb5kdc/kdc.conf" } }
+
+(* v4_name_convert in libdefaults *)
+test Krb5.libdefaults get "[libdefaults]
+        default_realm = MY.REALM
+	clockskew = 300
+	v4_instance_resolve = false
+	v4_name_convert = {
+		host = {
+			rcmd = host
+			ftp = ftp
+		}
+		plain = {
+			something = something-else
+		}
+	}\n" =
+
+  { "libdefaults"
+    { "default_realm" = "MY.REALM" }
+    { "clockskew" = "300" }
+    { "v4_instance_resolve" = "false" }
+    { "v4_name_convert"
+      { "host" { "rcmd" = "host" } { "ftp" = "ftp" } }
+      { "plain" { "something" = "something-else" } } } }
