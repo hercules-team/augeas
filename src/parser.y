@@ -24,7 +24,6 @@ int augl_parse_file(struct augeas *aug, const char *name, struct term **term);
 typedef void *yyscan_t;
 typedef struct info YYLTYPE;
 #define YYLTYPE_IS_DECLARED 1
-#define YYLTYPE_IS_TRIVIAL 1
 /* The lack of reference counting on filename is intentional */
 # define YYLLOC_DEFAULT(Current, Rhs, N)                                \
   do {                                                                  \
@@ -52,6 +51,15 @@ typedef struct info YYLTYPE;
 %parse-param    {struct term **term}
 %parse-param    {yyscan_t scanner}
 %lex-param      {yyscan_t scanner}
+
+%initial-action {
+  @$.first_line   = 1;
+  @$.first_column = 0;
+  @$.last_line    = 1;
+  @$.last_column  = 0;
+  @$.filename     = augl_get_extra(scanner)->filename;
+  @$.error        = augl_get_extra(scanner)->error;
+};
 
 %token <string> DQUOTED   /* "foo" */
 %token <string> REGEXP    /* /[ \t]+/ */
@@ -512,7 +520,6 @@ void augl_error(struct info *locp,
   MEMZERO(&info, 1);
   info.ref = string.ref = UINT_MAX;
   info.filename = &string;
-  info.error = locp->error;
 
   if (locp != NULL) {
     info.first_line   = locp->first_line;
@@ -520,12 +527,14 @@ void augl_error(struct info *locp,
     info.last_line    = locp->last_line;
     info.last_column  = locp->last_column;
     info.filename->str = locp->filename->str;
+    info.error = locp->error;
   } else if (scanner != NULL) {
     info.first_line   = augl_get_lineno(scanner);
     info.first_column = augl_get_column(scanner);
     info.last_line    = augl_get_lineno(scanner);
     info.last_column  = augl_get_column(scanner);
     info.filename     = augl_get_extra(scanner)->filename;
+    info.error        = augl_get_extra(scanner)->error;
   } else if (*term != NULL && (*term)->info != NULL) {
     memcpy(&info, (*term)->info, sizeof(info));
   } else {
