@@ -100,6 +100,12 @@ unset ONBOOT
     set "var/3" "v3"
   = "var=(v1 v2 v3)\n"
 
+  test Shellvars.lns get "var=(v1 v2   \n    \t v3)\n" =
+  { "var"
+    { "1" = "v1" }
+    { "2" = "v2" }
+    { "3" = "v3" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
