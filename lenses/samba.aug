@@ -14,7 +14,7 @@ module Samba =
  *************************************************************************)
 
 let comment  = IniFile.comment IniFile.comment_re IniFile.comment_default
-let sep      = del /[ \t]*[=:]/ " ="
+let sep      = del /[ \t]*=/ " ="
 let indent   = del /[ \t]*/ "   "
 
 (* Import useful INI File primitives *)
@@ -29,7 +29,7 @@ let sto_to_comment
  * smb.conf allows indented entries
  *************************************************************************)
 
-let entry_re = /[A-Za-z0-9_.-][A-Za-z0-9 _.-]*[A-Za-z0-9_.-]/
+let entry_re = /[A-Za-z0-9_.-][A-Za-z0-9 _.:-]*[A-Za-z0-9_.-]/
 let entry    = let kw = entry_re in
              [ indent
              . key kw

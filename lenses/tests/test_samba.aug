@@ -81,3 +81,7 @@ module Test_samba =
          { "printcap name" = "/etc/printcap" }
          { "print command" = "/usr/bin/lpr -P%p -r %s" }
          { "printing" = "cups" } }
+
+    test Samba.lns get "[test]\ncrazy:entry = foo\n" =
+         { "target" = "test"
+            {"crazy:entry" = "foo"}}
