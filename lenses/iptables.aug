@@ -32,8 +32,9 @@ let param (long:string) (short:string) =
 let ipt_match =
   let any_key = /[a-zA-Z-][a-zA-Z-]+/ -
     /protocol|source|destination|jump|goto|in-interface|out-interface|fragment|match/ in
+  let any_val = /([^\" \t\n-][^ \t\n]*)|\"([^\"\\\n]|\\\\.)*\"/ in
   let any_param =
-    [ spc . dels "--" . key any_key . (spc . store /[^ \t\n-][^ \t\n]*/)? ] in
+    [ spc . dels "--" . key any_key . (spc . store any_val)? ] in
     (param "protocol" "p"
     |param "source" "s"
     |param "destination" "d"

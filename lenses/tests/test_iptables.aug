@@ -164,3 +164,7 @@ test Iptables.lns get conf =
       { "to-source" = "195.233.192.1" } }
     { "#comment" = "and now commit" } }
   { "#comment" = "Completed on Wed Apr 24 10:19:55 2002" }
+
+test ipt_match get " -m comment --comment \"A comment\"" =
+  { "match" = "comment" }
+  { "comment" = "\"A comment\"" }
