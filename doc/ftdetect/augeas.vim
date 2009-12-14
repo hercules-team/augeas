@@ -1,1 +1,1 @@
-au BufNewFile?,BufRead? *.aug set filetype=augeas
+au BufNewFile,BufRead *.aug set filetype=augeas
