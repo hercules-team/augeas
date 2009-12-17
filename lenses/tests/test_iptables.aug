@@ -168,3 +168,30 @@ test Iptables.lns get conf =
 test ipt_match get " -m comment --comment \"A comment\"" =
   { "match" = "comment" }
   { "comment" = "\"A comment\"" }
+
+(*
+ * Test the various schemes for negation that iptables supports
+ *
+ * Note that the two ways in which a parameter can be negated lead to
+ * two different trees that mean the same.
+ *)
+test add_rule get "-I POSTROUTING ! -d 192.168.122.0/24 -j MASQUERADE\n" =
+  { "insert" = "POSTROUTING"
+    { "destination" = "192.168.122.0/24"
+      { "not" } }
+    { "jump" = "MASQUERADE" } }
+
+test add_rule get "-I POSTROUTING -d ! 192.168.122.0/24 -j MASQUERADE\n" =
+  { "insert" = "POSTROUTING"
+    { "destination" = "! 192.168.122.0/24" }
+    { "jump" = "MASQUERADE" } }
+
+test add_rule put "-I POSTROUTING ! -d 192.168.122.0/24 -j MASQUERADE\n"
+    after rm "/insert/destination/not" =
+  "-I POSTROUTING -d 192.168.122.0/24 -j MASQUERADE\n"
+
+(* I have no idea if iptables will accept double negations, but we
+ * allow it syntactically *)
+test add_rule put "-I POSTROUTING -d ! 192.168.122.0/24 -j MASQUERADE\n"
+    after clear "/insert/destination/not" =
+  "-I POSTROUTING ! -d ! 192.168.122.0/24 -j MASQUERADE\n"

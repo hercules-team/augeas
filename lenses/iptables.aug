@@ -26,23 +26,35 @@ let chain =
 let param (long:string) (short:string) =
   [ label long .
       spc . del (/--/ . long | /-/ . short) ("-" . short) . spc .
-      store /(![ \t]*)?[^ \t\n-][^ \t\n]*/ ]
+      store /(![ \t]*)?[^ \t\n!-][^ \t\n]*/ ]
+
+(* A negatable parameter, which can either be FTW
+     ! --param arg
+   or
+     --param ! arg
+*)
+let neg_param (long:string) (short:string) =
+  [ label long .
+      [ spc . dels "!" . label "not" ]? .
+      spc . del (/--/ . long | /-/ . short) ("-" . short) . spc .
+      store /(![ \t]*)?[^ \t\n!-][^ \t\n]*/ ]
 
 (* misses --set-counters *)
 let ipt_match =
   let any_key = /[a-zA-Z-][a-zA-Z-]+/ -
     /protocol|source|destination|jump|goto|in-interface|out-interface|fragment|match/ in
-  let any_val = /([^\" \t\n-][^ \t\n]*)|\"([^\"\\\n]|\\\\.)*\"/ in
+  let any_val = /([^\" \t\n!-][^ \t\n]*)|\"([^\"\\\n]|\\\\.)*\"/ in
   let any_param =
-    [ spc . dels "--" . key any_key . (spc . store any_val)? ] in
-    (param "protocol" "p"
-    |param "source" "s"
-    |param "destination" "d"
+    [ [ spc . dels "!" . label "not" ]? .
+      spc . dels "--" . key any_key . (spc . store any_val)? ] in
+    (neg_param "protocol" "p"
+    |neg_param "source" "s"
+    |neg_param "destination" "d"
     |param "jump" "j"
     |param "goto" "g"
-    |param "in-interface" "i"
-    |param "out-interface" "o"
-    |param "fragment" "f"
+    |neg_param "in-interface" "i"
+    |neg_param "out-interface" "o"
+    |neg_param "fragment" "f"
     |param "match" "m"
     |any_param)*
 
