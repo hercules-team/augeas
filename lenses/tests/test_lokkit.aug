@@ -82,3 +82,7 @@ test Lokkit.lns get
   { "trust" = "tun+" }
   { "trust" = "eth0.42" }
   { "trust" = "eth0:1" }
+
+(* We didn't allow '-' in the service name *)
+test Lokkit.lns get "--service=samba-client\n" =
+  { "service" = "samba-client" }

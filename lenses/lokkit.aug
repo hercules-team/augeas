@@ -12,7 +12,7 @@ let spc = Util.del_ws_spc
 let dels = Util.del_str
 
 let eq = del /[ \t=]+/ "="
-let token = store /[a-zA-Z0-9]+/
+let token = store /[a-zA-Z0-9][a-zA-Z0-9-]*/
 
 let long_opt (n:regexp) =
   [ dels "--" . key n . eq . token . eol ]
