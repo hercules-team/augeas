@@ -37,7 +37,8 @@ enum lens_tag {
     L_UNION,
     L_SUBTREE,
     L_STAR,
-    L_MAYBE
+    L_MAYBE,
+    L_REC
 };
 
 /* A lens. The way the type information is computed is a little
@@ -49,6 +50,19 @@ enum lens_tag {
  *         can produce, or NULL if no label is produced
  * VTYPE - the 'value' type, matching the value that this lens
  *         can produce, or NULL if no value is produce
+ *
+ * We distinguish between regular and recursive (context-free) lenses. Only
+ * L_REC and the combinators can be marked recursive.
+ *
+ * Types are computed at different times, depending on whether the lens is
+ * recursive or not. For non-recursive lenses, types are computed when the
+ * lens is constructed by one of the LNS_MAKE_* functions; for recursive
+ * lenses, we never compute an explicit ctype (since regular approximations
+ * of it are pretty much useless), we do however compute regular
+ * approximations of the ktype, vtype, and atype in LNS_CHECK_REC. That
+ * means that recursive lenses accept context free languages in the string
+ * -> tree direction, but only regular tree languages in the tree -> string
+ * direction.
  */
 struct lens {
     unsigned int              ref;
@@ -60,6 +74,7 @@ struct lens {
     struct regexp            *vtype;
     unsigned int              value : 1;
     unsigned int              key : 1;
+    unsigned int              recursive : 1;
     unsigned int              consumes_value : 1;
     union {
         /* Primitive lenses */
@@ -73,6 +88,7 @@ struct lens {
             unsigned int nchildren;
             struct lens **children;
         };
+        struct lens *body;          /* L_REC */
     };
 };
 

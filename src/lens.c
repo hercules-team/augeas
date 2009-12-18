@@ -47,7 +47,7 @@ static struct value *typecheck_maybe(struct info *info, struct lens *l);
 /* Lens names for pretty printing */
 static const char *const tags[] = {
     "del", "store", "key", "label", "seq", "counter", "concat", "union",
-    "subtree", "star", "maybe"
+    "subtree", "star", "maybe", "rec"
 };
 
 static const struct string digits_string = {
@@ -59,7 +59,8 @@ char *format_lens(struct lens *l) {
     char *inf = format_info(l->info);
     char *result;
 
-    xasprintf(&result, "%s[%s]", tags[l->tag - L_DEL], inf);
+    xasprintf(&result, "%s[%s]%s", tags[l->tag - L_DEL], inf,
+              l->recursive ? "R" : "r");
     free(inf);
     return result;
 }
