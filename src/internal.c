@@ -438,6 +438,53 @@ int regexp_c_locale(char **u, size_t *len) {
 }
 #endif
 
+#if ENABLE_DEBUG
+bool debugging(const char *category) {
+    const char *debug = getenv("AUGEAS_DEBUG");
+    const char *s;
+
+    if (debug == NULL)
+        return false;
+
+    for (s = debug; s != NULL; ) {
+        if (STREQLEN(s, category, strlen(category)))
+            return true;
+        s = strchr(s, ':');
+        if (s != NULL)
+            s+=1;
+    }
+    return false;
+}
+
+FILE *debug_fopen(const char *format, ...) {
+    va_list ap;
+    FILE *result = NULL;
+    const char *dir;
+    char *name = NULL, *path = NULL;
+    int r;
+
+    dir = getenv("AUGEAS_DEBUG_DIR");
+    if (dir == NULL)
+        goto error;
+
+    va_start(ap, format);
+    r = vasprintf(&name, format, ap);
+    va_end(ap);
+    if (r < 0)
+        goto error;
+
+    r = xasprintf(&path, "%s/%s", dir, name);
+    if (r < 0)
+        goto error;
+
+    result = fopen(path, "w");
+
+ error:
+    free(name);
+    free(path);
+    return result;
+}
+#endif
 /*
  * Local variables:
  *  indent-tabs-mode: nil

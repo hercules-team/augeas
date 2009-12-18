@@ -495,6 +495,23 @@ int pathx_symtab_undefine(struct pathx_symtab **symtab, const char *name);
 void pathx_symtab_remove_descendants(struct pathx_symtab *symtab,
                                      const struct tree *tree);
 void free_symtab(struct pathx_symtab *symtab);
+
+/* Debug helpers, all defined in internal.c. When ENABLE_DEBUG is not
+ * set, they compile to nothing.
+ */
+#  if ENABLE_DEBUG
+  /* Return true if debugging for CATEGORY is turned on */
+  bool debugging(const char *category);
+  /* Format the arguments into a file name, prepend it with the directory
+   * from the environment variable AUGEAS_DEBUG_DIR, and open the file for
+   * writing.
+  */
+  FILE *debug_fopen(const char *format, ...)
+    ATTRIBUTE_FORMAT(printf, 1, 2);
+#  else
+#    define debugging(facility) (0)
+#    define debug_fopen(format ...) (NULL)
+#  endif
 #endif
 
 

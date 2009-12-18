@@ -28,8 +28,12 @@ upload:
 tag-release:
 	@git tag -s release-$(VERSION)
 
+# Print all the debug categories in use
+debug-categories:
+	@fgrep 'debugging("' src/*.c | sed -r -e 's/^.*debugging\("([^"]+)"\).*$$/\1/' | sort -u
+
 # This is how I run autogen.sh locally
 autogen:
-	./autogen.sh CFLAGS=-g --prefix=/data/share/ --gnulib-srcdir=${HOME}/code/gnulib/ --enable-compile-warnings=error
+	./autogen.sh CFLAGS=-g --prefix=/data/share/ --gnulib-srcdir=${HOME}/code/gnulib/ --enable-compile-warnings=error --enable-debug=yes
 
 .PHONY: build-rpm

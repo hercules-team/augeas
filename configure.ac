@@ -55,6 +55,15 @@ AC_ARG_WITH([failmalloc],
 
 AM_CONDITIONAL([WITH_FAILMALLOC], [test x$with_failmalloc != xno])
 
+dnl --enable-debug=(yes|no)
+AC_ARG_ENABLE([debug],
+              [AC_HELP_STRING([--enable-debug=no/yes],
+                             [enable debugging output])],[],[enable_debug=yes])
+AM_CONDITIONAL([ENABLE_DEBUG], test x"$enable_debug" = x"yes")
+if test x"$enable_debug" = x"yes"; then
+   AC_DEFINE([ENABLE_DEBUG], [1], [whether debugging is enabled])
+fi
+
 dnl Version info in libtool's notation
 AC_SUBST([LIBAUGEAS_VERSION_INFO], [10:0:10])
 AC_SUBST([LIBFA_VERSION_INFO], [3:0:2])
