@@ -69,7 +69,7 @@ typedef struct info YYLTYPE;
 /* Keywords */
 %token          KW_MODULE
 %token          KW_AUTOLOAD
-%token          KW_LET KW_IN
+%token          KW_LET KW_LET_REC KW_IN
 %token          KW_STRING
 %token          KW_REGEXP
 %token          KW_LENS
@@ -122,6 +122,8 @@ static void augl_error(struct info *locp, struct term **term,
  static struct term *make_bind(char *ident, struct term *params,
                              struct term *exp, struct term *decls,
                              struct info *locp);
+ static struct term *make_bind_rec(char *ident, struct term *exp,
+                                   struct term *decls, struct info *locp);
  static struct term *make_let(char *ident, struct term *params,
                               struct term *exp, struct term *body,
                               struct info *locp);
@@ -173,6 +175,11 @@ decls: KW_LET LIDENT param_list '=' exp decls
        {
          LOC_MERGE(@1, @1, @5);
          $$ = make_bind($2, $3, $5, $6, &@1);
+       }
+     | KW_LET_REC LIDENT '=' exp decls
+       {
+         LOC_MERGE(@1, @1, @4);
+         $$ = make_bind_rec($2, $4, $5, &@1);
        }
      | KW_TEST test_exp '=' exp decls
        {
@@ -402,6 +409,66 @@ static struct term *make_bind(char *ident, struct term *params,
   term->exp = exp;
   list_cons(decls, term);
   return decls;
+}
+
+static struct term *make_bind_rec(char *ident, struct term *exp,
+                                  struct term *decls, struct info *locp) {
+  /* Desugar let rec IDENT = EXP as
+   *  let IDENT =
+   *    let RLENS = (lns_make_rec) in
+   *    lns_check_rec ((lambda IDENT: EXP) RLENS) RLENS
+   * where RLENS is a brandnew recursive lens.
+   *
+   * That only works since we know that 'let rec' is only defined for lenses,
+   * not general purposes functions, i.e. we know that IDENT has type 'lens'
+   *
+   * The point of all this is that we make it possible to put a recursive
+   * lens (which is a placeholder for the actual recursion) into arbitrary
+   * places in some bigger lens and then have LNS_CHECK_REC rattle through
+   * to do the special-purpose typechecking.
+   */
+  char *id;
+  struct info *info = exp->info;
+  struct term *lambda = NULL, *rlens = NULL;
+  struct term *app1 = NULL, *app2 = NULL, *app3 = NULL;
+
+  id = strdup(ident);
+  if (id == NULL) goto error;
+
+  lambda = make_param(id, make_base_type(T_LENS), ref(info));
+  if (lambda == NULL) goto error;
+  id = NULL;
+
+  build_func(lambda, exp);
+
+  rlens = make_term(A_VALUE, ref(exp->info));
+  if (rlens == NULL) goto error;
+  rlens->value = lns_make_rec(ref(exp->info));
+  if (rlens->value == NULL) goto error;
+  rlens->type = make_base_type(T_LENS);
+
+  app1 = make_app_term(lambda, rlens, ref(info));
+  if (app1 == NULL) goto error;
+
+  id = strdup(LNS_CHECK_REC_NAME);
+  if (id == NULL) goto error;
+  app2 = make_app_ident(id, app1, ref(info));
+  if (app2 == NULL) goto error;
+  id = NULL;
+
+  app3 = make_app_term(app2, ref(rlens), ref(info));
+  if (app3 == NULL) goto error;
+
+  return make_bind(ident, NULL, app3, decls, locp);
+
+ error:
+  free(id);
+  unref(lambda, term);
+  unref(rlens, term);
+  unref(app1, term);
+  unref(app2, term);
+  unref(app3, term);
+  return NULL;
 }
 
 static struct term *make_let(char *ident, struct term *params,

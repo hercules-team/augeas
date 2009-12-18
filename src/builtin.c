@@ -433,6 +433,16 @@ static struct value *sys_read_file(struct info *info, struct value *n) {
     return v;
 }
 
+/* V_LENS -> V_LENS */
+static struct value *lns_check_rec_glue(struct info *info,
+                                        struct value *l, struct value *r) {
+    assert(l->tag == V_LENS);
+    assert(r->tag == V_LENS);
+    int check = info->error->aug->flags & AUG_TYPE_CHECK;
+
+    return lns_check_rec(info, l->lens, r->lens, check);
+}
+
 struct module *builtin_init(struct error *error) {
     struct module *modl = module_create("Builtin");
     int r;
@@ -469,6 +479,9 @@ struct module *builtin_init(struct error *error) {
     DEFINE_NATIVE(modl, "excl", 1, xform_excl, T_STRING, T_FILTER);
     DEFINE_NATIVE(modl, "transform", 2, xform_transform, T_LENS, T_FILTER,
                                                          T_TRANSFORM);
+    DEFINE_NATIVE(modl, LNS_CHECK_REC_NAME,
+                  2, lns_check_rec_glue, T_LENS, T_LENS, T_LENS);
+
     /* System functions */
     struct module *sys = module_create("Sys");
     modl->next = sys;

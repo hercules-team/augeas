@@ -225,6 +225,7 @@ void free_type(struct type *type);
  * arguments without incrementing. Caller owns returned objects.
  */
 struct term *make_term(enum term_tag tag, struct info *info);
+void free_term(struct term *term);
 struct term *make_param(char *name, struct type *type, struct info *info);
 struct value *make_value(enum value_tag tag, struct info *info);
 struct term *make_app_term(struct term *func, struct term *arg,
@@ -274,6 +275,9 @@ int define_native_intl(const char *fname, int line,
 struct module *builtin_init(struct error *);
 
 int load_module_file(struct augeas *aug, const char *filename);
+
+/* The name of the builtin function that checks recursive lenses */
+#define LNS_CHECK_REC_NAME "lns_check_rec"
 
 int interpreter_init(struct augeas *aug);
 

@@ -155,7 +155,7 @@ static void free_param(struct param *param) {
     free(param);
 }
 
-static void free_term(struct term *term) {
+void free_term(struct term *term) {
     if (term == NULL)
         return;
     assert(term->ref == 0);

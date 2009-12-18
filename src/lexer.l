@@ -70,6 +70,8 @@ static char *regexp_literal(const char *s, int len) {
 DIGIT [0-9]
 UID    [A-Z][A-Za-z0-9_]*
 LID    [a-z][A-Za-z0-9_]*
+LETREC   let[ \t]+rec
+WS     [ \t\n]
 QID    {UID}\.{LID}
 ARROW  ->
 
@@ -112,6 +114,9 @@ ARROW  ->
   [|*?+()=:;\.\[\]{}-]    return yytext[0];
 
   module        return KW_MODULE;
+
+  {LETREC}/{WS} return KW_LET_REC;
+
   let           return KW_LET;
   string        return KW_STRING;
   regexp        return KW_REGEXP;
