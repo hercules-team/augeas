@@ -218,6 +218,7 @@ struct value *lns_make_union(struct info *info,
     struct lens *lens = NULL;
     int consumes_value = l1->consumes_value && l2->consumes_value;
     int recursive = l1->recursive || l2->recursive;
+    int ctype_nullable = l1->ctype_nullable || l2->ctype_nullable;
 
     if (check && !recursive) {
         struct value *exn = typecheck_union(info, l1, l2);
@@ -227,6 +228,8 @@ struct value *lns_make_union(struct info *info,
 
     lens = make_lens_binop(L_UNION, info, l1, l2, regexp_union_n);
     lens->consumes_value = consumes_value;
+    if (! recursive)
+        lens->ctype_nullable = ctype_nullable;
     return make_lens_value(lens);
 }
 
@@ -235,6 +238,7 @@ struct value *lns_make_concat(struct info *info,
     struct lens *lens = NULL;
     int consumes_value = l1->consumes_value || l2->consumes_value;
     int recursive = l1->recursive || l2->recursive;
+    int ctype_nullable = l1->ctype_nullable && l2->ctype_nullable;
 
     if (check && !recursive) {
         struct value *exn = typecheck_concat(info, l1, l2);
@@ -251,6 +255,8 @@ struct value *lns_make_concat(struct info *info,
 
     lens = make_lens_binop(L_CONCAT, info, l1, l2, regexp_concat_n);
     lens->consumes_value = consumes_value;
+    if (! recursive)
+        lens->ctype_nullable = ctype_nullable;
     return make_lens_value(lens);
 }
 
@@ -307,6 +313,8 @@ struct value *lns_make_subtree(struct info *info, struct lens *l) {
         lens->atype = subtree_atype(info, l->ktype, l->vtype);
     lens->value = lens->key = 0;
     lens->recursive = l->recursive;
+    if (! l->recursive)
+        lens->ctype_nullable = l->ctype_nullable;
     return make_lens_value(lens);
 }
 
@@ -331,6 +339,7 @@ struct value *lns_make_star(struct info *info, struct lens *l, int check) {
         ltype(lens, t) = regexp_iter(info, ltype(l, t), 0, -1);
     }
     lens->recursive = l->recursive;
+    lens->ctype_nullable = 1;
     return make_lens_value(lens);
 }
 
@@ -361,6 +370,7 @@ struct value *lns_make_maybe(struct info *info, struct lens *l, int check) {
     lens->value = l->value;
     lens->key = l->key;
     lens->recursive = l->recursive;
+    lens->ctype_nullable = 1;
     return make_lens_value(lens);
 }
 
@@ -468,11 +478,14 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
     /* Set the ctype */
     if (tag == L_DEL || tag == L_STORE || tag == L_KEY) {
         lens->ctype = ref(regexp);
+        lens->ctype_nullable = regexp_matches_empty(lens->ctype);
     } else if (tag == L_LABEL || tag == L_SEQ || tag == L_COUNTER) {
         lens->ctype = regexp_make_empty(info);
+        lens->ctype_nullable = 1;
     } else {
         assert(0);
     }
+
 
     /* Set the ktype */
     if (tag == L_SEQ) {
@@ -1844,6 +1857,83 @@ static struct value *rtn_approx(struct lens *rec, enum lens_type lt) {
     goto done;
 }
 
+static struct value *
+exn_multiple_epsilons(struct lens *lens,
+                      struct lens *l1, struct lens *l2) {
+    char *fi = NULL;
+    struct value *exn = NULL;
+
+    exn = make_exn_value(ref(lens->info),
+                         "more than one nullable branch in a union");
+    fi = format_info(l1->info);
+    exn_printf_line(exn, "First nullable lens: %s", fi);
+    FREE(fi);
+
+    fi = format_info(l2->info);
+    exn_printf_line(exn, "Second nullable lens: %s", fi);
+    FREE(fi);
+
+    return exn;
+}
+
+/* Update lens->ctype_nullable and return 1 if there was a change,
+ * 0 if there was none */
+static int ctype_nullable(struct lens *lens, struct value **exn) {
+    int nullable = 0;
+    int ret = 0;
+    struct lens *null_lens = NULL;
+
+    if (! lens->recursive)
+        return 0;
+
+    switch(lens->tag) {
+    case L_CONCAT:
+        nullable = 1;
+        for (int i=0; i < lens->nchildren; i++) {
+            if (ctype_nullable(lens->children[i], exn))
+                ret = 1;
+            if (! lens->children[i]->ctype_nullable)
+                nullable = 0;
+        }
+        break;
+    case L_UNION:
+        for (int i=0; i < lens->nchildren; i++) {
+            if (ctype_nullable(lens->children[i], exn))
+                ret = 1;
+            if (lens->children[i]->ctype_nullable) {
+                if (nullable) {
+                    *exn = exn_multiple_epsilons(lens, null_lens,
+                                                 lens->children[i]);
+                    return 0;
+                }
+                nullable = 1;
+                null_lens = lens->children[i];
+            }
+        }
+        break;
+    case L_SUBTREE:
+        ret = ctype_nullable(lens->child, exn);
+        nullable = lens->child->ctype_nullable;
+        break;
+    case L_STAR:
+    case L_MAYBE:
+        nullable = 1;
+        break;
+    case L_REC:
+        nullable = lens->body->ctype_nullable;
+        break;
+    default:
+        assert(0);
+    }
+    if (*exn != NULL)
+        return 0;
+    if (nullable != lens->ctype_nullable) {
+        ret = 1;
+        lens->ctype_nullable = nullable;
+    }
+    return ret;
+}
+
 struct value *lns_check_rec(struct info *info,
                             struct lens *body, struct lens *rec,
                             int check) {
@@ -1881,6 +1971,11 @@ struct value *lns_check_rec(struct info *info,
     rec->value = rec->body->value;
     rec->consumes_value = rec->body->consumes_value;
 
+    while(ctype_nullable(rec->body, &result));
+    if (result != NULL)
+        goto error;
+    rec->ctype_nullable = rec->body->ctype_nullable;
+
     result = typecheck(rec->body, check);
     if (result != NULL)
         goto error;
@@ -1892,6 +1987,7 @@ struct value *lns_check_rec(struct info *info,
     top->value = rec->value;
     top->key = rec->key;
     top->consumes_value = rec->consumes_value;
+    top->ctype_nullable = rec->ctype_nullable;
     top->body = ref(body);
     top->alias = rec;
     rec->alias = top;

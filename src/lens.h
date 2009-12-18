@@ -78,6 +78,7 @@ struct lens {
     unsigned int              consumes_value : 1;
     /* Flag to help avoid cycles in recursive lenses */
     unsigned int              rec_internal : 1;
+    unsigned int              ctype_nullable : 1;
     union {
         /* Primitive lenses */
         struct {                   /* L_DEL uses both */
