@@ -27,6 +27,11 @@
 #include "memory.h"
 #include "errcode.h"
 
+/* This enum must be kept in sync with type_offs and ntypes */
+enum lens_type {
+    CTYPE, ATYPE, KTYPE, VTYPE
+};
+
 static const int const type_offs[] = {
     offsetof(struct lens, ctype),
     offsetof(struct lens, atype),
@@ -34,6 +39,9 @@ static const int const type_offs[] = {
     offsetof(struct lens, vtype)
 };
 static const int ntypes = sizeof(type_offs)/sizeof(type_offs[0]);
+
+static const char *lens_type_names[] =
+    { "ctype", "atype", "ktype", "vtype" };
 
 #define ltype(lns, t) *((struct regexp **) ((char *) lns + type_offs[t]))
 
@@ -754,9 +762,7 @@ void free_lens(struct lens *lens) {
         free(lens->children);
         break;
     case L_REC:
-        if (lens->ref != REF_MAX) {
-            /* Break unbounded recursion */
-            lens->ref = REF_MAX;
+        if (!lens->rec_internal) {
             unref(lens->body, lens);
         }
         break;
@@ -1026,6 +1032,876 @@ int lns_format_atype(struct lens *l, char **buf) {
         assert(0);
         break;
     };
+
+}
+
+/*
+ * Recursive lenses
+ */
+struct value *lns_make_rec(struct info *info) {
+    struct lens *l = make_lens(L_REC, info);
+    l->recursive = 1;
+
+    return make_lens_value(l);
+}
+
+/* Transform a recursive lens into a recursive transition network
+ *
+ * First, we transform the lens into context free grammar, considering any
+ * nonrecursive lens as a terminal
+ *
+ * cfg: lens -> nonterminal -> production list
+ *
+ * cfg(primitive, N) -> N := regexp(primitive)
+ * cfg(l1 . l2, N)   -> N := N1 . N2 + cfg(l1, N1) + cfg(l2, N2)
+ * cfg(l1 | l2, N)   -> N := N1 | N2 + cfg(l1, N1) + cfg(l2, N2)
+ * cfg(l*, N)        -> N := N . N' | eps + cfg(l, N')
+ * cfg([ l ], N)     -> N := N' + cfg(l, N')
+ *
+ * We use the lenses as nonterminals themselves; this also means that our
+ * productions are normalized such that the RHS is either a terminal
+ * (regexp) or entirely consists of nonterminals
+ *
+ * In a few places, we need to know that a nonterminal corresponds to a
+ * subtree combinator ([ l ]); this is the main reason that the rule (cfg[
+ * l ], N) introduces a useless production N := N'.
+ *
+ * Computing the types for a recursive lens r is (fairly) straightforward,
+ * given the above grammar, which we convert to an automaton following
+ * http://arxiv.org/abs/cs/9910022; the only complication arises from the
+ * subtree combinator, since it can be used in recursive lenses to
+ * construct trees of arbitrary depth, but we need to approximate the types
+ * of r in a way that fits with our top-down tree automaton in put.c.
+ *
+ * To handle subtree combinators, remember that the type rules for a lens
+ * m = [ l ] are:
+ *
+ *   m.ktype = NULL
+ *   m.vtype = NULL
+ *   m.ctype = l.ctype
+ *   m.atype = enc(l.ktype, l.vtype)
+ *     ( enc is a function regexp -> regexp -> regexp)
+ *
+ * We compute types for r by modifying its automaton according to
+ * Nederhof's paper and reducing it to a regular expression of lenses. This
+ * has to happen in the following steps:
+ *   r.ktype : approximate by using [ .. ].ktype = NULL
+ *   r.vtype : same as r.ktype
+ *   r.ctype : approximate by treating [ l ] as l
+ *   r.atype : approximate by using r.ktype and r.vtype from above
+ *             in lens expressions [ f(r) ]
+ */
+
+/* Transitions go to a state and are labeled with a lens. For epsilon
+ * transitions, lens may be NULL. When lens is a simple (nonrecursive
+ * lens), PROD will be NULL. When we modify the automaton to splice
+ * nonterminals in, we remember the production for the nonterminal in PROD.
+ */
+struct trans {
+    struct state  *to;
+    struct lens   *lens;
+    struct regexp *re;
+};
+
+struct state {
+    struct state  *next;   /* Linked list for memory management */
+    size_t         ntrans;
+    struct trans  *trans;
+};
+
+/* Productions for lens LENS. Start state START and end state END. If we
+   start with START, END is the only accepting state. */
+struct prod {
+    struct lens  *lens;
+    struct state *start;
+    struct state *end;
+};
+
+/* A recursive transition network used to compute regular approximations
+ * to the types */
+struct rtn {
+    struct info *info;
+    size_t        nprod;
+    struct prod **prod;
+    struct state *states;  /* Linked list through next of all states in all
+                              prods; the states for each production are on
+                              the part of the list from prod->start to
+                              prod->end */
+    struct value *exn;
+    enum lens_type lens_type;
+    unsigned int check : 1;
+};
+
+#define RTN_BAIL(rtn) if ((rtn)->exn != NULL ||                     \
+                          (rtn)->info->error->code != AUG_NOERROR)  \
+                         goto error;
+
+static void free_prod(struct prod *prod) {
+    if (prod == NULL)
+        return;
+    unref(prod->lens, lens);
+    free(prod);
+}
+
+static void free_rtn(struct rtn *rtn) {
+    if (rtn == NULL)
+        return;
+    for (int i=0; i < rtn->nprod; i++)
+        free_prod(rtn->prod[i]);
+    free(rtn->prod);
+    list_for_each(s, rtn->states) {
+        for (int i=0; i < s->ntrans; i++) {
+            unref(s->trans[i].lens, lens);
+            unref(s->trans[i].re, regexp);
+        }
+        free(s->trans);
+    }
+    list_free(rtn->states);
+    unref(rtn->info, info);
+    unref(rtn->exn, value);
+    free(rtn);
+}
+
+static struct state *add_state(struct prod *prod) {
+    struct state *result = NULL;
+    int r;
+
+    r = ALLOC(result);
+    ERR_NOMEM(r < 0, prod->lens->info);
+
+    list_cons(prod->start->next, result);
+ error:
+    return result;
+}
+
+static struct trans *add_trans(struct rtn *rtn, struct state *state,
+                               struct state *to, struct lens *l) {
+    int r;
+    struct trans *result = NULL;
+
+    for (int i=0; i < state->ntrans; i++)
+        if (state->trans[i].to == to && state->trans[i].lens == l)
+            return state->trans + i;
+
+    r = REALLOC_N(state->trans, state->ntrans+1);
+    ERR_NOMEM(r < 0, rtn->info);
+
+    result = state->trans + state->ntrans;
+    state->ntrans += 1;
+
+    MEMZERO(result, 1);
+    result->to = to;
+    if (l != NULL) {
+        result->lens = ref(l);
+        result->re = ref(ltype(l, rtn->lens_type));
+    }
+ error:
+    return result;
+}
+
+static struct prod *make_prod(struct rtn *rtn, struct lens *l) {
+    struct prod *result = NULL;
+    int r;
+
+    r = ALLOC(result);
+    ERR_NOMEM(r < 0, l->info);
+
+    result->lens = ref(l);
+    r = ALLOC(result->start);
+    ERR_NOMEM(r < 0, l->info);
+
+    result->end = add_state(result);
+    ERR_BAIL(l->info);
+
+    result->end->next = rtn->states;
+    rtn->states = result->start;
+
+    return result;
+ error:
+    free_prod(result);
+    return NULL;
+}
+
+static struct prod *prod_for_lens(struct rtn *rtn, struct lens *l) {
+    if (l == NULL)
+        return NULL;
+    for (int i=0; i < rtn->nprod; i++) {
+        if (rtn->prod[i]->lens == l)
+            return rtn->prod[i];
+    }
+    return NULL;
+}
+
+static void rtn_dot(struct rtn *rtn, const char *stage) {
+    FILE *fp;
+    int r = 0;
+
+    fp = debug_fopen("rtn_%s_%s.dot", stage, lens_type_names[rtn->lens_type]);
+    if (fp == NULL)
+        return;
+
+    fprintf(fp, "digraph \"l1\" {\n  rankdir=LR;\n");
+    list_for_each(s, rtn->states) {
+        char *label = NULL;
+        for (int p=0; p < rtn->nprod; p++) {
+            if (s == rtn->prod[p]->start) {
+                r = xasprintf(&label, "s%d", p);
+            } else if (s == rtn->prod[p]->end) {
+                r = xasprintf(&label, "e%d", p);
+            }
+            ERR_NOMEM(r < 0, rtn->info);
+        }
+        if (label == NULL) {
+            r = xasprintf(&label, "%p", s);
+            ERR_NOMEM(r < 0, rtn->info);
+        }
+        fprintf(fp, "  n%p [label = \"%s\"];\n", s, label == NULL ? "" : label);
+        FREE(label);
+        for (int i=0; i < s->ntrans; i++) {
+            fprintf(fp, "  n%p -> n%p", s, s->trans[i].to);
+            if (s->trans[i].re != NULL) {
+                label = regexp_escape(s->trans[i].re);
+                for (char *t = label; *t; t++)
+                    if (*t == '\\')
+                        *t = '~';
+                fprintf(fp, " [ label = \"%s\" ]", label);
+                FREE(label);
+            }
+            fprintf(fp, ";\n");
+        }
+    }
+ error:
+    fprintf(fp, "}\n");
+    fclose(fp);
+}
+
+/* Add transitions to RTN corresponding to cfg(l, N) */
+static void rtn_rules(struct rtn *rtn, struct lens *l) {
+    if (! l->recursive)
+        return;
+
+    struct prod *prod = prod_for_lens(rtn, l);
+    if (prod != NULL)
+        return;
+
+    int r = REALLOC_N(rtn->prod, rtn->nprod+1);
+    ERR_NOMEM(r < 0, l->info);
+
+    prod =  make_prod(rtn, l);
+    rtn->prod[rtn->nprod] = prod;
+    RTN_BAIL(rtn);
+    rtn->nprod += 1;
+
+    struct state *start = prod->start;
+
+    switch (l->tag) {
+    case L_UNION:
+        /* cfg(l1|..|ln, N) -> N := N1 | N2 | ... | Nn */
+        for (int i=0; i < l->nchildren; i++) {
+            add_trans(rtn, start, prod->end, l->children[i]);
+            RTN_BAIL(rtn);
+            rtn_rules(rtn, l->children[i]);
+            RTN_BAIL(rtn);
+        }
+        break;
+    case L_CONCAT:
+        /* cfg(l1 . l2 ... ln, N) -> N := N1 . N2 ... Nn */
+        for (int i=0; i < l->nchildren-1; i++) {
+            struct state *s = add_state(prod);
+            RTN_BAIL(rtn);
+            add_trans(rtn, start, s, l->children[i]);
+            RTN_BAIL(rtn);
+            start = s;
+            rtn_rules(rtn, l->children[i]);
+            RTN_BAIL(rtn);
+        }
+        {
+            struct lens *c = l->children[l->nchildren - 1];
+            add_trans(rtn, start, prod->end, c);
+            RTN_BAIL(rtn);
+            rtn_rules(rtn, c);
+            RTN_BAIL(rtn);
+        }
+        break;
+    case L_STAR: {
+        /* cfg(l*, N) -> N := N . N' | eps */
+        struct state *s = add_state(prod);
+        RTN_BAIL(rtn);
+        add_trans(rtn, start, s, l);
+        RTN_BAIL(rtn);
+        add_trans(rtn, s, prod->end, l->child);
+        RTN_BAIL(rtn);
+        add_trans(rtn, start, prod->end, NULL);
+        RTN_BAIL(rtn);
+        rtn_rules(rtn, l->child);
+        RTN_BAIL(rtn);
+        break;
+    }
+    case L_SUBTREE:
+        switch (rtn->lens_type) {
+        case KTYPE:
+        case VTYPE:
+            /* cfg([ l ], N) -> N := eps */
+            add_trans(rtn, start, prod->end, NULL);
+            break;
+        case CTYPE:
+            /* cfg([ l ], N) -> N := N' plus cfg(l, N') */
+            add_trans(rtn, start, prod->end, l->child);
+            RTN_BAIL(rtn);
+            rtn_rules(rtn, l->child);
+            RTN_BAIL(rtn);
+            break;
+        case ATYPE: {
+            /* At this point, we have propagated ktype and vtype */
+            /* cfg([ l ], N) -> N := enc(l->ktype, l->vtype) */
+            struct trans *t = add_trans(rtn, start, prod->end, NULL);
+            RTN_BAIL(rtn);
+            t->re = subtree_atype(l->info, l->child->ktype, l->child->vtype);
+            break;
+        }
+        default:
+            assert(0);
+        }
+        break;
+    case L_MAYBE:
+        /* cfg(l?, N) -> N := N' | eps plus cfg(l, N') */
+        add_trans(rtn, start, prod->end, l->child);
+        RTN_BAIL(rtn);
+        add_trans(rtn, start, prod->end, NULL);
+        RTN_BAIL(rtn);
+        rtn_rules(rtn, l->child);
+        RTN_BAIL(rtn);
+        break;
+    case L_REC:
+        /* cfg(l, N) -> N := N' plus cfg(l->body, N') */
+        add_trans(rtn, start, prod->end, l->body);
+        RTN_BAIL(rtn);
+        rtn_rules(rtn, l->body);
+        RTN_BAIL(rtn);
+        break;
+    default:
+        assert(0);
+    }
+ error:
+    return;
+}
+
+/* Replace transition t with two epsilon transitions s => p->start and
+ * p->end => s->trans[i].to where s is the start of t. Instead of adding
+ * epsilon transitions, we expand the epsilon transitions.
+ */
+static void prod_splice(struct rtn *rtn,
+                        struct prod *from, struct prod *to, struct trans *t) {
+
+    add_trans(rtn, to->end, t->to, NULL);
+    ERR_BAIL(from->lens->info);
+    t->to = to->start;
+    unref(t->re, regexp);
+
+ error:
+    return;
+}
+
+static void rtn_splice(struct rtn *rtn, struct prod *prod) {
+    for (struct state *s = prod->start; s != prod->end; s = s->next) {
+        for (int i=0; i < s->ntrans; i++) {
+            struct prod *p = prod_for_lens(rtn, s->trans[i].lens);
+            if (p != NULL) {
+                prod_splice(rtn, prod, p, s->trans+i);
+                RTN_BAIL(rtn);
+            }
+        }
+    }
+ error:
+    return;
+}
+
+static struct rtn *rtn_build(struct lens *rec, enum lens_type lt) {
+    int r;
+    struct rtn *rtn;
+
+    r = ALLOC(rtn);
+    ERR_NOMEM(r < 0, rec->info);
+
+    rtn->info = ref(rec->info);
+    rtn->lens_type = lt;
+
+    rtn_rules(rtn, rec);
+    RTN_BAIL(rtn);
+    if (debugging("cf.approx"))
+        rtn_dot(rtn, "10-rules");
+
+    for (int i=0; i < rtn->nprod; i++) {
+        rtn_splice(rtn, rtn->prod[i]);
+        RTN_BAIL(rtn);
+    }
+    if (debugging("cf.approx"))
+        rtn_dot(rtn, "11-splice");
+
+ error:
+    return rtn;
+}
+
+/* Compare transitions lexicographically by (to, lens) */
+static int trans_to_cmp(const void *v1, const void *v2) {
+    const struct trans *t1 = v1;
+    const struct trans *t2 = v2;
+
+    if (t1->to != t2->to)
+        return (t1->to < t2->to) ? -1 : 1;
+
+    if (t1->lens == t2->lens)
+        return 0;
+    return (t1->lens < t2->lens) ? -1 : 1;
+}
+
+/* Collapse a transition S1 -> S -> S2 by adding a transition S1 -> S2 with
+ * lens R1 . (LOOP)* . R2 | R3 where R3 is the regexp on the possibly
+ * existing transition S1 -> S2. If LOOP is NULL or R3 does not exist,
+ * label the transition with a simplified regexp by treating NULL as
+ * epsilon */
+static void collapse_trans(struct rtn *rtn,
+                           struct state *s1, struct state *s2,
+                           struct regexp *r1, struct regexp *loop,
+                           struct regexp *r2) {
+
+    struct trans *t = NULL;
+    struct regexp *r = NULL;
+
+    for (int i=0; i < s1->ntrans; i++) {
+        if (s1->trans[i].to == s2) {
+            t = s1->trans + i;
+            break;
+        }
+    }
+
+    /* Set R = R1 . (LOOP)* . R2, treating NULL's as epsilon */
+    if (loop == NULL) {
+        if (r1 == NULL)
+            r = ref(r2);
+        else if (r2 == NULL)
+            r = ref(r1);
+        else
+            r = regexp_concat(rtn->info, r1, r2);
+    } else {
+        struct regexp *s = regexp_iter(rtn->info, loop, 0, -1);
+        ERR_NOMEM(s == NULL, rtn->info);
+        struct regexp *c = NULL;
+        if (r1 == NULL) {
+            c = s;
+            s = NULL;
+        } else {
+            c = regexp_concat(rtn->info, r1, s);
+            unref(s, regexp);
+            ERR_NOMEM(c == NULL, rtn->info);
+        }
+        if (r2 == NULL) {
+            r = c;
+            c = NULL;
+        } else {
+            r = regexp_concat(rtn->info, c, r2);
+            unref(c, regexp);
+            ERR_NOMEM(r == NULL, rtn->info);
+        }
+    }
+
+    if (t == NULL) {
+        t = add_trans(rtn, s1, s2, NULL);
+        ERR_NOMEM(t == NULL, rtn->info);
+        t->re = r;
+    } else if (t->re == NULL) {
+        if (r == NULL || regexp_matches_empty(r))
+            t->re = r;
+        else {
+            t->re = regexp_maybe(rtn->info, r);
+            unref(r, regexp);
+            ERR_NOMEM(t->re == NULL, rtn->info);
+        }
+    } else if (r == NULL) {
+        if (!regexp_matches_empty(t->re)) {
+            r = regexp_maybe(rtn->info, t->re);
+            unref(t->re, regexp);
+            t->re = r;
+            ERR_NOMEM(r == NULL, rtn->info);
+        }
+    } else {
+        struct regexp *u = regexp_union(rtn->info, r, t->re);
+        unref(r, regexp);
+        unref(t->re, regexp);
+        t->re = u;
+        ERR_NOMEM(u == NULL, rtn->info);
+    }
+
+    return;
+ error:
+    rtn->exn = exn_error();
+    return;
+}
+
+/* Reduce the automaton with start state rprod->start and only accepting
+ * state rprod->end so that we have a single transition rprod->start =>
+ * rprod->end labelled with the overall approximating regexp for the
+ * automaton.
+ *
+ * This is the same algorithm as fa_as_regexp in fa.c
+ */
+static struct regexp *rtn_reduce(struct rtn *rtn, struct lens *rec) {
+    struct prod *prod = prod_for_lens(rtn, rec);
+    int r;
+
+    ERR_THROW(prod == NULL, rtn->info, AUG_EINTERNAL,
+              "No production for recursive lens");
+
+    /* Eliminate epsilon transitions and turn transitions between the same
+     * two states into a regexp union */
+    list_for_each(s, rtn->states) {
+        qsort(s->trans, s->ntrans, sizeof(*s->trans), trans_to_cmp);
+        for (int i=0; i < s->ntrans; i++) {
+            int j = i+1;
+            for (;j < s->ntrans && s->trans[i].to == s->trans[j].to;
+                 j++);
+            if (j > i+1) {
+                struct regexp *u, **v;
+                r = ALLOC_N(v, j - i);
+                ERR_NOMEM(r < 0, rtn->info);
+                for (int k=i; k < j; k++)
+                    v[k-i] = s->trans[k].re;
+                u = regexp_union_n(rtn->info, j - i, v);
+                if (u == NULL) {
+                    // FIXME: The calling convention for regexp_union_n
+                    // is bad, since we can't distinguish between alloc
+                    // failure and unioning all NULL's
+                    for (int k=0; k < j-i; k++)
+                        if (v[k] != NULL) {
+                            FREE(v);
+                            ERR_NOMEM(true, rtn->info);
+                        }
+                }
+                FREE(v);
+                for (int k=i; k < j; k++) {
+                    unref(s->trans[k].lens, lens);
+                    unref(s->trans[k].re, regexp);
+                }
+                s->trans[i].re = u;
+                MEMMOVE(s->trans + (i+1),
+                        s->trans + j,
+                        s->ntrans - j);
+                s->ntrans -= j - (i + 1);
+            }
+        }
+    }
+
+    /* Introduce new start and end states with epsilon transitions to/from
+     * the old start and end states */
+    struct state *end = NULL;
+    struct state *start = NULL;
+    if (ALLOC(start) < 0 || ALLOC(end) < 0) {
+        FREE(start);
+        FREE(end);
+        ERR_NOMEM(true, rtn->info);
+    }
+    list_insert_before(start, prod->start, rtn->states);
+    end->next = prod->end->next;
+    prod->end->next = end;
+
+    add_trans(rtn, start, prod->start, NULL);
+    RTN_BAIL(rtn);
+    add_trans(rtn, prod->end, end, NULL);
+    RTN_BAIL(rtn);
+
+    prod->start = start;
+    prod->end = end;
+
+    /* Eliminate states S (except for INI and FIN) one by one:
+     *     Let LOOP the regexp for the transition S -> S if it exists, epsilon
+     *     otherwise.
+     *     For all S1, S2 different from S with S1 -> S -> S2
+     *       Let R1 the regexp of S1 -> S
+     *           R2 the regexp of S -> S2
+     *           R3 the regexp of S1 -> S2 (or the regexp matching nothing
+     *                                      if no such transition)
+     *        set the regexp on the transition S1 -> S2 to
+     *          R1 . (LOOP)* . R2 | R3 */
+    // FIXME: This does not go over all states
+    list_for_each(s, rtn->states) {
+        if (s == prod->end || s == prod->start)
+            continue;
+        struct regexp *loop = NULL;
+        for (int i=0; i < s->ntrans; i++) {
+            if (s == s->trans[i].to) {
+                assert(loop == NULL);
+                loop = s->trans[i].re;
+            }
+        }
+        list_for_each(s1, rtn->states) {
+            if (s == s1)
+                continue;
+            for (int t1=0; t1 < s1->ntrans; t1++) {
+                if (s == s1->trans[t1].to) {
+                    for (int t2=0; t2 < s->ntrans; t2++) {
+                        struct state *s2 = s->trans[t2].to;
+                        if (s2 == s)
+                            continue;
+                        collapse_trans(rtn, s1, s2,
+                                       s1->trans[t1].re, loop,
+                                       s->trans[t2].re);
+                        RTN_BAIL(rtn);
+                    }
+                }
+            }
+        }
+    }
+
+    /* Find the overall regexp */
+    struct regexp *result = NULL;
+    for (int i=0; i < prod->start->ntrans; i++) {
+        if (prod->start->trans[i].to == prod->end) {
+            assert(result == NULL);
+            result = ref(prod->start->trans[i].re);
+        }
+    }
+    return result;
+ error:
+    return NULL;
+}
+
+static void propagate_type(struct lens *l, enum lens_type lt) {
+    struct regexp **types = NULL;
+    int r;
+
+    if (! l->recursive || ltype(l, lt) != NULL)
+        return;
+
+    switch(l->tag) {
+    case L_CONCAT:
+        r = ALLOC_N(types, l->nchildren);
+        ERR_NOMEM(r < 0, l->info);
+        for (int i=0; i < l->nchildren; i++) {
+            propagate_type(l->children[i], lt);
+            types[i] = ltype(l->children[i], lt);
+        }
+        ltype(l, lt) = regexp_concat_n(l->info, l->nchildren, types);
+        FREE(types);
+        break;
+    case L_UNION:
+        r = ALLOC_N(types, l->nchildren);
+        ERR_NOMEM(r < 0, l->info);
+        for (int i=0; i < l->nchildren; i++) {
+            propagate_type(l->children[i], lt);
+            types[i] = ltype(l->children[i], lt);
+        }
+        ltype(l, lt) = regexp_union_n(l->info, l->nchildren, types);
+        FREE(types);
+        break;
+    case L_SUBTREE:
+        propagate_type(l->child, lt);
+        if (lt == ATYPE)
+            l->atype = subtree_atype(l->info, l->child->ktype, l->child->vtype);
+        if (lt == CTYPE)
+            l->ctype = ref(l->child->ctype);
+        break;
+    case L_STAR:
+        propagate_type(l->child, lt);
+        ltype(l, lt) = regexp_iter(l->info, ltype(l->child, lt), 0, -1);
+        break;
+    case L_MAYBE:
+        propagate_type(l->child, lt);
+        ltype(l, lt) = regexp_maybe(l->info, ltype(l->child, lt));
+        break;
+    case L_REC:
+        /* Nothing to do */
+        break;
+    default:
+        assert(0);
+    }
+
+ error:
+    FREE(types);
+}
+
+static struct value *typecheck(struct lens *l, int check);
+
+typedef struct value *typecheck_n_make(struct info *,
+                                       struct lens *, struct lens *, int);
+
+static struct info *merge_info(struct info *i1, struct info *i2) {
+    struct info *info;
+    make_ref(info);
+    ERR_NOMEM(info == NULL, i1);
+
+    info->filename = ref(i1->filename);
+    info->first_line = i1->first_line;
+    info->first_column = i1->first_column;
+    info->last_line    = i2->last_line;
+    info->last_column  = i2->last_column;
+    info->error        = i1->error;
+    return info;
+
+ error:
+    unref(info, info);
+    return NULL;
+}
+
+static struct value *typecheck_n(struct lens *l,
+                                 typecheck_n_make *make, int check) {
+    struct value *exn = NULL;
+    struct lens *acc = NULL;
+
+    assert(l->tag == L_CONCAT || l->tag == L_UNION);
+    for (int i=0; i < l->nchildren; i++) {
+        exn = typecheck(l->children[i], check);
+        if (exn != NULL)
+            goto error;
+    }
+    acc = ref(l->children[0]);
+    for (int i=1; i < l->nchildren; i++) {
+        struct info *info = merge_info(acc->info, l->children[i]->info);
+        ERR_BAIL(acc->info);
+        exn = (*make)(info, acc, ref(l->children[i]), check);
+        if (EXN(exn))
+            goto error;
+        assert(exn->tag == V_LENS);
+        acc = ref(exn->lens);
+        unref(exn, value);
+    }
+    l->value = acc->value;
+    l->key = acc->key;
+ error:
+    unref(acc, lens);
+    return exn;
+}
+
+static struct value *typecheck(struct lens *l, int check) {
+    struct value *exn = NULL;
+
+    /* Nonrecursive lenses are typechecked at build time */
+    if (! l->recursive)
+        return NULL;
+
+    switch(l->tag) {
+    case L_CONCAT:
+        exn = typecheck_n(l, lns_make_concat, check);
+        break;
+    case L_UNION:
+        exn = typecheck_n(l, lns_make_union, check);
+        break;
+    case L_SUBTREE:
+        exn = typecheck(l->child, check);
+        break;
+    case L_STAR:
+        if (check)
+            exn = typecheck_iter(l->info, l->child);
+        if (exn == NULL && l->value)
+            exn = make_exn_value(l->info, "Multiple stores in iteration");
+        if (exn == NULL && l->key)
+            exn = make_exn_value(l->info, "Multiple keys/labels in iteration");
+        break;
+    case L_MAYBE:
+        if (check)
+            exn = typecheck_maybe(l->info, l->child);
+        l->key = l->child->key;
+        l->value = l->child->value;
+        break;
+    case L_REC:
+        /* Nothing to do */
+        break;
+    default:
+        assert(0);
+    }
+
+    return exn;
+}
+
+static struct value *rtn_approx(struct lens *rec, enum lens_type lt) {
+    struct rtn *rtn = NULL;
+    struct value *result = NULL;
+
+    rtn = rtn_build(rec, lt);
+    RTN_BAIL(rtn);
+    ltype(rec, lt) = rtn_reduce(rtn, rec);
+    RTN_BAIL(rtn);
+    if (debugging("cf.approx"))
+        rtn_dot(rtn, "50-reduce");
+
+    propagate_type(rec->body, lt);
+    ERR_BAIL(rec->info);
+
+ done:
+    free_rtn(rtn);
+
+    if (debugging("cf.approx")) {
+        printf("approx %s  => ", lens_type_names[lt]);
+        print_regexp(stdout, ltype(rec, lt));
+        printf("\n");
+    }
+
+    return result;
+ error:
+    if (rtn->exn == NULL)
+        result = exn_error();
+    else
+        result = ref(rtn->exn);
+    goto done;
+}
+
+struct value *lns_check_rec(struct info *info,
+                            struct lens *body, struct lens *rec,
+                            int check) {
+    /* The types in the order of approximation */
+    static const enum lens_type types[] = { KTYPE, VTYPE, ATYPE };
+
+    assert(rec->tag == L_REC);
+    assert(body->recursive);
+    struct value *result = NULL;
+
+    /* To help memory management, we avoid the cycle inherent ina recursive
+     * lens by using two instances of an L_REC lens. One is marked with
+     * rec_internal, and used inside the body of the lens. The other is the
+     * "toplevel" which receives external references.
+     *
+     * The internal instance of the recursive lens is REC, the external one
+     * is TOP, constructed below
+     */
+    rec->rec_internal = 1;
+    rec->body = body;                          /* REC does not own BODY */
+
+    for (int i=0; i < ARRAY_CARDINALITY(types); i++) {
+        result = rtn_approx(rec, types[i]);
+        ERR_BAIL(info);
+    }
+
+    if (rec->atype == NULL) {
+        result = make_exn_value(rec->info,
+        "recursive lens generates the empty language for its %s",
+         rec->ctype == NULL ? "ctype" : "atype");
+        goto error;
+    }
+
+    rec->key = rec->body->key;
+    rec->value = rec->body->value;
+    rec->consumes_value = rec->body->consumes_value;
+
+    result = typecheck(rec->body, check);
+    if (result != NULL)
+        goto error;
+
+    result = lns_make_rec(ref(rec->info));
+    struct lens *top = result->lens;
+    for (int t=0; t < ntypes; t++)
+        ltype(top, t) = ref(ltype(rec, t));
+    top->value = rec->value;
+    top->key = rec->key;
+    top->consumes_value = rec->consumes_value;
+    top->body = ref(body);
+    top->alias = rec;
+    rec->alias = top;
+    ERR_BAIL(info);
+
+    return result;
+ error:
+    if (result == NULL)
+        result = exn_error();
+    return result;
 }
 
 /*

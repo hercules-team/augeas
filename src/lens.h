@@ -76,6 +76,8 @@ struct lens {
     unsigned int              key : 1;
     unsigned int              recursive : 1;
     unsigned int              consumes_value : 1;
+    /* Flag to help avoid cycles in recursive lenses */
+    unsigned int              rec_internal : 1;
     union {
         /* Primitive lenses */
         struct {                   /* L_DEL uses both */
@@ -88,7 +90,18 @@ struct lens {
             unsigned int nchildren;
             struct lens **children;
         };
-        struct lens *body;          /* L_REC */
+        struct {
+            struct lens *body;      /* L_REC */
+            /* We represent a recursive lens as two instances of struct
+             * lens with L_REC. One has rec_internal set to 1, the other
+             * has it set to 0. The one with rec_internal is used within
+             * the body, the other is what is used from the 'outside'. This
+             * is necessary to break the cycles inherent in recursive
+             * lenses with reference counting. The link through alias is
+             * set up in lns_check_rec, and not reference counted.
+             */
+            struct lens *alias;
+        };
     };
 };
 
@@ -118,6 +131,12 @@ char *format_lens(struct lens *l);
 /* Pretty-print the atype of a lens. Allocates BUF, which must be freed by
  * the caller */
 int lns_format_atype(struct lens *, char **buf);
+
+/* Recursive lenses */
+struct value *lns_make_rec(struct info *info);
+struct value *lns_check_rec(struct info *info,
+                            struct lens *body, struct lens *rec,
+                            int check);
 
 /* Auxiliary data structures used during get/put/create */
 struct skel {
