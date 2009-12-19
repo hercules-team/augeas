@@ -709,10 +709,6 @@ void free_lens(struct lens *lens) {
         return;
     assert(lens->ref == 0);
 
-    unref(lens->info, info);
-    for (int t=0; t < ntypes; t++)
-        unref(ltype(lens, t), regexp);
-
     switch (lens->tag) {
     case L_DEL:
         unref(lens->regexp, regexp);
@@ -738,10 +734,23 @@ void free_lens(struct lens *lens) {
             unref(lens->children[i], lens);
         free(lens->children);
         break;
+    case L_REC:
+        if (lens->ref != REF_MAX) {
+            /* Break unbounded recursion */
+            lens->ref = REF_MAX;
+            unref(lens->body, lens);
+        }
+        break;
     default:
         assert(0);
         break;
     }
+
+    for (int t=0; t < ntypes; t++)
+        unref(ltype(lens, t), regexp);
+
+    unref(lens->info, info);
+
     free(lens);
 }
 
