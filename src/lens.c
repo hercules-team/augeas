@@ -147,6 +147,8 @@ static struct lens *make_lens_binop(enum lens_tag tag, struct info *info,
     lens->nchildren = n1;
     lens->nchildren += (l2->tag == tag) ? l2->nchildren : 1;
 
+    lens->recursive = l1->recursive || l2->recursive;
+
     if (ALLOC_N(lens->children, lens->nchildren) < 0) {
         lens->nchildren = 0;
         goto error;
@@ -176,10 +178,12 @@ static struct lens *make_lens_binop(enum lens_tag tag, struct info *info,
     if (ALLOC_N(types, lens->nchildren) < 0)
         goto error;
 
-    for (int t=0; t < ntypes; t++) {
-        for (int i=0; i < lens->nchildren; i++)
-            types[i] = ltype(lens->children[i], t);
-        ltype(lens, t) = (*combinator)(info, lens->nchildren, types);
+    if (!lens->recursive) {
+        for (int t=0; t < ntypes; t++) {
+            for (int i=0; i < lens->nchildren; i++)
+                types[i] = ltype(lens->children[i], t);
+            ltype(lens, t) = (*combinator)(info, lens->nchildren, types);
+        }
     }
 
     FREE(types);
@@ -205,8 +209,9 @@ struct value *lns_make_union(struct info *info,
                              struct lens *l1, struct lens *l2, int check) {
     struct lens *lens = NULL;
     int consumes_value = l1->consumes_value && l2->consumes_value;
+    int recursive = l1->recursive || l2->recursive;
 
-    if (check) {
+    if (check && !recursive) {
         struct value *exn = typecheck_union(info, l1, l2);
         if (exn != NULL)
             return exn;
@@ -221,8 +226,9 @@ struct value *lns_make_concat(struct info *info,
                               struct lens *l1, struct lens *l2, int check) {
     struct lens *lens = NULL;
     int consumes_value = l1->consumes_value || l2->consumes_value;
+    int recursive = l1->recursive || l2->recursive;
 
-    if (check) {
+    if (check && !recursive) {
         struct value *exn = typecheck_concat(info, l1, l2);
         if (exn != NULL) {
             return exn;
@@ -289,15 +295,17 @@ struct value *lns_make_subtree(struct info *info, struct lens *l) {
 
     lens = make_lens_unop(L_SUBTREE, info, l);
     lens->ctype = ref(l->ctype);
-    lens->atype = subtree_atype(info, l->ktype, l->vtype);
+    if (! l->recursive)
+        lens->atype = subtree_atype(info, l->ktype, l->vtype);
     lens->value = lens->key = 0;
+    lens->recursive = l->recursive;
     return make_lens_value(lens);
 }
 
 struct value *lns_make_star(struct info *info, struct lens *l, int check) {
     struct lens *lens;
 
-    if (check) {
+    if (check && !l->recursive) {
         struct value *exn = typecheck_iter(info, l);
         if (exn != NULL) {
             return exn;
@@ -314,6 +322,7 @@ struct value *lns_make_star(struct info *info, struct lens *l, int check) {
     for (int t = 0; t < ntypes; t++) {
         ltype(lens, t) = regexp_iter(info, ltype(l, t), 0, -1);
     }
+    lens->recursive = l->recursive;
     return make_lens_value(lens);
 }
 
@@ -332,7 +341,7 @@ struct value *lns_make_plus(struct info *info, struct lens *l, int check) {
 struct value *lns_make_maybe(struct info *info, struct lens *l, int check) {
     struct lens *lens;
 
-    if (check) {
+    if (check && !l->recursive) {
         struct value *exn = typecheck_maybe(info, l);
         if (exn != NULL) {
             return exn;
@@ -343,6 +352,7 @@ struct value *lns_make_maybe(struct info *info, struct lens *l, int check) {
         ltype(lens, t) = regexp_maybe(info, ltype(l, t));
     lens->value = l->value;
     lens->key = l->key;
+    lens->recursive = l->recursive;
     return make_lens_value(lens);
 }
 
@@ -494,6 +504,9 @@ static struct value *disjoint_check(struct info *info, bool is_get,
     struct value *exn = NULL;
     const char *const msg = is_get ? "union.get" : "tree union.put";
 
+    if (r1 == NULL || r2 == NULL)
+        return NULL;
+
     exn = regexp_to_fa(r1, &fa1);
     if (exn != NULL)
         goto done;
@@ -609,6 +622,9 @@ static struct value *ambig_concat_check(struct info *info, const char *msg,
     struct fa *fa2 = NULL;
     struct value *result = NULL;
 
+    if (r1 == NULL || r2 == NULL)
+        return NULL;
+
     result = regexp_to_fa(r1, &fa1);
     if (result != NULL)
         goto done;
@@ -649,6 +665,9 @@ static struct value *ambig_iter_check(struct info *info, const char *msg,
                                       struct regexp *r) {
     struct fa *fas = NULL, *fa = NULL;
     struct value *result = NULL;
+
+    if (r == NULL)
+        return NULL;
 
     result = regexp_to_fa(r, &fa);
     if (result != NULL)
