@@ -25,6 +25,7 @@
 
 #include "lens.h"
 #include "memory.h"
+#include "errcode.h"
 
 static const int const type_offs[] = {
     offsetof(struct lens, ctype),
@@ -227,6 +228,22 @@ struct value *lns_make_concat(struct info *info,
     return make_lens_value(lens);
 }
 
+static struct regexp *subtree_atype(struct info *info,
+                                    struct regexp *ktype,
+                                    struct regexp *vtype) {
+    const char *kpat = (ktype == NULL) ? ENC_NULL : ktype->pattern->str;
+    const char *vpat = (vtype == NULL) ? ENC_NULL : vtype->pattern->str;
+    char *pat;
+    struct regexp *result = NULL;
+
+    if (asprintf(&pat, "(%s)%s(%s)%s", kpat, ENC_EQ, vpat, ENC_SLASH) < 0)
+        ERR_NOMEM(pat == NULL, info);
+
+    result = make_regexp(info, pat);
+ error:
+    return result;
+}
+
 /*
  * A subtree lens l1 = [ l ]
  *
@@ -239,16 +256,10 @@ struct value *lns_make_concat(struct info *info,
  */
 struct value *lns_make_subtree(struct info *info, struct lens *l) {
     struct lens *lens;
-    const char *kpat = (l->ktype == NULL) ? ENC_NULL : l->ktype->pattern->str;
-    const char *vpat = (l->vtype == NULL) ? ENC_NULL : l->vtype->pattern->str;
-    char *pat;
-
-    if (asprintf(&pat, "(%s)%s(%s)%s", kpat, ENC_EQ, vpat, ENC_SLASH) < 0)
-        return NULL;
 
     lens = make_lens_unop(L_SUBTREE, info, l);
     lens->ctype = ref(l->ctype);
-    lens->atype = make_regexp(info, pat);
+    lens->atype = subtree_atype(info, l->ktype, l->vtype);
     lens->value = lens->key = 0;
     return make_lens_value(lens);
 }
