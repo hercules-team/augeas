@@ -29,6 +29,7 @@
 #include "syntax.h"
 #include "memory.h"
 #include "transform.h"
+#include "errcode.h"
 
 #define UNIMPL_BODY(name)                       \
     {                                           \
@@ -83,6 +84,9 @@ static struct value *make_exn_lns_error(struct info *info,
                                         struct lns_error *err,
                                         const char *text) {
     struct value *v;
+
+    if (HAS_ERR(info))
+        return exn_error();
 
     v = make_exn_value(ref(info), "%s", err->message);
     if (err->lens != NULL) {
@@ -147,7 +151,7 @@ static struct value *lens_get(struct info *info, struct value *l,
     const char *text = str->string->str;
 
     struct tree *tree = lns_get(info, l->lens, text, &err);
-    if (err == NULL) {
+    if (err == NULL && ! HAS_ERR(info)) {
         v = make_value(V_TREE, ref(info));
         v->origin = make_tree_origin(tree);
     } else {
@@ -184,7 +188,7 @@ static struct value *lens_put(struct info *info, struct value *l,
             str->string->str, &err);
     close_memstream(&ms);
 
-    if (err == NULL) {
+    if (err == NULL && ! HAS_ERR(info)) {
         v = make_value(V_STRING, ref(info));
         v->string = make_string(ms.buf);
     } else {
