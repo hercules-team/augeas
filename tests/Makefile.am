@@ -27,6 +27,7 @@ lens_tests =			\
   lens-fstab.sh			\
   lens-gdm.sh			\
   lens-group.sh			\
+  lens-json.sh          \
   lens-hosts.sh			\
   lens-inetd.sh         \
   lens-inifile.sh		\
