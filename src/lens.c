@@ -191,6 +191,7 @@ static struct value *make_lens_value(struct lens *lens) {
 struct value *lns_make_union(struct info *info,
                              struct lens *l1, struct lens *l2, int check) {
     struct lens *lens = NULL;
+    int consumes_value = l1->consumes_value && l2->consumes_value;
 
     if (check) {
         struct value *exn = typecheck_union(info, l1, l2);
@@ -199,13 +200,14 @@ struct value *lns_make_union(struct info *info,
     }
 
     lens = make_lens_binop(L_UNION, info, l1, l2, regexp_union_n);
-    lens->consumes_value = l1->consumes_value && l2->consumes_value;
+    lens->consumes_value = consumes_value;
     return make_lens_value(lens);
 }
 
 struct value *lns_make_concat(struct info *info,
                               struct lens *l1, struct lens *l2, int check) {
     struct lens *lens = NULL;
+    int consumes_value = l1->consumes_value || l2->consumes_value;
 
     if (check) {
         struct value *exn = typecheck_concat(info, l1, l2);
@@ -221,7 +223,7 @@ struct value *lns_make_concat(struct info *info,
     }
 
     lens = make_lens_binop(L_CONCAT, info, l1, l2, regexp_concat_n);
-    lens->consumes_value = l1->consumes_value || l2->consumes_value;
+    lens->consumes_value = consumes_value;
     return make_lens_value(lens);
 }
 
