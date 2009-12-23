@@ -777,6 +777,7 @@ void free_lens(struct lens *lens) {
     case L_REC:
         if (!lens->rec_internal) {
             unref(lens->body, lens);
+            jmt_free(lens->jmt);
         }
         break;
     default:
@@ -811,6 +812,11 @@ void lens_release(struct lens *lens) {
         for (int i=0; i < lens->nchildren; i++) {
             lens_release(lens->children[i]);
         }
+    }
+
+    if (lens->tag == L_REC) {
+        jmt_free(lens->jmt);
+        lens->jmt = NULL;
     }
 }
 
@@ -1980,6 +1986,9 @@ struct value *lns_check_rec(struct info *info,
     if (result != NULL)
         goto error;
 
+    struct jmt *jmt = jmt_build(rec);
+    ERR_BAIL(info);
+
     result = lns_make_rec(ref(rec->info));
     struct lens *top = result->lens;
     for (int t=0; t < ntypes; t++)
@@ -1991,7 +2000,8 @@ struct value *lns_check_rec(struct info *info,
     top->body = ref(body);
     top->alias = rec;
     rec->alias = top;
-    ERR_BAIL(info);
+
+    top->jmt = jmt;
 
     return result;
  error:

@@ -25,6 +25,7 @@
 
 #include "syntax.h"
 #include "fa.h"
+#include "jmt.h"
 
 enum lens_tag {
     L_DEL = 42,    /* Shift tag values so we fail fast(er) on bad pointers */
@@ -102,6 +103,7 @@ struct lens {
              * set up in lns_check_rec, and not reference counted.
              */
             struct lens *alias;
+            struct jmt  *jmt;
         };
     };
 };
