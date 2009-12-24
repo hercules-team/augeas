@@ -68,6 +68,19 @@ void bug_on(struct error *err, const char *srcfile, int srclineno,
         }                                               \
     } while(0)
 
+/* A variant of assert that uses our error reporting infrastructure
+ * instead of aborting
+ */
+#ifdef NDEBUG
+# define ensure(cond, obj) ((void) (0))
+#else
+# define ensure(cond, obj)                                           \
+    if (!(cond)) {                                                   \
+        bug_on((obj)->error, __FILE__, __LINE__, NULL);              \
+        goto error;                                                  \
+    }
+#endif
+
 #define BUG_ON(cond, obj, fmt ...)                                  \
     if (cond) {                                                     \
         bug_on((obj)->error, __FILE__, __LINE__, ## fmt);           \
