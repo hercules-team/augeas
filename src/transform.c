@@ -391,7 +391,7 @@ static int load_file(struct augeas *aug, struct lens *lens, char *filename) {
     if (r < 0)
         goto done;
 
-    text = read_file(filename);
+    text = xread_file(filename);
     if (text == NULL) {
         err_status = "read_failed";
         goto done;
@@ -724,7 +724,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
     }
 
     if (access(augorig, R_OK) == 0) {
-        text = read_file(augorig);
+        text = xread_file(augorig);
     } else {
         text = strdup("");
     }
@@ -810,7 +810,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
     }
 
     {
-        char *new_text = read_file(augnew);
+        char *new_text = xread_file(augnew);
         int same = 0;
         if (new_text == NULL) {
             err_status = "read_augnew";

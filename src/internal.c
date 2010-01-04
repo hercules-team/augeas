@@ -125,7 +125,7 @@ fread_file_lim (FILE *stream, size_t max_len, size_t *length)
     return NULL;
 }
 
-char* read_file(const char *path) {
+char* xread_file(const char *path) {
     FILE *fp = fopen(path, "r");
     char *result;
     size_t len;

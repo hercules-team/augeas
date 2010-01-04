@@ -418,7 +418,7 @@ static struct value *sys_read_file(struct info *info, struct value *n) {
     assert(n->tag == V_STRING);
     char *str = NULL;
 
-    str = read_file(n->string->str);
+    str = xread_file(n->string->str);
     if (str == NULL) {
         char error_buf[1024];
         const char *errmsg;

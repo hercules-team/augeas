@@ -258,11 +258,11 @@ int print_chars(FILE *out, const char *text, int cnt);
 void print_pos(FILE *out, const char *text, int pos);
 char *format_pos(const char *text, int pos);
 
-/* Function: read_file
+/* Function: xread_file
  * Read the contents of file PATH and return them as one long string. The
  * caller must free the result. Return NULL if any error occurs.
  */
-char* read_file(const char *path);
+char* xread_file(const char *path);
 
 /* Get the error message for ERRNUM in a threadsafe way. Based on libvirt's
  * virStrError
