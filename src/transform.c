@@ -326,44 +326,40 @@ static int store_error(struct augeas *aug,
  */
 static int add_file_info(struct augeas *aug,
                          const char *node, struct lens *lens) {
+    struct tree *file, *tree;
     char *tmp = NULL;
     int r;
-    char *p = NULL;
-    int end = 0;
+    char *path = NULL;
     int result = -1;
 
     if (lens == NULL)
         return -1;
 
-    r = pathjoin(&p, 2, AUGEAS_META_TREE, node);
-    if (r < 0)
-        goto done;
-    end = strlen(p);
+    r = pathjoin(&path, 2, AUGEAS_META_TREE, node);
+    ERR_NOMEM(r < 0, aug);
 
-    r = pathjoin(&p, 1, s_path);
-    if (r < 0)
-        goto done;
+    file = tree_find_cr(aug, path);
+    ERR_BAIL(aug);
 
-    r = aug_set(aug, p, node);
-    if (r < 0)
-        goto done;
-    p[end] = '\0';
+    /* Set 'path' */
+    tree = tree_child_cr(file, s_path);
+    ERR_NOMEM(tree == NULL, aug);
+    r = tree_set_value(tree, node);
+    ERR_NOMEM(r < 0, aug);
 
-    r = pathjoin(&p, 1, s_lens);
-    if (r < 0)
-        goto done;
-
+    /* Set 'lens' */
     tmp = format_info(lens->info);
-    if (tmp == NULL)
-        goto done;
-    r = aug_set(aug, p, tmp);
+    ERR_NOMEM(tmp == NULL, aug);
+    tree = tree_child_cr(file, s_lens);
+    ERR_NOMEM(tree == NULL, aug);
+    r = tree_set_value(tree, tmp);
+    ERR_NOMEM(r < 0, aug);
     FREE(tmp);
-    if (r < 0)
-        goto done;
 
     result = 0;
- done:
-    free(p);
+ error:
+    free(path);
+    free(tmp);
     return result;
 }
 
