@@ -103,6 +103,26 @@ static void testSaveNewFile(CuTest *tc) {
     CuAssertIntEquals(tc, 1, r);
 }
 
+ATTRIBUTE_UNUSED
+static void testNonExistentLens(CuTest *tc) {
+    int r;
+
+    r = aug_rm(aug, "/augeas/load/*");
+    CuAssertTrue(tc, r >= 0);
+
+    r = aug_set(aug, "/augeas/load/Fake/lens", "Fake.lns");
+    CuAssertIntEquals(tc, 0, r);
+    r = aug_set(aug, "/augeas/load/Fake/incl", "/fake");
+    CuAssertIntEquals(tc, 0, r);
+    r = aug_set(aug, "/files/fake/entry", "value");
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_save(aug);
+    CuAssertIntEquals(tc, -1, r);
+    r = aug_error(aug);
+    CuAssertIntEquals(tc, AUG_ENOLENS, r);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -122,6 +142,7 @@ int main(void) {
     CuSuiteSetup(suite, setup, teardown);
 
     SUITE_ADD_TEST(suite, testSaveNewFile);
+    SUITE_ADD_TEST(suite, testNonExistentLens);
 
     CuSuiteRun(suite);
     CuSuiteSummary(suite, &output);

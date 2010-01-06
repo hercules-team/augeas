@@ -36,6 +36,7 @@
 #include "augeas.h"
 #include "syntax.h"
 #include "transform.h"
+#include "errcode.h"
 
 static const int fnm_flags = FNM_PATHNAME;
 static const int glob_flags = GLOB_NOSORT;
@@ -331,6 +332,9 @@ static int add_file_info(struct augeas *aug,
     int end = 0;
     int result = -1;
 
+    if (lens == NULL)
+        return -1;
+
     r = pathjoin(&p, 2, AUGEAS_META_TREE, node);
     if (r < 0)
         goto done;
@@ -436,17 +440,26 @@ static int load_file(struct augeas *aug, struct lens *lens, char *filename) {
  * autoload transform for Module
  */
 static struct lens *lens_from_name(struct augeas *aug, const char *name) {
+    struct lens *result = NULL;
+
     if (name[0] == '@') {
         struct module *modl = NULL;
         for (modl = aug->modules;
              modl != NULL && !streqv(modl->name, name + 1);
              modl = modl->next);
-        if (modl == NULL || modl->autoload == NULL)
-            return NULL;
-        return modl->autoload->lens;
+        ERR_THROW(modl == NULL, aug, AUG_ENOLENS,
+                  "Could not find module %s", name + 1);
+        ERR_THROW(modl->autoload == NULL, aug, AUG_ENOLENS,
+                  "No autoloaded lens in module %s", name + 1);
+        result = modl->autoload->lens;
     } else {
-        return lens_lookup(aug, name);
+        result = lens_lookup(aug, name);
     }
+    ERR_THROW(result == NULL, aug, AUG_ENOLENS,
+              "Can not find lens %s", name);
+    return result;
+ error:
+    return NULL;
 }
 
 static struct lens *xfm_lens(struct augeas *aug, struct tree *xfm) {
@@ -494,14 +507,9 @@ int transform_validate(struct augeas *aug, struct tree *xfm) {
         xfm_error(xfm, "the 'lens' node does not contain a lens name");
         return -1;
     }
-    if (lens_from_name(aug, l->value) == NULL) {
-        char *msg;
-        if (asprintf(&msg, "the lens '%s' does not exist", l->value) < 0) {
-            xfm_error(xfm, "the lens does not exist");
-        } else {
-            xfm_error(xfm, msg);
-            free(msg);
-        }
+    lens_from_name(aug, l->value);
+    if (HAS_ERR(aug)) {
+        xfm_error(xfm, aug->error->details);
         return -1;
     }
     return 0;
