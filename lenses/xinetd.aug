@@ -20,7 +20,7 @@ module Xinetd =
   let comment = Util.comment
   let empty   = Util.empty
 
-  let name = key /[^ \t\n\/+-=]+/
+  let name = key /[^ \t\n\/=+-]+/
   let bol_spc = del /[ \t]*/ "\t"
   let spc = del /[ \t]+/ " "
   let eol = del /[ \t]*\n/ "\n"
