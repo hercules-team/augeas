@@ -59,6 +59,7 @@ static const int glob_flags = GLOB_NOSORT;
  */
 static const char *const s_path = "path";
 static const char *const s_lens = "lens";
+static const char *const s_info = "info";
 
 static const char *const s_error = "error";
 /* These are all put underneath "error" */
@@ -324,8 +325,8 @@ static int store_error(struct augeas *aug,
  *
  * Returns 0 on success, -1 on error
  */
-static int add_file_info(struct augeas *aug,
-                         const char *node, struct lens *lens) {
+static int add_file_info(struct augeas *aug, const char *node,
+                         struct lens *lens, const char *lens_name) {
     struct tree *file, *tree;
     char *tmp = NULL;
     int r;
@@ -347,14 +348,19 @@ static int add_file_info(struct augeas *aug,
     r = tree_set_value(tree, node);
     ERR_NOMEM(r < 0, aug);
 
-    /* Set 'lens' */
+    /* Set 'lens/info' */
     tmp = format_info(lens->info);
     ERR_NOMEM(tmp == NULL, aug);
-    tree = tree_child_cr(file, s_lens);
+    tree = tree_path_cr(file, 2, s_lens, s_info);
     ERR_NOMEM(tree == NULL, aug);
     r = tree_set_value(tree, tmp);
     ERR_NOMEM(r < 0, aug);
     FREE(tmp);
+
+    /* Set 'lens' */
+    tree = tree->parent;
+    r = tree_set_value(tree, lens_name);
+    ERR_NOMEM(r < 0, aug);
 
     result = 0;
  error:
@@ -376,7 +382,8 @@ static char *append_newline(char *text, size_t len) {
     return text;
 }
 
-static int load_file(struct augeas *aug, struct lens *lens, char *filename) {
+static int load_file(struct augeas *aug, struct lens *lens,
+                     const char *lens_name, char *filename) {
     char *text = NULL;
     const char *err_status = NULL;
     struct aug_file *file = NULL;
@@ -387,7 +394,7 @@ static int load_file(struct augeas *aug, struct lens *lens, char *filename) {
 
     pathjoin(&path, 2, AUGEAS_FILES_TREE, filename + strlen(aug->root) - 1);
 
-    r = add_file_info(aug, path, lens);
+    r = add_file_info(aug, path, lens, lens_name);
     if (r < 0)
         goto done;
 
@@ -468,7 +475,8 @@ const char *xfm_lens_name(struct tree *xfm) {
     return l->value;
 }
 
-static struct lens *xfm_lens(struct augeas *aug, struct tree *xfm) {
+static struct lens *xfm_lens(struct augeas *aug,
+                             struct tree *xfm, const char **lens_name) {
     struct tree *l = NULL;
 
     for (l = xfm->children;
@@ -477,6 +485,8 @@ static struct lens *xfm_lens(struct augeas *aug, struct tree *xfm) {
 
     if (l == NULL || l->value == NULL)
         return NULL;
+    *lens_name = l->value;
+
     return lens_from_name(aug, l->value);
 }
 
@@ -552,7 +562,8 @@ void transform_file_error(struct augeas *aug, const char *status,
 int transform_load(struct augeas *aug, struct tree *xfm) {
     int nmatches;
     char **matches;
-    struct lens *lens = xfm_lens(aug, xfm);
+    const char *lens_name;
+    struct lens *lens = xfm_lens(aug, xfm, &lens_name);
     int r;
 
     if (lens == NULL) {
@@ -563,7 +574,7 @@ int transform_load(struct augeas *aug, struct tree *xfm) {
     if (r == -1)
         return -1;
     for (int i=0; i < nmatches; i++) {
-        load_file(aug, lens, matches[i]);
+        load_file(aug, lens, lens_name, matches[i]);
         free(matches[i]);
     }
     lens_release(lens);
@@ -747,7 +758,8 @@ int transform_save(struct augeas *aug, struct tree *xfm,
     const char *err_status = NULL;
     char *dyn_err_status = NULL;
     struct lns_error *err = NULL;
-    struct lens *lens = xfm_lens(aug, xfm);
+    const char *lens_name;
+    struct lens *lens = xfm_lens(aug, xfm, &lens_name);
     int result = -1, r;
 
     errno = 0;
@@ -895,7 +907,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
     result = 1;
 
  done:
-    r = add_file_info(aug, path, lens);
+    r = add_file_info(aug, path, lens, lens_name);
     if (r < 0) {
         err_status = "file_info";
         result = -1;
