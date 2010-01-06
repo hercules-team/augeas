@@ -693,6 +693,9 @@ void free_lens(struct lens *lens) {
 }
 
 void lens_release(struct lens *lens) {
+    if (lens == NULL)
+        return;
+
     for (int t=0; t < ntypes; t++)
         regexp_release(ltype(lens, t));
 
