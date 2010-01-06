@@ -61,7 +61,8 @@ static const char *const errcodes[] = {
     "No match for path expression",                     /* AUG_ENOMATCH */
     "Too many matches for path expression",             /* AUG_EMMATCH */
     "Syntax error in lens definition",                  /* AUG_ESYNTAX */
-    "Lens not found"                                    /* AUG_ENOLENS */
+    "Lens not found",                                   /* AUG_ENOLENS */
+    "Multiple transforms"                               /* AUG_EMXFM */
 };
 
 static void tree_mark_dirty(struct tree *tree) {
@@ -921,7 +922,17 @@ static int tree_save(struct augeas *aug, struct tree *tree,
                     if (transform == NULL || transform == xfm) {
                         transform = xfm;
                     } else {
-                        FIXME("Multiple transforms for %s", path);
+                        const char *filename =
+                            tpath + strlen(AUGEAS_FILES_TREE) + 1;
+                        transform_file_error(aug, "mxfm_save", filename,
+                           "Lenses %s and %s could be used to save this file",
+                                             xfm_lens_name(transform),
+                                             xfm_lens_name(xfm));
+                        ERR_REPORT(aug, AUG_EMXFM,
+                                   "Path %s transformable by lens %s and %s",
+                                   tpath,
+                                   xfm_lens_name(transform),
+                                   xfm_lens_name(xfm));
                         result = -1;
                     }
                 }

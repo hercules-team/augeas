@@ -103,7 +103,6 @@ static void testSaveNewFile(CuTest *tc) {
     CuAssertIntEquals(tc, 1, r);
 }
 
-ATTRIBUTE_UNUSED
 static void testNonExistentLens(CuTest *tc) {
     int r;
 
@@ -121,6 +120,23 @@ static void testNonExistentLens(CuTest *tc) {
     CuAssertIntEquals(tc, -1, r);
     r = aug_error(aug);
     CuAssertIntEquals(tc, AUG_ENOLENS, r);
+}
+
+static void testMultipleXfm(CuTest *tc) {
+    int r;
+
+    r = aug_set(aug, "/augeas/load/Yum2/lens", "Yum.lns");
+    CuAssertIntEquals(tc, 0, r);
+    r = aug_set(aug, "/augeas/load/Yum2/incl", "/etc/yum.repos.d/*");
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_set(aug, "/files/etc/yum.repos.d/fedora.repo/fedora/enabled", "1");
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_save(aug);
+    CuAssertIntEquals(tc, -1, r);
+    r = aug_error(aug);
+    CuAssertIntEquals(tc, AUG_EMXFM, r);
 }
 
 int main(void) {
@@ -143,6 +159,7 @@ int main(void) {
 
     SUITE_ADD_TEST(suite, testSaveNewFile);
     SUITE_ADD_TEST(suite, testNonExistentLens);
+    SUITE_ADD_TEST(suite, testMultipleXfm);
 
     CuSuiteRun(suite);
     CuSuiteSummary(suite, &output);
