@@ -60,7 +60,8 @@ static const char *const errcodes[] = {
     "Invalid path expression",                          /* AUG_EPATHX */
     "No match for path expression",                     /* AUG_ENOMATCH */
     "Too many matches for path expression",             /* AUG_EMMATCH */
-    "Syntax error in lens definition"                   /* AUG_ESYNTAX */
+    "Syntax error in lens definition",                  /* AUG_ESYNTAX */
+    "Lens not found"                                    /* AUG_ENOLENS */
 };
 
 static void tree_mark_dirty(struct tree *tree) {
