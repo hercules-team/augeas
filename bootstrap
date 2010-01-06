@@ -64,6 +64,7 @@ getline
 gitlog-to-changelog
 canonicalize-lgpl
 regex
+safe-alloc
 selinux-h
 stpcpy
 stpncpy
