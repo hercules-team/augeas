@@ -81,7 +81,7 @@ static void tree_clean(struct tree *tree) {
     tree->dirty = 0;
 }
 
-static struct tree *tree_child(struct tree *tree, const char *label) {
+struct tree *tree_child(struct tree *tree, const char *label) {
     if (tree == NULL)
         return NULL;
 
@@ -92,8 +92,7 @@ static struct tree *tree_child(struct tree *tree, const char *label) {
     return NULL;
 }
 
-/* Get first existing child or create one */
-static struct tree *tree_child_cr(struct tree *tree, const char *label) {
+struct tree *tree_child_cr(struct tree *tree, const char *label) {
     static struct tree *child = NULL;
 
     if (tree == NULL)
@@ -109,7 +108,7 @@ static struct tree *tree_child_cr(struct tree *tree, const char *label) {
     return child;
 }
 
-static struct tree *tree_path_cr(struct tree *tree, int n, ...) {
+struct tree *tree_path_cr(struct tree *tree, int n, ...) {
     va_list ap;
 
     va_start(ap, n);
@@ -121,7 +120,7 @@ static struct tree *tree_path_cr(struct tree *tree, int n, ...) {
     return tree;
 }
 
-static int tree_set_value(struct tree *tree, const char *value) {
+int tree_set_value(struct tree *tree, const char *value) {
     if (tree->value != NULL) {
         free(tree->value);
         tree->value = NULL;
@@ -393,7 +392,7 @@ struct augeas *aug_init(const char *root, const char *loadpath,
     return NULL;
 }
 
-static void tree_unlink_children(struct augeas *aug, struct tree *tree) {
+void tree_unlink_children(struct augeas *aug, struct tree *tree) {
     if (tree == NULL)
         return;
 

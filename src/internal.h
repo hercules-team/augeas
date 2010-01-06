@@ -376,6 +376,18 @@ int dump_tree(FILE *out, struct tree *tree);
 int tree_equal(const struct tree *t1, const struct tree *t2);
 char *path_expand(struct tree *tree, const char *ppath);
 char *path_of_tree(struct tree *tree);
+/* Return first child with label LABEL or NULL */
+struct tree *tree_child(struct tree *tree, const char *label);
+/* Return first existing child with label LABEL or create one. Return NULL
+ * when allocation fails */
+struct tree *tree_child_cr(struct tree *tree, const char *label);
+/* Create a path in the tree; nodes along the path are looked up with
+ * tree_child_cr */
+struct tree *tree_path_cr(struct tree *tree, int n, ...);
+/* Set the value of TREE and update dirty flags */
+int tree_set_value(struct tree *tree, const char *value);
+/* Cleanly remove all children of TREE, but leave TREE itself unchanged */
+void tree_unlink_children(struct augeas *aug, struct tree *tree);
 
 /* Struct: memstream
  * Wrappers to simulate OPEN_MEMSTREAM where that's not available. The
