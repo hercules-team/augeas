@@ -570,8 +570,22 @@ void transform_file_error(struct augeas *aug, const char *status,
     free(msg);
 }
 
+static struct tree *file_info(struct augeas *aug, const char *fname) {
+    char *path = NULL;
+    struct tree *result = NULL;
+    int r;
+
+    r = pathjoin(&path, 2, AUGEAS_META_FILES, fname);
+    ERR_NOMEM(r < 0, aug);
+
+    result = tree_find(aug, path);
+    ERR_BAIL(aug);
+ error:
+    return result;
+}
+
 int transform_load(struct augeas *aug, struct tree *xfm) {
-    int nmatches;
+    int nmatches = 0;
     char **matches;
     const char *lens_name;
     struct lens *lens = xfm_lens(aug, xfm, &lens_name);
@@ -585,8 +599,20 @@ int transform_load(struct augeas *aug, struct tree *xfm) {
     if (r == -1)
         return -1;
     for (int i=0; i < nmatches; i++) {
-        load_file(aug, lens, lens_name, matches[i]);
-        free(matches[i]);
+        const char *filename = matches[i] + strlen(aug->root) - 1;
+        struct tree *finfo = file_info(aug, filename);
+        if (finfo != NULL && tree_child(finfo, s_lens) != NULL) {
+            const char *s = xfm_lens_name(finfo);
+            char *fpath = file_name_path(aug, matches[i]);
+            transform_file_error(aug, "mxfm_load", filename,
+              "Lenses %s and %s could be used to load this file",
+                                 s, lens_name);
+            aug_rm(aug, fpath);
+            free(fpath);
+        } else {
+            load_file(aug, lens, lens_name, matches[i]);
+        }
+        FREE(matches[i]);
     }
     lens_release(lens);
     free(matches);
