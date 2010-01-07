@@ -120,6 +120,41 @@ struct tree *tree_path_cr(struct tree *tree, int n, ...) {
     return tree;
 }
 
+struct tree *tree_find(struct augeas *aug, const char *path) {
+    struct pathx *p = NULL;
+    struct tree *result = NULL;
+    int r;
+
+    pathx_parse(aug->origin, aug->error, path, true, aug->symtab, &p);
+    ERR_BAIL(aug);
+
+    r = pathx_find_one(p, &result);
+    BUG_ON(r > 1, aug,
+           "Multiple matches for %s when only one was expected",
+           path);
+ done:
+    free_pathx(p);
+    return result;
+ error:
+    result = NULL;
+    goto done;
+}
+
+struct tree *tree_find_cr(struct augeas *aug, const char *path) {
+    struct pathx *p = NULL;
+    struct tree *result = NULL;
+    int r;
+
+    pathx_parse(aug->origin, aug->error, path, true, aug->symtab, &p);
+    ERR_BAIL(aug);
+
+    r = pathx_expand_tree(p, &result);
+    ERR_BAIL(aug);
+ error:
+    free_pathx(p);
+    return result;
+}
+
 int tree_set_value(struct tree *tree, const char *value) {
     if (tree->value != NULL) {
         free(tree->value);

@@ -388,6 +388,17 @@ struct tree *tree_path_cr(struct tree *tree, int n, ...);
 int tree_set_value(struct tree *tree, const char *value);
 /* Cleanly remove all children of TREE, but leave TREE itself unchanged */
 void tree_unlink_children(struct augeas *aug, struct tree *tree);
+/* Find the node matching PATH.
+ * Returns the node or NULL on error
+ * Errors: EMMATCH - more than one node matches PATH
+ *         ENOMEM  - allocation error
+ */
+struct tree *tree_find(struct augeas *aug, const char *path);
+/* Find the node matching PATH. Expand the tree to contain such a node if
+ * none exists.
+ * Returns the node or NULL on error
+ */
+struct tree *tree_find_cr(struct augeas *aug, const char *path);
 
 /* Struct: memstream
  * Wrappers to simulate OPEN_MEMSTREAM where that's not available. The
