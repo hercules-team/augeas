@@ -90,6 +90,11 @@ int remove_file(struct augeas *aug, struct tree *tree);
 
 /* Return a printable name for the transform XFM. Never returns NULL. */
 const char *xfm_lens_name(struct tree *xfm);
+
+/* Store a file-specific transformation error in /augeas/files/PATH/error */
+ATTRIBUTE_FORMAT(printf, 4, 5)
+void transform_file_error(struct augeas *aug, const char *status,
+                          const char *filename, const char *format, ...);
 #endif
 
 
