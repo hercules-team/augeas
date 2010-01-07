@@ -462,6 +462,16 @@ static struct lens *lens_from_name(struct augeas *aug, const char *name) {
     return NULL;
 }
 
+const char *xfm_lens_name(struct tree *xfm) {
+    struct tree *l = tree_child(xfm, s_lens);
+
+    if (l == NULL)
+        return "(unknown)";
+    if (l->value == NULL)
+        return "(noname)";
+    return l->value;
+}
+
 static struct lens *xfm_lens(struct augeas *aug, struct tree *xfm) {
     struct tree *l = NULL;
 

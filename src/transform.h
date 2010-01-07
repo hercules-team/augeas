@@ -87,6 +87,9 @@ int transform_save(struct augeas *aug, struct tree *xfm,
  * Return 0 on success, -1 on failure
  */
 int remove_file(struct augeas *aug, struct tree *tree);
+
+/* Return a printable name for the transform XFM. Never returns NULL. */
+const char *xfm_lens_name(struct tree *xfm);
 #endif
 
 
