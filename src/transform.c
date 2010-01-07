@@ -382,6 +382,15 @@ static char *append_newline(char *text, size_t len) {
     return text;
 }
 
+/* Turn the file name FNAME, which starts with aug->root, into
+ * a path in the tree underneath /files */
+static char *file_name_path(struct augeas *aug, const char *fname) {
+    char *path = NULL;
+
+    pathjoin(&path, 2, AUGEAS_FILES_TREE, fname + strlen(aug->root) - 1);
+    return path;
+}
+
 static int load_file(struct augeas *aug, struct lens *lens,
                      const char *lens_name, char *filename) {
     char *text = NULL;
@@ -392,7 +401,8 @@ static int load_file(struct augeas *aug, struct lens *lens,
     struct lns_error *err = NULL;
     int result = -1, r;
 
-    pathjoin(&path, 2, AUGEAS_FILES_TREE, filename + strlen(aug->root) - 1);
+    path = file_name_path(aug, filename);
+    ERR_NOMEM(path == NULL, aug);
 
     r = add_file_info(aug, path, lens, lens_name);
     if (r < 0)
@@ -429,6 +439,7 @@ static int load_file(struct augeas *aug, struct lens *lens,
  done:
     store_error(aug, filename + strlen(aug->root) - 1, path, err_status,
                 errno, err, text);
+ error:
     free_lns_error(err);
     free(path);
     free_tree(tree);
