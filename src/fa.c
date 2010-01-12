@@ -61,6 +61,7 @@ struct fa {
     struct state *initial;
     int           deterministic : 1;
     int           minimal : 1;
+    unsigned int  nocase : 1;
 };
 
 /* A state in a finite automaton. Transitions are never shared between
@@ -1835,11 +1836,27 @@ int fa_is_basic(struct fa *fa, unsigned int basic) {
     } else if (basic == FA_EPSILON) {
         return fa->initial->accept && fa->initial->tused == 0;
     } else if (basic == FA_TOTAL) {
-        if (! fa->initial->accept || fa->initial->tused != 1)
+        if (! fa->initial->accept)
             return 0;
-        struct trans *t = fa->initial->trans;
-        return t->to == fa->initial &&
-            t->min == UCHAR_MIN && t->max == UCHAR_MAX;
+        if (fa->nocase) {
+            if (fa->initial->tused != 2)
+                return 0;
+            struct trans *t1 = fa->initial->trans;
+            struct trans *t2 = fa->initial->trans + 1;
+            if (t1->to != fa->initial || t2->to != fa->initial)
+                return 0;
+            if (t2->max != UCHAR_MAX) {
+                t1 = t2;
+                t2 = fa->initial->trans;
+            }
+            return (t1->min == UCHAR_MIN && t1->max == 'A' - 1 &&
+                    t2->min == 'Z' + 1 && t2->max == UCHAR_MAX);
+        } else {
+            struct trans *t = fa->initial->trans;
+            return fa->initial->tused == 1 &&
+                t->to == fa->initial &&
+                t->min == UCHAR_MIN && t->max == UCHAR_MAX;
+        }
     }
     return 0;
 }
@@ -1854,6 +1871,7 @@ static struct fa *fa_clone(struct fa *fa) {
 
     result->deterministic = fa->deterministic;
     result->minimal = fa->minimal;
+    result->nocase = fa->nocase;
     list_for_each(s, fa->initial) {
         int i = state_set_push(set, s);
         _E(i < 0);
@@ -1885,11 +1903,20 @@ static struct fa *fa_clone(struct fa *fa) {
     return NULL;
 }
 
+static int case_expand(struct fa *fa);
+
 /* Compute FA1|FA2 and set FA1 to that automaton. FA2 is freed */
 ATTRIBUTE_RETURN_CHECK
 static int union_in_place(struct fa *fa1, struct fa **fa2) {
     struct state *s;
     int r;
+
+    if (fa1->nocase != (*fa2)->nocase) {
+        if (case_expand(fa1) < 0)
+            return -1;
+        if (case_expand(*fa2) < 0)
+            return -1;
+    }
 
     s = add_state(fa1, 0);
     if (s == NULL)
@@ -1929,6 +1956,13 @@ struct fa *fa_union(struct fa *fa1, struct fa *fa2) {
 ATTRIBUTE_RETURN_CHECK
 static int concat_in_place(struct fa *fa1, struct fa **fa2) {
     int r;
+
+    if (fa1->nocase != (*fa2)->nocase) {
+        if (case_expand(fa1) < 0)
+            return -1;
+        if (case_expand(*fa2) < 0)
+            return -1;
+    }
 
     list_for_each(s, fa1->initial) {
         if (s->accept) {
@@ -2160,6 +2194,11 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
     if (fa_is_basic(fa1, FA_EMPTY) || fa_is_basic(fa2, FA_EMPTY))
         return fa_make_empty();
 
+    if (fa1->nocase != fa2->nocase) {
+        _F(case_expand(fa1));
+        _F(case_expand(fa2));
+    }
+
     struct fa *fa = fa_make_empty();
     struct state_set *worklist = state_set_init(-1, S_NONE);
     state_triple_hash *newstates = state_triple_init();
@@ -2212,6 +2251,7 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
         }
     }
     fa->deterministic = fa1->deterministic && fa2->deterministic;
+    fa->nocase = fa1->nocase && fa2->nocase;
  done:
     state_set_free(worklist);
     state_triple_free(newstates);
@@ -2300,22 +2340,39 @@ static int totalize(struct fa *fa) {
     _F(mark_reachable(fa));
     sort_transition_intervals(fa);
 
-    r = add_new_trans(crash, crash, UCHAR_MIN, UCHAR_MAX);
-    if (r < 0)
-        return -1;
+    if (fa->nocase) {
+        r = add_new_trans(crash, crash, UCHAR_MIN, 'A' - 1);
+        if (r < 0)
+            return -1;
+        r = add_new_trans(crash, crash, 'Z' + 1, UCHAR_MAX);
+        if (r < 0)
+            return -1;
+    } else {
+        r = add_new_trans(crash, crash, UCHAR_MIN, UCHAR_MAX);
+        if (r < 0)
+            return -1;
+    }
 
     list_for_each(s, fa->initial) {
         int next = UCHAR_MIN;
         int tused = s->tused;
         for (int i=0; i < tused; i++) {
             uchar min = s->trans[i].min, max = s->trans[i].max;
+            if (fa->nocase) {
+                /* Don't add transitions on [A-Z] into crash */
+                if (isupper(min)) min = 'A';
+                if (isupper(max)) max = 'Z';
+            }
             if (min > next) {
                 r = add_new_trans(s, crash, next, min - 1);
                 if (r < 0)
                     return -1;
             }
-            if (max + 1 > next)
+            if (max + 1 > next) {
                 next = max + 1;
+                if (fa->nocase && isupper(next))
+                    next = 'Z' + 1;
+            }
         }
         if (next <= UCHAR_MAX) {
             r = add_new_trans(s, crash, next, UCHAR_MAX);
@@ -2920,6 +2977,78 @@ int fa_compile(const char *regexp, size_t size, struct fa **fa) {
     if (*fa == NULL || collect(*fa) < 0)
         parse.error = REG_ESPACE;
     return parse.error;
+}
+
+/* We represent a case-insensitive FA by using only transitions on
+ * lower-case letters.
+ */
+int fa_nocase(struct fa *fa) {
+    if (fa == NULL || fa->nocase)
+        return 0;
+
+    fa->nocase = 1;
+    list_for_each(s, fa->initial) {
+        int tused = s->tused;
+        /* For every transition on characters in [A-Z] add a corresponding
+         * transition on [a-z]; remove any portion covering [A-Z] */
+        for (int i=0; i < tused; i++) {
+            struct trans *t = s->trans + i;
+            int lc_min = t->min < 'A' ? 'a' : tolower(t->min);
+            int lc_max = t->max > 'Z' ? 'z' : tolower(t->max);
+
+            if (t->min > 'Z' || t->max < 'A')
+                continue;
+            if (t->min >= 'A' && t->max <= 'Z') {
+                t->min = tolower(t->min);
+                t->max = tolower(t->max);
+            } else if (t->max <= 'Z') {
+                /* t->min < 'A' */
+                t->max = 'A' - 1;
+                _F(add_new_trans(s, t->to, lc_min, lc_max));
+            } else {
+                /* t->min < 'A' && t->max > 'Z' */
+                _F(add_new_trans(s, t->to, 'Z' + 1, t->max));
+                s->trans[i].max = 'A' - 1;
+                _F(add_new_trans(s, s->trans[i].to, lc_min, lc_max));
+            }
+        }
+    }
+    _F(collect(fa));
+    return 0;
+ error:
+    return -1;
+}
+
+int fa_is_nocase(struct fa *fa) {
+    return fa->nocase;
+}
+
+/* If FA is case-insensitive, turn it into a case-sensitive automaton by
+ * adding transitions on upper-case letters for each existing transition on
+ * lower-case letters */
+static int case_expand(struct fa *fa) {
+    if (! fa->nocase)
+        return 0;
+
+    fa->nocase = 0;
+    list_for_each(s, fa->initial) {
+        int tused = s->tused;
+        /* For every transition on characters in [a-z] add a corresponding
+         * transition on [A-Z] */
+        for (int i=0; i < tused; i++) {
+            struct trans *t = s->trans + i;
+            int lc_min = t->min < 'a' ? 'A' : toupper(t->min);
+            int lc_max = t->max > 'z' ? 'Z' : toupper(t->max);
+
+            if (t->min > 'z' || t->max < 'a')
+                continue;
+            _F(add_new_trans(s, t->to, lc_min, lc_max));
+        }
+    }
+    _F(collect(fa));
+    return 0;
+ error:
+    return -1;
 }
 
 /*

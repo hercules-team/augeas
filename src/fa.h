@@ -67,6 +67,9 @@ extern int fa_minimization_algorithm;
  * On success, FA points to the newly allocated automaton constructed for
  * RE, and the function returns REG_NOERROR. Otherwise, FA is NULL, and the
  * return value indicates the error.
+ *
+ * The FA is case sensitive. Call FA_NOCASE to switch it to
+ * case-insensitive.
  */
 int fa_compile(const char *re, size_t size, struct fa **fa);
 
@@ -228,6 +231,16 @@ int fa_restrict_alphabet(const char *regexp, size_t regexp_len,
  */
 int fa_expand_char_ranges(const char *regexp, size_t regexp_len,
                           char **newregexp, size_t *newregexp_len);
+
+/* Modify FA so that it matches ignoring case.
+ *
+ * Returns 0 on success, and -1 if an allocation fails. On failure, the
+ * automaton is not guaranteed to represent anything sensible.
+ */
+int fa_nocase(struct fa *fa);
+
+/* Return 1 if FA matches ignoring case, 0 if matches are case sensitive */
+int fa_is_nocase(struct fa *fa);
 #endif
 
 

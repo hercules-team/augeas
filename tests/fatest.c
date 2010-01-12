@@ -28,6 +28,7 @@
 #include "memory.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #define FA_DOT_DIR "FA_DOT_DIR"
 
@@ -329,6 +330,15 @@ static void assertExample(CuTest *tc, const char *regexp, const char *exp) {
     fa_example(fa, &xmpl, &xmpl_len);
     CuAssertStrEquals(tc, exp, xmpl);
     free(xmpl);
+
+    fa_nocase(fa);
+    char *s = strdup(exp);
+    for (int i = 0; i < strlen(s); i++) s[i] = tolower(s[i]);
+
+    fa_example(fa, &xmpl, &xmpl_len);
+    CuAssertStrEquals(tc, s, xmpl);
+    free(xmpl);
+    free(s);
 }
 
 static void testExample(CuTest *tc) {
@@ -511,6 +521,26 @@ static void testExpandCharRanges(CuTest *tc) {
     CuAssertIntEquals(tc, strlen(nre), nre_len);
 }
 
+static void testNoCase(CuTest *tc) {
+    struct fa *fa1 = make_good_fa(tc, "[a-z0-9]");
+    struct fa *fa2 = make_good_fa(tc, "B");
+    struct fa *fa, *exp;
+    int r;
+
+    fa_nocase(fa1);
+    fa = fa_intersect(fa1, fa2);
+    CuAssertPtrNotNull(tc, fa);
+    r = fa_equals(fa, fa2);
+    fa_free(fa);
+    CuAssertIntEquals(tc, 1, r);
+
+    fa = fa_concat(fa1, fa2);
+    exp = make_good_fa(tc, "[a-zA-Z0-9]B");
+    r = fa_equals(fa, exp);
+    fa_free(fa);
+    CuAssertIntEquals(tc, 1, r);
+}
+
 int main(int argc, char **argv) {
     if (argc == 1) {
         char *output = NULL;
@@ -533,6 +563,7 @@ int main(int argc, char **argv) {
         SUITE_ADD_TEST(suite, testNul);
         SUITE_ADD_TEST(suite, testRestrictAlphabet);
         SUITE_ADD_TEST(suite, testExpandCharRanges);
+        SUITE_ADD_TEST(suite, testNoCase);
 
         CuSuiteRun(suite);
         CuSuiteSummary(suite, &output);

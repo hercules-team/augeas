@@ -23,3 +23,8 @@ FA_1.0.0 {
       fa_expand_char_ranges;
     local: *;
 };
+
+FA_1.2.0 {
+      fa_nocase;
+      fa_is_nocase;
+} FA_1.0.0;
