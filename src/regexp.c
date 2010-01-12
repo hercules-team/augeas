@@ -306,23 +306,39 @@ regexp_concat_n(struct info *info, int n, struct regexp **r) {
     return NULL;
 }
 
+static struct fa *regexp_to_fa(struct regexp *r) {
+    const char *p = r->pattern->str;
+    int ret;
+    struct fa *fa = NULL;
+
+    ret = fa_compile(p, strlen(p), &fa);
+    ERR_NOMEM(ret == REG_ESPACE, r->info);
+    BUG_ON(ret != REG_NOERROR, r->info, NULL);
+
+    if (r->nocase) {
+        ret = fa_nocase(fa);
+        ERR_NOMEM(ret < 0, r->info);
+    }
+    return fa;
+
+ error:
+    fa_free(fa);
+    return NULL;
+}
+
 struct regexp *
 regexp_minus(struct info *info, struct regexp *r1, struct regexp *r2) {
-    const char *p1 = r1->pattern->str;
-    const char *p2 = r2->pattern->str;
     struct regexp *result = NULL;
     struct fa *fa = NULL, *fa1 = NULL, *fa2 = NULL;
     int r;
     char *s = NULL;
     size_t s_len;
 
-    r = fa_compile(p1, strlen(p1), &fa1);
-    if (r != REG_NOERROR)
-        goto error;
+    fa1 = regexp_to_fa(r1);
+    ERR_BAIL(r1->info);
 
-    r = fa_compile(p2, strlen(p2), &fa2);
-    if (r != REG_NOERROR)
-        goto error;
+    fa2 = regexp_to_fa(r2);
+    ERR_BAIL(r2->info);
 
     fa = fa_minus(fa1, fa2);
     if (fa == NULL)
