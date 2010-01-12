@@ -70,7 +70,7 @@ char *format_lens(struct lens *l) {
  * return an exception.
  */
 static struct value *str_to_fa(struct info *info, const char *pattern,
-                               struct fa **fa) {
+                               struct fa **fa, int nocase) {
     int error;
     struct value *exn = NULL;
     size_t re_err_len;
@@ -78,8 +78,13 @@ static struct value *str_to_fa(struct info *info, const char *pattern,
 
     *fa = NULL;
     error = fa_compile(pattern, strlen(pattern), fa);
-    if (error == REG_NOERROR)
+    if (error == REG_NOERROR) {
+        if (nocase) {
+            error = fa_nocase(*fa);
+            ERR_NOMEM(error < 0, info);
+        }
         return NULL;
+    }
 
     re_str = escape(pattern, -1);
     ERR_NOMEM(re_str == NULL, info);
@@ -105,7 +110,7 @@ static struct value *str_to_fa(struct info *info, const char *pattern,
 }
 
 static struct value *regexp_to_fa(struct regexp *regexp, struct fa **fa) {
-    return str_to_fa(regexp->info, regexp->pattern->str, fa);
+    return str_to_fa(regexp->info, regexp->pattern->str, fa, regexp->nocase);
 }
 
 static struct lens *make_lens(enum lens_tag tag, struct info *info) {
@@ -391,7 +396,7 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
 
     /* Typecheck */
     if (tag == L_KEY) {
-        exn = str_to_fa(info, "(.|\n)*/(.|\n)*", &fa_slash);
+        exn = str_to_fa(info, "(.|\n)*/(.|\n)*", &fa_slash, regexp->nocase);
         if (exn != NULL)
             goto error;
 
