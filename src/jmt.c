@@ -196,10 +196,10 @@ struct jmt {
 };
 
 enum item_reason {
-    R_ROOT = 0,
-    R_COMPLETE = 1 << 1,
-    R_PREDICT = 1 << 2,
-    R_SCAN = 1 << 3
+    R_ROOT = 1,
+    R_COMPLETE = R_ROOT << 1,
+    R_PREDICT = R_COMPLETE << 1,
+    R_SCAN = R_PREDICT << 1
 };
 
 /* The reason an item was added for parse reconstruction; can be R_SCAN,
@@ -210,6 +210,7 @@ struct link {
     ind_t            from_set;   /* R_COMPLETE, R_PREDICT, R_SCAN */
     ind_t            from_item;  /* R_COMPLETE, R_PREDICT, R_SCAN */
     ind_t            to_item;    /* R_COMPLETE */
+    ind_t            caller;     /* number of a state */
 };
 
 struct item {
@@ -293,7 +294,8 @@ static ind_t parse_add_item(struct jmt_parse *parse, ind_t j,
                             struct state *s, ind_t k,
                             enum item_reason reason, ind_t lens,
                             ind_t from_set,
-                            ind_t from_item, ind_t to_item) {
+                            ind_t from_item, ind_t to_item,
+                            ind_t caller) {
 
     ensure(from_item == EPS || from_item < parse->sets[from_set]->items.used,
            parse);
@@ -334,7 +336,7 @@ static ind_t parse_add_item(struct jmt_parse *parse, ind_t j,
         struct link *lnk = item->links + i;
         if (lnk->reason == reason && lnk->lens == lens
             && lnk->from_set == from_set && lnk->from_item == from_item
-            && lnk->to_item == to_item)
+            && lnk->to_item == to_item && lnk->caller == caller)
             return result;
     }
 
@@ -349,6 +351,7 @@ static ind_t parse_add_item(struct jmt_parse *parse, ind_t j,
     lnk->from_set = from_set;
     lnk->from_item = from_item;
     lnk->to_item = to_item;
+    lnk->caller = caller;
  error:
     return result;
 }
@@ -364,7 +367,7 @@ static void parse_add_complete(struct jmt_parse *parse, ind_t j,
                                ind_t k, ind_t itemk,
                                ind_t lens,
                                ind_t item) {
-    parse_add_item(parse, j, s, i, R_COMPLETE, lens, k, itemk, item);
+    parse_add_item(parse, j, s, i, R_COMPLETE, lens, k, itemk, item, IND_MAX);
 }
 
 /* Same as parse_add_complete, but mark the item also as a predict
@@ -375,9 +378,9 @@ static void parse_add_predict_complete(struct jmt_parse *parse, ind_t j,
                                        struct state *s, ind_t i,
                                        ind_t k, ind_t itemk,
                                        ind_t lens,
-                                       ind_t item) {
+                                       ind_t item, ind_t caller) {
     parse_add_item(parse, j, s, i, R_COMPLETE|R_PREDICT,
-                   lens, k, itemk, item);
+                   lens, k, itemk, item, caller);
 }
 
 /* Add item (s, j) to E_j and record that it was added because of a
@@ -387,8 +390,10 @@ static ind_t parse_add_predict(struct jmt_parse *parse, ind_t j,
                                struct state *s, ind_t from) {
 
     ensure(from < parse->sets[j]->items.used, parse);
+    struct state *t = item_state(parse, j, from);
 
-    return parse_add_item(parse, j, s, j, R_PREDICT, EPS, j, from, EPS);
+    return parse_add_item(parse, j, s, j, R_PREDICT, EPS, j, from, EPS,
+                          t->num);
  error:
     return IND_MAX;
 }
@@ -403,7 +408,7 @@ static void parse_add_scan(struct jmt_parse *parse, ind_t j,
                            ind_t lens, ind_t k, ind_t item) {
     ensure(item < parse->sets[k]->items.used, parse);
 
-    parse_add_item(parse, j, s, i, R_SCAN, lens, k, item, EPS);
+    parse_add_item(parse, j, s, i, R_SCAN, lens, k, item, EPS, IND_MAX);
  error:
     return;
 }
@@ -421,6 +426,13 @@ static bool is_predict(const struct link *lnk) {
 ATTRIBUTE_PURE
 static bool is_scan(const struct link *lnk) {
     return lnk->reason & R_SCAN;
+}
+
+ATTRIBUTE_PURE
+static bool is_last_sibling(const struct link *lnk) {
+    if (is_complete(lnk))
+        return false;
+    return lnk->reason & (R_PREDICT|R_ROOT);
 }
 
 ATTRIBUTE_PURE
@@ -479,7 +491,7 @@ static void ncaller(struct jmt_parse *parse, ind_t j, ind_t item,
             parse_add_predict_complete(parse, j,
                                        u->to, i,
                                        j, item, u->lens,
-                                       pred);
+                                       pred, t->num);
         }
     }
 }
@@ -496,7 +508,7 @@ static void ncallee(struct jmt_parse *parse, ind_t j, ATTRIBUTE_UNUSED ind_t ite
             parse_add_predict_complete(parse, j,
                                        u->to, j,
                                        j, pred, u->lens,
-                                       pred);
+                                       pred, t->num);
         }
     }
 }
@@ -646,13 +658,14 @@ jmt_parse(struct jmt *jmt, const char *text, size_t text_len)
     ERR_BAIL(jmt);
 
     /* INIT */
-    parse_add_item(parse, 0, jmt->start, 0, R_ROOT, EPS, EPS, EPS, EPS);
+    parse_add_item(parse, 0, jmt->start, 0, R_ROOT, EPS, EPS, EPS, EPS,
+                   jmt->lens);
     /* NINIT */
     if (is_return(jmt->start)) {
         for_each_trans(x, jmt->start) {
             if (returns(jmt->start, x->lens))
                 parse_add_predict_complete(parse, 0, x->to, 0,
-                                           0, 0, x->lens, 0);
+                                           0, 0, x->lens, 0, 0);
         }
     }
 
@@ -774,83 +787,113 @@ static void build_trace(const char *msg, ind_t start, ind_t end,
     }
 }
 
-static int ambig_check(struct jmt_visitor *visitor, struct lens *lens,
-                        ind_t k, struct item *x) {
-    ind_t count = 0;
-    ind_t nonpred = 0;
+static int add_sibling(struct array *siblings, ind_t lnk) {
+    int r;
+    ind_t ind;
 
-    for (ind_t i=0; i < x->nlinks; i++) {
-        if (!is_predict(x->links + i) || is_complete(x->links + i)) {
-            nonpred = i;
-            count += 1;
-        }
-    }
-
-    if (count > 1) {
-        (*visitor->error)(lens, visitor->data, k,
-                 "Ambiguous parse: %d links in state (%d, %d) in E_%d",
-                 x->nlinks, x->state->num, x->parent, k);
+    r = array_add(siblings, &ind);
+    if (r < 0)
         return -1;
-    }
-    if (count == 1 && x->links[0].reason == R_PREDICT) {
-        struct link tmp = x->links[0];
-        x->links[0] = x->links[nonpred];
-        x->links[nonpred] = tmp;
-    }
+    *array_elem(*siblings, ind, ind_t) = lnk;
     return 0;
 }
 
-static int
-build_tree(struct jmt_parse *parse, ind_t k, ind_t item, struct lens *lens,
-           struct jmt_visitor *visitor, int lvl);
+/* Return true if CALLER is a possible caller for the link LNK which starts
+ * at item X.
+ *
+ * FIXME: We can get rid of the caller field on a link if we distinguish
+ * between NCALLER and NCALLEE in the Earley graph, rather than collapse
+ * them both into links with reason PREDICT|COMPLETE
+ */
+static bool is_caller(struct item *x, struct link *lnk, ind_t caller) {
+    if (lnk->reason & R_ROOT)
+        return caller == lnk->caller;
 
-static int
-build_children(struct jmt_parse *parse, ind_t k, ind_t item, ind_t start,
-               struct jmt_visitor *visitor, int lvl) {
-    struct item *x = set_item(parse, k, item);
-    struct lens *lens = lens_of_parse(parse, x->links->lens);
-    ind_t end = k;
+    if (! is_predict(lnk))
+        return false;
 
-    if (start == end) {
-        /* This completion corresponds to a nullable nonterminal
-         * that match epsilon. Reconstruct the full parse tree
-         * for matching epsilon */
-        build_nullable(parse, start, visitor, lens, lvl);
-        return end;
+    if (is_complete(lnk)) {
+        /* NCALLER: caller == t
+         * NCALLEE: caller == s */
+        return caller == lnk->caller;
     }
+    /* PREDICT: caller == t || caller == s */
+    return caller == lnk->caller || caller == x->state->num;
+}
 
-    /* x the first item in a list of siblings; visit items (x->from_set,
-     * x->from_item) in order, which will visit x and its siblings in the
-     * parse tree from right to left */
-    while (is_complete(x->links) || is_scan(x->links)) {
-        struct lens *sub = lens_of_parse(parse, x->links->lens);
-        if (sub->recursive) {
-            build_tree(parse, k, item, sub, visitor, lvl+1);
-            ERR_BAIL(parse);
-        } else {
-            if (debugging("cf.jmt.visit"))
-                build_trace("T", x->links->from_set, k, x, lvl+1);
-            if (visitor->terminal != NULL) {
-                (*visitor->terminal)(sub,
-                                     x->links->from_set, k, visitor->data);
-                ERR_BAIL(parse);
+/* Traverse the siblings of x and check that the callee's set of callers
+ * contains CALLER. When a path ending with a call from CALLER exists,
+ * record the number of the corresponding link for each item in
+ * SIBLINGS. The links are recorded in left-to-right order, i.e. the number
+ * of the first link to follow is in the last entry in SIBLINGS.
+ *
+ * Returns 0 if there is a path ending in a callee of CALLER. Return -1 if
+ * there is none. Return -2 if there are multiple such paths. Return -3 for
+ * any other error.
+ */
+static int filter_siblings(struct jmt_visitor *visitor, struct lens *lens,
+                          ind_t k, ind_t item, ind_t caller,
+                          struct array *siblings) {
+    struct jmt_parse *parse = visitor->parse;
+    struct item *x = set_item(parse, k, item);
+    ind_t nlast = 0;
+    int r;
+
+    for (ind_t lnk = 0; lnk < x->nlinks; lnk++)
+        if (is_last_sibling(x->links + lnk))
+            nlast += 1;
+
+    if (nlast > 0 && nlast < x->nlinks)
+        goto ambig;
+
+    if (nlast == x->nlinks) {
+        for (ind_t lnk = 0; lnk < x->nlinks; lnk++) {
+            if (is_caller(x, x->links + lnk, caller)) {
+                siblings->used = 0;
+                r = add_sibling(siblings, lnk);
+                if (r < 0) {
+                    ERR_REPORT(parse, AUG_ENOMEM, NULL);
+                    return -3;
+                }
+                return 0;
             }
         }
-        k = x->links->from_set;
-        item = x->links->from_item;
-        x = set_item(parse, k, item);
-        // FIXME: This is not clean - we are checking if
-        // we would leave because we'd leave the span [start .. end]
-        // That kinda works, but it's a kludge around the trouble we
-        // have with COMPLETE + PREDICT nodes
-        if (x->links->from_set < start)
-            break;
-        if (ambig_check(visitor, lens, k, x) < 0)
-            return end;
-        ERR_BAIL(parse);
+        return -1;
+    } else {
+        /* nlast == 0 */
+        ind_t found = IND_MAX;
+        for (ind_t lnk = 0; lnk < x->nlinks; lnk++) {
+            struct link *l = x->links + lnk;
+            r = filter_siblings(visitor, lens,
+                                l->from_set, l->from_item, caller,
+                                siblings);
+            if (r == -1)
+                continue;
+            if (r == 0) {
+                if (found != IND_MAX)
+                    goto ambig;
+                else
+                    found = lnk;
+            } else {
+                return r;
+            }
+        }
+        if (found == IND_MAX) {
+            return -1;
+        } else {
+            r = add_sibling(siblings, found);
+            if (r < 0) {
+                ERR_REPORT(parse, AUG_ENOMEM, NULL);
+                return -3;
+            }
+            return 0;
+        }
     }
- error:
-    return end;
+ ambig:
+    (*visitor->error)(lens, visitor->data, k,
+                      "Ambiguous parse: %d links in state (%d, %d) in E_%d",
+                      x->nlinks, x->state->num, x->parent, k);
+    return -2;
 }
 
 static void visit_enter(struct jmt_visitor *visitor, struct lens *lens,
@@ -872,6 +915,10 @@ static void visit_exit(struct jmt_visitor *visitor, struct lens *lens,
 }
 
 static int
+build_children(struct jmt_parse *parse, ind_t k, ind_t item,
+               struct jmt_visitor *visitor, int lvl, ind_t caller);
+
+static int
 build_tree(struct jmt_parse *parse, ind_t k, ind_t item, struct lens *lens,
            struct jmt_visitor *visitor, int lvl) {
     struct item *x = set_item(parse, k, item);
@@ -887,9 +934,6 @@ build_tree(struct jmt_parse *parse, ind_t k, ind_t item, struct lens *lens,
         return end;
     }
 
-    if (ambig_check(visitor, lens, k, x) < 0)
-        return end;
-
     ensure(is_complete(x->links), parse);
 
     visit_enter(visitor, lens, start, end, x, lvl);
@@ -898,18 +942,60 @@ build_tree(struct jmt_parse *parse, ind_t k, ind_t item, struct lens *lens,
     /* x is a completion item. (k, x->to_item) is its first child in the
      * parse tree. */
     if (! is_predict(x->links)) {
-        item = x->links->to_item;
+        struct link *lnk = x->links;
+        struct item *sib = set_item(parse, lnk->from_set, lnk->from_item);
+        ind_t caller = sib->state->num;
+
+        item = lnk->to_item;
         x = set_item(parse, k, item);
-        if (ambig_check(visitor, lens, k, x) < 0)
-            return end;
-        ERR_BAIL(parse);
-        build_children(parse, k, item, start, visitor, lvl);
+        build_children(parse, k, item, visitor, lvl, caller);
         ERR_BAIL(parse);
     }
 
     visit_exit(visitor, lens, start, end, old_x, lvl);
     ERR_BAIL(parse);
  error:
+    return end;
+}
+
+static int
+build_children(struct jmt_parse *parse, ind_t k, ind_t item,
+               struct jmt_visitor *visitor, int lvl, ind_t caller) {
+    struct item *x = set_item(parse, k, item);
+    struct lens *lens = lens_of_parse(parse, x->links->lens);
+    struct array siblings;
+    ind_t end = k;
+    int r;
+
+    array_init(&siblings, sizeof(ind_t));
+    r = filter_siblings(visitor, lens, k, item, caller, &siblings);
+    if (r < 0)
+        goto error;
+
+    /* x the first item in a list of siblings; visit items (x->from_set,
+     * x->from_item) in order, which will visit x and its siblings in the
+     * parse tree from right to left */
+    for (ind_t i = siblings.used - 1; i > 0; i--) {
+        ind_t lnk = *array_elem(siblings, i, ind_t);
+        struct lens *sub = lens_of_parse(parse, x->links[lnk].lens);
+        if (sub->recursive) {
+            build_tree(parse, k, item, sub, visitor, lvl+1);
+            ERR_BAIL(parse);
+        } else {
+            if (debugging("cf.jmt.visit"))
+                build_trace("T", x->links->from_set, k, x, lvl+1);
+            if (visitor->terminal != NULL) {
+                (*visitor->terminal)(sub,
+                                     x->links->from_set, k, visitor->data);
+                ERR_BAIL(parse);
+            }
+        }
+        k = x->links[lnk].from_set;
+        item = x->links[lnk].from_item;
+        x = set_item(parse, k, item);
+    }
+ error:
+    array_release(&siblings);
     return end;
 }
 
@@ -943,7 +1029,8 @@ void jmt_visit(struct jmt_visitor *visitor, size_t *len) {
     visit_enter(visitor, lens, 0, k, NULL, 0);
     ERR_BAIL(parse);
 
-    *len = build_children(parse, k, item, 0, visitor, 0);
+    *len = build_children(parse, k, item, visitor, 0,
+                          parse->jmt->start->num);
     ERR_BAIL(parse);
 
     visit_exit(visitor, lens, 0, k, NULL, 0);
