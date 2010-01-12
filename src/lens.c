@@ -74,28 +74,34 @@ static struct value *str_to_fa(struct info *info, const char *pattern,
     int error;
     struct value *exn = NULL;
     size_t re_err_len;
-    char *re_str, *re_err;
+    char *re_str = NULL, *re_err = NULL;
 
+    *fa = NULL;
     error = fa_compile(pattern, strlen(pattern), fa);
     if (error == REG_NOERROR)
         return NULL;
 
     re_str = escape(pattern, -1);
-    if (re_str == NULL) {
-        FIXME("Out of memory");
-    }
+    ERR_NOMEM(re_str == NULL, info);
+
     exn = make_exn_value(info, "Invalid regular expression /%s/", re_str);
 
     re_err_len = regerror(error, NULL, NULL, 0);
-    if (ALLOC_N(re_err, re_err_len) < 0) {
-        FIXME("Out of memory");
-    }
+    error = ALLOC_N(re_err, re_err_len);
+    ERR_NOMEM(error < 0, info);
+
     regerror(error, NULL, re_err, re_err_len);
     exn_printf_line(exn, "%s", re_err);
 
+ done:
     free(re_str);
     free(re_err);
     return exn;
+ error:
+    fa_free(*fa);
+    *fa = NULL;
+    exn = exn_error();
+    goto done;
 }
 
 static struct value *regexp_to_fa(struct regexp *regexp, struct fa **fa) {
