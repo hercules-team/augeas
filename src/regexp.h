@@ -31,6 +31,7 @@ struct regexp {
     struct info              *info;
     struct string            *pattern;
     struct re_pattern_buffer *re;
+    unsigned int              nocase : 1;
 };
 
 void print_regexp(FILE *out, struct regexp *regexp);
@@ -38,7 +39,7 @@ void print_regexp(FILE *out, struct regexp *regexp);
 /* Make a regexp with pattern PAT, which is not copied. Ownership
  * of INFO is taken.
  */
-struct regexp *make_regexp(struct info *info, char *pat);
+struct regexp *make_regexp(struct info *info, char *pat, int nocase);
 
 /* Return 1 if R is an empty pattern, i.e. one consisting of nothing but
    '(' and ')' characters, 0 otherwise */
@@ -109,6 +110,10 @@ void regexp_release(struct regexp *regexp);
 
 /* Produce a printable representation of R */
 char *regexp_escape(const struct regexp *r);
+
+/* If R is case-insensitive, expand its pattern so that it matches the same
+ * string even when used in a case-sensitive match. */
+char *regexp_expand_nocase(struct regexp *r);
 #endif
 
 

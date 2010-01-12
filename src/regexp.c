@@ -109,9 +109,11 @@ void print_regexp(FILE *out, struct regexp *r) {
         FREE(rx);
     }
     fputc('/', out);
+    if (r->nocase)
+        fputc('i', out);
 }
 
-struct regexp *make_regexp(struct info *info, char *pat) {
+struct regexp *make_regexp(struct info *info, char *pat, int nocase) {
     struct regexp *regexp;
 
     make_ref(regexp);
@@ -119,6 +121,7 @@ struct regexp *make_regexp(struct info *info, char *pat) {
 
     make_ref(regexp->pattern);
     regexp->pattern->str = pat;
+    regexp->nocase = nocase;
     return regexp;
 }
 
@@ -161,28 +164,50 @@ struct regexp *make_regexp_literal(struct info *info, const char *text) {
             *p++ = *t;
         }
     }
-    return make_regexp(info, pattern);
+    return make_regexp(info, pattern, 0);
 }
 
 struct regexp *
 regexp_union(struct info *info, struct regexp *r1, struct regexp *r2) {
-    const char *p1 = r1->pattern->str;
-    const char *p2 = r2->pattern->str;
-    char *s;
+    struct regexp *r[2];
 
-    if (asprintf(&s, "(%s)|(%s)", p1, p2) == -1)
-        return NULL;
-    return make_regexp(info, s);
+    r[0] = r1;
+    r[1] = r2;
+    return regexp_union_n(info, 2, r);
+}
+
+char *regexp_expand_nocase(struct regexp *r) {
+    const char *p = r->pattern->str;
+    char *s = NULL;
+    size_t len;
+    int ret;
+
+    if (! r->nocase)
+        return strdup(p);
+
+    ret = fa_expand_nocase(p, strlen(p), &s, &len);
+    ERR_NOMEM(ret == REG_ESPACE, r->info);
+    BUG_ON(ret != REG_NOERROR, r->info, NULL);
+ error:
+    return s;
 }
 
 struct regexp *
 regexp_union_n(struct info *info, int n, struct regexp **r) {
     size_t len = 0;
-    char *pat, *p;
+    char *pat = NULL, *p, *expanded = NULL;
+    int nnocase = 0, npresent = 0;
+    int ret;
 
     for (int i=0; i < n; i++)
-        if (r[i] != NULL)
+        if (r[i] != NULL) {
             len += strlen(r[i]->pattern->str) + strlen("()|");
+            npresent += 1;
+            if (r[i]->nocase)
+                nnocase += 1;
+        }
+
+    bool mixedcase = nnocase > 0 && nnocase < npresent;
 
     if (len == 0)
         return NULL;
@@ -198,37 +223,60 @@ regexp_union_n(struct info *info, int n, struct regexp **r) {
         if (added > 0)
             *p++ = '|';
         *p++ = '(';
-        p = stpcpy(p, r[i]->pattern->str);
+        if (mixedcase && r[i]->nocase) {
+            expanded = regexp_expand_nocase(r[i]);
+            ERR_BAIL(r[i]->info);
+            len += strlen(expanded) - strlen(r[i]->pattern->str);
+            ret = REALLOC_N(pat, len);
+            ERR_NOMEM(ret < 0, info);
+            p = pat + strlen(pat);
+            p = stpcpy(p, expanded);
+            FREE(expanded);
+        } else {
+            p = stpcpy(p, r[i]->pattern->str);
+        }
         *p++ = ')';
         added += 1;
     }
-    return make_regexp(info, pat);
+    *p = '\0';
+    return make_regexp(info, pat, nnocase == npresent);
+ error:
+    FREE(expanded);
+    FREE(pat);
+    return NULL;
 }
 
 struct regexp *
 regexp_concat(struct info *info, struct regexp *r1, struct regexp *r2) {
-    const char *p1 = r1->pattern->str;
-    const char *p2 = r2->pattern->str;
-    char *s;
+    struct regexp *r[2];
 
-    if (asprintf(&s, "(%s)(%s)", p1, p2) == -1)
-        return NULL;
-    return make_regexp(info, s);
+    r[0] = r1;
+    r[1] = r2;
+    return regexp_concat_n(info, 2, r);
 }
 
 struct regexp *
 regexp_concat_n(struct info *info, int n, struct regexp **r) {
     size_t len = 0;
-    char *pat, *p;
+    char *pat = NULL, *p, *expanded = NULL;
+    int nnocase = 0, npresent = 0;
+    int ret;
 
     for (int i=0; i < n; i++)
-        if (r[i] != NULL)
+        if (r[i] != NULL) {
             len += strlen(r[i]->pattern->str) + strlen("()");
+            npresent += 1;
+            if (r[i]->nocase)
+                nnocase += 1;
+        }
+
+    bool mixedcase = nnocase > 0 && nnocase < npresent;
 
     if (len == 0)
         return NULL;
 
-    if (ALLOC_N(pat, len+1) < 0)
+    len += 1;
+    if (ALLOC_N(pat, len) < 0)
         return NULL;
 
     p = pat;
@@ -236,10 +284,26 @@ regexp_concat_n(struct info *info, int n, struct regexp **r) {
         if (r[i] == NULL)
             continue;
         *p++ = '(';
-        p = stpcpy(p, r[i]->pattern->str);
+        if (mixedcase && r[i]->nocase) {
+            expanded = regexp_expand_nocase(r[i]);
+            ERR_BAIL(r[i]->info);
+            len += strlen(expanded) - strlen(r[i]->pattern->str);
+            ret = REALLOC_N(pat, len);
+            ERR_NOMEM(ret < 0, info);
+            p = pat + strlen(pat);
+            p = stpcpy(p, expanded);
+            FREE(expanded);
+        } else {
+            p = stpcpy(p, r[i]->pattern->str);
+        }
         *p++ = ')';
     }
-    return make_regexp(info, pat);
+    *p = '\0';
+    return make_regexp(info, pat, nnocase == npresent);
+ error:
+    FREE(expanded);
+    FREE(pat);
+    return NULL;
 }
 
 struct regexp *
@@ -276,7 +340,7 @@ regexp_minus(struct info *info, struct regexp *r1, struct regexp *r2) {
     if (regexp_c_locale(&s, NULL) < 0)
         goto error;
 
-    result = make_regexp(info, s);
+    result = make_regexp(info, s, fa_is_nocase(fa));
     s = NULL;
 
  done:
@@ -309,7 +373,7 @@ regexp_iter(struct info *info, struct regexp *r, int min, int max) {
     } else {
         ret = asprintf(&s, "(%s){%d,%d}", p, min, max);
     }
-    return (ret == -1) ? NULL : make_regexp(info, s);
+    return (ret == -1) ? NULL : make_regexp(info, s, r->nocase);
 }
 
 struct regexp *
@@ -322,7 +386,7 @@ regexp_maybe(struct info *info, struct regexp *r) {
         return NULL;
     p = r->pattern->str;
     ret = asprintf(&s, "(%s)?", p);
-    return (ret == -1) ? NULL : make_regexp(info, s);
+    return (ret == -1) ? NULL : make_regexp(info, s, r->nocase);
 }
 
 struct regexp *regexp_make_empty(struct info *info) {
@@ -334,6 +398,7 @@ struct regexp *regexp_make_empty(struct info *info) {
         /* Casting away the CONST for EMPTY_PATTERN is ok since it
            is protected against changes because REF == REF_MAX */
         regexp->pattern = (struct string *) empty_pattern;
+        regexp->nocase = 0;
     }
     return regexp;
 }
@@ -357,6 +422,8 @@ static int regexp_compile_internal(struct regexp *r, const char **c) {
         CALLOC(r->re, 1);
 
     re_syntax_options = syntax;
+    if (r->nocase)
+        re_syntax_options |= RE_ICASE;
     *c = re_compile_pattern(r->pattern->str, strlen(r->pattern->str), r->re);
     re_syntax_options = old_syntax;
 

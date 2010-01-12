@@ -452,7 +452,7 @@ static struct term *make_value_term(enum value_tag tag, char *value,
     term->type = make_base_type(T_STRING);
   } else {
     term->type = make_base_type(T_REGEXP);
-    term->value->regexp = make_regexp(term->info, value);
+    term->value->regexp = make_regexp(term->info, value, 0);
   }
   return term;
 }

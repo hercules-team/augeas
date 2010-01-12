@@ -641,7 +641,7 @@ static void func_regexp(struct state *state) {
         return;
     }
 
-    struct regexp *rx = make_regexp(NULL, pat);
+    struct regexp *rx = make_regexp(NULL, pat, 0);
     if (rx == NULL) {
         FREE(pat);
         STATE_ENOMEM;

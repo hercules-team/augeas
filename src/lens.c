@@ -235,12 +235,30 @@ static struct regexp *subtree_atype(struct info *info,
     const char *vpat = (vtype == NULL) ? ENC_NULL : vtype->pattern->str;
     char *pat;
     struct regexp *result = NULL;
+    char *ks = NULL, *vs = NULL;
+    int nocase;
 
-    if (asprintf(&pat, "(%s)%s(%s)%s", kpat, ENC_EQ, vpat, ENC_SLASH) < 0)
-        ERR_NOMEM(pat == NULL, info);
+    if (ktype != NULL && vtype != NULL && ktype->nocase != vtype->nocase) {
+        ks = regexp_expand_nocase(ktype);
+        vs = regexp_expand_nocase(vtype);
+        ERR_NOMEM(ks == NULL || vs == NULL, info);
+        if (asprintf(&pat, "(%s)%s(%s)%s", ks, ENC_EQ, vs, ENC_SLASH) < 0)
+            ERR_NOMEM(true, info);
+        nocase = 0;
+    } else {
+        if (asprintf(&pat, "(%s)%s(%s)%s", kpat, ENC_EQ, vpat, ENC_SLASH) < 0)
+            ERR_NOMEM(pat == NULL, info);
 
-    result = make_regexp(info, pat);
+        nocase = 0;
+        if (ktype != NULL)
+            nocase = ktype->nocase;
+        else if (vtype != NULL)
+            nocase = vtype->nocase;
+    }
+    result = make_regexp(info, pat, nocase);
  error:
+    free(ks);
+    free(vs);
     return result;
 }
 
@@ -327,6 +345,7 @@ static struct regexp *make_regexp_from_string(struct info *info,
     if (r != NULL) {
         r->info = ref(info);
         r->pattern = ref(string);
+        r->nocase = 0;
     }
     return r;
 }
@@ -350,7 +369,7 @@ static struct regexp *restrict_regexp(struct regexp *r) {
         return NULL;
     }
 
-    r = make_regexp(r->info, nre);
+    r = make_regexp(r->info, nre, r->nocase);
     if (regexp_compile(r) != 0)
         abort();
     return r;
