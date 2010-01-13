@@ -4110,6 +4110,96 @@ int fa_expand_char_ranges(const char *regexp, size_t regexp_len,
     return result;
 }
 
+/* Expand regexp so that it is case-insensitive in a case-sensitive match.
+ *
+ * Return 1 when a change was made, -1 when an allocation failed, and 0
+ * when no change was made.
+ */
+static int re_case_expand(struct re *re) {
+    int result = 0, r1, r2;
+
+    switch(re->type) {
+    case UNION:
+    case CONCAT:
+        r1 = re_case_expand(re->exp1);
+        r2 = re_case_expand(re->exp2);
+        result = (r1 != 0) ? r1 : r2;
+        break;
+    case CSET:
+        for (int c = 'A'; c <= 'Z'; c++)
+            if (bitset_get(re->cset, c)) {
+                result = 1;
+                bitset_set(re->cset, tolower(c));
+            }
+        for (int c = 'a'; c <= 'z'; c++)
+            if (bitset_get(re->cset, c)) {
+                result = 1;
+                bitset_set(re->cset, toupper(c));
+            }
+        break;
+    case CHAR:
+        if (isalpha(re->c)) {
+            int c = re->c;
+            re->type = CSET;
+            re->negate = false;
+            re->no_ranges = 0;
+            re->cset = bitset_init(UCHAR_NUM);
+            if (re->cset == NULL)
+                return -1;
+            bitset_set(re->cset, tolower(c));
+            bitset_set(re->cset, toupper(c));
+            result = 1;
+        }
+        break;
+    case ITER:
+        result = re_case_expand(re->exp);
+        break;
+    case EPSILON:
+        break;
+    default:
+        assert(0);
+        abort();
+        break;
+    }
+    return result;
+}
+
+int fa_expand_nocase(const char *regexp, size_t regexp_len,
+                     char **newregexp, size_t *newregexp_len) {
+    int result, r;
+    struct re *re = NULL;
+    struct re_parse parse;
+    struct re_str str;
+
+    *newregexp = NULL;
+    MEMZERO(&parse, 1);
+    parse.rx = regexp;
+    parse.rend = regexp + regexp_len;
+    parse.error = REG_NOERROR;
+    re = parse_regexp(&parse);
+    if (parse.error != REG_NOERROR)
+        return parse.error;
+
+    r = re_case_expand(re);
+    if (r < 0) {
+        re_unref(re);
+        return REG_ESPACE;
+    }
+
+    if (r == 1) {
+        MEMZERO(&str, 1);
+        result = re_as_string(re, &str);
+        *newregexp = str.rx;
+        *newregexp_len = str.len;
+    } else {
+        *newregexp = strndup(regexp, regexp_len);
+        *newregexp_len = regexp_len;
+        result = (*newregexp == NULL) ? REG_ESPACE : REG_NOERROR;
+    }
+    re_unref(re);
+    return result;
+}
+
 static void print_char(FILE *out, uchar c) {
     /* We escape '/' as '\\/' since dot chokes on bare slashes in labels;
        Also, a space ' ' is shown as '\s' */

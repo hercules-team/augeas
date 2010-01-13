@@ -541,6 +541,27 @@ static void testNoCase(CuTest *tc) {
     CuAssertIntEquals(tc, 1, r);
 }
 
+static void testExpandNoCase(CuTest *tc) {
+    const char *p1 = "aB";
+    const char *p2 = "[a-cUV]";
+    const char *p3 = "[^a-z]";
+    char *s;
+    size_t len;
+    int r;
+
+    r = fa_expand_nocase(p1, strlen(p1), &s, &len);
+    CuAssertStrEquals(tc, "[Aa][Bb]", s);
+    free(s);
+
+    r = fa_expand_nocase(p2, strlen(p2), &s, &len);
+    CuAssertStrEquals(tc, "[A-CUVa-cuv]", s);
+    free(s);
+
+    r = fa_expand_nocase(p3, strlen(p3), &s, &len);
+    CuAssertStrEquals(tc, "[^A-Za-z]", s);
+    free(s);
+}
+
 int main(int argc, char **argv) {
     if (argc == 1) {
         char *output = NULL;
@@ -564,6 +585,7 @@ int main(int argc, char **argv) {
         SUITE_ADD_TEST(suite, testRestrictAlphabet);
         SUITE_ADD_TEST(suite, testExpandCharRanges);
         SUITE_ADD_TEST(suite, testNoCase);
+        SUITE_ADD_TEST(suite, testExpandNoCase);
 
         CuSuiteRun(suite);
         CuSuiteSummary(suite, &output);

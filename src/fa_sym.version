@@ -27,4 +27,5 @@ FA_1.0.0 {
 FA_1.2.0 {
       fa_nocase;
       fa_is_nocase;
+      fa_expand_nocase;
 } FA_1.0.0;

@@ -241,6 +241,19 @@ int fa_nocase(struct fa *fa);
 
 /* Return 1 if FA matches ignoring case, 0 if matches are case sensitive */
 int fa_is_nocase(struct fa *fa);
+
+/* Assume REGEXP is a case-insensitive regular expression, and convert it
+ * to one that matches the same strings when used case sensitively. All
+ * occurrences of individual letters c in the regular expression will be
+ * replaced by character sets [cC], and lower/upper case characters are
+ * added to character sets as needed.
+ *
+ * Return a positive value if REGEXP is not syntactically valid; the value
+ * returned is one of the REG_ERRCODE_T POSIX error codes. Return 0 on
+ * success and -1 if an allocation fails.
+ */
+int fa_expand_nocase(const char *regexp, size_t regexp_len,
+                     char **newregexp, size_t *newregexp_len);
 #endif
 
 
