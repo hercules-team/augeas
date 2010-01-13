@@ -62,7 +62,7 @@ typedef struct info YYLTYPE;
 };
 
 %token <string> DQUOTED   /* "foo" */
-%token <string> REGEXP    /* /[ \t]+/ */
+%token <regexp> REGEXP    /* /[ \t]+/ */
 %token <string> LIDENT UIDENT QIDENT
 %token          ARROW
 
@@ -76,11 +76,15 @@ typedef struct info YYLTYPE;
 %token          KW_TEST KW_GET KW_PUT KW_AFTER
 
 %union {
-  struct term     *term;
+  struct term    *term;
   struct type    *type;
   struct ident   *ident;
   struct tree    *tree;
   char           *string;
+  struct {
+    int             nocase;
+    char           *pattern;
+  } regexp;
   int            intval;
   enum quant_tag quant;
 }
@@ -127,8 +131,9 @@ static void augl_error(struct info *locp, struct term **term,
  static struct term *make_unop(enum term_tag tag,
                               struct term *exp, struct info *locp);
  static struct term *make_ident(char *qname, struct info *locp);
- static struct term *make_value_term(enum value_tag tag, char *value,
-                                     struct info *locp);
+ static struct term *make_string_term(char *value, struct info *locp);
+ static struct term *make_regexp_term(char *pattern,
+                                      int nocase, struct info *locp);
  static struct term *make_rep(struct term *exp, enum quant_tag quant,
                              struct info *locp);
 
@@ -232,9 +237,9 @@ appexp: appexp rexp
 aexp: qid
       { $$ = make_ident($1, &@1); }
     | DQUOTED
-      { $$ = make_value_term(V_STRING, $1, &@1); }
+      { $$ = make_string_term($1, &@1); }
     | REGEXP
-      { $$ = make_value_term(V_REGEXP, $1, &@1); }
+      { $$ = make_regexp_term($1.pattern, $1.nocase, &@1); }
     | '(' exp ')'
       { $$ = $2; }
     | '[' exp ']'
@@ -442,18 +447,20 @@ static struct term *make_ident(char *qname, struct info *locp) {
   return term;
 }
 
-static struct term *make_value_term(enum value_tag tag, char *value,
-                                    struct info *locp) {
-  assert(tag == V_STRING || tag == V_REGEXP);
+static struct term *make_string_term(char *value, struct info *locp) {
   struct term *term = make_term_locp(A_VALUE, locp);
-  term->value = make_value(tag, ref(term->info));
-  if (tag == V_STRING) {
-    term->value->string = make_string(value);
-    term->type = make_base_type(T_STRING);
-  } else {
-    term->type = make_base_type(T_REGEXP);
-    term->value->regexp = make_regexp(term->info, value, 0);
-  }
+  term->value = make_value(V_STRING, ref(term->info));
+  term->value->string = make_string(value);
+  term->type = make_base_type(T_STRING);
+  return term;
+}
+
+static struct term *make_regexp_term(char *pattern, int nocase,
+                                     struct info *locp) {
+  struct term *term = make_term_locp(A_VALUE, locp);
+  term->value = make_value(V_REGEXP, ref(term->info));
+  term->type = make_base_type(T_REGEXP);
+  term->value->regexp = make_regexp(term->info, pattern, nocase);
   return term;
 }
 

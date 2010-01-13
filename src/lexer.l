@@ -95,9 +95,17 @@ ARROW  ->
                return DQUOTED;
   }
 
+  \/([^/]|\\\/)*\/i {
+               loc_update(yylloc, yytext, yyleng);
+               yylval->regexp.nocase = 1;
+               yylval->regexp.pattern = regexp_literal(yytext+1, yyleng-3);
+               return REGEXP;
+  }
+
   \/([^/]|\\\/)*\/ {
                loc_update(yylloc, yytext, yyleng);
-               yylval->string = regexp_literal(yytext+1, yyleng-2);
+               yylval->regexp.nocase = 0;
+               yylval->regexp.pattern = regexp_literal(yytext+1, yyleng-2);
                return REGEXP;
   }
 
