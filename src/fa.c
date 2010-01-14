@@ -3907,6 +3907,85 @@ static int re_collapse_trans(struct state *s1, struct state *s2,
     return -1;
 }
 
+static int convert_strings(struct fa *fa) {
+    struct state_set *worklist = state_set_init(-1, S_NONE);
+    int result = -1;
+
+    _E(worklist == NULL);
+
+    /* Abuse hash to count indegree, reachable to mark visited states */
+    list_for_each(s, fa->initial) {
+        s->hash = 0;
+        s->reachable = 0;
+    }
+
+    list_for_each(s, fa->initial) {
+        for_each_trans(t, s) {
+            t->to->hash += 1;
+        }
+    }
+
+    for (struct state *s = fa->initial;
+         s != NULL;
+         s = state_set_pop(worklist)) {
+        for (int i=0; i < s->tused; i++) {
+            struct trans *t = s->trans + i;
+            struct state *to = t->to;
+            while (to->hash == 1 && to->tused == 1 && ! to->accept) {
+                if (t->re == NULL) {
+                    t->re = to->trans->re;
+                    to->trans->re = NULL;
+                } else {
+                    t->re = make_re_binop(CONCAT, t->re, to->trans->re);
+                    if (t->re == NULL)
+                        goto error;
+                }
+                t->to = to->trans->to;
+                to->tused = 0;
+                to->hash -= 1;
+                to = t->to;
+                for (int j=0; j < s->tused; j++) {
+                    if (j != i && s->trans[j].to == to) {
+                        /* Combine transitions i and j; remove trans j */
+                        t->re = make_re_binop(UNION, t->re, s->trans[j].re);
+                        if (t->re == NULL)
+                            goto error;
+                        memmove(s->trans + j, s->trans + j + 1,
+                                sizeof(s->trans[j]) * (s->tused - j - 1));
+                        to->hash -= 1;
+                        s->tused -= 1;
+                        if (j < i) {
+                            i = i - 1;
+                            t = s->trans + i;
+                        }
+                    }
+                }
+            }
+
+            if (! to->reachable) {
+                to->reachable = 1;
+                _F(state_set_push(worklist, to));
+            }
+        }
+    }
+
+    for (struct state *s = fa->initial; s->next != NULL; ) {
+        if (s->next->hash == 0 && s->next->tused == 0) {
+            struct state *del = s->next;
+            s->next = del->next;
+            free(del->trans);
+            free(del);
+        } else {
+            s = s->next;
+        }
+    }
+    result = 0;
+
+ error:
+    state_set_free(worklist);
+    return result;
+}
+
 /* Convert an FA to a regular expression.
  * The strategy is the following:
  * (1) For all states S1 and S2, convert the transitions between them
@@ -3969,6 +4048,8 @@ int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len) {
     if (r < 0)
         goto error;
     set_initial(fa, ini);
+
+    convert_strings(fa);
 
     list_for_each(s, fa->initial->next) {
         if (s == fin)
