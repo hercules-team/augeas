@@ -1758,17 +1758,15 @@ static int compile_decl(struct term *term, struct ctx *ctx) {
 static struct module *compile(struct term *term, struct augeas *aug) {
     struct ctx ctx;
     struct transform *autoload = NULL;
-    int ok = 1;
     assert(term->tag == A_MODULE);
 
     ctx.aug = aug;
     ctx.local = NULL;
     ctx.name = term->mname;
     list_for_each(dcl, term->decls) {
-        ok &= compile_decl(dcl, &ctx);
+        if (!compile_decl(dcl, &ctx))
+            goto error;
     }
-    if (!ok)
-        goto error;
 
     if (term->autoload != NULL) {
         struct binding *bnd = bnd_lookup(ctx.local, term->autoload);
