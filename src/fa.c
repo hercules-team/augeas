@@ -2193,6 +2193,9 @@ static void sort_transition_intervals(struct fa *fa) {
 
 struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
     int ret;
+    struct fa *fa = NULL;
+    struct state_set *worklist = NULL;
+    state_triple_hash *newstates = NULL;
 
     if (fa1 == fa2)
         return fa_clone(fa1);
@@ -2205,9 +2208,9 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
         _F(case_expand(fa2));
     }
 
-    struct fa *fa = fa_make_empty();
-    struct state_set *worklist = state_set_init(-1, S_NONE);
-    state_triple_hash *newstates = state_triple_init();
+    fa = fa_make_empty();
+    worklist = state_set_init(-1, S_NONE);
+    newstates = state_triple_init();
     if (fa == NULL || worklist == NULL || newstates == NULL)
         goto error;
 
