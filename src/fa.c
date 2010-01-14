@@ -2842,28 +2842,26 @@ int fa_ambig_example(struct fa *fa1, struct fa *fa2,
     if (r < 0)
         goto error;
 
-    if (s == NULL)
-        goto error;
+    if (s != NULL) {
+        char *t;
+        _F(ALLOC_N(result, (strlen(s)-1)/2 + 1));
+        t = result;
+        int i = 0;
+        for (i=0; s[2*i] == X; i++)
+            *t++ = s[2*i + 1];
+        if (pv != NULL)
+            *pv = t;
+        i += 1;
 
-    char *t;
-    _F(ALLOC_N(result, (strlen(s)-1)/2 + 1));
-    t = result;
-    int i = 0;
-    for (i=0; s[2*i] == X; i++)
-        *t++ = s[2*i + 1];
-    if (pv != NULL)
-        *pv = t;
-    i += 1;
+        for ( ;s[2*i] == X; i++)
+            *t++ = s[2*i + 1];
+        if (v != NULL)
+            *v = t;
+        i += 1;
 
-    for ( ;s[2*i] == X; i++)
-        *t++ = s[2*i + 1];
-    if (v != NULL)
-        *v = t;
-    i += 1;
-
-    for (; 2*i+1 < strlen(s); i++)
-        *t++ = s[2*i + 1];
-
+        for (; 2*i+1 < strlen(s); i++)
+            *t++ = s[2*i + 1];
+    }
     ret = 0;
 
  done:
