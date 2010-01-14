@@ -3953,10 +3953,11 @@ int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len) {
         r = convert_trans_to_re(s);
         if (r < 0)
             goto error;
-        if (s->accept) {
+        if (s->accept && s != fin) {
             r = add_new_re_trans(s, fin, ref(eps));
             if (r < 0)
                 goto error;
+            s->accept = 0;
         }
     }
 
