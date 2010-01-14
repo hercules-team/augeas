@@ -557,8 +557,19 @@ static struct value *ambig_check(struct info *info,
                                  const char *msg, bool iterated) {
     char *upv, *pv, *v;
     size_t upv_len;
-    fa_ambig_example(fa1, fa2, &upv, &upv_len, &pv, &v);
     struct value *exn = NULL;
+    int r;
+
+    r = fa_ambig_example(fa1, fa2, &upv, &upv_len, &pv, &v);
+    if (r < 0) {
+        exn = make_exn_value(ref(info), "not enough memory");
+        if (exn != NULL) {
+            return exn;
+        } else {
+            ERR_REPORT(info, AUG_ENOMEM, NULL);
+            return exn_error();
+        }
+    }
 
     if (upv != NULL) {
         char *e_u = escape(upv, pv - upv);
