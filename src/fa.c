@@ -56,12 +56,18 @@ int fa_minimization_algorithm = FA_MIN_HOPCROFT;
  * is put on this list. Dead/unreachable states are cleared from the list
  * at opportune times (e.g., during minimization) It's poor man's garbage
  * collection
+ *
+ * Normally, transitions are on a character range [min..max]; in
+ * fa_as_regexp, we store regexps on transitions in the re field of each
+ * transition. TRANS_RE indicates that we do that, and is used by fa_dot to
+ * produce proper graphs of an automaton transitioning on regexps.
  */
 struct fa {
     struct state *initial;
     int           deterministic : 1;
     int           minimal : 1;
     unsigned int  nocase : 1;
+    int           trans_re : 1;
 };
 
 /* A state in a finite automaton. Transitions are never shared between
@@ -3941,6 +3947,8 @@ int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len) {
     if (fin == NULL)
         goto error;
 
+    fa->trans_re = 1;
+
     list_for_each(s, fa->initial) {
         r = convert_trans_to_re(s);
         if (r < 0)
@@ -4230,13 +4238,23 @@ void fa_dot(FILE *out, struct fa *fa) {
     fprintf(out, "%s -> \"%p\";\n", fa->deterministic ? "dfa" : "nfa",
             fa->initial);
 
+    struct re_str str;
+    MEMZERO(&str, 1);
     list_for_each(s, fa->initial) {
         for_each_trans(t, s) {
             fprintf(out, "\"%p\" -> \"%p\" [ label = \"", s, t->to);
-            print_char(out, t->min);
-            if (t->min != t->max) {
-                fputc('-', out);
-                print_char(out, t->max);
+            if (fa->trans_re) {
+                re_as_string(t->re, &str);
+                for (int i=0; i < str.len; i++) {
+                    print_char(out, str.rx[i]);
+                }
+                release_re_str(&str);
+            } else {
+                print_char(out, t->min);
+                if (t->min != t->max) {
+                    fputc('-', out);
+                    print_char(out, t->max);
+                }
             }
             fprintf(out, "\" ];\n");
         }
