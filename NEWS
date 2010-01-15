@@ -1,3 +1,35 @@
+0.7.0 - 2010-01-14
+  - Support for context-free lenses via the 'let rec' keyword. The syntax
+    is experimental, though the feature is here to stay. See
+    lenses/json.aug for an example of what's possible with that.
+  - Support for case-insensitive regular expressions. Simply append 'i' to
+    a regexp literal to make it case-insensitive, e.g. /hello/i will match
+    all variations of hello, regardless of case.
+  - Major revamp of augtool. In particular, path expressions don't need to
+    be quoted anymore. The online help has been greatly improved.
+  - Check during load/save that each file is only matched by one transform
+    under /augeas/load. If there are multiple transforms for a file, the
+    file is skipped.
+  - New error codes AUG_ENOLENS and AUG_EMXFM
+  - Do not choke on non-existing lens during save
+  - Change the metadata for files under /augeas/files slightly: the node
+    /augeas/files/$PATH/lens now has the name of the lens used to load the
+    file; the source location of that lens has moved to
+    /augeas/files/$PATH/lens/info
+  - New public functions fa_nocase, fa_is_nocase, and fa_expand_nocase in
+    libfa
+  - Various smaller bug fixes, performance improvements and improved error
+    messages
+  - Lens changes/additions
+    * Cobblersettings: new lens and test (Bryan Kearney)
+    * Iptables: allow quoted strings as arguments; handle both negation
+      syntaxes
+    * Json: lens and tests for generic Json files
+    * Lokkit: allow '-' in arguments
+    * Samba: accept entry keys with ':' (Partha Aji)
+    * Shellvars: allow arrays that span multiple lines
+    * Xinetd (name): fix bad '-' in character class
+
 0.6.0 - 2009-11-30
   - Add error reporting API (aug_error and related calls); use to report
     error details in a variety of places
