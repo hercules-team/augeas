@@ -69,7 +69,7 @@ static char *regexp_literal(const char *s, int len) {
 
 DIGIT [0-9]
 UID    [A-Z][A-Za-z0-9_]*
-LID    [a-z][A-Za-z0-9_]*
+LID    [a-z_][A-Za-z0-9_]*
 LETREC   let[ \t]+rec
 WS     [ \t\n]
 QID    {UID}\.{LID}

@@ -65,6 +65,9 @@ static const char *const type_names[] = {
     "transform", "function", NULL
 };
 
+/* The anonymous identifier which we will never bind */
+static const char const anon_ident[] = "_";
+
 static void print_value(FILE *out, struct value *v);
 
 /* The evaluation context with all loaded modules and the bindings for the
@@ -572,6 +575,9 @@ static struct type *ctx_lookup_type(struct info *info,
 static struct binding *bind_type(struct binding **bnds,
                                  const char *name, struct type *type) {
     struct binding *binding;
+
+    if (STREQ(name, anon_ident))
+        return NULL;
     make_ref(binding);
     make_ref(binding->ident);
     binding->ident->str = strdup(name);
@@ -601,11 +607,15 @@ static void unbind_param(struct binding **bnds, ATTRIBUTE_UNUSED struct param *p
     unref(b, binding);
 }
 
-/* Takes ownership of TYPE and VALUE */
+/* Takes ownership of VALUE */
 static void bind(struct binding **bnds,
                  const char *name, struct type *type, struct value *value) {
-    struct binding *b = bind_type(bnds, name, type);
-    b->value = ref(value);
+    struct binding *b = NULL;
+
+    if (STRNEQ(name, anon_ident)) {
+        b = bind_type(bnds, name, type);
+        b->value = ref(value);
+    }
 }
 
 /*
