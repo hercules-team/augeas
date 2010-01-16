@@ -52,6 +52,7 @@ static const struct type tree_type      = { .ref = UINT_MAX, .tag = T_TREE };
 static const struct type filter_type    = { .ref = UINT_MAX, .tag = T_FILTER };
 static const struct type transform_type =
                                        { .ref = UINT_MAX, .tag = T_TRANSFORM };
+static const struct type unit_type      = { .ref = UINT_MAX, .tag = T_UNIT };
 
 const struct type *const t_string    = &string_type;
 const struct type *const t_regexp    = &regexp_type;
@@ -59,10 +60,11 @@ const struct type *const t_lens      = &lens_type;
 const struct type *const t_tree      = &tree_type;
 const struct type *const t_filter    = &filter_type;
 const struct type *const t_transform = &transform_type;
+const struct type *const t_unit      = &unit_type;
 
 static const char *const type_names[] = {
     "string", "regexp", "lens", "tree", "filter",
-    "transform", "function", NULL
+    "transform", "unit", "function", NULL
 };
 
 /* The anonymous identifier which we will never bind */
@@ -294,6 +296,8 @@ void free_value(struct value *v) {
     case V_EXN:
         free_exn(v->exn);
         break;
+    case V_UNIT:
+        break;
     default:
         assert(0);
     }
@@ -342,6 +346,10 @@ struct value *make_value(enum value_tag tag, struct info *info) {
         value->info = info;
     }
     return value;
+}
+
+struct value *make_unit(struct info *info) {
+    return make_value(V_UNIT, info);
 }
 
 struct term *make_app_term(struct term *lambda, struct term *arg,
@@ -728,6 +736,9 @@ static void print_value(FILE *out, struct value *v) {
             v->exn->seen = 1;
         }
         break;
+    case V_UNIT:
+        fprintf(out, "()");
+        break;
     default:
         assert(0);
         break;
@@ -799,6 +810,8 @@ struct type *make_base_type(enum type_tag tag) {
         return (struct type *) t_filter;
     else if (tag == T_TRANSFORM)
         return (struct type *) t_transform;
+    else if (tag == T_UNIT)
+        return (struct type *) t_unit;
     assert(0);
     abort();
 }
@@ -842,15 +855,11 @@ static int subtype(struct type *t1, struct type *t2) {
        of strings/regexps to lenses (yet) */
     if (t1->tag == T_STRING)
         return (t2->tag == T_STRING || t2->tag == T_REGEXP);
-    if (t1->tag == T_REGEXP)
-        return t2->tag == T_REGEXP;
-    if (t1->tag == T_LENS)
-        return t2->tag == T_LENS;
     if (t1->tag == T_ARROW && t2->tag == T_ARROW) {
         return subtype(t2->dom, t1->dom)
             && subtype(t1->img, t2->img);
     }
-    return 0;
+    return t1->tag == t2->tag;
 }
 
 static int type_equal(struct type *t1, struct type *t2) {
@@ -926,6 +935,8 @@ static struct type *value_type(struct value *v) {
         return make_base_type(T_FILTER);
     case V_TRANSFORM:
         return make_base_type(T_TRANSFORM);
+    case V_UNIT:
+        return make_base_type(T_UNIT);
     case V_NATIVE:
         return ref(v->native->type);
     case V_CLOS:
@@ -1118,6 +1129,10 @@ static int check_compose(struct term *term, struct ctx *ctx) {
         if (! subtype(tl->img, tr->dom))
             goto print_error;
         term->type = make_arrow_type(tl->dom, tr->img);
+    } else if (tl->tag == T_UNIT) {
+        if (! check_exp(term->right, ctx))
+            return 0;
+        term->type = ref(term->right->type);
     } else {
         goto print_error;
     }
@@ -1474,9 +1489,9 @@ static struct value *compile_compose(struct term *exp, struct ctx *ctx) {
         v = make_closure(func, ctx->local);
         unref(func, term);
     } else {
-        fatal_error(info, "Tried to compose a %s and a %s to yield a %s",
-                    type_name(exp->left->type), type_name(exp->right->type),
-                    type_name(t));
+        v = compile_exp(exp->info, exp->left, ctx);
+        unref(v, value);
+        v = compile_exp(exp->info, exp->right, ctx);
     }
     return v;
 }

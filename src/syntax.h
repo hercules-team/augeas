@@ -149,7 +149,8 @@ enum value_tag {
     V_TRANSFORM,
     V_NATIVE,
     V_EXN,
-    V_CLOS
+    V_CLOS,
+    V_UNIT
 };
 
 #define EXN(v) ((v)->tag == V_EXN)
@@ -158,6 +159,7 @@ struct value {
     unsigned int   ref;
     struct info   *info;
     enum value_tag tag;
+    /* Nothing in this union for V_UNIT */
     union {
         struct string  *string;  /* V_STRING */
         struct regexp  *regexp;  /* V_REGEXP */
@@ -189,7 +191,8 @@ enum type_tag {
     T_TREE,
     T_FILTER,
     T_TRANSFORM,
-    T_ARROW
+    T_ARROW,
+    T_UNIT
 };
 
 struct type {
@@ -228,6 +231,7 @@ struct term *make_term(enum term_tag tag, struct info *info);
 void free_term(struct term *term);
 struct term *make_param(char *name, struct type *type, struct info *info);
 struct value *make_value(enum value_tag tag, struct info *info);
+struct value *make_unit(struct info *info);
 struct term *make_app_term(struct term *func, struct term *arg,
                            struct info *info);
 struct term *make_app_ident(char *id, struct term *func, struct info *info);

@@ -133,6 +133,7 @@ static void augl_error(struct info *locp, struct term **term,
  static struct term *make_unop(enum term_tag tag,
                               struct term *exp, struct info *locp);
  static struct term *make_ident(char *qname, struct info *locp);
+ static struct term *make_unit_term(struct info *locp);
  static struct term *make_string_term(char *value, struct info *locp);
  static struct term *make_regexp_term(char *pattern,
                                       int nocase, struct info *locp);
@@ -251,6 +252,8 @@ aexp: qid
       { $$ = $2; }
     | '[' exp ']'
       { $$ = make_unop(A_BRACKET, $2, &@$); }
+    | '(' ')'
+      { $$ = make_unit_term(&@$); }
 
 rexp: aexp rep
       { $$ = make_rep($1, $2, &@$); }
@@ -511,6 +514,13 @@ static struct term *make_unop(enum term_tag tag, struct term *exp,
 static struct term *make_ident(char *qname, struct info *locp) {
   struct term *term = make_term_locp(A_IDENT, locp);
   term->ident = make_string(qname);
+  return term;
+}
+
+static struct term *make_unit_term(struct info *locp) {
+  struct term *term = make_term_locp(A_VALUE, locp);
+  term->value = make_unit(ref(term->info));
+  term->type = make_base_type(T_UNIT);
   return term;
 }
 
