@@ -449,6 +449,75 @@ static struct value *lns_check_rec_glue(struct info *info,
     return lns_check_rec(info, l->lens, r->lens, check);
 }
 
+/*
+ * Print functions
+ */
+
+/* V_STRING -> V_UNIT */
+static struct value *pr_string(struct info *info, struct value *s) {
+    printf("%s", s->string->str);
+    return make_unit(ref(info));
+}
+
+/* V_REGEXP -> V_UNIT */
+static struct value *pr_regexp(struct info *info, struct value *r) {
+    print_regexp(stdout, r->regexp);
+    return make_unit(ref(info));
+}
+
+/* V_STRING -> V_UNIT */
+static struct value *pr_endline(struct info *info, struct value *s) {
+    printf("%s\n", s->string->str);
+    return make_unit(ref(info));
+}
+
+/*
+ * Lens inspection
+ */
+
+static struct value *lns_value_of_type(struct info *info, struct regexp *rx) {
+    struct value *result = make_value(V_REGEXP, ref(info));
+    if (rx)
+        result->regexp = ref(rx);
+    else
+        result->regexp = regexp_make_empty(ref(info));
+    return result;
+}
+
+/* V_LENS -> V_REGEXP */
+static struct value *lns_ctype(struct info *info, struct value *l) {
+    return lns_value_of_type(info, l->lens->ctype);
+}
+
+/* V_LENS -> V_REGEXP */
+static struct value *lns_atype(struct info *info, struct value *l) {
+    return lns_value_of_type(info, l->lens->atype);
+}
+
+/* V_LENS -> V_REGEXP */
+static struct value *lns_vtype(struct info *info, struct value *l) {
+    return lns_value_of_type(info, l->lens->vtype);
+}
+
+/* V_LENS -> V_REGEXP */
+static struct value *lns_ktype(struct info *info, struct value *l) {
+    return lns_value_of_type(info, l->lens->ktype);
+}
+
+/* V_LENS -> V_STRING */
+static struct value *lns_fmt_atype(struct info *info, struct value *l) {
+    struct value *result = NULL;
+    char *s = NULL;
+    int r;
+
+    r = lns_format_atype(l->lens, &s);
+    if (r < 0)
+        return exn_error();
+    result = make_value(V_STRING, ref(info));
+    result->string = make_string(s);
+    return result;
+}
+
 struct module *builtin_init(struct error *error) {
     struct module *modl = module_create("Builtin");
     int r;
@@ -488,6 +557,18 @@ struct module *builtin_init(struct error *error) {
                                                          T_TRANSFORM);
     DEFINE_NATIVE(modl, LNS_CHECK_REC_NAME,
                   2, lns_check_rec_glue, T_LENS, T_LENS, T_LENS);
+    /* Printing */
+    DEFINE_NATIVE(modl, "print_string", 1, pr_string, T_STRING, T_UNIT);
+    DEFINE_NATIVE(modl, "print_regexp", 1, pr_regexp, T_REGEXP, T_UNIT);
+    DEFINE_NATIVE(modl, "print_endline", 1, pr_endline, T_STRING, T_UNIT);
+
+    /* Lens inspection */
+    DEFINE_NATIVE(modl, "lens_ctype", 1, lns_ctype, T_LENS, T_REGEXP);
+    DEFINE_NATIVE(modl, "lens_atype", 1, lns_atype, T_LENS, T_REGEXP);
+    DEFINE_NATIVE(modl, "lens_vtype", 1, lns_vtype, T_LENS, T_REGEXP);
+    DEFINE_NATIVE(modl, "lens_ktype", 1, lns_ktype, T_LENS, T_REGEXP);
+    DEFINE_NATIVE(modl, "lens_format_atype", 1, lns_fmt_atype,
+                  T_LENS, T_STRING);
 
     /* System functions */
     struct module *sys = module_create("Sys");
