@@ -392,27 +392,30 @@ static struct regexp *make_regexp_from_string(struct info *info,
 
 static struct regexp *restrict_regexp(struct regexp *r) {
     char *nre = NULL;
+    struct regexp *result = NULL;
     size_t nre_len;
     int ret;
 
     ret = fa_restrict_alphabet(r->pattern->str, strlen(r->pattern->str),
                                &nre, &nre_len,
                                RESERVED_FROM, RESERVED_TO);
-    assert(nre_len == strlen(nre));
-    // FIXME: Tell the user what's wrong
-    if (ret != 0)
-        return NULL;
+    ERR_NOMEM(ret == REG_ESPACE || ret < 0, r->info);
+    BUG_ON(ret != 0, r->info, NULL);
+    ensure(nre_len == strlen(nre), r->info);
 
     ret = regexp_c_locale(&nre, &nre_len);
-    if (ret < 0) {
-        free(nre);
-        return NULL;
-    }
+    ERR_NOMEM(ret < 0, r->info);
 
-    r = make_regexp(r->info, nre, r->nocase);
-    if (regexp_compile(r) != 0)
-        abort();
-    return r;
+    result = make_regexp(r->info, nre, r->nocase);
+    nre = NULL;
+    BUG_ON(regexp_compile(result) != 0, r->info,
+           "Could not compile restricted regexp");
+ done:
+    free(nre);
+    return result;
+ error:
+    unref(result, regexp);
+    goto done;
 }
 
 struct value *lns_make_prim(enum lens_tag tag, struct info *info,
