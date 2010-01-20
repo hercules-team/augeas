@@ -1,0 +1,37 @@
+This file explains some details about developing the Augeas C library.
+
+Check out the sources
+---------------------
+
+The sources are in a git repo (which you presumably found already)
+
+  git clone git://git.fedorahosted.org/git/augeas.git
+
+Building from git
+-----------------
+
+  Besides the usual build tools (gcc, autoconf, automake etc.) you need the
+  following tools and libraries to build Augeas:
+
+    * Bison
+    * Flex
+    * readline-devel
+    * libselinux-devel (optional)
+
+  Augeas uses gnulib, and you need a checkout of gnulib. The build scripts
+  can create a checkout for you behind the scenes - though if you already
+  have a gnulib checkout, you can pass its location to autogen.sh with the
+  --gnulib-srcdir option.
+
+  At its simplest, you build Augeas from git by running the following
+  commands in the toplevel directory of your Augeas checkout:
+
+    ./autogen.sh [--gnulib-srcdir=$GNULIB_CHECKOUT]
+    make && make install
+
+  It is recommended though to turn on a few development features when
+  building; in particular, stricter compiler warnings and some debug
+  logging. You can pass these options either to autogen.sh or to
+  configure. You'd then run autogen like this:
+
+    ./autogen.sh --enable-compile-warnings=error --enable-debug=yes

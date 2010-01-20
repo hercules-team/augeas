@@ -59,12 +59,16 @@ Non-goals
 Building
 --------
 
+  These instructions apply to building a released tarball. If you want to
+  build from a git checkout, see the file HACKING.
+
   See the generic instructions in INSTALL. Generally,
     ./configure
     make && make install
   should be all that is needed.
 
-  You need to have readline-devel installed
+  You need to have readline-devel installed. On systems that support
+  SELinux, you should also install libselinux-devel.
 
 Documentation
 -------------
