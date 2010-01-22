@@ -26,6 +26,7 @@
 #include "regexp.h"
 #include "memory.h"
 #include "lens.h"
+#include "errcode.h"
 
 /* Data structure to keep track of where we are in the tree. The split
  * describes a sublist of the list of siblings in the current tree. The
@@ -414,10 +415,10 @@ static int skel_instance_of(struct lens *lens, struct skel *skel) {
     case L_REC:
         return skel_instance_of(lens->body, skel);
     default:
-        assert_error_at(__FILE__, __LINE__, lens->info,
-                        "illegal lens tag %d", lens->tag);
+        BUG_ON(true, lens->info, "illegal lens tag %d", lens->tag);
         break;
     }
+ error:
     return 0;
 }
 

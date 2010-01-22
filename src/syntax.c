@@ -137,19 +137,6 @@ void fatal_error(struct info *info, const char *format, ...) {
     va_end(ap);
 }
 
-void assert_error_at(const char *srcfile, int srclineno, struct info *info,
-                     const char *format, ...) {
-    va_list ap;
-
-    fprintf(stderr, "%s:%d:(", srcfile, srclineno);
-    print_info(stderr, info);
-    fprintf(stderr,"):Internal error:");
-	va_start(ap, format);
-    vfprintf(stderr, format, ap);
-    va_end(ap);
-    fprintf(stderr, "\n");
-}
-
 static void free_param(struct param *param) {
     if (param == NULL)
         return;

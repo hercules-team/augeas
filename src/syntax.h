@@ -37,10 +37,6 @@ void syntax_error(struct info *info, const char *format, ...)
 void fatal_error(struct info *info, const char *format, ...)
     ATTRIBUTE_FORMAT(printf, 2, 3);
 
-void assert_error_at(const char *srcfile, int srclineno, struct info *info,
-                     const char *format, ...)
-    ATTRIBUTE_FORMAT(printf, 4, 5);
-
 enum term_tag {
     A_MODULE,
     A_BIND,              /* Module scope binding of a name */

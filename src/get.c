@@ -37,9 +37,6 @@
 static const char *const short_iteration =
     "Iterated lens matched less than it should";
 
-#define assert_error(state, format, args ...) \
-    assert_error_at(__FILE__, __LINE__, state->info, format, ## args)
-
 struct seq {
     struct seq *next;
     const char *name;
@@ -1089,9 +1086,10 @@ static struct tree *get_lens(struct lens *lens, struct state *state) {
         tree = get_rec(lens, state);
         break;
     default:
-        assert_error(state, "illegal lens tag %d", lens->tag);
+        BUG_ON(true, state->info, "illegal lens tag %d", lens->tag);
         break;
     }
+ error:
     return tree;
 }
 
@@ -1223,9 +1221,10 @@ static struct skel *parse_lens(struct lens *lens, struct state *state,
         skel = parse_rec(lens, state, dict);
         break;
     default:
-        assert_error(state, "illegal lens tag %d", lens->tag);
+        BUG_ON(true, state->info, "illegal lens tag %d", lens->tag);
         break;
     }
+ error:
     return skel;
 }
 
