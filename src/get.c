@@ -349,12 +349,13 @@ static struct seq *find_seq(const char *name, struct state *state) {
 static struct tree *get_seq(struct lens *lens, struct state *state) {
     assert(lens->tag == L_SEQ);
     struct seq *seq = find_seq(lens->string->str, state);
+    int r;
 
-    if (asprintf((char **) &(state->key), "%d", seq->value) == -1) {
-        // FIXME: We are out of memory .. find a way to report that
-        abort();
-    }
+    r = asprintf((char **) &(state->key), "%d", seq->value);
+    ERR_NOMEM(r < 0, state->info);
+
     seq->value += 1;
+ error:
     return NULL;
 }
 
