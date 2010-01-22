@@ -248,7 +248,7 @@ static void get_expected_error(struct state *state, struct lens *l) {
  */
 
 static char *token(struct state *state) {
-    assert(REG_MATCHED(state));
+    ensure0(REG_MATCHED(state), state->info);
     return strndup(REG_POS(state), REG_SIZE(state));
 }
 
@@ -271,8 +271,8 @@ static void regexp_match_error(struct state *state, struct lens *lens,
 }
 
 static void no_match_error(struct state *state, struct lens *lens) {
-    assert(lens->tag == L_KEY || lens->tag == L_DEL
-           || lens->tag == L_STORE);
+    ensure(lens->tag == L_KEY || lens->tag == L_DEL
+           || lens->tag == L_STORE, state->info);
     char *pat = regexp_escape(lens->ctype);
     const char *lname;
     if (lens->tag == L_KEY)
@@ -281,10 +281,10 @@ static void no_match_error(struct state *state, struct lens *lens) {
         lname = "del";
     else if (lens->tag == L_STORE)
         lname = "store";
-    else
-        assert(0);
     get_error(state, lens, "no match for %s /%s/", lname, pat);
     free(pat);
+ error:
+    return;
 }
 
 /* Modifies STATE->REGS and STATE->NREG. The caller must save these
@@ -329,7 +329,7 @@ static void free_seqs(struct seq *seqs) {
 }
 
 static struct seq *find_seq(const char *name, struct state *state) {
-    assert(name != NULL);
+    ensure0(name != NULL, state->info);
     struct seq *seq;
 
     for (seq=state->seqs;
@@ -347,7 +347,7 @@ static struct seq *find_seq(const char *name, struct state *state) {
 }
 
 static struct tree *get_seq(struct lens *lens, struct state *state) {
-    assert(lens->tag == L_SEQ);
+    ensure0(lens->tag == L_SEQ, state->info);
     struct seq *seq = find_seq(lens->string->str, state);
     int r;
 
@@ -365,7 +365,7 @@ static struct skel *parse_seq(struct lens *lens, struct state *state) {
 }
 
 static struct tree *get_counter(struct lens *lens, struct state *state) {
-    assert(lens->tag == L_COUNTER);
+    ensure0(lens->tag == L_COUNTER, state->info);
     struct seq *seq = find_seq(lens->string->str, state);
     seq->value = 1;
     return NULL;
@@ -377,7 +377,7 @@ static struct skel *parse_counter(struct lens *lens, struct state *state) {
 }
 
 static struct tree *get_del(struct lens *lens, struct state *state) {
-    assert(lens->tag == L_DEL);
+    ensure0(lens->tag == L_DEL, state->info);
     if (! REG_MATCHED(state)) {
         char *pat = regexp_escape(lens->ctype);
         get_error(state, lens, "no match for del /%s/", pat);
@@ -387,7 +387,7 @@ static struct tree *get_del(struct lens *lens, struct state *state) {
 }
 
 static struct skel *parse_del(struct lens *lens, struct state *state) {
-    assert(lens->tag == L_DEL);
+    ensure0(lens->tag == L_DEL, state->info);
     struct skel *skel = NULL;
 
     skel = make_skel(lens);
@@ -399,10 +399,11 @@ static struct skel *parse_del(struct lens *lens, struct state *state) {
 }
 
 static struct tree *get_store(struct lens *lens, struct state *state) {
-    assert(lens->tag == L_STORE);
+    ensure0(lens->tag == L_STORE, state->info);
+    ensure0(state->value == NULL, state->info);
+
     struct tree *tree = NULL;
 
-    assert(state->value == NULL);
     if (state->value != NULL)
         get_error(state, lens, "More than one store in a subtree");
     else if (! REG_MATCHED(state))
@@ -414,24 +415,24 @@ static struct tree *get_store(struct lens *lens, struct state *state) {
 
 static struct skel *parse_store(struct lens *lens,
                                 ATTRIBUTE_UNUSED struct state *state) {
-    assert(lens->tag == L_STORE);
+    ensure0(lens->tag == L_STORE, state->info);
     return make_skel(lens);
 }
 
 static struct tree *get_value(struct lens *lens, struct state *state) {
-    assert(lens->tag == L_VALUE);
+    ensure0(lens->tag == L_VALUE, state->info);
     state->value = strdup(lens->string->str);
     return NULL;
 }
 
 static struct skel *parse_value(struct lens *lens,
                                 ATTRIBUTE_UNUSED struct state *state) {
-    assert(lens->tag == L_VALUE);
+    ensure0(lens->tag == L_VALUE, state->info);
     return make_skel(lens);
 }
 
 static struct tree *get_key(struct lens *lens, struct state *state) {
-    assert(lens->tag == L_KEY);
+    ensure0(lens->tag == L_KEY, state->info);
     if (! REG_MATCHED(state))
         no_match_error(state, lens);
     else
@@ -445,7 +446,7 @@ static struct skel *parse_key(struct lens *lens, struct state *state) {
 }
 
 static struct tree *get_label(struct lens *lens, struct state *state) {
-    assert(lens->tag == L_LABEL);
+    ensure0(lens->tag == L_LABEL, state->info);
     state->key = strdup(lens->string->str);
     return NULL;
 }
@@ -456,7 +457,8 @@ static struct skel *parse_label(struct lens *lens, struct state *state) {
 }
 
 static struct tree *get_union(struct lens *lens, struct state *state) {
-    assert(lens->tag == L_UNION);
+    ensure0(lens->tag == L_UNION, state->info);
+
     struct tree *tree = NULL;
     int applied = 0;
     uint old_nreg = state->nreg;
@@ -478,7 +480,8 @@ static struct tree *get_union(struct lens *lens, struct state *state) {
 
 static struct skel *parse_union(struct lens *lens, struct state *state,
                                 struct dict **dict) {
-    assert(lens->tag == L_UNION);
+    ensure0(lens->tag == L_UNION, state->info);
+
     struct skel *skel = NULL;
     int applied = 0;
     uint old_nreg = state->nreg;
@@ -501,7 +504,8 @@ static struct skel *parse_union(struct lens *lens, struct state *state,
 }
 
 static struct tree *get_concat(struct lens *lens, struct state *state) {
-    assert(lens->tag == L_CONCAT);
+    ensure0(lens->tag == L_CONCAT, state->info);
+
     struct tree *tree = NULL;
     uint old_nreg = state->nreg;
 
@@ -527,7 +531,7 @@ static struct tree *get_concat(struct lens *lens, struct state *state) {
 
 static struct skel *parse_concat(struct lens *lens, struct state *state,
                                  struct dict **dict) {
-    assert(lens->tag == L_CONCAT);
+    ensure0(lens->tag == L_CONCAT, state->info);
     struct skel *skel = make_skel(lens);
     uint old_nreg = state->nreg;
 
@@ -553,7 +557,7 @@ static struct skel *parse_concat(struct lens *lens, struct state *state,
 }
 
 static struct tree *get_quant_star(struct lens *lens, struct state *state) {
-    assert(lens->tag == L_STAR);
+    ensure0(lens->tag == L_STAR, state->info);
     struct lens *child = lens->child;
     struct tree *tree = NULL, *tail = NULL;
     struct re_registers *old_regs = state->regs;
@@ -585,7 +589,7 @@ static struct tree *get_quant_star(struct lens *lens, struct state *state) {
 
 static struct skel *parse_quant_star(struct lens *lens, struct state *state,
                                      struct dict **dict) {
-    assert(lens->tag == L_STAR);
+    ensure0(lens->tag == L_STAR, state->info);
     struct lens *child = lens->child;
     struct skel *skel = make_skel(lens), *tail = NULL;
     struct re_registers *old_regs = state->regs;
@@ -618,7 +622,7 @@ static struct skel *parse_quant_star(struct lens *lens, struct state *state,
 }
 
 static struct tree *get_quant_maybe(struct lens *lens, struct state *state) {
-    assert(lens->tag == L_MAYBE);
+    ensure0(lens->tag == L_MAYBE, state->info);
     struct tree *tree = NULL;
 
     /* Check that our child matched. For a construct like (r)?, the
@@ -635,7 +639,7 @@ static struct tree *get_quant_maybe(struct lens *lens, struct state *state) {
 
 static struct skel *parse_quant_maybe(struct lens *lens, struct state *state,
                                       struct dict **dict) {
-    assert(lens->tag == L_MAYBE);
+    ensure0(lens->tag == L_MAYBE, state->info);
 
     struct skel *skel = NULL;
 
@@ -699,7 +703,7 @@ static void print_frames(struct rec_state *state) {
 
 ATTRIBUTE_PURE
 static struct frame *top_frame(struct rec_state *state) {
-    assert(state->fsize > 0);
+    ensure0(state->fsize > 0, state->state->info);
     return state->frames + state->fused - 1;
 }
 
@@ -733,7 +737,7 @@ static struct frame *push_frame(struct rec_state *state, struct lens *lens) {
 }
 
 static struct frame *pop_frame(struct rec_state *state) {
-    assert(state->fused > 0);
+    ensure0(state->fused > 0, state->state->info);
 
     state->fused -= 1;
     if (state->fused > 0)
@@ -830,11 +834,11 @@ static void get_combine(struct rec_state *rec_state,
             while (tail->next != NULL) tail = tail->next;
 
         if (top->key != NULL) {
-            assert(key == NULL);
+            ensure(key == NULL, rec_state->state->info);
             key = top->key;
         }
         if (top->value != NULL) {
-            assert(value == NULL);
+            ensure(value == NULL, rec_state->state->info);
             value = top->value;
         }
     }
@@ -842,6 +846,8 @@ static void get_combine(struct rec_state *rec_state,
     top->tree = tree;
     top->key = key;
     top->value = value;
+ error:
+    return;
 }
 
 static void parse_combine(struct rec_state *rec_state,
@@ -861,7 +867,7 @@ static void parse_combine(struct rec_state *rec_state,
             while (tail->next != NULL) tail = tail->next;
         dict_append(&dict, top->dict);
         if (top->key != NULL) {
-            assert(key == NULL);
+            ensure(key == NULL, rec_state->state->info);
             key = top->key;
         }
     }
@@ -869,6 +875,8 @@ static void parse_combine(struct rec_state *rec_state,
     top->skel = skel;
     top->dict = dict;
     top->key = key;
+ error:
+    return;
 }
 
 static void visit_exit(struct lens *lens,
@@ -894,7 +902,7 @@ static void visit_exit(struct lens *lens,
             tree = make_tree(top->key, top->value, NULL, top->tree);
             ERR_NOMEM(tree == NULL, lens->info);
             top = pop_frame(rec_state);
-            assert(lens == top->lens);
+            ensure(lens == top->lens, state->info);
             state->key = top->key;
             state->value = top->value;
             pop_frame(rec_state);
@@ -908,7 +916,7 @@ static void visit_exit(struct lens *lens,
             dict = make_dict(top->key, top->skel, top->dict);
             ERR_NOMEM(dict == NULL, lens->info);
             top = pop_frame(rec_state);
-            assert(lens == top->lens);
+            ensure(lens == top->lens, state->info);
             state->key = top->key;
             pop_frame(rec_state);
             top = push_frame(rec_state, lens);
@@ -916,7 +924,7 @@ static void visit_exit(struct lens *lens,
             top->dict = dict;
         }
     } else if (lens->tag == L_CONCAT) {
-        assert(rec_state->fused >= lens->nchildren);
+        ensure(rec_state->fused >= lens->nchildren, state->info);
         for (int i = 0; i < lens->nchildren; i++) {
             struct frame *fr = nth_frame(rec_state, i);
             BUG_ON(lens->children[i] != fr->lens,
@@ -959,7 +967,7 @@ static void visit_error(struct lens *lens, void *data, size_t pos,
 
 static struct frame *rec_process(enum mode_t mode, struct lens *lens,
                                  struct state *state) {
-    assert(lens->tag == L_REC && lens->jmt != NULL);
+    ensure(lens->tag == L_REC && lens->jmt != NULL, state->info);
 
     uint end = REG_END(state);
     uint start = REG_START(state);
