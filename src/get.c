@@ -38,7 +38,7 @@ static const char *const short_iteration =
     "Iterated lens matched less than it should";
 
 #define assert_error(state, format, args ...) \
-    assert_error_at(__FILE__, __LINE__, &(state->info), format, ## args)
+    assert_error_at(__FILE__, __LINE__, state->info, format, ## args)
 
 struct seq {
     struct seq *next;
@@ -47,7 +47,7 @@ struct seq {
 };
 
 struct state {
-    struct info       info;
+    struct info      *info;
     const char       *text;
     struct seq       *seqs;
     char             *key;
@@ -720,7 +720,7 @@ static struct frame *push_frame(struct rec_state *state, struct lens *lens) {
         if (expand < 8)
             expand = 8;
         r = REALLOC_N(state->frames, state->fsize + expand);
-        ERR_NOMEM(r < 0, &state->state->info);
+        ERR_NOMEM(r < 0, state->state->info);
         state->fsize += expand;
     }
 
@@ -1128,11 +1128,14 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
     struct state state;
     struct tree *tree = NULL;
     uint size = strlen(text);
-    int partial;
+    int partial, r;
 
     MEMZERO(&state, 1);
-    state.info = *info;
-    state.info.ref = UINT_MAX;
+    r = ALLOC(state.info);
+    ERR_NOMEM(r < 0, info);
+
+    *state.info = *info;
+    state.info->ref = UINT_MAX;
 
     state.text = text;
 
@@ -1159,7 +1162,9 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
         get_error(&state, lens, "Get did not match entire input");
     }
 
+ error:
     free_regs(&state);
+    FREE(state.info);
 
     if (err != NULL) {
         *err = state.error;
@@ -1229,11 +1234,13 @@ struct skel *lns_parse(struct lens *lens, const char *text, struct dict **dict,
     struct state state;
     struct skel *skel = NULL;
     uint size = strlen(text);
-    int partial;
+    int partial, r;
 
     MEMZERO(&state, 1);
-    state.info.ref = UINT_MAX;
-    state.info.error = lens->info->error;
+    r = ALLOC(state.info);
+    ERR_NOMEM(r< 0, lens->info);
+    state.info->ref = UINT_MAX;
+    state.info->error = lens->info->error;
     state.text = text;
 
     state.text = text;
@@ -1263,8 +1270,9 @@ struct skel *lns_parse(struct lens *lens, const char *text, struct dict **dict,
         get_error(&state, lens, "parse can not process entire input");
     }
 
+ error:
     free_regs(&state);
-
+    FREE(state.info);
     if (err != NULL) {
         *err = state.error;
     } else {
