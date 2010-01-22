@@ -77,12 +77,18 @@ void bug_on(struct error *err, const char *srcfile, int srclineno,
  * instead of aborting
  */
 #ifdef NDEBUG
-# define ensure(cond, obj) ((void) (0))
+# define ensure(cond, obj) if (0) goto error
+# define ensure0(cond, obj) if (0) goto error
 #else
 # define ensure(cond, obj)                                           \
     if (!(cond)) {                                                   \
         bug_on((obj)->error, __FILE__, __LINE__, NULL);              \
         goto error;                                                  \
+    }
+# define ensure0(cond, obj)                                          \
+    if (!(cond)) {                                                   \
+        bug_on((obj)->error, __FILE__, __LINE__, NULL);              \
+        return NULL;                                                 \
     }
 #endif
 
