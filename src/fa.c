@@ -3313,7 +3313,7 @@ static struct re *parse_repeated_exp(struct re_parse *parse) {
         if (match(parse, ',')) {
             max = parse_int(parse);
             if (max == -1)
-                goto error;
+                max = -1;      /* If it's not an int, it means 'unbounded' */
             if (! match(parse, '}')) {
                 parse->error = REG_EBRACE;
                 goto error;
@@ -3324,7 +3324,7 @@ static struct re *parse_repeated_exp(struct re_parse *parse) {
             parse->error = REG_EBRACE;
             goto error;
         }
-        if (min > max) {
+        if (min > max && max != -1) {
             parse->error = REG_BADBR;
             goto error;
         }
@@ -3693,6 +3693,11 @@ static int re_iter_as_string(const struct re *re, struct re_str *str) {
         quant = "+";
     } else if (re->min == 0 && re->max == 1) {
         quant = "?";
+    } else if (re->max == -1) {
+        r = asprintf(&iter, "{%d,}", re->min);
+        if (r < 0)
+            return -1;
+        quant = iter;
     } else {
         r = asprintf(&iter, "{%d,%d}", re->min, re->max);
         if (r < 0)
