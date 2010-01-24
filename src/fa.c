@@ -3285,6 +3285,8 @@ static int parse_int(struct re_parse *parse) {
         free(s);
     }
 
+    if (used == 0)
+        return -1;
     parse->rx += used;
     if ((l<0) || (l > INT_MAX)) {
         parse->error = REG_BADBR;
