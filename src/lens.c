@@ -54,7 +54,8 @@ static struct value *typecheck_maybe(struct info *info, struct lens *l);
 
 /* Lens names for pretty printing */
 static const char *const tags[] = {
-    "del", "store", "key", "label", "seq", "counter", "concat", "union",
+    "del", "store", "value", "key", "label", "seq", "counter",
+    "concat", "union",
     "subtree", "star", "maybe", "rec"
 };
 
