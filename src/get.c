@@ -967,8 +967,6 @@ static void visit_error(struct lens *lens, void *data, size_t pos,
 
 static struct frame *rec_process(enum mode_t mode, struct lens *lens,
                                  struct state *state) {
-    ensure(lens->tag == L_REC && lens->jmt != NULL, state->info);
-
     uint end = REG_END(state);
     uint start = REG_START(state);
     size_t len;
@@ -979,6 +977,11 @@ static struct frame *rec_process(enum mode_t mode, struct lens *lens,
 
     MEMZERO(&rec_state, 1);
     MEMZERO(&visitor, 1);
+
+    if (lens->jmt == NULL) {
+        lens->jmt = jmt_build(lens);
+        ERR_BAIL(lens->info);
+    }
 
     state->regs = NULL;
     state->nreg = 0;
@@ -1091,9 +1094,6 @@ static struct tree *get_lens(struct lens *lens, struct state *state) {
     case L_MAYBE:
         tree = get_quant_maybe(lens, state);
         break;
-    case L_REC:
-        tree = get_rec(lens, state);
-        break;
     default:
         BUG_ON(true, state->info, "illegal lens tag %d", lens->tag);
         break;
@@ -1108,7 +1108,7 @@ static struct tree *get_lens(struct lens *lens, struct state *state) {
 static int init_regs(struct state *state, struct lens *lens, uint size) {
     int r;
 
-    if (lens->tag != L_STAR && lens->tag != L_REC) {
+    if (lens->tag != L_STAR && ! lens->recursive) {
         r = match(state, lens, lens->ctype, size, 0);
         if (r == -1)
             get_error(state, lens, "Input string does not match at all");
@@ -1153,8 +1153,12 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
      * fails, we throw our arms in the air and say 'something went wrong'
      */
     partial = init_regs(&state, lens, size);
-    if (partial >= 0)
-        tree = get_lens(lens, &state);
+    if (partial >= 0) {
+        if (lens->recursive)
+            tree = get_rec(lens, &state);
+        else
+            tree = get_lens(lens, &state);
+    }
 
     free_seqs(state.seqs);
     if (state.key != NULL) {
@@ -1226,9 +1230,6 @@ static struct skel *parse_lens(struct lens *lens, struct state *state,
     case L_MAYBE:
         skel = parse_quant_maybe(lens, state, dict);
         break;
-    case L_REC:
-        skel = parse_rec(lens, state, dict);
-        break;
     default:
         BUG_ON(true, state->info, "illegal lens tag %d", lens->tag);
         break;
@@ -1256,7 +1257,10 @@ struct skel *lns_parse(struct lens *lens, const char *text, struct dict **dict,
     partial = init_regs(&state, lens, size);
     if (! partial) {
         *dict = NULL;
-        skel = parse_lens(lens, &state, dict);
+        if (lens->recursive)
+            skel = parse_rec(lens, &state, dict);
+        else
+            skel = parse_lens(lens, &state, dict);
 
         free_seqs(state.seqs);
         if (state.error != NULL) {
