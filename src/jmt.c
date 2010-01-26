@@ -1084,7 +1084,7 @@ static void print_grammar(struct jmt *jmt, struct lens *lens) {
     ind_t l = lens_index(jmt, lens);
     struct state *sA = lens_state(jmt, l);
 
-    if (sA == NULL || lens->tag == L_REC)
+    if (sA == NULL || (lens->tag == L_REC && lens->rec_internal))
         return;
 
     printf("  ");
@@ -1134,6 +1134,11 @@ static void print_grammar(struct jmt *jmt, struct lens *lens) {
         printf("?\n");
         print_grammar(jmt, lens->child);
         break;
+    case L_REC:
+        print_lens_symbol(stdout, jmt, lens->body);
+        printf("\n");
+        print_grammar(jmt, lens->body);
+        break;
     default:
         BUG_ON(true, jmt, "Unexpected lens tag %d", lens->tag);
         break;
@@ -1142,14 +1147,16 @@ static void print_grammar(struct jmt *jmt, struct lens *lens) {
     return;
 }
 
-static void print_grammar_top(struct jmt *jmt, struct lens *rec) {
+static void print_grammar_top(struct jmt *jmt, struct lens *lens) {
     printf("Grammar:\n");
-    printf("  ");
-    print_lens_symbol(stdout, jmt, rec);
-    printf(" := ");
-    print_lens_symbol(stdout, jmt, rec->body);
-    printf("\n");
-    print_grammar(jmt, rec->body);
+    print_grammar(jmt, lens);
+    if (lens->tag == L_REC) {
+        printf("  ");
+        print_lens_symbol(stdout, jmt, lens->alias);
+        printf(" := ");
+        print_lens_symbol(stdout, jmt, lens->alias->body);
+        printf("\n");
+    }
 }
 
 static void index_lenses(struct jmt *jmt, struct lens *lens) {
