@@ -801,10 +801,80 @@ static int ambig_check(struct jmt_visitor *visitor, struct lens *lens,
 }
 
 static int
-build_tree(struct jmt_parse *parse, ind_t k, ind_t item,
-           struct jmt_visitor *visitor, int lvl) {
+build_tree(struct jmt_parse *parse, ind_t k, ind_t item, struct lens *lens,
+           struct jmt_visitor *visitor, int lvl);
+
+static int
+build_children(struct jmt_parse *parse, ind_t k, ind_t item, ind_t start,
+               struct jmt_visitor *visitor, int lvl) {
     struct item *x = set_item(parse, k, item);
     struct lens *lens = lens_of_parse(parse, x->links->lens);
+    ind_t end = k;
+
+    if (start == end) {
+        /* This completion corresponds to a nullable nonterminal
+         * that match epsilon. Reconstruct the full parse tree
+         * for matching epsilon */
+        build_nullable(parse, start, visitor, lens, lvl);
+        return end;
+    }
+
+    /* x the first item in a list of siblings; visit items (x->from_set,
+     * x->from_item) in order, which will visit x and its siblings in the
+     * parse tree from right to left */
+    while (is_complete(x->links) || is_scan(x->links)) {
+        struct lens *sub = lens_of_parse(parse, x->links->lens);
+        if (sub->recursive) {
+            build_tree(parse, k, item, sub, visitor, lvl+1);
+            ERR_BAIL(parse);
+        } else {
+            if (debugging("cf.jmt.visit"))
+                build_trace("T", x->links->from_set, k, x, lvl+1);
+            if (visitor->terminal != NULL) {
+                (*visitor->terminal)(sub,
+                                     x->links->from_set, k, visitor->data);
+                ERR_BAIL(parse);
+            }
+        }
+        k = x->links->from_set;
+        item = x->links->from_item;
+        x = set_item(parse, k, item);
+        // FIXME: This is not clean - we are checking if
+        // we would leave because we'd leave the span [start .. end]
+        // That kinda works, but it's a kludge around the trouble we
+        // have with COMPLETE + PREDICT nodes
+        if (x->links->from_set < start)
+            break;
+        if (ambig_check(visitor, lens, k, x) < 0)
+            return end;
+        ERR_BAIL(parse);
+    }
+ error:
+    return end;
+}
+
+static void visit_enter(struct jmt_visitor *visitor, struct lens *lens,
+                        size_t start, size_t end,
+                        struct item *x, int lvl) {
+    if (debugging("cf.jmt.visit"))
+        build_trace("{", start, end, x, lvl);
+    if (visitor->enter != NULL)
+        (*visitor->enter)(lens, start, end, visitor->data);
+}
+
+static void visit_exit(struct jmt_visitor *visitor, struct lens *lens,
+                       size_t start, size_t end,
+                       struct item *x, int lvl) {
+    if (debugging("cf.jmt.visit"))
+        build_trace("}", start, end, x, lvl);
+    if (visitor->exit != NULL)
+        (*visitor->exit)(lens, start, end, visitor->data);
+}
+
+static int
+build_tree(struct jmt_parse *parse, ind_t k, ind_t item, struct lens *lens,
+           struct jmt_visitor *visitor, int lvl) {
+    struct item *x = set_item(parse, k, item);
     ind_t start = x->links->from_set;
     ind_t end = k;
     struct item *old_x = x;
@@ -822,57 +892,23 @@ build_tree(struct jmt_parse *parse, ind_t k, ind_t item,
 
     ensure(is_complete(x->links), parse);
 
-    if (debugging("cf.jmt.visit"))
-        build_trace("{", start, end, x, lvl);
-    if (visitor->enter != NULL) {
-        (*visitor->enter)(lens, start, end, visitor->data);
-        ERR_BAIL(parse);
-    }
+    visit_enter(visitor, lens, start, end, x, lvl);
+    ERR_BAIL(parse);
 
     /* x is a completion item. (k, x->to_item) is its first child in the
-     * parse tree. (x->from_set, x->from_item) is its next sibling in
-     * right-to-left order in the parse tree (i.e., the order of children
-     * in the parse tree is reversed */
+     * parse tree. */
     if (! is_predict(x->links)) {
         item = x->links->to_item;
         x = set_item(parse, k, item);
         if (ambig_check(visitor, lens, k, x) < 0)
             return end;
         ERR_BAIL(parse);
-        while (is_complete(x->links) || is_scan(x->links)) {
-            struct lens *sub = lens_of_parse(parse, x->links->lens);
-            if (sub->recursive) {
-                build_tree(parse, k, item, visitor, lvl+1);
-                ERR_BAIL(parse);
-            } else {
-                if (debugging("cf.jmt.visit"))
-                    build_trace("T", x->links->from_set, k, x, lvl+1);
-                if (visitor->terminal != NULL) {
-                    (*visitor->terminal)(lens_of_parse(parse, x->links->lens),
-                                         x->links->from_set, k, visitor->data);
-                    ERR_BAIL(parse);
-                }
-            }
-            k = x->links->from_set;
-            item = x->links->from_item;
-            x = set_item(parse, k, item);
-            // FIXME: This is not clean - we are checking if
-            // we would leave because we'd leave the span [start .. end]
-            // That kinda works, but it's a kludge around the trouble we
-            // have with COMPLETE + PREDICT nodes
-            if (x->links->from_set < start)
-                break;
-            if (ambig_check(visitor, lens, k, x) < 0)
-                return end;
-            ERR_BAIL(parse);
-        }
-    }
-    if (debugging("cf.jmt.visit"))
-        build_trace("}", start, end, old_x, lvl);
-    if (visitor->exit != NULL) {
-        (*visitor->exit)(lens, start, end, visitor->data);
+        build_children(parse, k, item, start, visitor, lvl);
         ERR_BAIL(parse);
     }
+
+    visit_exit(visitor, lens, start, end, old_x, lvl);
+    ERR_BAIL(parse);
  error:
     return end;
 }
@@ -902,7 +938,17 @@ void jmt_visit(struct jmt_visitor *visitor, size_t *len) {
  found:
     if (item >= parse->sets[k]->items.used)
         goto noparse;
-    *len = build_tree(parse, k, item, visitor, 0);
+    struct lens *lens = lens_of_parse(parse, parse->jmt->lens);
+
+    visit_enter(visitor, lens, 0, k, NULL, 0);
+    ERR_BAIL(parse);
+
+    *len = build_children(parse, k, item, 0, visitor, 0);
+    ERR_BAIL(parse);
+
+    visit_exit(visitor, lens, 0, k, NULL, 0);
+    ERR_BAIL(parse);
+ error:
     return;
  noparse:
     for (; k > 0; k--)
