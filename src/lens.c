@@ -2001,9 +2001,6 @@ struct value *lns_check_rec(struct info *info,
     if (result != NULL)
         goto error;
 
-    struct jmt *jmt = jmt_build(rec);
-    ERR_BAIL(info);
-
     result = lns_make_rec(ref(rec->info));
     struct lens *top = result->lens;
     for (int t=0; t < ntypes; t++)
@@ -2017,10 +2014,13 @@ struct value *lns_check_rec(struct info *info,
     top->rec_internal = 0;
     rec->alias = top;
 
-    top->jmt = jmt;
+    top->jmt = jmt_build(top);
+    ERR_BAIL(info);
 
     return result;
  error:
+    if (result != NULL && result->tag != V_EXN)
+        unref(result, value);
     if (result == NULL)
         result = exn_error();
     return result;

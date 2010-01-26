@@ -1183,7 +1183,8 @@ static void index_lenses(struct jmt *jmt, struct lens *lens) {
         index_lenses(jmt, lens->child);
         break;
     case L_REC:
-        /* Nothing to do */
+        if (! lens->rec_internal)
+            index_lenses(jmt, lens->body);
         break;
     default:
         BUG_ON(true, jmt, "Unexpected lens tag %d", lens->tag);
@@ -1751,9 +1752,6 @@ static void determinize(struct jmt *jmt) {
 struct jmt *jmt_build(struct lens *lens) {
     struct jmt *jmt = NULL;
     int r;
-    ind_t l;
-
-    ensure(lens->tag == L_REC && lens->rec_internal, lens->info);
 
     r = ALLOC(jmt);
     ERR_NOMEM(r < 0, lens->info);
@@ -1761,11 +1759,7 @@ struct jmt *jmt_build(struct lens *lens) {
     jmt->error = lens->info->error;
     array_init(&jmt->lenses, sizeof(struct jmt_lens));
 
-    l = add_lens(jmt, lens);
-    ERR_BAIL(jmt);
-    ensure(l == 0, lens->info);
-
-    index_lenses(jmt, lens->body);
+    index_lenses(jmt, lens);
 
     if (debugging("cf.jmt"))
         print_grammar_top(jmt, lens);
