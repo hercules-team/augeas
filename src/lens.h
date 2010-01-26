@@ -65,20 +65,24 @@ enum lens_tag {
  * means that recursive lenses accept context free languages in the string
  * -> tree direction, but only regular tree languages in the tree -> string
  * direction.
+ *
+ * Any lens that uses a recursive lens somehow is marked as recursive
+ * itself.
  */
 struct lens {
     unsigned int              ref;
     enum lens_tag             tag;
     struct info              *info;
-    struct regexp            *ctype;
+    struct regexp            *ctype;  /* NULL when recursive == 1 */
     struct regexp            *atype;
     struct regexp            *ktype;
     struct regexp            *vtype;
+    struct jmt               *jmt;    /* NULL when recursive == 0 */
     unsigned int              value : 1;
     unsigned int              key : 1;
     unsigned int              recursive : 1;
     unsigned int              consumes_value : 1;
-    /* Flag to help avoid cycles in recursive lenses */
+    /* Whether we are inside a recursive lens or outside */
     unsigned int              rec_internal : 1;
     unsigned int              ctype_nullable : 1;
     union {
@@ -102,6 +106,13 @@ struct lens {
              * is necessary to break the cycles inherent in recursive
              * lenses with reference counting. The link through alias is
              * set up in lns_check_rec, and not reference counted.
+             *
+             * Generally, any lens used in the body of a recursive lens is
+             * marked with rec_internal == 1; lenses that use the recursive
+             * lens 'from the outside' are marked with rec_internal ==
+             * 0. In the latter case, we can assign types right away,
+             * except for the ctype, which we never have for any recursive
+             * lens.
              */
             struct lens *alias;
             struct jmt  *jmt;
