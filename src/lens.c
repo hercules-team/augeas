@@ -157,6 +157,7 @@ static struct lens *make_lens_binop(enum lens_tag tag, struct info *info,
     lens->nchildren += (l2->tag == tag) ? l2->nchildren : 1;
 
     lens->recursive = l1->recursive || l2->recursive;
+    lens->rec_internal = l1->rec_internal || l2->rec_internal;
 
     if (ALLOC_N(lens->children, lens->nchildren) < 0) {
         lens->nchildren = 0;
@@ -187,14 +188,17 @@ static struct lens *make_lens_binop(enum lens_tag tag, struct info *info,
     if (ALLOC_N(types, lens->nchildren) < 0)
         goto error;
 
-    if (!lens->recursive) {
+    if (! lens->rec_internal) {
+        /* Inside a recursive lens, we assign types with lns_check_rec
+         * once we know the entire lens */
         for (int t=0; t < ntypes; t++) {
+            if (lens->recursive && t == CTYPE)
+                continue;
             for (int i=0; i < lens->nchildren; i++)
                 types[i] = ltype(lens->children[i], t);
             ltype(lens, t) = (*combinator)(info, lens->nchildren, types);
         }
     }
-
     FREE(types);
 
     for (int i=0; i < lens->nchildren; i++)
@@ -313,6 +317,7 @@ struct value *lns_make_subtree(struct info *info, struct lens *l) {
         lens->atype = subtree_atype(info, l->ktype, l->vtype);
     lens->value = lens->key = 0;
     lens->recursive = l->recursive;
+    lens->rec_internal = l->rec_internal;
     if (! l->recursive)
         lens->ctype_nullable = l->ctype_nullable;
     return make_lens_value(lens);
@@ -338,6 +343,7 @@ struct value *lns_make_star(struct info *info, struct lens *l, int check) {
         ltype(lens, t) = regexp_iter(info, ltype(l, t), 0, -1);
     }
     lens->recursive = l->recursive;
+    lens->rec_internal = l->rec_internal;
     lens->ctype_nullable = 1;
     return make_lens_value(lens);
 }
@@ -368,6 +374,7 @@ struct value *lns_make_maybe(struct info *info, struct lens *l, int check) {
     lens->value = l->value;
     lens->key = l->key;
     lens->recursive = l->recursive;
+    lens->rec_internal = l->rec_internal;
     lens->ctype_nullable = 1;
     return make_lens_value(lens);
 }
@@ -1066,6 +1073,7 @@ int lns_format_atype(struct lens *l, char **buf) {
 struct value *lns_make_rec(struct info *info) {
     struct lens *l = make_lens(L_REC, info);
     l->recursive = 1;
+    l->rec_internal = 1;
 
     return make_lens_value(l);
 }
@@ -1954,6 +1962,8 @@ struct value *lns_check_rec(struct info *info,
 
     assert(rec->tag == L_REC);
     assert(body->recursive);
+    assert(rec->rec_internal);
+
     struct value *result = NULL;
 
     /* To help memory management, we avoid the cycle inherent ina recursive
@@ -1964,7 +1974,6 @@ struct value *lns_check_rec(struct info *info,
      * The internal instance of the recursive lens is REC, the external one
      * is TOP, constructed below
      */
-    rec->rec_internal = 1;
     rec->body = body;                          /* REC does not own BODY */
 
     for (int i=0; i < ARRAY_CARDINALITY(types); i++) {
@@ -2005,6 +2014,7 @@ struct value *lns_check_rec(struct info *info,
     top->ctype_nullable = rec->ctype_nullable;
     top->body = ref(body);
     top->alias = rec;
+    top->rec_internal = 0;
     rec->alias = top;
 
     top->jmt = jmt;
