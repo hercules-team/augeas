@@ -760,14 +760,18 @@ build_nullable(struct jmt_parse *parse, ind_t pos,
 }
 
 static void build_trace(const char *msg, ind_t start, ind_t end,
-                struct item *x, int lvl) {
+                        struct item *x, int lvl) {
     for (int i=0; i < lvl; i++) putc(' ', stderr);
-    printf("%s %d..%d: (%d, %d) %d %s%s%s\n", msg,
-           start, end, x->state->num,
-           x->parent, x->links->lens,
-           is_complete(x->links) ? "C" : "",
-           is_predict(x->links) ? "P" : "",
-           is_scan(x->links) ? "S" : "");
+    if (x != NULL) {
+        printf("%s %d..%d: (%d, %d) %d %s%s%s\n", msg,
+               start, end, x->state->num,
+               x->parent, x->links->lens,
+               is_complete(x->links) ? "c" : "",
+               is_predict(x->links) ? "p" : "",
+               is_scan(x->links) ? "s" : "");
+    } else {
+        printf("%s %d..%d\n", msg, start, end);
+    }
 }
 
 static int ambig_check(struct jmt_visitor *visitor, struct lens *lens,
