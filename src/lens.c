@@ -221,7 +221,7 @@ struct value *lns_make_union(struct info *info,
     int recursive = l1->recursive || l2->recursive;
     int ctype_nullable = l1->ctype_nullable || l2->ctype_nullable;
 
-    if (check && !recursive) {
+    if (check) {
         struct value *exn = typecheck_union(info, l1, l2);
         if (exn != NULL)
             return exn;
@@ -241,11 +241,10 @@ struct value *lns_make_concat(struct info *info,
     int recursive = l1->recursive || l2->recursive;
     int ctype_nullable = l1->ctype_nullable && l2->ctype_nullable;
 
-    if (check && !recursive) {
+    if (check) {
         struct value *exn = typecheck_concat(info, l1, l2);
-        if (exn != NULL) {
+        if (exn != NULL)
             return exn;
-        }
     }
     if (l1->value && l2->value) {
         return make_exn_value(info, "Multiple stores in concat");
@@ -322,11 +321,10 @@ struct value *lns_make_subtree(struct info *info, struct lens *l) {
 struct value *lns_make_star(struct info *info, struct lens *l, int check) {
     struct lens *lens;
 
-    if (check && !l->recursive) {
+    if (check) {
         struct value *exn = typecheck_iter(info, l);
-        if (exn != NULL) {
+        if (exn != NULL)
             return exn;
-        }
     }
     if (l->value) {
         return make_exn_value(info, "Multiple stores in iteration");
@@ -359,11 +357,10 @@ struct value *lns_make_plus(struct info *info, struct lens *l, int check) {
 struct value *lns_make_maybe(struct info *info, struct lens *l, int check) {
     struct lens *lens;
 
-    if (check && !l->recursive) {
+    if (check) {
         struct value *exn = typecheck_maybe(info, l);
-        if (exn != NULL) {
+        if (exn != NULL)
             return exn;
-        }
     }
     lens = make_lens_unop(L_MAYBE, info, l);
     for (int t=0; t < ntypes; t++)
@@ -730,7 +727,7 @@ static struct value *typecheck_maybe(struct info *info, struct lens *l) {
     /* Check (r)? as (<e>|r) where <e> is the empty language */
     struct value *exn = NULL;
 
-    if (regexp_matches_empty(l->ctype)) {
+    if (l->ctype != NULL && regexp_matches_empty(l->ctype)) {
         exn = make_exn_value(ref(info),
                 "illegal optional expression: /%s/ matches the empty word",
                 l->ctype->pattern->str);
@@ -743,7 +740,7 @@ static struct value *typecheck_maybe(struct info *info, struct lens *l) {
            depending on whether the current node has a non NULL value or not
     */
     if (exn == NULL && ! l->consumes_value) {
-        if (regexp_matches_empty(l->atype)) {
+        if (l->atype != NULL && regexp_matches_empty(l->atype)) {
             exn = make_exn_value(ref(info),
                "optional expression matches the empty tree but does not consume a value");
         }
