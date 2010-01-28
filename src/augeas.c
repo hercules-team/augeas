@@ -780,8 +780,6 @@ int tree_replace(struct tree *origin, const char *path, struct tree *sub) {
     list_for_each(s, sub) {
         s->parent = parent;
     }
-    if (sub->dirty)
-        tree_mark_dirty(parent);
     free_pathx(p);
     return 0;
  error:
