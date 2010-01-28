@@ -274,7 +274,7 @@ static void no_match_error(struct state *state, struct lens *lens) {
     ensure(lens->tag == L_KEY || lens->tag == L_DEL
            || lens->tag == L_STORE, state->info);
     char *pat = regexp_escape(lens->ctype);
-    const char *lname;
+    const char *lname = "(lname)";
     if (lens->tag == L_KEY)
         lname = "key";
     else if (lens->tag == L_DEL)
