@@ -92,11 +92,10 @@ module Sshd =
    let deny_users = array_entry "DenyUsers"
 
    let subsystemvalue =
-     let value = store  /[^ \t\n]+/ in
+     let value = store (/[^ \t\n](.*[^ \t\n])?/) in
      [ key /[A-Za-z0-9]+/ . sep . value . eol ]
 
    let subsystem =
-     let value = store  /[^ \t\n]+([ \t]+[^ \t\n]+)*/ in
      [ key "Subsystem" .  sep .  subsystemvalue ]
 
    let macs =
