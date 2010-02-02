@@ -20,10 +20,10 @@ module Shellvars =
   (* treated as a simple value                                           *)
   let array =
     let array_value = store (char+ | dquot) in
-    del "(" "(" . counter "values" .
+    del /\([ \t]*/ "(" . counter "values" .
       [ seq "values" . array_value ] .
       [ del /[ \t\n]+/ " " . seq "values" . array_value ] *
-      . del ")" ")"
+      . del /[ \t]*\)/ ")"
 
   (* Treat an empty list () as a value '()'; that's not quite correct *)
   (* but fairly close.                                                *)

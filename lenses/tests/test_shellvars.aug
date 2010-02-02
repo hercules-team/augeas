@@ -106,6 +106,10 @@ unset ONBOOT
     { "2" = "v2" }
     { "3" = "v3" } }
 
+  (* Allow spaces after/before opening/closing parens for array *)
+  test Shellvars.lns get "config_eth1=( \"10.128.0.48/24\" )\n" =
+  { "config_eth1"  { "1" = "\"10.128.0.48/24\"" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
