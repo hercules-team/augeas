@@ -16,6 +16,7 @@ lens_tests =			\
   lens-aptsource.sh		\
   lens-bbhosts.sh		\
   lens-cobblersettings.sh	\
+  lens-cobblermodules.sh	\
   lens-cron.sh			\
   lens-darkice.sh		\
   lens-dhclient.sh		\
