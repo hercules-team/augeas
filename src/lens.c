@@ -597,10 +597,10 @@ static struct value *typecheck_union(struct info *info,
     return exn;
 }
 
-static struct value *ambig_check(struct info *info,
-                                 struct fa *fa1, struct fa *fa2,
-                                 struct regexp *r1, struct regexp *r2,
-                                 const char *msg, bool iterated) {
+static struct value *
+ambig_check(struct info *info, struct fa *fa1, struct fa *fa2,
+            enum lens_type typ,  struct lens *l1, struct lens *l2,
+            const char *msg, bool iterated) {
     char *upv, *pv, *v;
     size_t upv_len;
     struct value *exn = NULL;
@@ -618,13 +618,26 @@ static struct value *ambig_check(struct info *info,
     }
 
     if (upv != NULL) {
-        char *e_u = escape(upv, pv - upv);
-        char *e_up = escape(upv, v - upv);
-        char *e_upv = escape(upv, -1);
-        char *e_pv = escape(pv, -1);
-        char *e_v = escape(v, -1);
-        char *s1 = regexp_escape(r1);
-        char *s2 = regexp_escape(r2);
+        char *e_u, *e_up, *e_upv, *e_pv, *e_v;
+        char *s1, *s2;
+
+        if (typ == ATYPE) {
+            e_u = enc_format(upv, pv - upv);
+            e_up = enc_format(upv, v - upv);
+            e_upv = enc_format(upv, upv_len);
+            e_pv = enc_format(pv, strlen(pv));
+            e_v = enc_format(v, strlen(v));
+            lns_format_atype(l1, &s1);
+            lns_format_atype(l2, &s2);
+        } else {
+            e_u = escape(upv, pv - upv);
+            e_up = escape(upv, v - upv);
+            e_upv = escape(upv, -1);
+            e_pv = escape(pv, -1);
+            e_v = escape(v, -1);
+            s1 = regexp_escape(ltype(l1, typ));
+            s2 = regexp_escape(ltype(l2, typ));
+        }
         exn = make_exn_value(ref(info), "%s", msg);
         if (iterated) {
             exn_printf_line(exn, "  Iterated regexp: /%s/", s1);
@@ -648,11 +661,14 @@ static struct value *ambig_check(struct info *info,
     return exn;
 }
 
-static struct value *ambig_concat_check(struct info *info, const char *msg,
-                                        struct regexp *r1, struct regexp *r2) {
+static struct value *
+ambig_concat_check(struct info *info, const char *msg,
+                   enum lens_type typ, struct lens *l1, struct lens *l2) {
     struct fa *fa1 = NULL;
     struct fa *fa2 = NULL;
     struct value *result = NULL;
+    struct regexp *r1 = ltype(l1, typ);
+    struct regexp *r2 = ltype(l2, typ);
 
     if (r1 == NULL || r2 == NULL)
         return NULL;
@@ -665,7 +681,7 @@ static struct value *ambig_concat_check(struct info *info, const char *msg,
     if (result != NULL)
         goto done;
 
-    result = ambig_check(info, fa1, fa2, r1, r2, msg, false);
+    result = ambig_check(info, fa1, fa2, typ, l1, l2, msg, false);
  done:
     fa_free(fa1);
     fa_free(fa2);
@@ -677,10 +693,10 @@ static struct value *typecheck_concat(struct info *info,
     struct value *result = NULL;
 
     result = ambig_concat_check(info, "ambiguous concatenation",
-                                l1->ctype, l2->ctype);
+                                CTYPE, l1, l2);
     if (result == NULL) {
         result = ambig_concat_check(info, "ambiguous tree concatenation",
-                                    l1->atype, l2->atype);
+                                    ATYPE, l1, l2);
     }
     if (result != NULL) {
         char *fi = format_info(l1->info);
@@ -693,10 +709,12 @@ static struct value *typecheck_concat(struct info *info,
     return result;
 }
 
-static struct value *ambig_iter_check(struct info *info, const char *msg,
-                                      struct regexp *r) {
+static struct value *
+ambig_iter_check(struct info *info, const char *msg,
+                 enum lens_type typ, struct lens *l) {
     struct fa *fas = NULL, *fa = NULL;
     struct value *result = NULL;
+    struct regexp *r = ltype(l, typ);
 
     if (r == NULL)
         return NULL;
@@ -707,7 +725,7 @@ static struct value *ambig_iter_check(struct info *info, const char *msg,
 
     fas = fa_iter(fa, 0, -1);
 
-    result = ambig_check(info, fa, fas, r, r, msg, true);
+    result = ambig_check(info, fa, fas, typ, l, l, msg, true);
 
  done:
     fa_free(fa);
@@ -718,9 +736,9 @@ static struct value *ambig_iter_check(struct info *info, const char *msg,
 static struct value *typecheck_iter(struct info *info, struct lens *l) {
     struct value *result = NULL;
 
-    result = ambig_iter_check(info, "ambiguous iteration", l->ctype);
+    result = ambig_iter_check(info, "ambiguous iteration", CTYPE, l);
     if (result == NULL) {
-        result = ambig_iter_check(info, "ambiguous tree iteration", l->atype);
+        result = ambig_iter_check(info, "ambiguous tree iteration", ATYPE, l);
     }
     if (result != NULL) {
         char *fi = format_info(l->info);
