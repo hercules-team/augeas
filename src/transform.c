@@ -581,6 +581,7 @@ static struct tree *file_info(struct augeas *aug, const char *fname) {
     result = tree_find(aug, path);
     ERR_BAIL(aug);
  error:
+    free(path);
     return result;
 }
 
