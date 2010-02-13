@@ -55,6 +55,7 @@ Group: Specific Modules  {
 
    File: Build  (build.aug)
    File: cgconfig  (cgconfig.aug)
+   File: cgrules  (cgrules.aug)
    File: Cron  (cron.aug)
    File: Dpkg  (dpkg.aug)
    File: Exports  (exports.aug)
