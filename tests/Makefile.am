@@ -45,6 +45,7 @@ lens_tests =			\
   lens-modprobe.sh		\
   lens-monit.sh			\
   lens-multipath.sh     \
+  lens-nagioscfg.sh     \
   lens-ntp.sh			\
   lens-openvpn.sh		\
   lens-pam.sh			\
