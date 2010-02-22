@@ -303,7 +303,7 @@ let parameter_integer           = parameter_integer_nobool
 let parameter_string_nobool_kw = "badpass_message" | "editor" | "mailsub"
                                | "noexec_file" | "passprompt" | "runas_default"
                                | "syslog_badpri" | "syslog_goodpri"
-                               | "timestampdir" | "timestampowner"
+                               | "timestampdir" | "timestampowner" | "secure_path"
 
 let parameter_string_nobool    = [ key parameter_string_nobool_kw . sep_eq
                                      . del /"?/ "" . sto_to_com_col

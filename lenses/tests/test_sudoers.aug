@@ -157,3 +157,10 @@ test Sudoers.parameter_integer_bool put "!!!!umask = 022" after
     set "/umask/negate" "" = "!!!!!umask"
 
 test Sudoers.parameter_integer_bool get "!!!umask = 022" = *
+
+(* BZ 566134 *)
+
+let s = "Defaults    secure_path = /sbin:/bin:/usr/sbin:/usr/bin\n"
+test Sudoers.lns get s =
+  { "Defaults"
+    { "secure_path" = "/sbin:/bin:/usr/sbin:/usr/bin" } }
