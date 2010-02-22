@@ -1092,7 +1092,7 @@ static int main_loop(void) {
             printf("\n");
             return ret;
         }
-        if (line[0] == '#')
+        if (*line == '\0' || *line == '#')
             continue;
 
         code = run_command(line);

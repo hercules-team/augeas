@@ -107,7 +107,8 @@ check_SCRIPTS = \
   test-get.sh \
   test-put-symlink.sh test-save-empty.sh test-mv.sh \
   test-bug-1.sh test-idempotent.sh test-preserve.sh \
-  test-events-saved.sh test-save-mode.sh test-unlink-error.sh
+  test-events-saved.sh test-save-mode.sh test-unlink-error.sh \
+  test-augtool-empty-line.sh
 
 EXTRA_DIST = \
   augtest $(AUGTESTS) root lens-test-1 \
