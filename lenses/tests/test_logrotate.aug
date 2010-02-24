@@ -176,3 +176,9 @@ include /etc/logrotate.d
 \tprerotate
 \tfoobar\n
 \tendscript\n}\n"
+
+(* Bug #101: whitespace at the end of the line *)
+test Logrotate.lns get "/file {\n missingok \t\n}\n" =
+  { "rule"
+    { "file" = "/file" }
+    { "missingok" = "missingok" } }

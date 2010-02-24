@@ -16,14 +16,16 @@ module Logrotate =
 
    let sep_spc = Util.del_ws_spc
    let sep_val = del /[ \t]*=[ \t]*|[ \t]+/ " "
-   let eol = Util.del_str "\n"
+   let eol = Util.eol
    let num = /[0-9]+/
    let word = /[^,#= \n\t{}]+/
    let filename = /\/[^,#= \n\t{}]+/
    let size = num . /[kMG]?/
 
    (* define comments and empty lines *)
-   let comment (indent:string) = [ label "#comment" . del /[ \t]*/ indent . del /#[ \t]*/ "# " .  store /([^ \t\n][^\n]*)?/ . eol ]
+   let comment (indent:string) =
+     let nl = Util.del_str "\n" in
+     [ label "#comment" . del /[ \t]*/ indent . del /#[ \t]*/ "# " .  store /([^ \t\n].*)?/ . nl ]
    let empty   = [ del /[ \t]*\n/ "\n" ]
 
 
