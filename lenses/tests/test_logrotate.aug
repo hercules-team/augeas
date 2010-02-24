@@ -20,6 +20,7 @@ include /etc/logrotate.d
 
 # no packages own wtmp, or btmp -- we'll rotate them here
 /var/log/wtmp
+/var/log/wtmp2
 {
     missingok
     monthly
@@ -82,6 +83,7 @@ include /etc/logrotate.d
       { "#comment" = "no packages own wtmp, or btmp -- we'll rotate them here" }
       { "rule"
            { "file"      = "/var/log/wtmp" }
+           { "file"      = "/var/log/wtmp2" }
            { "missingok" = "missingok" }
            { "schedule"  = "monthly" }
            { "create"

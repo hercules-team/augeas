@@ -19,6 +19,7 @@ module Logrotate =
    let eol = Util.del_str "\n"
    let num = /[0-9]+/
    let word = /[^,#= \n\t{}]+/
+   let filename = /\/[^,#= \n\t{}]+/
    let size = num . /[kMG]?/
 
    (* define comments and empty lines *)
@@ -101,8 +102,8 @@ module Logrotate =
 
    let rule =
      [ label "rule" . Util.indent .
-         [ label "file" . store word ] .
-	 [ del /[ \t]+/ " " . label "file" . store word ]* .
+         [ label "file" . store filename ] .
+	 [ del /[ \t\n]+/ " " . label "file" . store filename ]* .
 	 del /[ \t\n]*/ " " . body ]
 
    let lns = ( comment "" | empty | attrs "" | rule )*
