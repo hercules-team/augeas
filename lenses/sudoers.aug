@@ -268,7 +268,7 @@ let parameter_flag_kw    = "always_set_home" | "authenticate" | "env_editor"
                          | "shell_noargs" | "stay_setuid" | "targetpw"
                          | "tty_tickets"
 
-let parameter_flag       = [ (del_negate . negate_node)?
+let parameter_flag       = [ del_negate . negate_node?
                                . key parameter_flag_kw ]
 
 (************************************************************************

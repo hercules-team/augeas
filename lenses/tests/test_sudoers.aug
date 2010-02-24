@@ -21,7 +21,7 @@ Cmnd_Alias \
    Cmnd_Alias ICAL = /bin/cat /home/rpinson/.kde/share/apps/korganizer/std.ics
 
 	Defaults@LOCALNET        !lecture, \
-   		tty_tickets,!fqdn
+   \t\t tty_tickets,!fqdn, !!env_reset
 
 Defaults:buildd env_keep+=\"APT_CONFIG DEBIAN_FRONTEND SHELL\"
 
@@ -81,7 +81,8 @@ someuser ALL=(root) NOPASSWD: /usr/bin/python /usr/local/sbin/filterlog -iu\\=ww
           { "type"      = "@LOCALNET" }
 	      { "lecture" { "negate" } }
           { "tty_tickets" }
-          { "fqdn" { "negate" } } }
+          { "fqdn" { "negate" } }
+          { "env_reset" } }
       {}
       { "Defaults"
           { "type"      = ":buildd" }
