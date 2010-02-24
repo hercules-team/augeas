@@ -55,7 +55,7 @@ module Ntp =
 
     let simple_setting (k:regexp) = kv k word
 
-    (* Still incomplete, misses logconfig, phone, setvar, tinker, tos,
+    (* Still incomplete, misses logconfig, phone, setvar, tos,
        trap, ttl *)
     let simple_settings =
         kv "broadcastdelay" Rx.decimal
@@ -103,12 +103,19 @@ module Ntp =
      | [ key /autokey|revoke/ . [sep_spc . store word]? . eol ]
      | [ key /trustedkey/ . [ sep_spc . label "key" . store word ]+ . eol ]
 
+    (* tinker [step step | panic panic | dispersion dispersion |
+               stepout stepout | minpoll minpoll | allan allan | huffpuff huffpuff] *)
+    let tinker =
+      let arg_names = /step|panic|dispersion|stepout|minpoll|allan|huffpuff/ in
+      let arg = [ key arg_names . sep_spc . store Rx.decimal ] in
+      [ key "tinker" . (sep_spc . arg)* . eol ]
+
     (* Define lens *)
 
     let lns = ( comment | empty | command_record | fudge_record
               | restrict_record | simple_settings | statistics_record
               | filegen_record | broadcastclient
-              | auth_command )*
+              | auth_command | tinker )*
 
     let filter = (incl "/etc/ntp.conf")
         . Util.stdexcl

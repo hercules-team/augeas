@@ -145,3 +145,9 @@ filegen clockstats file clockstats type day enable nolink
      { "disable"
          { "flag" = "kernel" }
          { "flag" = "stats" } }
+
+(* Bug #103: tinker directive *)
+test Ntp.tinker get "tinker panic 0 huffpuff 3.14\n" =
+  { "tinker"
+    { "panic" = "0" }
+    { "huffpuff" = "3.14" } }
