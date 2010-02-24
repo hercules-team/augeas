@@ -15,6 +15,8 @@ send
 	fqdn.fqdn
 	  \"grosse.fugue.com.\";
 
+option rfc3442-classless-static-routes code 121 = array of unsigned integer 8;
+
 interface ep0 {
    script /sbin/dhclient-script;
    send dhcp-client-identifier 1:0:a0:24:ab:fb:9c;
@@ -60,6 +62,11 @@ lease {
         { "#comment" = "Dynamic DNS" }
         { "send"
            { "fqdn.fqdn" = "\"grosse.fugue.com.\"" } }
+        {}
+        { "option"
+           { "rfc3442-classless-static-routes"
+               { "code"  = "121" }
+               { "value" = "array of unsigned integer 8" } } }
         {}
         { "interface" = "ep0"
            { "script" = "/sbin/dhclient-script" }
