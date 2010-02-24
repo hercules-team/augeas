@@ -19,7 +19,8 @@ let comment  = IniFile.comment IniFile.comment_re IniFile.comment_default
 let sep      = IniFile.sep IniFile.sep_re IniFile.sep_default
 
 
-let setting = "allow_non-us_software"
+let setting = "allow_dcut"
+            | "allow_non-us_software"
             | "allow_unsigned_uploads"
             | "check_version"
             | "default_host_main"
