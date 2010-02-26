@@ -44,6 +44,7 @@ let lns = (comment|empty|entry)*
 
 let filter = (incl "/etc/modprobe.conf") .
   (incl "/etc/modprobe.d/*").
+  (incl "/etc/modprobe.conf.local").
   Util.stdexcl
 
 let xfm = transform lns filter
