@@ -44,9 +44,8 @@
 #define UCHAR_MIN 0
 typedef unsigned char uchar;
 
-#define _E(cond) if (cond) goto error
-#define _F(expr) if ((expr) < 0) goto error
-#define _N(expr) if ((expr) == NULL) goto error
+#define E(cond) if (cond) goto error
+#define F(expr) if ((expr) < 0) goto error
 
 /* Which algorithm to use in FA_MINIMIZE */
 int fa_minimization_algorithm = FA_MIN_HOPCROFT;
@@ -517,15 +516,15 @@ static int state_set_init_data(struct state_set *set) {
 static struct state_set *state_set_init(int size, int flags) {
     struct state_set *set = NULL;
 
-    _F(ALLOC(set));
+    F(ALLOC(set));
 
     set->sorted = (flags & S_SORTED) ? 1 : 0;
     set->with_data = (flags & S_DATA) ? 1 : 0;
     if (size > 0) {
         set->size = size;
-        _F(ALLOC_N(set->states, set->size));
+        F(ALLOC_N(set->states, set->size));
         if (set->with_data)
-            _F(state_set_init_data(set));
+            F(state_set_init_data(set));
     }
     return set;
  error:
@@ -844,7 +843,7 @@ static int mark_reachable(struct fa *fa) {
     struct state_set *worklist = state_set_init(-1, S_NONE);
     int result = -1;
 
-    _E(worklist == NULL);
+    E(worklist == NULL);
 
     list_for_each(s, fa->initial) {
         s->reachable = 0;
@@ -857,7 +856,7 @@ static int mark_reachable(struct fa *fa) {
         for_each_trans(t, s) {
             if (! t->to->reachable) {
                 t->to->reachable = 1;
-                _F(state_set_push(worklist, t->to));
+                F(state_set_push(worklist, t->to));
             }
         }
     }
@@ -876,11 +875,11 @@ static struct state_set *fa_states(struct fa *fa) {
     int r;
 
     r = mark_reachable(fa);
-    _E(visited == NULL || r < 0);
+    E(visited == NULL || r < 0);
 
     list_for_each(s, fa->initial) {
         if (s->reachable)
-            _F(state_set_push(visited, s));
+            F(state_set_push(visited, s));
     }
     return visited;
  error:
@@ -898,7 +897,7 @@ static struct state_set *fa_accept_states(struct fa *fa) {
     r = mark_reachable(fa);
     list_for_each(s, fa->initial) {
         if (s->reachable && s->accept)
-            _F(state_set_push(accept, s));
+            F(state_set_push(accept, s));
     }
     return accept;
  error:
@@ -913,7 +912,7 @@ ATTRIBUTE_RETURN_CHECK
 static int mark_live(struct fa *fa) {
     int changed;
 
-    _F(mark_reachable(fa));
+    F(mark_reachable(fa));
 
     list_for_each(s, fa->initial) {
         s->live = s->reachable && s->accept;
@@ -953,11 +952,11 @@ static struct state_set *fa_reverse(struct fa *fa) {
     all = fa_states(fa);
     accept = fa_accept_states(fa);
 
-    _F(state_set_init_data(all));
+    F(state_set_init_data(all));
 
     /* Reverse all transitions */
     int *tused;
-    _F(ALLOC_N(tused, all->used));
+    F(ALLOC_N(tused, all->used));
     for (int i=0; i < all->used; i++) {
         all->data[i] = all->states[i]->trans;
         tused[i] = all->states[i]->tused;
@@ -1006,7 +1005,7 @@ static uchar* start_points(struct fa *fa, int *npoints) {
     char pointset[UCHAR_NUM];
     uchar *points = NULL;
 
-    _F(mark_reachable(fa));
+    F(mark_reachable(fa));
     MEMZERO(pointset, UCHAR_NUM);
     list_for_each(s, fa->initial) {
         if (! s->reachable)
@@ -1022,7 +1021,7 @@ static uchar* start_points(struct fa *fa, int *npoints) {
     *npoints = 0;
     for(int i=0; i < UCHAR_NUM; *npoints += pointset[i], i++);
 
-    _F(ALLOC_N(points, *npoints+1));
+    F(ALLOC_N(points, *npoints+1));
     for (int i=0, n=0; i < UCHAR_NUM; i++) {
         if (pointset[i])
             points[n++] = (uchar) i;
@@ -1091,12 +1090,12 @@ static int state_set_hash_add(state_set_hash **smap,
                               struct state_set *set, struct fa *fa) {
     if (*smap == NULL) {
         *smap = hash_create(HASHCOUNT_T_MAX, set_cmp, set_hash);
-        _E(*smap == NULL);
+        E(*smap == NULL);
         hash_set_allocator(*smap, NULL, set_destroy, NULL);
     }
     struct state *s = add_state(fa, 0);
-    _E(s == NULL);
-    _F(hash_alloc_insert(*smap, set, s));
+    E(s == NULL);
+    F(hash_alloc_insert(*smap, set, s));
     return 0;
  error:
     return -1;
@@ -1248,7 +1247,7 @@ static void collect_dead_states(struct fa *fa) {
 }
 
 static int collect(struct fa *fa) {
-    _F(mark_live(fa));
+    F(mark_live(fa));
 
     if (! fa->initial->live) {
         /* This automaton accepts nothing, make it the canonical
@@ -1295,15 +1294,15 @@ static int determinize(struct fa *fa, struct state_set *ini) {
         return 0;
 
     points = start_points(fa, &npoints);
-    _E(points == NULL);
+    E(points == NULL);
     if (make_ini) {
         ini = state_set_init(-1, S_NONE);
         if (ini == NULL || state_set_push(ini, fa->initial) < 0)
             goto error;
     }
 
-    _F(state_set_list_add(&worklist, ini));
-    _F(state_set_hash_add(&newstate, ini, fa));
+    F(state_set_list_add(&worklist, ini));
+    F(state_set_hash_add(&newstate, ini, fa));
     // Make the new state the initial state
     swap_initial(fa);
     while (worklist != NULL) {
@@ -1314,17 +1313,17 @@ static int determinize(struct fa *fa, struct state_set *ini) {
         }
         for (int n=0; n < npoints; n++) {
             struct state_set *pset = state_set_init(-1, S_SORTED);
-            _E(pset == NULL);
+            E(pset == NULL);
             for(int q=0 ; q < sset->used; q++) {
                 for_each_trans(t, sset->states[q]) {
                     if (t->min <= points[n] && points[n] <= t->max) {
-                        _F(state_set_add(pset, t->to));
+                        F(state_set_add(pset, t->to));
                     }
                 }
             }
             if (!state_set_hash_contains(newstate, pset)) {
-                _F(state_set_list_add(&worklist, pset));
-                _F(state_set_hash_add(&newstate, pset, fa));
+                F(state_set_list_add(&worklist, pset));
+                F(state_set_hash_add(&newstate, pset, fa));
             }
             pset = state_set_hash_uniq(newstate, pset);
 
@@ -1443,7 +1442,7 @@ static int minimize_hopcroft(struct fa *fa) {
     int *nsind = NULL;
     int result = -1;
 
-    _F(determinize(fa, NULL));
+    F(determinize(fa, NULL));
 
     /* Total automaton, nothing to do */
     if (fa->initial->tused == 1
@@ -1452,32 +1451,32 @@ static int minimize_hopcroft(struct fa *fa) {
         && fa->initial->trans[0].max == UCHAR_MAX)
         return 0;
 
-    _F(totalize(fa));
+    F(totalize(fa));
 
     /* make arrays for numbered states and effective alphabet */
     states = state_set_init(-1, S_NONE);
-    _E(states == NULL);
+    E(states == NULL);
 
     list_for_each(s, fa->initial) {
-        _F(state_set_push(states, s));
+        F(state_set_push(states, s));
     }
     unsigned int nstates = states->used;
 
     int nsigma;
     sigma = start_points(fa, &nsigma);
-    _E(sigma == NULL);
+    E(sigma == NULL);
 
     /* initialize data structures */
 
     /* An ss->used x nsigma matrix of lists of states */
-    _F(ALLOC_N(reverse, nstates * nsigma));
+    F(ALLOC_N(reverse, nstates * nsigma));
     reverse_nonempty = bitset_init(nstates * nsigma);
-    _E(reverse_nonempty == NULL);
-    _F(ALLOC_N(partition, nstates));
-    _F(ALLOC_N(block, nstates));
+    E(reverse_nonempty == NULL);
+    F(ALLOC_N(partition, nstates));
+    F(ALLOC_N(block, nstates));
 
-    _F(ALLOC_N(active, nstates * nsigma));
-    _F(ALLOC_N(active2, nstates * nsigma));
+    F(ALLOC_N(active, nstates * nsigma));
+    F(ALLOC_N(active2, nstates * nsigma));
 
     /* PENDING is an array of pairs of ints. The i'th pair is stored in
      * PENDING[2*i] and PENDING[2*i + 1]. There are NPENDING pairs in
@@ -1486,26 +1485,26 @@ static int minimize_hopcroft(struct fa *fa) {
      */
     size_t npending = 0, spending = 0;
     pending2 = bitset_init(nstates * nsigma);
-    _E(pending2 == NULL);
+    E(pending2 == NULL);
 
     split = state_set_init(-1, S_NONE);
     split2 = bitset_init(nstates);
-    _E(split == NULL || split2 == NULL);
+    E(split == NULL || split2 == NULL);
 
-    _F(ALLOC_N(refine, nstates));
+    F(ALLOC_N(refine, nstates));
     refine2 = bitset_init(nstates);
-    _E(refine2 == NULL);
+    E(refine2 == NULL);
 
-    _F(ALLOC_N(splitblock, nstates));
+    F(ALLOC_N(splitblock, nstates));
 
     for (int q = 0; q < nstates; q++) {
         splitblock[q] = state_set_init(-1, S_NONE);
         partition[q] = state_set_init(-1, S_NONE);
-        _E(splitblock[q] == NULL || partition[q] == NULL);
+        E(splitblock[q] == NULL || partition[q] == NULL);
         for (int x = 0; x < nsigma; x++) {
             reverse[INDEX(q, x)] = state_set_init(-1, S_NONE);
-            _E(reverse[INDEX(q, x)] == NULL);
-            _F(ALLOC_N(active[INDEX(q, x)], 1));
+            E(reverse[INDEX(q, x)] == NULL);
+            F(ALLOC_N(active[INDEX(q, x)], 1));
         }
     }
 
@@ -1517,7 +1516,7 @@ static int minimize_hopcroft(struct fa *fa) {
             j = 0;
         else
             j = 1;
-        _F(state_set_push(partition[j], qq));
+        F(state_set_push(partition[j], qq));
         block[q] = j;
         for (int x = 0; x < nsigma; x++) {
             uchar y = sigma[x];
@@ -1525,7 +1524,7 @@ static int minimize_hopcroft(struct fa *fa) {
             assert(p != NULL);
             int pn = state_set_index(states, p);
             assert(pn >= 0);
-            _F(state_set_push(reverse[INDEX(pn, x)], qq));
+            F(state_set_push(reverse[INDEX(pn, x)], qq));
             bitset_set(reverse_nonempty, INDEX(pn, x));
         }
     }
@@ -1539,12 +1538,12 @@ static int minimize_hopcroft(struct fa *fa) {
                 if (bitset_get(reverse_nonempty, INDEX(qn, x))) {
                     active2[INDEX(qn, x)] =
                         state_list_add(active[INDEX(j, x)], qq);
-                    _E(active2[INDEX(qn, x)] == NULL);
+                    E(active2[INDEX(qn, x)] == NULL);
                 }
             }
 
     /* initialize pending */
-    _F(ALLOC_N(pending, 2*nsigma));
+    F(ALLOC_N(pending, 2*nsigma));
     npending = nsigma;
     spending = nsigma;
     for (int x = 0; x < nsigma; x++) {
@@ -1577,9 +1576,9 @@ static int minimize_hopcroft(struct fa *fa) {
                 int s = state_set_index(states, rs);
                 if (! bitset_get(split2, s)) {
                     bitset_set(split2, s);
-                    _F(state_set_push(split, rs));
+                    F(state_set_push(split, rs));
                     int j = block[s];
-                    _F(state_set_push(splitblock[j], rs));
+                    F(state_set_push(splitblock[j], rs));
                     if (!bitset_get(refine2, j)) {
                         bitset_set(refine2, j);
                         refine[ref++] = j;
@@ -1596,7 +1595,7 @@ static int minimize_hopcroft(struct fa *fa) {
                 struct state_set *b2 = partition[k];
                 for (int s = 0; s < sp->used; s++) {
                     state_set_remove(b1, sp->states[s]);
-                    _F(state_set_push(b2, sp->states[s]));
+                    F(state_set_push(b2, sp->states[s]));
                     int snum = state_set_index(states, sp->states[s]);
                     block[snum] = k;
                     for (int c = 0; c < nsigma; c++) {
@@ -1606,7 +1605,7 @@ static int minimize_hopcroft(struct fa *fa) {
                             active2[INDEX(snum, c)] =
                                 state_list_add(active[INDEX(k, c)],
                                                sp->states[s]);
-                            _E(active2[INDEX(snum, c)] == NULL);
+                            E(active2[INDEX(snum, c)] == NULL);
                         }
                     }
                 }
@@ -1616,7 +1615,7 @@ static int minimize_hopcroft(struct fa *fa) {
                     int ak = active[INDEX(k, c)]->size;
                     if (npending + 1 > spending) {
                         spending *= 2;
-                        _F(REALLOC_N(pending, 2 * spending));
+                        F(REALLOC_N(pending, 2 * spending));
                     }
                     pending[2*npending + 1] = c;
                     if (!bitset_get(pending2, INDEX(j, c))
@@ -1643,13 +1642,13 @@ static int minimize_hopcroft(struct fa *fa) {
 
     /* make a new state for each equivalence class, set initial state */
     newstates = state_set_init(k, S_NONE);
-    _E(newstates == NULL);
-    _F(ALLOC_N(nsnum, k));
-    _F(ALLOC_N(nsind, nstates));
+    E(newstates == NULL);
+    F(ALLOC_N(nsnum, k));
+    F(ALLOC_N(nsind, nstates));
 
     for (int n = 0; n < k; n++) {
         struct state *s = make_state();
-        _E(s == NULL);
+        E(s == NULL);
         newstates->states[n] = s;
         struct state_set *partn = partition[n];
         for (int q=0; q < partn->used; q++) {
@@ -1669,7 +1668,7 @@ static int minimize_hopcroft(struct fa *fa) {
         for_each_trans(t, states->states[nsnum[n]]) {
             int toind = state_set_index(states, t->to);
             struct state *nto = newstates->states[nsind[toind]];
-            _F(add_new_trans(s, nto, t->min, t->max));
+            F(add_new_trans(s, nto, t->min, t->max));
         }
     }
 
@@ -1734,13 +1733,13 @@ static int minimize_brzozowski(struct fa *fa) {
 
     /* Minimize using Brzozowski's algorithm */
     set = fa_reverse(fa);
-    _E(set == NULL);
-    _F(determinize(fa, set));
+    E(set == NULL);
+    F(determinize(fa, set));
     state_set_free(set);
 
     set = fa_reverse(fa);
-    _E(set == NULL);
-    _F(determinize(fa, set));
+    E(set == NULL);
+    F(determinize(fa, set));
     state_set_free(set);
     return 0;
  error:
@@ -1880,7 +1879,7 @@ static struct fa *fa_clone(struct fa *fa) {
     result->nocase = fa->nocase;
     list_for_each(s, fa->initial) {
         int i = state_set_push(set, s);
-        _E(i < 0);
+        E(i < 0);
 
         struct state *q = add_state(result, s->accept);
         if (q == NULL)
@@ -1949,7 +1948,7 @@ struct fa *fa_union(struct fa *fa1, struct fa *fa2) {
     if (fa1 == NULL || fa2 == NULL)
         goto error;
 
-    _F(union_in_place(fa1, &fa2));
+    F(union_in_place(fa1, &fa2));
 
     return fa1;
  error:
@@ -1993,9 +1992,9 @@ struct fa *fa_concat(struct fa *fa1, struct fa *fa2) {
     if (fa1 == NULL || fa2 == NULL)
         goto error;
 
-    _F(concat_in_place(fa1, &fa2));
+    F(concat_in_place(fa1, &fa2));
 
-    _F(collect(fa1));
+    F(collect(fa1));
 
     return fa1;
 
@@ -2204,8 +2203,8 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
         return fa_make_empty();
 
     if (fa1->nocase != fa2->nocase) {
-        _F(case_expand(fa1));
-        _F(case_expand(fa2));
+        F(case_expand(fa1));
+        F(case_expand(fa2));
     }
 
     fa = fa_make_empty();
@@ -2217,10 +2216,10 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
     sort_transition_intervals(fa1);
     sort_transition_intervals(fa2);
 
-    _F(state_set_push(worklist, fa1->initial));
-    _F(state_set_push(worklist, fa2->initial));
-    _F(state_set_push(worklist, fa->initial));
-    _F(state_triple_push(newstates,
+    F(state_set_push(worklist, fa1->initial));
+    F(state_set_push(worklist, fa2->initial));
+    F(state_set_push(worklist, fa->initial));
+    F(state_triple_push(newstates,
                          fa1->initial, fa2->initial, fa->initial));
     while (worklist->used) {
         struct state *s  = state_set_pop(worklist);
@@ -2241,11 +2240,11 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
                                                        t1[n1].to, t2[n2].to);
                     if (r == NULL) {
                         r = add_state(fa, 0);
-                        _N(r);
-                        _F(state_set_push(worklist, t1[n1].to));
-                        _F(state_set_push(worklist, t2[n2].to));
-                        _F(state_set_push(worklist, r));
-                        _F(state_triple_push(newstates,
+                        E(r == NULL);
+                        F(state_set_push(worklist, t1[n1].to));
+                        F(state_set_push(worklist, t2[n2].to));
+                        F(state_set_push(worklist, r));
+                        F(state_triple_push(newstates,
                                              t1[n1].to, t2[n2].to, r));
                     }
                     char min = t1[n1].min > t2[n2].min
@@ -2293,8 +2292,8 @@ int fa_contains(struct fa *fa1, struct fa *fa2) {
     sort_transition_intervals(fa1);
     sort_transition_intervals(fa2);
 
-    _F(state_pair_push(&worklist, fa1->initial, fa2->initial));
-    _F(state_pair_push(&visited, fa1->initial, fa2->initial));
+    F(state_pair_push(&worklist, fa1->initial, fa2->initial));
+    F(state_pair_push(&visited, fa1->initial, fa2->initial));
     while (worklist->used) {
         struct state *p1, *p2;
         void *v2;
@@ -2322,8 +2321,8 @@ int fa_contains(struct fa *fa1, struct fa *fa2) {
                     max1 = UCHAR_MIN;
                 }
                 if (state_pair_find(visited, t1[n1].to, t2[n2].to) == -1) {
-                    _F(state_pair_push(&worklist, t1[n1].to, t2[n2].to));
-                    _F(state_pair_push(&visited, t1[n1].to, t2[n2].to));
+                    F(state_pair_push(&worklist, t1[n1].to, t2[n2].to));
+                    F(state_pair_push(&visited, t1[n1].to, t2[n2].to));
                 }
             }
             if (min1 <= max1)
@@ -2345,8 +2344,8 @@ static int totalize(struct fa *fa) {
     int r;
     struct state *crash = add_state(fa, 0);
 
-    _E(crash == NULL);
-    _F(mark_reachable(fa));
+    E(crash == NULL);
+    F(mark_reachable(fa));
     sort_transition_intervals(fa);
 
     if (fa->nocase) {
@@ -2396,13 +2395,13 @@ static int totalize(struct fa *fa) {
 
 struct fa *fa_complement(struct fa *fa) {
     fa = fa_clone(fa);
-    _E(fa == NULL);
-    _F(determinize(fa, NULL));
-    _F(totalize(fa));
+    E(fa == NULL);
+    F(determinize(fa, NULL));
+    F(totalize(fa));
     list_for_each(s, fa->initial)
         s->accept = ! s->accept;
 
-    _F(collect(fa));
+    F(collect(fa));
     return fa;
  error:
     fa_free(fa);
@@ -2433,7 +2432,7 @@ static int accept_to_accept(struct fa *fa) {
     if (s == NULL)
         return -1;
 
-    _F(mark_reachable(fa));
+    F(mark_reachable(fa));
     list_for_each(a, fa->initial) {
         if (a->accept && a->reachable) {
             r = add_epsilon_trans(s, a);
@@ -2585,13 +2584,13 @@ int fa_example(struct fa *fa, char **example, size_t *example_len) {
     str = make_re_str("");
     if (path == NULL || str == NULL)
         goto error;
-    _F(state_set_push_data(path, fa->initial, str));
+    F(state_set_push_data(path, fa->initial, str));
 
     /* List of states still to visit */
     worklist = state_set_init(-1, S_NONE);
     if (worklist == NULL)
         goto error;
-    _F(state_set_push(worklist, fa->initial));
+    F(state_set_push(worklist, fa->initial));
 
     while (worklist->used) {
         struct state *s = state_set_pop(worklist);
@@ -2601,9 +2600,9 @@ int fa_example(struct fa *fa, char **example, size_t *example_len) {
             int toind = state_set_index(path, t->to);
             if (toind == -1) {
                 struct re_str *w = string_extend(NULL, ps, c);
-                _N(w);
-                _F(state_set_push(worklist, t->to));
-                _F(state_set_push_data(path, t->to, w));
+                E(w == NULL);
+                F(state_set_push(worklist, t->to));
+                F(state_set_push_data(path, t->to, w));
             } else {
                 path->data[toind] = string_extend(path->data[toind], ps, c);
             }
@@ -2657,7 +2656,7 @@ static struct fa *expand_alphabet(struct fa *fa, int add_marker,
     if (fa == NULL)
         return NULL;
 
-    _F(mark_reachable(fa));
+    F(mark_reachable(fa));
     list_for_each(p, fa->initial) {
         if (! p->reachable)
             continue;
@@ -2844,7 +2843,7 @@ int fa_ambig_example(struct fa *fa1, struct fa *fa2,
 
     if (s != NULL) {
         char *t;
-        _F(ALLOC_N(result, (strlen(s)-1)/2 + 1));
+        F(ALLOC_N(result, (strlen(s)-1)/2 + 1));
         t = result;
         int i = 0;
         for (i=0; s[2*i] == X; i++)
@@ -3011,16 +3010,16 @@ int fa_nocase(struct fa *fa) {
             } else if (t->max <= 'Z') {
                 /* t->min < 'A' */
                 t->max = 'A' - 1;
-                _F(add_new_trans(s, t->to, lc_min, lc_max));
+                F(add_new_trans(s, t->to, lc_min, lc_max));
             } else {
                 /* t->min < 'A' && t->max > 'Z' */
-                _F(add_new_trans(s, t->to, 'Z' + 1, t->max));
+                F(add_new_trans(s, t->to, 'Z' + 1, t->max));
                 s->trans[i].max = 'A' - 1;
-                _F(add_new_trans(s, s->trans[i].to, lc_min, lc_max));
+                F(add_new_trans(s, s->trans[i].to, lc_min, lc_max));
             }
         }
     }
-    _F(collect(fa));
+    F(collect(fa));
     return 0;
  error:
     return -1;
@@ -3049,10 +3048,10 @@ static int case_expand(struct fa *fa) {
 
             if (t->min > 'z' || t->max < 'a')
                 continue;
-            _F(add_new_trans(s, t->to, lc_min, lc_max));
+            F(add_new_trans(s, t->to, lc_min, lc_max));
         }
     }
-    _F(collect(fa));
+    F(collect(fa));
     return 0;
  error:
     return -1;
@@ -3919,7 +3918,7 @@ static int convert_strings(struct fa *fa) {
     struct state_set *worklist = state_set_init(-1, S_NONE);
     int result = -1;
 
-    _E(worklist == NULL);
+    E(worklist == NULL);
 
     /* Abuse hash to count indegree, reachable to mark visited states */
     list_for_each(s, fa->initial) {
@@ -3972,7 +3971,7 @@ static int convert_strings(struct fa *fa) {
 
             if (! to->reachable) {
                 to->reachable = 1;
-                _F(state_set_push(worklist, to));
+                F(state_set_push(worklist, to));
             }
         }
     }
