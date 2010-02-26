@@ -21,6 +21,7 @@ lens_tests =			\
   lens-cobblermodules.sh	\
   lens-cron.sh			\
   lens-darkice.sh		\
+  lens-debctrl.sh		\
   lens-dhclient.sh		\
   lens-dnsmasq.sh		\
   lens-dpkg.sh			\
