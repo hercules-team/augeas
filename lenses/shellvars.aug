@@ -91,6 +91,7 @@ module Shellvars =
       sc_incl "xendomains"
 
   let filter_ifcfg   = incl "/etc/sysconfig/network-scripts/ifcfg-*"
+                     . incl "/etc/sysconfig/network/ifcfg-*"
   let filter_default = incl "/etc/default/*"
   let filter_misc    = incl "/etc/arno-iptables-firewall/debconf.cfg"
                      . incl "/etc/cron-apt/config"
