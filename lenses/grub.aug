@@ -23,7 +23,7 @@ module Grub =
       [ command kw indent . value_sep dflt_sep . value_to_eol . eol ]
 
     let kw_boot_arg (kw:string) = kw_arg kw "\t" " "
-    let kw_menu_arg (kw:string) = kw_arg kw "" "="
+    let kw_menu_arg (kw:string) = kw_arg kw "" " "
     let password_arg = [ key "password" .
       (spc . [ switch "md5" ])? .
       spc . store (/[^ \t\n]+/ - "--md5") .
@@ -61,6 +61,7 @@ module Grub =
                      | kw_pres "hiddenmenu"
                      | kw_menu_arg "timeout"
                      | kw_menu_arg "splashimage"
+                     | kw_menu_arg "gfxmenu"
                      | serial
                      | terminal
                      | password_arg
@@ -70,9 +71,9 @@ module Grub =
 
     (* Parse the file name and args on a kernel or module line *)
     let kernel_args =
-      let arg = Rx.word - /type|no-mem-option/ in
+      let arg = Rx.word - /type|no-mem-option/  in
       store /\/[^ \t\n]*/ .
-            (spc . [ key arg . (eq . store Rx.no_spaces)?])* . eol
+            (spc . [ key arg . (eq. store /([^ \t\n])*/)?])* . eol
 
     let module_line =
       [ command "module" "\t" . spc . kernel_args ]
@@ -147,4 +148,5 @@ module Grub =
                     . del debian_footer debian_footer ]
 
     let lns = (comment | empty | menu_setting | boot | debian)*
-    let xfm = transform lns (incl "/etc/grub.conf")
+    let xfm = transform lns (incl "/boot/grub/menu.lst"
+                           . incl "/etc/grub.conf")

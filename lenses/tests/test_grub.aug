@@ -13,10 +13,11 @@ password --md5 $1$M9NLj$p2gs87vwNv48BUu.wAfVw0
 default=0
 timeout=5
 splashimage=(hd0,0)/grub/splash.xpm.gz
+gfxmenu=(hd0,0)/boot/message
 hiddenmenu
 title Fedora (2.6.24.4-64.fc8)
         root (hd0,0)
-        kernel /vmlinuz-2.6.24.4-64.fc8 ro root=/dev/vg00/lv00
+        kernel /vmlinuz-2.6.24.4-64.fc8 ro root=/dev/vg00/lv00 crashkernel=
         initrd /initrd-2.6.24.4-64.fc8.img
 title Fedora (2.6.24.3-50.fc8)
         root (hd0,0)
@@ -48,11 +49,12 @@ title Fedora (2.6.24.3-34.fc8)
     { "default" = "0" }
     { "timeout" = "5" }
     { "splashimage" = "(hd0,0)/grub/splash.xpm.gz" }
+    { "gfxmenu" = "(hd0,0)/boot/message" }
     { "hiddenmenu" }
     { "title" = "Fedora (2.6.24.4-64.fc8)"
         { "root" = "(hd0,0)" }
         { "kernel" = "/vmlinuz-2.6.24.4-64.fc8"
-            { "ro" }  { "root" = "/dev/vg00/lv00" } }
+            { "ro" }  { "root" = "/dev/vg00/lv00" } {"crashkernel" = ""} }
         { "initrd" = "/initrd-2.6.24.4-64.fc8.img" } }
     { "title" = "Fedora (2.6.24.3-50.fc8)"
         { "root" = "(hd0,0)" }
