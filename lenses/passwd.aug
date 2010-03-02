@@ -16,6 +16,7 @@ module Passwd =
 let eol        = Util.eol
 let comment    = Util.comment
 let empty      = Util.empty
+let dels       = Util.del_str
 
 let colon      = del /:/ ":"
 
@@ -39,11 +40,17 @@ let entry     = [ key word
                 . [ label "shell"    . sto_to_eol? ]
                 . eol ]
 
+(* A NIS entry has nothing bar the +@:::::: bits. *)
+let nisentry =
+  let nisuser = /\+\@[A-Za-z0-9_.-]+/ in
+  let colons = "::::::" in
+  [ dels "+@" . label "@nis" . store word . dels colons . eol ]
+
 (************************************************************************
  *                                LENS
  *************************************************************************)
 
-let lns        = (comment|empty|entry) *
+let lns        = (comment|empty|entry|nisentry) *
 
 let filter
                = incl "/etc/passwd"

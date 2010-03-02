@@ -27,3 +27,7 @@ test Passwd.lns get conf =
      { "name" = "Free Ekanayaka,,," }
      { "home" = "/home/free" }
      { "shell" = "/bin/bash" } }
+
+(* Popular on Solaris *)
+test Passwd.lns get "+@some-nis-group::::::\n" =
+  { "@nis" = "some-nis-group" }
