@@ -363,6 +363,10 @@ static void testExample(CuTest *tc) {
 
     assertExample(tc, "a[^\001-\004]+b", "aAb");
 
+    /* A strange way to write a? - allowed by POSIX */
+    assertExample(tc, "(a|)", "a");
+    assertExample(tc, "(|a)", "a");
+
     struct fa *fa1 = mark(fa_make_basic(FA_EMPTY));
     size_t xmpl_len;
     char *xmpl;

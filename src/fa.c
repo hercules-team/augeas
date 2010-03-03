@@ -3360,14 +3360,26 @@ static struct re *parse_concat_exp(struct re_parse *parse) {
 }
 
 static struct re *parse_regexp(struct re_parse *parse) {
-    struct re *re = parse_concat_exp(parse);
+    struct re *re = NULL;
+
+    /* Something like (|r) */
+    if (peek(parse, "|"))
+        re = make_re(EPSILON);
+    else
+        re = parse_concat_exp(parse);
     if (re == NULL)
         goto error;
 
     if (match(parse, '|')) {
-        struct re *re2 = parse_regexp(parse);
+        struct re *re2 = NULL;
+        /* Something like (r|) */
+        if (peek(parse, ")"))
+            re2 = make_re(EPSILON);
+        else
+            re2 = parse_regexp(parse);
         if (re2 == NULL)
             goto error;
+
         re = make_re_binop(UNION, re, re2);
         if (re == NULL) {
             parse->error = REG_ESPACE;
