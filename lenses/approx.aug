@@ -3,7 +3,7 @@ module Approx =
 
   let eol = Util.eol
   let indent = Util.indent
-  let key_re = /[A-Za-z0-9_.-]+/
+  let key_re = /\$?[A-Za-z0-9_.-]+/
   let sep = /[ \t]+/
   let value_re = /[^ \t\n](.*[^ \t\n])?/
 

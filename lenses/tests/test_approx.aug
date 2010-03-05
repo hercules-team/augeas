@@ -5,12 +5,12 @@ module Test_approx =
 # to uncomment them unless you want a different value.
 # See approx.conf(5) for details.
 
-interface	any
-port		9999
-interval	720
-max_wait	10
-max_rate	unlimited
-debug		false
+$interface	any
+$port		9999
+$interval	720
+$max_wait	10
+$max_rate	unlimited
+$debug		false
 
 # Here are some examples of remote repository mappings.
 # See http://www.debian.org/mirror/list for mirror sites.
@@ -25,12 +25,12 @@ security	http://security.debian.org
   { "#comment" = "to uncomment them unless you want a different value." }
   { "#comment" = "See approx.conf(5) for details." }
   {  }
-  { "interface" = "any" }
-  { "port"      = "9999" }
-  { "interval"  = "720" }
-  { "max_wait"  = "10" }
-  { "max_rate"  = "unlimited" }
-  { "debug"     = "false" }
+  { "$interface" = "any" }
+  { "$port" = "9999" }
+  { "$interval" = "720" }
+  { "$max_wait" = "10" }
+  { "$max_rate" = "unlimited" }
+  { "$debug" = "false" }
   {  }
   { "#comment" = "Here are some examples of remote repository mappings." }
   { "#comment" = "See http://www.debian.org/mirror/list for mirror sites." }
