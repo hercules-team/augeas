@@ -12,6 +12,7 @@ valgrind: fatest
 lens_tests =			\
   lens-sudoers.sh		\
   lens-aliases.sh		\
+  lens-approx.sh		\
   lens-aptpreferences.sh	\
   lens-aptsource.sh		\
   lens-bbhosts.sh		\
