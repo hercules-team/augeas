@@ -82,7 +82,7 @@ static void put_error(struct state *state, struct lens *lens,
     state->error->lens = ref(lens);
     state->error->pos  = -1;
     if (strlen(state->path) == 0) {
-        state->error->path = strdup("(root)");
+        state->error->path = strdup("");
     } else {
         state->error->path = strdup(state->path);
     }
@@ -505,28 +505,50 @@ static void put_concat(struct lens *lens, struct state *state) {
     state->skel = oldskel;
 }
 
+static void error_quant_star(struct split *last_split, struct lens *lens,
+                             struct state *state) {
+    struct tree *child = NULL;
+    if (last_split != NULL) {
+        if (last_split->follow != NULL) {
+            child = last_split->follow;
+        } else {
+            for (child = last_split->tree;
+                 child != NULL && child->next != NULL;
+                 child = child->next);
+        }
+    }
+    if (child == NULL) {
+        put_error(state, lens, "Malformed child node");
+    } else {
+        put_error(state, lens, "Malformed child node '%s'", child->label);
+    }
+}
+
 static void put_quant_star(struct lens *lens, struct state *state) {
     assert(lens->tag == L_STAR);
     struct split *oldsplit = state->split;
     struct skel *oldskel = state->skel;
+    struct split *last_split = NULL;
 
     struct split *split = split_iter(state, lens);
 
     state->skel = state->skel->skels;
     set_split(state, split);
+    last_split = state->split;
     while (state->split != NULL && state->skel != NULL) {
         put_lens(lens->child, state);
         state->skel = state->skel->next;
+        last_split = state->split;
         next_split(state);
     }
     while (state->split != NULL) {
         create_lens(lens->child, state);
+        last_split = state->split;
         next_split(state);
     }
+    if (state->pos != oldsplit->end)
+        error_quant_star(last_split, lens, state);
     list_free(split);
-    if (state->pos != oldsplit->end) {
-        put_error(state, lens, "Short iteration");
-    }
     set_split(state, oldsplit);
     state->skel = oldskel;
 }
@@ -657,18 +679,20 @@ static void create_concat(struct lens *lens, struct state *state) {
 static void create_quant_star(struct lens *lens, struct state *state) {
     assert(lens->tag == L_STAR);
     struct split *oldsplit = state->split;
+    struct split *last_split = NULL;
 
     struct split *split = split_iter(state, lens);
 
     set_split(state, split);
+    last_split = state->split;
     while (state->split != NULL) {
         create_lens(lens->child, state);
+        last_split = state->split;
         next_split(state);
     }
+    if (state->pos != oldsplit->end)
+        error_quant_star(last_split, lens, state);
     list_free(split);
-    if (state->pos != oldsplit->end) {
-        put_error(state, lens, "Short iteration");
-    }
     set_split(state, oldsplit);
 }
 
