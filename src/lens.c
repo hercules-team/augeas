@@ -1067,6 +1067,23 @@ static int lns_format_union_atype(struct lens *l, char **buf) {
     return result;
 }
 
+static int lns_format_rec_atype(struct lens *l, char **buf) {
+    int r;
+
+    if (l->rec_internal) {
+        *buf = strdup("<<rec>>");
+        return (*buf == NULL) ? -1 : 0;
+    }
+
+    char *c = NULL;
+    r = lns_format_atype(l->body, &c);
+    if (r < 0)
+        return -1;
+    r = xasprintf(buf, "<<rec:%s>>", c);
+    free(c);
+    return (r < 0) ? -1 : 0;
+}
+
 int lns_format_atype(struct lens *l, char **buf) {
     *buf = NULL;
 
@@ -1095,6 +1112,9 @@ int lns_format_atype(struct lens *l, char **buf) {
         break;
     case L_UNION:
         return lns_format_union_atype(l, buf);
+        break;
+    case L_REC:
+        return lns_format_rec_atype(l, buf);
         break;
     default:
         BUG_LENS_TAG(l);
