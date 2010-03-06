@@ -74,6 +74,21 @@ char *format_lens(struct lens *l) {
     return result;
 }
 
+#define BUG_LENS_TAG(lns)  bug_lens_tag(lns, __FILE__, __LINE__)
+
+static void bug_lens_tag(struct lens *lens, const char *file, int lineno) {
+    char *s = format_lens(lens);
+
+    if (lens != NULL && lens->info != NULL && lens->info->error != NULL) {
+        bug_on(lens->info->error, file, lineno, "Unexpected lens tag %s", s);
+    } else {
+        /* We are really screwed */
+        assert(0);
+    }
+    free(s);
+    return;
+}
+
 /* Construct a finite automaton from REGEXP and return it in *FA.
  *
  * Return NULL if REGEXP is valid, if the regexp REGEXP has syntax errors,
@@ -202,7 +217,7 @@ static struct lens *make_lens_binop(enum lens_tag tag, struct info *info,
     FREE(types);
 
     for (int i=0; i < lens->nchildren; i++)
-        assert(tag != lens->children[i]->tag);
+        ensure(tag != lens->children[i]->tag, lens->info);
 
     return lens;
  error:
@@ -492,7 +507,8 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
         lens->ctype = regexp_make_empty(info);
         lens->ctype_nullable = 1;
     } else {
-        assert(0);
+        BUG_LENS_TAG(lens);
+        goto error;
     }
 
 
@@ -776,7 +792,7 @@ static struct value *typecheck_maybe(struct info *info, struct lens *l) {
 void free_lens(struct lens *lens) {
     if (lens == NULL)
         return;
-    assert(lens->ref == 0);
+    ensure(lens->ref == 0, lens->info);
 
     switch (lens->tag) {
     case L_DEL:
@@ -811,7 +827,7 @@ void free_lens(struct lens *lens) {
         }
         break;
     default:
-        assert(0);
+        BUG_LENS_TAG(lens);
         break;
     }
 
@@ -821,6 +837,8 @@ void free_lens(struct lens *lens) {
     unref(lens->info, info);
 
     free(lens);
+ error:
+    return;
 }
 
 void lens_release(struct lens *lens) {
@@ -1079,10 +1097,10 @@ int lns_format_atype(struct lens *l, char **buf) {
         return lns_format_union_atype(l, buf);
         break;
     default:
-        assert(0);
+        BUG_LENS_TAG(l);
         break;
     };
-
+    return -1;
 }
 
 /*
@@ -1411,7 +1429,8 @@ static void rtn_rules(struct rtn *rtn, struct lens *l) {
             break;
         }
         default:
-            assert(0);
+            BUG_ON(true, rtn->info, "Unexpected lens type %d", rtn->lens_type);
+            break;
         }
         break;
     case L_MAYBE:
@@ -1431,7 +1450,8 @@ static void rtn_rules(struct rtn *rtn, struct lens *l) {
         RTN_BAIL(rtn);
         break;
     default:
-        assert(0);
+        BUG_LENS_TAG(l);
+        break;
     }
  error:
     return;
@@ -1680,7 +1700,7 @@ static struct regexp *rtn_reduce(struct rtn *rtn, struct lens *rec) {
         struct regexp *loop = NULL;
         for (int i=0; i < s->ntrans; i++) {
             if (s == s->trans[i].to) {
-                assert(loop == NULL);
+                ensure(loop == NULL, rtn->info);
                 loop = s->trans[i].re;
             }
         }
@@ -1707,7 +1727,7 @@ static struct regexp *rtn_reduce(struct rtn *rtn, struct lens *rec) {
     struct regexp *result = NULL;
     for (int i=0; i < prod->start->ntrans; i++) {
         if (prod->start->trans[i].to == prod->end) {
-            assert(result == NULL);
+            ensure(result == NULL, rtn->info);
             result = ref(prod->start->trans[i].re);
         }
     }
@@ -1763,7 +1783,8 @@ static void propagate_type(struct lens *l, enum lens_type lt) {
         /* Nothing to do */
         break;
     default:
-        assert(0);
+        BUG_LENS_TAG(l);
+        break;
     }
 
  error:
@@ -1798,7 +1819,7 @@ static struct value *typecheck_n(struct lens *l,
     struct value *exn = NULL;
     struct lens *acc = NULL;
 
-    assert(l->tag == L_CONCAT || l->tag == L_UNION);
+    ensure(l->tag == L_CONCAT || l->tag == L_UNION, l->info);
     for (int i=0; i < l->nchildren; i++) {
         exn = typecheck(l->children[i], check);
         if (exn != NULL)
@@ -1811,7 +1832,7 @@ static struct value *typecheck_n(struct lens *l,
         exn = (*make)(info, acc, ref(l->children[i]), check);
         if (EXN(exn))
             goto error;
-        assert(exn->tag == V_LENS);
+        ensure(exn->tag == V_LENS, l->info);
         acc = ref(exn->lens);
         unref(exn, value);
     }
@@ -1857,7 +1878,8 @@ static struct value *typecheck(struct lens *l, int check) {
         /* Nothing to do */
         break;
     default:
-        assert(0);
+        BUG_LENS_TAG(l);
+        break;
     }
 
     return exn;
@@ -1961,7 +1983,8 @@ static int ctype_nullable(struct lens *lens, struct value **exn) {
         nullable = lens->body->ctype_nullable;
         break;
     default:
-        assert(0);
+        BUG_LENS_TAG(lens);
+        break;
     }
     if (*exn != NULL)
         return 0;
@@ -1978,9 +2001,9 @@ struct value *lns_check_rec(struct info *info,
     /* The types in the order of approximation */
     static const enum lens_type types[] = { KTYPE, VTYPE, ATYPE };
 
-    assert(rec->tag == L_REC);
-    assert(body->recursive);
-    assert(rec->rec_internal);
+    ensure(rec->tag == L_REC, info);
+    ensure(body->recursive, info);
+    ensure(rec->rec_internal, info);
 
     struct value *result = NULL;
 
