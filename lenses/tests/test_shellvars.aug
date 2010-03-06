@@ -27,7 +27,7 @@ unset ONBOOT
     { "#comment" = "DHCP_HOSTNAME=host.example.com" }
     { "NETMASK" = "255.255.255.0" }
     { "NETWORK" = "172.31.0.0" }
-    { "unset"   = "ONBOOT" }
+    { "@unset"   = "ONBOOT" }
 
   test Shellvars.lns put eth_static after
       set "BOOTPROTO" "dhcp" ;
@@ -109,6 +109,10 @@ unset ONBOOT
   (* Allow spaces after/before opening/closing parens for array *)
   test Shellvars.lns get "config_eth1=( \"10.128.0.48/24\" )\n" =
   { "config_eth1"  { "1" = "\"10.128.0.48/24\"" } }
+
+  (* Bug 109: allow a bare export *)
+  test Shellvars.lns get "export FOO\n" =
+  { "@export" = "FOO" }
 
 (* Local Variables: *)
 (* mode: caml       *)

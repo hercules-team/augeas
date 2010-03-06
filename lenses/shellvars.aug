@@ -9,6 +9,7 @@ module Shellvars =
   let eq = Util.del_str "="
   let comment = Util.comment
   let empty   = Util.empty
+  let xchgs   = Build.xchgs
 
   let char  = /[^() '"\t\n]|\\\\"/
   let dquot = /"([^"\\\n]|\\\\.)*"/                    (* " Emacs, relax *)
@@ -34,7 +35,11 @@ module Shellvars =
   let export = [ key "export" . Util.del_ws_spc ]
   let kv = [ export? . key key_re . eq . (simple_value | array) . eol ]
 
-  let unset = [ key "unset" . Util.del_ws_spc . store key_re . eol ]
+  let var_action (name:string) =
+    [ xchgs name ("@" . name) . Util.del_ws_spc . store key_re . eol ]
+
+  let unset = var_action "unset"
+  let bare_export = var_action "export"
 
   let source =
     [
@@ -42,7 +47,7 @@ module Shellvars =
       Util.del_ws_spc . store /[^= \t\n]+/ . eol
     ]
 
-  let lns = (comment | empty | source | kv | unset) *
+  let lns = (comment | empty | source | kv | unset | bare_export) *
 
   let sc_incl (n:string) = (incl ("/etc/sysconfig/" . n))
   let filter_sysconfig =
