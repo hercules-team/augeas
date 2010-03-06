@@ -55,6 +55,15 @@ l0:0:wait:/etc/rc.d/rc 0
         { "process" = "/usr/bin/blank_comment " }
         { "#comment" = "" } }
 
+  (* Bug 108: allow ':' in the process field *)
+  test Inittab.record get
+    "co:234:respawn:ttymon -p \"console login: \"\n" =
+    { "co"
+        { "runlevels" = "234" }
+        { "action" = "respawn" }
+        { "process" = "ttymon -p \"console login: \"" } }
+
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
