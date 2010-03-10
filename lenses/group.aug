@@ -23,7 +23,7 @@ let comma      = Sep.comma
 let sto_to_spc = store Rx.space_in
 
 let word    = Rx.word
-let password = /[A-Za-z0-9_.-]*/
+let password = /[A-Za-z0-9_.\!\*-]*/
 let integer = Rx.integer
 
 (************************************************************************

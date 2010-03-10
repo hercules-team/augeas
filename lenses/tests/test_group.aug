@@ -25,3 +25,16 @@ test Group.lns get "root::0:root\n" =
     { "password" = "" }
     { "gid" = "0" }
     { "user" = "root" } }
+
+(* Password field can be disabled by ! or * *)
+test Group.lns get "testgrp:!:0:testusr\n" =
+  { "testgrp"
+    { "password" = "!" }
+    { "gid" = "0" }
+    { "user" = "testusr" } }
+
+test Group.lns get "testgrp:*:0:testusr\n" =
+  { "testgrp"
+    { "password" = "*" }
+    { "gid" = "0" }
+    { "user" = "testusr" } }
