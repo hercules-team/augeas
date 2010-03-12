@@ -2020,12 +2020,11 @@ struct value *lns_check_rec(struct info *info,
                             int check) {
     /* The types in the order of approximation */
     static const enum lens_type types[] = { KTYPE, VTYPE, ATYPE };
+    struct value *result = NULL;
 
     ensure(rec->tag == L_REC, info);
     ensure(body->recursive, info);
     ensure(rec->rec_internal, info);
-
-    struct value *result = NULL;
 
     /* To help memory management, we avoid the cycle inherent ina recursive
      * lens by using two instances of an L_REC lens. One is marked with
