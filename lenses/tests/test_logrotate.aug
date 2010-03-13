@@ -182,3 +182,18 @@ test Logrotate.lns get "/file {\n missingok \t\n}\n" =
   { "rule"
     { "file" = "/file" }
     { "missingok" = "missingok" } }
+
+(* Bug #104: file names can be separated by newlines *)
+let conf2 = "/var/log/mail.info
+/var/log/mail.warn
+/var/log/mail.err
+{
+       weekly
+}
+"
+test Logrotate.lns get conf2 =
+  { "rule"
+      { "file"      = "/var/log/mail.info" }
+      { "file"      = "/var/log/mail.warn" }
+      { "file"      = "/var/log/mail.err" }
+      { "schedule"  = "weekly" } }
