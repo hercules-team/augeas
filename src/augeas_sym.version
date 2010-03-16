@@ -29,3 +29,8 @@ AUGEAS_0.10.0 {
       aug_error_minor_message;
       aug_error_details;
 } AUGEAS_0.8.0;
+
+AUGEAS_0.11.0 {
+    global:
+      aug_setm;
+} AUGEAS_0.10.0;

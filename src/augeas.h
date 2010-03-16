@@ -137,6 +137,18 @@ int aug_get(const augeas *aug, const char *path, const char **value);
  */
 int aug_set(augeas *aug, const char *path, const char *value);
 
+/* Function: aug_setm
+ *
+ * Set the value of multiple nodes in one operation. Find or create a node
+ * matching SUB by interpreting SUB as a path expression relative to each
+ * node matching BASE. SUB may be NULL, in which case all the nodes
+ * matching BASE will be modified.
+ *
+ * Returns:
+ * number of modified nodes on success, -1 on error
+ */
+int aug_setm(augeas *aug, const char *base, const char *sub, const char *value);
+
 /* Function: aug_insert
  *
  * Create a new sibling LABEL for PATH by inserting into the tree just

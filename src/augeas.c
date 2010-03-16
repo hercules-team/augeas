@@ -619,6 +619,58 @@ int aug_set(struct augeas *aug, const char *path, const char *value) {
     return -1;
 }
 
+int aug_setm(struct augeas *aug, const char *base,
+             const char *sub, const char *value) {
+    struct pathx *bx = NULL, *sx = NULL;
+    struct error *err = err_of_aug(aug);
+    struct tree *bt, *st;
+    int result, r;
+
+    api_entry(aug);
+
+    bx = parse_user_pathx(aug, true, base);
+    ERR_BAIL(aug);
+
+    if (STREQ(sub, "."))
+        sub = NULL;
+
+    for (bt = pathx_first(bx); bt != NULL; bt = pathx_next(bx)) {
+        if (sub != NULL) {
+            /* Handle subnodes of BT */
+            pathx_parse(bt, err, sub, true, aug->symtab, &sx);
+            ERR_BAIL(aug);
+            if (pathx_first(sx) != NULL) {
+                /* Change existing subnodes matching SUB */
+                for (st = pathx_first(sx); st != NULL; st = pathx_next(sx)) {
+                    r = tree_set_value(st, value);
+                    ERR_NOMEM(r < 0, aug);
+                }
+            } else {
+                /* Create a new subnode matching SUB */
+                r = pathx_expand_tree(sx, &st);
+                if (r == -1)
+                    goto error;
+                r = tree_set_value(st, value);
+                ERR_NOMEM(r < 0, aug);
+            }
+            free_pathx(sx);
+            sx = NULL;
+        } else {
+            /* Set nodes matching BT directly */
+            r = tree_set_value(bt, value);
+            ERR_NOMEM(r < 0, aug);
+        }
+    }
+
+    result = 0;
+ done:
+    api_exit(aug);
+    return result;
+ error:
+    result = -1;
+    goto done;
+}
+
 int tree_insert(struct pathx *p, const char *label, int before) {
     struct tree *new = NULL, *match;
 
