@@ -62,3 +62,7 @@ test unamb1 get "zyy" = { "x" = "y" { "x" = "y" { "z" } } }
 let rec unamb2 = del /u*/ "" . [ unamb2 . key /x/ ] | del /s*/ ""
 test unamb2 get "sx" = { "x" }
 test unamb2 get "x" = { "x" }
+
+(* Test proper handling of '?'; bug #119 *)
+let rec maybe = [ del "a" "a" . maybe . del "b" "b" ]?
+test maybe get "aabb" = { { } }

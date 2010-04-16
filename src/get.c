@@ -947,6 +947,12 @@ static void visit_exit(struct lens *lens,
             get_combine(rec_state, lens, n);
         else
             parse_combine(rec_state, lens, n);
+    } else if (lens->tag == L_MAYBE) {
+        uint n = (top_frame(rec_state)->lens == lens->child) ? 1 : 0;
+        if (rec_state->mode == M_GET)
+            get_combine(rec_state, lens, n);
+        else
+            parse_combine(rec_state, lens, n);
     } else {
         top_frame(rec_state)->lens = lens;
     }
