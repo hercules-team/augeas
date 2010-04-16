@@ -930,6 +930,8 @@ build_tree(struct jmt_parse *parse, ind_t k, ind_t item, struct lens *lens,
         /* This completion corresponds to a nullable nonterminal
          * that match epsilon. Reconstruct the full parse tree
          * for matching epsilon */
+        if (debugging("cf.jmt.visit"))
+            build_trace("N", x->links->from_set, k, x, lvl);
         build_nullable(parse, start, visitor, lens, lvl);
         return end;
     }
