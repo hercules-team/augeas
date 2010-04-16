@@ -975,9 +975,10 @@ static struct frame *rec_process(enum mode_t mode, struct lens *lens,
                                  struct state *state) {
     uint end = REG_END(state);
     uint start = REG_START(state);
-    size_t len;
+    size_t len = 0;
     struct re_registers *old_regs = state->regs;
     uint old_nreg = state->nreg;
+    int r;
     struct jmt_visitor visitor;
     struct rec_state rec_state;
 
@@ -1005,9 +1006,9 @@ static struct frame *rec_process(enum mode_t mode, struct lens *lens,
     visitor.exit = visit_exit;
     visitor.error = visit_error;
     visitor.data = &rec_state;
-    jmt_visit(&visitor, &len);
+    r = jmt_visit(&visitor, &len);
     ERR_BAIL(lens->info);
-    if (len < end - start || (len == 0 && rec_state.fused == 0)) {
+    if (r != 1) {
         get_error(state, lens, "Syntax error");
         state->error->pos = start + len;
     }

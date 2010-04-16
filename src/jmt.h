@@ -55,7 +55,10 @@ struct jmt_parse *jmt_parse(struct jmt *jmt, const char *text, size_t text_len);
 
 void jmt_free_parse(struct jmt_parse *);
 
-void jmt_visit(struct jmt_visitor *visitor, size_t *len);
+/* Returns -1 on internal error, 0 on syntax error, 1 on a successful
+ * parse.
+ */
+int jmt_visit(struct jmt_visitor *visitor, size_t *len);
 
 void jmt_free(struct jmt *jmt);
 

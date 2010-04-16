@@ -1001,7 +1001,7 @@ build_children(struct jmt_parse *parse, ind_t k, ind_t item,
     return end;
 }
 
-void jmt_visit(struct jmt_visitor *visitor, size_t *len) {
+int jmt_visit(struct jmt_visitor *visitor, size_t *len) {
     struct jmt_parse *parse = visitor->parse;
     ind_t k = parse->nsets - 1;     /* Current Earley set */
     ind_t item;
@@ -1037,12 +1037,14 @@ void jmt_visit(struct jmt_visitor *visitor, size_t *len) {
 
     visit_exit(visitor, lens, 0, k, NULL, 0);
     ERR_BAIL(parse);
+    return 1;
  error:
-    return;
+    return -1;
  noparse:
     for (; k > 0; k--)
         if (parse->sets[k] != NULL) break;
     *len = k;
+    return 0;
 }
 
 /*
