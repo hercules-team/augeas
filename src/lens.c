@@ -2042,7 +2042,7 @@ struct value *lns_check_rec(struct info *info,
     }
 
     if (rec->atype == NULL) {
-        result = make_exn_value(rec->info,
+        result = make_exn_value(ref(rec->info),
         "recursive lens generates the empty language for its %s",
          rec->ctype == NULL ? "ctype" : "atype");
         goto error;
