@@ -686,9 +686,12 @@ static const struct command_def cmd_clear_def = {
 static void cmd_get(struct command *cmd) {
     const char *path = arg_value(cmd, "path");
     const char *val;
+    int r;
 
+    r = aug_get(aug, path, &val);
+    ERR_CHECK(cmd);
     printf("%s", path);
-    if (aug_get(aug, path, &val) != 1) {
+    if (r == 0) {
         printf(" (o)\n");
     } else if (val == NULL) {
         printf(" (none)\n");
