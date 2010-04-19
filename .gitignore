@@ -35,6 +35,7 @@ src/augtool
 src/augparse
 tests/fatest
 tests/lens-*.sh
+tests/test-api
 tests/test-xpath
 tests/test-load
 tests/test-save

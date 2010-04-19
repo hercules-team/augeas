@@ -484,7 +484,7 @@ static int find_one_node(struct pathx *p, struct tree **match) {
 }
 
 int aug_get(const struct augeas *aug, const char *path, const char **value) {
-    struct pathx *p;
+    struct pathx *p = NULL;
     struct tree *match;
     int r;
 
@@ -497,6 +497,10 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
         *value = NULL;
 
     r = pathx_find_one(p, &match);
+    ERR_BAIL(aug);
+    ERR_THROW(r > 1, aug, AUG_EMMATCH, "There are %d nodes matching %s",
+              r, path);
+
     if (r == 1 && value != NULL)
         *value = match->value;
     free_pathx(p);
@@ -504,6 +508,7 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
     api_exit(aug);
     return r;
  error:
+    free_pathx(p);
     api_exit(aug);
     return -1;
 }
