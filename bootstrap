@@ -63,6 +63,7 @@ fnmatch
 getline
 gitlog-to-changelog
 canonicalize-lgpl
+isblank
 regex
 safe-alloc
 selinux-h
