@@ -43,7 +43,8 @@ static void print_regerror(int err, const char *regexp) {
     size_t size;
     char *errbuf;
     size = regerror(err, NULL, NULL, 0);
-    errbuf = alloca(size);
+    if (ALLOC_N(errbuf, size) < 0)
+        die_oom();
     regerror(err, NULL, errbuf, size);
     if (strlen(regexp) > 40) {
         char *s = strndup(regexp, 40);
@@ -53,6 +54,7 @@ static void print_regerror(int err, const char *regexp) {
         fprintf(stderr, "Error building fa from %s:\n", regexp);
     }
     fprintf(stderr, "  %s\n", errbuf);
+    free(errbuf);
 }
 
 static void setup(ATTRIBUTE_UNUSED CuTest *tc) {
