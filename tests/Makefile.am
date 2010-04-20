@@ -62,6 +62,7 @@ lens_tests =			\
   lens-rsyncd.sh		\
   lens-rx.sh			\
   lens-samba.sh			\
+  lens-securetty.sh     \
   lens-services.sh		\
   lens-shellvars.sh		\
   lens-slapd.sh			\
