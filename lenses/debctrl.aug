@@ -2,7 +2,7 @@
 Module: debctrl
   Parses ./debian/control
 
-Author: 
+Author:
         Dominique Dumont domi.dumont@free.fr or dominique.dumont@hp.com
 
 About: Reference
@@ -54,34 +54,34 @@ let sep_comma_with_nl = del /[ \t\n]*,[ \t\n]*/ ",\n "
 let email =  store ( /([A-Za-z]+ )+<[^\n>]+>/ |  /[^\n,\t<> ]+/ )
 
 let multi_line_array_entry (k:regexp) (v:lens) =
-    [ key k . colon . [ counter "array" . seq "array" .  v ] . 
+    [ key k . colon . [ counter "array" . seq "array" .  v ] .
       [ seq "array" . sep_comma_with_nl . v ]* . hardeol ]
 
 (* dependency stuff *)
 
-let version_depends = 
-    [ label "version"  
+let version_depends =
+    [ label "version"
      . [   del / *\( */ " ( " . label "relation" . store /[<>=]+/ ]
-     . [   del_ws_spc . label "number" . store /[a-zA-Z0-9_\.\-]+/ 
-         . del / *\)/ " )" ] 
+     . [   del_ws_spc . label "number" . store /[a-zA-Z0-9_\.\-]+/
+         . del / *\)/ " )" ]
     ]
-    
-let arch_depends = 
-    [ label "arch" 
+
+let arch_depends =
+    [ label "arch"
     . [  del / *\[ */ " [ " . label "prefix" . store /!?/ ]
     . [ label "name" . store /[a-zA-Z0-9_\.\-]+/ . del / *\]/ " ]" ] ]
-    
 
-let package_depends 
-  =  [ key ( /[a-zA-Z0-9_\-]+/ | /\$\{[a-zA-Z0-9:]+\}/ ) 
+
+let package_depends
+  =  [ key ( /[a-zA-Z0-9_\-]+/ | /\$\{[a-zA-Z0-9:]+\}/ )
         . ( version_depends | arch_depends ) * ]
-    
+
 
 let dependency = [ label "or" . package_depends ]
                . [ label "or" . del / *\| */ " | "
                    . package_depends ] *
 
-let dependency_list (field:regexp) = 
+let dependency_list (field:regexp) =
     [ key field . colon . [ label "and" .  dependency ]
       . [ label "and" . sep_comma_with_nl . dependency ]*
       . eol ]
@@ -90,36 +90,36 @@ let dependency_list (field:regexp) =
 let uploaders  =
     multi_line_array_entry /Uploaders/ email
 
-let simple_src_keyword = "Source" | "Section" | "Priority" 
+let simple_src_keyword = "Source" | "Section" | "Priority"
     | "Standards\-Version" | "Homepage" | /Vcs\-Svn/ | /Vcs\-Browser/
     | "Maintainer"
 let depend_src_keywords = /Build\-Depends/ | /Build\-Depends\-Indep/
 
-let src_entries = (   simple_entry simple_src_keyword 
-                    | uploaders 
+let src_entries = (   simple_entry simple_src_keyword
+                    | uploaders
                     | dependency_list depend_src_keywords ) *
 
 
 (* package paragraph *)
 
 let simple_bin_keyword = "Package" | "Architecture" |  "Section"
-    | "Priority" | "Essential" | "Homepage" 
+    | "Priority" | "Essential" | "Homepage"
 
-let simple_bin_entry = simple_entry simple_bin_keyword 
+let simple_bin_entry = simple_entry simple_bin_keyword
 
 let multi_line_entry (k:string) =
      let line = /[^\n]+/ in
-      [ label k .  del /^ / " " .  store line . hardeol ] *  
+      [ label k .  del /^ / " " .  store line . hardeol ] *
 
 
-let description 
-  = [ key "Description" . colon 
+let description
+  = [ key "Description" . colon
      . [ label "summary" . store /[a-zA-Z][^\n]+/ . hardeol ]
      . multi_line_entry "text" ]
 
 
 (* binary package *)
-let simple_bin_keywords = "Package" | "Architecture" 
+let simple_bin_keywords = "Package" | "Architecture"
 let depend_bin_keywords = "Depends" | "Recommends" | "Suggests"
 
 let bin_entries = ( simple_entry simple_bin_keywords
@@ -127,7 +127,7 @@ let bin_entries = ( simple_entry simple_bin_keywords
                   ) + . description
 
 (* The whole stuff *)
-let lns =  [ label "srcpkg" .  src_entries  ] 
+let lns =  [ label "srcpkg" .  src_entries  ]
         .  [ label "binpkg" . hardeol+ . bin_entries ]+
         . eol*
 
