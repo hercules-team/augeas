@@ -22,7 +22,7 @@ init_dirs
 printf '127.0.0.1\tlocalhost\n' > $hosts
 
 chmod 0600 $hosts
-group=$(groups | tr ' ' '\n' | tail -n 1)
+group=$(groups | tr ' ' '\n' | tail -1)
 chgrp $group $hosts
 
 [ -x /usr/bin/chcon ] && selinux=yes || selinux=no

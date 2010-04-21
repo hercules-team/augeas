@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 # Check that reading the files in tests/root/ with augtool does not lead to
 # any errors

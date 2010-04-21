@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 # Test that saving changes that don't really change the underlying file
 # leave the original file intact

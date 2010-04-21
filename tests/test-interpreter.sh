@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 # Run test modules that make sure the interpreter fails/succeeds in
 # various hairy situations.
