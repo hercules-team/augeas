@@ -26,6 +26,8 @@
 #include "cutest.h"
 
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 const char *abs_top_srcdir;
 const char *abs_top_builddir;
