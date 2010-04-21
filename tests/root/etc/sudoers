@@ -33,7 +33,7 @@ Cmnd_Alias SOFTWARE = /bin/rpm, /usr/bin/up2date, /usr/bin/yum
 Cmnd_Alias SERVICES = /sbin/service, /sbin/chkconfig
 
 ## Updating the locate database
-Cmnd_Alias LOCATE = /usr/sbin/updatedb
+Cmnd_Alias LOCATE = /usr/bin/updatedb
 
 ## Storage
 Cmnd_Alias STORAGE = /sbin/fdisk, /sbin/sfdisk, /sbin/parted, /sbin/partprobe, /bin/mount, /bin/umount
@@ -62,6 +62,8 @@ Defaults    env_keep += "LC_COLLATE LC_IDENTIFICATION LC_MEASUREMENT LC_MESSAGES
 Defaults    env_keep += "LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE"
 Defaults    env_keep += "LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY"
 
+Defaults    secure_path = /sbin:/bin:/usr/sbin:/usr/bin
+
 ## Next comes the main part: which users can run what software on 
 ## which machines (the sudoers file can be shared between multiple
 ## systems).
@@ -79,7 +81,7 @@ root	ALL=(ALL) 	ALL
 # %sys ALL = NETWORKING, SOFTWARE, SERVICES, STORAGE, DELEGATING, PROCESSES, LOCATE, DRIVERS
 
 ## Allows people in group wheel to run all commands
-# %wheel	ALL=(ALL)	ALL
+%wheel	ALL=(ALL)	ALL
 
 ## Same thing without a password
 # %wheel	ALL=(ALL)	NOPASSWD: ALL
