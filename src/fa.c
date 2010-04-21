@@ -3744,7 +3744,7 @@ static int re_iter_as_string(const struct re *re, struct re_str *str) {
 
 static int re_as_string(const struct re *re, struct re_str *str) {
     /* Characters that must be escaped */
-    static const char * const special_chars = ".()[]{}*+?\\^$";
+    static const char * const special_chars = ".()[]{}*|+?\\^$";
     int result = 0;
 
     switch(re->type) {

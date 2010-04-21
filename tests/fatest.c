@@ -519,6 +519,8 @@ static void testRestrictAlphabet(CuTest *tc) {
 
 static void testExpandCharRanges(CuTest *tc) {
     const char *re = "[1-3]*|[a-b]([^\nU-X][^\n])*";
+    const char *re2 = "a\\|b";
+
     char *nre;
     size_t nre_len;
     int r;
@@ -527,6 +529,12 @@ static void testExpandCharRanges(CuTest *tc) {
     CuAssertIntEquals(tc, 0, r);
     CuAssertStrEquals(tc, "[123]*|[ab]([^\nUVWX].)*", nre);
     CuAssertIntEquals(tc, strlen(nre), nre_len);
+    free(nre);
+
+    r = fa_expand_char_ranges(re2, strlen(re2), &nre, &nre_len);
+    CuAssertIntEquals(tc, 0, r);
+    CuAssertStrEquals(tc, re2, nre);
+    free(nre);
 }
 
 static void testNoCase(CuTest *tc) {
