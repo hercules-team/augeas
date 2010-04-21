@@ -108,8 +108,8 @@ let simple_bin_keyword = "Package" | "Architecture" |  "Section"
 let simple_bin_entry = simple_entry simple_bin_keyword
 
 let multi_line_entry (k:string) =
-     let line = /[^\n]+/ in
-      [ label k .  del /^ / " " .  store line . hardeol ] *
+     let line = /.*[^ \t\n].*/ in
+      [ label k .  del / / " " .  store line . hardeol ] *
 
 
 let description
