@@ -70,4 +70,5 @@ let table = [ del /\*/ "*" . label "table" . store /[a-z]+/ . eol .
                 dels "COMMIT" . eol ]
 
 let lns = (comment|empty|table)*
-let xfm = transform lns (incl "/etc/sysconfig/iptables")
+let xfm = transform lns (incl "/etc/sysconfig/iptables"
+                       . incl "/etc/iptables-save")
