@@ -2,7 +2,7 @@ module Test_group =
 
 let conf = "bin:x:2:
 audio:x:29:joe
-avahi-autoipd:x:113:bill,martha
+avahi-autoipd:!:113:bill,martha
 "
 
 test Group.lns get conf =
@@ -14,7 +14,7 @@ test Group.lns get conf =
      { "gid" = "29" }
      { "user" = "joe" } }
    { "avahi-autoipd"
-     { "password" = "x" }
+     { "password" = "!" }
      { "gid" = "113" }
      { "user" = "bill"}
      { "user" = "martha"} }
