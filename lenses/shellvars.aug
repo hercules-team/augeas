@@ -69,7 +69,6 @@ module Shellvars =
       sc_incl "irda" .
       sc_incl "irqbalance" .
       sc_incl "kdump" .
-      sc_incl "kernel" .
       sc_incl "keyboard" .
       sc_incl "kudzu" .
       sc_incl "libvirtd" .

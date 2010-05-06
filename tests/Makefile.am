@@ -66,6 +66,7 @@ lens_tests =			\
   lens-securetty.sh     \
   lens-services.sh		\
   lens-shellvars.sh		\
+  lens-shellvars_list.sh	\
   lens-slapd.sh			\
   lens-soma.sh			\
   lens-spacevars.sh		\
