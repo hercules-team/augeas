@@ -1,7 +1,7 @@
 /*
  * ref.h: reference counting macros
  *
- * Copyright (C) 2007 Red Hat Inc.
+ * Copyright (C) 2007-2010 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

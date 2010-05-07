@@ -1,7 +1,7 @@
 /*
  * ast.c: Support routines for put/get
  *
- * Copyright (C) 2008 Red Hat Inc.
+ * Copyright (C) 2008-2010 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
