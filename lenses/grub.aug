@@ -16,6 +16,14 @@ module Grub =
     let switch_arg (n:regexp) = switch n . eq . store Rx.no_spaces
     let value_sep (dflt:string) = del /[ \t]*[ \t=][ \t]*/ dflt
 
+    let comment_re = /([^ \t\n].*[^ \t\n]|[^ \t\n])/
+                       - /# ## (Start|End) Default Options ##/
+
+    let comment    =
+        [ Util.indent . label "#comment" . del /#[ \t]*/ "# "
+            . store comment_re . eol ]
+    let empty   = Util.empty
+
     let command (kw:string) (indent:string) =
       Util.del_opt_ws indent . key kw
 
@@ -102,16 +110,9 @@ module Grub =
                      | savedefault
                      | module_line
 
-    let boot = [ label "title" . title . boot_setting* ]
-
-    let comment_re = /([^ \t\n].*[^ \t\n]|[^ \t\n])/
-                       - /# ## (Start|End) Default Options ##/
-
-    let comment    =
-        [ Util.indent . label "#comment" . del /#[ \t]*/ "# "
-            . store comment_re . eol ]
-    let empty   = Util.empty
-
+    let boot =
+      let line = ((boot_setting|comment)* . boot_setting)? in
+      [ label "title" . title . line ]
 
     let debian_header  = "## ## Start Default Options ##\n"
     let debian_footer  = "## ## End Default Options ##\n"

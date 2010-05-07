@@ -139,6 +139,31 @@ initrd\t\t/boot/initrd.img-2.6.18-6-vserver-686
   test Grub.savedefault put "savedefault\n" after
     set "/savedefault" "3" = "savedefault 3\n"
 
+  (* BZ 590067 - handle comments in a title section *)
+  (* Comments within a boot stanza belong to that boot stanza *)
+  test Grub.lns get "title Red Hat Enterprise Linux AS (2.4.21-63.ELsmp)
+    root (hd0,0)
+    kernel /vmlinuz-2.4.21-63.ELsmp ro root=LABEL=/
+    #initrd /initrd-2.4.21-63.ELsmp.img
+    initrd /initrd-2.4.21-63.EL.img.e1000.8139\n" =
+  { "title" = "Red Hat Enterprise Linux AS (2.4.21-63.ELsmp)"
+    { "root" = "(hd0,0)" }
+    { "kernel" = "/vmlinuz-2.4.21-63.ELsmp" { "ro" } { "root" = "LABEL=/" } }
+    { "#comment" = "initrd /initrd-2.4.21-63.ELsmp.img" }
+    { "initrd" = "/initrd-2.4.21-63.EL.img.e1000.8139" } }
+
+  (* Comments at the end of a boot stanza go into the top level *)
+  test Grub.lns get "title Red Hat Enterprise Linux AS (2.4.21-63.ELsmp)
+    root (hd0,0)
+    kernel /vmlinuz-2.4.21-63.ELsmp ro root=LABEL=/
+    initrd /initrd-2.4.21-63.EL.img.e1000.8139
+    # Now for something completely different\n" =
+  { "title" = "Red Hat Enterprise Linux AS (2.4.21-63.ELsmp)"
+    { "root" = "(hd0,0)" }
+    { "kernel" = "/vmlinuz-2.4.21-63.ELsmp" { "ro" } { "root" = "LABEL=/" } }
+    { "initrd" = "/initrd-2.4.21-63.EL.img.e1000.8139" } }
+  { "#comment" = "Now for something completely different" }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
