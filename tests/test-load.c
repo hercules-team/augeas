@@ -210,6 +210,41 @@ static void testLoadDefined(CuTest *tc) {
     aug_close(aug);
 }
 
+static void testDefvarExpr(CuTest *tc) {
+    static const char *const expr = "/files/etc/hosts/*/ipaddr";
+    static const char *const expr2 = "/files/etc/hosts/*/canonical";
+
+    augeas *aug = NULL;
+    const char *v;
+    int r;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC);
+    CuAssertPtrNotNull(tc, aug);
+
+    r = aug_defvar(aug, "v", expr);
+    CuAssertIntEquals(tc, 2, r);
+
+    r = aug_get(aug, "/augeas/variables/v", &v);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertStrEquals(tc, expr, v);
+
+    r = aug_defvar(aug, "v", expr2);
+    CuAssertIntEquals(tc, 2, r);
+
+    r = aug_get(aug, "/augeas/variables/v", &v);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertStrEquals(tc, expr2, v);
+
+    r = aug_defvar(aug, "v", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_get(aug, "/augeas/variables/v", &v);
+    CuAssertIntEquals(tc, 0, r);
+    CuAssertStrEquals(tc, NULL, v);
+
+    aug_close(aug);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -221,6 +256,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testInvalidLens);
     SUITE_ADD_TEST(suite, testLoadSave);
     SUITE_ADD_TEST(suite, testLoadDefined);
+    SUITE_ADD_TEST(suite, testDefvarExpr);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)

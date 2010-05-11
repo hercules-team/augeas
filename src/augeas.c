@@ -50,7 +50,7 @@ static const char *const static_nodes[][2] = {
     { AUGEAS_META_TREE "/version/save/mode[2]", AUG_SAVE_NEWFILE_TEXT },
     { AUGEAS_META_TREE "/version/save/mode[3]", AUG_SAVE_NOOP_TEXT },
     { AUGEAS_META_TREE "/version/save/mode[4]", AUG_SAVE_OVERWRITE_TEXT },
-    { AUGEAS_META_TREE "/version/defvar", NULL }
+    { AUGEAS_META_TREE "/version/defvar/expr", NULL }
 };
 
 static const char *const errcodes[] = {
@@ -525,6 +525,20 @@ int aug_defvar(augeas *aug, const char *name, const char *expr) {
         p = parse_user_pathx((struct augeas *) aug, false, expr);
         ERR_BAIL(aug);
         result = pathx_symtab_define(&(aug->symtab), name, p);
+    }
+    ERR_BAIL(aug);
+
+    /* Record the definition of the variable */
+    struct tree *tree = tree_path_cr(aug->origin, 2, "augeas", "variables");
+    ERR_NOMEM(tree == NULL, aug);
+    if (expr == NULL) {
+        tree = tree_child(tree, name);
+        if (tree != NULL)
+            tree_unlink(tree);
+    } else {
+        tree = tree_child_cr(tree, name);
+        ERR_NOMEM(tree == NULL, aug);
+        tree_set_value(tree, expr);
     }
  error:
     free_pathx(p);
