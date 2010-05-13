@@ -63,6 +63,7 @@ Group: Specific Modules  {
    File: Iptables  (iptables.aug)
    File: Lokkit  (lokkit.aug)
    File: Modprobe  (modprobe.aug)
+   File: Modules_conf  (modules_conf.aug)
    File: Pbuilder  (pbuilder.aug)
    File: Rx  (rx.aug)
    File: Sep  (sep.aug)
