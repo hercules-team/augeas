@@ -45,6 +45,7 @@ lens_tests =			\
   lens-logrotate.sh		\
   lens-lokkit.sh		\
   lens-modprobe.sh		\
+  lens-modules_conf.sh	\
   lens-monit.sh			\
   lens-multipath.sh     \
   lens-nagioscfg.sh     \
