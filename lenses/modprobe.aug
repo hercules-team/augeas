@@ -33,10 +33,16 @@ let options =
   let option = [ spc . key opt_ch+ . (del /=/ "=" . token)? ] in
     [ cmd "options" . token . option* . eol ]
 
-let entry = [ cmd "alias" . token . spc . arg "modulename" . eol ]
-  | [ cmd "include" . token . eol ]
+let alias = [ cmd "alias" . token . spc . arg "modulename" . eol ]
+
+let include = [ cmd "include" . token . eol ]
+
+let cmd_token_to_eol (n:regexp) = [ cmd n . token_to_eol . eol ]
+
+let entry = alias
+  | include
   | options
-  | [ cmd /install|remove/ . token_to_eol . eol ]
+  | cmd_token_to_eol /install|remove/
   | [ cmd "blacklist" . token . eol ]
   | [ cmd "config" . store /binary_indexes|yes|no/ ]
 
