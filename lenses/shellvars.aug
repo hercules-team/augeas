@@ -79,6 +79,8 @@ module Shellvars =
       sc_incl "nfs" .
       sc_incl "ntpd" .
       sc_incl "prelink" .
+      sc_incl "puppet" .
+      sc_incl "puppetmaster" .
       sc_incl "readonly-root" .
       sc_incl "rsyslog" .
       sc_incl "samba" .
