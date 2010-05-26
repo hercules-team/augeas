@@ -590,6 +590,39 @@ static const struct command_def cmd_set_def = {
     "will appear last\n amongst their siblings"
 };
 
+static void cmd_setm(struct command *cmd) {
+    const char *base = arg_value(cmd, "base");
+    const char *sub  = arg_value(cmd, "sub");
+    const char *val  = arg_value(cmd, "value");
+    int r;
+
+    r = aug_setm(aug, base, sub, val);
+    err_check(cmd);
+    if (r == -1)
+        printf ("Failed\n");
+}
+
+static const struct command_opt_def cmd_setm_opts[] = {
+    { .type = CMD_PATH, .name = "base", .optional = false,
+      .help = "the base node" },
+    { .type = CMD_PATH, .name = "sub", .optional = false,
+      .help = "the subtree relative to the base" },
+    { .type = CMD_STR, .name = "value", .optional = false,
+      .help = "the value for the nodes" },
+    CMD_OPT_DEF_LAST
+};
+
+static const struct command_def cmd_setm_def = {
+    .name = "setm",
+    .opts = cmd_setm_opts,
+    .handler = cmd_setm,
+    .synopsis = "set the value of multiple nodes",
+    .help = "Set multiple nodes in one operation.  Find or create a node"
+    " matching SUB\n by interpreting SUB as a  path expression relative"
+    " to each node matching\n BASE. If SUB is '.', the nodes matching "
+    "BASE will be modified."
+};
+
 static void cmd_defvar(struct command *cmd) {
     const char *name = arg_value(cmd, "name");
     const char *path = arg_value(cmd, "expr");
@@ -897,6 +930,7 @@ static const struct command_def const *commands[] = {
     &cmd_rm_def,
     &cmd_save_def,
     &cmd_set_def,
+    &cmd_setm_def,
     &cmd_help_def,
     &cmd_def_last
 };
