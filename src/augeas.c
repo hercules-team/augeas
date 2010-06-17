@@ -634,6 +634,7 @@ int aug_setm(struct augeas *aug, const char *base,
     if (sub != NULL && STREQ(sub, "."))
         sub = NULL;
 
+    result = 0;
     for (bt = pathx_first(bx); bt != NULL; bt = pathx_next(bx)) {
         if (sub != NULL) {
             /* Handle subnodes of BT */
@@ -644,6 +645,7 @@ int aug_setm(struct augeas *aug, const char *base,
                 for (st = pathx_first(sx); st != NULL; st = pathx_next(sx)) {
                     r = tree_set_value(st, value);
                     ERR_NOMEM(r < 0, aug);
+                    result += 1;
                 }
             } else {
                 /* Create a new subnode matching SUB */
@@ -652,6 +654,7 @@ int aug_setm(struct augeas *aug, const char *base,
                     goto error;
                 r = tree_set_value(st, value);
                 ERR_NOMEM(r < 0, aug);
+                result += 1;
             }
             free_pathx(sx);
             sx = NULL;
@@ -659,10 +662,10 @@ int aug_setm(struct augeas *aug, const char *base,
             /* Set nodes matching BT directly */
             r = tree_set_value(bt, value);
             ERR_NOMEM(r < 0, aug);
+            result += 1;
         }
     }
 
-    result = 0;
  done:
     api_exit(aug);
     return result;

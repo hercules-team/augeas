@@ -72,12 +72,63 @@ static void testGet(CuTest *tc) {
     aug_close(aug);
 }
 
+static void testSetM(CuTest *tc) {
+    int r;
+    struct augeas *aug;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    /* Change base nodes when SUB is NULL */
+    r = aug_setm(aug, "/augeas/version/save/*", NULL, "changed");
+    CuAssertIntEquals(tc, 4, r);
+
+    r = aug_match(aug, "/augeas/version/save/*[. = 'changed']", NULL);
+    CuAssertIntEquals(tc, 4, r);
+
+    /* Only change existing nodes */
+    r = aug_setm(aug, "/augeas/version/save", "mode", "again");
+    CuAssertIntEquals(tc, 4, r);
+
+    r = aug_match(aug, "/augeas/version/save/*", NULL);
+    CuAssertIntEquals(tc, 4, r);
+
+    r = aug_match(aug, "/augeas/version/save/*[. = 'again']", NULL);
+    CuAssertIntEquals(tc, 4, r);
+
+    /* Create a new node */
+    r = aug_setm(aug, "/augeas/version/save", "mode[last() + 1]", "newmode");
+    CuAssertIntEquals(tc, 1, r);
+
+    r = aug_match(aug, "/augeas/version/save/*", NULL);
+    CuAssertIntEquals(tc, 5, r);
+
+    r = aug_match(aug, "/augeas/version/save/*[. = 'again']", NULL);
+    CuAssertIntEquals(tc, 4, r);
+
+    r = aug_match(aug, "/augeas/version/save/*[last()][. = 'newmode']", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    /* Noexistent base */
+    r = aug_setm(aug, "/augeas/version/save[last()+1]", "mode", "newmode");
+    CuAssertIntEquals(tc, 0, r);
+
+    /* Invalid path expressions */
+    r = aug_setm(aug, "/augeas/version/save[]", "mode", "invalid");
+    CuAssertIntEquals(tc, -1, r);
+
+    r = aug_setm(aug, "/augeas/version/save/*", "mode[]", "invalid");
+    CuAssertIntEquals(tc, -1, r);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
     CuSuiteSetup(suite, NULL, NULL);
 
     SUITE_ADD_TEST(suite, testGet);
+    SUITE_ADD_TEST(suite, testSetM);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)
