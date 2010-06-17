@@ -631,7 +631,7 @@ int aug_setm(struct augeas *aug, const char *base,
     bx = parse_user_pathx(aug, true, base);
     ERR_BAIL(aug);
 
-    if (STREQ(sub, "."))
+    if (sub != NULL && STREQ(sub, "."))
         sub = NULL;
 
     for (bt = pathx_first(bx); bt != NULL; bt = pathx_next(bx)) {
