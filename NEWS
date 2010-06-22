@@ -1,3 +1,17 @@
+0.7.2 - 2010-06-22
+  - new API call aug_setm to set/create multiple nodes simultaneously
+  - record expression used in a defvar underneath /augeas/variables
+  - Lens changes/additions
+    * Group: add test for disabled account (Raphael Pinson)
+    * Grub: handle comments within a boot stanza
+    * Iptables: also look for /etc/iptables-save (Nicolas Valcarcel)
+    * Modules_conf: new lens for /etc/modules.conf (Matt Booth)
+    * Securetty: added handling of emtpy lines/comments (Frederik Wagner)
+    * Shellvars: added SuSE sysconfig puppet files (Frederik Wagner),
+      process /etc/environment (seph)
+    * Shellvars_list: Shellvars-like lens that treats strings of
+      space-separated words as lists (Frederik Wagner)
+
 0.7.1 - 2010-04-21
   - new primitive lens 'value' to set value of a node to a constant,
     similar to 'label' for the key (see http://augeas.net/docs/lenses.html)
