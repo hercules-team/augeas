@@ -71,7 +71,9 @@ rm -rf $RPM_BUILD_ROOT
 
 %files libs
 %defattr(-,root,root,-)
-%{_datadir}/augeas
+# %{_datadir}/augeas and %{_datadir}/augeas/lenses are owned
+# by filesystem.
+%{_datadir}/augeas/lenses/dist
 %{_libdir}/*.so.*
 %doc AUTHORS COPYING NEWS
 
@@ -83,6 +85,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/pkgconfig/augeas.pc
 
 %changelog
+* Tue Jun 22 2010 David Lutterkort <lutter@redhat.com> - 0.7.2-1
+- Fix ownership of /usr/share/augeas. BZ 569393
+
 * Wed Apr 21 2010 David Lutterkort <lutter@redhat.com> - 0.7.1-1
 - New version
 
