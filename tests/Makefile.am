@@ -23,6 +23,7 @@ lens_tests =			\
   lens-cron.sh			\
   lens-darkice.sh		\
   lens-debctrl.sh		\
+  lens-device_map.sh    \
   lens-dhclient.sh		\
   lens-dnsmasq.sh		\
   lens-dpkg.sh			\
