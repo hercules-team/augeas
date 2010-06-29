@@ -70,6 +70,8 @@ static struct augeas *setup_writable_hosts(CuTest *tc) {
     r = aug_set(aug, "/augeas/load/Hosts/incl", "/etc/hosts");
     CuAssertRetSuccess(tc, r);
 
+    free(build_root);
+    free(etcdir);
     return aug;
 }
 
@@ -262,6 +264,142 @@ static void testDefvarExpr(CuTest *tc) {
     aug_close(aug);
 }
 
+static void testReloadChanged(CuTest *tc) {
+    FILE *fp;
+    augeas *aug = NULL;
+    const char *build_root, *mtime2, *s;
+    char *mtime1;
+    char *hosts = NULL;
+    int r;
+
+    aug = setup_writable_hosts(tc);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_get(aug, "/augeas/root", &build_root);
+    CuAssertIntEquals(tc, 1, r);
+
+    r = aug_get(aug, "/augeas/files/etc/hosts/mtime", &s);
+    CuAssertIntEquals(tc, 1, r);
+    mtime1 = strdup(s);
+    CuAssertPtrNotNull(tc, mtime1);
+
+    /* Tickle /etc/hosts behind augeas' back */
+    r = asprintf(&hosts, "%setc/hosts", build_root);
+    CuAssertPositive(tc, r);
+
+    fp = fopen(hosts, "a");
+    CuAssertPtrNotNull(tc, fp);
+
+    r = fprintf(fp, "192.168.0.1 other.example.com\n");
+    CuAssertTrue(tc, r > 0);
+
+    r = fclose(fp);
+    CuAssertRetSuccess(tc, r);
+
+    /* Unsaved changes are discarded */
+    r = aug_set(aug, "/files/etc/hosts/1/ipaddr", "127.0.0.2");
+    CuAssertRetSuccess(tc, r);
+
+    /* Check that we really did load the right file*/
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_get(aug, "/augeas/files/etc/hosts/mtime", &mtime2);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertStrNotEqual(tc, mtime1, mtime2);
+
+    r = aug_match(aug, "/files/etc/hosts/*[ipaddr = '192.168.0.1']", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    r = aug_match(aug, "/files/etc/hosts/1[ipaddr = '127.0.0.1']", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    free(mtime1);
+    free(hosts);
+    aug_close(aug);
+}
+
+static void testReloadDirty(CuTest *tc) {
+    augeas *aug = NULL;
+    int r;
+
+    aug = setup_writable_hosts(tc);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    /* Unsaved changes are discarded */
+    r = aug_set(aug, "/files/etc/hosts/1/ipaddr", "127.0.0.2");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_match(aug, "/files/etc/hosts/1[ipaddr = '127.0.0.1']", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    aug_close(aug);
+}
+
+static void testReloadDeleted(CuTest *tc) {
+    augeas *aug = NULL;
+    int r;
+
+    aug = setup_writable_hosts(tc);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    /* A missing file causes a reload */
+    r = aug_rm(aug, "/files/etc/hosts");
+    CuAssertPositive(tc, r);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_match(aug, "/files/etc/hosts/1[ipaddr = '127.0.0.1']", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    /* A missing entry in a file causes a reload */
+    r = aug_rm(aug, "/files/etc/hosts/1/ipaddr");
+    CuAssertPositive(tc, r);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_match(aug, "/files/etc/hosts/1[ipaddr = '127.0.0.1']", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    aug_close(aug);
+}
+
+static void testReloadDeletedMeta(CuTest *tc) {
+    augeas *aug = NULL;
+    int r;
+
+    aug = setup_writable_hosts(tc);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    /* Unsaved changes are discarded */
+    r = aug_rm(aug, "/augeas/files/etc/hosts");
+    CuAssertPositive(tc, r);
+
+    r = aug_set(aug, "/files/etc/hosts/1/ipaddr", "127.0.0.2");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_match(aug, "/files/etc/hosts/1[ipaddr = '127.0.0.1']", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    aug_close(aug);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -274,6 +412,10 @@ int main(void) {
     SUITE_ADD_TEST(suite, testLoadSave);
     SUITE_ADD_TEST(suite, testLoadDefined);
     SUITE_ADD_TEST(suite, testDefvarExpr);
+    SUITE_ADD_TEST(suite, testReloadChanged);
+    SUITE_ADD_TEST(suite, testReloadDirty);
+    SUITE_ADD_TEST(suite, testReloadDeleted);
+    SUITE_ADD_TEST(suite, testReloadDeletedMeta);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)

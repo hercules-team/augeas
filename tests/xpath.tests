@@ -148,6 +148,7 @@ test ipaddr-sibling //*[../ipaddr]
 
 test lircd-ancestor //*[ancestor::kudzu][label() != '#comment']
      /augeas/files/etc/sysconfig/kudzu/path = /files/etc/sysconfig/kudzu
+     /augeas/files/etc/sysconfig/kudzu/mtime = ...
      /augeas/files/etc/sysconfig/kudzu/lens = @Shellvars
      /augeas/files/etc/sysconfig/kudzu/lens/info = ...
      /files/etc/sysconfig/kudzu/SAFE = no

@@ -451,6 +451,51 @@ void tree_unlink_children(struct augeas *aug, struct tree *tree) {
         tree_unlink(tree->children);
 }
 
+static void tree_mark_files(struct tree *tree) {
+    if (tree_child(tree, "path") != NULL) {
+        tree_mark_dirty(tree);
+    } else {
+        list_for_each(c, tree->children) {
+            tree_mark_files(c);
+        }
+    }
+}
+
+static void tree_rm_dirty_files(struct augeas *aug, struct tree *tree) {
+    struct tree *p;
+
+    if (!tree->dirty)
+        return;
+
+    if ((p = tree_child(tree, "path")) != NULL) {
+        aug_rm(aug, p->value);
+        tree_unlink(tree);
+    } else {
+        struct tree *c = tree->children;
+        while (c != NULL) {
+            struct tree *next = c->next;
+            tree_rm_dirty_files(aug, c);
+            c = next;
+        }
+    }
+}
+
+static void tree_rm_dirty_leaves(struct augeas *aug, struct tree *tree,
+                                 struct tree *protect) {
+    if (! tree->dirty)
+        return;
+
+    struct tree *c = tree->children;
+    while (c != NULL) {
+        struct tree *next = c->next;
+        tree_rm_dirty_leaves(aug, c, protect);
+        c = next;
+    }
+
+    if (tree != protect && tree->children == NULL)
+        tree_unlink(tree);
+}
+
 int aug_load(struct augeas *aug) {
     struct tree *meta = tree_child_cr(aug->origin, s_augeas);
     struct tree *meta_files = tree_child_cr(meta, s_files);
@@ -462,13 +507,36 @@ int aug_load(struct augeas *aug) {
 
     ERR_NOMEM(load == NULL, aug);
 
-    tree_unlink_children(aug, meta_files);
-    tree_unlink_children(aug, files);
+    /* To avoid unnecessary loads of files, we reload an existing file in
+     * several steps:
+     * (1) mark all file nodes under /augeas/files as dirty (and only those)
+     * (2) process all files matched by a lens; we check (in
+     *     transform_load) if the file has been modified. If it has, we
+     *     reparse it. Either way, we clear the dirty flag. We also need to
+     *     reread the file if part or all of it has been modified in the
+     *     tree but not been saved yet
+     * (3) remove all files from the tree that still have a dirty entry
+     *     under /augeas/files. Those files are not processed by any lens
+     *     anymore
+     * (4) Remove entries from /augeas/files and /files that correspond
+     *     to directories without any files of interest
+     */
+    tree_clean(meta_files);
+    tree_mark_files(meta_files);
 
     list_for_each(xfm, load->children) {
         if (transform_validate(aug, xfm) == 0)
             transform_load(aug, xfm);
     }
+
+    /* This makes it possible to spot 'directories' that are now empty
+     * because we removed their file contents */
+    tree_clean(files);
+
+    tree_rm_dirty_files(aug, meta_files);
+    tree_rm_dirty_leaves(aug, meta_files, meta_files);
+    tree_rm_dirty_leaves(aug, files, files);
+
     tree_clean(aug->origin);
 
     list_for_each(v, vars->children) {

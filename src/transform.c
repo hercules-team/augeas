@@ -49,6 +49,7 @@ static const int glob_flags = GLOB_NOSORT;
 /* Loaded files are tracked underneath METATREE. When a file with name
  * FNAME is loaded, certain entries are made under METATREE / FNAME:
  *   path      : path where tree for FNAME is put
+ *   mtime     : time of last modification of the file as reported by stat(2)
  *   lens/info : information about where the applied lens was loaded from
  *   lens/id   : unique hexadecimal id of the lens
  *   error     : indication of errors during processing FNAME, or NULL
@@ -60,6 +61,7 @@ static const int glob_flags = GLOB_NOSORT;
 static const char *const s_path = "path";
 static const char *const s_lens = "lens";
 static const char *const s_info = "info";
+static const char *const s_mtime = "mtime";
 
 static const char *const s_error = "error";
 /* These are all put underneath "error" */
@@ -109,6 +111,59 @@ static bool is_regular_file(const char *path) {
     if (r < 0)
         return false;
     return S_ISREG(st.st_mode);
+}
+
+static char *mtime_as_string(struct augeas *aug, const char *fname) {
+    int r;
+    struct stat st;
+    char *result = NULL;
+
+    r = stat(fname, &st);
+    if (r < 0) {
+        /* If we fail to stat, silently ignore the error
+         * and report an impossible mtime */
+        result = strdup("0");
+        ERR_NOMEM(result == NULL, aug);
+    } else {
+        r = xasprintf(&result, "%ld", (long) st.st_mtime);
+        ERR_NOMEM(r < 0, aug);
+    }
+    return result;
+ error:
+    FREE(result);
+    return NULL;
+}
+
+static bool file_current(struct augeas *aug, const char *fname,
+                         struct tree *finfo) {
+    struct tree *mtime = tree_child(finfo, s_mtime);
+    struct tree *file = NULL, *path = NULL;
+    int r;
+    struct stat st;
+    int64_t mtime_i;
+
+    if (mtime == NULL || mtime->value == NULL)
+        return false;
+
+    r = xstrtoint64(mtime->value, 10, &mtime_i);
+    if (r < 0) {
+        /* Ignore silently and err on the side of caution */
+        return false;
+    }
+
+    r = stat(fname, &st);
+    if (r < 0)
+        return false;
+
+    if (mtime_i != (int64_t) st.st_mtime)
+        return false;
+
+    path = tree_child(finfo, s_path);
+    if (path == NULL)
+        return false;
+
+    file = tree_find(aug, path->value);
+    return (file != NULL && ! file->dirty);
 }
 
 static int filter_generate(struct tree *xfm, const char *root,
@@ -326,7 +381,8 @@ static int store_error(struct augeas *aug,
  * Returns 0 on success, -1 on error
  */
 static int add_file_info(struct augeas *aug, const char *node,
-                         struct lens *lens, const char *lens_name) {
+                         struct lens *lens, const char *lens_name,
+                         const char *filename) {
     struct tree *file, *tree;
     char *tmp = NULL;
     int r;
@@ -348,6 +404,13 @@ static int add_file_info(struct augeas *aug, const char *node,
     r = tree_set_value(tree, node);
     ERR_NOMEM(r < 0, aug);
 
+    /* Set 'mtime' */
+    tmp = mtime_as_string(aug, filename);
+    ERR_BAIL(aug);
+    tree = tree_child_cr(file, s_mtime);
+    ERR_NOMEM(tree == NULL, aug);
+    tree_store_value(tree, &tmp);
+
     /* Set 'lens/info' */
     tmp = format_info(lens->info);
     ERR_NOMEM(tmp == NULL, aug);
@@ -361,6 +424,8 @@ static int add_file_info(struct augeas *aug, const char *node,
     tree = tree->parent;
     r = tree_set_value(tree, lens_name);
     ERR_NOMEM(r < 0, aug);
+
+    tree_clean(file);
 
     result = 0;
  error:
@@ -404,7 +469,7 @@ static int load_file(struct augeas *aug, struct lens *lens,
     path = file_name_path(aug, filename);
     ERR_NOMEM(path == NULL, aug);
 
-    r = add_file_info(aug, path, lens, lens_name);
+    r = add_file_info(aug, path, lens, lens_name, filename);
     if (r < 0)
         goto done;
 
@@ -602,7 +667,8 @@ int transform_load(struct augeas *aug, struct tree *xfm) {
     for (int i=0; i < nmatches; i++) {
         const char *filename = matches[i] + strlen(aug->root) - 1;
         struct tree *finfo = file_info(aug, filename);
-        if (finfo != NULL && tree_child(finfo, s_lens) != NULL) {
+        if (finfo != NULL && !finfo->dirty &&
+            tree_child(finfo, s_lens) != NULL) {
             const char *s = xfm_lens_name(finfo);
             char *fpath = file_name_path(aug, matches[i]);
             transform_file_error(aug, "mxfm_load", filename,
@@ -610,9 +676,11 @@ int transform_load(struct augeas *aug, struct tree *xfm) {
                                  s, lens_name);
             aug_rm(aug, fpath);
             free(fpath);
-        } else {
+        } else if (!file_current(aug, matches[i], finfo)) {
             load_file(aug, lens, lens_name, matches[i]);
         }
+        if (finfo != NULL)
+            finfo->dirty = 0;
         FREE(matches[i]);
     }
     lens_release(lens);
@@ -945,7 +1013,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
     result = 1;
 
  done:
-    r = add_file_info(aug, path, lens, lens_name);
+    r = add_file_info(aug, path, lens, lens_name, filename);
     if (r < 0) {
         err_status = "file_info";
         result = -1;

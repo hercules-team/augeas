@@ -138,6 +138,23 @@ void CuAssertStrEquals_LineMsg(CuTest* tc, const char* file, int line,
 	CuFailInternal(tc, file, line, string);
 }
 
+void CuAssertStrNotEqual_LineMsg(CuTest* tc, const char* file, int line,
+                                 const char* message,
+                                 const char* expected, const char* actual) {
+	char *string = NULL;
+
+    if (expected != NULL && actual != NULL && strcmp(expected, actual) != 0)
+        return;
+
+	if (message != NULL) {
+        asprintf_or_die(&string, "%s: expected <%s> but was <%s>", message,
+                        expected, actual);
+	} else {
+        asprintf_or_die(&string, "expected <%s> but was <%s>", expected, actual);
+    }
+	CuFailInternal(tc, file, line, string);
+}
+
 void CuAssertIntEquals_LineMsg(CuTest* tc, const char* file, int line,
                                const char* message,
                                int expected, int actual) {
