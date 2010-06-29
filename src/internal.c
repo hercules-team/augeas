@@ -392,6 +392,19 @@ int xasprintf(char **strp, const char *format, ...) {
   return result;
 }
 
+/* From libvirt's src/xen/block_stats.c */
+int xstrtoint64(char const *s, int base, int64_t *result) {
+    long long int lli;
+    char *p;
+
+    errno = 0;
+    lli = strtoll(s, &p, base);
+    if (errno || !(*p == 0 || *p == '\n') || p == s || (int64_t) lli != lli)
+        return -1;
+    *result = lli;
+    return 0;
+}
+
 void calc_line_ofs(const char *text, size_t pos, size_t *line, size_t *ofs) {
     *line = 1;
     *ofs = 0;

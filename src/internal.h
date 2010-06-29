@@ -272,6 +272,9 @@ const char *xstrerror(int errnum, char *buf, size_t len);
 /* Like asprintf, but set *STRP to NULL on error */
 int xasprintf(char **strp, const char *format, ...);
 
+/* Convert S to RESULT with error checking */
+int xstrtoint64(char const *s, int base, int64_t *result);
+
 /* Calculate line and column number of character POS in TEXT */
 void calc_line_ofs(const char *text, size_t pos, size_t *line, size_t *ofs);
 
