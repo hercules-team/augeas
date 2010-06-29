@@ -156,17 +156,27 @@ struct tree *tree_find_cr(struct augeas *aug, const char *path) {
     return result;
 }
 
-int tree_set_value(struct tree *tree, const char *value) {
+void tree_store_value(struct tree *tree, char **value) {
     if (tree->value != NULL) {
         free(tree->value);
         tree->value = NULL;
     }
-    if (value != NULL) {
-        tree->value = strdup(value);
-        if (tree->value == NULL)
-            return -1;
+    if (*value != NULL) {
+        tree->value = *value;
+        *value = NULL;
     }
     tree_mark_dirty(tree);
+}
+
+int tree_set_value(struct tree *tree, const char *value) {
+    char *v = NULL;
+
+    if (value != NULL) {
+        v = strdup(value);
+        if (v == NULL)
+            return -1;
+    }
+    tree_store_value(tree, &v);
     return 0;
 }
 
