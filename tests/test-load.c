@@ -205,7 +205,7 @@ static void testLoadDefined(CuTest *tc) {
     CuAssertRetSuccess(tc, r);
 
     r = aug_match(aug, "$v", NULL);
-    CuAssertIntEquals(tc, 0, r);
+    CuAssertIntEquals(tc, 2, r);
 
     aug_close(aug);
 }

@@ -447,6 +447,7 @@ int aug_load(struct augeas *aug) {
     struct tree *meta_files = tree_child_cr(meta, s_files);
     struct tree *files = tree_child_cr(aug->origin, s_files);
     struct tree *load = tree_child_cr(meta, s_load);
+    struct tree *vars = tree_child_cr(meta, s_vars);
 
     api_entry(aug);
 
@@ -460,6 +461,11 @@ int aug_load(struct augeas *aug) {
             transform_load(aug, xfm);
     }
     tree_clean(aug->origin);
+
+    list_for_each(v, vars->children) {
+        aug_defvar(aug, v->label, v->value);
+        ERR_BAIL(aug);
+    }
 
     api_exit(aug);
     return 0;
