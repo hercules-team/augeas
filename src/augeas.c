@@ -41,6 +41,7 @@ static const char *const s_load   = "load";
 static const char *const s_pathx  = "pathx";
 static const char *const s_error  = "error";
 static const char *const s_pos    = "pos";
+static const char *const s_vars   = "variables";
 
 #define TREE_HIDDEN(tree) ((tree)->label == NULL)
 
@@ -529,7 +530,7 @@ int aug_defvar(augeas *aug, const char *name, const char *expr) {
     ERR_BAIL(aug);
 
     /* Record the definition of the variable */
-    struct tree *tree = tree_path_cr(aug->origin, 2, "augeas", "variables");
+    struct tree *tree = tree_path_cr(aug->origin, 2, s_augeas, s_vars);
     ERR_NOMEM(tree == NULL, aug);
     if (expr == NULL) {
         tree = tree_child(tree, name);
