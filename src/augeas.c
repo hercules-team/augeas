@@ -74,8 +74,7 @@ static void tree_mark_dirty(struct tree *tree) {
     tree->dirty = 1;
 }
 
-/* Clear the dirty flag in the whole TREE */
-static void tree_clean(struct tree *tree) {
+void tree_clean(struct tree *tree) {
     if (tree->dirty) {
         list_for_each(c, tree->children)
             tree_clean(c);

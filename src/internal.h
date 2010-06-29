@@ -379,6 +379,8 @@ int dump_tree(FILE *out, struct tree *tree);
 int tree_equal(const struct tree *t1, const struct tree *t2);
 char *path_expand(struct tree *tree, const char *ppath);
 char *path_of_tree(struct tree *tree);
+/* Clear the dirty flag in the whole TREE */
+void tree_clean(struct tree *tree);
 /* Return first child with label LABEL or NULL */
 struct tree *tree_child(struct tree *tree, const char *label);
 /* Return first existing child with label LABEL or create one. Return NULL
