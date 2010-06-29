@@ -32,7 +32,8 @@
 #define CuAssertRetSuccess(tc, n) CuAssertTrue(tc, (n) == 0)
 
 static const char *abs_top_srcdir;
-static char *root;
+static const char *abs_top_builddir;
+static char *root = NULL;
 static char *loadpath;
 
 #define die(msg)                                                    \
@@ -41,6 +42,36 @@ static char *loadpath;
         exit(EXIT_FAILURE);                                         \
     } while(0)
 
+static struct augeas *setup_writable_hosts(CuTest *tc) {
+    char *etcdir, *build_root;
+    struct augeas *aug = NULL;
+    int r;
+
+    if (asprintf(&build_root, "%s/build/test-load/%s",
+                 abs_top_builddir, tc->name) < 0) {
+        CuFail(tc, "failed to set build_root");
+    }
+
+    if (asprintf(&etcdir, "%s/etc", build_root) < 0)
+        CuFail(tc, "asprintf etcdir failed");
+
+    run(tc, "test -d %s && chmod -R u+w %s || :", build_root, build_root);
+    run(tc, "rm -rf %s", build_root);
+    run(tc, "mkdir -p %s", etcdir);
+    run(tc, "cp -pr %s/etc/hosts %s", root, etcdir);
+    run(tc, "chmod -R u+w %s", build_root);
+
+    aug = aug_init(build_root, loadpath, AUG_NO_MODL_AUTOLOAD);
+    CuAssertPtrNotNull(tc, aug);
+
+    r = aug_set(aug, "/augeas/load/Hosts/lens", "Hosts.lns");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_set(aug, "/augeas/load/Hosts/incl", "/etc/hosts");
+    CuAssertRetSuccess(tc, r);
+
+    return aug;
+}
 
 static void testDefault(CuTest *tc) {
     augeas *aug = NULL;
@@ -162,21 +193,7 @@ static void testLoadSave(CuTest *tc) {
     augeas *aug = NULL;
     int r;
 
-    /* FIXME: This test behaves properly during distcheck, since srcdir
-     * is writeprotected, making an incorrect attempt to write
-     * /etc/hosts.augnew fail; during normal 'make check' the test will
-     * succeed.
-     * To address this, we should copy the files fro, tests/root into
-     * another directory and 'chmod a-w /etc' in that root
-     */
-    aug = aug_init(root, loadpath, AUG_NO_MODL_AUTOLOAD|AUG_SAVE_NOOP);
-    CuAssertPtrNotNull(tc, aug);
-
-    r = aug_set(aug, "/augeas/load/Hosts/lens", "Hosts.lns");
-    CuAssertRetSuccess(tc, r);
-
-    r = aug_set(aug, "/augeas/load/Hosts/incl", "/etc/hosts");
-    CuAssertRetSuccess(tc, r);
+    aug = setup_writable_hosts(tc);
 
     r = aug_load(aug);
     CuAssertRetSuccess(tc, r);
@@ -261,6 +278,10 @@ int main(void) {
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)
         die("env var abs_top_srcdir must be set");
+
+    abs_top_builddir = getenv("abs_top_builddir");
+    if (abs_top_builddir == NULL)
+        die("env var abs_top_builddir must be set");
 
     if (asprintf(&root, "%s/tests/root", abs_top_srcdir) < 0) {
         die("failed to set root");
