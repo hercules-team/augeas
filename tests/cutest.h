@@ -120,6 +120,8 @@ void CuSuiteRun(CuSuite* testSuite);
 void CuSuiteSummary(CuSuite* testSuite, char **summary);
 void CuSuiteDetails(CuSuite* testSuite, char **details);
 
+/* Run a command */
+void run(CuTest *tc, const char *format, ...);
 #endif /* CU_TEST_H */
 
 /*

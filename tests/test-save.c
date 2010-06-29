@@ -40,26 +40,6 @@ struct augeas *aug = NULL;
         exit(EXIT_FAILURE);                                         \
     } while(0)
 
-static void run(CuTest *tc, const char *format, ...) {
-    char *command;
-    va_list args;
-    int r;
-
-    va_start(args, format);
-    r = vasprintf(&command, format, args);
-    va_end (args);
-    if (r < 0)
-        CuFail(tc, "Failed to format command (out of memory)");
-    r = system(command);
-    if (r < 0 || (WIFEXITED(r) && WEXITSTATUS(r) != 0)) {
-        char *msg;
-        r = asprintf(&msg, "Command %s failed with status %d\n",
-                     command, WEXITSTATUS(r));
-        CuFail(tc, msg);
-        free(msg);
-    }
-}
-
 static void setup(CuTest *tc) {
     char *lensdir;
 
