@@ -1014,7 +1014,7 @@ int jmt_visit(struct jmt_visitor *visitor, size_t *len) {
         struct item *x = set_item(parse, k, item);
         if (x->parent == 0 && returns(x->state, parse->jmt->lens)) {
             for (ind_t i = 0; i < x->nlinks; i++) {
-                if (is_complete(x->links + i)) {
+                if (is_complete(x->links + i) || is_scan(x->links + i)) {
                     if (debugging("cf.jmt.visit"))
                         printf("visit: found (%d, %d) in E_%d\n",
                                x->state->num, x->parent, k);

@@ -66,3 +66,11 @@ test unamb2 get "x" = { "x" }
 (* Test proper handling of '?'; bug #119 *)
 let rec maybe = [ del "a" "a" . maybe . del "b" "b" ]?
 test maybe get "aabb" = { { } }
+
+(* Test that parses ending with a SCAN are accepted; bug #126 *)
+let dels (s:string) = del s s
+let d2 = del /b*/ ""
+let sec (body:lens) = [ key /a*/ . dels "{" . body . dels "}"]*
+let rec sec_complete = sec sec_complete
+let lns2 = sec_complete . d2
+test lns2 get "a{}b" = { "a" }
