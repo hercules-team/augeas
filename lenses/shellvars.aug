@@ -89,6 +89,7 @@ module Shellvars =
       sc_incl "sendmail" .
       sc_incl "smartmontools" .
       sc_incl "spamassassin" .
+      sc_incl "suseconfig" .
       sc_incl "sysstat" .
       sc_incl "system-config-users" .
       sc_incl "vncservers" .
