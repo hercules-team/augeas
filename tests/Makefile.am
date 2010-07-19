@@ -73,6 +73,7 @@ lens_tests =			\
   lens-spacevars.sh		\
   lens-squid.sh			\
   lens-sshd.sh			\
+  lens-sysconfig.sh		\
   lens-sysctl.sh		\
   lens-vsftpd.sh		\
   lens-webmin.sh		\
