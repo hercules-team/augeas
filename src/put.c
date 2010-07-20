@@ -226,7 +226,7 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
         count = -1;
     if (count < 0) {
         regexp_match_error(state, lens, count, outer);
-        return NULL;
+        goto error;
     }
 
     struct tree *cur = outer->tree;
@@ -245,9 +245,14 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
         reg += 1 + regexp_nsub(lens->children[i]->atype);
     }
     assert(reg < regs.num_regs);
+ done:
     free(regs.start);
     free(regs.end);
     return split;
+ error:
+    free_split(split);
+    split = NULL;
+    goto done;
 }
 
 static struct split *split_iter(struct state *state, struct lens *lens) {
