@@ -147,6 +147,19 @@ static struct value *make_pathx_exn(struct info *info, struct pathx *p) {
     return v;
 }
 
+static struct value *pathx_parse_glue(struct info *info, struct value *tree,
+                                      struct value *path, struct pathx **p) {
+    assert(path->tag == V_STRING);
+    assert(tree->tag == V_TREE);
+
+    if (pathx_parse(tree->origin, info->error, path->string->str, true,
+                    NULL, p) != PATHX_NOERROR) {
+        return make_pathx_exn(ref(info), *p);
+    } else {
+        return NULL;
+    }
+}
+
 /* V_LENS -> V_STRING -> V_TREE */
 static struct value *lens_get(struct info *info, struct value *l,
                               struct value *str) {
@@ -224,11 +237,9 @@ static struct value *tree_set_glue(struct info *info, struct value *path,
         fake = tree->origin->children;
     }
 
-    if (pathx_parse(tree->origin, NULL, path->string->str, true, NULL, &p)
-        != PATHX_NOERROR) {
-        result = make_pathx_exn(ref(info), p);
+    result = pathx_parse_glue(info, tree, path, &p);
+    if (result != NULL)
         goto done;
-    }
 
     if (tree_set(p, val->string->str) == NULL) {
         result = make_exn_value(ref(info),
@@ -265,11 +276,9 @@ static struct value *tree_clear_glue(struct info *info, struct value *path,
         fake = tree->origin->children;
     }
 
-    if (pathx_parse(tree->origin, NULL, path->string->str, true, NULL, &p)
-        != PATHX_NOERROR) {
-        result = make_pathx_exn(ref(info), p);
+    result = pathx_parse_glue(info, tree, path, &p);
+    if (result != NULL)
         goto done;
-    }
 
     if (tree_set(p, NULL) == NULL) {
         result = make_exn_value(ref(info),
@@ -302,11 +311,9 @@ static struct value *tree_insert_glue(struct info *info, struct value *label,
     struct pathx *p = NULL;
     struct value *result = NULL;
 
-    if (pathx_parse(tree->origin, NULL, path->string->str, true, NULL, &p)
-        != PATHX_NOERROR) {
-        result = make_pathx_exn(ref(info), p);
+    result = pathx_parse_glue(info, tree, path, &p);
+    if (result != NULL)
         goto done;
-    }
 
     r = tree_insert(p, label->string->str, before);
     if (r != 0) {
@@ -349,11 +356,9 @@ static struct value *tree_rm_glue(struct info *info,
     struct pathx *p = NULL;
     struct value *result = NULL;
 
-    if (pathx_parse(tree->origin, NULL, path->string->str, true, NULL, &p)
-        != PATHX_NOERROR) {
-        result = make_pathx_exn(ref(info), p);
+    result = pathx_parse_glue(info, tree, path, &p);
+    if (result != NULL)
         goto done;
-    }
 
     if (tree_rm(p) == -1) {
         result = make_exn_value(ref(info), "Tree rm of %s failed",
