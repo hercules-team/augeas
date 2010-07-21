@@ -1729,6 +1729,7 @@ static int compile_test(struct term *term, struct ctx *ctx) {
         }
     }
  done:
+    reset_error(term->info->error);
     unref(actual, value);
     unref(expect, value);
     return ret;
