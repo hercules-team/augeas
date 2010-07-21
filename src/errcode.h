@@ -50,6 +50,8 @@ void bug_on(struct error *err, const char *srcfile, int srclineno,
             const char *format, ...)
     ATTRIBUTE_FORMAT(printf, 4, 5);
 
+void reset_error(struct error *err);
+
 #define HAS_ERR(obj) ((obj)->error->code != AUG_NOERROR)
 
 #define ERR_BAIL(obj) if ((obj)->error->code != AUG_NOERROR) goto error;

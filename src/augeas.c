@@ -315,10 +315,7 @@ static void api_entry(const struct augeas *aug) {
     if (aug->api_entries > 1)
         return;
 
-    err->code = AUG_NOERROR;
-    err->minor = 0;
-    FREE(err->details);
-    err->minor_details = NULL;
+    reset_error(err);
     save_locale((struct augeas *) aug);
 }
 

@@ -23,6 +23,7 @@
 #include <config.h>
 
 #include "errcode.h"
+#include "memory.h"
 #include <stdarg.h>
 
 static void vreport_error(struct error *err, aug_errcode_t errcode,
@@ -70,6 +71,13 @@ void bug_on(struct error *err, const char *srcfile, int srclineno,
             err->details = msg;
         }
     }
+}
+
+void reset_error(struct error *err) {
+    err->code = AUG_NOERROR;
+    err->minor = 0;
+    FREE(err->details);
+    err->minor_details = NULL;
 }
 
 /*
