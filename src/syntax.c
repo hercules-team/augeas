@@ -1955,8 +1955,8 @@ int load_module_file(struct augeas *aug, const char *filename) {
         goto error;
 
     struct module *module = compile(term, aug);
-    if (module == NULL)
-        goto error;
+    ERR_THROW(module == NULL, aug, AUG_ESYNTAX,
+              "Failed to load %s", filename);
 
     list_append(aug->modules, module);
     result = 0;
