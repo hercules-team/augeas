@@ -2023,8 +2023,14 @@ struct value *lns_check_rec(struct info *info,
     struct value *result = NULL;
 
     ensure(rec->tag == L_REC, info);
-    ensure(body->recursive, info);
     ensure(rec->rec_internal, info);
+
+    /* The user might have written down a regular lens with 'let rec' */
+    if (! body->recursive) {
+        result = make_lens_value(ref(body));
+        ERR_NOMEM(result == NULL, info);
+        return result;
+    }
 
     /* To help memory management, we avoid the cycle inherent ina recursive
      * lens by using two instances of an L_REC lens. One is marked with
