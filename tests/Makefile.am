@@ -49,6 +49,7 @@ lens_tests =			\
   lens-modules_conf.sh	\
   lens-monit.sh			\
   lens-multipath.sh     \
+  lens-mysql.sh			\
   lens-nagioscfg.sh     \
   lens-ntp.sh			\
   lens-openvpn.sh		\
