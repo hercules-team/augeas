@@ -38,7 +38,7 @@ www-data +biglab=(rpinson)NOEXEC: ICAL \
 
 	+secretaries           ALPHA = /usr/bin/su [!-]*, !/usr/bin/su *root*
 
-someuser ALL=(root) NOPASSWD: /usr/bin/python /usr/local/sbin/filterlog -iu\\=www /var/log/something.log
+@my\ admin\ group ALL=(root) NOPASSWD: /usr/bin/python /usr/local/sbin/filterlog -iu\\=www /var/log/something.log
 "
 
    test Sudoers.lns get conf =
@@ -136,7 +136,7 @@ someuser ALL=(root) NOPASSWD: /usr/bin/python /usr/local/sbin/filterlog -iu\\=ww
 	      { "command" = "!/usr/bin/su *root*" } } }
       {}
       { "spec"
-          { "user"    = "someuser" }
+          { "user"    = "@my\ admin\ group" }
           { "host_group"
               { "host" = "ALL" }
               { "command" = "/usr/bin/python /usr/local/sbin/filterlog -iu\\=www /var/log/something.log"

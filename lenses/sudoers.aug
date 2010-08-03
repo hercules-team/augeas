@@ -90,8 +90,13 @@ let sto_to_com_cmnd = store /([^,=:#() \t\n\\\\]([^,=:#()\n\\\\]|\\\\[=:,\\\\])*
 There could be a \ in the middle of a command *)
 let sto_to_com      = store /([^,=:#() \t\n\\\\][^,=:#()\n]*[^,=:#() \t\n\\\\])|[^,=:#() \t\n\\\\]/
 
-(* Variable: sto_to_com_user *)
-let sto_to_com_user = store ( /[^,=:#() \t\n]+/
+(* Variable: sto_to_com_host *)
+let sto_to_com_host = store /[^,=:#() \t\n\\\\]+/
+
+
+(* Variable: sto_to_com_user
+Escaped spaces are allowed *)
+let sto_to_com_user = store ( /([^,=:#() \t\n]([^,=:#() \t\n]|(\\\\[ \t]))*[^,=:#() \t\n])|[^,=:#() \t\n]/
                               - /(User|Runas|Host|Cmnd)_Alias|Defaults.*/ )
 
 (* Variable: sto_to_com_col *)
@@ -446,7 +451,7 @@ let cmnd_spec_list = cmnd_spec . ( sep_com . cmnd_spec )*
  * View: spec_list
  *   Group of hosts with <cmnd_spec_list>
  *************************************************************************)
-let spec_list = [ label "host_group" . alias_list "host" sto_to_com
+let spec_list = [ label "host_group" . alias_list "host" sto_to_com_host
                     . sep_eq . cmnd_spec_list ]
 
 (************************************************************************
