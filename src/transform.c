@@ -817,11 +817,9 @@ static int file_saved_event(struct augeas *aug, const char *path) {
     struct tree *dummy;
     int r;
 
-    r = pathx_parse(aug->origin, err_of_aug(aug),
-                    AUGEAS_EVENTS_SAVED "[last()]",
-                    true, NULL, &px);
-    if (r != PATHX_NOERROR)
-        return -1;
+    px = pathx_aug_parse(aug, aug->origin, AUGEAS_EVENTS_SAVED "[last()]",
+                         true);
+    ERR_BAIL(aug);
 
     if (pathx_find_one(px, &dummy) == 1) {
         r = tree_insert(px, saved, 0);

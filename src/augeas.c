@@ -126,7 +126,7 @@ struct tree *tree_find(struct augeas *aug, const char *path) {
     struct tree *result = NULL;
     int r;
 
-    pathx_parse(aug->origin, aug->error, path, true, aug->symtab, &p);
+    p = pathx_aug_parse(aug, aug->origin, path, true);
     ERR_BAIL(aug);
 
     r = pathx_find_one(p, &result);
@@ -146,7 +146,7 @@ struct tree *tree_find_cr(struct augeas *aug, const char *path) {
     struct tree *result = NULL;
     int r;
 
-    pathx_parse(aug->origin, aug->error, path, true, aug->symtab, &p);
+    p = pathx_aug_parse(aug, aug->origin, path, true);
     ERR_BAIL(aug);
 
     r = pathx_expand_tree(p, &result);
@@ -706,7 +706,6 @@ int aug_set(struct augeas *aug, const char *path, const char *value) {
 int aug_setm(struct augeas *aug, const char *base,
              const char *sub, const char *value) {
     struct pathx *bx = NULL, *sx = NULL;
-    struct error *err = err_of_aug(aug);
     struct tree *bt, *st;
     int result, r;
 
@@ -722,7 +721,7 @@ int aug_setm(struct augeas *aug, const char *base,
     for (bt = pathx_first(bx); bt != NULL; bt = pathx_next(bx)) {
         if (sub != NULL) {
             /* Handle subnodes of BT */
-            pathx_parse(bt, err, sub, true, aug->symtab, &sx);
+            sx = pathx_aug_parse(aug, bt, sub, true);
             ERR_BAIL(aug);
             if (pathx_first(sx) != NULL) {
                 /* Change existing subnodes matching SUB */
@@ -1153,8 +1152,8 @@ static int unlink_removed_files(struct augeas *aug,
         if (tf == NULL) {
             /* Unlink all files in tm */
             struct pathx *px = NULL;
-            if (pathx_parse(tm, err_of_aug(aug), file_nodes, true, NULL, &px)
-                != PATHX_NOERROR) {
+            if (pathx_parse(tm, err_of_aug(aug), file_nodes, true,
+                            aug->symtab, &px) != PATHX_NOERROR) {
                 result = -1;
                 continue;
             }
