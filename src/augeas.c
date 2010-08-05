@@ -916,13 +916,13 @@ int aug_rm(struct augeas *aug, const char *path) {
     return -1;
 }
 
-int tree_replace(struct tree *origin, const char *path, struct tree *sub) {
+int tree_replace(struct augeas *aug, const char *path, struct tree *sub) {
     struct tree *parent;
     struct pathx *p = NULL;
     int r;
 
-    if (pathx_parse(origin, NULL, path, true, NULL, &p) != PATHX_NOERROR)
-        goto error;
+    p = parse_user_pathx(aug, true, path);
+    ERR_BAIL(aug);
 
     r = tree_rm(p);
     if (r == -1)

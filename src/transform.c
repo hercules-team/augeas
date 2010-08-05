@@ -497,7 +497,7 @@ static int load_file(struct augeas *aug, struct lens *lens,
         goto done;
     }
 
-    tree_replace(aug->origin, path, tree);
+    tree_replace(aug, path, tree);
     tree = NULL;
 
     result = 0;

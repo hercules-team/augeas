@@ -28,8 +28,8 @@
 #include "internal.h"
 
 #define CuAssertPositive(tc, n) CuAssertTrue(tc, (n) > 0)
-#define CuAssertZero(tc, n) CuAssertTrue(tc, (n) == 0)
-#define CuAssertRetSuccess(tc, n) CuAssertTrue(tc, (n) == 0)
+#define CuAssertZero(tc, n) CuAssertIntEquals(tc, 0, (n))
+#define CuAssertRetSuccess(tc, n) CuAssertIntEquals(tc, 0, (n))
 
 static const char *abs_top_srcdir;
 static const char *abs_top_builddir;
@@ -400,6 +400,53 @@ static void testReloadDeletedMeta(CuTest *tc) {
     aug_close(aug);
 }
 
+/* BZ 613967 - segfault when reloading a file that has been externally
+ * modified, and we have a variable pointing into the old tree
+ */
+static void testReloadExternalMod(CuTest *tc) {
+    augeas *aug = NULL;
+    int r, created;
+    const char *aug_root;
+
+    aug = setup_writable_hosts(tc);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    /* Set up a new entry and save */
+    r = aug_defnode(aug, "new", "/files/etc/hosts/3", NULL, &created);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertIntEquals(tc, 1, created);
+
+    r = aug_set(aug, "$new/ipaddr", "172.31.42.1");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_set(aug, "$new/canonical", "new.example.com");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_save(aug);
+    CuAssertRetSuccess(tc, r);
+
+    /* Now modify the file outside of Augeas */
+    r = aug_get(aug, "/augeas/root", &aug_root);
+    CuAssertIntEquals(tc, 1, r);
+
+    run(tc, "sed -i -e '1,2d' %setc/hosts", aug_root);
+
+    /* Reload and save again */
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_save(aug);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_match(aug, "/files/etc/hosts/#comment", NULL);
+    CuAssertIntEquals(tc, 2, r);
+
+    r = aug_match(aug, "/files/etc/hosts/*", NULL);
+    CuAssertIntEquals(tc, 5, r);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -416,6 +463,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testReloadDirty);
     SUITE_ADD_TEST(suite, testReloadDeleted);
     SUITE_ADD_TEST(suite, testReloadDeletedMeta);
+    SUITE_ADD_TEST(suite, testReloadExternalMod);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)
