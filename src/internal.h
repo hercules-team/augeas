@@ -468,6 +468,22 @@ struct pathx_symtab;
 
 const char *pathx_error(struct pathx *pathx, const char **txt, int *pos);
 
+/* Parse a path expression PATH rooted at TREE, which is a node somewhere
+ * in AUG->ORIGIN. If TREE is NULL, AUG->ORIGIN is used.
+ *
+ * Use this function rather than PATHX_PARSE for path expressions inside
+ * the tree in AUG->ORIGIN.
+ *
+ * If NEED_NODESET is true, the resulting path expression must evaluate toa
+ * nodeset, otherwise it can evaluate to a value of any type.
+ *
+ * Return the resulting path expression, or NULL on error. If an error
+ * occurs, the error struct in AUG contains details.
+ */
+struct pathx *pathx_aug_parse(const struct augeas *aug,
+                              struct tree *tree,
+                              const char *path, bool need_nodeset);
+
 /* Parse the string PATH into a path expression PX that will be evaluated
  * against the tree ORIGIN.
  *
