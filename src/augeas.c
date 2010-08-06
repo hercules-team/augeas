@@ -597,6 +597,24 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
     return -1;
 }
 
+static void record_var_meta(struct augeas *aug, const char *name,
+                            const char *expr) {
+    /* Record the definition of the variable */
+    struct tree *tree = tree_path_cr(aug->origin, 2, s_augeas, s_vars);
+    ERR_NOMEM(tree == NULL, aug);
+    if (expr == NULL) {
+        tree = tree_child(tree, name);
+        if (tree != NULL)
+            tree_unlink(tree);
+    } else {
+        tree = tree_child_cr(tree, name);
+        ERR_NOMEM(tree == NULL, aug);
+        tree_set_value(tree, expr);
+    }
+ error:
+    return;
+}
+
 int aug_defvar(augeas *aug, const char *name, const char *expr) {
     struct pathx *p = NULL;
     int result = -1;
@@ -612,18 +630,8 @@ int aug_defvar(augeas *aug, const char *name, const char *expr) {
     }
     ERR_BAIL(aug);
 
-    /* Record the definition of the variable */
-    struct tree *tree = tree_path_cr(aug->origin, 2, s_augeas, s_vars);
-    ERR_NOMEM(tree == NULL, aug);
-    if (expr == NULL) {
-        tree = tree_child(tree, name);
-        if (tree != NULL)
-            tree_unlink(tree);
-    } else {
-        tree = tree_child_cr(tree, name);
-        ERR_NOMEM(tree == NULL, aug);
-        tree_set_value(tree, expr);
-    }
+    record_var_meta(aug, name, expr);
+    ERR_BAIL(aug);
  error:
     free_pathx(p);
     api_exit(aug);
@@ -647,18 +655,29 @@ int aug_defnode(augeas *aug, const char *name, const char *expr,
     p = pathx_aug_parse(aug, aug->origin, expr, false);
     ERR_BAIL(aug);
 
-    r = pathx_expand_tree(p, &tree);
-    if (r < 0)
-        goto done;
+    if (pathx_first(p) == NULL) {
+        r = pathx_expand_tree(p, &tree);
+        if (r < 0)
+            goto done;
+        *created = 1;
+    } else {
+        *created = 0;
+    }
 
-    *created = r > 0;
     if (*created) {
         r = tree_set_value(tree, value);
         if (r < 0)
             goto done;
         result = pathx_symtab_assign_tree(&(aug->symtab), name, tree);
+        char *e = path_of_tree(tree);
+        ERR_NOMEM(e == NULL, aug)
+        record_var_meta(aug, name, e);
+        free(e);
+        ERR_BAIL(aug);
     } else {
         result = pathx_symtab_define(&(aug->symtab), name, p);
+        record_var_meta(aug, name, expr);
+        ERR_BAIL(aug);
     }
 
  done:

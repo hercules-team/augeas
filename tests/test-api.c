@@ -120,6 +120,106 @@ static void testSetM(CuTest *tc) {
 
     r = aug_setm(aug, "/augeas/version/save/*", "mode[]", "invalid");
     CuAssertIntEquals(tc, -1, r);
+
+    aug_close(aug);
+}
+
+/* Check that defining a variable leads to a corresponding entry in
+ * /augeas/variables and that that entry disappears when the variable is
+ * undefined */
+static void testDefVarMeta(CuTest *tc) {
+    int r;
+    struct augeas *aug;
+    static const char *const expr = "/augeas/version/save/mode";
+    const char *value;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    r = aug_defvar(aug, "var", expr);
+    CuAssertIntEquals(tc, 4, r);
+
+    r = aug_match(aug, "/augeas/variables/*", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    r = aug_get(aug, "/augeas/variables/var", &value);
+    CuAssertStrEquals(tc, expr, value);
+
+    r = aug_defvar(aug, "var", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_match(aug, "/augeas/variables/*", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    aug_close(aug);
+}
+
+/* Check that defining a variable with defnode leads to a corresponding
+ * entry in /augeas/variables and that that entry disappears when the
+ * variable is undefined
+ */
+static void testDefNodeExistingMeta(CuTest *tc) {
+    int r, created;
+    struct augeas *aug;
+    static const char *const expr = "/augeas/version/save/mode";
+    const char *value;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    r = aug_defnode(aug, "var", expr, "other", &created);
+    CuAssertIntEquals(tc, 4, r);
+    CuAssertIntEquals(tc, 0, created);
+
+    r = aug_match(aug, "/augeas/variables/*", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    r = aug_get(aug, "/augeas/variables/var", &value);
+    CuAssertStrEquals(tc, expr, value);
+
+    r = aug_defvar(aug, "var", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_match(aug, "/augeas/variables/*", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    aug_close(aug);
+}
+
+/* Check that defining a variable with defnode leads to a corresponding
+ * entry in /augeas/variables and that that entry disappears when the
+ * variable is undefined
+ */
+static void testDefNodeCreateMeta(CuTest *tc) {
+    int r, created;
+    struct augeas *aug;
+    static const char *const expr = "/augeas/version/save/mode[last()+1]";
+    static const char *const expr_can = "/augeas/version/save/mode[5]";
+    const char *value;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    r = aug_defnode(aug, "var", expr, "other", &created);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertIntEquals(tc, 1, created);
+
+    r = aug_match(aug, "/augeas/variables/*", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    r = aug_get(aug, "/augeas/variables/var", &value);
+    CuAssertStrEquals(tc, expr_can, value);
+
+    r = aug_defvar(aug, "var", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_match(aug, "/augeas/variables/*", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    aug_close(aug);
 }
 
 int main(void) {
@@ -129,6 +229,9 @@ int main(void) {
 
     SUITE_ADD_TEST(suite, testGet);
     SUITE_ADD_TEST(suite, testSetM);
+    SUITE_ADD_TEST(suite, testDefVarMeta);
+    SUITE_ADD_TEST(suite, testDefNodeExistingMeta);
+    SUITE_ADD_TEST(suite, testDefNodeCreateMeta);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)
