@@ -1,3 +1,29 @@
+0.7.3 - 2010-08-06
+  - aug_load: only reparse files that have actually changed; greatly speeds
+    up reloading
+  - record all variables in /augeas/variables, regardless of whether they
+    were defined with aug_defvar or aug_defnode; make sure
+    /augeas/variables always exists
+  - redefine all variables (by reevaluating their corresponding
+    expressions) after a aug_load. This makes variables 'sticky' across
+    loads
+  - fix behavior of aug_defnode to not fail when the expression evaluates
+    to a nonempty node set
+  - make gnulib a git submodule so that we record the gnulib commit off
+    which we are based
+  - allow 'let rec' with non-recursive RHS
+  - fix memory corruption when reloading a tree into which a variable
+    defined by defnode points (BZ 613967)
+  - plug a few small memory leaks, and some segfaults
+  - Lens changes/additions
+    * Device_map: new lens for grub's device.map (Matt Booth)
+    * Limits: also look for files in /etc/security/limits.d
+    * Mysql: new lens (Tim Stoop)
+    * Shellvars: read /etc/sysconfig/suseconfig (Frederik Wagner)
+    * Sudoers: allow escaped spaces in user/group names (Raphael Pinson)
+    * Sysconfig: lens for the shell subdialect used in /etc/sysconfig; lens
+      strips quotes automatically
+
 0.7.2 - 2010-06-22
   - new API call aug_setm to set/create multiple nodes simultaneously
   - record expression used in a defvar underneath /augeas/variables
