@@ -74,3 +74,11 @@ let sec (body:lens) = [ key /a*/ . dels "{" . body . dels "}"]*
 let rec sec_complete = sec sec_complete
 let lns2 = sec_complete . d2
 test lns2 get "a{}b" = { "a" }
+
+(* Test stack handling with both parsing direction; bug #136 *)
+let idr = [ key /[0-9]+/ . del /z+/ "z" . store /[0-9]+/ . del /a+/ "a" ]
+let rec idr_left = idr_left? . idr
+let rec idr_right = idr . idr_right?
+let input = "1zz2aa33zzz44aaa555zzzz666aaaa"
+test idr_left get input = { "1" = "2" }{ "33" = "44" }{ "555" = "666" }
+test idr_right get input = { "1" = "2" }{ "33" = "44" }{ "555" = "666" }
