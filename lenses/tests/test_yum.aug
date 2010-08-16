@@ -81,6 +81,12 @@ installonly_limit=100
         { "name" = "A name" }
         { "baseurl" = "url1" } }
 
+  (* Handle continuation lines for gpgkey; bug #132 *)
+  test Yum.lns get "[main]\ngpgkey=key1\n  key2\n" =
+    { "main"
+        { "gpgkey" = "key1" }
+        { "gpgkey" = "key2" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

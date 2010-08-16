@@ -4,7 +4,7 @@ module Yum =
 
   let eol = Util.del_str "\n"
 
-  let key_re = /[^#;:= \t\n[\/]+/ - "baseurl"
+  let key_re = /[^#;:= \t\n[\/]+/ - /baseurl|gpgkey/
 
   let eq = del /[ \t]*[:=][ \t]*/ "="
   let secname = /[^]\/]+/
@@ -38,7 +38,9 @@ module Yum =
   (* more interesting: there can be at most one baseurl entry in each    *)
   (* section (more precisely, yum will only obey one of them, but we act *)
   (* as if yum would actually barf)                                      *)
-  let section = [ sechead . (entry* | entry* . (kv_list "baseurl") . entry*)]
+  let section =
+    let lists = kv_list "baseurl" | kv_list "gpgkey" in
+    [ sechead . (entry* | entry* . lists . entry*)]
 
   let lns = (comment) * . (section) *
 
