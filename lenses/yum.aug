@@ -17,7 +17,7 @@ module Yum =
   (* define KEY_RE as /[A-Za-z0-9]+/ - "REM" - "rem"                         *)
   let comment = [ del /([;#].*)?[ \t]*\n/ "\n" ]
 
-  let list_sep = del /[ \t]*(,[ \t]*|\n[ \t]+)/ "\n\t"
+  let list_sep = del /([ \t]*(,[ \t]*|\n[ \t]+))|[ \t]+/ "\n\t"
   let list_value = store /[^ \t\n,]+/
 
   let kv_list(s:string) =
@@ -39,8 +39,13 @@ module Yum =
   (* section (more precisely, yum will only obey one of them, but we act *)
   (* as if yum would actually barf)                                      *)
   let section =
-    let lists = kv_list "baseurl" | kv_list "gpgkey" in
-    [ sechead . (entry* | entry* . lists . entry*)]
+    let list_baseurl = kv_list "baseurl" in
+      let list_gpgkey = kv_list "gpgkey" in
+    [ sechead . (  entry*
+                 | entry* . list_baseurl . entry*
+                 | entry* . list_gpgkey . entry*
+                 | entry* . list_baseurl . entry* . list_gpgkey . entry*
+                 | entry* . list_gpgkey . entry* . list_baseurl . entry*)]
 
   let lns = (comment) * . (section) *
 

@@ -26,6 +26,50 @@ installonly_limit=100
 # in /etc/yum.repos.d
 "
 
+  let yum_repo1 = "[fedora]
+name=Fedora $releasever - $basearch
+failovermethod=priority
+#baseurl=http://download.fedora.redhat.com/pub/fedora/linux/releases/$releasever/Everything/$basearch/os/
+mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=fedora-$releasever&arch=$basearch
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora file:///etc/pki/rpm-gpg/RPM-GPG-KEY
+
+[fedora-debuginfo]
+name=Fedora $releasever - $basearch - Debug
+failovermethod=priority
+#baseurl=http://download.fedora.redhat.com/pub/fedora/linux/releases/$releasever/Everything/$basearch/debug/
+mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=fedora-debug-$releasever&arch=$basearch
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora file:///etc/pki/rpm-gpg/RPM-GPG-KEY
+
+[fedora-source]
+name=Fedora $releasever - Source
+failovermethod=priority
+#baseurl=http://download.fedora.redhat.com/pub/fedora/linux/releases/$releasever/Everything/source/SRPMS/
+mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=fedora-source-$releasever&arch=$basearch
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora file:///etc/pki/rpm-gpg/RPM-GPG-KEY
+"
+  let yum_repo2 = "[remi]
+name=Les RPM de remi pour FC$releasever - $basearch
+baseurl=http://remi.collet.free.fr/rpms/fc$releasever.$basearch/
+    http://iut-info.ens.univ-reims.fr/remirpms/fc$releasever.$basearch/
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-remi
+
+[remi-test]
+name=Les RPM de remi en test pour FC$releasever - $basearch
+baseurl=http://remi.collet.free.fr/rpms/test-fc$releasever.$basearch/
+    http://iut-info.ens.univ-reims.fr/remirpms/test-fc$releasever.$basearch/
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-remi
+"
+
   let cont = "[main]\nbaseurl=url1\n   url2 , url3\n   \n"
 
   test Yum.lns get yum_simple =
@@ -86,6 +130,61 @@ installonly_limit=100
     { "main"
         { "gpgkey" = "key1" }
         { "gpgkey" = "key2" } }
+
+  test Yum.lns get yum_repo1 =
+  { "fedora"
+    { "name" = "Fedora $releasever - $basearch" }
+    { "failovermethod" = "priority" }
+    {  }
+    { "mirrorlist" = "http://mirrors.fedoraproject.org/mirrorlist?repo=fedora-$releasever&arch=$basearch" }
+    { "enabled" = "1" }
+    { "gpgcheck" = "1" }
+    { "gpgkey" = "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora" }
+    { "gpgkey" = "file:///etc/pki/rpm-gpg/RPM-GPG-KEY" }
+    {  }
+  }
+  { "fedora-debuginfo"
+    { "name" = "Fedora $releasever - $basearch - Debug" }
+    { "failovermethod" = "priority" }
+    {  }
+    { "mirrorlist" = "http://mirrors.fedoraproject.org/mirrorlist?repo=fedora-debug-$releasever&arch=$basearch" }
+    { "enabled" = "0" }
+    { "gpgcheck" = "1" }
+    { "gpgkey" = "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora" }
+    { "gpgkey" = "file:///etc/pki/rpm-gpg/RPM-GPG-KEY" }
+    {  }
+  }
+  { "fedora-source"
+    { "name" = "Fedora $releasever - Source" }
+    { "failovermethod" = "priority" }
+    {  }
+    { "mirrorlist" = "http://mirrors.fedoraproject.org/mirrorlist?repo=fedora-source-$releasever&arch=$basearch" }
+    { "enabled" = "0" }
+    { "gpgcheck" = "1" }
+    { "gpgkey" = "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora" }
+    { "gpgkey" = "file:///etc/pki/rpm-gpg/RPM-GPG-KEY" }
+  }
+
+
+
+  test Yum.lns get yum_repo2 =
+  { "remi"
+    { "name" = "Les RPM de remi pour FC$releasever - $basearch" }
+    { "baseurl" = "http://remi.collet.free.fr/rpms/fc$releasever.$basearch/" }
+    { "baseurl" = "http://iut-info.ens.univ-reims.fr/remirpms/fc$releasever.$basearch/" }
+    { "enabled" = "0" }
+    { "gpgcheck" = "1" }
+    { "gpgkey" = "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-remi" }
+    {  }
+  }
+  { "remi-test"
+    { "name" = "Les RPM de remi en test pour FC$releasever - $basearch" }
+    { "baseurl" = "http://remi.collet.free.fr/rpms/test-fc$releasever.$basearch/" }
+    { "baseurl" = "http://iut-info.ens.univ-reims.fr/remirpms/test-fc$releasever.$basearch/" }
+    { "enabled" = "0" }
+    { "gpgcheck" = "1" }
+    { "gpgkey" = "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-remi" }
+  }
 
 (* Local Variables: *)
 (* mode: caml       *)
