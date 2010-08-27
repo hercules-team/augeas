@@ -70,6 +70,7 @@ getline
 gitlog-to-changelog
 canonicalize-lgpl
 isblank
+locale
 regex
 safe-alloc
 selinux-h
