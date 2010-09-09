@@ -118,6 +118,12 @@ static char *mtime_as_string(struct augeas *aug, const char *fname) {
     struct stat st;
     char *result = NULL;
 
+    if (fname == NULL) {
+        result = strdup("0");
+        ERR_NOMEM(result == NULL, aug);
+        goto done;
+    }
+
     r = stat(fname, &st);
     if (r < 0) {
         /* If we fail to stat, silently ignore the error
@@ -128,6 +134,7 @@ static char *mtime_as_string(struct augeas *aug, const char *fname) {
         r = xasprintf(&result, "%ld", (long) st.st_mtime);
         ERR_NOMEM(r < 0, aug);
     }
+ done:
     return result;
  error:
     FREE(result);
@@ -1011,7 +1018,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
     result = 1;
 
  done:
-    r = add_file_info(aug, path, lens, lens_name, filename);
+    r = add_file_info(aug, path, lens, lens_name, augorig);
     if (r < 0) {
         err_status = "file_info";
         result = -1;

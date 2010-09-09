@@ -121,6 +121,30 @@ static void testMultipleXfm(CuTest *tc) {
     CuAssertIntEquals(tc, AUG_EMXFM, r);
 }
 
+static void testMtime(CuTest *tc) {
+    const char *s, *mtime2;
+    char *mtime1;
+    int r;
+
+    r = aug_set(aug, "/files/etc/hosts/1/alias[last() + 1]", "new");
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_get(aug, "/augeas/files/etc/hosts/mtime", &s);
+    CuAssertIntEquals(tc, 1, r);
+    mtime1 = strdup(s);
+    CuAssertPtrNotNull(tc, mtime1);
+
+
+    r = aug_save(aug);
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_get(aug, "/augeas/files/etc/hosts/mtime", &mtime2);
+    CuAssertIntEquals(tc, 1, r);
+
+    CuAssertStrNotEqual(tc, mtime1, mtime2);
+    CuAssertStrNotEqual(tc, "0", mtime2);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -142,6 +166,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testSaveNewFile);
     SUITE_ADD_TEST(suite, testNonExistentLens);
     SUITE_ADD_TEST(suite, testMultipleXfm);
+    SUITE_ADD_TEST(suite, testMtime);
 
     CuSuiteRun(suite);
     CuSuiteSummary(suite, &output);

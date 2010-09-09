@@ -406,12 +406,18 @@ static void testReloadDeletedMeta(CuTest *tc) {
 static void testReloadExternalMod(CuTest *tc) {
     augeas *aug = NULL;
     int r, created;
-    const char *aug_root;
+    const char *aug_root, *s;
+    char *mtime;
 
     aug = setup_writable_hosts(tc);
 
     r = aug_load(aug);
     CuAssertRetSuccess(tc, r);
+
+    r = aug_get(aug, "/augeas/files/etc/hosts/mtime", &s);
+    CuAssertIntEquals(tc, 1, r);
+    mtime = strdup(s);
+    CuAssertPtrNotNull(tc, mtime);
 
     /* Set up a new entry and save */
     r = aug_defnode(aug, "new", "/files/etc/hosts/3", NULL, &created);
@@ -425,6 +431,10 @@ static void testReloadExternalMod(CuTest *tc) {
     CuAssertRetSuccess(tc, r);
 
     r = aug_save(aug);
+    CuAssertRetSuccess(tc, r);
+
+    /* Fake the mtime to be old */
+    r = aug_set(aug, "/augeas/files/etc/hosts/mtime", mtime);
     CuAssertRetSuccess(tc, r);
 
     /* Now modify the file outside of Augeas */
