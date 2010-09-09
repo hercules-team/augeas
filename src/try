@@ -25,6 +25,8 @@ EOF
 cd $topdir/src
 if [[ "x$1" == "xgdb" ]] ; then
     libtool --mode=execute gdb -x $GDBCMDS ./augtool
+elif [[ "x$1" == "xstrace" ]] ; then
+    libtool --mode=execute /usr/bin/strace ./augtool --nostdinc < $AUGCMDS
 elif [[ "x$1" == "xvalgrind" ]] ; then
     libtool --mode=execute valgrind --leak-check=full ./augtool --nostdinc < $AUGCMDS
 elif [[ "x$1" == "xcli" ]] ; then
