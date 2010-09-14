@@ -52,6 +52,7 @@ lens_tests =			\
   lens-mysql.sh			\
   lens-nagioscfg.sh     \
   lens-ntp.sh			\
+  lens-odbc.sh          \
   lens-openvpn.sh		\
   lens-pam.sh			\
   lens-passwd.sh		\
