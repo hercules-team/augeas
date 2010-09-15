@@ -112,7 +112,7 @@ static void testMultipleXfm(CuTest *tc) {
     r = aug_set(aug, "/augeas/load/Yum2/incl", "/etc/yum.repos.d/*");
     CuAssertIntEquals(tc, 0, r);
 
-    r = aug_set(aug, "/files/etc/yum.repos.d/fedora.repo/fedora/enabled", "1");
+    r = aug_set(aug, "/files/etc/yum.repos.d/fedora.repo/fedora/enabled", "0");
     CuAssertIntEquals(tc, 0, r);
 
     r = aug_save(aug);

@@ -157,6 +157,11 @@ struct tree *tree_find_cr(struct augeas *aug, const char *path) {
 }
 
 void tree_store_value(struct tree *tree, char **value) {
+    if (streqv(tree->value, *value)) {
+        free(*value);
+        *value = NULL;
+        return;
+    }
     if (tree->value != NULL) {
         free(tree->value);
         tree->value = NULL;
@@ -171,6 +176,8 @@ void tree_store_value(struct tree *tree, char **value) {
 int tree_set_value(struct tree *tree, const char *value) {
     char *v = NULL;
 
+    if (streqv(tree->value, value))
+        return 0;
     if (value != NULL) {
         v = strdup(value);
         if (v == NULL)
