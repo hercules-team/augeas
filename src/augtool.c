@@ -41,6 +41,7 @@ static const char *const progname = "augtool";
 static unsigned int flags = AUG_NONE;
 const char *root = NULL;
 char *loadpath = NULL;
+const char *inputfile = NULL;
 int echo = 0;
 bool print_version = false;
 
@@ -990,6 +991,7 @@ static void usage(void) {
     fprintf(stderr, "  -r, --root ROOT    use ROOT as the root of the filesystem\n");
     fprintf(stderr, "  -I, --include DIR  search DIR for modules; can be given mutiple times\n");
     fprintf(stderr, "  -e, --echo         echo commands when reading from a file\n");
+    fprintf(stderr, "  -f, --file FILE    read commands from FILE\n");
     fprintf(stderr, "  --nostdinc         do not search the builtin default directories for modules\n");
     fprintf(stderr, "  --noload           do not load any files into the tree on startup\n");
     fprintf(stderr, "  --noautoload       do not autoload modules from the search path\n");
@@ -1015,6 +1017,7 @@ static void parse_opts(int argc, char **argv) {
         { "root",      1, 0, 'r' },
         { "include",   1, 0, 'I' },
         { "echo",      0, 0, 'e' },
+        { "file",      1, 0, 'f' },
         { "nostdinc",  0, 0, VAL_NO_STDINC },
         { "noload",    0, 0, VAL_NO_LOAD },
         { "noautoload", 0, 0, VAL_NO_AUTOLOAD },
@@ -1023,7 +1026,7 @@ static void parse_opts(int argc, char **argv) {
     };
     int idx;
 
-    while ((opt = getopt_long(argc, argv, "hnbcr:I:e", options, &idx)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hnbcr:I:ef:", options, &idx)) != -1) {
         switch(opt) {
         case 'c':
             flags |= AUG_TYPE_CHECK;
@@ -1045,6 +1048,9 @@ static void parse_opts(int argc, char **argv) {
             break;
         case 'e':
             echo = 1;
+            break;
+        case 'f':
+            inputfile = optarg;
             break;
         case VAL_NO_STDINC:
             flags |= AUG_NO_STDINC;
@@ -1113,10 +1119,29 @@ static int main_loop(void) {
     char *line = NULL;
     int ret = 0;
     size_t len = 0;
+    char inputline [128];
     enum command_result code;
 
+    FILE *fp;
+    if (inputfile) {
+       fp = fopen(inputfile, "r");
+
+       if (fp == NULL) {
+           fprintf(stderr, "Failed to open input file %s.\n", inputfile);
+           return -1;
+       }
+    }
+
     while(1) {
-        if (isatty(fileno(stdin))) {
+        if (inputfile) {
+            if (fgets(inputline, sizeof(inputline), fp) == NULL) {
+                line = NULL;
+            } else {
+                line = inputline;
+            }
+            if (echo)
+                printf("augtool> %s", line);
+        } else if (isatty(fileno(stdin))) {
             line = readline("augtool> ");
         } else {
             if (getline(&line, &len, stdin) == -1)
@@ -1124,6 +1149,7 @@ static int main_loop(void) {
             if (echo)
                 printf("augtool> %s", line);
         }
+
         cleanstr(line, '\n');
         if (line == NULL) {
             printf("\n");
