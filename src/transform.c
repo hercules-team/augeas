@@ -296,30 +296,29 @@ static char *err_path(const char *filename) {
 }
 
 ATTRIBUTE_FORMAT(printf, 4, 5)
-static int err_set(struct augeas *aug, char **ep, const char *sub,
-                   const char *format, ...) {
+static void err_set(struct augeas *aug,
+                    struct tree *err_info, const char *sub,
+                    const char *format, ...) {
     int r;
     va_list ap;
-    size_t ep_len = strlen(*ep);
     char *value = NULL;
-
-    r = pathjoin(ep, 1, sub);
-    if (r < 0)
-        goto error;
+    struct tree *tree = NULL;
 
     va_start(ap, format);
     r = vasprintf(&value, format, ap);
     va_end(ap);
-    if (r < 0) {
+    if (r < 0)
         value = NULL;
-        goto error;
-    }
+    ERR_NOMEM(r < 0, aug);
 
-    r = aug_set(aug, *ep, value);
+    tree = tree_child_cr(err_info, sub);
+    ERR_NOMEM(tree == NULL, aug);
+
+    r = tree_set_value(tree, value);
+    ERR_NOMEM(r < 0, aug);
+
  error:
     free(value);
-    (*ep)[ep_len] = '\0';
-    return (r < 0) ? -1 : 0;
 }
 
 /* Record an error in the tree. The error will show up underneath
@@ -331,51 +330,65 @@ static int store_error(struct augeas *aug,
                        const char *filename, const char *path,
                        const char *status, int errnum,
                        const struct lns_error *err, const char *text) {
-    char *ep = err_path(filename);
+    struct tree *err_info = NULL, *finfo = NULL;
+    char *fip = NULL;
     int r;
     int result = -1;
 
-    if (ep == NULL)
-        return -1;
+    r = pathjoin(&fip, 2, AUGEAS_META_FILES, filename);
+    ERR_NOMEM(r < 0, aug);
 
-    aug_rm(aug, ep);
+    finfo = tree_find_cr(aug, fip);
+    ERR_BAIL(aug);
+
     if (status != NULL) {
-        r = aug_set(aug, ep, status);
-        if (r < 0)
-            goto done;
+        err_info = tree_child_cr(finfo, s_error);
+        ERR_NOMEM(err_info == NULL, aug);
+
+        r = tree_set_value(err_info, status);
+        ERR_NOMEM(r < 0, aug);
 
         /* Errors from err_set are ignored on purpose. We try
          * to report as much as we can */
         if (err != NULL) {
             if (err->pos >= 0) {
                 size_t line, ofs;
-                err_set(aug, &ep, s_pos, "%d", err->pos);
+                err_set(aug, err_info, s_pos, "%d", err->pos);
                 if (text != NULL) {
                     calc_line_ofs(text, err->pos, &line, &ofs);
-                    err_set(aug, &ep, s_line, "%zd", line);
-                    err_set(aug, &ep, s_char, "%zd", ofs);
+                    err_set(aug, err_info, s_line, "%zd", line);
+                    err_set(aug, err_info, s_char, "%zd", ofs);
                 }
             }
             if (err->path != NULL) {
-                err_set(aug, &ep, s_path, "%s%s", path, err->path);
+                err_set(aug, err_info, s_path, "%s%s", path, err->path);
             }
             if (err->lens != NULL) {
                 char *fi = format_info(err->lens->info);
                 if (fi != NULL) {
-                    err_set(aug, &ep, s_lens, "%s", fi);
+                    err_set(aug, err_info, s_lens, "%s", fi);
                     free(fi);
                 }
             }
-            err_set(aug, &ep, s_message, "%s", err->message);
+            err_set(aug, err_info, s_message, "%s", err->message);
         } else if (errnum != 0) {
             const char *msg = strerror(errnum);
-            err_set(aug, &ep, s_message, "%s", msg);
+            err_set(aug, err_info, s_message, "%s", msg);
+        }
+    } else {
+        /* No error, nuke the error node if it exists */
+        err_info = tree_child(finfo, s_error);
+        if (err_info != NULL) {
+            tree_unlink_children(aug, err_info);
+            pathx_symtab_remove_descendants(aug->symtab, err_info);
+            tree_unlink(err_info);
         }
     }
 
+    tree_clean(finfo);
     result = 0;
- done:
-    free(ep);
+ error:
+    free(fip);
     return result;
 }
 

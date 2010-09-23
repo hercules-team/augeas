@@ -457,6 +457,33 @@ static void testReloadExternalMod(CuTest *tc) {
     CuAssertIntEquals(tc, 5, r);
 }
 
+/* Make sure parse errors from applying a lens to a file that does not
+ * match get reported under /augeas//error
+ *
+ * Tests bug #138
+ */
+static void testParseErrorReported(CuTest *tc) {
+    augeas *aug = NULL;
+    int nmatches, r;
+
+    aug = aug_init(root, loadpath, AUG_NO_MODL_AUTOLOAD);
+    CuAssertPtrNotNull(tc, aug);
+
+    r = aug_set(aug, "/augeas/load/Bad/lens", "Yum.lns");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_set(aug, "/augeas/load/Bad/incl", "/etc/fstab");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    nmatches = aug_match(aug, "/augeas/files/etc/fstab/error", NULL);
+    CuAssertIntEquals(tc, 1, nmatches);
+
+    aug_close(aug);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -474,6 +501,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testReloadDeleted);
     SUITE_ADD_TEST(suite, testReloadDeletedMeta);
     SUITE_ADD_TEST(suite, testReloadExternalMod);
+    SUITE_ADD_TEST(suite, testParseErrorReported);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)
