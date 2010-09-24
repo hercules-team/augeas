@@ -44,7 +44,7 @@ let rbracket = Util.del_str "}"
 
 (* View: comment
 Map comments in "#comment" nodes *)
-let comment =
+let comment = 
     [ indent . label "#comment" . del /[#!][ \t]*/ "# "
         . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ . eol ]
 
@@ -74,11 +74,6 @@ let sto_word = store word
 (* View: sto_num *)
 let sto_num = store /[0-9]+/
 
-(* View: sto_to_eol
-Should not be necessary once static_ipaddress_field uses fields *)
-let sto_to_eol = store /[^}!# \t\n][^}!#\n]*[^}!# \t\n]|[^}!# \t\n]/
-
-
 (* View: field *)
 let field (kw:string) (sto:lens) = [ indent . key kw . sep_spc . sto . (eol_comment|eol) ]
 
@@ -86,7 +81,7 @@ let field (kw:string) (sto:lens) = [ indent . key kw . sep_spc . sto . (eol_comm
 A single word *)
 let flag (kw:regexp) = [ indent . key kw ]
 
-(* View: lens_block
+(* View: lens_block 
 A generic block with a title lens *)
 let lens_block (title:lens) (sto:lens) = [ indent . title . sep_spc . lbracket . eol
                                          . (sto | empty | comment)+
@@ -96,13 +91,13 @@ let lens_block (title:lens) (sto:lens) = [ indent . title . sep_spc . lbracket .
 A simple block with just a block title *)
 let block (kw:string) (sto:lens) = lens_block (key kw) sto
 
-(* View: named_block
+(* View: named_block 
 A block with a block title and name *)
 let named_block (kw:string) (sto:lens) = lens_block (key kw . sep_spc . sto_word) sto
 
 (* View: named_block_arg_title
 A title lens for named_block_arg *)
-let named_block_arg_title (kw:string) (name:string) (arg:string) =
+let named_block_arg_title (kw:string) (name:string) (arg:string) = 
                             key kw . sep_spc
                           . [ label name . sto_word ]
                           . sep_spc
@@ -110,7 +105,7 @@ let named_block_arg_title (kw:string) (name:string) (arg:string) =
 
 (* View: named_block_arg
 A block with a block title, a name and an argument *)
-let named_block_arg (kw:string) (name:string) (arg:string) (sto:lens) =
+let named_block_arg (kw:string) (name:string) (arg:string) (sto:lens) = 
                            lens_block (named_block_arg_title kw name arg) sto
 
 
@@ -139,6 +134,10 @@ let global_defs = block "global_defs" global_defs_field
 A prefix for IP addresses *)
 let prefixlen = [ label "prefixlen" . Util.del_str "/" . sto_num ]
 
+(* View: ipaddr
+An IP address or range with an optional mask *)
+let ipaddr = label "ipaddr" . store /[0-9\.-]+/ . prefixlen?
+
 (* View: ipdev
 A device for IP addresses *)
 let ipdev = [ key "dev" . sep_spc . sto_word ]
@@ -148,9 +147,7 @@ The whole string is fed to ip addr add.
 You can truncate the string anywhere you like and let ip addr add use defaults for the rest of the string.
 To be refined with fields according to `ip addr help`.
 *)
-let static_ipaddress_field = [ indent . label "ipaddr"
-                             . store /[0-9\.]+/
-                             . prefixlen?
+let static_ipaddress_field = [ indent . ipaddr
                              . (sep_spc . ipdev)?
                              . (eol|eol_comment) ]
 
@@ -167,7 +164,7 @@ let static_routes = block "static_ipaddress" static_ipaddress_field
                   | block "static_routes" static_routes_field
 
 
-(* View: global_conf
+(* View: global_conf 
 A global configuration entry *)
 let global_conf = global_defs | static_routes
 
@@ -210,8 +207,6 @@ let vrrpd_conf = vrrp_sync_group | vrrp_instance
  * Group:                 LVS CONFIGURATION
  *************************************************************************)
 
-(* View: virtual_server_group *)
-
 (* View: tcp_check_field *)
 let tcp_check_field = field "connect_timeout" sto_num
                     | field "connect_port" sto_num
@@ -231,9 +226,19 @@ let virtual_server_field = field "delay_loop" sto_num
 (* View: virtual_server *)
 let virtual_server = named_block_arg "virtual_server" "ip" "port" virtual_server_field
 
+(* View: virtual_server_group_field *)
+let virtual_server_group_field = [ indent . label "vip"
+                               . [ ipaddr ]
+			       . sep_spc
+			       . [ label "port" . sto_num ]
+			       . (eol|eol_comment) ]
+
+(* View: virtual_server_group *)
+let virtual_server_group = named_block "virtual_server_group" virtual_server_group_field
+
 (* View: lvs_conf
 contains subblocks of Virtual server group(s) and Virtual server(s) *)
-let lvs_conf = virtual_server
+let lvs_conf = virtual_server | virtual_server_group
 
 
 (* View: lns
@@ -246,3 +251,4 @@ let filter = incl "/etc/keepalived/keepalived.conf"
     . Util.stdexcl
 
 let xfm = transform lns filter
+
