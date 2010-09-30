@@ -71,3 +71,10 @@ let ip        = ipv4 | ipv6
  *)
 
 let device_name = /[a-zA-Z0-9_?.+:!-]+/
+
+(*
+ * Variable: email_addr
+ *    To be refined
+ *)
+let email_addr = /[A-Za-z0-9_\+\.-]+@[A-Za-z0-9_\.-]+/
+
