@@ -34,7 +34,7 @@ let indent = Util.indent
 let eol = Util.eol
 
 (* View: sep_spc *)
-let sep_spc = del /[ \t]+/ " "
+let sep_spc = Sep.space
 
 (* View: lbracket *)
 let lbracket = Util.del_str "{"
@@ -60,26 +60,26 @@ Map empty lines *)
 let empty   = Util.empty
 
 (* View: sto_email_addr *)
-let sto_email_addr = store /[A-Za-z0-9_\+\.-]+@[A-Za-z0-9_\.-]+/
+let sto_email_addr = store Rx.email_addr
 
 (* Variable: word *)
-let word = /[A-Za-z0-9_\.-]+/
+let word = Rx.word
 
 (* Variable: word_slash *)
-let word_slash = /[A-Za-z0-9_\.\/-]+/
+let word_slash = word | "/"
 
 (* View: sto_word *)
 let sto_word = store word
 
 (* View: sto_num *)
-let sto_num = store /[0-9]+/
+let sto_num = store Rx.integer
 
 (* View: field *)
-let field (kw:string) (sto:lens) = [ indent . key kw . sep_spc . sto . (eol_comment|eol) ]
+let field (kw:string) (sto:lens) = indent . Build.key_value_line_comment kw sep_spc sto eol_comment
 
 (* View: flag
 A single word *)
-let flag (kw:regexp) = [ indent . key kw ]
+let flag (kw:regexp) = indent . Build.flag kw
 
 (* View: lens_block 
 A generic block with a title lens *)
