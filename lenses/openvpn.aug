@@ -20,8 +20,8 @@ let sep    = Util.del_ws_spc
 let sep_dquote = Util.del_str "\""
 
 (* Define value regexps *)
-let ip_re  = /[0-9\.]+/
-let num_re = /[0-9]+/
+let ip_re  = Rx.ipv4
+let num_re = Rx.integer
 let fn_re  = /[^#; \t\n][^#;\n]*[^#; \t\n]|[^#; \t\n]/
 let an_re  = /[a-z][a-z0-9_-]*/
 
