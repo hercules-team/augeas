@@ -60,7 +60,7 @@ let opt_list (lns:lens) (sep:lens) = lns . ( sep . lns )*
 
 
 (************************************************************************
- * Group:                   LABELS
+ * Group:                   LABEL OPERATIONS
  ************************************************************************)
 
 (************************************************************************
@@ -88,7 +88,7 @@ let xchgs (m:string) (l:string) = xchg m m l
 
 
 (************************************************************************
- * Group:                   KEYS
+ * Group:                   SUBNODE CONSTRUCTIONS
  ************************************************************************)
 
 (************************************************************************
@@ -105,6 +105,20 @@ let key_value_line (kw:regexp) (sep:lens) (sto:lens) =
                                    [ key kw . sep . sto . eol ]
 
 (************************************************************************
+ * View: key_value_line_comment
+ *   Same as <key_value_line>, but allows to have a comment in the end of a line
+ *   and an end of line
+ *
+ *   Parameters:
+ *     kw:regexp    - the pattern to match as key
+ *     sep:lens     - the separator lens, which can be taken from the <Sep> module
+ *     sto:lens     - the storing lens
+ *     comment:lens - the comment lens, which can be taken from <Util>
+ ************************************************************************)
+let key_value_line_comment (kw:regexp) (sep:lens) (sto:lens) (comment:lens) =
+                                   [ key kw . sep . sto . (eol|comment) ]
+
+(************************************************************************
  * View: key_value
  *   Same as <key_value_line>, but does not end with an end of line
  *
@@ -116,4 +130,12 @@ let key_value_line (kw:regexp) (sep:lens) (sto:lens) =
 let key_value (kw: regexp) (sep:lens) (sto:lens) =
                                    [ key kw . sep . sto ]
 
+(************************************************************************
+ * View: flag
+ *   A simple flag subnode, consisting of a single key
+ *
+ *   Parameters:
+ *     kw:regexp - the pattern to match as key
+ ************************************************************************)
+let flag (kw:regexp) = [ key kw ]
 
