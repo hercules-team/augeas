@@ -40,6 +40,7 @@ lens_tests =			\
   lens-inittab.sh		\
   lens-interfaces.sh		\
   lens-iptables.sh		\
+  lens-keepalived.sh	\
   lens-krb5.sh			\
   lens-ldap.sh			\
   lens-limits.sh		\
@@ -58,6 +59,7 @@ lens_tests =			\
   lens-pam.sh			\
   lens-passwd.sh		\
   lens-pbuilder.sh		\
+  lens-pg_hba.sh		\
   lens-php.sh			\
   lens-phpvars.sh		\
   lens-postfix_access.sh \
