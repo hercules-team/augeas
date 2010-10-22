@@ -284,7 +284,10 @@ let parameter_flag_kw    = "always_set_home" | "authenticate" | "env_editor"
                          | "requiretty" | "root_sudo" | "rootpw" | "runaspw"
                          | "set_home" | "set_logname" | "setenv"
                          | "shell_noargs" | "stay_setuid" | "targetpw"
-                         | "tty_tickets" | "visiblepw"
+                         | "tty_tickets" | "visiblepw" | "closefrom_override"
+                         | "closefrom_override" | "compress_io" | "fast_glob"
+                         | "log_input" | "log_output" | "pwfeedback"
+                         | "umask_override" | "use_pty"
 
 let parameter_flag       = [ del_negate . negate_node?
                                . key parameter_flag_kw ]

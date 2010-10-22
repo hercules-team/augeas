@@ -23,6 +23,8 @@ Cmnd_Alias \
 	Defaults@LOCALNET        !lecture, \
    \t\t tty_tickets,!fqdn, !!env_reset
 
+Defaults   !visiblepw
+
 Defaults:buildd env_keep+=\"APT_CONFIG DEBIAN_FRONTEND SHELL\"
 
 # User privilege specification
@@ -87,6 +89,9 @@ www-data +biglab=(rpinson)NOEXEC: ICAL \
           { "tty_tickets" }
           { "fqdn" { "negate" } }
           { "env_reset" } }
+      {}
+      { "Defaults"
+          { "visiblepw" { "negate" } } }
       {}
       { "Defaults"
           { "type"      = ":buildd" }
