@@ -36,4 +36,5 @@ test Nsswitch.lns get conf =
       { "service" = "files" } }
    { "database" = "netgroup"
       { "service" = "nis" } }
-   
+
+
