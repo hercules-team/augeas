@@ -624,6 +624,36 @@ static const struct command_def cmd_setm_def = {
     "BASE will be modified."
 };
 
+static void cmd_clearm(struct command *cmd) {
+    const char *base = arg_value(cmd, "base");
+    const char *sub  = arg_value(cmd, "sub");
+    int r;
+
+    r = aug_setm(aug, base, sub, NULL);
+    err_check(cmd);
+    if (r == -1)
+        printf ("Failed\n");
+}
+
+static const struct command_opt_def cmd_clearm_opts[] = {
+    { .type = CMD_PATH, .name = "base", .optional = false,
+      .help = "the base node" },
+    { .type = CMD_PATH, .name = "sub", .optional = false,
+      .help = "the subtree relative to the base" },
+    CMD_OPT_DEF_LAST
+};
+
+static const struct command_def cmd_clearm_def = {
+    .name = "clearm",
+    .opts = cmd_clearm_opts,
+    .handler = cmd_clearm,
+    .synopsis = "clear the value of multiple nodes",
+    .help = "Clear multiple nodes values in one operation. Find or create a"
+    " node matching SUB\n by interpreting SUB as a path expression relative"
+    " to each node matching\n BASE. If SUB is '.', the nodes matching "
+    "BASE will be modified."
+};
+
 static void cmd_defvar(struct command *cmd) {
     const char *name = arg_value(cmd, "name");
     const char *path = arg_value(cmd, "expr");
@@ -932,6 +962,7 @@ static const struct command_def const *commands[] = {
     &cmd_save_def,
     &cmd_set_def,
     &cmd_setm_def,
+    &cmd_clearm_def,
     &cmd_help_def,
     &cmd_def_last
 };
