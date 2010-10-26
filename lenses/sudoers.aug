@@ -271,7 +271,7 @@ let parameter_flag_kw    = "always_set_home" | "authenticate" | "env_editor"
                          | "requiretty" | "root_sudo" | "rootpw" | "runaspw"
                          | "set_home" | "set_logname" | "setenv"
                          | "shell_noargs" | "stay_setuid" | "targetpw"
-                         | "tty_tickets"
+                         | "tty_tickets" | "visiblepw"
 
 let parameter_flag       = [ del_negate . negate_node?
                                . key parameter_flag_kw ]
