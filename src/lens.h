@@ -240,6 +240,11 @@ void free_lens(struct lens *lens);
  */
 char *enc_format(const char *e, size_t len);
 
+#if ENABLE_DEBUG
+void dump_lens_tree(struct lens *lens);
+void dump_lens(FILE *out, struct lens *lens);
+#endif
+
 #endif
 
 

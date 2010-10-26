@@ -26,6 +26,7 @@
 #include "lens.h"
 #include "memory.h"
 #include "errcode.h"
+#include "internal.h"
 
 /* This enum must be kept in sync with type_offs and ntypes */
 enum lens_type {
@@ -58,6 +59,8 @@ static const char *const tags[] = {
     "concat", "union",
     "subtree", "star", "maybe", "rec"
 };
+
+#define ltag(lens) (tags[lens->tag - L_DEL])
 
 static const struct string digits_string = {
     .ref = REF_MAX, .str = (char *) "[0123456789]+"
@@ -794,6 +797,8 @@ void free_lens(struct lens *lens) {
         return;
     ensure(lens->ref == 0, lens->info);
 
+    if (debugging("lenses"))
+        dump_lens_tree(lens);
     switch (lens->tag) {
     case L_DEL:
         unref(lens->regexp, regexp);
@@ -2091,6 +2096,103 @@ struct value *lns_check_rec(struct info *info,
         result = exn_error();
     return result;
 }
+
+#if ENABLE_DEBUG
+void dump_lens_tree(struct lens *lens){
+    static int count = 0;
+    FILE *fp;
+
+    fp = debug_fopen("lens_%02d_%s.dot", count++, ltag(lens));
+    if (fp == NULL)
+        return;
+
+    fprintf(fp, "digraph \"%s\" {\n", "lens");
+    dump_lens(fp, lens);
+    fprintf(fp, "}\n");
+
+    fclose(fp);
+}
+
+void dump_lens(FILE *out, struct lens *lens){
+    int i = 0;
+    struct regexp *re;
+
+    fprintf(out, "\"%p\" [ shape = box, label = \"%s\\n", lens, ltag(lens));
+
+    for (int t=0; t < ntypes; t++) {
+        re = ltype(lens, t);
+        if (re == NULL)
+            continue;
+        fprintf(out, "%s=",lens_type_names[t]);
+        print_regexp(out, re);
+        fprintf(out, "\\n");
+    }
+
+    fprintf(out, "recursive=%x\\n", lens->recursive);
+    fprintf(out, "rec_internal=%x\\n", lens->rec_internal);
+    fprintf(out, "consumes_value=%x\\n", lens->consumes_value);
+    fprintf(out, "ctype_nullable=%x\\n", lens->ctype_nullable);
+    fprintf(out, "\"];\n");
+    switch(lens->tag){
+    case L_DEL:
+        break;
+    case L_STORE:
+        break;
+    case L_VALUE:
+        break;
+    case L_KEY:
+        break;
+    case L_LABEL:
+        break;
+    case L_SEQ:
+        break;
+    case L_COUNTER:
+        break;
+    case L_CONCAT:
+        for(i = 0; i<lens->nchildren;i++){
+            fprintf(out, "\"%p\" -> \"%p\"\n", lens, lens->children[i]);
+            dump_lens(out, lens->children[i]);
+        }
+        break;
+    case L_UNION:
+        for(i = 0; i<lens->nchildren;i++){
+            fprintf(out, "\"%p\" -> \"%p\"\n", lens, lens->children[i]);
+            dump_lens(out, lens->children[i]);
+        }
+        break;
+    case L_SUBTREE:
+        fprintf(out, "\"%p\" -> \"%p\"\n", lens, lens->child);
+        dump_lens(out, lens->child);
+        break;
+    case L_STAR:
+        fprintf(out, "\"%p\" -> \"%p\"\n", lens, lens->child);
+        dump_lens(out, lens->child);
+
+        break;
+    case L_MAYBE:
+        fprintf(out, "\"%p\" -> \"%p\"\n", lens, lens->child);
+        dump_lens(out, lens->child);
+
+        break;
+    case L_REC:
+        if (lens->rec_internal == 0){
+            fprintf(out, "\"%p\" -> \"%p\"\n", lens, lens->child);
+            dump_lens(out, lens->body);
+        }
+        break;
+    /* uncomment for square lens */
+    /*
+    case L_SQUARE:
+        fprintf(out, "\"%p\" -> \"%p\"\n", lens, lens->child);
+        dump_lens(out, lens->child);
+        break;
+    */
+    default:
+        fprintf(out, "ERROR\n");
+        break;
+    }
+}
+#endif
 
 /*
  * Local variables:
