@@ -83,7 +83,7 @@ let database =
 let lns = ( empty | comment | database )*
 
 (* Variable: filter *)
-let filter = (incl "/etc/resolv.conf")
+let filter = (incl "/etc/nsswitch.conf")
     . Util.stdexcl
 
 let xfm = transform lns filter
