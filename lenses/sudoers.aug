@@ -484,6 +484,7 @@ let lns = ( empty | comment | alias | defaults | spec  )*
 
 (* Variable: filter *)
 let filter = (incl "/etc/sudoers")
+    . (incl "/etc/sudoers.d/*")
     . Util.stdexcl
 
 let xfm = transform lns filter
