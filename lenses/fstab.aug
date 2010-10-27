@@ -28,8 +28,10 @@ module Fstab =
                  . eol ]
 
   let lns = ( empty | comment | record ) *
+  let filter = (incl "/etc/fstab")
+             . (incl "/etc/mtab")
 
-  let xfm = transform lns (incl "/etc/fstab")
+  let xfm = transform lns filter
 
 (* Local Variables: *)
 (* mode: caml *)
