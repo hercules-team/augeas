@@ -108,20 +108,24 @@
     } while (0)
 
 /* Append ELT to the end of LIST. TAIL must be NULL or a pointer to
-   the last element of LIST
+   the last element of LIST. ELT may also be a list
 */
 #define list_tail_cons(list, tail, elt)                                 \
     do {                                                                \
+        /* Append ELT at the end of LIST */                             \
         if ((list) == NULL) {                                           \
             (list) = (elt);                                             \
-            (tail) = (list);                                            \
         } else {                                                        \
             if ((tail) == NULL)                                         \
                 for ((tail) = (list); (tail)->next != NULL;             \
                      (tail) = (tail)->next);                            \
             (tail)->next = (elt);                                       \
-            (tail) = (elt);                                             \
         }                                                               \
+        /* Make sure TAIL is the last element on the combined LIST */   \
+        (tail) = (elt);                                                 \
+        if ((tail) != NULL)                                             \
+            while ((tail)->next != NULL)                                \
+                (tail) = (tail)->next;                                  \
     } while(0)
 
 /*

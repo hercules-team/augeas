@@ -47,6 +47,7 @@ mapping eth1
             { "2" = "eth0" }
             { "3" = "#foo" } }
         { "allow-hotplug" { "1" = "eth1" } }
+        { }
         { "iface" = "lo"
             { "family" = "inet"}
             { "method" = "loopback"} {} }
@@ -86,4 +87,3 @@ test Interfaces.lns put "" after
 	set "/iface[1]/family" "inet";
 	set "/iface[1]/method" "dhcp"
 = "iface eth0 inet dhcp\n"
-
