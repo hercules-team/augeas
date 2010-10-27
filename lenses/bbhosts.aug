@@ -11,17 +11,17 @@ module BBhosts =
 
     (* Define useful shortcuts *)
 
-    let eol = del /[ \t]*\n/ "\n"
+    let eol = Util.eol
     let eol_no_spc = Util.del_str "\n"
-    let sep_spc = Util.del_ws_spc
+    let sep_spc = Sep.space
     let word  = store /[^|;# \n\t]+/
     let value_to_eol = store /[^ \t][^\n]+/
-    let ip    = store /[0-9\.]+/
+    let ip    = store Rx.ipv4
     let url   = store /https?:[^;,# \n\t]+/
 
     (* Define comments and empty lines *)
-    let comment = [ label "#comment" . del /#[ \t]*/ "# " .  store /([^ \t\n][^\n]*)?/ . eol_no_spc ]
-    let empty   = [ del /[ \t]*\n/ "\n" ]
+    let comment = Util.comment
+    let empty   = Util.empty
 
 
     (* Define host *)
