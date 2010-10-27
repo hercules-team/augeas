@@ -42,8 +42,10 @@ module Test_fstab =
         { "spec" = "devpts" }
         { "file" = "/dev/pts" }
         { "vfstype" = "devpts" }
-        { "opt" = "gid=5" }
-        { "opt" = "mode=620" }
+        { "opt" = "gid"
+            { "value" = "5" } }
+        { "opt" = "mode"
+            { "value" = "620" } }
         { "dump" = "0" }
         { "passno" = "0" } }
 
@@ -76,9 +78,12 @@ module Test_fstab =
     { "spec" = "sshfs#jon@10.0.0.2:/home" }
     { "file" = "/media/server" }
     { "vfstype" = "fuse" }
-    { "opt" = "uid=1000" }
-    { "opt" = "gid=100" }
-    { "opt" = "port=1022" }
+    { "opt" = "uid"
+         { "value" = "1000" } }
+    { "opt" = "gid"
+         { "value" = "100" } }
+    { "opt" = "port"
+         { "value" = "1022" } }
     { "dump" = "0" }
     { "passno" = "0" } }
 

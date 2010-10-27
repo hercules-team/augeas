@@ -11,16 +11,17 @@ module Fstab =
   let comment = Util.comment
   let empty   = Util.empty
 
-  let word    = Rx.neg1
+  let word    = Rx.word
   let spec    = /[^,# \n\t][^ \n\t]*/
 
   let comma_sep_list (l:string) =
-    let lns = [ label l . store word ] in
-       Build.opt_list lns comma
+    let value = [ label "value" . Util.del_str "=" . store word ] in
+      let lns = [ label l . store word . value? ] in
+         Build.opt_list lns comma
 
   let record = [ seq "mntent" .
                    [ label "spec" . store spec ] . sep_tab .
-                   [ label "file" . store word ] . sep_tab .
+                   [ label "file" . store Rx.neg1 ] . sep_tab .
                    comma_sep_list "vfstype" . sep_tab .
                    comma_sep_list "opt" .
                    (sep_tab . [ label "dump" . store /[0-9]+/ ] .
