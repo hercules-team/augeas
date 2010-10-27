@@ -58,9 +58,8 @@ arguments -- A sequence of arguments to pass to the command.
 
 In addition to this straightforward tree, inetd has the ability to set
 "default" listen addresses; this is a little used feature which nonetheless
-comes in handy sometimes.  The key for entries of this type is "#address"
-(to prevent collision with any real services that might one day be called
-"address"), and the subtree should be a sequence of addresses.  "*" can
+comes in handy sometimes.  The key for entries of this type is "address"
+, and the subtree should be a sequence of addresses.  "*" can
 always be used to return the default behaviour of listening on INADDR_ANY.
 
 *)
@@ -97,7 +96,7 @@ module Inetd =
 	 * ELEMENTS
 	 ***************************)
 
-	let service = ( [label "address" . address_list . del_str ":" ]? . key /[^ \t\n\/:#]+/ )
+	let service (l:string) = ( label l . [label "address" . address_list . del_str ":" ]? . store /[^ \t\n\/:#]+/ )
 
 	let socket = [ label "socket" . store /[^ \t\n#]+/ ]
 
@@ -122,7 +121,7 @@ module Inetd =
 	 * SERVICE LINES
 	 ***************************)
 
-	let service_line = [ service
+	let service_line = [ service "service"
 	                     . sep
 	                     . socket
 	                     . sep
@@ -136,11 +135,40 @@ module Inetd =
 	                     . eol
 	                   ]
 
+
+	(***************************
+	 * RPC LINES
+	 ***************************)
+
+	let rpc_service = service "rpc_service" . Util.del_str "/"
+                        . [ label "version" . store Rx.integer ]
+
+        let rpc_endpoint = [ label "endpoint-type" . store Rx.word ]
+        let rpc_protocol = Util.del_str "rpc/"
+                         . (Build.opt_list
+                             [label "protocol" . store /[^ \t\n,#]+/ ]
+                             Sep.comma)
+
+	let rpc_line = [ rpc_service
+	                     . sep
+	                     . rpc_endpoint
+	                     . sep
+	                     . rpc_protocol
+	                     . sep
+	                     . wait
+	                     . sep
+	                     . usergroup
+	                     . sep
+	                     . command
+	                     . eol
+	                   ]
+
+
 	(***************************
 	 * DEFAULT LISTEN ADDRESSES
 	 ***************************)
 
-	let default_listen_address = [ label "#address"
+	let default_listen_address = [ label "address"
 	                               . address_list
 	                               . del_str ":"
 	                               . eol
@@ -150,7 +178,7 @@ module Inetd =
 	 * LENS / FILTER
 	 ***********************)
 
-	let lns = (comment|empty|service_line|default_listen_address)*
+	let lns = (comment|empty|service_line|rpc_line|default_listen_address)*
 
 	let filter = incl "/etc/inetd.conf"
 

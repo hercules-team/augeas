@@ -22,19 +22,21 @@ dotgroupsrv	stream	tcp	nowait	fred.wilma	/usr/bin/dotgroupsrv
 colongroupsrv	stream	tcp	nowait	fred:wilma	/usr/bin/colongroupsrv
 
 maxsrv		stream	tcp	nowait.20	fred	/usr/bin/maxsrv
+
+dummy/1       tli     rpc/circuit_v,udp       wait    root    /tmp/test_svc   test_svc
 "
 
 	test Inetd.lns get conf =
 		{ "#comment" = "Blah di blah comment" }
 		{}
-		{ "simplesrv"
+		{ "service" = "simplesrv"
 			{ "socket" = "stream" }
 			{ "protocol" = "tcp" }
 			{ "wait" = "nowait" }
 			{ "user" = "fred" }
 			{ "command" = "/usr/bin/simplesrv" }
 		}
-		{ "arguserve"
+		{ "service" = "arguserve"
 			{ "socket" = "dgram" }
 			{ "protocol" = "udp" }
 			{ "wait" = "wait" }
@@ -47,7 +49,7 @@ maxsrv		stream	tcp	nowait.20	fred	/usr/bin/maxsrv
 			}
 		}
 		{}
-		{ "1234"
+		{ "service" = "1234"
 			{ "socket" = "stream" }
 			{ "protocol" = "tcp" }
 			{ "wait" = "nowait" }
@@ -55,7 +57,7 @@ maxsrv		stream	tcp	nowait.20	fred	/usr/bin/maxsrv
 			{ "command" = "/usr/bin/numbersrv" }
 		}
 		{}
-		{ "addrsrv"
+		{ "service" = "addrsrv"
 			{ "address"
 				{ "1" = "127.0.0.1" }
 			}
@@ -65,7 +67,7 @@ maxsrv		stream	tcp	nowait.20	fred	/usr/bin/maxsrv
 			{ "user" = "fred" }
 			{ "command" = "/usr/bin/addrsrv" }
 		}
-		{ "multiaddrsrv"
+		{ "service" = "multiaddrsrv"
 			{ "address"
 				{ "1" = "127.0.0.1" }
 				{ "2" = "10.0.0.1" }
@@ -76,18 +78,18 @@ maxsrv		stream	tcp	nowait.20	fred	/usr/bin/maxsrv
 			{ "user" = "fred" }
 			{ "command" = "/usr/bin/multiaddrsrv" }
 		}
-		{ "#address"
+		{ "address"
 			{ "1" = "faff.fred.com" }
 		}
-		{ "#address"
+		{ "address"
 			{ "1" = "127.0.0.1" }
 			{ "2" = "faff.fred.com" }
 		}
-		{ "#address"
+		{ "address"
 			{ "1" = "*" }
 		}
 		{}
-		{ "sndbufsrv"
+		{ "service" = "sndbufsrv"
 			{ "socket" = "stream" }
 			{ "protocol" = "tcp" }
 			{ "sndbuf" = "12k" }
@@ -95,7 +97,7 @@ maxsrv		stream	tcp	nowait.20	fred	/usr/bin/maxsrv
 			{ "user" = "fred" }
 			{ "command" = "/usr/bin/sndbufsrv" }
 		}
-		{ "rcvbufsrv"
+		{ "service" = "rcvbufsrv"
 			{ "socket" = "stream" }
 			{ "protocol" = "tcp" }
 			{ "rcvbuf" = "24k" }
@@ -103,7 +105,7 @@ maxsrv		stream	tcp	nowait.20	fred	/usr/bin/maxsrv
 			{ "user" = "fred" }
 			{ "command" = "/usr/bin/rcvbufsrv" }
 		}
-		{ "allbufsrv"
+		{ "service" = "allbufsrv"
 			{ "socket" = "stream" }
 			{ "protocol" = "tcp" }
 			{ "sndbuf" = "1m" }
@@ -113,7 +115,7 @@ maxsrv		stream	tcp	nowait.20	fred	/usr/bin/maxsrv
 			{ "command" = "/usr/bin/allbufsrv" }
 		}
 		{}
-		{ "dotgroupsrv"
+		{ "service" = "dotgroupsrv"
 			{ "socket" = "stream" }
 			{ "protocol" = "tcp" }
 			{ "wait" = "nowait" }
@@ -121,7 +123,7 @@ maxsrv		stream	tcp	nowait.20	fred	/usr/bin/maxsrv
 			{ "group" = "wilma" }
 			{ "command" = "/usr/bin/dotgroupsrv" }
 		}
-		{ "colongroupsrv"
+		{ "service" = "colongroupsrv"
 			{ "socket" = "stream" }
 			{ "protocol" = "tcp" }
 			{ "wait" = "nowait" }
@@ -130,7 +132,7 @@ maxsrv		stream	tcp	nowait.20	fred	/usr/bin/maxsrv
 			{ "command" = "/usr/bin/colongroupsrv" }
 		}
 		{}
-		{ "maxsrv"
+		{ "service" = "maxsrv"
 			{ "socket" = "stream" }
 			{ "protocol" = "tcp" }
 			{ "wait" = "nowait" }
@@ -138,6 +140,18 @@ maxsrv		stream	tcp	nowait.20	fred	/usr/bin/maxsrv
 			{ "user" = "fred" }
 			{ "command" = "/usr/bin/maxsrv" }
 		}
+                {}
+                { "rpc_service" = "dummy"
+                        { "version" = "1" }
+                        { "endpoint-type" = "tli" }
+                        { "protocol" = "circuit_v" }
+                        { "protocol" = "udp" }
+                        { "wait" = "wait" }
+                        { "user" = "root" }
+                        { "command" = "/tmp/test_svc" }
+                        { "arguments"
+                           { "1" = "test_svc" } }
+                }
 
 
 (**************************************************************************)
@@ -145,9 +159,12 @@ maxsrv		stream	tcp	nowait.20	fred	/usr/bin/maxsrv
 	(* Test new file creation *)
 
 	test Inetd.lns put "" after
-		set "/faffsrv/socket" "stream";
-		set "/faffsrv/protocol" "tcp";
-		set "/faffsrv/wait" "nowait";
-		set "/faffsrv/user" "george";
-		set "/faffsrv/command" "/sbin/faffsrv"
+                set "/service" "faffsrv";
+		set "/service/socket" "stream";
+		set "/service/protocol" "tcp";
+		set "/service/wait" "nowait";
+		set "/service/user" "george";
+		set "/service/command" "/sbin/faffsrv"
 	= "faffsrv	stream	tcp	nowait	george	/sbin/faffsrv\n"
+
+
