@@ -379,7 +379,7 @@ let parameter        = parameter_flag | parameter_integer
                      | parameter_string | parameter_lists
 
 (************************************************************************
- * View: paramater_list
+ * View: parameter_list
  *   A list of comma-separated <parameters> for <defaults>
  *
  *   Definition:
