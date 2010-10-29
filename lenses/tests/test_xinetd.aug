@@ -45,7 +45,7 @@ test Xinetd.lns get cvs =
   { "#comment" = "files. CVS stores all the versions of a file in a single" }
   { "#comment" = "file in a clever way that only stores the differences" }
   { "#comment" = "between versions." }
-  { "cvspserver"
+  { "service" = "cvspserver"
       { "disable" = "yes" }
       { "port" = "2401" }
       { "socket_type" = "stream" }
@@ -63,11 +63,12 @@ test Xinetd.lns get cvs =
       { "log_on_failure" { "add" } { "value" = "HOST" } } }
 
 (* Switch the '+=' to a simple '=' *)
-test Xinetd.lns put lst_add after rm "/svc_add/log_on_failure/add" =
+test Xinetd.lns put lst_add after rm "/service/log_on_failure/add" =
   "service svc_add\n{\n   log_on_failure = HOST\n}\n"
 
 test Xinetd.lns put "" after
-  set "/svc/instances" "UNLIMITED" = "service svc
+  set "/service" "svc";
+  set "/service/instances" "UNLIMITED" = "service svc
 {
 \tinstances = UNLIMITED
 }

@@ -102,8 +102,8 @@ module Xinetd =
                      . Util.del_ws_spc . store /[^ \t\n]+/ . eol ]
 
   let service =
-     let key_re = /[^# \t\n\/]+/ - /include|includedir|defaults/ in
-     [ del /service[ \t]+/ "service " . key key_re . body service_attr ]
+     let sto_re = /[^# \t\n\/]+/ in
+     [ key "service" . Sep.space . store sto_re . body service_attr ]
 
   let defaults = [ key "defaults" . del /[ \t]*/ "" . body default_attr ]
 
