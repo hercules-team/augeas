@@ -54,6 +54,7 @@ Group: Main Site  {
 Group: Specific Modules  {
 
    File: Access  (access.aug)
+   File: aliases.aug  (aliases.aug)
    File: Cgconfig  (no auto-title, cgconfig.aug)
    File: Cgrules  (no auto-title, cgrules.aug)
    File: Cron  (cron.aug)

@@ -9,9 +9,13 @@ mailer-daemon:	postmaster
 postmaster:	root
 
 # General redirections for pseudo accounts.
-bin:		root, adm
+bin:		root , adm,
+  bob
 daemon:		root
 adm:		root
+file:		/var/foo
+pipe1:		|/bin/ls
+pipe2:		|\"/usr/bin/ls args,\"
 "
   test Aliases.lns get file =
     { }
@@ -27,14 +31,21 @@ adm:		root
     { "#comment" = "General redirections for pseudo accounts." }
     { "3" { "name" = "bin" }
           { "value" = "root" }
-          { "value" = "adm" } }
+          { "value" = "adm" }
+          { "value" = "bob" } }
     { "4" { "name" = "daemon" }
           { "value" = "root" } }
     { "5" { "name" = "adm" }
           { "value" = "root" } }
+    { "6" { "name" = "file" }
+          { "value" = "/var/foo" } }
+    { "7" { "name" = "pipe1" }
+          { "value" = "|/bin/ls" } }
+    { "8" { "name" = "pipe2" }
+          { "value" = "|\"/usr/bin/ls args,\"" } }
 
   test Aliases.lns put file after
-    rm "/4" ; rm "/5" ;
+    rm "/4" ; rm "/5" ; rm "/6" ; rm "/7" ; rm "/8" ;
       set "/1/value[2]" "barbar" ;
       set "/3/value[2]" "ruth"
     = "#
@@ -46,7 +57,8 @@ mailer-daemon:	postmaster, barbar
 postmaster:	root
 
 # General redirections for pseudo accounts.
-bin:		root, ruth
+bin:		root , ruth,
+  bob
 "
 
   (* Schema violation, no 3/name *)
