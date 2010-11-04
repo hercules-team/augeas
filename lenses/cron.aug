@@ -14,8 +14,8 @@ About: License
 About: Lens Usage
   Sample usage of this lens in augtool
 
-    * Get the identifier of the devices with a "Clone" option:
-      > match "/files/etc/X11/xorg.conf/Device[Option = 'Clone']/Identifier"
+    * Get the entry that launches '/usr/bin/ls'
+      >  match '/files/etc/crontab/entry[. = "/usr/bin/ls"]'
 
 About: Configuration files
   This lens applies to /etc/cron.d/* and /etc/crontab. See <filter>.
