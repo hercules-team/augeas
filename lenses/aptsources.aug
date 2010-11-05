@@ -7,7 +7,8 @@ module Aptsources =
 
   let eol = Util.del_str "\n"
 
-  let comment = [ del /([ \t]*\n)|(#.*\n)/ "#\n" ]
+  let comment = Util.comment
+  let empty = Util.empty
 
   let word = /[^# \n\t]+/
 
@@ -18,7 +19,7 @@ module Aptsources =
                                 del /[ \t]*(#.*)?/ ""
                  . eol ]
 
-  let lns = ( comment | record ) *
+  let lns = ( comment | empty | record ) *
 
   let filter = (incl "/etc/apt/sources.list")
       . (incl "/etc/apt/sources.list.d/*")
