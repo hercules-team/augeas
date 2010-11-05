@@ -11,7 +11,7 @@ module Aptsources =
 
   let word = /[^# \n\t]+/
 
-  let record = [ seq "source" . [ label "type" . store word ] . sep_ws .
+  let record = [ Util.indent . seq "source" . [ label "type" . store word ] . sep_ws .
                                 [ label "uri"  . store word ] . sep_ws .
                                 [ label "distribution" . store word ]  .
                                 [ label "component" . sep_ws . store word ]* .

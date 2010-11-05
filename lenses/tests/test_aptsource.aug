@@ -26,8 +26,8 @@ let multi_line = "#deb http://www.backports.org/debian/ sarge postfix
 # deb http://people.debian.org/~adconrad sarge subversion
 
 deb ftp://mirror.bytemark.co.uk/debian/ etch main non-free contrib
-deb http://security.debian.org/ etch/updates main contrib non-free # security line
-deb-src http://mirror.bytemark.co.uk/debian etch main contrib non-free\n"
+  deb http://security.debian.org/ etch/updates main contrib non-free # security line
+	deb-src http://mirror.bytemark.co.uk/debian etch main contrib non-free\n"
 
   test Aptsources.lns get multi_line =
     {} {} {}
