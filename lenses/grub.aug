@@ -75,7 +75,7 @@ module Grub =
                      | password_arg
                      | color
 
-    let title = del /title[ \t]+/ "title " . value_to_eol . eol
+    let title = del /title[ \t=]+/ "title " . value_to_eol . eol
 
     (* Parse the file name and args on a kernel or module line *)
     let kernel_args =

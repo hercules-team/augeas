@@ -19,7 +19,7 @@ title Fedora (2.6.24.4-64.fc8)
         root (hd0,0)
         kernel /vmlinuz-2.6.24.4-64.fc8 ro root=/dev/vg00/lv00 crashkernel=
         initrd /initrd-2.6.24.4-64.fc8.img
-title Fedora (2.6.24.3-50.fc8)
+title=Fedora (2.6.24.3-50.fc8)
         root (hd0,0)
         kernel /vmlinuz-2.6.24.3-50.fc8 ro root=/dev/vg00/lv00
         initrd /initrd-2.6.24.3-50.fc8.img
