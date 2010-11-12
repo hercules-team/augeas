@@ -54,9 +54,9 @@ struct dict_node {
    string */
 struct dict {
     struct dict_node **nodes;
-    uint32_t          size : 24;
-    uint32_t          used : 24;
-    uint32_t          marked : 1;
+    uint32_t          size;
+    uint32_t          used;
+    bool              marked;
 };
 
 static const int dict_initial_size = 2;
