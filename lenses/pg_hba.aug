@@ -1,6 +1,6 @@
 (*
 Module: Pg_Hba
-  Parses /var/lib/pgsql/data/pg_hba.conf
+  Parses PostgreSQL's pg_hba.conf
 
 Author: Aurelien Bompard <aurelien@bompard.org>
 
@@ -12,7 +12,7 @@ About: License
   This file is licensed under the GPL.
 
 About: Configuration files
-  This lens applies to /var/lib/pgsql/data/pg_hba.conf. See <filter>.
+  This lens applies to pg_hba.conf. See <filter> for exact locations.
 *)
 
 
@@ -65,7 +65,8 @@ module Pg_Hba =
 
     let record = [ seq "entries" . (record_local | record_remote) . eol ]
 
-    let filter = (incl "/var/lib/pgsql/data/pg_hba.conf")
+    let filter = (incl "/var/lib/pgsql/data/pg_hba.conf" .
+                  incl "/etc/postgresql/*/*/pg_hba.conf" )
 
     let lns = ( record | Util.comment | Util.empty ) *
 
