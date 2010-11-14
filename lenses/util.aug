@@ -94,6 +94,10 @@ Variable: stdexcl
   let stdexcl = (excl "*~") .
     (excl "*.rpmnew") .
     (excl "*.rpmsave") .
+    (excl "*.dpkg-old") .
+    (excl "*.dpkg-new") .
+    (excl "*.dpkg-bak") .
+    (excl "*.dpkg-dist") .
     (excl "*.augsave") .
     (excl "*.augnew")
 
