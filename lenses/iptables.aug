@@ -16,7 +16,7 @@ let eol = Util.eol
 let spc = Util.del_ws_spc
 let dels = Util.del_str
 
-let chain_name = store /[A-Za-z0-9-]+/
+let chain_name = store /[A-Za-z0-9_-]+/
 let chain =
   let policy = [ label "policy" . store /ACCEPT|DROP|REJECT|-/ ] in
   let counters_eol = del /[ \t]*(\[[0-9:]+\])?[ \t]*\n/ "\n" in

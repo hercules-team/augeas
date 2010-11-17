@@ -195,3 +195,7 @@ test add_rule put "-I POSTROUTING ! -d 192.168.122.0/24 -j MASQUERADE\n"
 test add_rule put "-I POSTROUTING -d ! 192.168.122.0/24 -j MASQUERADE\n"
     after clear "/insert/destination/not" =
   "-I POSTROUTING ! -d ! 192.168.122.0/24 -j MASQUERADE\n"
+
+test Iptables.chain get ":tcp_packets - [0:0]
+" = 
+    { "chain" = "tcp_packets" { "policy" = "-" } }
