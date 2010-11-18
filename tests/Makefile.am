@@ -44,8 +44,10 @@ lens_tests =			\
   lens-krb5.sh			\
   lens-ldap.sh			\
   lens-limits.sh		\
+  lens-login_defs.sh 	\
   lens-logrotate.sh		\
   lens-lokkit.sh		\
+  lens-mke2fs.sh		\
   lens-modprobe.sh		\
   lens-modules_conf.sh	\
   lens-monit.sh			\
@@ -54,6 +56,7 @@ lens_tests =			\
   lens-nagioscfg.sh     \
   lens-ntp.sh			\
   lens-nrpe.sh          \
+  lens-nsswitch.sh		\
   lens-odbc.sh          \
   lens-openvpn.sh		\
   lens-pam.sh			\
@@ -66,11 +69,13 @@ lens_tests =			\
   lens-postfix_main.sh		\
   lens-postfix_master.sh	\
   lens-puppet.sh		\
+  lens-resolv.sh		\
   lens-rsyncd.sh		\
   lens-rx.sh			\
   lens-samba.sh			\
   lens-securetty.sh     \
   lens-services.sh		\
+  lens-shells.sh		\
   lens-shellvars.sh		\
   lens-shellvars_list.sh	\
   lens-slapd.sh			\
