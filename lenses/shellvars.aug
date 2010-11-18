@@ -47,7 +47,16 @@ module Shellvars =
       Util.del_ws_spc . store /[^= \t\n]+/ . eol
     ]
 
-  let lns = (comment | empty | source | kv | unset | bare_export) *
+  let shell_builtin_cmds = "ulimit"
+
+  let builtin =
+    [ label "@builtin"
+      . store shell_builtin_cmds
+      . Util.del_ws_spc
+      . [ label "args" . store /[^ \t\n][^;\n]+[^ \t\n]|[^ \t;\n]+/ ]
+      . eol ]
+
+  let lns = (comment | empty | source | kv | unset | bare_export | builtin) *
 
   let sc_incl (n:string) = (incl ("/etc/sysconfig/" . n))
   let filter_sysconfig =

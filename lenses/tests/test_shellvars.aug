@@ -114,6 +114,10 @@ unset ONBOOT
   test Shellvars.lns get "export FOO\n" =
   { "@export" = "FOO" }
 
+  (* Bug 73: allow ulimit builtin *)
+  test Shellvars.lns get "ulimit -c unlimited\n" =
+  { "@builtin" = "ulimit" { "args" = "-c unlimited" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
