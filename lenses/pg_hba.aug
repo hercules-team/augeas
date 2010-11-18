@@ -58,16 +58,23 @@ module Pg_Hba =
     (* Variable: remtypes
        non-local connection types *)
     let remtypes = "host" | "hostssl" | "hostnossl"
+
     (* View: record_remote *)
     let record_remote = [ label "type" . store remtypes ] . Sep.tab .
                         database . Sep.tab .  user . Sep.tab .
                         address . Sep.tab . method
 
+    (* View: record
+        A sequence of <record_local> or <record_remote> entries *)
     let record = [ seq "entries" . (record_local | record_remote) . eol ]
 
+    (* View: filter
+        The pg_hba.conf conf file *)
     let filter = (incl "/var/lib/pgsql/data/pg_hba.conf" .
                   incl "/etc/postgresql/*/*/pg_hba.conf" )
 
+    (* View: lns
+        The pg_hba.conf lens *)
     let lns = ( record | Util.comment | Util.empty ) *
 
     let xfm = transform lns filter
