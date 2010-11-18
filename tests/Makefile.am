@@ -84,6 +84,7 @@ lens_tests =			\
   lens-squid.sh			\
   lens-sshd.sh			\
   lens-sysconfig.sh		\
+  lens-syslog.sh		\
   lens-sysctl.sh		\
   lens-vsftpd.sh		\
   lens-webmin.sh		\
