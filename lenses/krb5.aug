@@ -20,8 +20,8 @@ let closebr = del /[ \t]*\}/ "}"
    and realms in the [appdefaults] section.
 *)
 
-let realm_re = /[.A-Z-]+/
-let app_re = /[a-z0-9_]+/
+let realm_re = /[A-Z][.a-zA-Z0-9-]*/
+let app_re = /[a-z][a-zA-Z0-9_]*/
 let name_re = /[.a-zA-Z0-9_-]+/
 
 let value = store /[^;# \t\n{}]+/
