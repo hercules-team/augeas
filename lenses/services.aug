@@ -75,11 +75,12 @@ let record = [ label "service-name" . store word_re . sep_spc . port
                  . del "/" "/" . protocol . ( sep_spc . alias )*
                  . (comment|eol) ]
 
-(* View: lns *)
+(* View: lns
+    The services lens is either <empty>, <comment> or <record> *)
 let lns = ( empty | comment | record )*
 
 
-(* Variable: filter *)
+(* View: filter *)
 let filter = (incl "/etc/services")
 
 let xfm = transform lns filter
