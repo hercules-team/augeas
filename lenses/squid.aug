@@ -51,7 +51,6 @@ let entry_re =    "accept_filter"
                 | "background_ping_rate"
                 | "balance_on_multiple_ip"
                 | "broken_posts"
-                | "broken_vary_encoding"
                 | "buffered_logs"
                 | "cache"
                 | "cache_dir"
@@ -116,7 +115,6 @@ let entry_re =    "accept_filter"
                 | "error_map"
                 | "err_page_stylesheet"
                 | "esi_parser"
-                | "extension_methods"
                 | "external_acl_type"
                 | "external_refresh_check"
                 | "follow_x_forwarded_for"
@@ -258,7 +256,6 @@ let entry_re =    "accept_filter"
                 | "redirector_bypass"
                 | "referer_log"
                 | "refresh_all_ims"
-                | "refresh_pattern"
                 | "refresh_stale_hit"
                 | "relaxed_header_parser"
                 | "reload_into_ims"
@@ -311,7 +308,6 @@ let entry_re =    "accept_filter"
                 | "unique_hostname"
                 | "unlinkd_program"
                 | "update_headers"
-                | "upgrade_http0.9"
                 | "uri_whitespace"
                 | "url_rewrite_access"
                 | "url_rewrite_bypass"
@@ -375,6 +371,9 @@ let acl        = indent
 
 let http_access_re
                = "http_access"
+               | "upgrade_http0.9"
+               | "broken_vary_encoding"
+
 let http_access
                = indent
                  . [ key http_access_re
@@ -386,10 +385,43 @@ let http_access
                  . (eol|comment) ]
 
 (************************************************************************
+ *                             REFRESH PATTERN
+ *************************************************************************)
+
+let refresh_pattern_option_re = "override-expire"
+		              | "override-lastmod"
+		              | "reload-into-ims"
+		              | "ignore-reload"
+		              | "ignore-no-cache"
+		              | "ignore-no-store"
+		              | "ignore-must-revalidate"
+		              | "ignore-private"
+		              | "ignore-auth"
+		              | "refresh-ims"
+		              | "store-stale"
+
+let refresh_pattern = indent . [ key "refresh_pattern" . spc
+                      . [ label "case_insensitive" . Util.del_str "-i" . spc ]?
+                      . store /[^ \t\n]+/ . spc
+                      . [ label "min" . store Rx.integer ] . spc
+                      . [ label "percent" . store Rx.integer . Util.del_str "%" ] . spc
+                      . [ label "max" . store Rx.integer ]
+                      . (spc . Build.opt_list [ label "option" . store refresh_pattern_option_re ] spc)?
+                      . (eol|comment) ]
+
+(************************************************************************
+ *                             EXTENSION METHODS
+ *************************************************************************)
+
+let extension_methods = indent . [ key "extension_methods" . spc
+                        . Build.opt_list [ seq "extension_method" . store Rx.word ] spc
+                        . (eol|comment) ]
+
+(************************************************************************
  *                               LENS
  *************************************************************************)
 
-let lns         = Spacevars.lns (entry|auth|acl|http_access)
+let lns         = Spacevars.lns (entry|auth|acl|http_access|refresh_pattern|extension_methods)
 
 let filter      = Util.stdexcl
                 . incl "/etc/squid/squid.conf"

@@ -71,7 +71,7 @@ refresh_pattern ^ftp:           1440    20%     10080
 refresh_pattern ^gopher:        1440    0%      1440
 refresh_pattern -i (/cgi-bin/|\?) 0     0%      0
 refresh_pattern (Release|Package(.gz)*)$        0       20%     2880
-refresh_pattern .               0       20%     4320
+refresh_pattern .               0       20%     4320	ignore-reload ignore-auth # testing options
 acl shoutcast rep_header X-HTTP09-First-Line ^ICY\s[0-9]
 upgrade_http0.9 deny shoutcast
 acl apache rep_header Server ^Apache
@@ -159,11 +159,30 @@ test Squid.lns get debian_lenny_default =
   { "http_port" = "3128" }
   { "hierarchy_stoplist" = "cgi-bin ?" }
   { "access_log" = "/var/log/squid/access.log squid" }
-  { "refresh_pattern" = "^ftp:           1440    20%     10080" }
-  { "refresh_pattern" = "^gopher:        1440    0%      1440" }
-  { "refresh_pattern" = "-i (/cgi-bin/|\?) 0     0%      0" }
-  { "refresh_pattern" = "(Release|Package(.gz)*)$        0       20%     2880" }
-  { "refresh_pattern" = ".               0       20%     4320" }
+  { "refresh_pattern" = "^ftp:"
+       { "min" = "1440" }
+       { "percent" = "20" }
+       { "max" = "10080" } }
+  { "refresh_pattern" = "^gopher:"
+       { "min" = "1440" }
+       { "percent" = "0" }
+       { "max" = "1440" } }
+  { "refresh_pattern" = "(/cgi-bin/|\?)"
+       { "case_insensitive" }
+       { "min" = "0" }
+       { "percent" = "0" }
+       { "max" = "0" } }
+  { "refresh_pattern" = "(Release|Package(.gz)*)$"
+       { "min" = "0" }
+       { "percent" = "20" }
+       { "max" = "2880" } }
+  { "refresh_pattern" = "."
+       { "min" = "0" }
+       { "percent" = "20" }
+       { "max" = "4320" }
+       { "option" = "ignore-reload" }
+       { "option" = "ignore-auth" }
+       { "#comment" = "testing options" } }
   { "acl"
     { "shoutcast"
       { "type" = "rep_header" }
@@ -173,7 +192,8 @@ test Squid.lns get debian_lenny_default =
       }
     }
   }
-  { "upgrade_http0.9" = "deny shoutcast" }
+  { "upgrade_http0.9"
+      { "deny" = "shoutcast" } }
   { "acl"
     { "apache"
       { "type" = "rep_header" }
@@ -183,7 +203,12 @@ test Squid.lns get debian_lenny_default =
       }
     }
   }
-  { "broken_vary_encoding" = "allow apache" }
-  { "extension_methods" = "REPORT MERGE MKACTIVITY CHECKOUT" }
+  { "broken_vary_encoding"
+      { "allow" = "apache" } }
+  { "extension_methods"
+      { "1" = "REPORT" }
+      { "2" = "MERGE" }
+      { "3" = "MKACTIVITY" }
+      { "4" = "CHECKOUT" } }
   { "hosts_file" = "/etc/hosts" }
   { "coredump_dir" = "/var/spool/squid" }
