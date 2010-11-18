@@ -19,9 +19,13 @@ module Pbuilder =
 
 autoload xfm
 
+(* View: filter
+    The pbuilder conffiles *)
 let filter = incl "/etc/pbuilder/pbuilderrc"
            . incl "/etc/pbuilderrc"
 
+(* View: lns
+    The pbuilder lens *)
 let lns    = Shellvars.lns
 
 let xfm    = transform lns filter
