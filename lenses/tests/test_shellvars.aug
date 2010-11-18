@@ -6,11 +6,11 @@ DEVICE=eth0
 BOOTPROTO=static
 BROADCAST=172.31.0.255
 HWADDR=ab:cd:ef:12:34:56
-export IPADDR=172.31.0.31
+export IPADDR=172.31.0.31 # this is our IP
 #DHCP_HOSTNAME=host.example.com
 NETMASK=255.255.255.0
 NETWORK=172.31.0.0
-unset ONBOOT
+unset ONBOOT    #   We do not want this var
 "
   let empty_val = "EMPTY=\nDEVICE=eth0\n"
 
@@ -23,11 +23,13 @@ unset ONBOOT
     { "BROADCAST" = "172.31.0.255" }
     { "HWADDR" = "ab:cd:ef:12:34:56" }
     { "IPADDR" = "172.31.0.31"
-        { "export" } }
+        { "export" }
+        { "#comment" = "this is our IP" } }
     { "#comment" = "DHCP_HOSTNAME=host.example.com" }
     { "NETMASK" = "255.255.255.0" }
     { "NETWORK" = "172.31.0.0" }
-    { "@unset"   = "ONBOOT" }
+    { "@unset"   = "ONBOOT"
+        { "#comment" = "We do not want this var" } }
 
   test Shellvars.lns put eth_static after
       set "BOOTPROTO" "dhcp" ;
@@ -40,7 +42,7 @@ DEVICE=eth0
 BOOTPROTO=dhcp
 HWADDR=ab:cd:ef:12:34:56
 #DHCP_HOSTNAME=host.example.com
-unset ONBOOT
+unset ONBOOT    #   We do not want this var
 "
   test Shellvars.lns get empty_val =
     { "EMPTY" = "" } { "DEVICE" = "eth0" }
@@ -70,13 +72,29 @@ unset ONBOOT
     { "var" = "\\\"" }
 
   test Shellvars.lns get "var=ab#c\n" =
-    { "var" = "ab#c" }
+    { "var" = "ab"
+        { "#comment" = "c" } }
+
+  test Shellvars.lns get "var='ab#c'\n" =
+    { "var" = "'ab#c'" }
+
+  test Shellvars.lns get "var=\"ab#c\"\n" =
+    { "var" = "\"ab#c\"" }
+
+  (* For some reason, `` conflicts with comment_eol *)
+  test Shellvars.lns get "var=`ab#c`\n" =
+    { "var" = "`ab"
+       { "#comment" = "c`" } }
 
   test Shellvars.lns get "var=`grep nameserver /etc/resolv.conf | head -1`\n" =
     { "var" = "`grep nameserver /etc/resolv.conf | head -1`" }
 
-  (* We don't handle comments at the end of a line yet *)
-  test Shellvars.lns get "var=ab #c\n" = *
+  test Shellvars.lns put "var=ab #c\n"
+    after rm "/var/#comment" = "var=ab\n"
+
+  test Shellvars.lns put "var=ab\n"
+    after set "/var/#comment" "this is a var" =
+       "var=ab # this is a var\n"
 
   (* Handling of arrays *)
   test Shellvars.lns get "var=(val1 \"val\\\"2\\\"\" val3)\n" =

@@ -32,10 +32,8 @@ let filename = store fn_re
 let sto_to_dquote = store /[^"\n]+/   (* " Emacs, relax *)
 
 (* define comments and empty lines *)
-let comment = [ indent . label "#comment"
-              . del /[;#][ \t]*/ "# "
-              . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
-	      . eol ]
+let comment = Util.comment_generic /[ \t]*[;#][ \t]*/ "# "
+let comment_or_eol = eol | Util.comment_generic /[ \t]*[;#][ \t]*/ " # "
 
 let empty   = Util.empty
 
@@ -86,7 +84,7 @@ let single_an  = "user"
 
 
 let single_entry (kw:regexp) (re:regexp)
-               = [ key kw . sep . store re . (eol|comment) ]
+               = [ key kw . sep . store re . comment_or_eol ]
 
 let single     = single_entry single_num num_re
       	       | single_entry single_fn  fn_re
@@ -127,7 +125,7 @@ let flag_words = "client-to-client"
 	       | "http-proxy-retry"
 
 let flag_entry (kw:regexp)
-               = [ key kw . (eol|comment) ]
+               = [ key kw . comment_or_eol ]
 
 let flag       = flag_entry flag_words
 
@@ -145,42 +143,42 @@ let flag       = flag_entry flag_words
 
 let server        = [ key "server" . sep
                     . [ label "address" . ip ] . sep
-		    . [ label "netmask" . ip ] . (eol|comment)
+		    . [ label "netmask" . ip ] . comment_or_eol
 		    ]
 
 let server_bridge = [ key "server-bridge" . sep
                     . [ label "address" . ip ] . sep
 		    . [ label "netmask" . ip ] . sep
 		    . [ label "start"   . ip ] . sep
-		    . [ label "end"     . ip ] . (eol|comment)
+		    . [ label "end"     . ip ] . comment_or_eol
 		    ]
 
 let push          = [ key "push" . sep
                     . sep_dquote
 		    . sto_to_dquote
 		    . sep_dquote
-		    . (eol|comment)
+		    . comment_or_eol
                     ]
 
 let keepalive     = [ key "keepalive" . sep
                     . [ label "ping"    . num ] . sep
-		    . [ label "timeout" . num ] . (eol|comment)
+		    . [ label "timeout" . num ] . comment_or_eol
                     ]
 
 let tls_auth      = [ key "tls-auth" . sep
                     . [ label "key"       . filename     ] . sep
-		    . [ label "is_client" . store /[01]/ ] . (eol|comment)
+		    . [ label "is_client" . store /[01]/ ] . comment_or_eol
                     ]
 
 let remote        = [ key "remote" . sep
                     . [ label "server" . filename ] . sep
-		    . [ label "port"   . num      ] . (eol|comment)
+		    . [ label "port"   . num      ] . comment_or_eol
 		    ]
 
 let http_proxy    = [ key "http-proxy" .
                     ( sep . [ label "server" . store /[A-Za-z0-9\._-]+/ ] .
 		    ( sep . [ label "port"   . num      ] )? )?
-		    . (eol|comment)
+		    . comment_or_eol
 		    ]
 
 let other         = server

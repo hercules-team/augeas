@@ -60,4 +60,6 @@ z39.50		210/tcp		z3950 wais	# NISO Z39.50 database \n"
       { "port" = "0" }
       { "protocol" = "proto" } }
 
+  test Services.lns put "tcpmux          1/tcp # some comment\n"
+    after rm "/service-name/#comment" = "tcpmux          1/tcp\n"
 

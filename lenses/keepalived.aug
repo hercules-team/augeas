@@ -44,16 +44,15 @@ let rbracket = Util.del_str "}"
 
 (* View: comment
 Map comments in "#comment" nodes *)
-let comment = 
-    [ indent . label "#comment" . del /[#!][ \t]*/ "# "
-        . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ . eol ]
+let comment = Util.comment_generic /[ \t]*[#!][ \t]*/ "# "
 
-(* View: eol_comment
-And end-of-line comment
-with a space in front of # by default *)
-let eol_comment =
-    [ label "#comment" . del /[ \t]*[#!][ \t]*/ " # "
-        . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ . eol ]
+(* View: comment_eol
+Map comments at eol *)
+let comment_eol = Util.comment_generic /[ \t]*[#!][ \t]*/ " # "
+
+(* View: comment_or_eol
+A <comment_eol> or <eol> *)
+let comment_or_eol = comment_eol | (del /[ \t]*#?\n/ "\n")
 
 (* View: empty
 Map empty lines *)
@@ -75,7 +74,7 @@ let sto_word = store word
 let sto_num = store Rx.integer
 
 (* View: field *)
-let field (kw:string) (sto:lens) = indent . Build.key_value_line_comment kw sep_spc sto eol_comment
+let field (kw:string) (sto:lens) = indent . Build.key_value_line_comment kw sep_spc sto comment_eol
 
 (* View: flag
 A single word *)
@@ -115,7 +114,7 @@ let named_block_arg (kw:string) (name:string) (arg:string) (sto:lens) =
 
 (* View: email
 A simple email address entry *)
-let email = [ indent . label "email" . sto_email_addr . (eol_comment|eol) ]
+let email = [ indent . label "email" . sto_email_addr . comment_or_eol ]
 
 (* View: global_defs_field
 Possible fields in the global_defs block *)
@@ -149,7 +148,7 @@ To be refined with fields according to `ip addr help`.
 *)
 let static_ipaddress_field = [ indent . ipaddr
                              . (sep_spc . ipdev)?
-                             . (eol|eol_comment) ]
+                             . comment_or_eol ]
 
 (* View: static_routes_field
 src $SRC_IP to $DST_IP dev $SRC_DEVICE
@@ -157,7 +156,7 @@ src $SRC_IP to $DST_IP dev $SRC_DEVICE
 let static_routes_field = [ indent . label "route"
                           . [ key "src" . sto_word ] . sep_spc
                           . [ key "to"  . sto_word ] . sep_spc
-                          . [ key "dev" . sto_word ] . (eol|eol_comment) ]
+                          . [ key "dev" . sto_word ] . comment_or_eol ]
 
 (* View: static_routes *)
 let static_routes = block "static_ipaddress" static_ipaddress_field
@@ -174,7 +173,7 @@ let global_conf = global_defs | static_routes
  *************************************************************************)
 
 (*View: vrrp_sync_group_field *)
-let vrrp_sync_group_field = block "group" [ indent . key word . (eol|eol_comment) ]
+let vrrp_sync_group_field = block "group" [ indent . key word . comment_or_eol ]
 
 (* View: vrrp_sync_group *)
 let vrrp_sync_group = named_block "vrrp_sync_group" vrrp_sync_group_field
@@ -231,7 +230,7 @@ let virtual_server_group_field = [ indent . label "vip"
                                . [ ipaddr ]
 			       . sep_spc
 			       . [ label "port" . sto_num ]
-			       . (eol|eol_comment) ]
+			       . comment_or_eol ]
 
 (* View: virtual_server_group *)
 let virtual_server_group = named_block "virtual_server_group" virtual_server_group_field

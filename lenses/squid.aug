@@ -19,7 +19,8 @@ let indent      = Util.indent
 let word        =  /[A-Za-z0-9!_.-]+(\[[0-9]+\])?/
 let sto_to_spc  = store /[^# \t\n]+/
 
-let comment     = Spacevars.comment
+let comment     = Util.comment
+let comment_or_eol = Util.comment_or_eol
 let value (kw:string)
                 = [ spc . label kw . sto_to_spc ]
 let parameters  = [ label "parameters"
@@ -350,7 +351,7 @@ let auth        = indent
                   . value "scheme"
                   . value "parameter"
                   . (value "setting") ?
-                  . (eol|comment) ]
+                  . comment_or_eol ]
 
 (************************************************************************
  *                                ACL
@@ -363,7 +364,7 @@ let acl        = indent
                    . value "type"
                    . value "setting"
                    . parameters?
-                   . (eol|comment) ] ]
+                   . comment_or_eol ] ]
 
 (************************************************************************
  *                             HTTP ACCESS
@@ -382,7 +383,7 @@ let http_access
                    . spc
                    . sto_to_spc
                    . parameters? ]
-                 . (eol|comment) ]
+                 . comment_or_eol ]
 
 (************************************************************************
  *                             REFRESH PATTERN
@@ -407,7 +408,7 @@ let refresh_pattern = indent . [ key "refresh_pattern" . spc
                       . [ label "percent" . store Rx.integer . Util.del_str "%" ] . spc
                       . [ label "max" . store Rx.integer ]
                       . (spc . Build.opt_list [ label "option" . store refresh_pattern_option_re ] spc)?
-                      . (eol|comment) ]
+                      . comment_or_eol ]
 
 (************************************************************************
  *                             EXTENSION METHODS
@@ -415,7 +416,7 @@ let refresh_pattern = indent . [ key "refresh_pattern" . spc
 
 let extension_methods = indent . [ key "extension_methods" . spc
                         . Build.opt_list [ seq "extension_method" . store Rx.word ] spc
-                        . (eol|comment) ]
+                        . comment_or_eol ]
 
 (************************************************************************
  *                               LENS

@@ -65,12 +65,28 @@ Variable: indent
      of comments and stores them in nodes, except for empty comments which are
      ignored together with empty lines
 
-View: comment
+View: comment_generic
+  Map comments and set default comment sign
+*)
+
+  let comment_generic (r:regexp) (d:string) =
+    [ label "#comment" . del r d
+        . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ . eol ]
+
+(* View: comment
   Map comments into "#comment" nodes
 *)
-  let comment =
-    [ indent . label "#comment" . del /#[ \t]*/ "# "
-        . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ . eol ]
+  let comment = comment_generic /[ \t]*#[ \t]*/ "# "
+
+(* View: comment_eol
+  Map eol comments into "#comment" nodes
+  Add a space before # for end of line comments
+*)
+  let comment_eol = comment_generic /[ \t]*#[ \t]*/ " # "
+
+(* View: comment_or_eol
+    A <comment_eol> or <eol> *)
+  let comment_or_eol = comment_eol | (del /[ \t]*#?\n/ "\n")
 
 (*
 View: empty

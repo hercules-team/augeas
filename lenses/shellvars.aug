@@ -8,13 +8,15 @@ module Shellvars =
   let key_re = /[A-Za-z0-9_]+(\[[0-9]+\])?/ - "unset" - "export"
   let eq = Util.del_str "="
   let comment = Util.comment
+  let comment_or_eol = Util.comment_or_eol
   let empty   = Util.empty
   let xchgs   = Build.xchgs
 
-  let char  = /[^() '"\t\n]|\\\\"/
+  let char  = /[^#() '"\t\n]|\\\\"/
   let dquot = /"([^"\\\n]|\\\\.)*"/                    (* " Emacs, relax *)
   let squot = /'[^'\n]*'/
-  let bquot = /`[^`\n]*`/
+  (* For some reason, `` conflicts with comment_or_eol *)
+  let bquot = /`[^#`\n]*`/
 
   (* Array values of the form '(val1 val2 val3)'. We do not handle empty *)
   (* arrays here because of typechecking headaches. Instead, they are    *)
@@ -33,10 +35,10 @@ module Shellvars =
       store (char* | dquot | squot | bquot | empty_array)
 
   let export = [ key "export" . Util.del_ws_spc ]
-  let kv = [ export? . key key_re . eq . (simple_value | array) . eol ]
+  let kv = [ export? . key key_re . eq . (simple_value | array) . comment_or_eol ]
 
   let var_action (name:string) =
-    [ xchgs name ("@" . name) . Util.del_ws_spc . store key_re . eol ]
+    [ xchgs name ("@" . name) . Util.del_ws_spc . store key_re . comment_or_eol ]
 
   let unset = var_action "unset"
   let bare_export = var_action "export"

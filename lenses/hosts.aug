@@ -6,10 +6,11 @@ module Hosts =
   let sep_tab = Util.del_ws_tab
   let sep_spc = Util.del_ws_spc
 
-  let eol = del /[ \t]*\n/ "\n"
-  let indent = del /[ \t]*/ ""
+  let eol = Util.eol
+  let indent = Util.indent
 
   let comment = Util.comment
+  let comment_or_eol = Util.comment_or_eol
   let empty   = [ del /[ \t]*#?[ \t]*\n/ "\n" ]
 
   let word = /[^# \n\t]+/
@@ -17,7 +18,7 @@ module Hosts =
                               [ label "ipaddr" . store  word ] . sep_tab .
                               [ label "canonical" . store word ] .
                               [ label "alias" . sep_spc . store word ]*
-                 . (comment|eol) ]
+                 . comment_or_eol ]
 
   let lns = ( empty | comment | record ) *
 

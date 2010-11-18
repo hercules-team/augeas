@@ -17,6 +17,7 @@ module Pam =
   let argument = /[^#\n \t]+/
 
   let comment = Util.comment
+  let comment_or_eol = Util.comment_or_eol
   let empty   = Util.empty
 
 
@@ -34,7 +35,7 @@ module Pam =
                    Util.del_ws_tab .
                    [ label "module" . store word ] .
                    [ Util.del_ws_tab . label "argument" . store argument ]* .
-		 (comment|eol)
+		 comment_or_eol
                ]
   let lns = ( empty | comment | include | record ) *
 

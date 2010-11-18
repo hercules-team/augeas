@@ -23,6 +23,7 @@ module Dhclient =
 
 let eol               = Util.eol
 let comment           = Util.comment
+let comment_or_eol    = Util.comment_or_eol
 let empty             = Util.empty
 
 (* Define separators *)
@@ -65,7 +66,7 @@ let stmt_simple       = [ key stmt_simple_re
                         . sep_spc
                         . sto_to_spc
                         . sep_scl
-                        . (eol|comment) ]
+                        . comment_or_eol ]
 
 
 (************************************************************************
@@ -82,7 +83,7 @@ let stmt_array        = [ key stmt_array_re
                         . counter "stmt_array"
                         . [ seq "stmt_array" . sto_to_spc ]
                         . [ sep_com . seq "stmt_array" . sto_to_spc ]*
-                        . sep_scl . (eol|comment) ]
+                        . sep_scl . comment_or_eol ]
 
 (************************************************************************
  *                          HASH STATEMENTS
@@ -95,7 +96,7 @@ let stmt_hash         = [ key stmt_hash_re
                         . sep_spc
                         . [ key word . sep_spc . (sto_to_spc|rfc_code) ]
                         . sep_scl
-                        . (eol|comment) ]
+                        . comment_or_eol ]
 
 (************************************************************************
  *                         BLOCK STATEMENTS
@@ -119,7 +120,7 @@ let stmt_block_opt    = [ key stmt_block_opt_re
                          . sep_spc
                          . sto_to_spc
                          . sep_scl
-                         . (eol|comment) ]
+                         . comment_or_eol ]
 
 let stmt_block_date_re
                       = "renew"
@@ -135,7 +136,7 @@ let stmt_block_date   = [ key stmt_block_date_re
                         . [ sep_col . label "minute"  . sto_number ]
                         . [ sep_col . label "second"  . sto_number ]
                         . sep_scl
-                        . (eol|comment) ]
+                        . comment_or_eol ]
 
 let stmt_block_arg    = sep_spc . sto_to_spc
 
@@ -150,7 +151,7 @@ let stmt_block        = [ key stmt_block_re
                         . sep_obr
                         . stmt_block_entry+
                         . sep_cbr
-                        . (eol|comment) ]
+                        . comment_or_eol ]
 
 (************************************************************************
  *                              LENS & FILTER

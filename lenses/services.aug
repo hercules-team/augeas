@@ -44,6 +44,7 @@ module Services =
 let eol         = del /[ \t]*(#)?[ \t]*\n/ "\n"
 let indent      = Util.indent
 let comment     = Util.comment
+let comment_or_eol = Util.comment_or_eol
 let empty       = Util.empty
 let protocol_re = /[a-zA-Z]+/
 let word_re     = /[a-zA-Z0-9_.+*\/-]+/
@@ -73,7 +74,7 @@ let alias = [ label "alias" . store word_re ]
  *)
 let record = [ label "service-name" . store word_re . sep_spc . port
                  . del "/" "/" . protocol . ( sep_spc . alias )*
-                 . (comment|eol) ]
+                 . comment_or_eol ]
 
 (* View: lns
     The services lens is either <empty>, <comment> or <record> *)
