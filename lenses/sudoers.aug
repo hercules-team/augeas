@@ -482,7 +482,7 @@ let spec = [ label "spec" . indent
 *)
 let lns = ( empty | comment | alias | defaults | spec  )*
 
-(* Variable: filter *)
+(* View: filter *)
 let filter = (incl "/etc/sudoers")
     . (incl "/usr/local/etc/sudoers")
     . (incl "/etc/sudoers.d/*")
