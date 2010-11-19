@@ -139,6 +139,7 @@ module Grub =
                           | "memtest86"
                           | "updatedefaultentry"
                           | "savedefault"
+                          | "indomU"
 
     let debian_setting = debian_kw_arg debian_setting_re
 
