@@ -1,3 +1,46 @@
+0.7.4 - 2010-11-19
+  - augtool: new clearm command to parallel setm
+  - augtool: add --file option
+  - Fix SEGV under gcc 4.5, caused by difficulties of the gcc optimizer
+    handling bitfields (bug #149; rhbz #651992)
+  - Preserve parse errors under /augeas//error: commit 5ee81630, released
+    in 0.7.3, introduced a regression that would cause the loss of parse
+    errors; bug #138
+  - Avoid losing already parsed nodes under certain circumstances; bug #144
+  - Properly record the new mtime of a saved file; previously the mtime in
+    the tree was reset to 0 when a file was saved, causing unnecessary file
+    reloads
+  - fix a SEGV when using L_MAYBE in recursive lens; bug #136
+  - Incompatible lens changes
+    * Fstab: parse option values
+    * Squid: various improvements, see bug #46;
+    * Xinetd: map service names differently
+  - Lens changes/additions
+    * Aptsources: map comments properly, allow indented lines; bug #151
+    * Grub: add indomU setting for Debian. Allow '=' as separator in title;
+      bug #150
+    * Fstab: also process /etc/mtab
+    * Inetd: support rpc services
+    * Iptables: allow underscore in chain names
+    * Keepalived: new lens for /etc/keepalived/keepalived.conf
+    * Krb5: allow digits in realm names; bug #139
+    * Login_defs: new lens for /etc/login.defs (Erinn Looney-Triggs)
+    * Mke2fs: new lens for /etc/mke2fs.conf
+    * Nrpe: new lens for Nagios nrpe (Marc Fournier)
+    * Nsswitch: new lens for /etc/nsswitch.conf
+    * Odbc: new lens for /etc/odbc.ini (Marc Fournier)
+    * Pg_hba: New lens; bug #140 (Aurelien Bompard). Add system path on
+      Debian; bug #154 (Marc Fournier)
+    * Postfix_master: parse arguments in double quotes; bug #69
+    * Resolv: new lens for /etc/resolv.conf
+    * Shells: new lens for /etc/shells
+    * Shellvars: parse ulimit builtin
+    * Sudoers: load file from /usr/local/etc (Mathieu Arnold) Allow
+      'visiblepw' parameter flag; bug #143. Read files from /etc/sudoers.d
+    * Syslog: new lens for /etc/syslog.conf (Mathieu Arnold)
+    * Util: exclude dpkg backup files; bug #153 (Marc Fournier)
+    * Yum: accept continuation lines for gpgkey; bug #132
+
 0.7.3 - 2010-08-06
   - aug_load: only reparse files that have actually changed; greatly speeds
     up reloading
