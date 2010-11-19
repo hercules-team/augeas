@@ -39,6 +39,9 @@ daemon.info                                     /var/log/cvsupd.log
 daemon.info                                     /var/log/cvsupd.log
 !*
 daemon.info                                     /var/log/cvsupd.log
+*.=debug;\
+        auth,authpriv.none;\
+        news.none;mail.none     -/var/log/debug
 "
 
 	test Syslog.lns get conf =
@@ -178,8 +181,13 @@ daemon.info                                     /var/log/cvsupd.log
 	    { "program" = "*" }
 	    { "entry"
 	      { "selector" { "facility" = "daemon" } { "level" = "info" } }
-	      { "action" { "file" = "/var/log/cvsupd.log" } }
-	    }
+	      { "action" { "file" = "/var/log/cvsupd.log" } } }
+            { "entry"
+              { "selector" { "facility" = "*" } { "comparison" = "=" } { "level" = "debug" } }
+              { "selector" { "facility" = "auth" } { "facility" = "authpriv" } { "level" = "none" } }
+              { "selector" { "facility" = "news" } { "level" = "none" } }
+              { "selector" { "facility" = "mail" } { "level" = "none" } }
+	      { "action" { "no_sync" } { "file" = "/var/log/debug" } } }
 	  }
 
 	(* changing file *)

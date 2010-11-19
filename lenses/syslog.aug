@@ -33,7 +33,10 @@ module Syslog =
 	(* Variable: eol *)
         let eol        = Util.eol
 	(* Variable: sep_tab *)
-        let sep_tab    = Sep.tab
+        let sep_tab    = del /([ \t]+|[ \t]*\\\\\n[ \t]*)/ "\t"
+
+	(* Variable: sep_tab_opt *)
+        let sep_tab_opt = del /([ \t]*|[ \t]*\\\\\n[ \t]*)/ ""
 
 	(* View: comment
 	  Map comments into "#comment" nodes
@@ -47,15 +50,15 @@ module Syslog =
         (* Variable: comma
 	 Deletes a comma and default to it
 	 *)
-	let comma      = Util.del_str ","
+	let comma      = sep_tab_opt . Util.del_str "," . sep_tab_opt
 	(* Variable: colon
 	 Deletes a colon and default to it
 	 *)
-	let colon      = Util.del_str ":"
+	let colon      = sep_tab_opt . Util.del_str ":" . sep_tab_opt
 	(* Variable: semicolon
 	 Deletes a semicolon and default to it
 	 *)
-	let semicolon  = Util.del_str ";"
+	let semicolon  = sep_tab_opt . Util.del_str ";" . sep_tab_opt
 	(* Variable: at
 	 Deletes a at and default to it
 	 *)
