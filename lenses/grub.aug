@@ -86,6 +86,11 @@ module Grub =
     let module_line =
       [ command "module" "\t" . spc . kernel_args ]
 
+    let map_line =
+      [ command "map" "\t" . spc .
+           [ label "from" . store /[()A-za-z0-9]+/ ] . spc .
+           [ label "to" . store /[()A-za-z0-9]+/ ] . eol ]
+
     let kernel =
         [ command "kernel" "\t" .
           (spc .
@@ -109,6 +114,7 @@ module Grub =
                      | kw_pres "quiet"  (* Seems to be a Ubuntu extension *)
                      | savedefault
                      | module_line
+                     | map_line
 
     let boot =
       let line = ((boot_setting|comment)* . boot_setting)? in

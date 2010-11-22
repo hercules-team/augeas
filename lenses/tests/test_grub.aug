@@ -32,6 +32,7 @@ title Fedora (2.6.24.3-34.fc8)
         root (hd0,0)
         kernel /vmlinuz-2.6.24.3-34.fc8 ro root=/dev/vg00/lv00
         initrd /initrd-2.6.24.3-34.fc8.img
+        map (hd0) (hd1)
 "
 
   test Grub.lns get conf =
@@ -71,7 +72,8 @@ title Fedora (2.6.24.3-34.fc8)
         { "root" = "(hd0,0)" }
         { "kernel" = "/vmlinuz-2.6.24.3-34.fc8"
             { "ro" } { "root" = "/dev/vg00/lv00" } }
-        { "initrd" = "/initrd-2.6.24.3-34.fc8.img" } }
+        { "initrd" = "/initrd-2.6.24.3-34.fc8.img" }
+        { "map" { "from" = "(hd0)" } { "to" = "(hd1)" } } }
 
   test Grub.lns put conf after set "default" "0" = conf
 
