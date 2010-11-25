@@ -1,4 +1,6 @@
 *~
+.cproject
+.project
 augeas.pc
 augeas.spec
 build/
