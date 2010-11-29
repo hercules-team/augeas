@@ -177,6 +177,17 @@ initrd\t\t/boot/initrd.img-2.6.18-6-vserver-686
     { "kernel$" = "/platform/i86pc/multiboot" { "-B" } { "$ZFS-BOOTFS" } }
     { "module$" = "/platform/i86pc/boot_archive" } }
 
+  (* Solaris 10 extension: multiboot kernel may take a path as its first *)
+  (* argument. *)
+  test Grub.lns get "title Solaris failsafe
+    findroot (pool_rpool,0,a)
+    kernel /boot/multiboot kernel/unix -s
+    module /boot/x86.miniroot-safe\n" =
+  { "title" = "Solaris failsafe"
+    { "findroot" = "(pool_rpool,0,a)" }
+    { "kernel" = "/boot/multiboot kernel/unix" { "-s" } }
+    { "module" = "/boot/x86.miniroot-safe" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
