@@ -166,6 +166,17 @@ initrd\t\t/boot/initrd.img-2.6.18-6-vserver-686
     { "initrd" = "/initrd-2.4.21-63.EL.img.e1000.8139" } }
   { "#comment" = "Now for something completely different" }
 
+  (* Solaris 10 extensions: kernel$ and module$ are permitted and enable *)
+  (* variable expansion.  findroot also added, vaguely similar to root.  *)
+  test Grub.lns get "title Solaris 10 10/09 s10x_u8wos_08a X86
+    findroot (pool_rpool,0,a)
+    kernel$ /platform/i86pc/multiboot -B $ZFS-BOOTFS
+    module$ /platform/i86pc/boot_archive\n" =
+  { "title" = "Solaris 10 10/09 s10x_u8wos_08a X86"
+    { "findroot" = "(pool_rpool,0,a)" }
+    { "kernel$" = "/platform/i86pc/multiboot" { "-B" } { "$ZFS-BOOTFS" } }
+    { "module$" = "/platform/i86pc/boot_archive" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

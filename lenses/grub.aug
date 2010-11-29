@@ -24,10 +24,10 @@ module Grub =
             . store comment_re . eol ]
     let empty   = Util.empty
 
-    let command (kw:string) (indent:string) =
+    let command (kw:regexp) (indent:string) =
       Util.del_opt_ws indent . key kw
 
-    let kw_arg (kw:string) (indent:string) (dflt_sep:string) =
+    let kw_arg (kw:regexp) (indent:string) (dflt_sep:string) =
       [ command kw indent . value_sep dflt_sep . value_to_eol . eol ]
 
     let kw_boot_arg (kw:string) = kw_arg kw "\t" " "
@@ -79,12 +79,13 @@ module Grub =
 
     (* Parse the file name and args on a kernel or module line *)
     let kernel_args =
-      let arg = Rx.word - /type|no-mem-option/  in
+      let arg = /[A-Za-z0-9_.\$-]+/ - /type|no-mem-option/  in
       store /\/[^ \t\n]*/ .
             (spc . [ key arg . (eq. store /([^ \t\n])*/)?])* . eol
 
+    (* Solaris extension adds module$ and kernel$ for variable interpolation *)
     let module_line =
-      [ command "module" "\t" . spc . kernel_args ]
+      [ command /module\$?/ "\t" . spc . kernel_args ]
 
     let map_line =
       [ command "map" "\t" . spc .
@@ -92,7 +93,7 @@ module Grub =
            [ label "to" . store /[()A-za-z0-9]+/ ] . eol ]
 
     let kernel =
-        [ command "kernel" "\t" .
+        [ command /kernel\$?/ "\t" .
           (spc .
              ([switch "type" . eq . store /[a-z]+/]
              |[switch "no-mem-option"]))* .
@@ -111,6 +112,7 @@ module Grub =
                      | kw_boot_arg "rootnoverify"
                      | chainloader
                      | kw_boot_arg "uuid"
+                     | kw_boot_arg "findroot"  (* Solaris extension *)
                      | kw_pres "quiet"  (* Seems to be a Ubuntu extension *)
                      | savedefault
                      | module_line
