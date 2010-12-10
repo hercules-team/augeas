@@ -2250,13 +2250,10 @@ void dump_lens(FILE *out, struct lens *lens){
             dump_lens(out, lens->body);
         }
         break;
-    /* uncomment for square lens */
-    /*
     case L_SQUARE:
         fprintf(out, "\"%p\" -> \"%p\"\n", lens, lens->child);
         dump_lens(out, lens->child);
         break;
-    */
     default:
         fprintf(out, "ERROR\n");
         break;
