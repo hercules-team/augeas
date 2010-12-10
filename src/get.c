@@ -49,6 +49,7 @@ struct state {
     struct seq       *seqs;
     char             *key;
     char             *value;     /* GET_STORE leaves a value here */
+    char             *square;    /* last L_DEL from L_SQUARE */
     struct lns_error *error;
     /* We use the registers from a regular expression match to keep track
      * of the substring we are currently looking at. REGS are the registers
@@ -71,12 +72,13 @@ struct state {
 struct frame {
     struct lens     *lens;
     char            *key;
+    char            *square;
     union {
-        struct {
+        struct { /* MGET */
             char        *value;
             struct tree *tree;
         };
-        struct {
+        struct { /* M_PARSE */
             struct skel *skel;
             struct dict *dict;
         };
@@ -156,7 +158,7 @@ static struct skel *make_skel(struct lens *lens) {
 void free_skel(struct skel *skel) {
     if (skel == NULL)
         return;
-    if (skel->tag == L_CONCAT || skel->tag == L_STAR || skel->tag == L_MAYBE) {
+    if (skel->tag == L_CONCAT || skel->tag == L_STAR || skel->tag == L_MAYBE || skel->tag == L_SQUARE) {
         while (skel->skels != NULL) {
             struct skel *del = skel->skels;
             skel->skels = del->next;
@@ -382,6 +384,9 @@ static struct tree *get_del(struct lens *lens, struct state *state) {
         char *pat = regexp_escape(lens->ctype);
         get_error(state, lens, "no match for del /%s/", pat);
         free(pat);
+    }
+    if (lens->string == NULL) {
+        state->square = token(state);
     }
     return NULL;
 }
@@ -682,6 +687,41 @@ static struct skel *parse_subtree(struct lens *lens, struct state *state,
     return make_skel(lens);
 }
 
+static struct tree *get_square(struct lens *lens, struct state *state) {
+    ensure0(lens->tag == L_SQUARE, state->info);
+
+    struct tree *tree = NULL;
+    char *key = NULL, *square = NULL;
+
+    // get the child lens
+    tree = get_concat(lens->child, state);
+
+    key = state->key;
+    square = state->square;
+    ensure0(key != NULL, state->info);
+    ensure0(square != NULL, state->info);
+
+    if (strcmp(key, square) != 0) {
+        get_error(state, lens, "%s \"%s\" %s \"%s\"",
+                "Parse error: mismatched key in square lens, expecting", key,
+                "but got", square);
+    }
+
+    FREE(state->square);
+    return tree;
+}
+
+static struct skel *parse_square(struct lens *lens, struct state *state, struct dict **dict) {
+    ensure0(lens->tag == L_SQUARE, state->info);
+    struct skel *skel, *sk;
+
+    skel = parse_concat(lens->child, state, dict);
+    sk = make_skel(lens);
+    sk->skels = skel;
+
+    return sk;
+}
+
 /*
  * Helpers for recursive lenses
  */
@@ -691,7 +731,7 @@ static void print_frames(struct rec_state *state) {
     for (int j = state->fused - 1; j >=0; j--) {
         struct frame *f = state->frames + j;
         for (int i=0; i < state->lvl; i++) fputc(' ', stderr);
-        fprintf(stderr, "%2d %s %s", j, f->key, f->value);
+        fprintf(stderr, "%2d %s %s %s", j, f->key, f->value, f->square);
         if (f->tree == NULL) {
             fprintf(stderr, " - ");
         } else {
@@ -760,8 +800,10 @@ static void get_terminal(struct frame *top, struct lens *lens,
     top->tree = get_lens(lens, state);
     top->key = state->key;
     top->value = state->value;
+    top->square = state->square;
     state->key = NULL;
     state->value = NULL;
+    state->square = NULL;
 }
 
 static void parse_terminal(struct frame *top, struct lens *lens,
@@ -821,7 +863,7 @@ static void visit_enter(struct lens *lens,
 static void get_combine(struct rec_state *rec_state,
                         struct lens *lens, uint n) {
     struct tree *tree = NULL, *tail = NULL;
-    char *key = NULL, *value = NULL;
+    char *key = NULL, *value = NULL, *square = NULL;
     struct frame *top = NULL;
 
     if (n > 0)
@@ -841,11 +883,16 @@ static void get_combine(struct rec_state *rec_state,
             ensure(value == NULL, rec_state->state->info);
             value = top->value;
         }
+        if (top->square != NULL) {
+            ensure(square == NULL, rec_state->state->info);
+            square = top->square;
+        }
     }
     top = push_frame(rec_state, lens);
     top->tree = tree;
     top->key = key;
     top->value = value;
+    top->square = square;
  error:
     return;
 }
@@ -899,6 +946,7 @@ static void visit_exit(struct lens *lens,
         struct frame *top = top_frame(rec_state);
         if (rec_state->mode == M_GET) {
             struct tree *tree;
+            // FIXME: tree may leak if pop_frame ensure0 fail
             tree = make_tree(top->key, top->value, NULL, top->tree);
             ERR_NOMEM(tree == NULL, lens->info);
             top = pop_frame(rec_state);
@@ -957,6 +1005,29 @@ static void visit_exit(struct lens *lens,
             get_combine(rec_state, lens, n);
         else
             parse_combine(rec_state, lens, n);
+    } else if (lens->tag == L_SQUARE) {
+        if (rec_state->mode == M_GET) {
+            char *key, *square;
+
+            key = top_frame(rec_state)->key;
+            square = top_frame(rec_state)->square;
+
+            ensure(key != NULL, state->info);
+            ensure(square != NULL, state->info);
+
+            // raise syntax error if they are not equals
+            if (strcmp(key, square) != 0){
+                get_error(state, lens, "%s \"%s\" %s \"%s\"",
+                                "Parse error: mismatched key in square lens, expecting", key,
+                                "but got", square);
+                state->error->pos = end - strlen(square);
+                goto error;
+            }
+
+            get_combine(rec_state, lens, 1);
+        } else {
+            parse_combine(rec_state, lens, 1);
+        }
     } else {
         top_frame(rec_state)->lens = lens;
     }
@@ -985,6 +1056,8 @@ static struct frame *rec_process(enum mode_t mode, struct lens *lens,
     int r;
     struct jmt_visitor visitor;
     struct rec_state rec_state;
+    int i;
+    struct frame *f = NULL;
 
     MEMZERO(&rec_state, 1);
     MEMZERO(&visitor, 1);
@@ -1032,6 +1105,19 @@ static struct frame *rec_process(enum mode_t mode, struct lens *lens,
     jmt_free_parse(visitor.parse);
     return rec_state.frames;
  error:
+
+    for(i = 0; i < rec_state.fused; i++) {
+        f = nth_frame(&rec_state, i);
+        FREE(f->key);
+        FREE(f->square);
+        if (mode == M_GET) {
+            FREE(f->value);
+            free_tree(f->tree);
+        } else if (mode == M_PARSE) {
+            free_skel(f->skel);
+            free_dict(f->dict);
+        }
+    }
     FREE(rec_state.frames);
     goto done;
 }
@@ -1104,6 +1190,9 @@ static struct tree *get_lens(struct lens *lens, struct state *state) {
         break;
     case L_MAYBE:
         tree = get_quant_maybe(lens, state);
+        break;
+    case L_SQUARE:
+        tree = get_square(lens, state);
         break;
     default:
         BUG_ON(true, state->info, "illegal lens tag %d", lens->tag);
@@ -1180,6 +1269,10 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
         get_error(&state, lens, "get left unused value %s", state.value);
         free(state.value);
     }
+    if (state.square != NULL) {
+        get_error(&state, lens, "get left unused square %s", state.square);
+        free(state.square);
+    }
     if (partial && state.error == NULL) {
         get_error(&state, lens, "Get did not match entire input");
     }
@@ -1240,6 +1333,9 @@ static struct skel *parse_lens(struct lens *lens, struct state *state,
         break;
     case L_MAYBE:
         skel = parse_quant_maybe(lens, state, dict);
+        break;
+    case L_SQUARE:
+        skel = parse_square(lens, state, dict);
         break;
     default:
         BUG_ON(true, state->info, "illegal lens tag %d", lens->tag);

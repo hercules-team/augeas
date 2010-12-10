@@ -27,6 +27,7 @@
 #include "fa.h"
 #include "jmt.h"
 
+/* keep in sync with tag name table */
 enum lens_tag {
     L_DEL = 42,    /* Shift tag values so we fail fast(er) on bad pointers */
     L_STORE,
@@ -40,7 +41,8 @@ enum lens_tag {
     L_SUBTREE,
     L_STAR,
     L_MAYBE,
-    L_REC
+    L_REC,
+    L_SQUARE
 };
 
 /* A lens. The way the type information is computed is a little
@@ -88,11 +90,14 @@ struct lens {
     union {
         /* Primitive lenses */
         struct {                   /* L_DEL uses both */
+            /* L_DEL string set to NULL means it belongs to parent L_SQUARE lens
+             * and the put and create copy the current key
+             */
             struct regexp *regexp; /* L_STORE, L_KEY */
             struct string *string; /* L_VALUE, L_LABEL, L_SEQ, L_COUNTER */
         };
         /* Combinators */
-        struct lens *child;         /* L_SUBTREE, L_STAR, L_MAYBE */
+        struct lens *child;         /* L_SUBTREE, L_STAR, L_MAYBE, L_SQUARE */
         struct {                    /* L_UNION, L_CONCAT */
             unsigned int nchildren;
             struct lens **children;
@@ -139,6 +144,8 @@ struct value *lns_make_plus(struct info *, struct lens *,
                             int check);
 struct value *lns_make_maybe(struct info *, struct lens *,
                              int check);
+struct value *lns_make_square(struct info *, struct regexp *, struct lens *,
+                              int check);
 
 /* Pretty-print a lens */
 char *format_lens(struct lens *l);

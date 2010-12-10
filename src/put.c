@@ -419,6 +419,8 @@ static int skel_instance_of(struct lens *lens, struct skel *skel) {
         return 1;
     case L_REC:
         return skel_instance_of(lens->body, skel);
+    case L_SQUARE:
+        return skel->tag == L_SQUARE;
     default:
         BUG_ON(true, lens->info, "illegal lens tag %d", lens->tag);
         break;
@@ -466,7 +468,12 @@ static void put_del(ATTRIBUTE_UNUSED struct lens *lens, struct state *state) {
     assert(lens->tag == L_DEL);
     assert(state->skel != NULL);
     assert(state->skel->tag == L_DEL);
+    if (lens->string != NULL) {
     fprintf(state->out, "%s", state->skel->text);
+    } else {
+    /* L_DEL with NULL string: replicate the current key */
+        fprintf(state->out, "%s", state->key);
+    }
 }
 
 static void put_union(struct lens *lens, struct state *state) {
@@ -590,6 +597,13 @@ static void put_rec(struct lens *lens, struct state *state) {
     put_lens(lens->body, state);
 }
 
+static void put_square(struct lens *lens, struct state *state) {
+    struct skel *oldskel = state->skel;
+    state->skel = state->skel->skels;
+    put_lens(lens->child, state);
+    state->skel = oldskel;
+}
+
 static void put_lens(struct lens *lens, struct state *state) {
     if (state->error != NULL)
         return;
@@ -632,6 +646,9 @@ static void put_lens(struct lens *lens, struct state *state) {
     case L_REC:
         put_rec(lens, state);
         break;
+    case L_SQUARE:
+        put_square(lens, state);
+        break;
     default:
         assert(0);
         break;
@@ -644,8 +661,13 @@ static void create_subtree(struct lens *lens, struct state *state) {
 
 static void create_del(struct lens *lens, struct state *state) {
     assert(lens->tag == L_DEL);
-
+    if (lens->string != NULL) {
     print_escaped_chars(state->out, lens->string->str);
+    } else {
+        /* L_DEL with NULL string: replicate the current key */
+        print_escaped_chars(state->out, state->key);
+    }
+
 }
 
 static void create_union(struct lens *lens, struct state *state) {
@@ -753,6 +775,9 @@ static void create_lens(struct lens *lens, struct state *state) {
         break;
     case L_REC:
         create_rec(lens, state);
+        break;
+    case L_SQUARE:
+        create_concat(lens->child, state);
         break;
     default:
         assert(0);

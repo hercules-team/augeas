@@ -54,10 +54,11 @@ static struct value *typecheck_iter(struct info *info, struct lens *l);
 static struct value *typecheck_maybe(struct info *info, struct lens *l);
 
 /* Lens names for pretty printing */
+/* keep order in sync with enum type */
 static const char *const tags[] = {
     "del", "store", "value", "key", "label", "seq", "counter",
     "concat", "union",
-    "subtree", "star", "maybe", "rec"
+    "subtree", "star", "maybe", "rec", "square"
 };
 
 #define ltag(lens) (tags[lens->tag - L_DEL])
@@ -397,6 +398,65 @@ struct value *lns_make_maybe(struct info *info, struct lens *l, int check) {
     return make_lens_value(lens);
 }
 
+/* Build a square lens as
+ *   key REG . lns . del REG MATCHED
+ * where MATCHED is whatever the key lens matched (the inability to express
+ * this with other lenses makes the square primitve necessary
+ */
+struct value *lns_make_square(struct info *info,
+                              struct regexp *reg,
+                              struct lens *lns, int check) {
+    struct value *key = NULL, *del = NULL;
+    struct value *cnt1 = NULL, *cnt2 = NULL, *res = NULL;
+    struct lens *sqr = NULL;
+
+    res = lns_make_prim(L_KEY, ref(info), ref(reg), NULL);
+    if (EXN(res))
+        goto error;
+    key = res;
+
+    res = lns_make_prim(L_DEL, ref(info), ref(reg), NULL);
+    if (EXN(res))
+        goto error;
+    del = res;
+
+    // typechecking is handled when concatenating lenses
+    res = lns_make_concat(ref(info), ref(key->lens), ref(lns), check);
+    if (EXN(res))
+        goto error;
+    cnt1 = res;
+
+    res = lns_make_concat(ref(info), ref(cnt1->lens), ref(del->lens), check);
+    if (EXN(res))
+        goto error;
+    cnt2 = res;
+
+    sqr = make_lens_unop(L_SQUARE, ref(info), ref(cnt2->lens));
+    ERR_NOMEM(sqr == NULL, info);
+
+    for (int t=0; t < ntypes; t++)
+        ltype(sqr, t) = ref(ltype(cnt2->lens, t));
+    sqr->recursive = cnt2->lens->recursive;
+    sqr->rec_internal = cnt2->lens->rec_internal;
+    sqr->consumes_value = cnt2->lens->consumes_value;
+
+    res = make_lens_value(sqr);
+    ERR_NOMEM(res == NULL, info);
+    sqr = NULL;
+
+ error:
+    unref(info, info);
+    unref(reg, regexp);
+    unref(lns, lens);
+
+    unref(key, value);
+    unref(del, value);
+    unref(cnt1, value);
+    unref(cnt2, value);
+    unref(sqr, lens);
+    return res;
+}
+
 /*
  * Lens primitives
  */
@@ -477,7 +537,7 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
                                  string->str);
             goto error;
         }
-    } else if (tag == L_DEL) {
+    } else if (tag == L_DEL && string != NULL) {
         int cnt;
         const char *dflt = string->str;
         cnt = regexp_match(regexp, dflt, strlen(dflt), 0, NULL);
@@ -817,6 +877,7 @@ void free_lens(struct lens *lens) {
     case L_SUBTREE:
     case L_STAR:
     case L_MAYBE:
+    case L_SQUARE:
         unref(lens->child, lens);
         break;
     case L_CONCAT:
@@ -1120,6 +1181,9 @@ int lns_format_atype(struct lens *l, char **buf) {
         break;
     case L_REC:
         return lns_format_rec_atype(l, buf);
+        break;
+    case L_SQUARE:
+        return lns_format_concat_atype(l->child, buf);
         break;
     default:
         BUG_LENS_TAG(l);
@@ -1807,6 +1871,10 @@ static void propagate_type(struct lens *l, enum lens_type lt) {
     case L_REC:
         /* Nothing to do */
         break;
+    case L_SQUARE:
+        propagate_type(l->child, lt);
+        ltype(l, lt) = ref(ltype(l->child, lt));
+        break;
     default:
         BUG_LENS_TAG(l);
         break;
@@ -1883,6 +1951,7 @@ static struct value *typecheck(struct lens *l, int check) {
         exn = typecheck_n(l, lns_make_union, check);
         break;
     case L_SUBTREE:
+    case L_SQUARE:
         exn = typecheck(l->child, check);
         break;
     case L_STAR:
@@ -1997,6 +2066,7 @@ static int ctype_nullable(struct lens *lens, struct value **exn) {
         }
         break;
     case L_SUBTREE:
+    case L_SQUARE:
         ret = ctype_nullable(lens->child, exn);
         nullable = lens->child->ctype_nullable;
         break;

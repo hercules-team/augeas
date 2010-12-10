@@ -754,6 +754,7 @@ build_nullable(struct jmt_parse *parse, ind_t pos,
                                    lens->children[i], lvl+1);
             break;
         case L_SUBTREE:
+        case L_SQUARE:
             build_nullable(parse, pos, visitor, lens->child, lvl+1);
             break;
         case L_STAR:
@@ -1230,6 +1231,11 @@ static void print_grammar(struct jmt *jmt, struct lens *lens) {
         printf("\n");
         print_grammar(jmt, lens->body);
         break;
+    case L_SQUARE:
+       print_lens_symbol(stdout, jmt, lens->child);
+       printf("\n");
+       print_grammar(jmt, lens->child);
+       break;
     default:
         BUG_ON(true, jmt, "Unexpected lens tag %d", lens->tag);
         break;
@@ -1271,6 +1277,7 @@ static void index_lenses(struct jmt *jmt, struct lens *lens) {
     case L_SUBTREE:
     case L_STAR:
     case L_MAYBE:
+    case L_SQUARE:
         index_lenses(jmt, lens->child);
         break;
     case L_REC:
@@ -1472,6 +1479,9 @@ static void conv_rhs(struct jmt *jmt, ind_t l) {
         conv(jmt, lens->child, &s, &e, &f);
         add_new_trans(jmt, s, e, EPS);
         break;
+    case L_SQUARE:
+       conv(jmt, lens->child, &s, &e, &f);
+       break;
     default:
         BUG_ON(true, jmt, "Unexpected lens tag %d", lens->tag);
     }
