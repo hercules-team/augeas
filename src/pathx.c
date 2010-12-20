@@ -210,6 +210,7 @@ struct state {
     pathx_errcode_t errcode;
     const char     *file;
     int             line;
+    char           *errmsg;
 
     const char     *txt;  /* Entire expression */
     const char     *pos;  /* Current position within TXT during parsing */
@@ -504,6 +505,7 @@ static value_ind_t make_value(enum type tag, struct state *state) {
         state->value_pool_size = new_size;
     }
     state->value_pool[state->value_pool_used].tag = tag;
+    state->value_pool[state->value_pool_used].nodeset = NULL;
     return state->value_pool_used++;
 }
 
@@ -629,6 +631,7 @@ static void func_label(struct state *state) {
 
 static void func_regexp(struct state *state) {
     value_ind_t vind = make_value(T_REGEXP, state);
+    int r;
 
     CHECK_ERROR;
 
@@ -642,17 +645,20 @@ static void func_regexp(struct state *state) {
     }
 
     struct regexp *rx = make_regexp(NULL, pat, 0);
+    state->value_pool[vind].regexp = rx;
     if (rx == NULL) {
         FREE(pat);
         STATE_ENOMEM;
         return;
     }
-    if (regexp_compile(rx) < 0) {
+    r = regexp_compile(rx);
+    if (r < 0) {
+        const char *msg;
+        regexp_check(rx, &msg);
+        state->errmsg = strdup(msg);
         STATE_ERROR(state, PATHX_EREGEXP);
-        unref(rx, regexp);
         return;
     }
-    state->value_pool[vind].regexp = rx;
     push_value(vind, state);
 }
 
@@ -2032,16 +2038,24 @@ static void store_error(struct pathx *pathx) {
     const pathx_errcode_t errcode = pathx->state->errcode;
     struct error *err = pathx->state->error;
 
-    char *pos_str = NULL;
-    int pos;
+    char *pos_str = pathx->state->errmsg;
+    pathx->state->errmsg = NULL;
 
     if (err == NULL || errcode == PATHX_NOERROR || err->code != AUG_NOERROR)
         return;
 
+    int pos;
     pathx_msg = pathx_error(pathx, NULL, &pos);
 
-    if (ALLOC_N(pos_str, strlen(path) + 4) >= 0) {
-        strncpy(pos_str, path, pos);
+    bool has_msg = pos_str != NULL;
+    int pos_str_len = pos_str == NULL ? 0 : strlen(pos_str);
+    if (REALLOC_N(pos_str, pos_str_len + strlen(path) + 8) >= 0) {
+        if (has_msg) {
+            strcat(pos_str, " in ");
+            strncat(pos_str, path, pos);
+        } else {
+            strncpy(pos_str, path, pos);
+        }
         strcat(pos_str, "|=|");
         strcat(pos_str, path + pos);
     }
@@ -2051,8 +2065,6 @@ static void store_error(struct pathx *pathx) {
     err->details = pos_str;
     pos_str = NULL;
     err->minor_details = pathx_msg;
-
-    FREE(pos_str);
 }
 
 int pathx_parse(const struct tree *tree,
@@ -2076,6 +2088,7 @@ int pathx_parse(const struct tree *tree,
     state = (*pathx)->state;
 
     state->errcode = PATHX_NOERROR;
+    state->errmsg = NULL;
     state->txt = txt;
     state->pos = txt;
     state->symtab = symtab;
