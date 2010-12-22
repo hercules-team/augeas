@@ -76,7 +76,7 @@ About: Limitations
 module Exports =
   autoload xfm
 
-  let client_re = /[a-zA-Z0-9\-\.@\*\?\/]+/
+  let client_re = /[a-zA-Z0-9\.@\*\?\/\-]+/
 
   let eol = Util.eol
   let lbracket  = Util.del_str "("
