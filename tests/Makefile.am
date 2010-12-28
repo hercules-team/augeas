@@ -91,6 +91,7 @@ lens_tests =			\
   lens-webmin.sh		\
   lens-wine.sh			\
   lens-xinetd.sh		\
+  lens-xml.sh			\
   lens-xorg.sh			\
   lens-grub.sh			\
   lens-yum.sh
