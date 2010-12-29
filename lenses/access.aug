@@ -16,7 +16,7 @@ About: Lens Usage
   * Add a rule to permit login of all users from local sources (tty's, X, cron)
   > set /files/etc/security/access.conf[0] +
   > set /files/etc/security/access.conf[0]/user ALL
-  > set /files/etc/security/access.conf[0]/host LOCAL
+  > set /files/etc/security/access.conf[0]/origin LOCAL
 
 About: Configuration files
   This lens applies to /etc/security/access.conf. See <filter>.
@@ -44,24 +44,52 @@ let colon     = Sep.space . Sep.colon . Sep.space
  *)
 let access    = label "access" . store /[+-]/
 
+(* View: user_re
+ * Regex for user/netgroup fields
+ *)
+let user_re = Rx.word - /[Ee][Xx][Cc][Ee][Pp][Tt]/
+
 (* View: user
  * user can be a username or a group
  *)
-let user      = [ label "user" . store Rx.word ]
+let user      = [ label "user" . store user_re ]
 
-(* View: host_list
- * host_list can be a single ipaddr/hostname/domain/fqdn or a list of those values
+(* View: netgroup
+ * netgroups begin with @
  *)
-let host_list = Build.opt_list [ label "host" . store Rx.word ] Sep.space
+let netgroup = [ label "netgroup" . Util.del_str "@" . store user_re ]
+
+(* View: user_list
+ * A list of users or netgroups to apply the rule to
+ *)
+let user_list = Build.opt_list (user|netgroup) Sep.space
+
+(* View: origin_list
+ * origin_list can be a single ipaddr/originname/domain/fqdn or a list of those values
+ *)
+let origin_list = 
+   let origin_re = Rx.no_spaces - /[Ee][Xx][Cc][Ee][Pp][Tt]/
+   in Build.opt_list [ label "origin" . store origin_re ] Sep.space
+
+(* View: except
+ * The except operator makes it possible to write very compact rules. 
+ *)
+let except (lns:lens) = [ label "except" . Sep.space
+                        . del /[Ee][Xx][Cc][Ee][Pp][Tt]/ "EXCEPT"
+                        . Sep.space . lns ]
 
 (* View: entry 
  * A valid entry line
  * Definition:
- *   > entry ::= access ':' user ':' host_list
+ *   > entry ::= access ':' user ':' origin_list
  *)
 let entry     = [ access . colon
-                . user . colon
-                . host_list . Util.eol ]
+                . user_list
+                . (except user_list)?
+                . colon
+                . origin_list
+                . (except origin_list)?
+                . Util.eol ]
 
 (************************************************************************
  * Group:                        LENS & FILTER
