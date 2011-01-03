@@ -7,6 +7,7 @@ hosts:          files mdns4_minimal [NOTFOUND=return] dns mdns4
 networks:       nis [!UNAVAIL=return success=continue] files
 protocols:      db files
 netgroup:       nis
+bootparams: nisplus [NOTFOUND=return] files
 "
 
 test Nsswitch.lns get conf =
@@ -36,5 +37,11 @@ test Nsswitch.lns get conf =
       { "service" = "files" } }
    { "database" = "netgroup"
       { "service" = "nis" } }
+   { "database" = "bootparams"
+      { "service" = "nisplus" }
+      { "reaction"
+           { "status" = "NOTFOUND"
+               { "action" = "return" } } }
+      { "service" = "files" } }
 
 
