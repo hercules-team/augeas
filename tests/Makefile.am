@@ -27,6 +27,7 @@ lens_tests =			\
   lens-debctrl.sh		\
   lens-device_map.sh    \
   lens-dhclient.sh		\
+  lens-dhcpd.sh		\
   lens-dnsmasq.sh		\
   lens-dpkg.sh			\
   lens-dput.sh			\
