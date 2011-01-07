@@ -24,7 +24,7 @@ autoload xfm
  *************************************************************************)
 
 (* View: comment *)
-let comment = Util.comment
+let comment = Util.comment_generic /[ \t]*[;#][ \t]*/ "# "
 
 (* View: empty *)
 let empty = Util.empty

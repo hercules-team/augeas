@@ -1,6 +1,7 @@
 module Test_resolv =
 
    let conf = "# Sample resolv.conf
+; With multiple comment styles
 nameserver 192.168.0.3
 nameserver ff02::1
 domain mynet.com
@@ -15,6 +16,7 @@ options no-ip6-dotint
 
 test Resolv.lns get conf =
    { "#comment" = "Sample resolv.conf" }
+   { "#comment" = "With multiple comment styles" }
    { "nameserver" = "192.168.0.3" }
    { "nameserver" = "ff02::1" }
    { "domain" = "mynet.com" }
