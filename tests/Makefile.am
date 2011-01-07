@@ -80,6 +80,7 @@ lens_tests =			\
   lens-shellvars.sh		\
   lens-shellvars_list.sh	\
   lens-slapd.sh			\
+  lens-solaris_system.sh		\
   lens-soma.sh			\
   lens-spacevars.sh		\
   lens-squid.sh			\
