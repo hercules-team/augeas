@@ -99,6 +99,10 @@ module Shellvars =
       sc_incl "selinux" .
       sc_incl "sendmail" .
       sc_incl "smartmontools" .
+      sc_incl "snmpd" .
+      sc_incl "snmpd.options" .
+      sc_incl "snmptrapd" .
+      sc_incl "snmptrapd.options" .
       sc_incl "spamassassin" .
       sc_incl "suseconfig" .
       sc_incl "sysstat" .
