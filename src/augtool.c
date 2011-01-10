@@ -1157,40 +1157,30 @@ run_command(const char *line) {
 static int main_loop(void) {
     char *line = NULL;
     int ret = 0;
-    size_t len = 0;
     char inputline [128];
     enum command_result code;
     bool end_reached = false;
     bool get_line = true;
+    // make readline silent by default
+    rl_outstream = fopen("/dev/null", "w");
 
-    FILE *fp;
     if (inputfile) {
-       fp = fopen(inputfile, "r");
-
-       if (fp == NULL) {
-           fprintf(stderr, "Failed to open input file %s.\n", inputfile);
-           return -1;
-       }
+        if (freopen(inputfile, "r", stdin) == NULL) {
+            char *msg = NULL;
+            if (asprintf(&msg, "Failed to open %s", inputfile) < 0)
+                perror("Failed to open input file");
+            else
+                perror(msg);
+            return CMD_RES_ERR;
+        }
     }
+
+    if (echo || isatty(fileno(stdin)))
+        rl_outstream = NULL;
 
     while(1) {
         if (get_line) {
-            if (inputfile) {
-                if (fgets(inputline, sizeof(inputline), fp) == NULL) {
-                    line = NULL;
-                } else {
-                    line = inputline;
-                }
-                if (echo)
-                    printf(AUGTOOL_PROMPT "%s", line);
-            } else if (isatty(fileno(stdin))) {
-                line = readline(AUGTOOL_PROMPT);
-            } else {
-                if (getline(&line, &len, stdin) == -1)
-                    line = NULL;
-                if (echo && line != NULL)
-                    printf(AUGTOOL_PROMPT "%s", line);
-            }
+            line = readline(AUGTOOL_PROMPT);
         } else {
             line = NULL;
         }
@@ -1199,24 +1189,21 @@ static int main_loop(void) {
             if (auto_save) {
                 strncpy(inputline, "save", sizeof(inputline));
                 line = inputline;
-                if (echo) {
-                   printf(AUGTOOL_PROMPT "%s\n", line);
-                } else if (isatty(fileno(stdin))) {
-                   printf ("%s\n", line);
-                }
-                // Avoid looping here
                 auto_save = false;
             } else {
                 end_reached = true;
             }
             get_line = false;
         }
+
         cleanstr(line, '\n');
+
         if (end_reached) {
-            if (isatty(fileno(stdin)))
+            if (echo || isatty(fileno(stdin)))
                 printf("\n");
             return ret;
         }
+
         if (*line == '\0' || *line == '#')
             continue;
 
