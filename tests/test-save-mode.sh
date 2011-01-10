@@ -109,3 +109,14 @@ EOF
 assert_ipaddr 127.0.0.2
 assert_file_exists_not $hosts.augnew
 assert_file_exists $hosts.augsave
+
+
+augopts="${augopts} --autosave"
+
+setup "autosave"
+run_augtool ok <<EOF
+set /files/etc/hosts/1/ipaddr 127.0.0.2
+EOF
+assert_ipaddr 127.0.0.2
+assert_file_exists_not $hosts.augnew
+assert_file_exists_not $hosts.augsave

@@ -44,6 +44,7 @@ char *loadpath = NULL;
 const char *inputfile = NULL;
 int echo = 0;
 bool print_version = false;
+bool auto_save = false;
 
 /*
  * General utilities
@@ -78,6 +79,8 @@ struct command_opt_def {
 };
 
 #define CMD_OPT_DEF_LAST { .type = CMD_NONE, .name = NULL }
+
+#define AUGTOOL_PROMPT "augtool> "
 
 /* Handlers return one of these */
 enum command_result {
@@ -1023,6 +1026,7 @@ static void usage(void) {
     fprintf(stderr, "  -I, --include DIR  search DIR for modules; can be given mutiple times\n");
     fprintf(stderr, "  -e, --echo         echo commands when reading from a file\n");
     fprintf(stderr, "  -f, --file FILE    read commands from FILE\n");
+    fprintf(stderr, "  -s, --autosave     automatically save at the end of instructions\n");
     fprintf(stderr, "  --nostdinc         do not search the builtin default directories for modules\n");
     fprintf(stderr, "  --noload           do not load any files into the tree on startup\n");
     fprintf(stderr, "  --noautoload       do not autoload modules from the search path\n");
@@ -1038,7 +1042,7 @@ static void parse_opts(int argc, char **argv) {
         VAL_NO_STDINC = CHAR_MAX + 1,
         VAL_NO_LOAD = VAL_NO_STDINC + 1,
         VAL_NO_AUTOLOAD = VAL_NO_LOAD + 1,
-        VAL_VERSION = VAL_NO_AUTOLOAD + 1
+        VAL_VERSION = VAL_NO_AUTOLOAD + 1,
     };
     struct option options[] = {
         { "help",      0, 0, 'h' },
@@ -1049,6 +1053,7 @@ static void parse_opts(int argc, char **argv) {
         { "include",   1, 0, 'I' },
         { "echo",      0, 0, 'e' },
         { "file",      1, 0, 'f' },
+        { "autosave",  0, 0, 's' },
         { "nostdinc",  0, 0, VAL_NO_STDINC },
         { "noload",    0, 0, VAL_NO_LOAD },
         { "noautoload", 0, 0, VAL_NO_AUTOLOAD },
@@ -1057,7 +1062,7 @@ static void parse_opts(int argc, char **argv) {
     };
     int idx;
 
-    while ((opt = getopt_long(argc, argv, "hnbcr:I:ef:", options, &idx)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hnbcr:I:ef:s", options, &idx)) != -1) {
         switch(opt) {
         case 'c':
             flags |= AUG_TYPE_CHECK;
@@ -1082,6 +1087,9 @@ static void parse_opts(int argc, char **argv) {
             break;
         case 'f':
             inputfile = optarg;
+            break;
+        case 's':
+            auto_save = true;
             break;
         case VAL_NO_STDINC:
             flags |= AUG_NO_STDINC;
@@ -1152,6 +1160,8 @@ static int main_loop(void) {
     size_t len = 0;
     char inputline [128];
     enum command_result code;
+    bool end_reached = false;
+    bool get_line = true;
 
     FILE *fp;
     if (inputfile) {
@@ -1164,26 +1174,47 @@ static int main_loop(void) {
     }
 
     while(1) {
-        if (inputfile) {
-            if (fgets(inputline, sizeof(inputline), fp) == NULL) {
-                line = NULL;
+        if (get_line) {
+            if (inputfile) {
+                if (fgets(inputline, sizeof(inputline), fp) == NULL) {
+                    line = NULL;
+                } else {
+                    line = inputline;
+                }
+                if (echo)
+                    printf(AUGTOOL_PROMPT "%s", line);
+            } else if (isatty(fileno(stdin))) {
+                line = readline(AUGTOOL_PROMPT);
             } else {
-                line = inputline;
+                if (getline(&line, &len, stdin) == -1)
+                    line = NULL;
+                if (echo && line != NULL)
+                    printf(AUGTOOL_PROMPT "%s", line);
             }
-            if (echo)
-                printf("augtool> %s", line);
-        } else if (isatty(fileno(stdin))) {
-            line = readline("augtool> ");
         } else {
-            if (getline(&line, &len, stdin) == -1)
-                return ret;
-            if (echo)
-                printf("augtool> %s", line);
+            line = NULL;
         }
 
-        cleanstr(line, '\n');
         if (line == NULL) {
-            printf("\n");
+            if (auto_save) {
+                strncpy(inputline, "save", sizeof(inputline));
+                line = inputline;
+                if (echo) {
+                   printf(AUGTOOL_PROMPT "%s\n", line);
+                } else if (isatty(fileno(stdin))) {
+                   printf ("%s\n", line);
+                }
+                // Avoid looping here
+                auto_save = false;
+            } else {
+                end_reached = true;
+            }
+            get_line = false;
+        }
+        cleanstr(line, '\n');
+        if (end_reached) {
+            if (isatty(fileno(stdin)))
+                printf("\n");
             return ret;
         }
         if (*line == '\0' || *line == '#')
