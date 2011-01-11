@@ -1,3 +1,5 @@
+-*- coding: utf-8 -*-
+
 Written by:
 
   David Lutterkort <lutter@redhat.com>
@@ -12,7 +14,7 @@ Contributions by:
   Partha Aji                  <paji@redhat.com>
   Mathieu Arnold              <mat@FreeBSD.org>
   Sylvain Baubeau             <bob@glumol.com>
-  Anders F Bj�rklund          <afb@users.sourceforge.net>
+  Anders F BjÃ¶rklund          <afb@users.sourceforge.net>
   Aurelien Bompard            <aurelien@bompard.org>
   Matthew Booth               <mbooth@redhat.com>
   Francois Deppierraz         <francois.deppierraz@camptocamp.com>
@@ -23,6 +25,7 @@ Contributions by:
   Shannon Hughes              <shughes@redhat.com>
   Simon Josi                  <josi@puzzle.ch>
   Bryan Kearney               <bkearney@redhat.com>
+  Frédéric Lespez             <frederic.lespez@free.fr>
   Erinn Looney-Triggs         <erinn.looneytriggs@gmail.com>
   Jim Meyering                <meyering@redhat.com>
   Sean Millichamp             <sean@bruenor.org>
@@ -31,7 +34,7 @@ Contributions by:
   Alan Pevec                  <apevec@redhat.com>
   Robin Lee Powell            <rlpowell@digitalkingdom.org>
   Satoru SATOH                <satoru.satoh@gmail.com>
-  Nicolas Valc�rcel Scerpella <nvalcarcel@ubuntu.com>
+  Nicolas ValcÃ¡rcel Scerpella <nvalcarcel@ubuntu.com>
   Nahum Shalman               <nshalman elys com>
   Tim Stoop                   <tim.stoop@gmail.com>
   Laine Stump                 <laine@laine.org>

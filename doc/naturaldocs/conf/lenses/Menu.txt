@@ -57,6 +57,7 @@ Group: Specific Modules  {
    File: Cgconfig  (no auto-title, cgconfig.aug)
    File: Cgrules  (no auto-title, cgrules.aug)
    File: Cron  (cron.aug)
+   File: crypttab.aug  (crypttab.aug)
    File: Debctrl  (no auto-title, debctrl.aug)
    File: Dpkg  (dpkg.aug)
    File: Exports  (exports.aug)
@@ -98,5 +99,6 @@ Group: Index  {
    Augeas Module Index: Modules
    Augeas Variable Index: Variables
    Index: Everything
+   File Index: Files
    }  # Group: Index
 
