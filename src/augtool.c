@@ -1042,7 +1042,7 @@ static void parse_opts(int argc, char **argv) {
         VAL_NO_STDINC = CHAR_MAX + 1,
         VAL_NO_LOAD = VAL_NO_STDINC + 1,
         VAL_NO_AUTOLOAD = VAL_NO_LOAD + 1,
-        VAL_VERSION = VAL_NO_AUTOLOAD + 1,
+        VAL_VERSION = VAL_NO_AUTOLOAD + 1
     };
     struct option options[] = {
         { "help",      0, 0, 'h' },
@@ -1189,6 +1189,8 @@ static int main_loop(void) {
             if (auto_save) {
                 strncpy(inputline, "save", sizeof(inputline));
                 line = inputline;
+                if (echo || isatty(fileno(stdin)))
+                    printf("%s\n", line);
                 auto_save = false;
             } else {
                 end_reached = true;
