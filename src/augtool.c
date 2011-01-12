@@ -59,6 +59,8 @@ static char *cleanstr(char *path, const char sep) {
 }
 
 static char *cleanpath(char *path) {
+    if (STREQ(path, "/"))
+        return path;
     return cleanstr(path, SEP);
 }
 
