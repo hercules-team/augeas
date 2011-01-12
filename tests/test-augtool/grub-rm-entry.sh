@@ -1,11 +1,11 @@
-refresh=true
 commands="
 rm /files/etc/grub.conf/title[2]
-save
 "
 
-diff["/etc/grub.conf"] = <<TXT
---- /etc/grub.conf
+lens=Grub.lns
+file="/etc/grub.conf"
+
+diff='--- /etc/grub.conf
 +++ /etc/grub.conf.augnew
 @@ -15,10 +15,6 @@
  \troot (hd0,0)
@@ -23,5 +23,4 @@ diff["/etc/grub.conf"] = <<TXT
  \tkernel /vmlinuz-2.6.24.3-34.fc8 ro root=/dev/vg00/lv00
  \tinitrd /initrd-2.6.24.3-34.fc8.img
 -        savedefault
-+\tsavedefault
-TXT
++\tsavedefault'

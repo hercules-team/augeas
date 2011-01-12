@@ -1,11 +1,12 @@
 commands="
 ins value after /files/etc/aliases/1/value[last()]
 set /files/etc/aliases/1/value[last()] barbar
-save
 "
 
-diff["/etc/aliases"] = <<TXT
---- /etc/aliases
+lens=Aliases.lns
+file="/etc/aliases"
+
+diff='--- /etc/aliases
 +++ /etc/aliases.augnew
 @@ -8,7 +8,7 @@
  #
@@ -15,5 +16,4 @@ diff["/etc/aliases"] = <<TXT
 +mailer-daemon:\tpostmaster, barbar
  postmaster:\troot
 
- # General redirections for pseudo accounts.
-TXT
+ # General redirections for pseudo accounts.'

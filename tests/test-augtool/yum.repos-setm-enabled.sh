@@ -1,11 +1,12 @@
 # set all existing repos to enabled
 commands="
 setm /files/etc/yum.repos.d/fedora.repo/* enabled 1
-save
 "
 
-diff["/etc/yum.repos.d/fedora.repo"] = <<TXT
---- /etc/yum.repos.d/fedora.repo
+lens=Yum.lns
+file="/etc/yum.repos.d/fedora.repo"
+
+diff='--- /etc/yum.repos.d/fedora.repo
 +++ /etc/yum.repos.d/fedora.repo.augnew
 @@ -12,7 +12,7 @@
  failovermethod=priority
@@ -23,5 +24,4 @@ diff["/etc/yum.repos.d/fedora.repo"] = <<TXT
 -enabled=0
 +enabled=1
  gpgcheck=1
- gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora file:///etc/pki/rpm-gpg/RPM-GPG-KEY
-TXT
+ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora file:///etc/pki/rpm-gpg/RPM-GPG-KEY'

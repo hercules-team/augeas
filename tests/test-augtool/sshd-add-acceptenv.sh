@@ -1,13 +1,11 @@
-# Note that aliases must be set (to NULL here), otherwise the tree
-# is not syntactically correct and can not be saved
 commands="
-set /files/etc/ssh/sshd_config/AcceptEnv[3]/10000 FOO
-save
+set /files/etc/ssh/sshd_config/AcceptEnv[3]/01 FOO
 "
 
-refresh=true
-diff["/etc/ssh/sshd_config"] = <<TXT
---- /etc/ssh/sshd_config
+lens=Sshd.lns
+file="/etc/ssh/sshd_config"
+
+diff='--- /etc/ssh/sshd_config
 +++ /etc/ssh/sshd_config.augnew
 @@ -93,7 +93,7 @@
  # Accept locale-related environment variables
@@ -17,5 +15,4 @@ diff["/etc/ssh/sshd_config"] = <<TXT
 +AcceptEnv LC_IDENTIFICATION LC_ALL FOO
  #AllowTcpForwarding yes
  #GatewayPorts no
- #X11Forwarding no
-TXT
+ #X11Forwarding no'

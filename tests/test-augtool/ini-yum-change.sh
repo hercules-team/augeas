@@ -1,10 +1,11 @@
 commands="
 set /files/etc/yum.conf/main/debuglevel 99
-save
 "
 
-diff["/etc/yum.conf"] = <<TXT
---- /etc/yum.conf
+lens=Yum.lns
+file="/etc/yum.conf"
+
+diff='--- /etc/yum.conf
 +++ /etc/yum.conf.augnew
 @@ -1,7 +1,7 @@
  [main]
@@ -14,5 +15,4 @@ diff["/etc/yum.conf"] = <<TXT
 +debuglevel=99
  logfile=/var/log/yum.log
  exactarch=1
- obsoletes=1
-TXT
+ obsoletes=1'

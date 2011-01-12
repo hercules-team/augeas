@@ -1,9 +1,11 @@
 commands="
 set /files/etc/aliases/3/value[2] ruth
-save
 "
-diff["/etc/aliases"] = <<TXT
---- /etc/aliases
+
+lens=Aliases.lns
+file="/etc/aliases"
+
+diff='--- /etc/aliases
 +++ /etc/aliases.augnew
 @@ -12,7 +12,7 @@
  postmaster:\troot
@@ -12,6 +14,4 @@ diff["/etc/aliases"] = <<TXT
 -bin:\t\troot, adm
 +bin:\t\troot, ruth
  daemon:\t\troot
- adm:\t\troot
-
-TXT
+ adm:\t\troot'

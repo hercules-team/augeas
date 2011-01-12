@@ -126,14 +126,14 @@ $(lens_tests): lens-test-1
 check_SCRIPTS = \
   test-interpreter.sh \
   $(lens_tests) \
-  test-get.sh \
+  test-get.sh test-augtool.sh \
   test-put-symlink.sh test-save-empty.sh test-mv.sh \
   test-bug-1.sh test-idempotent.sh test-preserve.sh \
   test-events-saved.sh test-save-mode.sh test-unlink-error.sh \
   test-augtool-empty-line.sh test-augtool-modify-root.sh
 
 EXTRA_DIST = \
-  augtest $(AUGTESTS) root lens-test-1 \
+  $(AUGTESTS) root lens-test-1 \
   $(check_SCRIPTS) $(wildcard modules/*.aug) xpath.tests
 
 noinst_SCRIPTS = $(check_SCRIPTS)
@@ -146,7 +146,7 @@ TESTS_ENVIRONMENT = \
   abs_top_srcdir='$(abs_top_srcdir)' \
   LANG=en_US
 
-TESTS = augtest $(check_SCRIPTS) $(check_PROGRAMS)
+TESTS = $(check_SCRIPTS) $(check_PROGRAMS)
 
 INCLUDES = -I$(top_srcdir)/src
 
