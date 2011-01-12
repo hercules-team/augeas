@@ -42,7 +42,7 @@ static unsigned int flags = AUG_NONE;
 const char *root = NULL;
 char *loadpath = NULL;
 const char *inputfile = NULL;
-int echo = 0;
+int echo = 0;         /* Gets also changed in main_loop */
 bool print_version = false;
 bool auto_save = false;
 
@@ -514,10 +514,12 @@ static const struct command_def cmd_match_def = {
 static void cmd_rm(struct command *cmd) {
     int cnt;
     const char *path = arg_value(cmd, "path");
-    printf("rm : %s", path);
+    if (echo)
+        printf("rm : %s", path);
     cnt = aug_rm(aug, path);
     err_check(cmd);
-    printf(" %d\n", cnt);
+    if (echo)
+        printf(" %d\n", cnt);
 }
 
 static const struct command_opt_def cmd_rm_opts[] = {
@@ -813,7 +815,8 @@ static void cmd_save(struct command *cmd) {
     } else {
         r = aug_match(aug, "/augeas/events/saved", NULL);
         if (r > 0) {
-            printf("Saved %d file(s)\n", r);
+            if (echo)
+                printf("Saved %d file(s)\n", r);
         } else if (r < 0) {
             printf("Error during match: %d\n", r);
         }
@@ -1175,7 +1178,9 @@ static int main_loop(void) {
         }
     }
 
-    if (echo || isatty(fileno(stdin)))
+    echo = echo || isatty(fileno(stdin));
+
+    if (echo)
         rl_outstream = NULL;
 
     while(1) {
@@ -1189,7 +1194,7 @@ static int main_loop(void) {
             if (auto_save) {
                 strncpy(inputline, "save", sizeof(inputline));
                 line = inputline;
-                if (echo || isatty(fileno(stdin)))
+                if (echo)
                     printf("%s\n", line);
                 auto_save = false;
             } else {
@@ -1201,7 +1206,7 @@ static int main_loop(void) {
         cleanstr(line, '\n');
 
         if (end_reached) {
-            if (echo || isatty(fileno(stdin)))
+            if (echo)
                 printf("\n");
             return ret;
         }
