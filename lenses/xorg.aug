@@ -137,8 +137,8 @@ let option = [ indent . del /[oO]ption/ "Option" . label "Option" . sep_spc
  *)
 let screen = [ indent . del /[sS]creen/ "Screen" . label "Screen" . sep_spc
                . [ label "num" . store int . sep_spc ]?
-               . quoted_string_val . sep_spc
-               . [ label "position" . store to_eol ]
+               . quoted_string_val
+               . [ sep_spc . label "position" . store to_eol ]?
                . eol ]
 
 (* View: input_device *)
@@ -235,7 +235,7 @@ let display = [ indent . del "SubSection" "SubSection" . sep_spc
  *     >   DRI            DRI-specific configuration
  *     >   Vendor         Vendor-specific configuration
  *************************************************************************)
-let section_re = /(Files|ServerFlags|Module|InputDevice|Device|VideoAdaptor|Monitor|Modes|Screen|ServerLayout|DRI|Vendor)/
+let section_re = /(Extensions|Files|ServerFlags|Module|InputDevice|Device|VideoAdaptor|Monitor|Modes|Screen|ServerLayout|DRI|Vendor)/
 
 
 (************************************************************************
