@@ -680,8 +680,8 @@ static bool coerce_to_bool(struct value *v) {
         return true;
     default:
         assert(0);
+        return false;
     }
-    assert(0);
 }
 
 static int calc_eq_nodeset_nodeset(struct nodeset *ns1, struct nodeset *ns2,
@@ -938,6 +938,7 @@ static bool eval_pred(struct expr *expr, struct state *state) {
         return v->nodeset->used > 0;
     default:
         assert(0);
+        return false;
     }
 }
 

@@ -80,7 +80,7 @@ void reset_error(struct error *err);
  */
 #ifdef NDEBUG
 # define ensure(cond, obj) if (0) goto error
-# define ensure0(cond, obj) if (0) goto error
+# define ensure0(cond, obj) if (0) return NULL
 #else
 # define ensure(cond, obj)                                           \
     if (!(cond)) {                                                   \
