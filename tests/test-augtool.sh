@@ -13,7 +13,7 @@ export PATH="$TOP_BUILDDIR/src:${PATH}"
 export AUGEAS_ROOT="$TOP_BUILDDIR/build/test-augtool"
 export AUGEAS_LENS_LIB="$TOP_SRCDIR/lenses"
 
-function fail() {
+fail() {
     [ -z "$failed" ] && echo FAIL
     failed=yes
     echo "$@"
