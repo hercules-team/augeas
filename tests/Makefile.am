@@ -71,6 +71,7 @@ lens_tests =			\
   lens-postfix_main.sh		\
   lens-postfix_master.sh	\
   lens-puppet.sh		\
+  lens-puppetfileserver.sh		\
   lens-resolv.sh		\
   lens-rsyncd.sh		\
   lens-rx.sh			\

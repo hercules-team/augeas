@@ -72,6 +72,7 @@ Group: Specific Modules  {
    File: Nsswitch  (nsswitch.aug)
    File: Pbuilder  (pbuilder.aug)
    File: Pg_Hba  (pg_hba.aug)
+   File: PuppetFileserver  (puppetfileserver.aug)
    File: Resolv  (resolv.aug)
    File: Services  (services.aug)
    File: Shells  (shells.aug)
