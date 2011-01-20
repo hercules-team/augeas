@@ -98,7 +98,7 @@ reached as C<[last()]>. See L</EXAMPLES> for some examples of this.
 
 =over 4
 
-=item B<exit>, B<quit>
+=item B<quit>
 
 Exit the program
 
@@ -153,17 +153,17 @@ command line options are given, files are changed in place.
 
 =item B<load>
 
-Load files accordig to the transforms in C</augeas/load>.
+Load files according to the transforms in C</augeas/load>.
 
 =item B<defvar> E<lt>NAMEE<gt> E<lt>EXPRE<gt>
 
-Define the variable NAME to the result of evalutating EXPR. The variable
+Define the variable NAME to the result of evaluating EXPR. The variable
 can be used in path expressions as $NAME. Note that EXPR is evaluated when
 the variable is defined, not when it is used.
 
 =item B<defnode> E<lt>NAMEE<gt> E<lt>EXPRE<gt> [E<lt>VALUEE<gt>]
 
-Define the variable NAME to the result of evalutating EXPR, which must be a
+Define the variable NAME to the result of evaluating EXPR, which must be a
 nodeset. If no node matching EXPR exists yet, one is created and NAME will
 refer to it. If VALUE is given, this is the same as 'set EXPR VALUE'; if
 VALUE is not given, the node is created as if with 'clear EXPR' would and
