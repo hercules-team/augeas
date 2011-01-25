@@ -77,13 +77,17 @@ module Grub =
 
     let title = del /title[ \t=]+/ "title " . value_to_eol . eol
 
-    (* Parse the file name and args on a kernel or module line. *)
     (* Permits a second form for Solaris multiboot kernels that *)
     (* take a path (with a slash) as their first arg, e.g.      *)
     (*   /boot/multiboot kernel/unix another=arg                *)
+    let multiboot_arg = [ label "@path" .
+                          store (Rx.word . "/" . Rx.no_spaces) ]
+
+    (* Parse the file name and args on a kernel or module line. *)
     let kernel_args =
       let arg = /[A-Za-z0-9_.\$-]+/ - /type|no-mem-option/  in
-      store (/\/[^ \t\n]*/ | (/\/[^ \t\n]*[ \t]+/ . Rx.word . "/" . Rx.no_spaces)).
+      store /\/[^ \t\n]*/ .
+            (spc . multiboot_arg)? .
             (spc . [ key arg . (eq. store /([^ \t\n])*/)?])* . eol
 
     (* Solaris extension adds module$ and kernel$ for variable interpolation *)

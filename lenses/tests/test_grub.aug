@@ -185,7 +185,7 @@ initrd\t\t/boot/initrd.img-2.6.18-6-vserver-686
     module /boot/x86.miniroot-safe\n" =
   { "title" = "Solaris failsafe"
     { "findroot" = "(pool_rpool,0,a)" }
-    { "kernel" = "/boot/multiboot kernel/unix" { "-s" } }
+    { "kernel" = "/boot/multiboot" { "@path" = "kernel/unix" } { "-s" } }
     { "module" = "/boot/x86.miniroot-safe" } }
 
 (* Local Variables: *)
