@@ -2057,7 +2057,7 @@ static void store_error(struct pathx *pathx) {
         } else {
             /* initialize pos_str explicitly, path might be "" */
             pos_str[0] = '\0';
-            strncpy(pos_str, path, pos);
+            strncat(pos_str, path, pos);
         }
         strcat(pos_str, "|=|");
         strcat(pos_str, path + pos);
