@@ -208,6 +208,8 @@ let conf2 = "<VirtualHost *:80>
 
     CustomLog /var/log/apache2/access.log combined
 
+    SSLRequireSSL
+
     Alias /doc/ \"/usr/share/doc/\"
     <Directory \"/usr/share/doc/\">
         Options Indexes MultiViews FollowSymLinks
@@ -295,6 +297,8 @@ test Httpd.lns get conf2 =
       { "arg" = "/var/log/apache2/access.log" }
       { "arg" = "combined" }
     }
+    {  }
+    { "directive" = "SSLRequireSSL" }
     {  }
     { "directive" = "Alias"
       { "arg" = "/doc/" }

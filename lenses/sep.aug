@@ -15,6 +15,6 @@ let colon = Util.del_str ":"
 let comma = Util.del_str ","
 let space = del Rx.space " "
 let tab   = del Rx.space "\t"
-let opt_space = del Rx.opt_space " "
+let opt_space = del Rx.opt_space ""
 let opt_tab   = del Rx.opt_space "\t"
 

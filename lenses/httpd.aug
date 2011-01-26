@@ -43,8 +43,8 @@ autoload xfm
  *                           Utilities lens
  *****************************************************************)
 let dels (s:string)     = del s s
-let sep_spc             = del /[ \t]+/ " "
-let sep_osp             = del /[ \t]*/ ""
+let sep_spc             = Sep.space
+let sep_osp             = Sep.opt_space
 let sep_eq              = del /[ \t]*=[ \t]*/ "="
 
 let nmtoken             = /[a-zA-Z:_][a-zA-Z0-9:_\.-]*/
@@ -70,7 +70,7 @@ let arg_sec = [ label "arg" . store (char_arg_sec+|dquot) ]
 let argv (l:lens) = l . (sep_spc . l)*
 
 let directive = [ indent . label "directive" . store word .
-                  sep_spc . argv arg_dir . eol ]
+                  (sep_spc . argv arg_dir)? . eol ]
 
 let section (body:lens) =
     let h = (sep_spc . argv arg_sec)? . sep_osp .
