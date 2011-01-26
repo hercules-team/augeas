@@ -37,6 +37,7 @@ lens_tests =			\
   lens-group.sh			\
   lens-json.sh          \
   lens-hosts.sh			\
+  lens-httpd.sh         \
   lens-inetd.sh         \
   lens-inifile.sh		\
   lens-inittab.sh		\

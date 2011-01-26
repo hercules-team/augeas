@@ -1,12 +1,15 @@
 (* Apache HTTPD lens for Augeas
 
-Author: Francis Giraldeau <francis.giraldeau@usherbrooke.ca>
+Authors:
+  David Lutterkort <lutter@redhat.com>
+  Francis Giraldeau <francis.giraldeau@usherbrooke.ca>
+  Raphael Pinson <raphink@gmail.com>
 
 About: Reference
   Online Apache configuration manual: http://httpd.apache.org/docs/trunk/
 
 About: License
-    This file is licensed under the GPL.
+    This file is licensed under the LGPLv2+.
 
 About: Lens Usage
   Sample usage of this lens in augtool
@@ -27,7 +30,7 @@ About: Lens Usage
   > set /files/etc/apache2/sites-available/foo/VirtualHost/*[self::directive="ServerAdmin"]/arg "admin@example.com"
 
 About: Configuration files
-  This lens applies to /etc/dhcpd3/dhcpd.conf. See <filter>.
+  This lens applies to files in /etc/httpd and /etc/apache2. See <filter>.
 
 *)
 
@@ -84,6 +87,8 @@ let filter = (incl "/etc/apache2/apache2.conf") .
              (incl "/etc/apache2/conf.d/*") .
              (incl "/etc/apache2/mods-available/*") .
              (incl "/etc/apache2/sites-available/*") .
+             (incl "/etc/httpd/conf.d/*.conf") .
+             (incl "/etc/httpd/httpd.conf") .
              Util.stdexcl
 
 let xfm = transform lns filter
