@@ -27,6 +27,8 @@
 #include "cutest.h"
 #include "internal.h"
 
+#include <unistd.h>
+
 static const char *abs_top_srcdir;
 static char *root;
 static char *loadpath;
@@ -222,6 +224,116 @@ static void testDefNodeCreateMeta(CuTest *tc) {
     aug_close(aug);
 }
 
+static void reset_indexes(uint *a, uint *b, uint *c, uint *d, uint *e, uint *f) {
+    *a = 0; *b = 0; *c = 0; *d = 0; *e = 0; *f = 0;
+}
+
+#define SPAN_TEST_DEF_LAST { .expr = NULL, .ls = 0, .le = 0, \
+        .vs = 0, .ve = 0, .ss = 0, .se = 0 }
+
+struct span_test_def {
+    const char *expr;
+    const char *f;
+    int ret;
+    int ls;
+    int le;
+    int vs;
+    int ve;
+    int ss;
+    int se;
+};
+
+static const struct span_test_def span_test[] = {
+    { .expr = "/files/etc/hosts/1/ipaddr", .f = "hosts", .ret = 0, .ls = 0, .le = 0, .vs = 104, .ve = 113, .ss = 104, .se = 113 },
+    { .expr = "/files/etc/hosts/1", .f = "hosts", .ret = 0, .ls = 0, .le = 0, .vs = 0, .ve = 0, .ss = 104, .se = 171 },
+    { .expr = "/files/etc/hosts/*[last()]", .f = "hosts", .ret = 0, .ls = 0, .le = 0, .vs = 0, .ve = 0, .ss = 266, .se = 309 },
+    { .expr = "/files/etc/hosts/#comment[2]", .f = "hosts", .ret = 0, .ls = 0, .le = 0, .vs = 58, .ve = 103, .ss = 56, .se = 104 },
+    { .expr = "/files/etc/hosts", .f = "hosts", .ret = 0, .ls = 0, .le = 0, .vs = 0, .ve = 0, .ss = 0, .se = 309 },
+    { .expr = "/files", .f = NULL, .ret = -1, .ls = 0, .le = 0, .vs = 0, .ve = 0, .ss = 0, .se = 0 },
+    { .expr = "/random", .f = NULL, .ret = -1, .ls = 0, .le = 0, .vs = 0, .ve = 0, .ss = 0, .se = 0 },
+    SPAN_TEST_DEF_LAST
+};
+
+static void testNodeInfo(CuTest *tc) {
+    int ret;
+    int i = 0;
+    struct augeas *aug;
+    struct span_test_def test;
+    char *fbase;
+    char msg[1024];
+    static const char *const expr = "/files/etc/hosts/1/ipaddr";
+
+    char *filename_ac;
+    uint label_start, label_end, value_start, value_end, span_start, span_end;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD|AUG_ENABLE_SPAN);
+    ret = aug_load(aug);
+    CuAssertRetSuccess(tc, ret);
+
+    while(span_test[i].expr != NULL) {
+        test = span_test[i];
+        i++;
+        ret = aug_span(aug, test.expr, &filename_ac, &label_start, &label_end,
+                     &value_start, &value_end, &span_start, &span_end);
+        sprintf(msg, "span_test %d ret\n", i);
+        CuAssertIntEquals_Msg(tc, msg, test.ret, ret);
+        sprintf(msg, "span_test %d label_start\n", i);
+        CuAssertIntEquals_Msg(tc, msg, test.ls, label_start);
+        sprintf(msg, "span_test %d label_end\n", i);
+        CuAssertIntEquals_Msg(tc, msg, test.le, label_end);
+        sprintf(msg, "span_test %d value_start\n", i);
+        CuAssertIntEquals_Msg(tc, msg, test.vs, value_start);
+        sprintf(msg, "span_test %d value_end\n", i);
+        CuAssertIntEquals_Msg(tc, msg, test.ve, value_end);
+        sprintf(msg, "span_test %d span_start\n", i);
+        CuAssertIntEquals_Msg(tc, msg, test.ss, span_start);
+        sprintf(msg, "span_test %d span_end\n", i);
+        CuAssertIntEquals_Msg(tc, msg, test.se, span_end);
+        if (filename_ac != NULL) {
+            fbase = basename(filename_ac);
+        } else {
+            fbase = NULL;
+        }
+        sprintf(msg, "span_test %d filename\n", i);
+        CuAssertStrEquals_Msg(tc, msg, test.f, fbase);
+        free(filename_ac);
+        filename_ac = NULL;
+        reset_indexes(&label_start, &label_end, &value_start, &value_end,
+                      &span_start, &span_end);
+    }
+
+    /* aug_span returns -1 and when no node matches */
+    ret = aug_span(aug, "/files/etc/hosts/*[ last() + 1 ]", &filename_ac,
+            &label_start, &label_end, &value_start, &value_end,
+            &span_start, &span_end);
+    CuAssertIntEquals(tc, -1, ret);
+    CuAssertPtrEquals(tc, NULL, filename_ac);
+    CuAssertIntEquals(tc, AUG_ENOMATCH, aug_error(aug));
+
+    /* aug_span should return an error when multiple nodes match */
+    ret = aug_span(aug, "/files/etc/hosts/*", &filename_ac,
+            &label_start, &label_end, &value_start, &value_end,
+            &span_start, &span_end);
+    CuAssertIntEquals(tc, -1, ret);
+    CuAssertPtrEquals(tc, NULL, filename_ac);
+    CuAssertIntEquals(tc, AUG_EMMATCH, aug_error(aug));
+
+    /* aug_span returns -1 if nodes span are not loaded */
+    aug_close(aug);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    ret = aug_load(aug);
+    CuAssertRetSuccess(tc, ret);
+    ret = aug_span(aug, expr, &filename_ac, &label_start, &label_end,
+                 &value_start, &value_end, &span_start, &span_end);
+    CuAssertIntEquals(tc, -1, ret);
+    CuAssertPtrEquals(tc, NULL, filename_ac);
+    CuAssertIntEquals(tc, AUG_ENOSPAN, aug_error(aug));
+    reset_indexes(&label_start, &label_end, &value_start, &value_end,
+                  &span_start, &span_end);
+
+    aug_close(aug);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -232,6 +344,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testDefVarMeta);
     SUITE_ADD_TEST(suite, testDefNodeExistingMeta);
     SUITE_ADD_TEST(suite, testDefNodeCreateMeta);
+    SUITE_ADD_TEST(suite, testNodeInfo);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)

@@ -45,6 +45,7 @@ struct seq {
 
 struct state {
     struct info      *info;
+    struct span      *span;
     const char       *text;
     struct seq       *seqs;
     char             *key;
@@ -73,6 +74,7 @@ struct frame {
     struct lens     *lens;
     char            *key;
     char            *square;
+    struct span     *span;
     union {
         struct { /* MGET */
             char        *value;
@@ -389,6 +391,7 @@ static struct tree *get_del(struct lens *lens, struct state *state) {
     if (lens->string == NULL) {
         state->square = token(state);
     }
+    update_span(state->span, REG_START(state), REG_END(state));
     return NULL;
 }
 
@@ -414,8 +417,14 @@ static struct tree *get_store(struct lens *lens, struct state *state) {
         get_error(state, lens, "More than one store in a subtree");
     else if (! REG_MATCHED(state))
         no_match_error(state, lens);
-    else
+    else {
         state->value = token(state);
+        if (state->span) {
+            state->span->value_start = REG_START(state);
+            state->span->value_end = REG_END(state);
+            update_span(state->span, REG_START(state), REG_END(state));
+        }
+    }
     return tree;
 }
 
@@ -441,8 +450,14 @@ static struct tree *get_key(struct lens *lens, struct state *state) {
     ensure0(lens->tag == L_KEY, state->info);
     if (! REG_MATCHED(state))
         no_match_error(state, lens);
-    else
+    else {
         state->key = token(state);
+        if (state->span) {
+            state->span->label_start = REG_START(state);
+            state->span->label_end = REG_END(state);
+            update_span(state->span, REG_START(state), REG_END(state));
+        }
+    }
     return NULL;
 }
 
@@ -662,17 +677,32 @@ static struct skel *parse_quant_maybe(struct lens *lens, struct state *state,
 static struct tree *get_subtree(struct lens *lens, struct state *state) {
     char *key = state->key;
     char *value = state->value;
+    struct span *span = state->span;
+
     struct tree *tree = NULL, *children;
 
     state->key = NULL;
     state->value = NULL;
+    if (state->info->flags & AUG_ENABLE_SPAN) {
+        state->span = make_span(state->info);
+        ERR_NOMEM(state->span == NULL, state->info);
+    }
+
     children = get_lens(lens->child, state);
 
     tree = make_tree(state->key, state->value, NULL, children);
+    tree->span = state->span;
+
+    if (state->span != NULL) {
+        update_span(span, state->span->span_start, state->span->span_end);
+    }
 
     state->key = key;
     state->value = value;
+    state->span = span;
     return tree;
+ error:
+    return NULL;
 }
 
 static struct skel *parse_subtree(struct lens *lens, struct state *state,
@@ -857,11 +887,18 @@ static void visit_enter(struct lens *lens,
         struct frame *f = push_frame(rec_state, lens);
         f->key = state->key;
         f->value = state->value;
+        f->span = state->span;
         state->key = NULL;
         state->value = NULL;
     } else if (lens->tag == L_MAYBE) {
         push_frame(rec_state, lens);
+        if (state->info->flags & AUG_ENABLE_SPAN) {
+            state->span = make_span(state->info);
+            ERR_NOMEM(state->span == NULL, state->info);
+        }
     }
+ error:
+    return;
 }
 
 static void get_combine(struct rec_state *rec_state,
@@ -952,11 +989,13 @@ static void visit_exit(struct lens *lens,
             struct tree *tree;
             // FIXME: tree may leak if pop_frame ensure0 fail
             tree = make_tree(top->key, top->value, NULL, top->tree);
+            tree->span = state->span;
             ERR_NOMEM(tree == NULL, lens->info);
             top = pop_frame(rec_state);
             ensure(lens == top->lens, state->info);
             state->key = top->key;
             state->value = top->value;
+            state->span = top->span;
             pop_frame(rec_state);
             top = push_frame(rec_state, lens);
             top->tree = tree;

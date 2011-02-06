@@ -662,6 +662,54 @@ static const struct command_def cmd_clearm_def = {
     "BASE will be modified."
 };
 
+static void cmd_span(struct command *cmd) {
+    const char *path = arg_value(cmd, "path");
+    int r;
+    uint label_start, label_end, value_start, value_end, span_start, span_end;
+    char *filename;
+    const char *option;
+    // FIXME: add check to see if AUG_ENABLE_SPAN is set
+
+    if (aug_get(aug, AUGEAS_SPAN_OPTION, &option) != 1) {
+        printf("Error: option " AUGEAS_SPAN_OPTION " not found\n");
+        return;
+    }
+    if (strcmp(AUG_DISABLE, option) == 0) {
+        printf("Span is not enabled. To enable, run commands:\n");
+        printf("set %s %s\n", AUGEAS_SPAN_OPTION, AUG_ENABLE);
+        printf("rm %s\n", AUGEAS_FILES_TREE);
+        printf("load\n");
+        return;
+    } else if (strcmp(AUG_ENABLE, option) != 0) {
+        printf("Error: option %s must be %s or %s\n", AUGEAS_SPAN_OPTION,
+               AUG_ENABLE, AUG_DISABLE);
+        return;
+    }
+    r = aug_span(aug, path, &filename, &label_start, &label_end, &value_start,
+                 &value_end, &span_start, &span_end);
+    err_check(cmd);
+    if (r == -1){
+        printf ("Failed\n");
+        return;
+    }
+    printf("%s label=(%i:%i) value=(%i:%i) span=(%i,%i)\n", filename,
+           label_start, label_end, value_start, value_end, span_start, span_end);
+}
+
+static const struct command_opt_def cmd_span_opts[] = {
+    { .type = CMD_PATH, .name = "path", .optional = false,
+      .help = "node path" },
+    CMD_OPT_DEF_LAST
+};
+
+static const struct command_def cmd_span_def = {
+    .name = "span",
+    .opts = cmd_span_opts,
+    .handler = cmd_span,
+    .synopsis = "get the filename, label and value position in the text of this node",
+    .help = "get the filename, label and value position in the text of this node"
+};
+
 static void cmd_defvar(struct command *cmd) {
     const char *name = arg_value(cmd, "name");
     const char *path = arg_value(cmd, "expr");
@@ -972,6 +1020,7 @@ static const struct command_def const *commands[] = {
     &cmd_set_def,
     &cmd_setm_def,
     &cmd_clearm_def,
+    &cmd_span_def,
     &cmd_help_def,
     &cmd_def_last
 };
@@ -1037,6 +1086,7 @@ static void usage(void) {
     fprintf(stderr, "  -S, --nostdinc     do not search the builtin default directories for modules\n");
     fprintf(stderr, "  -L, --noload       do not load any files into the tree on startup\n");
     fprintf(stderr, "  -A, --noautoload   do not autoload modules from the search path\n");
+    fprintf(stderr, "  --span             load span positions for nodes related to a file\n");
     fprintf(stderr, "  --version          print version information and exit.\n");
 
     exit(EXIT_FAILURE);
@@ -1046,7 +1096,8 @@ static void parse_opts(int argc, char **argv) {
     int opt;
     size_t loadpathlen = 0;
     enum {
-        VAL_VERSION = CHAR_MAX + 1
+        VAL_VERSION = CHAR_MAX + 1,
+        VAL_SPAN = VAL_VERSION + 1
     };
     struct option options[] = {
         { "help",      0, 0, 'h' },
@@ -1062,6 +1113,7 @@ static void parse_opts(int argc, char **argv) {
         { "nostdinc",  0, 0, 'S' },
         { "noload",    0, 0, 'L' },
         { "noautoload", 0, 0, 'A' },
+        { "span",      0, 0, VAL_SPAN },
         { "version",   0, 0, VAL_VERSION },
         { 0, 0, 0, 0}
     };
@@ -1111,6 +1163,9 @@ static void parse_opts(int argc, char **argv) {
         case VAL_VERSION:
             flags |= AUG_NO_MODL_AUTOLOAD;
             print_version = true;
+            break;
+        case VAL_SPAN:
+            flags |= AUG_ENABLE_SPAN;
             break;
         default:
             usage();

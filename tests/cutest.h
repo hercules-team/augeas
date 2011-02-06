@@ -37,6 +37,10 @@ void die_oom(void);
 
 /* CuTest */
 
+#define CuAssertPositive(tc, n) CuAssertTrue(tc, (n) > 0)
+#define CuAssertZero(tc, n) CuAssertIntEquals(tc, 0, (n))
+#define CuAssertRetSuccess(tc, n) CuAssertIntEquals(tc, 0, (n))
+
 typedef struct CuTest CuTest;
 
 typedef void (*TestFunction)(CuTest *);

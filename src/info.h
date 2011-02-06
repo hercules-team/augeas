@@ -51,6 +51,17 @@ struct info {
     uint16_t last_line;
     uint16_t last_column;
     ref_t    ref;
+    int flags;
+};
+
+struct span {
+    struct string *filename;
+    uint label_start;
+    uint label_end;
+    uint value_start;
+    uint value_end;
+    uint span_start;
+    uint span_end;
 };
 
 char *format_info(struct info *info);
@@ -60,6 +71,10 @@ void print_info(FILE *out, struct info *info);
 /* Do not call directly, use UNREF instead */
 void free_info(struct info *info);
 
+struct span *make_span(struct info *info);
+void free_span(struct span *node_info);
+void update_span(struct span *node_info, int x, int y);
+void print_span(struct span *node_info);
 #endif
 
 

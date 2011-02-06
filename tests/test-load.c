@@ -27,10 +27,6 @@
 #include "cutest.h"
 #include "internal.h"
 
-#define CuAssertPositive(tc, n) CuAssertTrue(tc, (n) > 0)
-#define CuAssertZero(tc, n) CuAssertIntEquals(tc, 0, (n))
-#define CuAssertRetSuccess(tc, n) CuAssertIntEquals(tc, 0, (n))
-
 static const char *abs_top_srcdir;
 static const char *abs_top_builddir;
 static char *root = NULL;
@@ -488,7 +484,6 @@ int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
     CuSuiteSetup(suite, NULL, NULL);
-
     SUITE_ADD_TEST(suite, testDefault);
     SUITE_ADD_TEST(suite, testNoLoad);
     SUITE_ADD_TEST(suite, testNoAutoload);

@@ -90,6 +90,10 @@
 /* Where to put information about parsing of path expressions */
 #define AUGEAS_META_PATHX AUGEAS_META_TREE "/pathx"
 
+/* Define: AUGEAS_SPAN_OPTION
+ * Enable or disable node indexes */
+#define AUGEAS_SPAN_OPTION AUGEAS_META_TREE "/span"
+
 /* Define: AUGEAS_LENS_ENV
  * Name of env var that contains list of paths to search for additional
    spec files */
@@ -110,6 +114,10 @@
 #define AUG_SAVE_NEWFILE_TEXT "newfile"
 #define AUG_SAVE_NOOP_TEXT "noop"
 #define AUG_SAVE_OVERWRITE_TEXT "overwrite"
+
+/* constants for options in the tree */
+#define AUG_ENABLE "enable"
+#define AUG_DISABLE "disable"
 
 #ifdef __GNUC__
 
@@ -344,6 +352,7 @@ struct tree {
     struct tree *children;   /* List of children through NEXT */
     char        *value;
     int          dirty;
+    struct span *span;
 };
 
 /* The opaque structure used to represent path expressions. API's

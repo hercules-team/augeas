@@ -63,7 +63,8 @@ static const char *const errcodes[] = {
     "Too many matches for path expression",             /* AUG_EMMATCH */
     "Syntax error in lens definition",                  /* AUG_ESYNTAX */
     "Lens not found",                                   /* AUG_ENOLENS */
-    "Multiple transforms"                               /* AUG_EMXFM */
+    "Multiple transforms",                              /* AUG_EMXFM */
+    "Node has no span info"                             /* AUG_ENOSPAN */
 };
 
 static void tree_mark_dirty(struct tree *tree) {
@@ -421,6 +422,13 @@ struct augeas *aug_init(const char *root, const char *loadpath,
     } else {
         aug_set(result, AUGEAS_META_SAVE_MODE, AUG_SAVE_OVERWRITE_TEXT);
     }
+
+    if (flags & AUG_ENABLE_SPAN) {
+        aug_set(result, AUGEAS_SPAN_OPTION, AUG_ENABLE);
+    } else {
+        aug_set(result, AUGEAS_SPAN_OPTION, AUG_DISABLE);
+    }
+
     /* Make sure we always have /files and /augeas/variables */
     tree_path_cr(result->origin, 1, s_files);
     tree_path_cr(result->origin, 2, s_augeas, s_vars);
@@ -503,6 +511,7 @@ static void tree_rm_dirty_leaves(struct augeas *aug, struct tree *tree,
 }
 
 int aug_load(struct augeas *aug) {
+    const char *option = NULL;
     struct tree *meta = tree_child_cr(aug->origin, s_augeas);
     struct tree *meta_files = tree_child_cr(meta, s_files);
     struct tree *files = tree_child_cr(aug->origin, s_files);
@@ -527,6 +536,16 @@ int aug_load(struct augeas *aug) {
      * (4) Remove entries from /augeas/files and /files that correspond
      *     to directories without any files of interest
      */
+
+    /* update flags according to option value */
+    if (aug_get(aug, AUGEAS_SPAN_OPTION, &option) == 1) {
+        if (strcmp(option, AUG_ENABLE) == 0) {
+            aug->flags |= AUG_ENABLE_SPAN;
+        } else {
+            aug->flags &= ~AUG_ENABLE_SPAN;
+        }
+    }
+
     tree_clean(meta_files);
     tree_mark_files(meta_files);
 
@@ -860,6 +879,8 @@ static void free_tree_node(struct tree *tree) {
     if (tree == NULL)
         return;
 
+    if (tree->span != NULL)
+        free_span(tree->span);
     free(tree->label);
     free(tree->value);
     free(tree);
@@ -941,6 +962,63 @@ int aug_rm(struct augeas *aug, const char *path) {
  error:
     api_exit(aug);
     return -1;
+}
+
+int aug_span(struct augeas *aug, const char *path, char **filename,
+        uint *label_start, uint *label_end, uint *value_start, uint *value_end,
+        uint *span_start, uint *span_end) {
+    struct pathx *p = NULL;
+    int result = -1;
+    struct tree *tree = NULL;
+    struct span *span;
+
+    api_entry(aug);
+
+    p = pathx_aug_parse(aug, aug->origin, path, true);
+    ERR_BAIL(aug);
+
+    tree = pathx_first(p);
+    ERR_BAIL(aug);
+
+    ERR_THROW(tree == NULL, aug, AUG_ENOMATCH, "No node matching %s", path);
+    ERR_THROW(tree->span == NULL, aug, AUG_ENOSPAN, "No span info for %s", path);
+    ERR_THROW(pathx_next(p) != NULL, aug, AUG_EMMATCH, "Multiple nodes match %s", path);
+
+    span = tree->span;
+
+    if (label_start != NULL)
+        *label_start = span->label_start;
+
+    if (label_end != NULL)
+        *label_end = span->label_end;
+
+    if (value_start != NULL)
+        *value_start = span->value_start;
+
+    if (value_end != NULL)
+        *value_end = span->value_end;
+
+    if (span_start != NULL)
+        *span_start = span->span_start;
+
+    if (span_end != NULL)
+        *span_end = span->span_end;
+
+    /* We are safer here, make sure we have a filename */
+    if (filename != NULL) {
+        if (span->filename == NULL || span->filename->str == NULL) {
+            *filename = strdup("");
+        } else {
+            *filename = strdup(span->filename->str);
+        }
+        ERR_NOMEM(*filename == NULL, aug);
+    }
+
+    result = 0;
+ error:
+    free_pathx(p);
+    api_exit(aug);
+    return result;
 }
 
 int tree_replace(struct augeas *aug, const char *path, struct tree *sub) {

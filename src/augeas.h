@@ -47,7 +47,8 @@ enum aug_flags {
     AUG_SAVE_NOOP    = (1 << 4),  /* Make save a no-op process, just record
                                      what would have changed */
     AUG_NO_LOAD      = (1 << 5),  /* Do not load the tree from AUG_INIT */
-    AUG_NO_MODL_AUTOLOAD = (1 << 6)
+    AUG_NO_MODL_AUTOLOAD = (1 << 6),
+    AUG_ENABLE_SPAN  = (1 << 7)   /* Track the span in the input of nodes */
 };
 
 /* Function: aug_init
@@ -148,6 +149,27 @@ int aug_set(augeas *aug, const char *path, const char *value);
  * number of modified nodes on success, -1 on error
  */
 int aug_setm(augeas *aug, const char *base, const char *sub, const char *value);
+
+/* Function: aug_span
+ *
+ * Get the span according to input file of the node associated with PATH. If
+ * the node is associated with a file, the filename, label and value start and
+ * end positions are set, and return value is 0. The caller is responsible for
+ * freeing returned filename. If an argument for return value is NULL, then the
+ * corresponding value is not set. If the node associated with PATH doesn't
+ * belong to a file or is doesn't exists, filename and span are not set and
+ * return value is -1.
+ *
+ * Returns:
+ * 0 on success with filename, label_start, label_stop, value_start, value_end,
+ *   span_start, span_end
+ * -1 on error
+ */
+
+int aug_span(augeas *aug, const char *path, char **filename,
+        unsigned int *label_start, unsigned int *label_end,
+        unsigned int *value_start, unsigned int *value_end,
+        unsigned int *span_start, unsigned int *span_end);
 
 /* Function: aug_insert
  *
@@ -297,7 +319,8 @@ typedef enum {
     AUG_EMMATCH,        /* Too many matches for path expression */
     AUG_ESYNTAX,        /* Syntax error in lens file */
     AUG_ENOLENS,        /* Lens lookup failed */
-    AUG_EMXFM           /* Multiple transforms */
+    AUG_EMXFM,          /* Multiple transforms */
+    AUG_ENOSPAN         /* No span for this node */
 } aug_errcode_t;
 
 /* Return the error code from the last API call */

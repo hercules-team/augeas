@@ -34,3 +34,8 @@ AUGEAS_0.11.0 {
     global:
       aug_setm;
 } AUGEAS_0.10.0;
+
+AUGEAS_0.12.0 {
+    global:
+      aug_span;
+} AUGEAS_0.11.0;
