@@ -857,6 +857,8 @@ static void visit_enter(struct lens *lens,
         f->value = state->value;
         state->key = NULL;
         state->value = NULL;
+    } else if (lens->tag == L_MAYBE) {
+        push_frame(rec_state, lens);
     }
 }
 
@@ -996,10 +998,10 @@ static void visit_exit(struct lens *lens,
         else
             parse_combine(rec_state, lens, n);
     } else if (lens->tag == L_MAYBE) {
-        uint n = 0;
+        uint n = 1;
         if (rec_state->fused > 0
             && top_frame(rec_state)->lens == lens->child) {
-            n = 1;
+            n = 2;
         }
         if (rec_state->mode == M_GET)
             get_combine(rec_state, lens, n);

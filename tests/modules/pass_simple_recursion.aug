@@ -67,6 +67,19 @@ test unamb2 get "x" = { "x" }
 let rec maybe = [ del "a" "a" . maybe . del "b" "b" ]?
 test maybe get "aabb" = { { } }
 
+(* Test proper handling of '?'; bug #180 *)
+let rec maybe2 = [ del "a" "a" . maybe2 ]?
+test maybe2 get "aa" = { { } }
+
+let rec maybe3 = [ maybe3 . del "a" "a" ]?
+test maybe3 get "aa" = { { } }
+
+let rec maybe4 = [ del "a" "a" ] . maybe4?
+test maybe4 get "aa" = { } { }
+
+let rec maybe5 = maybe5? . [ del "a" "a" ]
+test maybe5 get "aa" = { } { }
+
 (* Test that parses ending with a SCAN are accepted; bug #126 *)
 let dels (s:string) = del s s
 let d2 = del /b*/ ""
