@@ -45,6 +45,7 @@ const char *inputfile = NULL;
 int echo = 0;         /* Gets also changed in main_loop */
 bool print_version = false;
 bool auto_save = false;
+bool interactive = false;
 
 /*
  * General utilities
@@ -1032,6 +1033,7 @@ static void usage(void) {
     fprintf(stderr, "  -e, --echo         echo commands when reading from a file\n");
     fprintf(stderr, "  -f, --file FILE    read commands from FILE\n");
     fprintf(stderr, "  -s, --autosave     automatically save at the end of instructions\n");
+    fprintf(stderr, "  -i, --interactive  run an interactive shell after evaluating the commands in STDIN and FILE\n");
     fprintf(stderr, "  --nostdinc         do not search the builtin default directories for modules\n");
     fprintf(stderr, "  --noload           do not load any files into the tree on startup\n");
     fprintf(stderr, "  --noautoload       do not autoload modules from the search path\n");
@@ -1059,6 +1061,7 @@ static void parse_opts(int argc, char **argv) {
         { "echo",      0, 0, 'e' },
         { "file",      1, 0, 'f' },
         { "autosave",  0, 0, 's' },
+        { "interactive",  0, 0, 'i' },
         { "nostdinc",  0, 0, VAL_NO_STDINC },
         { "noload",    0, 0, VAL_NO_LOAD },
         { "noautoload", 0, 0, VAL_NO_AUTOLOAD },
@@ -1067,7 +1070,7 @@ static void parse_opts(int argc, char **argv) {
     };
     int idx;
 
-    while ((opt = getopt_long(argc, argv, "hnbcr:I:ef:s", options, &idx)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hnbcr:I:ef:si", options, &idx)) != -1) {
         switch(opt) {
         case 'c':
             flags |= AUG_TYPE_CHECK;
@@ -1095,6 +1098,9 @@ static void parse_opts(int argc, char **argv) {
             break;
         case 's':
             auto_save = true;
+            break;
+        case 'i':
+            interactive = true;
             break;
         case VAL_NO_STDINC:
             flags |= AUG_NO_STDINC;
@@ -1166,6 +1172,7 @@ static int main_loop(void) {
     enum command_result code;
     bool end_reached = false;
     bool get_line = true;
+    bool in_interactive = false;
     // make readline silent by default
     rl_outstream = fopen("/dev/null", "w");
 
@@ -1193,6 +1200,25 @@ static int main_loop(void) {
         }
 
         if (line == NULL) {
+            if (!isatty(fileno(stdin)) && interactive && !in_interactive) {
+               in_interactive = true;
+               echo = true;
+               // reopen in and out streams
+               if ((rl_instream = fopen("/dev/tty", "r")) == NULL) {
+                   perror("Failed to open terminal for reading");
+                   return CMD_RES_ERR;
+               }
+               if (rl_outstream != NULL) {
+                   fclose(rl_outstream);
+                   rl_outstream = NULL;
+               }
+               if ((rl_outstream = fopen("/dev/stdout", "w")) == NULL) {
+                   perror("Failed to reopen stdout");
+                   return CMD_RES_ERR;
+               }
+               continue;
+            }
+
             if (auto_save) {
                 strncpy(inputline, "save", sizeof(inputline));
                 line = inputline;
