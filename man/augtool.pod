@@ -22,41 +22,51 @@ encountered.
 
 =over 4
 
-=item B<-c>
+=item B<-c>, B<--typecheck>
 
 Typecheck lenses. This can be very slow, and is therefore not done by
 default, but is highly recommended during development.
 
-=item B<-b>
+=item B<-b>, B<--backup>
 
 When files are changed, preserve the originals in a file with extension
 '.augsave'
 
-=item B<-n>
+=item B<-n>, B<--new>
 
 Save changes in files with extension '.augnew', do not modify the original
 files
 
-=item B<-r> I<ROOT>
+=item B<-r>, B<--root>=I<ROOT>
 
 Use directory ROOT as the root of the filesystem. Takes precedence over a
 root set with the AUGEAS_ROOT environment variable.
 
-=item B<-I> I<DIR>
+=item B<-I>, B<--include>=I<DIR>
 
 Add DIR to the module loadpath. Can be given multiple times. The
 directories set here are searched before any directories specified in the
 AUGEAS_LENS_LIB environment variable, and before the default directory
 F</usr/share/augeas/lenses>.
 
-=item B<-f> I<FILE>
+=item B<-f>, B<--file>=I<FILE>
 
 Read commands from FILE.
+
+=item B<-i>, B<--interactive>
+
+Read commands from the terminal. When combined with B<-f> or redirection of
+stdin, drop into an interactive session after executing the commands from
+the file.
 
 =item B<-e>
 
 When reading commands from a file via stdin, echo the commands before
 printing their output.
+
+=item B<-s>, B<--autosave>
+
+Automatically save all changes at the end of the session.
 
 =item B<--nostdinc>
 

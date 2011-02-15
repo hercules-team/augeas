@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "AUGTOOL 1"
-.TH AUGTOOL 1 "2011-01-19" "Augeas 0.7.4" "Augeas"
+.TH AUGTOOL 1 "2011-02-14" "Augeas 0.7.4" "Augeas"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -147,35 +147,43 @@ no \s-1COMMAND\s0, it reads commands from standard input until an end-of-file is
 encountered.
 .SH "OPTIONS"
 .IX Header "OPTIONS"
-.IP "\fB\-c\fR" 4
-.IX Item "-c"
+.IP "\fB\-c\fR, \fB\-\-typecheck\fR" 4
+.IX Item "-c, --typecheck"
 Typecheck lenses. This can be very slow, and is therefore not done by
 default, but is highly recommended during development.
-.IP "\fB\-b\fR" 4
-.IX Item "-b"
+.IP "\fB\-b\fR, \fB\-\-backup\fR" 4
+.IX Item "-b, --backup"
 When files are changed, preserve the originals in a file with extension
 \&'.augsave'
-.IP "\fB\-n\fR" 4
-.IX Item "-n"
+.IP "\fB\-n\fR, \fB\-\-new\fR" 4
+.IX Item "-n, --new"
 Save changes in files with extension '.augnew', do not modify the original
 files
-.IP "\fB\-r\fR \fI\s-1ROOT\s0\fR" 4
-.IX Item "-r ROOT"
+.IP "\fB\-r\fR, \fB\-\-root\fR=\fI\s-1ROOT\s0\fR" 4
+.IX Item "-r, --root=ROOT"
 Use directory \s-1ROOT\s0 as the root of the filesystem. Takes precedence over a
 root set with the \s-1AUGEAS_ROOT\s0 environment variable.
-.IP "\fB\-I\fR \fI\s-1DIR\s0\fR" 4
-.IX Item "-I DIR"
+.IP "\fB\-I\fR, \fB\-\-include\fR=\fI\s-1DIR\s0\fR" 4
+.IX Item "-I, --include=DIR"
 Add \s-1DIR\s0 to the module loadpath. Can be given multiple times. The
 directories set here are searched before any directories specified in the
 \&\s-1AUGEAS_LENS_LIB\s0 environment variable, and before the default directory
 \&\fI/usr/share/augeas/lenses\fR.
-.IP "\fB\-f\fR \fI\s-1FILE\s0\fR" 4
-.IX Item "-f FILE"
+.IP "\fB\-f\fR, \fB\-\-file\fR=\fI\s-1FILE\s0\fR" 4
+.IX Item "-f, --file=FILE"
 Read commands from \s-1FILE\s0.
+.IP "\fB\-i\fR, \fB\-\-interactive\fR" 4
+.IX Item "-i, --interactive"
+Read commands from the terminal. When combined with \fB\-f\fR or redirection of
+stdin, drop into an interactive session after executing the commands from
+the file.
 .IP "\fB\-e\fR" 4
 .IX Item "-e"
 When reading commands from a file via stdin, echo the commands before
 printing their output.
+.IP "\fB\-s\fR, \fB\-\-autosave\fR" 4
+.IX Item "-s, --autosave"
+Automatically save all changes at the end of the session.
 .IP "\fB\-\-nostdinc\fR" 4
 .IX Item "--nostdinc"
 Do not search any of the default directories for modules. When this option
