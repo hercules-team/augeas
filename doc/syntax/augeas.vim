@@ -3,6 +3,8 @@
 " Version: 1.0
 " $Id$
 " Maintainer:  Bruno Cornec <bruno@project-builder.org>
+" Contributors:
+"  Raphaël Pinson <raphink@gmail.com>
 
 " For version 5.x: Clear all syntax items
 " For version 6.x: Quit when a syntax file was already loaded
@@ -16,7 +18,8 @@ endif
 syn case ignore
 syn sync lines=250
 
-syn keyword augeasStatement	module let incl transform autoload
+syn keyword augeasStatement	module let incl transform autoload in rec
+syn keyword augeasTestStatement	test get after put insa insb set rm
 syn keyword augeasTodo contained	TODO FIXME XXX DEBUG NOTE
 
 if exists("augeas_symbol_operator")
@@ -26,7 +29,7 @@ if exists("augeas_symbol_operator")
   syn match   augeasSymbolOperator      ":="
   syn match   augeasSymbolOperator      "[()]"
   syn match   augeasSymbolOperator      "\.\."
-  syn match   augeasSymbolOperator       "[\^.]"
+  syn match   augeasSymbolOperator      "[\^.]"
   syn match   augeasMatrixDelimiter	"[][]"
   "if you prefer you can highlight the range
   "syn match  augeasMatrixDelimiter	"[\d\+\.\.\d\+]"
@@ -36,15 +39,18 @@ if exists("augeas_no_tabs")
   syn match augeasShowTab "\t"
 endif
 
-syn region augeasComment	start="(\*\|{"  end="\*)\|}" contains=augeasTodo,augeasSpaceError
+syn region augeasComment	start="(\*"  end="\*)" contains=augeasTodo,augeasSpaceError
 
 
 if !exists("augeas_no_functions")
   " functions
-  syn keyword augeasLabel	del key store label store
+  syn keyword augeasLabel	del key store label value
   syn keyword augeasFunction	Util Build Rx Sep
-
 endif
+
+syn region  augeasRegexp	start="/"  end="[^\\]/"
+syn region  augeasString	start=+"+  end=+"\([ \t)\.-]\|$\)+
+
 
 " Define the default highlighting.
 " For version 5.7 and earlier: only when not done already
@@ -80,9 +86,11 @@ if version >= 508 || !exists("did_augeas_syn_inits")
   HiLink augeasString		String
   HiLink augeasStringEscape	Special
   HiLink augeasStringEscapeGPC	Special
+  HiLink augeasRegexp		Special
   HiLink augeasStringError	Error
   HiLink augeasStruct		augeasStatement
   HiLink augeasSymbolOperator	augeasOperator
+  HiLink augeasTestStatement	augeasStatement
   HiLink augeasTodo		Todo
   HiLink augeasType		Type
   HiLink augeasUnclassified	augeasStatement
