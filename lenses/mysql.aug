@@ -10,7 +10,7 @@ module MySQL =
 (************************************************************************
  * INI File settings
  *************************************************************************)
-let comment  = IniFile.comment IniFile.comment_re IniFile.comment_default
+let comment  = IniFile.comment IniFile.comment_re "#"
 
 let sep      = IniFile.sep IniFile.sep_re IniFile.sep_default
 
