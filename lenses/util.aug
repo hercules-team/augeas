@@ -90,9 +90,9 @@ View: comment_generic
 
 (* View: comment_multiline
     A C-style multiline comment *)
-  let comment_multiline =  
+  let comment_multiline =
      let mline_re = (/[^ \t\n].*[^ \t\n]|[^ \t\n]/ - /.*\*\/.*/) in
-     let mline = [ seq "mline" 
+     let mline = [ seq "mline"
                  . store mline_re ] in
      [ label "#mcomment" . del /[ \t]*\/\*[ \t\n]*/ "/*\n"
        . counter "mline"
@@ -101,13 +101,13 @@ View: comment_generic
 
 (* View: comment_c_style
     A comment line, C-style *)
-  let comment_c_style = 
+  let comment_c_style =
     comment_generic /[ \t]*\/\/[ \t]*/ "// "
 
 (* View: empty_generic
   A generic definition of <empty>
   Map empty lines, including empty comments *)
-  let empty_generic (r:regexp) = 
+  let empty_generic (r:regexp) =
     [ del r "" . del_str "\n" ]
 
 (* View: empty
@@ -116,7 +116,7 @@ View: comment_generic
 
 (* View: empty_c_style
   Map empty lines, including C-style empty comment *)
-  let empty_c_style = 
+  let empty_c_style =
     empty_generic /[ \t]*((\/\/)|(\/\*[ \t]*\*\/))?[ \t]*/
 
 
