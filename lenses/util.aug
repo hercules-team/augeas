@@ -59,8 +59,8 @@ Variable: indent
 *)
   let indent = del /[ \t]*/ ""
 
-(* Group: Comment and empty
-     This is a general definition of comment and empty.
+(* Group: Comment
+     This is a general definition of comment
      It allows indentation for comments, removes the leading and trailing spaces
      of comments and stores them in nodes, except for empty comments which are
      ignored together with empty lines
@@ -86,13 +86,39 @@ View: comment_generic
 
 (* View: comment_or_eol
     A <comment_eol> or <eol> *)
-  let comment_or_eol = comment_eol | (del /[ \t]*#?\n/ "\n")
+ let comment_or_eol = comment_eol | (del /[ \t]*#?\n/ "\n")
 
-(*
-View: empty
-  Map empty lines, including empty comments
-*)
-  let empty   = [ del /[ \t]*#?[ \t]*\n/ "\n" ]
+(* View: comment_multiline
+    A C-style multiline comment *)
+  let comment_multiline =  
+     let mline_re = (/[^ \t\n].*[^ \t\n]|[^ \t\n]/ - /.*\*\/.*/) in
+     let mline = [ seq "mline" 
+                 . store mline_re ] in
+     [ label "#mcomment" . del /[ \t]*\/\*[ \t\n]*/ "/*\n"
+       . counter "mline"
+       . (mline . (eol . mline)*)
+       . del /[ \t\n]*\*\/[ \t]*\n/ "\n*/\n" ]
+
+(* View: comment_c_style
+    A comment line, C-style *)
+  let comment_c_style = 
+    comment_generic /[ \t]*\/\/[ \t]*/ "// "
+
+(* View: empty_generic
+  A generic definition of <empty>
+  Map empty lines, including empty comments *)
+  let empty_generic (r:regexp) = 
+    [ del r "" . del_str "\n" ]
+
+(* View: empty
+  Map empty lines, including empty comments *)
+  let empty = empty_generic /[ \t]*#?[ \t]*/
+
+(* View: empty_c_style
+  Map empty lines, including C-style empty comment *)
+  let empty_c_style = 
+    empty_generic /[ \t]*((\/\/)|(\/\*[ \t]*\*\/))?[ \t]*/
+
 
 (* View: Split *)
 (* Split (SEP . ELT)* into an array-like tree where each match for ELT *)
