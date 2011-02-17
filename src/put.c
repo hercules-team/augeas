@@ -662,7 +662,7 @@ static void create_subtree(struct lens *lens, struct state *state) {
 static void create_del(struct lens *lens, struct state *state) {
     assert(lens->tag == L_DEL);
     if (lens->string != NULL) {
-    print_escaped_chars(state->out, lens->string->str);
+        print_escaped_chars(state->out, lens->string->str);
     } else {
         /* L_DEL with NULL string: replicate the current key */
         print_escaped_chars(state->out, state->key);

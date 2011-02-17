@@ -158,7 +158,8 @@ static struct skel *make_skel(struct lens *lens) {
 void free_skel(struct skel *skel) {
     if (skel == NULL)
         return;
-    if (skel->tag == L_CONCAT || skel->tag == L_STAR || skel->tag == L_MAYBE || skel->tag == L_SQUARE) {
+    if (skel->tag == L_CONCAT || skel->tag == L_STAR || skel->tag == L_MAYBE ||
+        skel->tag == L_SQUARE) {
         while (skel->skels != NULL) {
             struct skel *del = skel->skels;
             skel->skels = del->next;
@@ -711,7 +712,8 @@ static struct tree *get_square(struct lens *lens, struct state *state) {
     return tree;
 }
 
-static struct skel *parse_square(struct lens *lens, struct state *state, struct dict **dict) {
+static struct skel *parse_square(struct lens *lens, struct state *state,
+                                 struct dict **dict) {
     ensure0(lens->tag == L_SQUARE, state->info);
     struct skel *skel, *sk;
 
@@ -1020,8 +1022,8 @@ static void visit_exit(struct lens *lens,
             // raise syntax error if they are not equals
             if (strcmp(key, square) != 0){
                 get_error(state, lens, "%s \"%s\" %s \"%s\"",
-                                "Parse error: mismatched key in square lens, expecting", key,
-                                "but got", square);
+                        "Parse error: mismatched key in square lens, expecting",
+                        key, "but got", square);
                 state->error->pos = end - strlen(square);
                 goto error;
             }
