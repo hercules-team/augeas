@@ -1026,6 +1026,7 @@ static void visit_exit(struct lens *lens,
                 goto error;
             }
 
+            FREE(square);
             get_combine(rec_state, lens, 1);
         } else {
             parse_combine(rec_state, lens, 1);
