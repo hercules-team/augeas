@@ -24,7 +24,7 @@ address 192.168.1.1
 #        up flush-mail
     down Mambo #5
 
-iface eth0-work inet dhcp
+  iface eth0-work inet dhcp
 
 allow-auto eth1
 iface eth1 inet dhcp

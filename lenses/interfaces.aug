@@ -74,7 +74,8 @@ let mapping = [ stanza_id "mapping"
  *                              IFACE
  *************************************************************************)
 
-let iface   = [ stanza_id    "iface"
+let iface   = [ Util.indent
+              . stanza_id    "iface"
               . stanza_param "family"
               . stanza_param "method"
               . eol
