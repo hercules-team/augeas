@@ -53,7 +53,7 @@ Variable: sep
     default:string - the default string to use
 *)
 let sep (pat:regexp) (default:string)
-                       = Util.del_opt_ws "" . del pat default
+                       = Sep.opt_space . del pat default
 
 (*
 Variable: sep_re
@@ -76,13 +76,13 @@ let sep_default        = "="
 Variable: sto_to_eol
   Store until end of line
 *)
-let sto_to_eol         = Util.del_opt_ws ""
-                         . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
+let sto_to_eol         = Sep.opt_space . store Rx.space_in
+
 (*
 Variable: sto_to_comment
   Store until comment
 *)
-let sto_to_comment     = Util.del_opt_ws ""
+let sto_to_comment     = Sep.opt_space
                          . store /[^;# \t\n][^;#\n]*[^;# \t\n]|[^;# \t\n]/
 
 
@@ -198,8 +198,7 @@ View: indented_title
     > let title   = IniFile.title IniFile.record_re
 *)
 let indented_title (kw:regexp)
-                       = Util.del_opt_ws "" . Util.del_str "[" . key kw
-                         . Util.del_str "]". eol
+                       = Util.indent . title kw
 
 (*
 View: title_label
@@ -216,6 +215,20 @@ let title_label (name:string) (kw:regexp)
                        = label name
                          . Util.del_str "[" . store kw
                          . Util.del_str "]". eol
+
+(*
+View: indented_title_label
+  Title for <record>. This maps the title of a record as a value in the abstract tree. The title may be indented with arbitrary amounts of whitespace
+
+  Parameters:
+    name:string - name for the title label
+    kw:regexp   - keyword regexp for the label
+
+  Sample Usage:
+    > let title   = IniFile.title_label "target" IniFile.record_label_re
+*)
+let indented_title_label (name:string) (kw:regexp)
+                       = Util.indent . title_label name kw
 
 
 (*

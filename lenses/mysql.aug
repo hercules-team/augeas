@@ -27,7 +27,7 @@ let entry    = [ key IniFile.entry_re . sep . IniFile.sto_to_comment . (comment|
  * We also remove / as first character
  * because augeas doesn't like '/' keys (although it is legal in INI Files)
  *************************************************************************)
-let title   = IniFile.title_label "target" IniFile.record_label_re
+let title   = IniFile.indented_title_label "target" IniFile.record_label_re
 let record  = IniFile.record title entry
 
 let lns    = IniFile.lns record comment

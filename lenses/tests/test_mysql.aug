@@ -22,7 +22,7 @@ socket		= /var/run/mysqld/mysqld.sock
 # The following values assume you have at least 32M ram
 
 # This was formally known as [safe_mysqld]. Both versions are currently parsed.
-[mysqld_safe]
+   [mysqld_safe]
 socket		= /var/run/mysqld/mysqld.sock
 nice		= 0
 
