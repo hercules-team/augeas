@@ -1,7 +1,7 @@
 
 SUBDIRS = naturaldocs
 
-EXTRA_DIST = lenses.tex unambig.tex syntax/augeas.vim ftdetect/augeas.vim
+EXTRA_DIST = lenses.tex unambig.tex syntax/augeas.vim ftdetect/augeas.vim bcprules.sty xpath.txt
 
 vimdir = $(datadir)/vim/vimfiles
 nobase_vim_DATA = syntax/augeas.vim ftdetect/augeas.vim
