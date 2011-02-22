@@ -68,19 +68,19 @@ printing their output.
 
 Automatically save all changes at the end of the session.
 
-=item B<--nostdinc>
+=item B<-S>, B<--nostdinc>
 
 Do not search any of the default directories for modules. When this option
 is set, only directories specified explicitly with B<-I> or specified in
 B<AUGEAS_LENS_LIB> will be searched for modules.
 
-=item B<--noload>
+=item B<-L>, B<--noload>
 
 Do not load any files on startup. This is generally used to fine-tune which
 files to load by modifying the entries in C</augeas/load> and then issuing
 a C<load> command.
 
-=item B<--noautoload>
+=item B<-A>, B<--noautoload>
 
 Do not load any lens modules, and therefore no files, on startup. This
 creates no entries under C</augeas/load> whatsoever; to read any files,

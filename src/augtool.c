@@ -1034,9 +1034,9 @@ static void usage(void) {
     fprintf(stderr, "  -f, --file FILE    read commands from FILE\n");
     fprintf(stderr, "  -s, --autosave     automatically save at the end of instructions\n");
     fprintf(stderr, "  -i, --interactive  run an interactive shell after evaluating the commands in STDIN and FILE\n");
-    fprintf(stderr, "  --nostdinc         do not search the builtin default directories for modules\n");
-    fprintf(stderr, "  --noload           do not load any files into the tree on startup\n");
-    fprintf(stderr, "  --noautoload       do not autoload modules from the search path\n");
+    fprintf(stderr, "  -S, --nostdinc     do not search the builtin default directories for modules\n");
+    fprintf(stderr, "  -L, --noload       do not load any files into the tree on startup\n");
+    fprintf(stderr, "  -A, --noautoload   do not autoload modules from the search path\n");
     fprintf(stderr, "  --version          print version information and exit.\n");
 
     exit(EXIT_FAILURE);
@@ -1046,10 +1046,7 @@ static void parse_opts(int argc, char **argv) {
     int opt;
     size_t loadpathlen = 0;
     enum {
-        VAL_NO_STDINC = CHAR_MAX + 1,
-        VAL_NO_LOAD = VAL_NO_STDINC + 1,
-        VAL_NO_AUTOLOAD = VAL_NO_LOAD + 1,
-        VAL_VERSION = VAL_NO_AUTOLOAD + 1
+        VAL_VERSION = CHAR_MAX + 1
     };
     struct option options[] = {
         { "help",      0, 0, 'h' },
@@ -1062,15 +1059,15 @@ static void parse_opts(int argc, char **argv) {
         { "file",      1, 0, 'f' },
         { "autosave",  0, 0, 's' },
         { "interactive",  0, 0, 'i' },
-        { "nostdinc",  0, 0, VAL_NO_STDINC },
-        { "noload",    0, 0, VAL_NO_LOAD },
-        { "noautoload", 0, 0, VAL_NO_AUTOLOAD },
+        { "nostdinc",  0, 0, 'S' },
+        { "noload",    0, 0, 'L' },
+        { "noautoload", 0, 0, 'A' },
         { "version",   0, 0, VAL_VERSION },
         { 0, 0, 0, 0}
     };
     int idx;
 
-    while ((opt = getopt_long(argc, argv, "hnbcr:I:ef:si", options, &idx)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hnbcr:I:ef:siSLA", options, &idx)) != -1) {
         switch(opt) {
         case 'c':
             flags |= AUG_TYPE_CHECK;
@@ -1102,13 +1099,13 @@ static void parse_opts(int argc, char **argv) {
         case 'i':
             interactive = true;
             break;
-        case VAL_NO_STDINC:
+        case 'S':
             flags |= AUG_NO_STDINC;
             break;
-        case VAL_NO_LOAD:
+        case 'L':
             flags |= AUG_NO_LOAD;
             break;
-        case VAL_NO_AUTOLOAD:
+        case 'A':
             flags |= AUG_NO_MODL_AUTOLOAD;
             break;
         case VAL_VERSION:
