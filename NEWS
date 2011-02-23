@@ -1,3 +1,41 @@
+0.8.0 - 2011-02-22
+  - add new 'square' lens combinator
+  - add new aug_span API function
+  - augtool: short options for --nostdinc, --noload, and --noautoload
+  - augtool: read commands from tty after executing file with --interactive
+  - augtool: add --autosave option
+  - augtool: add --span option to load nodes' span
+  - augtool: add span command to get the node's span according to the input
+    file
+  - augtool: really be quiet when we shouldn't be echoing
+  - fix segfault in get.c with L_MAYBE lens; bug #180
+  - fix segfault when a path expression called regexp() with an invalid
+    regexp; bug #168
+  - improved vim syntax file
+  - replace augtest by test-augtool.sh to obviate the need for Ruby to run
+    tests
+  - use sys_wait module from gnulib; bug #164
+  - Lens changes/additions
+    * Access: new lens for /etc/security/access.conf (Lorenzo Dalrio)
+    * Crypttab: new lens for /etc/crypttab (Frederic Lespez)
+    * Dhcpd: new lens
+    * Exports: accept hostnames with dashes; bug #169 (Sergio Ballestrero)
+    * Grub: add various Solaris extensions (Dominic Cleal); support "map"
+      entries, bug #148
+    * Httpd: new lens for Apache config
+    * Inifile: new lens indented_title_label
+    * Interfaces: allow indentation for "iface" entries; bug #182
+    * Mysql: change default comment delimiter from ';' to '#'; bug #181
+    * Nsswitch: accept various add'l databases; bug #171
+    * PuppetFileserver: new lens for Puppet's fileserver.conf (Frederic Lespez)
+    * REsolv: allow comments starting with ';'; bug #173 (erinn)
+    * Shellvars: autoload various snmpd config files; bug #170 (erinn)
+    * Solaris_system: new lens for /etc/system on Solaris (Dominic Cleal)
+    * Util (comment_c_style, empty_generic, empty_c_style): new lenses
+    * Xml: generic lens to process XML files
+    * Xorg: make "position" in "screen" optional; allow "Extensions"
+      section; bug #175 (omzkk)
+
 0.7.4 - 2010-11-19
   - augtool: new clearm command to parallel setm
   - augtool: add --file option
