@@ -1,5 +1,3 @@
-AUGTESTS=$(wildcard *.rb)
-
 GNULIB= ../gnulib/lib/libgnu.la
 GNULIB_CFLAGS= -I $(top_srcdir)/gnulib/lib
 
@@ -136,7 +134,7 @@ check_SCRIPTS = \
   test-augtool-empty-line.sh test-augtool-modify-root.sh
 
 EXTRA_DIST = \
-  $(AUGTESTS) root lens-test-1 \
+  test-augtool root lens-test-1 \
   $(check_SCRIPTS) $(wildcard modules/*.aug) xpath.tests
 
 noinst_SCRIPTS = $(check_SCRIPTS)
