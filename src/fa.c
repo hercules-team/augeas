@@ -895,6 +895,8 @@ static struct state_set *fa_accept_states(struct fa *fa) {
     int r;
 
     r = mark_reachable(fa);
+    E(r < 0);
+
     list_for_each(s, fa->initial) {
         if (s->reachable && s->accept)
             F(state_set_push(accept, s));

@@ -152,6 +152,7 @@ struct tree *tree_find_cr(struct augeas *aug, const char *path) {
 
     r = pathx_expand_tree(p, &result);
     ERR_BAIL(aug);
+    ERR_THROW(r < 0, aug, AUG_EINTERNAL, "pathx_expand_tree failed");
  error:
     free_pathx(p);
     return result;
@@ -1215,7 +1216,6 @@ static int tree_save(struct augeas *aug, struct tree *tree,
 /* Reset the flags based on what is set in the tree. */
 static int update_save_flags(struct augeas *aug) {
     const char *savemode ;
-    int noop = 0 ;
 
     aug_get(aug, AUGEAS_META_SAVE_MODE, &savemode);
     if (savemode == NULL)
@@ -1228,7 +1228,6 @@ static int update_save_flags(struct augeas *aug) {
         aug->flags |= AUG_SAVE_BACKUP;
     } else if (STREQ(savemode, AUG_SAVE_NOOP_TEXT)) {
         aug->flags |= AUG_SAVE_NOOP ;
-        noop = 1 ;
     } else if (STRNEQ(savemode, AUG_SAVE_OVERWRITE_TEXT)) {
         return -1;
     }

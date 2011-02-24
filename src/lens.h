@@ -79,7 +79,6 @@ struct lens {
     struct regexp            *atype;
     struct regexp            *ktype;
     struct regexp            *vtype;
-    struct jmt               *jmt;    /* NULL when recursive == 0 */
     unsigned int              value : 1;
     unsigned int              key : 1;
     unsigned int              recursive : 1;

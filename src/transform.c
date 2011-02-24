@@ -604,11 +604,10 @@ static struct lens *xfm_lens(struct augeas *aug,
 static void xfm_error(struct tree *xfm, const char *msg) {
     char *v = strdup(msg);
     char *l = strdup("error");
-    struct tree *e = NULL;
 
     if (l == NULL || v == NULL)
         return;
-    e = tree_append(xfm, l, v);
+    tree_append(xfm, l, v);
 }
 
 int transform_validate(struct augeas *aug, struct tree *xfm) {

@@ -575,6 +575,10 @@ static void parse_dot_link(FILE *fp, struct jmt_parse *parse,
             r = xasprintf(&lens_label, "<%d>", lnk->lens);
         else
             r = xasprintf(&lens_label, "%d", lnk->lens);
+        if (r < 0) {
+            fprintf(fp, "// Internal error generating lens_label\n");
+            return;
+        }
     }
     fprintf(fp, "    n%d_%d_%d [ label = \"(%d, %d)\"];\n",
             k, x->state->num, x->parent, x->state->num, x->parent);

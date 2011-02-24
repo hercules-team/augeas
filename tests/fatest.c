@@ -566,14 +566,17 @@ static void testExpandNoCase(CuTest *tc) {
     int r;
 
     r = fa_expand_nocase(p1, strlen(p1), &s, &len);
+    CuAssertIntEquals(tc, 0, r);
     CuAssertStrEquals(tc, "[Aa][Bb]", s);
     free(s);
 
     r = fa_expand_nocase(p2, strlen(p2), &s, &len);
+    CuAssertIntEquals(tc, 0, r);
     CuAssertStrEquals(tc, "[A-CUVa-cuv]", s);
     free(s);
 
     r = fa_expand_nocase(p3, strlen(p3), &s, &len);
+    CuAssertIntEquals(tc, 0, r);
     CuAssertStrEquals(tc, "[^A-Za-z]", s);
     free(s);
 }
