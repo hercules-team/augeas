@@ -56,16 +56,17 @@ let empty               = Util.empty
 let indent              = Util.indent
 
 (* borrowed from shellvars.aug *)
-let char_arg_dir  = /[^ '"\t\n]|\\\\"/
-let char_arg_sec  = /[^ '"\t\n>]|\\\\"/
+let char_arg_dir  = /[^ '"\t\n]|\\\\"'/
+let char_arg_sec  = /[^ '"\t\n>]|\\\\"'/
 let dquot = /"([^"\\\n]|\\\\.)*"/
+let squot = /'([^'\\\n]|\\\\.)*'/
 
 (******************************************************************
  *                            Attributes
  *****************************************************************)
 
-let arg_dir = [ label "arg" . store (char_arg_dir+|dquot) ]
-let arg_sec = [ label "arg" . store (char_arg_sec+|dquot) ]
+let arg_dir = [ label "arg" . store (char_arg_dir+|dquot|squot) ]
+let arg_sec = [ label "arg" . store (char_arg_sec+|dquot|squot) ]
 
 let argv (l:lens) = l . (sep_spc . l)*
 

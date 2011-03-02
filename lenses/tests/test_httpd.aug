@@ -7,6 +7,13 @@ test Httpd.directive get d1 =
     { "arg" = "\"/etc/apache2\"" }
   }
 
+(* simple quotes *)
+let d1s = "ServerRoot '/etc/apache2'\n"
+test Httpd.directive get d1s =
+  { "directive" = "ServerRoot"
+    { "arg" = "'/etc/apache2'" }
+  }
+
 let d2 = "ScriptAlias /cgi-bin/ /usr/lib/cgi-bin/\n"
 test Httpd.directive get d2 =
   { "directive" = "ScriptAlias"
