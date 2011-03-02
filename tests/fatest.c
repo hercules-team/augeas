@@ -255,12 +255,12 @@ static void testManualAmbig(CuTest *tc) {
     struct fa *ss = make_good_fa(tc, "(X(.|\n))*YX");
 
     struct fa *a1f_mp = mark(fa_concat(a1f, mp));
-    struct fa *a1f_mp$a1t = mark(fa_intersect(a1f_mp, a1t));
-    struct fa *b1 = mark(fa_concat(a1f_mp$a1t, ms));
+    struct fa *a1f_mp_a1t = mark(fa_intersect(a1f_mp, a1t));
+    struct fa *b1 = mark(fa_concat(a1f_mp_a1t, ms));
 
     struct fa *sp_a2f = mark(fa_concat(sp, a2f));
-    struct fa *sp_a2f$a2t = mark(fa_intersect(sp_a2f, a2t));
-    struct fa *b2 = mark(fa_concat(ss, sp_a2f$a2t));
+    struct fa *sp_a2f_a2t = mark(fa_intersect(sp_a2f, a2t));
+    struct fa *b2 = mark(fa_concat(ss, sp_a2f_a2t));
 
     struct fa *amb = mark(fa_intersect(b1, b2));
     struct fa *exp = make_good_fa(tc, "XaYXXbYXXa");
