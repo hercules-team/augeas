@@ -11,27 +11,31 @@ About: License
 module Nrpe =
   autoload xfm
 
-let nl = del /[ \t]*\n/ "\n"
-let eq = del /=/ "="
+
+let eol = Util.eol
+let eq = Sep.equal
+
+(* View: word *)
+let word = /[^=\n\t ]+/
 
 
-(* command entries
+(* View: command
+    nrpe.cfg usually has many entries defining commands to run
 
-nrpe.cfg usually has many entries defining commands to run
-
-command[check_foo]=/path/to/nagios/plugin -w 123 -c 456
-command[check_bar]=/path/to/another/nagios/plugin --option
-
+    > command[check_foo]=/path/to/nagios/plugin -w 123 -c 456
+    > command[check_bar]=/path/to/another/nagios/plugin --option
 *)
-let obrkt = del /\[/ "["
-let cbrkt = del /\]/ "]"
+let command =
+  let obrkt = del /\[/ "[" in
+  let cbrkt = del /\]/ "]" in
+    [ key "command" .
+    [ obrkt . key /[^]\/\n]+/ . cbrkt . eq
+            . store /[^=\n]+/ . del /\n/ "\n" ]
+    ]
 
-let command = [ key "command" .
-  [ obrkt . key /[^]\/\n]+/ . cbrkt . eq . store /[^=\n]+/ . del /\n/ "\n" ]
-]
 
-
-(* regular entries *)
+(* View: item_re
+     regular entries re *)
 let item_re = "server_port"
             | "command_prefix"
             | "server_address"
@@ -46,44 +50,47 @@ let item_re = "server_port"
             | "pid_file"
             | "log_facility"
 
-let item = [ key item_re . eq . store /[^=\n\t ]+/ . nl ]
+(* View: item
+     regular entries *)
+let item = [ key item_re . eq . store word . eol ]
 
 
-(* include entries
+(* View: include
+    An include entry.
 
-nrpe.cfg can include more than one file or directory of files
+    nrpe.cfg can include more than one file or directory of files
 
-include=/path/to/file1.cfg
-include=/path/to/file2.cfg
-include_dir=/path/to/dir/
-
+    > include=/path/to/file1.cfg
+    > include=/path/to/file2.cfg
 *)
 let include = [ key "include" .
-  [ label "file" . eq . store /[^=\n\t ]+/ . nl ]
-]
-let include_dir = [ key "include_dir" .
-  [ label "dir" . eq . store /[^=\n\t ]+/ . nl ]
+  [ label "file" . eq . store word . eol ]
 ]
 
-
-(* comments
-
-We can't use Util.comment because nrpe only allows comments starting at
-beginning of line.
-
+(* View: include_dir
+    > include_dir=/path/to/dir/
 *)
-let comment = [ label "#comment" . del /^#[ \t]*/ "# " . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ . nl ]
+let include_dir = [ key "include_dir" .
+  [ label "dir" . eq . store word . eol ]
+]
 
+
+(* View: comment
+    Nrpe comments must start at beginning of line *)
+let comment = Util.comment_generic /#[ \t]*/ "# "
 
 (* blank lines and empty comments *)
 let empty = Util.empty
 
-
-(* final lens definition *)
+(* View: lns
+    The Nrpe lens *)
 let lns = ( command | item | include | include_dir | comment | empty ) *
 
+(* View: filter
+    File filter *)
 let filter = Util.stdexcl .
              incl "/etc/nrpe.cfg" .
              incl "/etc/nagios/nrpe.cfg"
 
 let xfm = transform lns (filter)
+
