@@ -86,12 +86,13 @@ vasprintf
 #   put *.m4 files in new gnulib/m4/ dir
 #   put *.[ch] files in new gnulib/lib/ dir.
 
-$gnulib_tool			\
-  --lgpl=2			\
-  --with-tests			\
-  --m4-base=gnulib/m4		\
-  --source-base=gnulib/lib	\
-  --tests-base=gnulib/tests	\
+$gnulib_tool                    \
+  --lgpl=2                      \
+  --with-tests                  \
+  --m4-base=gnulib/m4           \
+  --source-base=gnulib/lib      \
+  --tests-base=gnulib/tests     \
   --aux-dir=build/aux           \
+  --libtool                     \
   --quiet                       \
   --import $modules
