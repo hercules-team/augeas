@@ -20,7 +20,7 @@ module NagiosCfg =
 
     (* View: param_def
         define a field *)
-    let param_def   = 
+    let param_def =
                key /[A-Za-z0-9_]+/
              . Sep.opt_space . Sep.equal
              . Sep.opt_space . store Rx.no_spaces
@@ -29,7 +29,7 @@ module NagiosCfg =
         Params can have sub params *)
     let param =
          [ Util.indent . param_def
-         . [ Sep.space . param_def ]* 
+         . [ Sep.space . param_def ]*
          . Util.eol ]
 
     (* View: lns
