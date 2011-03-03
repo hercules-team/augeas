@@ -67,6 +67,7 @@ modules='
 argz
 fnmatch
 getline
+getopt-gnu
 gitlog-to-changelog
 canonicalize-lgpl
 isblank
