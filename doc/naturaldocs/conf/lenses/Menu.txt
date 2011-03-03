@@ -68,6 +68,8 @@ Group: Specific Modules  {
    File: Mke2fs  (mke2fs.aug)
    File: Modprobe  (modprobe.aug)
    File: Modules_conf  (modules_conf.aug)
+   File: NagiosCfg (nagioscfg.aug)
+   File: NagiosObjects (nagiosobjects.aug)
    File: Nrpe  (nrpe.aug)
    File: Nsswitch  (nsswitch.aug)
    File: Pbuilder  (pbuilder.aug)
