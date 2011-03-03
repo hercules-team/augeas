@@ -1,76 +1,72 @@
 module Test_NagiosCfg =
+    let conf="
+# LOG FILE
+log_file=/var/log/nagios3/nagios.log
 
-	let s1 = "log_file=/var/log/nagios3/nagios.log\n"
-	test NagiosCfg.lns get s1 =
-		{ "log_file" = "/var/log/nagios3/nagios.log" }
+# OBJECT CONFIGURATION FILE(S)
+cfg_file=/etc/nagios3/objects/check_commands.cfg
+cfg_file=/etc/nagios3/objects/contact_groups.cfg
+cfg_file=/etc/nagios3/objects/contacts.cfg
+cfg_file=/etc/nagios3/objects/hostgroups.cfg
+cfg_file=/etc/nagios3/objects/hosts.cfg
+cfg_file=/etc/nagios3/objects/services.cfg
 
-	let s2 = "debug_level=0
+# NAGIOS USER
+nagios_user=nagios
 
+# NAGIOS GROUP
+nagios_group=nagios
 
+# DATE FORMAT
+date_format=iso8601
 
-# DEBUG VERBOSITY
-# This option determines how verbose the debug log out will be.
-# Values: 0 = Brief output
-#         1 = More detailed
-#         2 = Very detailed
+# ILLEGAL OBJECT NAME CHARS
+illegal_object_name_chars=`~!$%^&*|'\"<>?,()'=
 
-debug_verbosity=1
+# ILLEGAL MACRO OUTPUT CHARS
+illegal_macro_output_chars=`~$&|'\"<>
 
-
-
-# DEBUG FILE
-# This option determines where Nagios should write debugging information.
-
-debug_file=/var/lib/nagios3/nagios.debug
-
-
-
-# MAX DEBUG FILE SIZE
-# This option determines the maximum size (in bytes) of the debug file.  If
-# the file grows larger than this size, it will be renamed with a .old
-# extension.  If a file already exists with a .old extension it will
-# automatically be deleted.  This helps ensure your disk space usage doesn't
-# get out of control when debugging Nagios.
-
-max_debug_file_size=1000000
-
-
-cfg_dir=/etc/nagios3/dcsit_production
-cfg_dir=/etc/nagios3/dcdb_test
-cfg_dir=/etc/nagios3/dcdb_production
+# MISC DIRECTIVES
+p1_file=/usr/lib/nagios3/p1.pl
+event_broker_options=-1
+use_large_installation_tweaks=1
+broker_module=/usr/lib/nagios3/libNagiosCluster-1.0.so.4.0.0
+broker_module=/usr/sbin/ndomod.o config_file=/etc/nagios3/ndomod.cfg
 "
-	test NagiosCfg.lns get s2 =
-  { "debug_level" = "0" }
-  {  }
-  {  }
-  {  }
-  { "#comment" = "DEBUG VERBOSITY" }
-  { "#comment" = "This option determines how verbose the debug log out will be." }
-  { "#comment" = "Values: 0 = Brief output" }
-  { "#comment" = "1 = More detailed" }
-  { "#comment" = "2 = Very detailed" }
-  {  }
-  { "debug_verbosity" = "1" }
-  {  }
-  {  }
-  {  }
-  { "#comment" = "DEBUG FILE" }
-  { "#comment" = "This option determines where Nagios should write debugging information." }
-  {  }
-  { "debug_file" = "/var/lib/nagios3/nagios.debug" }
-  {  }
-  {  }
-  {  }
-  { "#comment" = "MAX DEBUG FILE SIZE" }
-  { "#comment" = "This option determines the maximum size (in bytes) of the debug file.  If" }
-  { "#comment" = "the file grows larger than this size, it will be renamed with a .old" }
-  { "#comment" = "extension.  If a file already exists with a .old extension it will" }
-  { "#comment" = "automatically be deleted.  This helps ensure your disk space usage doesn't" }
-  { "#comment" = "get out of control when debugging Nagios." }
-  {  }
-  { "max_debug_file_size" = "1000000" }
-  {  }
-  {  }
-  { "cfg_dir" = "/etc/nagios3/dcsit_production" }
-  { "cfg_dir" = "/etc/nagios3/dcdb_test" }
-  { "cfg_dir" = "/etc/nagios3/dcdb_production" }
+
+    test NagiosCfg.lns get conf =
+        {}
+        { "#comment"     = "LOG FILE" }
+        { "log_file"    = "/var/log/nagios3/nagios.log" }
+        {}
+        { "#comment"     = "OBJECT CONFIGURATION FILE(S)" }
+        { "cfg_file"    = "/etc/nagios3/objects/check_commands.cfg" }
+        { "cfg_file"    = "/etc/nagios3/objects/contact_groups.cfg" }
+        { "cfg_file"    = "/etc/nagios3/objects/contacts.cfg" }
+        { "cfg_file"    = "/etc/nagios3/objects/hostgroups.cfg" }
+        { "cfg_file"    = "/etc/nagios3/objects/hosts.cfg" }
+        { "cfg_file"    = "/etc/nagios3/objects/services.cfg" }
+        {}
+        { "#comment"     = "NAGIOS USER" }
+        { "nagios_user" = "nagios" }
+        {}
+        { "#comment"     = "NAGIOS GROUP" }
+        { "nagios_group"= "nagios" }
+        {}
+        { "#comment"     = "DATE FORMAT" }
+        { "date_format" = "iso8601" }
+        {}
+        { "#comment"     = "ILLEGAL OBJECT NAME CHARS" }
+        { "illegal_object_name_chars"   = "`~!$%^&*|'\"<>?,()'=" }
+        {}
+        { "#comment"     = "ILLEGAL MACRO OUTPUT CHARS" }
+        { "illegal_macro_output_chars"  = "`~$&|'\"<>" }
+        {}
+        { "#comment"     = "MISC DIRECTIVES" }
+        { "p1_file"     = "/usr/lib/nagios3/p1.pl" }
+        { "event_broker_options"    = "-1" }
+        { "use_large_installation_tweaks"   = "1" }
+        { "broker_module"   = "/usr/lib/nagios3/libNagiosCluster-1.0.so.4.0.0" }
+        { "broker_module"   = "/usr/sbin/ndomod.o"
+           { "config_file" = "/etc/nagios3/ndomod.cfg" } }
+
