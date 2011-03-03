@@ -27,7 +27,7 @@ define service {
         { "#comment" = "Nagios Objects definitions file" }
         {}
         {}
-        { "host" 
+        { "host"
             { "host_name"       = "plonk" }
             { "alias"           = "plonk" }
             { "address"         = "plonk" }
@@ -35,7 +35,7 @@ define service {
             { "contact_groups"  = "Monitoring-Team,admins" }
         }
         {}
-        { "service" 
+        { "service"
             { "service_description"     = "gen" }
             { "use"                     = "generic_template_passive" }
             { "host_name"               = "plonk" }
