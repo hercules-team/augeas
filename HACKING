@@ -35,3 +35,20 @@ Building from git
   configure. You'd then run autogen like this:
 
     ./autogen.sh --enable-compile-warnings=error --enable-debug=yes
+
+Running augtool
+---------------
+
+The script ./src/try can be used to run ./src/augtool against a fresh
+filesystem root. It copies the files from tests/root/ to build/try/ and
+starts augtool against that root, using the lenses from lenses/ (and none
+of the ones that might be installed on your system)
+
+The script can be used for the following; OPTS are options that are passed
+to augtool verbatim
+
+  ./src/try OPTS     - run the commands from /tmp/augcmds.txt
+  ./src/try cli OPTS - start an interactive session with augtool
+  ./src/try gdb      - start gdb and set it up for debugging augtool
+  ./src/try valgrind - run the commands from /tmp/augcmds.txt through augtool
+                       under valgrind to check for memory leaks

@@ -4,8 +4,8 @@ topdir=$(cd $(dirname $0)/.. && pwd)
 export AUGEAS_LENS_LIB=${topdir}/lenses
 export AUGEAS_ROOT=${topdir}/build/try
 
-AUGCMDS=/tmp/augcmds.txt
-GDBCMDS=/tmp/gdbcmds.txt
+AUGCMDS=${topdir}/build/augcmds.txt
+GDBCMDS=${topdir}/build/gdbcmds.txt
 
 rm -rf $AUGEAS_ROOT
 cp -pr ${topdir}/tests/root $AUGEAS_ROOT
@@ -13,7 +13,7 @@ find $AUGEAS_ROOT -name \*.augnew\* | xargs -r rm
 
 if [[ ! -f $AUGCMDS ]] ; then
     cat > $AUGCMDS <<EOF
-print /system/config
+match /augeas/version
 EOF
 fi
 
