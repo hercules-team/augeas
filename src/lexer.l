@@ -45,6 +45,7 @@ typedef struct info YYLTYPE;
 int augl_get_column  (yyscan_t yyscanner);
 static void augl_set_column (int  column_no , yyscan_t yyscanner);
 int augl_init_lexer(struct info *info, yyscan_t * scanner);
+void augl_close_lexer(yyscan_t *scanner);
 
 static void loc_update(YYLTYPE *yylloc, const char *s, int len) {
   for (int i=0; i < len; i++) {
@@ -156,7 +157,7 @@ ARROW  ->
                 }
 
   <<EOF>>       {
-                  fclose(augl_get_in(yyscanner));
+                  augl_close_lexer(yyscanner);
                   yyterminate();
                 }
 
@@ -178,10 +179,22 @@ ARROW  ->
                                "%s:%d:%d: Missing *)",
                                augl_get_extra(yyscanner)->filename->str,
                                yylineno, yylloc->first_column);
+                  augl_close_lexer(yyscanner);
                   yyterminate();
                 }
 }
 %%
+
+void augl_close_lexer(yyscan_t *scanner) {
+  FILE *fp = augl_get_in(scanner);
+
+  if (fp != NULL) {
+    fclose(fp);
+    augl_set_in(NULL, scanner);
+  }
+
+  return 0;
+}
 
 int augl_init_lexer(struct info *info, yyscan_t *scanner) {
   FILE *f;
@@ -191,8 +204,10 @@ int augl_init_lexer(struct info *info, yyscan_t *scanner) {
   if (f == NULL)
     return -1;
 
-  if (augl_lex_init(scanner) != 0)
+  if (augl_lex_init(scanner) != 0) {
+    augl_close_lexer(scanner);
     return -1;
+  }
   augl_set_extra(info, *scanner);
   augl_set_in(f, *scanner);
   return 0;

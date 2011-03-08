@@ -104,6 +104,7 @@ typedef struct info YYLTYPE;
 /* Lexer */
 extern int augl_lex (YYSTYPE * yylval_param,struct info * yylloc_param ,yyscan_t yyscanner);
  int augl_init_lexer(struct info *info, yyscan_t * scanner);
+void augl_close_lexer(yyscan_t *scanner);
 int augl_lex_destroy (yyscan_t yyscanner );
 int augl_get_lineno (yyscan_t yyscanner );
 int augl_get_column  (yyscan_t yyscanner);
@@ -357,6 +358,7 @@ int augl_parse_file(struct augeas *aug, const char *name,
 
   yydebug = getenv("YYDEBUG") != NULL;
   r = augl_parse(term, scanner);
+  augl_close_lexer(scanner);
   augl_lex_destroy(scanner);
   if (r == 1) {
     augl_error(&info, term, NULL, "syntax error");
