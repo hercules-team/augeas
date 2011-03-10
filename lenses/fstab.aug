@@ -11,12 +11,13 @@ module Fstab =
   let comment = Util.comment
   let empty   = Util.empty
 
-  let word    = Rx.word
+  (* An option label can't contain comma, comment, equals, or space *)
+  let optlabel = /[^,#= \n\t]+/
   let spec    = /[^,# \n\t][^ \n\t]*/
 
   let comma_sep_list (l:string) =
-    let value = [ label "value" . Util.del_str "=" . store word ] in
-      let lns = [ label l . store word . value? ] in
+    let value = [ label "value" . Util.del_str "=" . store Rx.neg1 ] in
+      let lns = [ label l . store optlabel . value? ] in
          Build.opt_list lns comma
 
   let record = [ seq "mntent" .

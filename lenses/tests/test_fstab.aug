@@ -35,7 +35,7 @@ module Test_fstab =
         { "opt" = "defaults" } }
 
 
-  let multi_opts = "devpts\t /dev/pts\t devpts  gid=5,mode=620  0 0\n"
+  let multi_opts = "devpts\t /dev/pts\t devpts  gid=5,mode=620,fscontext=system_u:object_r:removable_t  0 0\n"
 
   let multi_opts_tree =
     { "1"
@@ -46,6 +46,8 @@ module Test_fstab =
             { "value" = "5" } }
         { "opt" = "mode"
             { "value" = "620" } }
+        { "opt" = "fscontext"
+            { "value" = "system_u:object_r:removable_t" } }
         { "dump" = "0" }
         { "passno" = "0" } }
 
