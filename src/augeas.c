@@ -343,6 +343,7 @@ struct augeas *aug_init(const char *root, const char *loadpath,
                         unsigned int flags) {
     struct augeas *result;
     struct tree *tree_root = make_tree(NULL, NULL, NULL, NULL);
+    int r;
 
     if (tree_root == NULL)
         return NULL;
@@ -370,16 +371,22 @@ struct augeas *aug_init(const char *root, const char *loadpath,
     result->modpathz = NULL;
     result->nmodpath = 0;
     if (loadpath != NULL) {
-        argz_add_sep(&result->modpathz, &result->nmodpath,
-                     loadpath, PATH_SEP_CHAR);
+        r = argz_add_sep(&result->modpathz, &result->nmodpath,
+                         loadpath, PATH_SEP_CHAR);
+        ERR_NOMEM(r != 0, result);
     }
     char *env = getenv(AUGEAS_LENS_ENV);
     if (env != NULL) {
-        argz_add_sep(&result->modpathz, &result->nmodpath, env, PATH_SEP_CHAR);
+        r = argz_add_sep(&result->modpathz, &result->nmodpath,
+                         env, PATH_SEP_CHAR);
+        ERR_NOMEM(r != 0, result);
     }
     if (!(flags & AUG_NO_STDINC)) {
-        argz_add(&result->modpathz, &result->nmodpath, AUGEAS_LENS_DIR);
-        argz_add(&result->modpathz, &result->nmodpath, AUGEAS_LENS_DIST_DIR);
+        r = argz_add(&result->modpathz, &result->nmodpath, AUGEAS_LENS_DIR);
+        ERR_NOMEM(r != 0, result);
+        r = argz_add(&result->modpathz, &result->nmodpath,
+                     AUGEAS_LENS_DIST_DIR);
+        ERR_NOMEM(r != 0, result);
     }
     /* Clean up trailing slashes */
     if (result->nmodpath > 0) {
@@ -402,8 +409,10 @@ struct augeas *aug_init(const char *root, const char *loadpath,
             *t = '\0';
         }
         s = result->modpathz;
-        argz_create_sep(s, PATH_SEP_CHAR, &result->modpathz, &result->nmodpath);
+        r = argz_create_sep(s, PATH_SEP_CHAR, &result->modpathz,
+                            &result->nmodpath);
         free(s);
+        ERR_NOMEM(r != 0, result);
     }
 
     /* We report the root dir in AUGEAS_META_ROOT, but we only use the
