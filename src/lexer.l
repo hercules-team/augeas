@@ -205,7 +205,7 @@ int augl_init_lexer(struct info *info, yyscan_t *scanner) {
     return -1;
 
   if (augl_lex_init(scanner) != 0) {
-    augl_close_lexer(scanner);
+    fclose(f);
     return -1;
   }
   augl_set_extra(info, *scanner);
