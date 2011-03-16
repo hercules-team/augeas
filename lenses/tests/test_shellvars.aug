@@ -136,6 +136,11 @@ unset ONBOOT    #   We do not want this var
   test Shellvars.lns get "ulimit -c unlimited\n" =
   { "@builtin" = "ulimit" { "args" = "-c unlimited" } }
 
+  (* Bug 183: segfault on NULL value *)
+  test Shellvars.lns put "" after
+    clear "/key"
+  = *
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
