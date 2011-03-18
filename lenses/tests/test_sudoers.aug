@@ -39,6 +39,7 @@ www-data +biglab=(rpinson)NOEXEC: ICAL \
 	+secretaries           ALPHA = /usr/bin/su [!-]*, !/usr/bin/su *root*
 
 @my\ admin\ group ALL=(root) NOPASSWD: /usr/bin/python /usr/local/sbin/filterlog -iu\\=www /var/log/something.log
+#includedir /etc/sudoers.d
 "
 
    test Sudoers.lns get conf =
@@ -145,6 +146,7 @@ www-data +biglab=(rpinson)NOEXEC: ICAL \
               }
           }
       }
+      { "#includedir" = "/etc/sudoers.d" }
 
 test Sudoers.parameter_integer_bool
     put "umask = 022"

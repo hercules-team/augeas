@@ -120,12 +120,17 @@ let sto_integer = store /[0-9]+/
 (* View: comment
 Map comments in "#comment" nodes *)
 let comment =
-  let sto_to_eol = store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ in
+  let sto_to_eol = store (/([^ \t\n].*[^ \t\n]|[^ \t\n])/ - /includedir.*/) in
   [ label "#comment" . del /[ \t]*#[ \t]*/ "# " . sto_to_eol . eol ]
 
 (* View: empty
 Map empty lines *)
 let empty   = [ del /[ \t]*#?[ \t]*\n/ "\n" ]
+
+(* View: includedir *)
+let includedir =
+  [ key "#includedir" . Sep.space . store Rx.fspath . eol ]
+
 
 (************************************************************************
  * Group:                                    ALIASES
@@ -476,11 +481,12 @@ let spec = [ label "spec" . indent
      The sudoers lens, any amount of
        * <empty> lines
        * <comments>
+       * <includedirs>
        * <aliases>
        * <defaults>
        * <specs>
 *)
-let lns = ( empty | comment | alias | defaults | spec  )*
+let lns = ( empty | comment | includedir | alias | defaults | spec  )*
 
 (* View: filter *)
 let filter = (incl "/etc/sudoers")
