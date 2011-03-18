@@ -8,6 +8,7 @@ networks:       nis [!UNAVAIL=return success=continue] files
 protocols:      db files
 netgroup:       nis
 bootparams: nisplus [NOTFOUND=return] files
+sudoers:        files ldap
 "
 
 test Nsswitch.lns get conf =
@@ -43,5 +44,7 @@ test Nsswitch.lns get conf =
            { "status" = "NOTFOUND"
                { "action" = "return" } } }
       { "service" = "files" } }
-
+   { "database" = "sudoers"
+      { "service" = "files" }
+      { "service" = "ldap" } }
 

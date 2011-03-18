@@ -76,6 +76,7 @@ let database =
                   | "sendmailvars"
                   | "services"
                   | "shadow"
+                  | "sudoers"
     in [ label "database" . store database_kw
                . sep_colon
                . (Build.opt_list
