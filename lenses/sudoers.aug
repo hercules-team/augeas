@@ -120,7 +120,7 @@ let sto_integer = store /[0-9]+/
 (* View: comment
 Map comments in "#comment" nodes *)
 let comment =
-  let sto_to_eol = store (/([^ \t\n].*[^ \t\n]|[^ \t\n])/ - /includedir.*/) in
+  let sto_to_eol = store (/([^ \t\n].*[^ \t\n]|[^ \t\n])/ - /include(dir)?.*/) in
   [ label "#comment" . del /[ \t]*#[ \t]*/ "# " . sto_to_eol . eol ]
 
 (* View: empty
@@ -129,7 +129,7 @@ let empty   = [ del /[ \t]*#?[ \t]*\n/ "\n" ]
 
 (* View: includedir *)
 let includedir =
-  [ key "#includedir" . Sep.space . store Rx.fspath . eol ]
+  [ key /#include(dir)?/ . Sep.space . store Rx.fspath . eol ]
 
 
 (************************************************************************
