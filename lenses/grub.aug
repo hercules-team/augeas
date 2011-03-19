@@ -70,6 +70,7 @@ module Grub =
                      | kw_menu_arg "timeout"
                      | kw_menu_arg "splashimage"
                      | kw_menu_arg "gfxmenu"
+                     | kw_menu_arg "background"
                      | serial
                      | terminal
                      | password_arg
@@ -113,6 +114,9 @@ module Grub =
     let savedefault =
       [ command "savedefault" "\t" . (spc . store Rx.integer)? . eol ]
 
+    let configfile =
+      [ command "configfile" "\t" . spc . store Rx.no_spaces . eol ]
+
     let boot_setting = kw_boot_arg "root"
                      | kernel
                      | kw_boot_arg "initrd"
@@ -122,6 +126,7 @@ module Grub =
                      | kw_boot_arg "findroot"  (* Solaris extension *)
                      | kw_pres "quiet"  (* Seems to be a Ubuntu extension *)
                      | savedefault
+                     | configfile
                      | module_line
                      | map_line
 

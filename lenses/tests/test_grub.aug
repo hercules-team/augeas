@@ -11,6 +11,7 @@ module Test_grub =
 #boot=/dev/sda
 password --md5 $1$M9NLj$p2gs87vwNv48BUu.wAfVw0
 default=0
+background 103332
 timeout=5
 splashimage=(hd0,0)/grub/splash.xpm.gz
 gfxmenu=(hd0,0)/boot/message
@@ -33,6 +34,8 @@ title Fedora (2.6.24.3-34.fc8)
         kernel /vmlinuz-2.6.24.3-34.fc8 ro root=/dev/vg00/lv00
         initrd /initrd-2.6.24.3-34.fc8.img
         map (hd0) (hd1)
+title othermenu
+        configfile /boot/grub/othergrub.conf
 "
 
   test Grub.lns get conf =
@@ -48,6 +51,7 @@ title Fedora (2.6.24.3-34.fc8)
     { "password" = "$1$M9NLj$p2gs87vwNv48BUu.wAfVw0"
         { "md5" } }
     { "default" = "0" }
+    { "background" = "103332" }
     { "timeout" = "5" }
     { "splashimage" = "(hd0,0)/grub/splash.xpm.gz" }
     { "gfxmenu" = "(hd0,0)/boot/message" }
@@ -74,6 +78,9 @@ title Fedora (2.6.24.3-34.fc8)
             { "ro" } { "root" = "/dev/vg00/lv00" } }
         { "initrd" = "/initrd-2.6.24.3-34.fc8.img" }
         { "map" { "from" = "(hd0)" } { "to" = "(hd1)" } } }
+    { "title" = "othermenu"
+        { "configfile" = "/boot/grub/othergrub.conf" } }
+
 
   test Grub.lns put conf after set "default" "0" = conf
 
