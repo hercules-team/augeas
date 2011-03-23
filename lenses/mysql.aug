@@ -34,6 +34,7 @@ let lns    = IniFile.lns record comment
 
 let filter = (incl "/etc/mysql/my.cnf")
              . (incl "/etc/mysql/conf.d/*.cnf")
+             . (incl "/etc/my.cnf")
              . Util.stdexcl
 
 let xfm = transform lns filter
