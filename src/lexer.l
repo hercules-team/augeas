@@ -34,18 +34,19 @@ typedef struct info YYLTYPE;
 #define YY_USER_ACTION                                            \
   do {                                                            \
      yylloc->last_column += yyleng;                               \
-     yylloc->filename = augl_get_extra(yyscanner)->filename;      \
-     yylloc->error = augl_get_extra(yyscanner)->error;            \
+     yylloc->filename = augl_get_info(yyscanner)->filename;       \
+     yylloc->error = augl_get_info(yyscanner)->error;             \
    } while(0);
 
 #define YY_USER_INIT LOCATION_STEP(*yylloc)
 
-#define YY_EXTRA_TYPE struct info *
+#define YY_EXTRA_TYPE struct state *
 
 int augl_get_column  (yyscan_t yyscanner);
 static void augl_set_column (int  column_no , yyscan_t yyscanner);
-int augl_init_lexer(struct info *info, yyscan_t * scanner);
+int augl_init_lexer(struct state *state, yyscan_t * scanner);
 void augl_close_lexer(yyscan_t *scanner);
+struct info *augl_get_info(yyscan_t yyscanner);
 
 static void loc_update(YYLTYPE *yylloc, const char *s, int len) {
   for (int i=0; i < len; i++) {
@@ -77,10 +78,6 @@ QID    {UID}\.{LID}
 ARROW  ->
 
 %s COMMENT
-
-%{
-    int comment_depth = 0;
-%}
 
 %%
 <*>
@@ -146,13 +143,13 @@ ARROW  ->
                    return UIDENT;
                 }
   \(\*          {
-                   comment_depth = 1;
+                   augl_get_extra(yyscanner)->comment_depth = 1;
                    BEGIN(COMMENT);
                 }
   .             {
-    report_error(augl_get_extra(yyscanner)->error, AUG_ESYNTAX,
+    report_error(augl_get_info(yyscanner)->error, AUG_ESYNTAX,
                  "%s:%d:%d: Unexpected character %c",
-                 augl_get_extra(yyscanner)->filename->str,
+                 augl_get_info(yyscanner)->filename->str,
                  yylineno, yylloc->first_column, yytext[0]);
                 }
 
@@ -166,18 +163,18 @@ ARROW  ->
 <COMMENT>
 {
   \(\*          {
-                   comment_depth += 1;
+                   augl_get_extra(yyscanner)->comment_depth += 1;
                 }
   \*\)          {
-                   comment_depth -= 1;
-                   if (comment_depth == 0)
+                   augl_get_extra(yyscanner)->comment_depth -= 1;
+                   if (augl_get_extra(yyscanner)->comment_depth == 0)
                        BEGIN(INITIAL);
                 }
   .             /* Skip */;
   <<EOF>>       {
-                  report_error(augl_get_extra(yyscanner)->error, AUG_ESYNTAX,
+                  report_error(augl_get_info(yyscanner)->error, AUG_ESYNTAX,
                                "%s:%d:%d: Missing *)",
-                               augl_get_extra(yyscanner)->filename->str,
+                               augl_get_info(yyscanner)->filename->str,
                                yylineno, yylloc->first_column);
                   augl_close_lexer(yyscanner);
                   yyterminate();
@@ -196,9 +193,9 @@ void augl_close_lexer(yyscan_t *scanner) {
   return 0;
 }
 
-int augl_init_lexer(struct info *info, yyscan_t *scanner) {
+int augl_init_lexer(struct state *state, yyscan_t *scanner) {
   FILE *f;
-  struct string *name = info->filename;
+  struct string *name = state->info->filename;
 
   f = fopen(name->str, "r");
   if (f == NULL)
@@ -208,7 +205,11 @@ int augl_init_lexer(struct info *info, yyscan_t *scanner) {
     fclose(f);
     return -1;
   }
-  augl_set_extra(info, *scanner);
+  augl_set_extra(state, *scanner);
   augl_set_in(f, *scanner);
   return 0;
+}
+
+struct info *augl_get_info(yyscan_t scanner) {
+  return augl_get_extra(scanner)->info;
 }

@@ -27,8 +27,8 @@ typedef struct info YYLTYPE;
 /* The lack of reference counting on filename is intentional */
 # define YYLLOC_DEFAULT(Current, Rhs, N)                                \
   do {                                                                  \
-    (Current).filename = augl_get_extra(scanner)->filename;             \
-    (Current).error = augl_get_extra(scanner)->error;                   \
+    (Current).filename = augl_get_info(scanner)->filename;              \
+    (Current).error = augl_get_info(scanner)->error;                    \
     if (YYID (N)) {                                                     \
         (Current).first_line   = YYRHSLOC (Rhs, 1).first_line;          \
         (Current).first_column = YYRHSLOC (Rhs, 1).first_column;        \
@@ -41,8 +41,19 @@ typedef struct info YYLTYPE;
 	    YYRHSLOC (Rhs, 0).last_column;                                  \
     }                                                                   \
   } while (0)
-
 %}
+
+%code provides {
+#include "info.h"
+
+/* Track custom scanner state */
+struct state {
+  struct info *info;
+  unsigned int comment_depth;
+};
+
+}
+
 %locations
 %error-verbose
 %name-prefix="augl_"
@@ -57,8 +68,8 @@ typedef struct info YYLTYPE;
   @$.first_column = 0;
   @$.last_line    = 1;
   @$.last_column  = 0;
-  @$.filename     = augl_get_extra(scanner)->filename;
-  @$.error        = augl_get_extra(scanner)->error;
+  @$.filename     = augl_get_info(scanner)->filename;
+  @$.error        = augl_get_info(scanner)->error;
 };
 
 %token <string> DQUOTED   /* "foo" */
@@ -103,12 +114,12 @@ typedef struct info YYLTYPE;
 %{
 /* Lexer */
 extern int augl_lex (YYSTYPE * yylval_param,struct info * yylloc_param ,yyscan_t yyscanner);
- int augl_init_lexer(struct info *info, yyscan_t * scanner);
+int augl_init_lexer(struct state *state, yyscan_t * scanner);
 void augl_close_lexer(yyscan_t *scanner);
 int augl_lex_destroy (yyscan_t yyscanner );
 int augl_get_lineno (yyscan_t yyscanner );
 int augl_get_column  (yyscan_t yyscanner);
-struct info *augl_get_extra (yyscan_t yyscanner );
+struct info *augl_get_info(yyscan_t yyscanner);
 char *augl_get_text (yyscan_t yyscanner );
 
 static void augl_error(struct info *locp, struct term **term,
@@ -333,7 +344,8 @@ tree_label: DQUOTED
 
 int augl_parse_file(struct augeas *aug, const char *name,
                     struct term **term) {
-  yyscan_t       scanner;
+  yyscan_t          scanner;
+  struct state      state;
   struct string  *sname = NULL;
   struct info    info;
   int result = -1;
@@ -351,7 +363,12 @@ int augl_parse_file(struct augeas *aug, const char *name,
   info.ref = UINT_MAX;
   info.filename = sname;
   info.error = aug->error;
-  if (augl_init_lexer(&info, &scanner) < 0) {
+
+  MEMZERO(&state, 1);
+  state.info = &info;
+  state.comment_depth = 0;
+
+  if (augl_init_lexer(&state, &scanner) < 0) {
     augl_error(&info, term, NULL, "file not found");
     goto error;
   }
@@ -619,8 +636,8 @@ void augl_error(struct info *locp,
     info.first_column = augl_get_column(scanner);
     info.last_line    = augl_get_lineno(scanner);
     info.last_column  = augl_get_column(scanner);
-    info.filename     = augl_get_extra(scanner)->filename;
-    info.error        = augl_get_extra(scanner)->error;
+    info.filename     = augl_get_info(scanner)->filename;
+    info.error        = augl_get_info(scanner)->error;
   } else if (*term != NULL && (*term)->info != NULL) {
     memcpy(&info, (*term)->info, sizeof(info));
   } else {
