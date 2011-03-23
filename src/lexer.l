@@ -42,8 +42,6 @@ typedef struct info YYLTYPE;
 
 #define YY_EXTRA_TYPE struct state *
 
-int augl_get_column  (yyscan_t yyscanner);
-static void augl_set_column (int  column_no , yyscan_t yyscanner);
 int augl_init_lexer(struct state *state, yyscan_t * scanner);
 void augl_close_lexer(yyscan_t *scanner);
 struct info *augl_get_info(yyscan_t yyscanner);
@@ -189,8 +187,6 @@ void augl_close_lexer(yyscan_t *scanner) {
     fclose(fp);
     augl_set_in(NULL, scanner);
   }
-
-  return 0;
 }
 
 int augl_init_lexer(struct state *state, yyscan_t *scanner) {
