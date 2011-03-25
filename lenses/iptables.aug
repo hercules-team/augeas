@@ -58,15 +58,18 @@ let ipt_match =
     |param "match" "m"
     |any_param)*
 
-let add_rule =
-  let chain_action (n:string) (o:string) =
+let chain_action (n:string) (o:string) =
     [ label n .
         del (/--/ . n | o) o .
-        spc . chain_name . ipt_match . eol ] in
-    chain_action "append" "-A" | chain_action "insert" "-I"
+        spc . chain_name . ipt_match . eol ]
+
+let table_rule = chain_action "append" "-A"
+	       | chain_action "insert" "-I"
+	       | empty
+
 
 let table = [ del /\*/ "*" . label "table" . store /[a-z]+/ . eol .
-                (chain|comment)* . (add_rule . comment*)* .
+                (chain|comment|table_rule)* .
                 dels "COMMIT" . eol ]
 
 let lns = (comment|empty|table)*
