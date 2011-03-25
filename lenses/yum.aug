@@ -52,6 +52,7 @@ module Yum =
   let filter = (incl "/etc/yum.conf")
       . (incl "/etc/yum.repos.d/*")
       . (incl "/etc/yum/pluginconf.d/*")
+      . (excl "/etc/yum/pluginconf.d/versionlock.list")
       . Util.stdexcl
 
   let xfm = transform lns filter
