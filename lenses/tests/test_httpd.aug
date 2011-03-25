@@ -174,15 +174,17 @@ test Httpd.directive get c8 =
  * that the directive continues onto the next line. There must be no other
  * characters or white space between the backslash and the end of the line.
  *)
-test Httpd.directive get "Options Indexes \
-FollowSymLinks MultiViews\n" = *
-(*
+let multiline = "Options Indexes \
+FollowSymLinks MultiViews
+"
+
+test Httpd.directive get multiline =
   { "directive" = "Options"
     { "arg" = "Indexes" }
     { "arg" = "FollowSymLinks" }
     { "arg" = "MultiViews" }
   }
-*)
+
 
 let conf2 = "<VirtualHost *:80>
     ServerAdmin webmaster@localhost

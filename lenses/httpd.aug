@@ -43,7 +43,10 @@ autoload xfm
  *                           Utilities lens
  *****************************************************************)
 let dels (s:string)     = del s s
-let sep_spc             = Sep.space
+
+(* deal with continuation lines *)
+let sep_spc    =  del /([ \t]+|[ \t]*\\\\\n[ \t]*)/ " "
+
 let sep_osp             = Sep.opt_space
 let sep_eq              = del /[ \t]*=[ \t]*/ "="
 
