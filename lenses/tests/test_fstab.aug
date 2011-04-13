@@ -89,6 +89,19 @@ module Test_fstab =
     { "dump" = "0" }
     { "passno" = "0" } }
 
+  (* Bug #191 *)
+  test Fstab.lns get "tmpfs /dev/shm tmpfs rw,rootcontext=\"system_u:object_r:tmpfs_t:s0\" 0 0\n" =
+  { "1"
+    { "spec" = "tmpfs" }
+    { "file" = "/dev/shm" }
+    { "vfstype" = "tmpfs" }
+    { "opt" = "rw" }
+    { "opt" = "rootcontext"
+      { "value" = "\"system_u:object_r:tmpfs_t:s0\"" } }
+    { "dump" = "0" }
+    { "passno" = "0" } }
+
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
