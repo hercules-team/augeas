@@ -40,6 +40,12 @@ module Grub =
 
     let kw_pres (kw:string) = [ opt_ws . key kw . del_to_eol . eol ]
 
+    (* This is a shell-only directive in upstream grub; the grub versions
+       in at least Fedora/RHEL use this to find devices for UEFI boot *)
+    let device =
+	  [ command "device" "" . Sep.space . store /\([A-Za-z0-9_.-]+\)/ . spc .
+		  [ label "file" . value_to_eol ] . Util.eol ]
+
     let color =
       (* Should we nail it down to exactly the color names that *)
       (* grub supports ? *)
@@ -75,6 +81,7 @@ module Grub =
                      | terminal
                      | password_arg
                      | color
+		     | device
 
     let title = del /title[ \t=]+/ "title " . value_to_eol . eol
 
