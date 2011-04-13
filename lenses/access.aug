@@ -55,9 +55,11 @@ let user_re = Rx.word - /[Ee][Xx][Cc][Ee][Pp][Tt]/
 let user      = [ label "user" . store user_re ]
 
 (* View: netgroup
- * netgroups begin with @
+ * Format is @NETGROUP[@@NISDOMAIN]
  *)
-let netgroup = [ label "netgroup" . Util.del_str "@" . store user_re ]
+let netgroup =
+    [ label "netgroup" . Util.del_str "@" . store user_re
+      . [ label "nisdomain" . Util.del_str "@@" . store Rx.word ]? ]
 
 (* View: user_list
  * A list of users or netgroups to apply the rule to

@@ -65,3 +65,14 @@ test Access.lns put conf after
 + : ALL EXCEPT john @wheel : ALL EXCEPT LOCAL .win.tue.nl
 - : ALL : ALL
 "
+
+(* Bug #190 *)
+test Access.lns get "+ : @group@@domain : ALL \n" =
+  { "access" = "+"
+    { "netgroup" = "group"
+      { "nisdomain" = "domain" } }
+    { "origin" = "ALL" } }
+
+test Access.lns put "+ : @group : ALL \n" after
+  set "/access/netgroup[. = 'group']/nisdomain" "domain" =
+"+ : @group@@domain : ALL \n"
