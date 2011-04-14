@@ -1325,6 +1325,8 @@ static int run_args(int argc, char **argv) {
     }
     code = run_command(line);
     free(line);
+    if (code == CMD_RES_OK && auto_save)
+        code = run_command("save");
     return (code == CMD_RES_OK || code == CMD_RES_QUIT) ? 0 : -1;
 }
 
