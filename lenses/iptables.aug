@@ -39,10 +39,18 @@ let neg_param (long:string) (short:string) =
       spc . del (/--/ . long | /-/ . short) ("-" . short) . spc .
       store /(![ \t]*)?[^ \t\n!-][^ \t\n]*/ ]
 
+let tcp_flags =
+  let flags = /SYN|ACK|FIN|RST|URG|PSH|ALL|NONE/ in
+  let flag_list (name:string) =
+    Build.opt_list [label name . store flags] (dels ",") in
+  [ label "tcp-flags" .
+      spc . dels "--tcp-flags" .
+      spc . flag_list "mask" . spc . flag_list "set" ]
+
 (* misses --set-counters *)
 let ipt_match =
   let any_key = /[a-zA-Z-][a-zA-Z-]+/ -
-    /protocol|source|destination|jump|goto|in-interface|out-interface|fragment|match/ in
+    /protocol|source|destination|jump|goto|in-interface|out-interface|fragment|match|tcp-flags/ in
   let any_val = /([^\" \t\n!-][^ \t\n]*)|\"([^\"\\\n]|\\\\.)*\"/ in
   let any_param =
     [ [ spc . dels "!" . label "not" ]? .
@@ -56,6 +64,7 @@ let ipt_match =
     |neg_param "out-interface" "o"
     |neg_param "fragment" "f"
     |param "match" "m"
+    |tcp_flags
     |any_param)*
 
 let chain_action (n:string) (o:string) =

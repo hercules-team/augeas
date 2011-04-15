@@ -209,3 +209,12 @@ test add_rule put "-I POSTROUTING -d ! 192.168.122.0/24 -j MASQUERADE\n"
 test Iptables.chain get ":tcp_packets - [0:0]
 " = 
     { "chain" = "tcp_packets" { "policy" = "-" } }
+
+(* Bug #157 *)
+test ipt_match get " --tcp-flags SYN,RST,ACK,FIN SYN" =
+  { "tcp-flags"
+    { "mask" = "SYN" }
+    { "mask" = "RST" }
+    { "mask" = "ACK" }
+    { "mask" = "FIN" }
+    { "set" = "SYN" } }
