@@ -31,3 +31,15 @@ test Passwd.lns get conf =
 (* Popular on Solaris *)
 test Passwd.lns get "+@some-nis-group::::::\n" =
   { "@nis" = "some-nis-group" }
+
+test Passwd.lns get "+\n" =
+  { "@nisdefault" }
+
+test Passwd.lns get "+::::::/sbin/nologin\n" =
+  { "@nisdefault"
+    { "password" = "" }
+    { "uid" = "" }
+    { "gid" = "" }
+    { "name" }
+    { "home" }
+    { "shell" = "/sbin/nologin" } }

@@ -46,11 +46,22 @@ let nisentry =
   let colons = "::::::" in
   [ dels "+@" . label "@nis" . store word . dels colons . eol ]
 
+let nisdefault =
+  let overrides =
+        colon
+      . [ label "password" . store word?    . colon ]
+      . [ label "uid"      . store integer? . colon ]
+      . [ label "gid"      . store integer? . colon ]
+      . [ label "name"     . sto_to_col?    . colon ]
+      . [ label "home"     . sto_to_col?    . colon ]
+      . [ label "shell"    . sto_to_eol? ] in
+  [ dels "+" . label "@nisdefault" . overrides? . eol ]
+
 (************************************************************************
  *                                LENS
  *************************************************************************)
 
-let lns        = (comment|empty|entry|nisentry) *
+let lns        = (comment|empty|entry|nisentry|nisdefault) *
 
 let filter
                = incl "/etc/passwd"

@@ -1,3 +1,28 @@
+0.8.1 - 2011-04-15
+  - augtool: respect autosave flag in oneshot mode, bug #193; fix segfault
+    caused by unmatched bracket in path expression, bug #186
+  - eliminate a global variable in the lexer, fixes BZ 690286
+  - replace an erroneous assert(0) with a proper error message when none of
+    the alternatives in a union match during saving, bug #183
+  - improve AIX support
+  - Lens changes/additions
+    * Access: support the format @netgroup@@nisdomain, bug #190
+    * Fstab: fix parsing of SELinux labels in the fscontext option (Matt Booth)
+    * Grub: support 'device' directive for UEFI boot, bug #189; support
+      'configfile' and 'background' (Onur Küçük)
+    * Httpd: handle continuation lines (Bill Pemberton); autoload
+      httpd.conf on Fedora/RHEL, BZ 688149; fix support for single-quoted
+      strings
+    * Iptables: support --tcp-flags, bug #157; allow blank and comment
+      lines anywhere
+    * Mysql: include /etc/my.cnf used on Fedora/RHEL, BZ 688053
+    * NagiosCfg: parse setting multiple values on one line (Sebastien Aperghis)
+    * NagiosObjects: process /etc/nagios3/objects/*.cfg (Sebastien Aperghis)
+    * Nsswitch: support 'sudoers' as a database, bug #187
+    * Shellvars: autoload /etc/rc.conf used in FreeBSD (Rich Jones)
+    * Sudoers: support '#include' and '#includedir', bug #188
+    * Yum: exclude /etc/yum/pluginconf.d/versionlock.list (Bill Pemberton)
+
 0.8.0 - 2011-02-22
   - add new 'square' lens combinator
   - add new aug_span API function
