@@ -1374,17 +1374,16 @@ static void push_new_binary_op(enum binary_op op, struct state *state) {
 }
 
 /*
- * Name ::= /[^][/=) \t\n]+/
+ * NameNoWS ::= [^][|/\= \t\n] | \\.
+ * NameWS   ::= [^][|/\=] | \\.
+ * Name ::= NameNoWS NameWS* NameNoWS | NameNoWS
  */
 static char *parse_name(struct state *state) {
+    static const char const follow[] = "][|/=()";
     const char *s = state->pos;
     char *result;
 
-    while (*state->pos != '\0' &&
-           *state->pos != L_BRACK && *state->pos != SEP &&
-           *state->pos != R_BRACK && *state->pos != '=' &&
-           *state->pos != ')' &&
-           !isspace(*state->pos)) {
+    while (*state->pos != '\0' && strchr(follow, *state->pos) == NULL) {
         if (*state->pos == '\\') {
             state->pos += 1;
             if (*state->pos == '\0') {
@@ -1392,6 +1391,14 @@ static char *parse_name(struct state *state) {
                 return NULL;
             }
         }
+        state->pos += 1;
+    }
+
+    /* Strip trailing white space */
+    if (state->pos > s) {
+        state->pos -= 1;
+        while (isspace(*state->pos) && state->pos >= s)
+            state->pos -= 1;
         state->pos += 1;
     }
 

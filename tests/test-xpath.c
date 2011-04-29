@@ -78,6 +78,19 @@ static char *token_to_eol(char *s, char **tok) {
     return s;
 }
 
+static char *findpath(char *s, char **p) {
+    char *t = skipws(s);
+
+    while (*s && *s != '=') s++;
+    if (s > t) {
+        s -= 1;
+        while (*s && isspace(*s)) s -= 1;
+        s += 1;
+    }
+    *p = strndup(t, s - t);
+    return s;
+}
+
 static struct test *read_tests(void) {
     char *fname;
     FILE *fp;
@@ -107,7 +120,7 @@ static struct test *read_tests(void) {
             if (ALLOC(e) < 0)
                 die("out of memory");
             list_append(t->entries, e);
-            s = token(s, &(e->path));
+            s = findpath(s, &(e->path));
             s = skipws(s);
             if (*s) {
                 if (*s != '=') {
@@ -318,6 +331,9 @@ static int run_tests(struct test *tests) {
     r = aug_defvar(aug, "localhost", "'127.0.0.1'");
     if (r != 0)
         die("aug_defvar $localhost");
+    r = aug_defvar(aug, "php", "/files/etc/php.ini");
+    if (r != 1)
+        die("aug_defvar $php");
 
     list_for_each(t, tests) {
         if (run_one_test(aug, t) < 0)

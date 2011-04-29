@@ -133,7 +133,10 @@ UnionExpr ::= PathExpr ("|" PathExpr)*
 
 Literal ::= '"' /[^"]* / '"' | "'" /[^']* / "'"
 Number       ::= /[0-9]+/
-Name ::= /([^][/\= \t\n]|\\.)+/
+/* Names can contain whitespace in the interior */
+NameNoWS ::= [^][|/\= \t\n] | \\.
+NameWS   ::= [^][|/\=] | \\.
+Name ::= NameNoWS NameWS* NameNoWS | NameNoWS
 
 VariableReference ::= '$' /[a-zA-Z_][a-zA-Z0-9_]*/
 

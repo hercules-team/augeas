@@ -16,7 +16,9 @@
 # results listed in the test
 #
 # The test framework sets up variables:
-#   hosts   /files/etc/hosts/*
+#   hosts      /files/etc/hosts/*
+#   localhost  '127.0.0.1'
+#   php        /files/etc/php.ini
 
 # Very simple to warm up
 test wildcard /files/etc/hosts/*/ipaddr
@@ -235,3 +237,19 @@ test union (/files/etc/yum.conf | /files/etc/yum.repos.d/*)/*/gpgcheck
      /files/etc/yum.repos.d/fedora.repo/fedora-source/gpgcheck = 1
      /files/etc/yum.repos.d/remi.repo/remi/gpgcheck = 1
      /files/etc/yum.repos.d/remi.repo/remi-test/gpgcheck = 1
+
+# Paths with whitespace in them
+test php1 $php/mail function
+     /files/etc/php.ini/mail function
+
+test php2 $php[mail function]
+     /files/etc/php.ini
+
+test php3 $php[count(mail function) = 1]
+     /files/etc/php.ini
+
+test php4 $php/mail function/SMTP
+     /files/etc/php.ini/mail function/SMTP = localhost
+
+test php5 $php/mail\ function
+     /files/etc/php.ini/mail function
