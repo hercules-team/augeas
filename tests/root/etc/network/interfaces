@@ -1,0 +1,39 @@
+# /etc/network/interfaces -- configuration file for ifup(8), ifdown(8)
+
+# The loopback interface
+auto lo
+iface lo inet loopback
+
+# The first network card - this entry was created during the Debian installation
+## auto eth0
+iface eth0 inet dhcp
+  pre-up /etc/init.d/ntp-server stop || true
+  up /etc/init.d/ntpdate restart || true
+  up /etc/init.d/ntp-server start || true
+
+iface eth0-0 inet static
+  address 134.158.129.99
+  netmask 255.255.254.0
+  network 134.158.128.0
+  broadcast 134.158.129.255
+  gateway 134.158.128.1
+
+iface eth0-2 inet static
+	address 192.168.1.160
+  netmask 255.255.255.0
+  network 192.168.1.0
+  broadcast 192.168.1.255
+  gateway 192.168.1.1
+
+iface eth0-3 inet static
+  address 192.168.1.7
+  netmask 255.255.255.0
+  network 192.168.1.0
+  broadcast 192.168.1.255
+
+iface adsl0 inet dhcp
+  pre-up /sbin/modprobe adiusbadsl
+  pre-up /usr/sbin/adictrl -i
+  pre-up /usr/sbin/adictrl -f
+  pre-up /usr/sbin/adictrl -d
+  pre-up /usr/sbin/adictrl -s
