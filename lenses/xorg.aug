@@ -225,7 +225,9 @@ let display = [ indent . del "SubSection" "SubSection" . sep_spc
  *     >   Files          File pathnames
  *     >   ServerFlags    Server flags
  *     >   Module         Dynamic module loading
+ *     >   Extensions     Extension Enabling
  *     >   InputDevice    Input device description
+ *     >   InputClass     Input Class description
  *     >   Device         Graphics device description
  *     >   VideoAdaptor   Xv video adaptor description
  *     >   Monitor        Monitor description
@@ -288,6 +290,8 @@ let lns = ( empty | comment | section )*
 
 
 (* Variable: filter *)
-let filter = (incl "/etc/X11/xorg.conf")
+let filter = (incl "/etc/X11/xorg.conf") .
+  (incl "/etc/X11/xorg.conf.d/*.conf") .
+  Util.stdexcl
 
 let xfm = transform lns filter
