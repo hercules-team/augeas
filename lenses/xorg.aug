@@ -237,7 +237,7 @@ let display = [ indent . del "SubSection" "SubSection" . sep_spc
  *     >   DRI            DRI-specific configuration
  *     >   Vendor         Vendor-specific configuration
  *************************************************************************)
-let section_re = /(Extensions|Files|ServerFlags|Module|InputDevice|Device|VideoAdaptor|Monitor|Modes|Screen|ServerLayout|DRI|Vendor)/
+let section_re = /(Extensions|Files|ServerFlags|Module|InputDevice|InputClass|Device|VideoAdaptor|Monitor|Modes|Screen|ServerLayout|DRI|Vendor)/
 
 
 (************************************************************************
