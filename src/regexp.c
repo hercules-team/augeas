@@ -113,6 +113,15 @@ void print_regexp(FILE *out, struct regexp *r) {
         fputc('i', out);
 }
 
+struct regexp *
+make_regexp_dup(struct info *info, const char *pat, int nocase) {
+    char *p = strdup(pat);
+
+    if (p == NULL)
+        return NULL;
+    return make_regexp(info, p, nocase);
+}
+
 struct regexp *make_regexp(struct info *info, char *pat, int nocase) {
     struct regexp *regexp;
 
