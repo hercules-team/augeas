@@ -277,8 +277,8 @@ static void func_count(struct state *state);
 static void func_label(struct state *state);
 static void func_regexp(struct state *state);
 
-static const enum type const count_arg_types[] = { T_NODESET };
-static const enum type const regexp_arg_types[] = { T_STRING };
+static const enum type const arg_types_nodeset[] = { T_NODESET };
+static const enum type const arg_types_string[] = { T_STRING };
 
 static const struct func builtin_funcs[] = {
     { .name = "last", .arity = 0, .type = T_NUMBER, .arg_types = NULL,
@@ -288,11 +288,14 @@ static const struct func builtin_funcs[] = {
     { .name = "label", .arity = 0, .type = T_STRING, .arg_types = NULL,
       .impl = func_label },
     { .name = "count", .arity = 1, .type = T_NUMBER,
-      .arg_types = count_arg_types,
+      .arg_types = arg_types_nodeset,
       .impl = func_count },
     { .name = "regexp", .arity = 1, .type = T_REGEXP,
-      .arg_types = regexp_arg_types,
-      .impl =func_regexp }
+      .arg_types = arg_types_string,
+      .impl = func_regexp },
+    { .name = "regexp", .arity = 1, .type = T_REGEXP,
+      .arg_types = arg_types_nodeset,
+      .impl = func_regexp }
 };
 
 #define CHECK_ERROR                                                     \
@@ -629,28 +632,65 @@ static void func_label(struct state *state) {
     push_value(vind, state);
 }
 
+static struct regexp *
+nodeset_as_regexp(struct info *info, struct nodeset *ns) {
+    struct regexp *result = NULL;
+    struct regexp **rx = NULL;
+    int used = 0;
+
+    for (int i = 0; i < ns->used; i++) {
+        if (ns->nodes[i]->value != NULL)
+            used += 1;
+    }
+
+    if (used == 0) {
+        result = regexp_make_empty(info);
+    } else {
+        if (ALLOC_N(rx, ns->used) < 0)
+            goto error;
+        for (int i=0; i < ns->used; i++) {
+            if (ns->nodes[i]->value == NULL)
+                continue;
+
+            rx[i] = make_regexp_dup(info, ns->nodes[i]->value, 0);
+            if (rx[i] == NULL)
+                goto error;
+        }
+        result = regexp_union_n(info, ns->used, rx);
+    }
+
+ error:
+    if (rx != NULL) {
+        for (int i=0; i < ns->used; i++)
+            unref(rx[i], regexp);
+        free(rx);
+    }
+    return result;
+}
+
 static void func_regexp(struct state *state) {
     value_ind_t vind = make_value(T_REGEXP, state);
     int r;
 
     CHECK_ERROR;
 
-    struct value *str = pop_value(state);
-    assert(str->tag == T_STRING);
+    struct value *v = pop_value(state);
+    struct regexp *rx = NULL;
 
-    char *pat = strdup(str->string);
-    if (pat == NULL) {
-        STATE_ENOMEM;
-        return;
+    if (v->tag == T_STRING) {
+        rx = make_regexp_dup(state->error->info, v->string, 0);
+    } else if (v->tag == T_NODESET) {
+        rx = nodeset_as_regexp(state->error->info, v->nodeset);
+    } else {
+        assert(0);
     }
 
-    struct regexp *rx = make_regexp(NULL, pat, 0);
-    state->value_pool[vind].regexp = rx;
     if (rx == NULL) {
-        FREE(pat);
         STATE_ENOMEM;
         return;
     }
+
+    state->value_pool[vind].regexp = rx;
     r = regexp_compile(rx);
     if (r < 0) {
         const char *msg;

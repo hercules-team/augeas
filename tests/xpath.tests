@@ -226,6 +226,13 @@ test regexp1 /files/etc/sysconfig/network-scripts/*[label() =~ regexp('.*-eth0')
 test regexp2 /files/etc/hosts/*[* =~ regexp('127\..*')]
      /files/etc/hosts/1
 
+test regexp3 /files/etc/hosts/*[ipaddr =~ regexp(/files/etc/hosts/*/ipaddr)]
+     /files/etc/hosts/1
+     /files/etc/hosts/2
+
+# Check that we don't crash when the nodeset contains all NULL's
+test regexp4 /files/etc/hosts/*[ipaddr =~ regexp(/files/etc/hosts/*[ipaddr])]
+
 # Union of nodesets
 test union (/files/etc/yum.conf | /files/etc/yum.repos.d/*)/*/gpgcheck
      /files/etc/yum.conf/main/gpgcheck = 1
