@@ -1168,15 +1168,35 @@ static void check_filter(struct expr *expr, struct state *state) {
 
 static void check_app(struct expr *expr, struct state *state) {
     assert(expr->tag == E_APP);
+
     for (int i=0; i < expr->func->arity; i++) {
         check_expr(expr->args[i], state);
         CHECK_ERROR;
-        if (expr->args[i]->type != expr->func->arg_types[i]) {
-            STATE_ERROR(state, PATHX_ETYPE);
-            return;
-        }
     }
-    expr->type = expr->func->type;
+
+    int f;
+    for (f=0; f < ARRAY_CARDINALITY(builtin_funcs); f++) {
+        const struct func *fn = builtin_funcs + f;
+        if (STRNEQ(expr->func->name, fn->name))
+            continue;
+
+        int match = 1;
+        for (int i=0; i < expr->func->arity; i++) {
+            if (expr->args[i]->type != fn->arg_types[i]) {
+                match = 0;
+                break;
+            }
+        }
+        if (match)
+            break;
+    }
+
+    if (f < ARRAY_CARDINALITY(builtin_funcs)) {
+        expr->func = builtin_funcs + f;
+        expr->type = expr->func->type;
+    } else {
+        STATE_ERROR(state, PATHX_ETYPE);
+    }
 }
 
 /* Check the binary operators. Type rules:
