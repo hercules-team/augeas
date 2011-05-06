@@ -352,6 +352,12 @@ struct augeas *aug_init(const char *root, const char *loadpath,
         goto error;
     if (ALLOC(result->error) < 0)
         goto error;
+    if (make_ref(result->error->info) < 0)
+        goto error;
+    result->error->info->error = result->error;
+    result->error->info->filename = dup_string("(unknown file)");
+    if (result->error->info->filename == NULL)
+        goto error;
     result->error->aug = result;
 
     result->origin = make_tree_origin(tree_root);
@@ -1446,6 +1452,7 @@ void aug_close(struct augeas *aug) {
     free((void *) aug->root);
     free(aug->modpathz);
     free_symtab(aug->symtab);
+    unref(aug->error->info, info);
     free(aug->error->details);
     free(aug->error);
     free(aug);

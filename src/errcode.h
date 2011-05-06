@@ -35,6 +35,10 @@ struct error {
     int            minor;
     char          *details;       /* Human readable explanation */
     const char    *minor_details; /* Human readable version of MINOR */
+    /* A dummy info of last resort; this can be used in places where
+     * a struct info is needed but none available
+     */
+    struct info   *info;
     /* Bit of a kludge to get at struct augeas, but since struct error
      * is now available in a lot of places (through struct info), this
      * gives a convenient way to get at the overall state
