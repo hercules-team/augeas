@@ -913,6 +913,42 @@ static void eval_union(struct state *state) {
     push_value(vind, state);
 }
 
+static void eval_concat_string(struct state *state) {
+    value_ind_t vind = make_value(T_STRING, state);
+    struct value *r = pop_value(state);
+    struct value *l = pop_value(state);
+    char *res = NULL;
+
+    CHECK_ERROR;
+
+    if (ALLOC_N(res, strlen(l->string) + strlen(r->string) + 1) < 0) {
+        STATE_ENOMEM;
+        return;
+    }
+    strcpy(res, l->string);
+    strcat(res, r->string);
+    state->value_pool[vind].string = res;
+    push_value(vind, state);
+}
+
+static void eval_concat_regexp(struct state *state) {
+    value_ind_t vind = make_value(T_REGEXP, state);
+    struct value *r = pop_value(state);
+    struct value *l = pop_value(state);
+    struct regexp *rx = NULL;
+
+    CHECK_ERROR;
+
+    rx = regexp_concat(state->error->info, l->regexp, r->regexp);
+    if (rx == NULL) {
+        STATE_ENOMEM;
+        return;
+    }
+
+    state->value_pool[vind].regexp = rx;
+    push_value(vind, state);
+}
+
 static void eval_re_match(struct state *state, enum binary_op op) {
     struct value *rx  = pop_value(state);
     struct value *v = pop_value(state);
@@ -958,8 +994,15 @@ static void eval_binary(struct expr *expr, struct state *state) {
     case OP_GE:
         eval_rel(state, true, true);
         break;
-    case OP_MINUS:
     case OP_PLUS:
+        if (expr->type == T_NUMBER)
+            eval_arith(state, expr->op);
+        else if (expr->type == T_STRING)
+            eval_concat_string(state);
+        else if (expr->type == T_REGEXP)
+            eval_concat_regexp(state);
+        break;
+    case OP_MINUS:
     case OP_STAR:
         eval_arith(state, expr->op);
         break;
@@ -1274,6 +1317,9 @@ static void check_app(struct expr *expr, struct state *state) {
  * '>', '>=',
  * '<', '<='  : T_NUMBER -> T_NUMBER -> T_BOOLEAN
  *              T_STRING -> T_STRING -> T_BOOLEAN
+ * '+'        : T_NUMBER -> T_NUMBER -> T_NUMBER
+ *              T_STRING -> T_STRING -> T_STRING
+ *              T_REGEXP -> T_REGEXP -> T_REGEXP
  * '+', '-', '*': T_NUMBER -> T_NUMBER -> T_NUMBER
  *
  * 'and', 'or': T_BOOLEAN -> T_BOOLEAN -> T_BOOLEAN
@@ -1311,6 +1357,9 @@ static void check_binary(struct expr *expr, struct state *state) {
         res = T_BOOLEAN;
         break;
     case OP_PLUS:
+        ok = (l == r && (l == T_NUMBER || l == T_STRING || l == T_REGEXP));
+        res = l;
+        break;
     case OP_MINUS:
     case OP_STAR:
         ok =  (l == T_NUMBER && r == T_NUMBER);
