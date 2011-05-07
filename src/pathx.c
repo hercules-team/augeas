@@ -276,6 +276,7 @@ static void func_position(struct state *state);
 static void func_count(struct state *state);
 static void func_label(struct state *state);
 static void func_regexp(struct state *state);
+static void func_glob(struct state *state);
 
 static const enum type const arg_types_nodeset[] = { T_NODESET };
 static const enum type const arg_types_string[] = { T_STRING };
@@ -295,7 +296,13 @@ static const struct func builtin_funcs[] = {
       .impl = func_regexp },
     { .name = "regexp", .arity = 1, .type = T_REGEXP,
       .arg_types = arg_types_nodeset,
-      .impl = func_regexp }
+      .impl = func_regexp },
+    { .name = "glob", .arity = 1, .type = T_REGEXP,
+      .arg_types = arg_types_string,
+      .impl = func_glob },
+    { .name = "glob", .arity = 1, .type = T_REGEXP,
+      .arg_types = arg_types_nodeset,
+      .impl = func_glob }
 };
 
 #define CHECK_ERROR                                                     \
@@ -633,7 +640,7 @@ static void func_label(struct state *state) {
 }
 
 static struct regexp *
-nodeset_as_regexp(struct info *info, struct nodeset *ns) {
+nodeset_as_regexp(struct info *info, struct nodeset *ns, int glob) {
     struct regexp *result = NULL;
     struct regexp **rx = NULL;
     int used = 0;
@@ -652,7 +659,10 @@ nodeset_as_regexp(struct info *info, struct nodeset *ns) {
             if (ns->nodes[i]->value == NULL)
                 continue;
 
-            rx[i] = make_regexp_dup(info, ns->nodes[i]->value, 0);
+            if (glob)
+                rx[i] = make_regexp_from_glob(info, ns->nodes[i]->value);
+            else
+                rx[i] = make_regexp_dup(info, ns->nodes[i]->value, 0);
             if (rx[i] == NULL)
                 goto error;
         }
@@ -668,7 +678,7 @@ nodeset_as_regexp(struct info *info, struct nodeset *ns) {
     return result;
 }
 
-static void func_regexp(struct state *state) {
+static void func_regexp_or_glob(struct state *state, int glob) {
     value_ind_t vind = make_value(T_REGEXP, state);
     int r;
 
@@ -678,9 +688,12 @@ static void func_regexp(struct state *state) {
     struct regexp *rx = NULL;
 
     if (v->tag == T_STRING) {
-        rx = make_regexp_dup(state->error->info, v->string, 0);
+        if (glob)
+            rx = make_regexp_from_glob(state->error->info, v->string);
+        else
+            rx = make_regexp_dup(state->error->info, v->string, 0);
     } else if (v->tag == T_NODESET) {
-        rx = nodeset_as_regexp(state->error->info, v->nodeset);
+        rx = nodeset_as_regexp(state->error->info, v->nodeset, glob);
     } else {
         assert(0);
     }
@@ -700,6 +713,14 @@ static void func_regexp(struct state *state) {
         return;
     }
     push_value(vind, state);
+}
+
+static void func_regexp(struct state *state) {
+    func_regexp_or_glob(state, 0);
+}
+
+static void func_glob(struct state *state) {
+    func_regexp_or_glob(state, 1);
 }
 
 static bool coerce_to_bool(struct value *v) {

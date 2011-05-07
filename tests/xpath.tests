@@ -233,6 +233,23 @@ test regexp3 /files/etc/hosts/*[ipaddr =~ regexp(/files/etc/hosts/*/ipaddr)]
 # Check that we don't crash when the nodeset contains all NULL's
 test regexp4 /files/etc/hosts/*[ipaddr =~ regexp(/files/etc/hosts/*[ipaddr])]
 
+test glob1 /files[ 'axxa' =~ glob('a*a') ]
+     /files
+
+test glob2 /files[ 'axxa' =~ glob('a?[a-z]a') ]
+     /files
+
+test glob3 /files[ '^a' =~ glob('^a') ]
+     /files
+
+test glob4 /augeas/load/*[ '/etc/hosts' =~ glob(incl) ]
+     /augeas/load/Hosts
+
+test glob5 /files[ '/files/etc/hosts/1' =~ glob('/files/*/1') ]
+
+test glob6 /files[ '/files/etc/hosts/1' =~ glob('/files/*/*/1') ]
+     /files
+
 # Union of nodesets
 test union (/files/etc/yum.conf | /files/etc/yum.repos.d/*)/*/gpgcheck
      /files/etc/yum.conf/main/gpgcheck = 1
