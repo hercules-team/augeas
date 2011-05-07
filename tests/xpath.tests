@@ -250,6 +250,9 @@ test glob5 /files[ '/files/etc/hosts/1' =~ glob('/files/*/1') ]
 test glob6 /files[ '/files/etc/hosts/1' =~ glob('/files/*/*/1') ]
      /files
 
+test glob_nomatch /files/etc/hosts/*[ipaddr][ ipaddr !~ glob(/files/etc/hosts/*/ipaddr[1]) ]
+    /files/etc/hosts/2
+
 # Union of nodesets
 test union (/files/etc/yum.conf | /files/etc/yum.repos.d/*)/*/gpgcheck
      /files/etc/yum.conf/main/gpgcheck = 1

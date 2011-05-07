@@ -85,6 +85,7 @@ enum binary_op {
     OP_AND,        /* 'and' */
     OP_OR,         /* 'or' */
     OP_RE_MATCH,   /* '=~' */
+    OP_RE_NOMATCH, /* '!~' */
     OP_UNION       /* '|' */
 };
 
@@ -912,7 +913,7 @@ static void eval_union(struct state *state) {
     push_value(vind, state);
 }
 
-static void eval_re_match(struct state *state) {
+static void eval_re_match(struct state *state, enum binary_op op) {
     struct value *rx  = pop_value(state);
     struct value *v = pop_value(state);
 
@@ -928,6 +929,8 @@ static void eval_re_match(struct state *state) {
             CHECK_ERROR;
         }
     }
+    if (op == OP_RE_NOMATCH)
+        result = !result;
     push_boolean_value(result, state);
 }
 
@@ -968,7 +971,8 @@ static void eval_binary(struct expr *expr, struct state *state) {
         eval_union(state);
         break;
     case OP_RE_MATCH:
-        eval_re_match(state);
+    case OP_RE_NOMATCH:
+        eval_re_match(state, expr->op);
         break;
     default:
         assert(0);
@@ -1273,7 +1277,7 @@ static void check_app(struct expr *expr, struct state *state) {
  * '+', '-', '*': T_NUMBER -> T_NUMBER -> T_NUMBER
  *
  * 'and', 'or': T_BOOLEAN -> T_BOOLEAN -> T_BOOLEAN
- * '=~'       : T_STRING  -> T_REGEXP  -> T_BOOLEAN
+ * '=~', '!~' : T_STRING  -> T_REGEXP  -> T_BOOLEAN
  *              T_NODESET -> T_REGEXP  -> T_BOOLEAN
  *
  * '|'        : T_NODESET -> T_NODESET -> T_NODESET
@@ -1322,6 +1326,7 @@ static void check_binary(struct expr *expr, struct state *state) {
         res = T_BOOLEAN;
         break;
     case OP_RE_MATCH:
+    case OP_RE_NOMATCH:
         ok = ((l == T_STRING || l == T_NODESET) && r == T_REGEXP);
         res = T_BOOLEAN;
         break;
@@ -1460,7 +1465,7 @@ static void push_new_binary_op(enum binary_op op, struct state *state) {
  * Name ::= NameNoWS NameWS* NameNoWS | NameNoWS
  */
 static char *parse_name(struct state *state) {
-    static const char const follow[] = "][|/=()";
+    static const char const follow[] = "][|/=()!";
     const char *s = state->pos;
     char *result;
 
@@ -2060,17 +2065,19 @@ static void parse_relational_expr(struct state *state) {
 /*
  * EqualityExpr ::= RelationalExpr (EqualityOp RelationalExpr)? | ReMatchExpr
  * EqualityOp ::= "=" | "!="
- * ReMatchExpr ::= RelationalExpr "=~" RelationalExpr
+ * ReMatchExpr ::= RelationalExpr MatchOp RelationalExpr
+ * MatchOp ::= "=~" | "!~"
  */
 static void parse_equality_expr(struct state *state) {
     parse_relational_expr(state);
     CHECK_ERROR;
-    if (*state->pos == '=' && state->pos[1] == '~') {
+    if ((*state->pos == '=' || *state->pos == '!') && state->pos[1] == '~') {
+        enum binary_op op = (*state->pos == '=') ? OP_RE_MATCH : OP_RE_NOMATCH;
         state->pos += 2;
         skipws(state);
         parse_relational_expr(state);
         CHECK_ERROR;
-        push_new_binary_op(OP_RE_MATCH, state);
+        push_new_binary_op(op, state);
     } else if (*state->pos == '=' ||
         (*state->pos == '!' && state->pos[1] == '=')) {
         enum binary_op op = (*state->pos == '=') ? OP_EQ : OP_NEQ;

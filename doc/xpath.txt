@@ -122,7 +122,8 @@ FunctionCall ::= Name '(' ( Expr ( ',' Expr )* )? ')'
 
 Expr ::= EqualityExpr
 EqualityExpr ::= RelationalExpr (EqualityOp RelationalExpr)? | ReMatchExpr
-ReMatchExpr ::= RelationalExpr "=~" RelationalExpr
+ReMatchExpr ::= RelationalExpr MatchOp RelationalExpr
+MatchOp ::= "=~" | "!~"
 EqualityOp ::= "=" | "!="
 RelationalExpr ::= AdditiveExpr (RelationalOp AdditiveExpr)?
 RelationalOp ::= ">" | "<" | ">=" | "<="
