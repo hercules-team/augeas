@@ -55,6 +55,9 @@ int regexp_is_empty_pattern(struct regexp *r);
  */
 struct regexp *make_regexp_literal(struct info *info, const char *text);
 
+/* Make a regexp from a glob pattern */
+struct regexp *make_regexp_from_glob(struct info *info, const char *glob);
+
 /* Do not call directly, use UNREF instead */
 void free_regexp(struct regexp *regexp);
 

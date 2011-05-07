@@ -134,6 +134,57 @@ struct regexp *make_regexp(struct info *info, char *pat, int nocase) {
     return regexp;
 }
 
+/* Take a POSIX glob and turn it into a regexp. The regexp is constructed
+ * by doing the following translations of characters in the string:
+ *  * -> [^/]*
+ *  ? -> [^/]
+ *  leave characters escaped with a backslash alone
+ *  escape any of ".|{}()+^$" with a backslash
+ *
+ * Note that that ignores some of the finer points of globs, like
+ * complementation.
+ */
+struct regexp *make_regexp_from_glob(struct info *info, const char *glob) {
+    static const char *const star = "[^/]*";
+    static const char *const qmark = "[^/]";
+    static const char *const special = ".|{}()+^$";
+    int newlen = strlen(glob);
+    char *pat = NULL;
+
+    for (const char *s = glob; *s; s++) {
+        if (*s == '\\' && *(s+1))
+            s += 1;
+        else if (*s == '*')
+            newlen += strlen(star)-1;
+        else if (*s == '?')
+            newlen += strlen(qmark)-1;
+        else if (strchr(special, *s) != NULL)
+            newlen += 1;
+    }
+
+    if (ALLOC_N(pat, newlen + 1) < 0)
+        return NULL;
+
+    char *t = pat;
+    for (const char *s = glob; *s; s++) {
+        if (*s == '\\' && *(s+1)) {
+            *t++ = *s++;
+            *t++ = *s;
+        } else if (*s == '*') {
+            t = stpcpy(t, star);
+        } else if (*s == '?') {
+            t = stpcpy(t, qmark);
+        } else if (strchr(special, *s) != NULL) {
+            *t++ = '\\';
+            *t++ = *s;
+        } else {
+            *t++ = *s;
+        }
+    }
+
+    return make_regexp(info, pat, 0);
+}
+
 void free_regexp(struct regexp *regexp) {
     if (regexp == NULL)
         return;
