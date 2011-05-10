@@ -195,7 +195,7 @@ struct expr {
         char            *ident;        /* E_VAR */
         struct {                       /* E_APP */
             const struct func *func;
-            struct expr       *args[];
+            struct expr       **args;
         };
     };
 };
@@ -392,6 +392,7 @@ static void free_expr(struct expr *expr) {
     case E_APP:
         for (int i=0; i < expr->func->arity; i++)
             free_expr(expr->args[i]);
+        free(expr->args);
         break;
     default:
         assert(0);
