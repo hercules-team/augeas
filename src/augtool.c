@@ -32,6 +32,9 @@
 #include <limits.h>
 #include <ctype.h>
 #include <locale.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <pwd.h>
 
 /* Global variables */
 
@@ -46,6 +49,8 @@ int echo = 0;         /* Gets also changed in main_loop */
 bool print_version = false;
 bool auto_save = false;
 bool interactive = false;
+/* History file is ~/.augeas/history */
+char *history_file = NULL;
 
 /*
  * General utilities
@@ -65,6 +70,19 @@ static char *cleanpath(char *path) {
     if (STREQ(path, "/"))
         return path;
     return cleanstr(path, SEP);
+}
+
+/* Not static, since prototype is in internal.h */
+int xasprintf(char **strp, const char *format, ...) {
+  va_list args;
+  int result;
+
+  va_start (args, format);
+  result = vasprintf (strp, format, args);
+  va_end (args);
+  if (result < 0)
+      *strp = NULL;
+  return result;
 }
 
 /*
@@ -1061,10 +1079,60 @@ static char **readline_completion(const char *text, int start,
     return NULL;
 }
 
+static char *get_home_dir(uid_t uid) {
+    char *strbuf;
+    char *result;
+    struct passwd pwbuf;
+    struct passwd *pw = NULL;
+    long val = sysconf(_SC_GETPW_R_SIZE_MAX);
+    size_t strbuflen = val;
+
+    if (val < 0)
+        return NULL;
+
+    if (ALLOC_N(strbuf, strbuflen) < 0)
+        return NULL;
+
+    if (getpwuid_r(uid, &pwbuf, strbuf, strbuflen, &pw) != 0 || pw == NULL) {
+        free(strbuf);
+        return NULL;
+    }
+
+    result = strdup(pw->pw_dir);
+
+    free(strbuf);
+
+    return result;
+}
+
 static void readline_init(void) {
     rl_readline_name = "augtool";
     rl_attempted_completion_function = readline_completion;
     rl_completion_entry_function = readline_path_generator;
+
+    /* Set up persistent history */
+    char *home_dir = get_home_dir(getuid());
+    char *history_dir = NULL;
+
+    if (home_dir == NULL)
+        goto done;
+
+    if (xasprintf(&history_dir, "%s/.augeas", home_dir) < 0)
+        goto done;
+
+    if (mkdir(history_dir, 0755) < 0 && errno != EEXIST)
+        goto done;
+
+    if (xasprintf(&history_file, "%s/history", history_dir) < 0)
+        goto done;
+
+    stifle_history(500);
+
+    read_history(history_file);
+
+ done:
+    free(home_dir);
+    free(history_dir);
 }
 
 __attribute__((noreturn))
@@ -1305,8 +1373,6 @@ static int main_loop(void) {
             fprintf(stderr, "Out of memory.\n");
             return -1;
         }
-        if (isatty(fileno(stdin)))
-            add_history(line);
     }
 }
 
@@ -1353,6 +1419,8 @@ int main(int argc, char **argv) {
     } else {
         r = main_loop();
     }
+    if (history_file != NULL)
+        write_history(history_file);
 
     return r == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
