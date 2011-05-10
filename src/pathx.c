@@ -1119,7 +1119,8 @@ static void ns_from_locpath(struct locpath *lp, uint *maxns,
         for (int i=0; i < root->used; i++)
             ns_add((*ns)[0], root->nodes[i], state);
     }
-    CHECK_ERROR;
+    if (HAS_ERROR(state))
+        goto error;
 
     uint cur_ns = 0;
     list_for_each(step, lp->steps) {
@@ -1132,7 +1133,8 @@ static void ns_from_locpath(struct locpath *lp, uint *maxns,
                 ns_add(next, node, state);
         }
         ns_filter(next, step->predicates, state);
-        CHECK_ERROR;
+        if (HAS_ERROR(state))
+            goto error;
         cur_ns += 1;
     }
 
@@ -1682,7 +1684,8 @@ parse_relative_location_path(struct state *state) {
     struct locpath *locpath = NULL;
 
     step = parse_step(state);
-    CHECK_ERROR_RET0;
+    if (HAS_ERROR(state))
+        goto error;
 
     if (ALLOC(locpath) < 0) {
         STATE_ENOMEM;
