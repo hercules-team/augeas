@@ -314,7 +314,7 @@ static int test_invalid_regexp(struct augeas *aug) {
     return -1;
 }
 
-static int run_tests(struct test *tests) {
+static int run_tests(struct test *tests, int argc, char **argv) {
     char *lensdir;
     struct augeas *aug = NULL;
     int r, result = EXIT_SUCCESS;
@@ -336,28 +336,35 @@ static int run_tests(struct test *tests) {
         die("aug_defvar $php");
 
     list_for_each(t, tests) {
+        int skip = (argc > 0);
+        for (int i=0; i < argc; i++)
+            if (STREQ(argv[i], t->name))
+                skip = 0;
+        if (skip)
+            continue;
         if (run_one_test(aug, t) < 0)
             result = EXIT_FAILURE;
     }
 
-    if (test_rm_var(aug) < 0)
-        result = EXIT_FAILURE;
+    if (argc == 0) {
+        if (test_rm_var(aug) < 0)
+            result = EXIT_FAILURE;
 
-    if (test_defvar_nonexistent(aug) < 0)
-        result = EXIT_FAILURE;
+        if (test_defvar_nonexistent(aug) < 0)
+            result = EXIT_FAILURE;
 
-    if (test_defnode_nonexistent(aug) < 0)
-        result = EXIT_FAILURE;
+        if (test_defnode_nonexistent(aug) < 0)
+            result = EXIT_FAILURE;
 
-    if (test_invalid_regexp(aug) < 0)
-        result = EXIT_FAILURE;
-
+        if (test_invalid_regexp(aug) < 0)
+            result = EXIT_FAILURE;
+    }
     aug_close(aug);
 
     return result;
 }
 
-int main(void) {
+int main(int argc, char **argv) {
     struct test *tests;
 
     abs_top_srcdir = getenv("abs_top_srcdir");
@@ -369,7 +376,7 @@ int main(void) {
     }
 
     tests = read_tests();
-    return run_tests(tests);
+    return run_tests(tests, argc - 1, argv + 1);
     /*
     list_for_each(t, tests) {
         printf("Test %s\n", t->name);
