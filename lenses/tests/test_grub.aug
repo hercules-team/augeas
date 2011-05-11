@@ -198,6 +198,13 @@ initrd\t\t/boot/initrd.img-2.6.18-6-vserver-686
     { "kernel" = "/boot/multiboot" { "@path" = "kernel/unix" } { "-s" } }
     { "module" = "/boot/x86.miniroot-safe" } }
 
-(* Local Variables: *)
-(* mode: caml       *)
-(* End:             *)
+  test Grub.lns get "title SUSE Linux Enterprise Server 11 SP1 - 2.6.32.27-0.2
+    kernel (hd0,0)/vmlinuz root=/dev/vg_root/lv_root resume=/dev/vg_root/lv_swap splash=silent showopts
+    initrd (hd0,0)/initrd\n" =
+  { "title" = "SUSE Linux Enterprise Server 11 SP1 - 2.6.32.27-0.2"
+    { "kernel" = "(hd0,0)/vmlinuz"
+      { "root" = "/dev/vg_root/lv_root" }
+      { "resume" = "/dev/vg_root/lv_swap" }
+      { "splash" = "silent" }
+      { "showopts" } }
+    { "initrd" = "(hd0,0)/initrd" } }
