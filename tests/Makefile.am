@@ -4,7 +4,11 @@ GNULIB_CFLAGS= -I $(top_srcdir)/gnulib/lib
 AM_CFLAGS = $(AUGEAS_CFLAGS) $(WARN_CFLAGS) $(GNULIB_CFLAGS) \
 	-I $(top_builddir)/src
 
-valgrind: fatest
+valgrind:
+	make check \
+	  VALGRIND="libtool --mode=execute valgrind --quiet --leak-check=full" \
+	  AUGPARSE=$(abs_top_builddir)/src/augparse \
+	  AUGTOOL=$(abs_top_builddir)/src/augtool
 	libtool --mode=execute valgrind --quiet --leak-check=full ./fatest
 
 lens_tests =			\

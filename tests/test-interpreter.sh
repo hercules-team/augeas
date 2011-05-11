@@ -17,7 +17,7 @@ if [ "x$1" = "x-v" ]; then
     VERBOSE=y
 fi
 
-run_tests ()
+run_tests_plain ()
 {
     ret_succ=$1
     ret_fail=$(( 1 - $ret_succ ))
@@ -50,6 +50,41 @@ run_tests ()
     done
 }
 
+run_tests_valgrind ()
+{
+    ret_succ=$1
+    ret_fail=$(( 1 - $ret_succ ))
+    action=$2
+    shift
+    shift
+
+    for g in $*; do
+        if [ ! -r "$g" ]; then
+            echo "Grammar file $g is not readable"
+            exit 19
+        fi
+        echo "========================================================="
+        printf "$action %-30s \n" $(basename $g .aug)
+        set +e
+        $VALGRIND $AUGPARSE --nostdinc -I ${MODULES} $g
+        ret=$?
+        set -e
+        if [ $ret -eq $ret_fail ]; then
+            echo FAIL
+            result=1
+        elif [ $ret -eq $ret_succ ]; then
+            echo PASS
+        else
+            echo ERROR
+            result=19
+        fi
+        if [ "$VERBOSE" = "y" ] ; then
+            echo $errs
+        fi
+        echo "---------------------------------------------------------"
+    done
+}
+
 if [ ! -x $AUGPARSE ] ; then
     echo "Failed to find executable augparse"
     echo "  looked for $AUGPARSE"
@@ -61,7 +96,9 @@ echo "Running interpreter tests"
 echo
 
 result=0
-run_tests 1 reject $MODULES/fail_*.aug
-run_tests 0 accept $MODULES/pass_*.aug
+[ -z "$VALGRIND" ] && flavor=plain || flavor=valgrind
+
+run_tests_$flavor 1 reject $MODULES/fail_*.aug
+run_tests_$flavor 0 accept $MODULES/pass_*.aug
 
 exit $result
