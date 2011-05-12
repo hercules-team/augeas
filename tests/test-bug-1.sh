@@ -12,8 +12,8 @@ rm -rf $root
 mkdir -p $(dirname $file)
 
 cat > $file <<EOF
-myfile {
-  weekly
+/myfile {
+  size=5M
 }
 EOF
 ln $file $file.orig
