@@ -24,6 +24,7 @@
  * The purpose of this example is to show the usage of libfa
  */
 
+#include <config.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <ctype.h>
