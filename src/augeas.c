@@ -45,13 +45,21 @@ static const char *const s_vars   = "variables";
 
 #define TREE_HIDDEN(tree) ((tree)->label == NULL)
 
+#define AUGEAS_META_PATHX_FUNC AUGEAS_META_TREE "/version/pathx/functions"
+
 static const char *const static_nodes[][2] = {
     { AUGEAS_META_TREE "/version", PACKAGE_VERSION },
     { AUGEAS_META_TREE "/version/save/mode[1]", AUG_SAVE_BACKUP_TEXT },
     { AUGEAS_META_TREE "/version/save/mode[2]", AUG_SAVE_NEWFILE_TEXT },
     { AUGEAS_META_TREE "/version/save/mode[3]", AUG_SAVE_NOOP_TEXT },
     { AUGEAS_META_TREE "/version/save/mode[4]", AUG_SAVE_OVERWRITE_TEXT },
-    { AUGEAS_META_TREE "/version/defvar/expr", NULL }
+    { AUGEAS_META_TREE "/version/defvar/expr", NULL },
+    { AUGEAS_META_PATHX_FUNC "/count", NULL },
+    { AUGEAS_META_PATHX_FUNC "/glob", NULL },
+    { AUGEAS_META_PATHX_FUNC "/label", NULL },
+    { AUGEAS_META_PATHX_FUNC "/last", NULL },
+    { AUGEAS_META_PATHX_FUNC "/position", NULL },
+    { AUGEAS_META_PATHX_FUNC "/regexp", NULL }
 };
 
 static const char *const errcodes[] = {
