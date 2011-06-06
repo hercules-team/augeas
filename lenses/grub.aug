@@ -131,6 +131,7 @@ module Grub =
                      | chainloader
                      | kw_boot_arg "uuid"
                      | kw_boot_arg "findroot"  (* Solaris extension *)
+                     | kw_boot_arg "bootfs"    (* Solaris extension *)
                      | kw_pres "quiet"  (* Seems to be a Ubuntu extension *)
                      | savedefault
                      | configfile
