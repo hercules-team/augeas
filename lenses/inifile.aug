@@ -10,7 +10,6 @@ About: License
 About: TODO
   Things to add in the future
   - Support double quotes in value
-  - Support multiline values (is it standard?)
 
 About: Lens usage
   This lens is made to provide generic primitives to construct INI File lenses.
@@ -79,11 +78,20 @@ Variable: sto_to_eol
 let sto_to_eol         = Sep.opt_space . store Rx.space_in
 
 (*
+Variable: to_comment_re
+  Regex until comment
+*)
+let to_comment_re = /[^;# \t\n][^;#\n]*[^;# \t\n]|[^;# \t\n]/
+
+(*
 Variable: sto_to_comment
   Store until comment
 *)
-let sto_to_comment     = Sep.opt_space
-                         . store /[^;# \t\n][^;#\n]*[^;# \t\n]|[^;# \t\n]/
+let sto_to_comment = Sep.opt_space . store to_comment_re
+
+let sto_multiline = Sep.opt_space
+         . store (to_comment_re
+               . (/[ \t]*\n/ . Rx.space . to_comment_re)*)
 
 
 (* Group: Define comment and defaults *)
@@ -139,6 +147,11 @@ View: entry
 *)
 let entry (kw:regexp) (sep:lens) (comment:lens)
                        = [ key kw . sep . sto_to_comment? . (comment|eol) ] | comment
+
+
+let entry_multiline (kw:regexp) (sep:lens) (comment:lens)
+                       = [ key kw . sep . sto_multiline? . (comment|eol) ] | comment
+
 
 (*
 View: indented_entry

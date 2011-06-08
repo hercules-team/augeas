@@ -203,4 +203,9 @@ test_bdf =
 	  { "test_bdf" } }
 
 
+  (* TEST multiline values *)
+  let multiline_test = "test_ace = val1\n  val2\n   val3\n"
+  let multiline_ace = IniFile.entry_multiline IniFile.entry_re sep_ace comment_ace
+  test multiline_ace get multiline_test =
+      { "test_ace" = "val1\n  val2\n   val3" }
 
