@@ -61,10 +61,17 @@ let defaults =
    |kv "udev_dir" Rx.fspath
    |qstr "selector"
    |kv "user_friendly_names" /yes|no/
+   |kv "dev_loss_tmo" Rx.integer
+   |kv "fast_io_fail_tmo" Rx.integer
+   |kv "verbosity" /[0-6]/
+   |kv "reassign_maps" /yes|no/
    (* These are not in the manpage but in the example multipath.conf *)
    |kv "prio" Rx.word
-   |kv "max_fds" Rx.integer in
-  section "defaults" setting
+   |kv "max_fds" Rx.integer
+   (* SUSE extensions *)
+   |kv "async_timeout" Rx.integer
+   |kv "max_polling_interval" Rx.integer
+  in section "defaults" setting
 
 (* The blacklist and blacklist_exceptions sections *)
 let blacklist =
