@@ -109,7 +109,7 @@ let sto_to_eq  = store /[^,=:#() \t\n\\\\]+/
 let sto_to_spc = store /[^", \t\n\\\\]+|"[^", \t\n\\\\]+"/
 
 (* Variable: sto_to_spc_no_dquote *)
-let sto_to_spc_no_dquote = store /[^", \t\n\\\\]+/ (* " relax emacs *)
+let sto_to_spc_no_dquote = store /[^",# \t\n\\\\]+/ (* " relax emacs *)
 
 (* Variable: sto_integer *)
 let sto_integer = store /[0-9]+/
@@ -122,6 +122,14 @@ Map comments in "#comment" nodes *)
 let comment =
   let sto_to_eol = store (/([^ \t\n].*[^ \t\n]|[^ \t\n])/ - /include(dir)?.*/) in
   [ label "#comment" . del /[ \t]*#[ \t]*/ "# " . sto_to_eol . eol ]
+
+(* View: comment_eol
+Requires a space before the # *)
+let comment_eol = Util.comment_generic /[ \t]+#[ \t]*/ " # "
+
+(* View: comment_or_eol
+A <comment_eol> or <eol> *)
+let comment_or_eol = comment_eol | (del /([ \t]+#\n|[ \t]*\n)/ "\n")
 
 (* View: empty
 Map empty lines *)
@@ -195,7 +203,7 @@ let alias_entry_single (field:string) (sto:lens)
  *************************************************************************)
 let alias_entry (kw:string) (field:string) (sto:lens)
     = [ indent . key kw . sep_cont . alias_entry_single field sto
-          . ( sep_col . alias_entry_single field sto )* . eol ]
+          . ( sep_col . alias_entry_single field sto )* . comment_or_eol ]
 
 (* TODO: go further in user definitions *)
 (* View: user_alias
@@ -401,7 +409,7 @@ let parameter_list   = parameter . ( sep_com . parameter )*
  *     > Default_Entry ::= Default_Type Parameter_List
  *************************************************************************)
 let defaults = [ indent . key "Defaults" . default_type? . sep_cont
-                   . parameter_list . eol ]
+                   . parameter_list . comment_or_eol ]
 
 
 
@@ -470,7 +478,7 @@ let spec_list = [ label "host_group" . alias_list "host" sto_to_com_host
 let spec = [ label "spec" . indent
                . alias_list "user" sto_to_com_user . sep_cont
                . spec_list
-               . ( sep_col . spec_list )* . eol ]
+               . ( sep_col . spec_list )* . comment_or_eol ]
 
 
 (************************************************************************

@@ -169,3 +169,26 @@ let s = "Defaults    secure_path = /sbin:/bin:/usr/sbin:/usr/bin\n"
 test Sudoers.lns get s =
   { "Defaults"
     { "secure_path" = "/sbin:/bin:/usr/sbin:/usr/bin" } }
+
+(* Ticket #206, comments at end of lines *)
+let commenteol = "#
+Defaults targetpw    # ask for
+Host_Alias LOCALNET = 192.168.0.0/24   # foo eol
+root    ALL=(ALL) ALL                  # all root\n"
+test Sudoers.lns get commenteol =
+  {}
+  { "Defaults"
+    { "targetpw" }
+    { "#comment" = "ask for" } }
+  { "Host_Alias"
+      { "alias"
+    { "name" = "LOCALNET" }
+          { "host" = "192.168.0.0/24" } }
+    { "#comment" = "foo eol" } }
+  { "spec"
+      { "user" = "root" }
+      { "host_group"
+    { "host" = "ALL" }
+    { "command" = "ALL"
+        { "runas_user"  = "ALL" } } }
+    { "#comment" = "all root" } }
