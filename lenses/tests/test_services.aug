@@ -48,6 +48,15 @@ z39.50		210/tcp		z3950 wais	# NISO Z39.50 database \n"
        { "port"     = "1911" }
        { "protocol" = "tcp" } }
 
+  (* And comments with one space in *)
+  test Services.lns get "mtp\t\t\t1911/tcp\t\t\t# \nfoo 123/tcp\n" =
+    { "service-name" = "mtp"
+       { "port"     = "1911" }
+       { "protocol" = "tcp" } }
+    { "service-name" = "foo"
+       { "port"     = "123" }
+       { "protocol" = "tcp" } }
+
   test Services.lns get "sql*net\t\t66/tcp\t\t\t# Oracle SQL*NET\n" =
     { "service-name" = "sql*net"
        { "port"     = "66" }
