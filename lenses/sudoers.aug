@@ -501,6 +501,8 @@ let filter = (incl "/etc/sudoers")
     . (incl "/usr/local/etc/sudoers")
     . (incl "/etc/sudoers.d/*")
     . (incl "/usr/local/etc/sudoers.d/*")
+    . (incl "/opt/csw/etc/sudoers")
+    . (incl "/etc/opt/csw/sudoers")
     . Util.stdexcl
 
 let xfm = transform lns filter
