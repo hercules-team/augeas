@@ -298,6 +298,18 @@ int aug_load(augeas *aug);
  */
 int aug_print(const augeas *aug, FILE *out, const char *path);
 
+/*
+ * Function: aug_srun
+ *
+ * Run one or more newline-separated commands. The output of the commands
+ * will be printed to OUT.
+ *
+ * Returns:
+ * the number of executed commands on success, -1 on failure, and -2 if a
+ * 'quit' command was encountered
+ */
+int aug_srun(augeas *aug, FILE *out, const char *text);
+
 /* Function: aug_close
  *
  * Close this Augeas instance and free any storage associated with
@@ -321,7 +333,8 @@ typedef enum {
     AUG_ENOLENS,        /* Lens lookup failed */
     AUG_EMXFM,          /* Multiple transforms */
     AUG_ENOSPAN,        /* No span for this node */
-    AUG_EMVDESC         /* Cannot move node into its descendant */
+    AUG_EMVDESC,        /* Cannot move node into its descendant */
+    AUG_ECMDRUN         /* Failed to execute command */
 } aug_errcode_t;
 
 /* Return the error code from the last API call */

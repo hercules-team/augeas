@@ -334,6 +334,23 @@ static void testNodeInfo(CuTest *tc) {
     aug_close(aug);
 }
 
+static void testMv(CuTest *tc) {
+    struct augeas *aug;
+    int r;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+
+    r = aug_set(aug, "/a/b/c", "value");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_mv(aug, "/a/b/c", "/a/b/c/d");
+    CuAssertIntEquals(tc, -1, r);
+    CuAssertIntEquals(tc, AUG_EMVDESC, aug_error(aug));
+
+    aug_close(aug);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -345,6 +362,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testDefNodeExistingMeta);
     SUITE_ADD_TEST(suite, testDefNodeCreateMeta);
     SUITE_ADD_TEST(suite, testNodeInfo);
+    SUITE_ADD_TEST(suite, testMv);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)

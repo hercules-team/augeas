@@ -2,7 +2,7 @@
 
 aug_mv() {
 opts='--nostdinc -r /dev/null'
-(augtool $opts | grep -v '/augeas\|/files\|augtool' | tr '\n' ' ') <<EOF
+(augtool $opts | grep -v '/augeas\|/files\|augtool' | tr '\n' ' ') 2>&1 <<EOF
 set /a/b/c value
 mv $1 $2
 print
@@ -34,7 +34,9 @@ assert_eq /a/x
 
 # Check that we don't move into a descendant
 ACT=$(aug_mv /a/b/c /a/b/c/d)
-EXP='Failed /a /a/b /a/b/c = "value" /a/b/c/d '
+EXP='error: Cannot move node into its descendant
+error: destination /a/b/c/d is a descendant of /a/b/c
+/a /a/b /a/b/c = "value" /a/b/c/d '
 assert_eq /a/b/c/d
 
 ACT=$(aug_mv /a/b/c /a/b/d)

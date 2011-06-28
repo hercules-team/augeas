@@ -39,3 +39,10 @@ AUGEAS_0.12.0 {
     global:
       aug_span;
 } AUGEAS_0.11.0;
+
+AUGEAS_0.14.0 {
+    global:
+      aug_srun;
+      __aug_init_memstream;
+      __aug_close_memstream;
+} AUGEAS_0.12.0;

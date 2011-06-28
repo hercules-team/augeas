@@ -145,7 +145,7 @@ EXTRA_DIST = \
 
 noinst_SCRIPTS = $(check_SCRIPTS)
 
-check_PROGRAMS = fatest test-xpath test-load test-save test-api
+check_PROGRAMS = fatest test-xpath test-load test-save test-api test-run
 
 TESTS_ENVIRONMENT = \
   PATH='$(abs_top_builddir)/src$(PATH_SEPARATOR)'"$$PATH" \
@@ -171,6 +171,9 @@ test_save_LDADD = $(top_builddir)/src/libaugeas.la $(GNULIB)
 
 test_api_SOURCES = test-api.c cutest.c cutest.h $(top_srcdir)/src/memory.c $(top_srcdir)/src/memory.h
 test_api_LDADD = $(top_builddir)/src/libaugeas.la $(GNULIB)
+
+test_run_SOURCES = test-run.c cutest.c cutest.h $(top_srcdir)/src/memory.c $(top_srcdir)/src/memory.h
+test_run_LDADD = $(top_builddir)/src/libaugeas.la $(GNULIB)
 
 FAILMALLOC_START ?= 1
 FAILMALLOC_REP   ?= 20

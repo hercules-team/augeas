@@ -73,7 +73,8 @@ static const char *const errcodes[] = {
     "Lens not found",                                   /* AUG_ENOLENS */
     "Multiple transforms",                              /* AUG_EMXFM */
     "Node has no span info",                            /* AUG_ENOSPAN */
-    "Cannot move node into its descendant"              /* AUG_EMVDESC */
+    "Cannot move node into its descendant",             /* AUG_EMVDESC */
+    "Failed to execute command"                         /* AUG_ECMDRUN */
 };
 
 static void tree_mark_dirty(struct tree *tree) {
@@ -198,21 +199,38 @@ int tree_set_value(struct tree *tree, const char *value) {
     return 0;
 }
 
+static void store_error(const struct augeas *aug, const char *label, const char *value,
+                 int nentries, ...) {
+    va_list ap;
+    struct tree *tree;
+
+    ensure(nentries % 2 == 0, aug);
+    tree = tree_path_cr(aug->origin, 3, s_augeas, s_error, label);
+    if (tree == NULL)
+        return;
+
+    tree_set_value(tree, value);
+
+    va_start(ap, nentries);
+    for (int i=0; i < nentries; i += 2) {
+        char *l = va_arg(ap, char *);
+        char *v = va_arg(ap, char *);
+        struct tree *t = tree_child_cr(tree, l);
+        if (t != NULL)
+            tree_set_value(t, v);
+    }
+    va_end(ap);
+ error:
+    return;
+}
+
 /* Report pathx errors in /augeas/pathx/error */
 static void store_pathx_error(const struct augeas *aug) {
     if (aug->error->code != AUG_EPATHX)
         return;
 
-    struct tree *error =
-        tree_path_cr(aug->origin, 3, s_augeas, s_pathx, s_error);
-    if (error == NULL)
-        return;
-    tree_set_value(error, aug->error->minor_details);
-
-    struct tree *tpos = tree_child_cr(error, s_pos);
-    if (tpos == NULL)
-        return;
-    tree_set_value(tpos, aug->error->details);
+    store_error(aug, s_pathx, aug->error->minor_details,
+                2, s_pos, aug->error->details);
 }
 
 struct pathx *pathx_aug_parse(const struct augeas *aug,
@@ -327,7 +345,7 @@ static void restore_locale(ATTRIBUTE_UNUSED struct augeas *aug) { }
  * that count is 0. That requires that all public functions enclose their
  * work within a matching pair of api_entry/api_exit calls.
  */
-static void api_entry(const struct augeas *aug) {
+void api_entry(const struct augeas *aug) {
     struct error *err = ((struct augeas *) aug)->error;
 
     ((struct augeas *) aug)->api_entries += 1;
@@ -339,7 +357,7 @@ static void api_entry(const struct augeas *aug) {
     save_locale((struct augeas *) aug);
 }
 
-static void api_exit(const struct augeas *aug) {
+void api_exit(const struct augeas *aug) {
     assert(aug->api_entries > 0);
     ((struct augeas *) aug)->api_entries -= 1;
     if (aug->api_entries == 0) {

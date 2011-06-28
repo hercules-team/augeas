@@ -281,7 +281,7 @@ void print_pos(FILE *out, const char *text, int pos) {
     }
 }
 
-int init_memstream(struct memstream *ms) {
+int __aug_init_memstream(struct memstream *ms) {
     MEMZERO(ms, 1);
 #if HAVE_OPEN_MEMSTREAM
     ms->stream = open_memstream(&(ms->buf), &(ms->size));
@@ -295,7 +295,7 @@ int init_memstream(struct memstream *ms) {
 #endif
 }
 
-int close_memstream(struct memstream *ms) {
+int __aug_close_memstream(struct memstream *ms) {
 #if !HAVE_OPEN_MEMSTREAM
     rewind(ms->stream);
     ms->buf = fread_file_lim(ms->stream, MAX_READ_LEN, &(ms->size));

@@ -1,0 +1,225 @@
+test mv-into-multiple -1 EMMATCH
+  mv /files /augeas/version/save/*
+# Tests for aug_srun
+
+# Blank lines and lines starting with '#' are ignored. This file is
+# processed by test-run.c
+#
+# The syntax for a test specification is
+#   test NAME RESULT ERRCODE
+#     COMMANDS
+#   prints
+#     OUTPUT
+#
+# where
+#   NAME     - the name printed to identify the test
+#   RESULT   - an integer that is compared against the return code
+#              of aug_srun
+#   ERRCODE  - one of the error codes defined in enum errcode_t in augeas.h
+#              without the AUG_ prefix, i.e. NOERROR, EMMATCH etc. If ERRCODE
+#              is ommitted, it defaults to NOERROR
+#   COMMANDS - the commands to hand to aug_srun; can be multiple lines,
+#              which are passed as one string.
+#   OUTPUT   - the string that aug_srun should print on the OUT file stream
+#
+# The prints keyword and OUTPUT are optional; if they are not provided, the
+# output of aug_srun must be empty
+#
+# Leading spaces are stripped from COMMANDS and OUTPUT; a leading ':' is
+# also stripped, but the rest of the line is used verbatim.
+#
+# A test passes when RESULT and ERRCODE agree with what aug_srun given
+# COMMANDS produces, and OUTPUT coincides with what aug_srun prints on its
+# OUT stream.
+#
+# The test is run against a tree initialized with AUG_NO_STDINC|AUG_NO_LOAD
+# and file system root /dev/null
+
+#
+# Various corner cases
+#
+test null 0
+
+test empty 0
+  :
+
+test quit -2
+  quit
+
+test quit-2 -2
+  get /augeas
+  quit
+prints
+  /augeas (none)
+
+test two-commands 2
+  get /augeas/root
+  get /augeas/span
+prints
+  /augeas/root = /dev/null/
+  /augeas/span = disable
+
+test comment 1
+  :# Get /augeas
+  get /augeas
+prints
+  /augeas (none)
+
+test unknown-cmd -1 ECMDRUN
+  nocommand
+
+test help 1
+  help
+prints something
+
+#
+# ls tests
+#
+test ls-root 1
+  ls /
+prints
+  augeas/ = (none)
+  files = (none)
+
+test ls-bad-pathx -1 EPATHX
+  ls /files[]
+
+#
+# match tests
+#
+test match-root 1
+  match /
+prints
+  /augeas = (none)
+  /files = (none)
+
+test match-root-star 1
+  match /*
+prints
+  /augeas = (none)
+  /files = (none)
+
+test match-bad-pathx -1 EPATHX
+  match /files[]
+
+test match-nothing 1
+  match /not-there
+prints
+  :  (no matches)
+
+#
+# test rm
+#
+test rm-save-modes 1
+  rm /augeas/version/save
+prints
+  rm : /augeas/version/save 5
+
+test rm-bad-pathx -1 EPATHX
+  rm /files[]
+
+#
+# test mv
+#
+test mv 1
+  mv /augeas/version /files
+
+test mv-not-there -1 ENOMATCH
+  mv /not-there /files
+
+test mv-to-not-there 1
+  mv /files /new-node
+
+test mv-into-descendant -1 EMVDESC
+  mv /augeas /augeas/version
+
+test mv-into-self -1 EMVDESC
+  mv /augeas /augeas
+
+test mv-into-multiple -1 EMMATCH
+  mv /files /augeas/version/save/*
+
+test mv-multiple -1 EMMATCH
+  mv /augeas/version/save/* /files
+
+#
+# test set
+#
+test set-not-there 2
+  set /foo value
+  get /foo
+prints
+  /foo = value
+
+test set-existing 2
+  set /files value
+  get /files
+prints
+  /files = value
+
+test set-bad-pathx -1 EPATHX
+  set /files[] 1
+
+test set-multiple -1 EMMATCH
+  set /augeas/version/save/mode value
+
+test set-args -1 ECMDRUN
+  set /files
+
+#
+# test clear
+#
+test clear-not-there 2
+  clear /foo
+  get /foo
+prints
+  /foo (none)
+
+test clear-existing 2
+  clear /files
+  get /files
+prints
+  /files (none)
+
+test clear-bad-pathx -1 EPATHX
+  clear /files[]
+
+test clear-multiple -1 EMMATCH
+  clear /augeas/version/save/mode
+
+test clear-args -1 ECMDRUN
+  clear /files value
+
+#
+# test get
+#
+test get-save-mode 1
+  get /augeas/version/save/mode[1]
+prints
+ /augeas/version/save/mode[1] = backup
+
+test get-too-many -1 EMMATCH
+  get /augeas/*
+
+test get-not-there 1
+  get /not-there
+prints
+  /not-there (o)
+
+test get-bad-pathx -1 EPATHX
+  get /files[]
+
+#
+# test print
+#
+test print-save 1
+  print /augeas/version/save
+prints
+  /augeas/version/save
+  /augeas/version/save/mode[1] = "backup"
+  /augeas/version/save/mode[2] = "newfile"
+  /augeas/version/save/mode[3] = "noop"
+  /augeas/version/save/mode[4] = "overwrite"
+
+test print-root 1
+  print /

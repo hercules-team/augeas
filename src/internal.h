@@ -330,6 +330,10 @@ static inline struct error *err_of_aug(const struct augeas *aug) {
 /* Used by augparse for loading tests */
 int __aug_load_module_file(struct augeas *aug, const char *filename);
 
+/* Called at beginning and end of every _public_ API function */
+void api_entry(const struct augeas *aug);
+void api_exit(const struct augeas *aug);
+
 /* Struct: tree
  * An entry in the global config tree. The data structure allows associating
  * values with interior nodes, but the API currently marks that as an error.
@@ -437,7 +441,8 @@ struct memstream {
  *
  * MS must be allocated in advance; INIT_MEMSTREAM initializes it.
  */
-int init_memstream(struct memstream *ms);
+int __aug_init_memstream(struct memstream *ms);
+#define init_memstream(ms) __aug_init_memstream(ms);
 
 /* Function: close_memstream
  * Close a memstream. After calling this, MS->STREAM can not be used
@@ -446,7 +451,8 @@ int init_memstream(struct memstream *ms);
  *
  * The caller must free the MEMSTREAM structure.
  */
-int close_memstream(struct memstream *ms);
+int __aug_close_memstream(struct memstream *ms);
+#define close_memstream(ms) __aug_close_memstream(ms)
 
 /*
  * Path expressions
