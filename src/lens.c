@@ -945,8 +945,9 @@ char *enc_format(const char *e, size_t len) {
     while (*k && k - e < len) {
         char *eq,  *slash, *v;
         eq = strchr(k, ENC_EQ_CH);
+        assert(eq != NULL);
         slash = strchr(eq, ENC_SLASH_CH);
-        assert(eq != NULL && slash != NULL);
+        assert(slash != NULL);
         v = eq + 1;
 
         size += 6;     /* Surrounding braces */

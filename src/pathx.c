@@ -2562,14 +2562,13 @@ const char *pathx_error(struct pathx *path, const char **txt, int *pos) {
             errcode = path->state->errcode;
         else
             errcode = PATHX_EINTERNAL;
+
+        if (txt)
+            *txt = path->state->txt;
+
+        if (pos)
+            *pos = path->state->pos - path->state->txt;
     }
-
-    if (txt)
-        *txt = path->state->txt;
-
-    if (pos)
-        *pos = path->state->pos - path->state->txt;
-
     return errcodes[errcode];
 }
 

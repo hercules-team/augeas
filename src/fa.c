@@ -981,6 +981,8 @@ static struct state_set *fa_reverse(struct fa *fa) {
 
     /* Make new initial and final states */
     struct state *s = add_state(fa, 0);
+    E(s == NULL);
+
     fa->initial->accept = 1;
     set_initial(fa, s);
     for (int i=0; i < accept->used; i++) {
@@ -2290,7 +2292,7 @@ int fa_contains(struct fa *fa1, struct fa *fa2) {
     if (fa1 == fa2)
         return 1;
 
-    determinize(fa2, NULL);
+    F(determinize(fa2, NULL));
     sort_transition_intervals(fa1);
     sort_transition_intervals(fa2);
 
@@ -2547,8 +2549,10 @@ static struct re_str *string_extend(struct re_str *dst,
             dst = make_re_str(NULL);
         if (dst == NULL)
             return NULL;
-        if (REALLOC_N(dst->rx, slen+2) < 0)
+        if (REALLOC_N(dst->rx, slen+2) < 0) {
+            free(dst);
             return NULL;
+        }
         memcpy(dst->rx, src->rx, slen);
         dst->rx[slen] = c;
         dst->rx[slen + 1] = '\0';
@@ -2587,6 +2591,7 @@ int fa_example(struct fa *fa, char **example, size_t *example_len) {
     if (path == NULL || str == NULL)
         goto error;
     F(state_set_push_data(path, fa->initial, str));
+    str = NULL;
 
     /* List of states still to visit */
     worklist = state_set_init(-1, S_NONE);
@@ -2635,6 +2640,7 @@ int fa_example(struct fa *fa, char **example, size_t *example_len) {
     state_set_free(path);
     state_set_free(worklist);
     free_re_str(word);
+    free_re_str(str);
     return -1;
 }
 

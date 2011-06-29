@@ -1497,7 +1497,7 @@ int aug_error(struct augeas *aug) {
 const char *aug_error_message(struct augeas *aug) {
     aug_errcode_t errcode = aug->error->code;
 
-    if (errcode > ARRAY_CARDINALITY(errcodes))
+    if (errcode >= ARRAY_CARDINALITY(errcodes))
         errcode = AUG_EINTERNAL;
     return errcodes[errcode];
 }

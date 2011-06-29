@@ -113,9 +113,10 @@ static int array_insert(struct array *arr, ind_t ind) {
 }
 
 static void array_release(struct array *arr) {
-    if (arr != NULL)
+    if (arr != NULL) {
         free(arr->data);
-    arr->used = arr->size = 0;
+        arr->used = arr->size = 0;
+    }
 }
 
 static void array_remove(struct array *arr, ind_t ind) {

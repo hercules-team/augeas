@@ -823,8 +823,9 @@ static int clone_file(const char *from, const char *to,
     }
     result = 0;
  done:
-    fclose(from_fp);
-    if (fclose(to_fp) != 0)
+    if (from_fp != NULL)
+        fclose(from_fp);
+    if (to_fp != NULL && fclose(to_fp) != 0)
         result = -1;
     if (result != 0)
         unlink(to);
