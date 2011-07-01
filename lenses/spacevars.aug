@@ -43,5 +43,7 @@ let filter = Util.stdexcl
            . incl "/etc/havp/havp.config"
            . incl "/etc/ldap.conf"
            . incl "/etc/ldap/ldap.conf"
+           . incl "/etc/libnss-ldap.conf"
+           . incl "/etc/pam_ldap.conf"
 
 let xfm = transform simple_lns filter
