@@ -664,7 +664,7 @@ nodeset_as_regexp(struct info *info, struct nodeset *ns, int glob) {
             if (glob)
                 rx[i] = make_regexp_from_glob(info, ns->nodes[i]->value);
             else
-                rx[i] = make_regexp_dup(info, ns->nodes[i]->value, 0);
+                rx[i] = make_regexp_unescape(info, ns->nodes[i]->value, 0);
             if (rx[i] == NULL)
                 goto error;
         }
@@ -693,7 +693,7 @@ static void func_regexp_or_glob(struct state *state, int glob) {
         if (glob)
             rx = make_regexp_from_glob(state->error->info, v->string);
         else
-            rx = make_regexp_dup(state->error->info, v->string, 0);
+            rx = make_regexp_unescape(state->error->info, v->string, 0);
     } else if (v->tag == T_NODESET) {
         rx = nodeset_as_regexp(state->error->info, v->nodeset, glob);
     } else {

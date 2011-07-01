@@ -42,9 +42,10 @@ void print_regexp(FILE *out, struct regexp *regexp);
 struct regexp *make_regexp(struct info *info, char *pat, int nocase);
 
 /* Make a regexp with pattern PAT, which is copied. Ownership of INFO is
- * taken.
+ * taken. Escape sequences like \n in PAT are interpreted.
  */
-struct regexp *make_regexp_dup(struct info *info, const char *pat, int nocase);
+struct regexp *make_regexp_unescape(struct info *info, const char *pat,
+                                    int nocase);
 
 /* Return 1 if R is an empty pattern, i.e. one consisting of nothing but
    '(' and ')' characters, 0 otherwise */

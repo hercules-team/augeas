@@ -114,8 +114,8 @@ void print_regexp(FILE *out, struct regexp *r) {
 }
 
 struct regexp *
-make_regexp_dup(struct info *info, const char *pat, int nocase) {
-    char *p = strdup(pat);
+make_regexp_unescape(struct info *info, const char *pat, int nocase) {
+    char *p = unescape(pat, strlen(pat));
 
     if (p == NULL)
         return NULL;
