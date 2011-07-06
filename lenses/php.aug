@@ -46,7 +46,9 @@ let lns    = record_anon? . record*
 let filter = (incl "/etc/php*/*/*.ini")
              . (incl "/etc/php.ini")
              . (incl "/etc/php.d/*.ini")
+             (* Zend Community edition *)
+             . (incl "/usr/local/zend/etc/php.ini")
+             . (incl "/usr/local/zend/etc/conf.d/*.ini")
              . Util.stdexcl
 
 let xfm = transform lns filter
-
