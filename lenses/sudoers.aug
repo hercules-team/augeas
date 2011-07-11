@@ -419,13 +419,25 @@ let defaults = [ indent . key "Defaults" . default_type? . sep_cont
 
 (************************************************************************
  * View: runas_spec
- *   A runas specification for <spec>, using <alias_list>
+ *   A runas specification for <spec>, using <alias_list> for listing
+ *   users and/or groups used to run a command
  *
  *   Definition:
- *     > Runas_Spec ::= '(' Runas_List ')'
+ *     > Runas_Spec ::= '(' Runas_List ')' |
+ *     >                '(:' Runas_List ')' |
+ *     >                '(' Runas_List ':' Runas_List ')'
  *************************************************************************)
-let runas_spec = Util.del_str "(" . alias_list "runas_user" sto_to_com
-    . Util.del_str ")" . sep_cont_opt
+let runas_spec_user       = alias_list "runas_user" sto_to_com
+let runas_spec_group      = Util.del_str ":" . indent
+                            . alias_list "runas_group" sto_to_com
+
+let runas_spec_usergroup  = runas_spec_user . indent . runas_spec_group
+
+let runas_spec = Util.del_str "("
+                 . (runas_spec_user
+                    | runas_spec_group
+                    | runas_spec_usergroup )
+                 . Util.del_str ")" . sep_cont_opt
 
 (************************************************************************
  * View: tag_spec

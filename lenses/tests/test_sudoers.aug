@@ -27,6 +27,8 @@ Defaults:buildd env_keep+=\"APT_CONFIG DEBIAN_FRONTEND SHELL\"
 
 # User privilege specification
 root    ALL=(ALL) ALL
+root    ALL=(: ALL) ALL
+root    ALL=(ALL :ALL) ALL
 
 # Members of the admin group may gain root privileges
 %admin  ALL=(ALL) ALL, NOPASSWD  :	NOSETENV: \
@@ -101,6 +103,19 @@ www-data +biglab=(rpinson)NOEXEC: ICAL \
 	      { "host" = "ALL" }
 	      { "command" = "ALL"
 	          { "runas_user"  = "ALL" } } } }
+      { "spec"
+          { "user" = "root" }
+          { "host_group"
+	      { "host" = "ALL" }
+	      { "command" = "ALL"
+            { "runas_group" = "ALL" } } } }
+      { "spec"
+          { "user" = "root" }
+          { "host_group"
+	      { "host" = "ALL" }
+	      { "command" = "ALL"
+	          { "runas_user"  = "ALL" }
+            { "runas_group" = "ALL" } } } }
       {}
       { "#comment" = "Members of the admin group may gain root privileges" }
       { "spec"
