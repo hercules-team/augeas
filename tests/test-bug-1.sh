@@ -19,7 +19,7 @@ EOF
 ln $file $file.orig
 
 augtool --nostdinc -I $abs_top_srcdir/lenses -r $root > /dev/null <<EOF
-ins invalid before /files/etc/logrotate.d/test/rule
+ins invalid before /files/etc/logrotate.d/rpm/rule[1]
 save
 EOF
 
