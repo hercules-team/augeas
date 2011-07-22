@@ -1523,6 +1523,14 @@ static char *parse_name(struct state *state) {
     char *result;
 
     while (*state->pos != '\0' && strchr(follow, *state->pos) == NULL) {
+        /* This is a hack: since we allow spaces in names, we need to avoid
+         * gobbling up stuff that is in follow(Name), e.g. 'or' so that
+         * things like [name1 or name2] still work.
+         */
+        if (STREQLEN(state->pos, " or ", strlen(" or ")) ||
+            STREQLEN(state->pos, " and ", strlen(" and ")))
+            break;
+
         if (*state->pos == '\\') {
             state->pos += 1;
             if (*state->pos == '\0') {

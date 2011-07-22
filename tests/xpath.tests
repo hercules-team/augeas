@@ -283,3 +283,7 @@ test php4 $php/mail function/SMTP
 
 test php5 $php/mail\ function
      /files/etc/php.ini/mail function
+
+test expr-or /files/etc/group/root/*[self::gid or self::user]
+     /files/etc/group/root/gid = 0
+     /files/etc/group/root/user = root
