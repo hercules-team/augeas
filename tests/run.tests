@@ -142,6 +142,58 @@ test mv-into-multiple -1 EMMATCH
 test mv-multiple -1 EMMATCH
   mv /augeas/version/save/* /files
 
+test mv-tree1 3
+  set /a/b/c value
+  mv /a/b/c /x
+  print /*[ label() != 'augeas' and label() != 'files']
+prints
+  /a
+  /a/b
+  /x = "value"
+
+test mv-tree2 3
+  set /a/b/c value
+  mv /a/b/c /a/x
+  print /*[ label() != 'augeas' and label() != 'files']
+prints
+  /a
+  /a/b
+  /a/x = "value"
+
+test mv-tree3 3
+  set /a/b/c value
+  mv /a/b/c /x/y
+  print /*[ label() != 'augeas' and label() != 'files']
+prints
+  /a
+  /a/b
+  /x
+  /x/y = "value"
+
+test mv-tree4 -1 EMVDESC
+  set /a/b/c value
+  mv /a/b/c /a/b/c/d
+  print /*[ label() != 'augeas' and label() != 'files']
+
+test mv-tree5 3
+  set /a/b/c value
+  mv /a/b/c /a/b/d
+  print /*[ label() != 'augeas' and label() != 'files']
+prints
+  /a
+  /a/b
+  /a/b/d = "value"
+
+test mv-tree6 3
+  set /a/b/c value
+  mv /a /x/y
+  print /*[ label() != 'augeas' and label() != 'files']
+prints
+  /x
+  /x/y
+  /x/y/b
+  /x/y/b/c = "value"
+
 #
 # test set
 #
