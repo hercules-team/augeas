@@ -72,7 +72,8 @@ static const char *const errcodes[] = {
     "Syntax error in lens definition",                  /* AUG_ESYNTAX */
     "Lens not found",                                   /* AUG_ENOLENS */
     "Multiple transforms",                              /* AUG_EMXFM */
-    "Node has no span info"                             /* AUG_ENOSPAN */
+    "Node has no span info",                            /* AUG_ENOSPAN */
+    "Cannot move node into its descendant"              /* AUG_EMVDESC */
 };
 
 static void tree_mark_dirty(struct tree *tree) {
@@ -1097,10 +1098,10 @@ int aug_mv(struct augeas *aug, const char *src, const char *dst) {
     /* Don't move SRC into its own descendent */
     t = td;
     do {
-        if (t == ts)
-            goto error;
+        ERR_THROW(t == ts, aug, AUG_EMVDESC,
+                  "destination %s is a descendant of %s", dst, src);
         t = t->parent;
-    } while (! ROOT_P(t));
+    } while (t != aug->origin);
 
     free_tree(td->children);
 

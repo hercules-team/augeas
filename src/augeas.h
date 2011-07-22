@@ -320,7 +320,8 @@ typedef enum {
     AUG_ESYNTAX,        /* Syntax error in lens file */
     AUG_ENOLENS,        /* Lens lookup failed */
     AUG_EMXFM,          /* Multiple transforms */
-    AUG_ENOSPAN         /* No span for this node */
+    AUG_ENOSPAN,        /* No span for this node */
+    AUG_EMVDESC         /* Cannot move node into its descendant */
 } aug_errcode_t;
 
 /* Return the error code from the last API call */
