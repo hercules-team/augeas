@@ -42,13 +42,14 @@ static const char *const errcodes[] = {
     "unmatched '['",
     "unmatched '('",
     "expected a '/'",
-    "internal error",   /* PATHX_EINTERNAL */
-    "type error",       /* PATHX_ETYPE */
-    "undefined variable",               /* PATHX_ENOVAR */
-    "garbage at end of path expression",/* PATHX_EEND */
-    "can not expand tree from empty nodeset",  /* PATHX_ENONODES */
+    "internal error",                             /* PATHX_EINTERNAL */
+    "type error",                                 /* PATHX_ETYPE */
+    "undefined variable",                         /* PATHX_ENOVAR */
+    "garbage at end of path expression",          /* PATHX_EEND */
+    "no match for path expression",               /* PATHX_ENOMATCH */
     "wrong number of arguments in function call", /* PATHX_EARITY */
-    "invalid regular expression"        /* PATHX_EREGEXP */
+    "invalid regular expression",                 /* PATHX_EREGEXP */
+    "too many matches"                            /* PATHX_EMMATCH */
 };
 
 /*
@@ -2193,6 +2194,25 @@ static void store_error(struct pathx *pathx) {
     if (err == NULL || errcode == PATHX_NOERROR || err->code != AUG_NOERROR)
         return;
 
+    switch (errcode) {
+    case PATHX_ENOMEM:
+        err->code = AUG_ENOMEM;
+        break;
+    case PATHX_EMMATCH:
+        err->code = AUG_EMMATCH;
+        break;
+    case PATHX_ENOMATCH:
+        err->code = AUG_ENOMATCH;
+        break;
+    default:
+        err->code = AUG_EPATHX;
+        break;
+    }
+
+    /* We only need details for pathx syntax errors */
+    if (err->code != AUG_EPATHX)
+        return;
+
     int pos;
     pathx_msg = pathx_error(pathx, NULL, &pos);
 
@@ -2211,7 +2231,6 @@ static void store_error(struct pathx *pathx) {
         strcat(pos_str, path + pos);
     }
 
-    err->code = errcode == PATHX_ENOMEM ? AUG_ENOMEM : AUG_EPATHX;
     err->minor = errcode;
     err->details = pos_str;
     pos_str = NULL;
@@ -2494,7 +2513,7 @@ int pathx_expand_tree(struct pathx *path, struct tree **tree) {
 
     if (lpt.maxns == 0) {
         if (v->tag != T_NODESET || v->nodeset->used == 0) {
-            STATE_ERROR(path->state, PATHX_ENONODES);
+            STATE_ERROR(path->state, PATHX_ENOMATCH);
             goto error;
         }
         if (v->nodeset->used > 1)
@@ -2505,8 +2524,10 @@ int pathx_expand_tree(struct pathx *path, struct tree **tree) {
 
     *tree = path->origin;
     r = locpath_search(&lpt, tree, &step);
-    if (r == -1)
-        return -1;
+    if (r == -1) {
+        STATE_ERROR(path->state, PATHX_EMMATCH);
+        goto error;
+    }
 
     if (step == NULL)
         return 0;
