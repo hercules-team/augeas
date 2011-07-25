@@ -116,13 +116,13 @@ static struct test *read_tests(void) {
     char line[BUFSIZ];
     struct test *result = NULL, *t = NULL;
     int lc = 0;
-    bool append_cmd;
+    bool append_cmd = true;
 
     if (asprintf(&fname, "%s/tests/run.tests", abs_top_srcdir) < 0)
         die("asprintf fname");
 
     if ((fp = fopen(fname, "r")) == NULL)
-        die("fopen xpath.tests");
+        die("fopen run.tests");
 
     while (fgets(line, BUFSIZ, fp) != NULL) {
         lc += 1;
