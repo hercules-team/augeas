@@ -1,3 +1,37 @@
+0.9.0 - 2011-07-25
+  - augtool: keep history in ~/.augeas/history
+  - add aug_srun API function; this makes it possible to run a sequence of
+    commands through the API
+  - aug_mv: report error AUG_EMVDESC on attempts to move a node into one of
+    its descendants
+  - path expressions: allow whitespace inside names, making '/files/etc/foo
+    bar/baz' a legal path, but parse [expr1 or expr2] and [expr1 and expr2]
+    as the logical and/or of expr1 and expr2
+  - path expressions: interpret escape sequences in regexps; since '.' does
+    not match newlines, it has to be possible to write '.|\n' to match any
+    character
+  - path expressions: allow concatenating strings and regexps; add
+    comparison operator '!~'; add function 'glob'; allow passing a nodeset
+    to function 'regexp'
+  - store the names of the functions available in path expressions under
+    /augeas/version
+  - fix several smaller memory leaks
+  - Lens changes/additions
+    * Aliases: allow spaces and commas in aliases (Mathieu Arnold)
+    * Grub: allow "bootfs" Solaris/ZFS extension for dataset name, bug #201
+      (Dominic Cleal); allow kernel path starting with a BIOS device,
+      bug #199
+    * Inifile: allow multiline values
+    * Php: include files from Zend community edition, bug #210
+    * Properties: new lens for Java properties files, bug #194 (Craig Dunn)
+    * Spacevars: autoload two ldap files, bug #202 (John Morrissey)
+    * Sudoers: support users:groups format in a Runas_Spec line, bug #211;
+      add CSW paths (Dominic Cleal)
+    * Util: allow comment_or_eol to match whitespace-only comments,
+      bug #205 (Dominic Cleal)
+    * Xorg: accept InputClass section; autoload from /etc/X11/xorg.conf.d,
+      bug #197
+
 0.8.1 - 2011-04-15
   - augtool: respect autosave flag in oneshot mode, bug #193; fix segfault
     caused by unmatched bracket in path expression, bug #186

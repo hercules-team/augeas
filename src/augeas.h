@@ -302,7 +302,9 @@ int aug_print(const augeas *aug, FILE *out, const char *path);
  * Function: aug_srun
  *
  * Run one or more newline-separated commands. The output of the commands
- * will be printed to OUT.
+ * will be printed to OUT. Running just 'help' will print what commands are
+ * available. Commands accepted by this are identical to what augtool
+ * accepts.
  *
  * Returns:
  * the number of executed commands on success, -1 on failure, and -2 if a
