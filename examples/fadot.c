@@ -66,7 +66,7 @@ int main (int argc, char **argv) {
 
   progname = argv[0];
 
-  while ((c = getopt (argc, argv, "nf:o:")) != -1)
+  while ((c = getopt (argc, argv, "nhf:o:")) != -1)
     switch (c)
       {
       case 'n':
@@ -74,6 +74,9 @@ int main (int argc, char **argv) {
         break;
       case 'f':
         file_output = optarg;
+        break;
+      case 'h':
+        usage();
         break;
       case 'o':
         operation = optarg;
