@@ -42,8 +42,12 @@ module PuppetFileserver =
 
 (* Group: INI File settings *)
 
-(* Variable: sep_tab *)
+(* Variable: eol *)
 let eol = IniFile.eol
+
+(* Variable: sep
+  Only treat one space as the sep, extras are stripped by IniFile *)
+let sep = Util.del_str " "
 
 (*
 Variable: comment
@@ -64,15 +68,11 @@ let entry_re = /path|allow|deny/
 
 (*
 View: entry
-  Non standard INI File entry:
   - It might be indented with an arbitrary amount of whitespace
   - It does not have any separator between keywords and their values
-  - It cannot contain a comment after a value (on the same line)
   - It can only have keywords with the following values (path, allow, deny)
 *)
-let entry = [ Util.del_opt_ws "" . key entry_re .
-              Util.del_ws_spc . store /[^# \n\t]+/ .
-              eol ] | comment
+let entry = IniFile.indented_entry entry_re sep comment
 
 
 (************************************************************************
