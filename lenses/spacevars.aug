@@ -26,17 +26,17 @@ let sto_to_eol = store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
  *************************************************************************)
 
 
-let entry (kw:regexp)
-               = [ key kw . spc . sto_to_eol . eol ]
-let entry_re   = /[A-Za-z0-9\._-]+(\[[0-9]+\])?/
+let entry =
+  let kw = /[A-Za-z0-9\._-]+(\[[0-9]+\])?/ in
+  [ key kw . spc . sto_to_eol . eol ]
 
 (************************************************************************
  *                                LENS
  *************************************************************************)
 
-let lns (entry:lens) = (comment|empty|entry) *
+let lns = (comment|empty|entry)*
 
-let simple_lns = lns (entry entry_re)
+let simple_lns = lns    (* An alias for compatibility reasons *)
 
 (* configuration files that can be parsed without customizing the lens *)
 let filter = Util.stdexcl
@@ -46,4 +46,4 @@ let filter = Util.stdexcl
            . incl "/etc/libnss-ldap.conf"
            . incl "/etc/pam_ldap.conf"
 
-let xfm = transform simple_lns filter
+let xfm = transform lns filter

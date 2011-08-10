@@ -9,7 +9,7 @@ very.useful-key my=value
 
 "
 
-    let lns = Spacevars.lns (Spacevars.entry Spacevars.entry_re)
+    let lns = Spacevars.lns
 
     test lns get conf =
         { "#comment" = "This a spaced key/value configuration file."}
