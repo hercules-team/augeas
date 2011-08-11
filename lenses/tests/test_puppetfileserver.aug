@@ -17,7 +17,7 @@ let fileserver = "# This a comment
 [mount3]
 allow *   # Puppet #6026: same line comment
 # And trailing whitespace
-allow *    	
+allow *
 "
 
 test PuppetFileserver.lns get fileserver =
