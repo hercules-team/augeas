@@ -131,6 +131,20 @@ let key_value (kw: regexp) (sep:lens) (sto:lens) =
                                    [ key kw . sep . sto ]
 
 (************************************************************************
+ * View: key_ws_value
+ *
+ *   Store a key/value pair where key and value are separated by whitespace
+ *   and the value goes to the end of the line. Leading and trailing
+ *   whitespace is stripped from the value. The end of line is consumed by
+ *   this lens
+ *
+ *   Parameters:
+ *     kw:regexp - the pattern to match as key
+ ************************************************************************)
+let key_ws_value (kw:regexp) =
+  key_value_line kw Util.del_ws_spc (store Rx.space_in)
+
+(************************************************************************
  * View: flag
  *   A simple flag subnode, consisting of a single key
  *

@@ -20,6 +20,7 @@ let word        =  /[A-Za-z0-9!_.-]+(\[[0-9]+\])?/
 let sto_to_spc  = store /[^# \t\n]+/
 
 let comment     = Util.comment
+let empty       = Util.empty
 let comment_or_eol = Util.comment_or_eol
 let value (kw:string)
                 = [ spc . label kw . sto_to_spc ]
@@ -339,7 +340,8 @@ let entry_re =    "accept_filter"
                 | "zph_option"
                 | "zph_parent"
                 | "zph_sibling"
-let entry       = indent . Spacevars.entry entry_re
+
+let entry       = indent . (Build.key_ws_value entry_re)
 
 (************************************************************************
  *                                AUTH
@@ -422,7 +424,7 @@ let extension_methods = indent . [ key "extension_methods" . spc
  *                               LENS
  *************************************************************************)
 
-let lns         = Spacevars.lns (entry|auth|acl|http_access|refresh_pattern|extension_methods)
+let lns         = (comment|empty|entry|auth|acl|http_access|refresh_pattern|extension_methods)*
 
 let filter      = Util.stdexcl
                 . incl "/etc/squid/squid.conf"

@@ -20,6 +20,9 @@ let sto_to_eol  = store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
 let sto_to_spc  = store /[^\\# \t\n]+/
 let sto_to_by   = store (/[^\\# \t\n]+/ - "by")
 
+let comment     = Util.comment
+let empty       = Util.empty
+
 (************************************************************************
  *                           ACCESS TO
  *************************************************************************)
@@ -97,7 +100,7 @@ let global_re   = "allow"
                 | "TLSCRLCheck"
                 | "backend"
 
-let global     = Spacevars.entry global_re
+let global     = Build.key_ws_value global_re
 
 (************************************************************************
  *                             DATABASE
@@ -141,13 +144,13 @@ let database    = [ key "database"
                   . spc
                   . sto_to_eol
                   . eol
-                  . Spacevars.lns (Spacevars.entry database_re|access) ]
+                  . (comment|empty|Build.key_ws_value database_re|access)* ]
 
 (************************************************************************
  *                              LENS
  *************************************************************************)
 
-let lns         = Spacevars.lns (global|access) . (database)*
+let lns         = (comment|empty|global|access)* . (database)*
 
 let filter      = incl "/etc/ldap/slapd.conf"
                 . incl "/etc/openldap/slapd.conf"
