@@ -483,7 +483,7 @@ static int run_args(int argc, char **argv) {
     }
     code = run_command(line);
     free(line);
-    if (code == 0 && auto_save)
+    if (code >= 0 && auto_save)
         code = run_command("save");
     return (code == 0 || code == -2) ? 0 : -1;
 }
