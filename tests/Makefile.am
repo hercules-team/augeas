@@ -93,6 +93,7 @@ lens_tests =			\
   lens-spacevars.sh		\
   lens-squid.sh			\
   lens-sshd.sh			\
+  lens-stunnel.sh			\
   lens-sysconfig.sh		\
   lens-syslog.sh		\
   lens-sysctl.sh		\
