@@ -11,8 +11,9 @@ module Shellvars =
   let comment_or_eol = Util.comment_or_eol
   let empty   = Util.empty
   let xchgs   = Build.xchgs
+  let semicol = del /;?/ ""
 
-  let char  = /[^#() '"\t\n]|\\\\"/
+  let char  = /[^;#() '"\t\n]|\\\\"/
   let dquot = /"([^"\\\n]|\\\\.)*"/                    (* " Emacs, relax *)
   let squot = /'[^'\n]*'/
   (* For some reason, `` conflicts with comment_or_eol *)
@@ -35,10 +36,10 @@ module Shellvars =
       store (char* | dquot | squot | bquot | empty_array)
 
   let export = [ key "export" . Util.del_ws_spc ]
-  let kv = [ export? . key key_re . eq . (simple_value | array) . comment_or_eol ]
+  let kv = [ export? . key key_re . eq . (simple_value | array) . semicol . comment_or_eol ]
 
   let var_action (name:string) =
-    [ xchgs name ("@" . name) . Util.del_ws_spc . store key_re . comment_or_eol ]
+    [ xchgs name ("@" . name) . Util.del_ws_spc . store key_re . semicol . comment_or_eol ]
 
   let unset = var_action "unset"
   let bare_export = var_action "export"
@@ -46,7 +47,7 @@ module Shellvars =
   let source =
     [
       del /\.|source/ "." . label ".source" .
-      Util.del_ws_spc . store /[^= \t\n]+/ . eol
+      Util.del_ws_spc . store /[^;= \t\n]+/ . semicol . eol
     ]
 
   let shell_builtin_cmds = "ulimit"
@@ -55,8 +56,8 @@ module Shellvars =
     [ label "@builtin"
       . store shell_builtin_cmds
       . Util.del_ws_spc
-      . [ label "args" . store /[^ \t\n][^;\n]+[^ \t\n]|[^ \t;\n]+/ ]
-      . eol ]
+      . [ label "args" . store /[^; \t\n][^;\n]+[^; \t\n]|[^ \t;\n]+/ ]
+      . semicol . eol ]
 
   let lns = (comment | empty | source | kv | unset | bare_export | builtin) *
 
@@ -118,7 +119,6 @@ module Shellvars =
   let filter_misc    = incl "/etc/arno-iptables-firewall/debconf.cfg"
                      . incl "/etc/cron-apt/config"
                      . incl "/etc/environment"
-                     . incl "/etc/rc.conf"
 
   let filter = filter_sysconfig
              . filter_ifcfg
