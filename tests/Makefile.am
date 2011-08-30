@@ -35,6 +35,7 @@ lens_tests =			\
   lens-dput.sh			\
   lens-ethers.sh		\
   lens-exports.sh		\
+  lens-fai_diskconfig.sh	\
   lens-fstab.sh			\
   lens-gdm.sh			\
   lens-group.sh			\
