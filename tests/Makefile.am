@@ -93,6 +93,7 @@ lens_tests =			\
   lens-soma.sh			\
   lens-spacevars.sh		\
   lens-squid.sh			\
+  lens-ssh.sh			\
   lens-sshd.sh			\
   lens-stunnel.sh			\
   lens-sysconfig.sh		\
