@@ -654,7 +654,9 @@ nodeset_as_regexp(struct info *info, struct nodeset *ns, int glob) {
     }
 
     if (used == 0) {
-        result = regexp_make_empty(info);
+        /* If the nodeset is empty, make sure we produce a regexp
+         * that never matches anything */
+        result = make_regexp_unescape(info, "[^\001-\7ff]", 0);
     } else {
         if (ALLOC_N(rx, ns->used) < 0)
             goto error;
