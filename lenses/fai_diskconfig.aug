@@ -44,6 +44,12 @@ let tag (re:regexp) = [ Util.del_str ":" . key re ]
 let generic_opt (type:string) (kw:regexp) =
    [ key type . Util.del_str ":" . store kw ]
 
+(* Variable: generic_opt_list
+   A generic key/list option *)
+let generic_opt_list (type:string) (kw:regexp) =
+   [ key type . Util.del_str ":" . counter "locallist"
+   . Build.opt_list [seq "locallist" . store kw] Sep.comma ]
+
 
 (************************************************************************
  * Group:                      RECORDS
@@ -127,7 +133,8 @@ let volume_full (type:lens) (third_field:lens) =
            . third_field . space
            . filesystem . space
            . mount_options
-           . (space . fs_options)? ]
+           . (space . fs_options)?
+           . eol ]
 
 (* Variable: name
    LVM volume group name *)
@@ -150,7 +157,8 @@ let vg_option =
 let volume_vg = [ key "vg"
                 . space . name
                 . space . disk
-                . (space . vg_option)? ]
+                . (space . vg_option)?
+                . eol ]
 
 (* Variable: spare_missing *)
 let spare_missing = tag /spare|missing/
@@ -176,32 +184,37 @@ let volume_tmpfs =
            . mountpoint .space
            . size . space
            . mount_options
-           . (space . fs_options)? ]
+           . (space . fs_options)?
+           . eol ]
 
-(* TODO: assign each volume type to a specific disk_config type *)
-(* Variable: volume_entry
-   An <volume> entry *)
-let volume_entry = volume_full (key "primary") size     (* for physical disks only *)
-                 | volume_full (key "logical") size     (* for physical disks only *)
-                 | volume_full (key /raid[0156]/) disk_list  (* raid level *)
-                 | volume_full (key "raw-disk") size
-                 | volume_full type_label_lv size  (* lvm logical volume: vg name and lv name *)
-                 | volume_vg
-                 | volume_tmpfs
+(* Variable: volume_lvm *)
+let volume_lvm = volume_full type_label_lv size  (* lvm logical volume: vg name and lv name *)
+               | volume_vg
+
+(* Variable: volume_raid *)
+let volume_raid = volume_full (key /raid[0156]/) disk_list  (* raid level *)
+
+(* Variable: device *)
+let device = [ label "device" . store Rx.fspath ]
+
+(* Variable: volume_cryptsetup *)
+let volume_cryptsetup = volume_full (key ("swap"|"tmp"|"luks")) device
 
 (* Variable: volume *)
-let volume = volume_entry . eol
+let volume = volume_full (key "primary") size     (* for physical disks only *)
+           | volume_full (key "logical") size     (* for physical disks only *)
+           | volume_full (key "raw-disk") size
 
 (* Variable: volume_or_comment
    A succesion of <volume>s and <comment>s *)
-let volume_or_comment =
-      volume | (volume . (volume|empty|comment)* . volume)
+let volume_or_comment (vol:lens) =
+      vol | (vol . (vol|empty|comment)* . vol)
 
 (* Variable: disk_config_entry *)
-let disk_config_entry (kw:regexp) (opt:lens) =
+let disk_config_entry (kw:regexp) (opt:lens) (vol:lens) =
                   [ key "disk_config" . space . store kw
                   . (space . opt)* . eol
-                  . volume_or_comment? ]
+                  . (volume_or_comment vol)? ]
 
 (* Variable: lvmoption *)
 let lvmoption =
@@ -219,10 +232,10 @@ let lvmoption =
 (* Variable: raidoption *)
 let raidoption =
      (* preserve partitions -- always *)
-     generic_opt "preserve_always" /[0-9]+(,[0-9]+)*/
+     generic_opt_list "preserve_always" (Rx.integer | "all")
      (* preserve partitions -- unless the system is installed
       * for the first time *)
-   | generic_opt "preserve_reinstall" /[0-9]+(,[0-9]+)*/
+   | generic_opt_list "preserve_reinstall" Rx.integer
      (* when creating the fstab, the key used for defining the device
       * may be the device (/dev/xxx), a label given using -L, or the uuid *)
    | generic_opt "fstabkey" /device|label|uuid/
@@ -230,12 +243,12 @@ let raidoption =
 (* Variable: option *)
 let option =
      (* preserve partitions -- always *)
-     generic_opt "preserve_always" /[0-9]+(,[0-9]+)*/
+     generic_opt_list "preserve_always" (Rx.integer | "all")
      (* preserve partitions -- unless the system is installed
         for the first time *)
-   | generic_opt "preserve_reinstall" /[0-9]+(,[0-9]+)*/
+   | generic_opt_list "preserve_reinstall" Rx.integer
      (* attempt to resize partitions *)
-   | generic_opt "resize" /[0-9]+(,[0-9]+)*/
+   | generic_opt_list "resize" Rx.integer
      (* write a disklabel - default is msdos *)
    | generic_opt "disklabel" /msdos|gpt/
      (* mark a partition bootable, default is / *)
@@ -245,15 +258,23 @@ let option =
      (* when creating the fstab, the key used for defining the device
       * may be the device (/dev/xxx), a label given using -L, or the uuid *)
    | generic_opt "fstabkey" /device|label|uuid/
+   | generic_opt_list "always_format" Rx.integer
+   | generic_opt "sameas" Rx.fspath
+
+let cryptoption =
+     [ key "randinit" ]
 
 (* Variable: disk_config *)
 let disk_config =
-    let other_label = Rx.fspath - "lvm" - "raid" - "end" - /disk[0-9]+/ in
-                  disk_config_entry "lvm" lvmoption
-                | disk_config_entry "raid" raidoption
-                | disk_config_entry "end" option (* there shouldn't be an option here *)
-                | disk_config_entry /disk[0-9]+/ option
-                | disk_config_entry other_label option
+    let other_label = Rx.fspath - "lvm" - "raid" - "end" - /disk[0-9]+/
+                                - "cryptsetup" - "tmpfs" in
+                  disk_config_entry "lvm" lvmoption volume_lvm
+                | disk_config_entry "raid" raidoption volume_raid
+                | disk_config_entry "tmpfs" option volume_tmpfs
+                | disk_config_entry "end" option volume (* there shouldn't be an option here *)
+                | disk_config_entry /disk[0-9]+/ option volume
+                | disk_config_entry "cryptsetup" cryptoption volume_cryptsetup
+                | disk_config_entry other_label option volume
 
 (* Variable: lns
    The disk_config lens *)
