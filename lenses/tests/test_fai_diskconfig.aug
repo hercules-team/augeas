@@ -617,3 +617,22 @@ test FAI_DiskConfig.lns get config3 =
       }
     }
   }
+
+
+let with_spaces = "disk_config disk2
+
+raw-disk - 0 - -
+"
+
+test FAI_DiskConfig.lns get with_spaces =
+  { "disk_config" = "disk2"
+    {  }
+    { "raw-disk"
+      { "mountpoint" = "-" }
+      { "size" = "0" }
+      { "filesystem" = "-" }
+      { "mount_options"
+        { "1" = "-" }
+      }
+    }
+  }

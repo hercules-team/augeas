@@ -208,7 +208,7 @@ let volume = volume_full (key "primary") size     (* for physical disks only *)
 (* Variable: volume_or_comment
    A succesion of <volume>s and <comment>s *)
 let volume_or_comment (vol:lens) =
-      vol | (vol . (vol|empty|comment)* . vol)
+      (vol|empty|comment)* . vol
 
 (* Variable: disk_config_entry *)
 let disk_config_entry (kw:regexp) (opt:lens) (vol:lens) =
