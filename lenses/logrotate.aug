@@ -93,7 +93,7 @@ module Logrotate =
    let hooks =
      let hook_names = /(pre|post)rotate|(first|last)action/ in
      [ del /[ \t]*/ "\t" . key hook_names . eol .
-       hook_lines .
+       hook_lines? .
        del /[ \t]*endscript[ \t]*\n/ "\tendscript\n" ]
 
    (* Define rule *)
