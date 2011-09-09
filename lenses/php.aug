@@ -21,7 +21,7 @@ let empty    = IniFile.empty
  * otherwise it would lead to an ambiguity with the "section" label
  * since PHP allows entries outside of sections.
  *************************************************************************)
-let entry    = IniFile.entry IniFile.entry_re sep comment
+let entry    = IniFile.indented_entry IniFile.entry_re sep comment
 
 
 (************************************************************************
