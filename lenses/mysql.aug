@@ -15,8 +15,7 @@ let comment  = IniFile.comment IniFile.comment_re "#"
 let sep      = IniFile.sep IniFile.sep_re IniFile.sep_default
 
 let entry    = [ key IniFile.entry_re . sep . IniFile.sto_to_comment . (comment|IniFile.eol) ] | 
-               [ key IniFile.entry_re . store // . (comment|IniFile.eol) ] | 
-               [ key /\![A-Za-z][A-Za-z0-9\._-]+/ . del / / " " . store /\/[A-Za-z0-9\.\/_-]+/ . (comment|IniFile.eol) ] |
+               [ key IniFile.entry_re . store // .  (comment|IniFile.eol) ] |
                comment
 
 (************************************************************************
@@ -30,7 +29,9 @@ let entry    = [ key IniFile.entry_re . sep . IniFile.sto_to_comment . (comment|
 let title   = IniFile.indented_title_label "target" IniFile.record_label_re
 let record  = IniFile.record title entry
 
-let lns    = IniFile.lns record comment
+let includedir = Build.key_value_line "!includedir" Sep.space (store Rx.fspath)
+
+let lns    = (comment|IniFile.empty)* . (record|includedir)*
 
 let filter = (incl "/etc/mysql/my.cnf")
              . (incl "/etc/mysql/conf.d/*.cnf")
