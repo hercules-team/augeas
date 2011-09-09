@@ -132,6 +132,7 @@ key_buffer		= 16M
 # * IMPORTANT: Additional settings that can override those from this file!
 #
 !includedir /etc/mysql/conf.d/
+
 "
 
 
@@ -273,5 +274,6 @@ key_buffer		= 16M
     { "#comment" }
   }
   { "!includedir" = "/etc/mysql/conf.d/" }
+  { }
 
 

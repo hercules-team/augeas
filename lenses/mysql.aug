@@ -30,6 +30,7 @@ let title   = IniFile.indented_title_label "target" IniFile.record_label_re
 let record  = IniFile.record title entry
 
 let includedir = Build.key_value_line "!includedir" Sep.space (store Rx.fspath)
+               . IniFile.empty*
 
 let lns    = (comment|IniFile.empty)* . (record|includedir)*
 
