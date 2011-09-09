@@ -14,8 +14,8 @@ module Test_mysql =
 # This will be passed to all mysql clients
 # It has been reported that passwords should be enclosed with ticks/quotes
 # Remember to edit /etc/mysql/debian.cnf when changing the socket location.
-[client]
-port		= 3306
+ [client]
+ port		= 3306
 socket		= /var/run/mysqld/mysqld.sock
 
 # Here is entries for some specific programs
