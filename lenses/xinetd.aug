@@ -86,9 +86,9 @@ module Xinetd =
    *       about how to write that down. The resulting regular expressions
    *       would simply be prohibitively large.
    *)
-  let body (attr:lens) = Util.del_str "\n{\n"
+  let body (attr:lens) = del /\n\{[ \t]*\n/ "\n{\n"
                        . (empty|comment|attr)*
-                       . del /[ \t]*}[ \t]*\n/ "}\n"
+                       . del /[ \t]*\}[ \t]*\n/ "}\n"
 
   (* View: includes
    *  Note:
