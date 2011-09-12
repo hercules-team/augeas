@@ -38,7 +38,7 @@ basedir		= /usr
 datadir		= /var/lib/mysql
 tmpdir		= /tmp
 language	= /usr/share/mysql/english
-skip-external-locking
+ skip-external-locking
 #
 # Instead of skip-networking the default is now to listen only on
 # localhost which is more compatible and is not less secure.

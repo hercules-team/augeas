@@ -15,8 +15,8 @@ let comment  = IniFile.comment IniFile.comment_re "#"
 let sep      = IniFile.sep IniFile.sep_re IniFile.sep_default
 
 let entry    = Util.indent
-             . [ key IniFile.entry_re . sep . IniFile.sto_to_comment . (comment|IniFile.eol) ] |
-               [ key IniFile.entry_re . store // .  (comment|IniFile.eol) ] |
+             . ([ key IniFile.entry_re . sep . IniFile.sto_to_comment . (comment|IniFile.eol) ] |
+               [ key IniFile.entry_re . store // .  (comment|IniFile.eol) ]) |
                comment
 
 (************************************************************************
