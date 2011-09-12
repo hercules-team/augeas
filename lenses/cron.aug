@@ -49,7 +49,7 @@ let num        = /[0-9\*][0-9\/,-\*]*/
 let alpha      = /[A-Za-z]{3}/
 
 (* Variable: alphanum *)
-let alphanum   = num | alpha
+let alphanum   = (num|alpha) . ("-" . (num|alpha))?
 
 
 (* Group: Separators *)

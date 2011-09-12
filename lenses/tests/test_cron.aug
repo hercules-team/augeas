@@ -8,6 +8,7 @@ CRON_TZ=America/Los_Angeles
 
 	30 7      * * *   root	test -x /etc/init.d/anacron && /usr/sbin/invoke-rc.d anacron start >/dev/null
   00 */3    15-25/2 May 1-5   user   somecommand
+  00 */3    15-25/2 May mon-tue   user   somecommand
 # a comment
 @yearly				foo    a command\n"
 
@@ -33,6 +34,14 @@ CRON_TZ=America/Los_Angeles
               { "dayofmonth"   = "15-25/2" }
               { "month"        = "May"     }
               { "dayofweek"    = "1-5"     } }
+          { "user"         = "user"    } }
+      { "entry" = "somecommand"
+          { "time"
+              { "minute"       = "00"      }
+              { "hour"         = "*/3"     }
+              { "dayofmonth"   = "15-25/2" }
+              { "month"        = "May"     }
+              { "dayofweek"    = "mon-tue"     } }
           { "user"         = "user"    } }
       { "#comment" = "a comment" }
       { "entry" = "a command"
