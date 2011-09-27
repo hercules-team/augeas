@@ -46,6 +46,7 @@ include=/etc/nrpe_local.cfg
 
 command[check_users]=/usr/lib/nagios/check_users -w 5 -c 10
 command[check_load]=/usr/lib/nagios/check_load -w 15,10,5 -c 30,25,20
+command[check_mongoscl_proc]=/usr/lib64/nagios/plugins/check_procs -c 1:1 --ereg-argument-array=mongosCL
 command[test_command]= foo bar \n
 include=/etc/nrpe/nrpe.cfg
 include_dir=/etc/nrpe/cfgdir/ \n
@@ -69,6 +70,9 @@ include_dir=/etc/nrpe/cfgdir/ \n
     }
     { "command"
       { "check_load" = "/usr/lib/nagios/check_load -w 15,10,5 -c 30,25,20" }
+    }
+    { "command"
+      { "check_mongoscl_proc" = "/usr/lib64/nagios/plugins/check_procs -c 1:1 --ereg-argument-array=mongosCL" }
     }
     { "command"
       { "test_command" = " foo bar " }

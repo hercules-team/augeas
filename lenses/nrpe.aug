@@ -30,7 +30,7 @@ let command =
   let cbrkt = del /\]/ "]" in
     [ key "command" .
     [ obrkt . key /[^]\/\n]+/ . cbrkt . eq
-            . store /[^=\n]+/ . del /\n/ "\n" ]
+            . store /[^\n]+/ . del /\n/ "\n" ]
     ]
 
 
