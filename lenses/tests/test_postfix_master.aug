@@ -43,3 +43,19 @@ test Postfix_Master.lns get conf2 =
     { "command" = "pipe\n  flags=R user=cyrus argv=/usr/sbin/cyrdeliver -e -m \"${extension}\" ${user}" }
   }
 
+(* accept commas in arguments *)
+let conf3 = "# master.cf
+submission inet n       -       n       -       -       smtpd
+  -o smtpd_client_restrictions=permit_sasl_authenticated,reject
+"
+
+test Postfix_Master.lns get conf3 =
+   { "#comment" = "master.cf" }
+   { "submission"
+     { "type" = "inet" }
+     { "private" = "n" }
+     { "unpriviliged" = "-" }
+     { "chroot" = "n" }
+     { "wakeup" = "-" }
+     { "limit" = "-" }
+     { "command" = "smtpd\n  -o smtpd_client_restrictions=permit_sasl_authenticated,reject" } }

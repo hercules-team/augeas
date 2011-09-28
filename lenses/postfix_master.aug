@@ -19,7 +19,7 @@ let comment    = Util.comment
 let empty      = Util.empty
 
 let word       = /[A-Za-z0-9_.-]+/
-let words      = /[A-Za-z0-9$(){}=!_.-][A-Za-z0-9$!(){} ="\/_.-]*[A-Za-z0-9$!(){}="\/_.-]/
+let words      = /[A-Za-z0-9$(){}=!_.,-][A-Za-z0-9$!(){} ="\/_.,-]*[A-Za-z0-9$!(){}="\/_.,-]/
 
 let bool       = /y|n|-/
 let integer    = /([0-9]+|-)\??/
