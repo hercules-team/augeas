@@ -67,7 +67,7 @@ module BBhosts =
 
     let host_test_list = Build.opt_list host_test sep_spc
 
-    let host_opts = [ label "probes" . sep_spc . Util.del_str "#" . (sep_spc . host_test_list)? ]
+    let host_opts = [ label "probes" . sep_spc . Util.del_str "#" . (sep_spc? . host_test_list)? ]
 
     let host = [ label "host" . host_ip . host_fqdn . host_opts . eol ]
 
