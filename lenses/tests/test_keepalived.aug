@@ -33,8 +33,31 @@ vrrp_sync_group VG1 {
 vrrp_instance VI_1 { 
         state MASTER 
         interface eth0 
+
+	track_interface {
+		eth0 # Back
+		eth1 # DMZ
+	}
+	track_script {
+		check_apache2    # weight = +2 si ok, 0 si nok
+	}
+	garp_master_delay 5
+	priority 50
+	advert_int 2
+	authentication {
+		auth_type PASS
+		auth_pass mypass
+	}
+	virtual_ipaddress {
+		10.234.66.146/32 dev eth0
+	}
      
         lvs_sync_daemon_interface eth0 
+	ha_suspend
+
+       notify_master   \"/svr/scripts/notify_master.sh\"
+       notify_backup   \"/svr/scripts/notify_backup.sh\"
+       notify_fault    \"/svr/scripts/notify_fault.sh\"
 
     ! each virtual router id must be unique per instance name! 
         virtual_router_id 51 
@@ -118,6 +141,12 @@ virtual_server_group DNS_1 {
     10.45.58.59/32 27
 }
 
+vrrp_script chk_apache2 {       # Requires keepalived-1.1.13
+script \"killall -0 apache2\"   # faster
+interval 2                      # check every 2 seconds
+weight 2                        # add 2 points of prio if OK
+}
+
 ! that's all
 "
 
@@ -127,8 +156,10 @@ virtual_server_group DNS_1 {
      { "#comment" = "Configuration File for keepalived" }
      {}
      { "global_defs"
+       { }
        { "#comment" = "this is who emails will go to on alerts" }
        { "notification_email"
+            { }
             { "email" = "admins@example.com" }
             { "email" = "fakepager@example.com" }
             { "#comment" = "add a few more email addresses here if you would like" } }
@@ -144,17 +175,45 @@ virtual_server_group DNS_1 {
        { "lvs_id" = "LVS_EXAMPLE_01" } }
      {}
      { "vrrp_sync_group" = "VG1"
+       { }
        { "group"
+         { }
          { "inside_network"
            { "#comment" = "name of vrrp_instance (below)" } }
          { "outside_network"
            { "#comment" = "One for each moveable IP." } } } }
      {}
      { "vrrp_instance" = "VI_1"
+       { }
        { "state" = "MASTER" }
        { "interface" = "eth0" }
        { }
+       { "track_interface"
+         { }
+         { "eth0" { "#comment" = "Back" } }
+         { "eth1" { "#comment" = "DMZ" } } }
+       { "track_script"
+         { }
+         { "check_apache2" { "#comment" = "weight = +2 si ok, 0 si nok" } } }
+       { "garp_master_delay" = "5" }
+       { "priority" = "50" }
+       { "advert_int" = "2" }
+       { "authentication"
+         { }
+         { "auth_type" = "PASS" }
+         { "auth_pass" = "mypass" } }
+       { "virtual_ipaddress"
+         { }
+         { "ipaddr" = "10.234.66.146"
+           { "prefixlen" = "32" }
+           { "dev" = "eth0" } } }
+       { }
        { "lvs_sync_daemon_interface" = "eth0" }
+       { "ha_suspend" }
+       { }
+       { "notify_master" = "\"/svr/scripts/notify_master.sh\"" }
+       { "notify_backup" = "\"/svr/scripts/notify_backup.sh\"" }
+       { "notify_fault" = "\"/svr/scripts/notify_fault.sh\"" }
        { }
        { "#comment" = "each virtual router id must be unique per instance name!" }
        { "virtual_router_id" = "51" }
@@ -174,7 +233,6 @@ virtual_server_group DNS_1 {
        { "#comment" = "send an alert when this instance changes state from MASTER to BACKUP" }
        { "smtp_alert" }
        { }
-       { }
        { "#comment" = "this authentication is for syncing between failover servers" }
        { "#comment" = "keepalived supports PASS, which is simple password" }
        { "#comment" = "authentication" }
@@ -182,6 +240,7 @@ virtual_server_group DNS_1 {
        { "#comment" = "I don't use AH" }
        { "#comment" = "yet as many people have reported problems with it" }
        { "authentication"
+         { }
          { "auth_type" = "PASS" }
          { "auth_pass" = "example" } }
        { }
@@ -192,6 +251,7 @@ virtual_server_group DNS_1 {
        { "#comment" = "any IP addresses" }
        { }
        { "virtual_ipaddress"
+         { }
          { "ipaddr" = "192.168.1.11" }
          { "ipaddr" = "10.234.66.146"
            { "prefixlen" = "32" }
@@ -202,6 +262,7 @@ virtual_server_group DNS_1 {
        { "virtual_server"
          { "ip" = "192.168.1.11" }
          { "port" = "22" }
+         { }
          { "delay_loop" = "6" }
          { }
          { "#comment" = "use round-robin as a load balancing algorithm" }
@@ -219,6 +280,7 @@ virtual_server_group DNS_1 {
            { "ip" = "10.20.40.10" }
            { "port" = "22" }
            { }
+           { }
            { "#comment" = "if we used weighted round-robin or a similar lb algo," }
            { "#comment" = "we include the weight of this server" }
            { }
@@ -231,10 +293,12 @@ virtual_server_group DNS_1 {
            { "#comment" = "if it fails, we will pull this realserver out of the pool" }
            { "#comment" = "and send email about the removal" }
            { "TCP_CHECK"
+             { }
              { "connect_timeout" = "3" }
              { "connect_port" = "22" } } } }
        { }
        { "virtual_server_group" = "DNS_1"
+         { }
          { "vip"
 	   { "ipaddr" = "192.168.0.1" }
 	   { "port" = "22" } }
@@ -245,6 +309,15 @@ virtual_server_group DNS_1 {
 	   { "ipaddr" = "10.45.58.59"
 	     { "prefixlen" = "32" } }
 	   { "port" = "27" } } }
+       { }
+       { "vrrp_script" = "chk_apache2"
+         { "#comment" = "Requires keepalived-1.1.13" }
+         { "script" = "\"killall -0 apache2\""
+           { "#comment" = "faster" } }
+         { "interval" = "2"
+           { "#comment" = "check every 2 seconds" } }
+         { "weight" = "2"
+           { "#comment" = "add 2 points of prio if OK" } } }
        { }
        { "#comment" = "that's all" }
 

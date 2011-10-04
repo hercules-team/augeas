@@ -33,8 +33,17 @@ let indent = Util.indent
 (* View: eol *)
 let eol = Util.eol
 
+(* View: opt_eol *)
+let opt_eol = del /[ \t]*\n?/ " "
+
 (* View: sep_spc *)
 let sep_spc = Sep.space
+
+(* View: sep_opt_spc *)
+let sep_opt_spc = Sep.opt_space
+
+(* View: sep_dquot *)
+let sep_dquot = Util.del_str "\""
 
 (* View: lbracket *)
 let lbracket = Util.del_str "{"
@@ -52,7 +61,7 @@ let comment_eol = Util.comment_generic /[ \t]*[#!][ \t]*/ " # "
 
 (* View: comment_or_eol
 A <comment_eol> or <eol> *)
-let comment_or_eol = comment_eol | (del /[ \t]*#?\n/ "\n")
+let comment_or_eol = comment_eol | (del /[ \t]*[#!]?\n/ "\n")
 
 (* View: empty
 Map empty lines *)
@@ -71,18 +80,21 @@ let word_slash = word | "/"
 let sto_word = store word
 
 (* View: sto_num *)
-let sto_num = store Rx.integer
+let sto_num = store Rx.relinteger
+
+(* View: sto_to_eol *)
+let sto_to_eol = store /[^#! \t\n][^#!\n]*[^#! \t\n]|[^#! \t\n]/
 
 (* View: field *)
 let field (kw:string) (sto:lens) = indent . Build.key_value_line_comment kw sep_spc sto comment_eol
 
 (* View: flag
 A single word *)
-let flag (kw:regexp) = indent . Build.flag kw
+let flag (kw:regexp) = [ indent . key kw . comment_or_eol ]
 
 (* View: lens_block 
 A generic block with a title lens *)
-let lens_block (title:lens) (sto:lens) = [ indent . title . sep_spc . lbracket . eol
+let lens_block (title:lens) (sto:lens) = [ indent . title . opt_eol . lbracket
                                          . (sto | empty | comment)+
                                          . indent . rbracket . eol ]
 
@@ -185,21 +197,36 @@ let vrrp_instance_field = field "state" sto_word
                         | field "virtual_router_id" sto_num
                         | field "priority" sto_num
                         | field "advert_int" sto_num
+                        | field "garp_master_delay" sto_num
+                        | field "notify_master" sto_to_eol
+                        | field "notify_backup" sto_to_eol
+                        | field "notify_fault" sto_to_eol
                         | flag "smtp_alert"
                         | flag "nopreempt"
+                        | flag "ha_suspend"
                         | block "authentication" (
                                 field "auth_type" sto_word
                               | field "auth_pass" sto_word
                               )
                         | block "virtual_ipaddress" static_ipaddress_field
+                        | block "track_interface" ( flag word )
+                        | block "track_script" ( flag word )
 
 (* View: vrrp_instance *)
 let vrrp_instance = named_block "vrrp_instance" vrrp_instance_field
 
+(* View: vrrp_script_field *)
+let vrrp_script_field = field "script" sto_to_eol
+                      | field "interval" sto_num
+                      | field "weight" sto_num
+
+(* View: vrrp_script *)
+let vrrp_script = named_block "vrrp_script" vrrp_script_field
+
 
 (* View: vrrpd_conf
 contains subblocks of VRRP synchronization group(s) and VRRP instance(s) *)
-let vrrpd_conf = vrrp_sync_group | vrrp_instance
+let vrrpd_conf = vrrp_sync_group | vrrp_instance | vrrp_script
 
 
 (************************************************************************

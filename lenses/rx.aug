@@ -18,9 +18,10 @@ let space_in  = /[^ \t\n].*[^ \t\n]|[^ \t\n]/
 let no_spaces = /[^ \t\n]+/
 
 (* Generic fields *)
-let word      = /[A-Za-z0-9_.-]+/
-let integer   = /[0-9]+/
-let decimal   = /[0-9]+([.,][0-9]+)?/
+let word       = /[A-Za-z0-9_.-]+/
+let integer    = /[0-9]+/
+let relinteger = /-?[0-9]+/
+let decimal    = /[0-9]+([.,][0-9]+)?/
 
 (* A filesystem path *)
 let fspath    = /[^ \t\n]+/
