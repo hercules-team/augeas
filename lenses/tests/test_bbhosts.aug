@@ -11,7 +11,7 @@ group-compress  A group
 
 group-only  dns  VIP DNS
 10.50.25.48	mydnsmachine.network #
-10.50.25.49     myotherdnsmachine.network # noping noconn !ssh dns;mydnstocheck
+10.50.25.49     myotherdnsmachine.network #noping noconn !ssh dns;mydnstocheck
 # a comment in a group
 
 

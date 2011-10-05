@@ -14,6 +14,7 @@ module BBhosts =
     let eol = Util.eol
     let eol_no_spc = Util.del_str "\n"
     let sep_spc = Sep.space
+    let sep_opt_spc = Sep.opt_space
     let word  = store /[^|;# \n\t]+/
     let value_to_eol = store /[^ \t][^\n]+/
     let ip    = store Rx.ipv4
@@ -67,7 +68,7 @@ module BBhosts =
 
     let host_test_list = Build.opt_list host_test sep_spc
 
-    let host_opts = [ label "probes" . sep_spc . Util.del_str "#" . (sep_spc? . host_test_list)? ]
+    let host_opts = [ label "probes" . sep_spc . Util.del_str "#" . (sep_opt_spc . host_test_list)? ]
 
     let host = [ label "host" . host_ip . host_fqdn . host_opts . eol ]
 
