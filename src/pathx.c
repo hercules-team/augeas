@@ -279,9 +279,11 @@ static void func_count(struct state *state);
 static void func_label(struct state *state);
 static void func_regexp(struct state *state);
 static void func_glob(struct state *state);
+static void func_int(struct state *state);
 
 static const enum type const arg_types_nodeset[] = { T_NODESET };
 static const enum type const arg_types_string[] = { T_STRING };
+static const enum type const arg_types_bool[] = { T_BOOLEAN };
 
 static const struct func builtin_funcs[] = {
     { .name = "last", .arity = 0, .type = T_NUMBER, .arg_types = NULL,
@@ -304,7 +306,13 @@ static const struct func builtin_funcs[] = {
       .impl = func_glob },
     { .name = "glob", .arity = 1, .type = T_REGEXP,
       .arg_types = arg_types_nodeset,
-      .impl = func_glob }
+      .impl = func_glob },
+    { .name = "int", .arity = 1, .type = T_NUMBER,
+      .arg_types = arg_types_string, .impl = func_int },
+    { .name = "int", .arity = 1, .type = T_NUMBER,
+      .arg_types = arg_types_nodeset, .impl = func_int },
+    { .name = "int", .arity = 1, .type = T_NUMBER,
+      .arg_types = arg_types_bool, .impl = func_int }
 };
 
 #define RET_ON_ERROR                                                    \
@@ -639,6 +647,39 @@ static void func_label(struct state *state) {
         return;
     }
     state->value_pool[vind].string = s;
+    push_value(vind, state);
+}
+
+static void func_int(struct state *state) {
+    value_ind_t vind = make_value(T_NUMBER, state);
+    int64_t i = -1;
+    RET_ON_ERROR;
+
+    struct value *v = pop_value(state);
+    if (v->tag == T_BOOLEAN) {
+        i = v->boolval;
+    } else {
+        const char *s = NULL;
+        if (v->tag == T_STRING) {
+            s = v->string;
+        } else {
+            /* T_NODESET */
+            if (v->nodeset->used != 1) {
+                STATE_ERROR(state, PATHX_EMMATCH);
+                return;
+            }
+            s = v->nodeset->nodes[0]->value;
+        }
+        if (s != NULL) {
+            int r;
+            r = xstrtoint64(s, 10, &i);
+            if (r < 0) {
+                STATE_ERROR(state, PATHX_ENUMBER);
+                return;
+            }
+        }
+    }
+    state->value_pool[vind].number = i;
     push_value(vind, state);
 }
 

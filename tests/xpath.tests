@@ -287,3 +287,16 @@ test php5 $php/mail\ function
 test expr-or /files/etc/group/root/*[self::gid or self::user]
      /files/etc/group/root/gid = 0
      /files/etc/group/root/user = root
+
+test int-ns-eq /files/etc/group/*[int(gid) = 30]
+     /files/etc/group/gopher
+
+test int-ns-lt /files/etc/group/*[int(gid) < 3]
+    /files/etc/group/root
+    /files/etc/group/bin
+    /files/etc/group/daemon
+
+test int-bool-f /files[int(1 = 0) > 0]
+
+test int-bool-t /files[int(1 = 1) > 0]
+     /files
