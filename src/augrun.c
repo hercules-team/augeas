@@ -621,13 +621,17 @@ static void cmd_span(struct command *cmd) {
     char *filename = NULL;
     const char *option = NULL;
 
-    if (! streqv(AUG_DISABLE, option)) {
+    if (aug_get(cmd->aug, AUGEAS_SPAN_OPTION, &option) != 1) {
+        printf("Error: option " AUGEAS_SPAN_OPTION " not found\n");
+        return;
+    }
+    if (streqv(AUG_DISABLE, option)) {
         ERR_REPORT(cmd, AUG_ECMDRUN,
                    "Span is not enabled. To enable, run the commands:\n"
                    "    set %s %s\n    rm %s\n    load\n",
                    AUGEAS_SPAN_OPTION, AUG_ENABLE, AUGEAS_FILES_TREE);
         return;
-    } else if (streqv(AUG_ENABLE, option)) {
+    } else if (! streqv(AUG_ENABLE, option)) {
         ERR_REPORT(cmd, AUG_ECMDRUN,
                    "option %s must be %s or %s\n", AUGEAS_SPAN_OPTION,
                    AUG_ENABLE, AUG_DISABLE);
