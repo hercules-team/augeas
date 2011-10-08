@@ -16,7 +16,7 @@ module Sysconfig =
   let nothing = del /(""|'')?/ "" . value ""
 
   (* Chars allowed in a bare string *)
-  let bchar = /[^ \t\n\"'\\]|\\\\./
+  let bchar = /[^ \t\n"'\\]|\\./
   let qchar = /["']/  (* " *)
 
   (* We split the handling of right hand sides into a few cases:

@@ -18,7 +18,7 @@ let eol        = Util.eol
 
 (* a line can be extended across multiple lines by making the last  *)
 (*  character a backslash *)
-let sep_spc    =  del /([ \t]+|[ \t]*\\\\\n[ \t]*)/ " "
+let sep_spc    =  del /([ \t]+|[ \t]*\\\n[ \t]*)/ " "
 
 (* Define fields *)
 let sto_to_eol = store /([^\\ \t\n].*[^\\ \t\n]|[^\\ \t\n])/ . eol

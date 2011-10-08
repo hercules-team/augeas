@@ -13,8 +13,8 @@ module Shellvars_list =
   let indent  = Util.indent
 
   let sqword = /[^ '\t\n]+/
-  let dqword = /([^ "\\\t\n]|\\\\.)+/
-  let uqword = /([^ "'\\\t\n]|\\\\.)+/
+  let dqword = /([^ "\\\t\n]|\\.)+/
+  let uqword = /([^ "'\\\t\n]|\\.)+/
 
   (* lists values of the form ...  val1 val2 val3  ... *)
   let list(word:regexp) =

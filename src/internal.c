@@ -148,10 +148,10 @@ char* xread_file(const char *path) {
 /*
  * Escape/unescape of string literals
  */
-static const char *const escape_chars    = "\"\a\b\t\n\v\f\r\\";
-static const char *const escape_names = "\"abtnvfr\\";
+static const char *const escape_chars = "\a\b\t\n\v\f\r";
+static const char *const escape_names = "abtnvfr";
 
-char *unescape(const char *s, int len) {
+char *unescape(const char *s, int len, const char *extra) {
     size_t size;
     const char *n;
     char *result, *t;
@@ -162,7 +162,9 @@ char *unescape(const char *s, int len) {
 
     size = 0;
     for (i=0; i < len; i++, size++)
-        if (s[i] == '\\' && strchr(escape_names, s[i+1]) != NULL) {
+        if (s[i] == '\\' && (n = strchr(escape_names, s[i+1])) != NULL) {
+            i += 1;
+        } else if (s[i] == '\\' && extra && strchr(extra, s[i+1]) != NULL) {
             i += 1;
         }
 
@@ -173,6 +175,9 @@ char *unescape(const char *s, int len) {
         if (s[i] == '\\' && (n = strchr(escape_names, s[i+1])) != NULL) {
             *t++ = escape_chars[n - escape_names];
             i += 1;
+        } else if (s[i] == '\\' && extra && strchr(extra, s[i+1]) != NULL) {
+            *t++ = s[i+1];
+            i += 1;
         } else {
             *t++ = s[i];
         }
@@ -180,7 +185,7 @@ char *unescape(const char *s, int len) {
     return result;
 }
 
-char *escape(const char *text, int cnt) {
+char *escape(const char *text, int cnt, const char *extra) {
 
     int len = 0;
     char *esc = NULL, *e;
@@ -190,6 +195,8 @@ char *escape(const char *text, int cnt) {
 
     for (int i=0; i < cnt; i++) {
         if (text[i] && (strchr(escape_chars, text[i]) != NULL))
+            len += 2;  /* Escaped as '\x' */
+        else if (text[i] && extra && (strchr(extra, text[i]) != NULL))
             len += 2;  /* Escaped as '\x' */
         else if (! isprint(text[i]))
             len += 4;  /* Escaped as '\ooo' */
@@ -204,6 +211,9 @@ char *escape(const char *text, int cnt) {
         if (text[i] && ((p = strchr(escape_chars, text[i])) != NULL)) {
             *e++ = '\\';
             *e++ = escape_names[p - escape_chars];
+        } else if (text[i] && extra && (strchr(extra, text[i]) != NULL)) {
+            *e++ = '\\';
+            *e++ = text[i];
         } else if (! isprint(text[i])) {
             sprintf(e, "\\%03o", (unsigned char) text[i]);
             e += 4;
@@ -225,7 +235,7 @@ int print_chars(FILE *out, const char *text, int cnt) {
     if (cnt < 0)
         cnt = strlen(text);
 
-    esc = escape(text, cnt);
+    esc = escape(text, cnt, NULL);
     total = strlen(esc);
     if (out != NULL)
         fprintf(out, "%s", esc);
@@ -243,10 +253,10 @@ char *format_pos(const char *text, int pos) {
 
     if (before > window)
         before = window;
-    left = escape(text + pos - before, before);
+    left = escape(text + pos - before, before, NULL);
     if (left == NULL)
         goto done;
-    right = escape(text + pos, window);
+    right = escape(text + pos, window, NULL);
     if (right == NULL)
         goto done;
 

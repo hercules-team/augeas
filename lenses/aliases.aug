@@ -9,7 +9,7 @@ module Aliases =
    (* Group: basic tokens *)
 
    (* Variable: word *)
-   let word = /[^\|", \t\n]+/
+   let word = /[^|", \t\n]+/
    (* Variable: name *)
    let name = /([^ \t\n#:|@]+|"[^"|\n]*")/ (* " make emacs calm down *)
 

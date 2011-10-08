@@ -115,7 +115,7 @@ static struct value *str_to_fa(struct info *info, const char *pattern,
         return NULL;
     }
 
-    re_str = escape(pattern, -1);
+    re_str = escape(pattern, -1, RX_ESCAPES);
     ERR_NOMEM(re_str == NULL, info);
 
     exn = make_exn_value(info, "Invalid regular expression /%s/", re_str);
@@ -542,7 +542,7 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
         const char *dflt = string->str;
         cnt = regexp_match(regexp, dflt, strlen(dflt), 0, NULL);
         if (cnt != strlen(dflt)) {
-            char *s = escape(dflt, -1);
+            char *s = escape(dflt, -1, RX_ESCAPES);
             char *r = regexp_escape(regexp);
             exn = make_exn_value(info,
                    "del: the default value '%s' does not match /%s/",
@@ -709,11 +709,11 @@ ambig_check(struct info *info, struct fa *fa1, struct fa *fa2,
             lns_format_atype(l1, &s1);
             lns_format_atype(l2, &s2);
         } else {
-            e_u = escape(upv, pv - upv);
-            e_up = escape(upv, v - upv);
-            e_upv = escape(upv, -1);
-            e_pv = escape(pv, -1);
-            e_v = escape(v, -1);
+            e_u = escape(upv, pv - upv, RX_ESCAPES);
+            e_up = escape(upv, v - upv, RX_ESCAPES);
+            e_upv = escape(upv, -1, RX_ESCAPES);
+            e_pv = escape(pv, -1, RX_ESCAPES);
+            e_v = escape(v, -1, RX_ESCAPES);
             s1 = regexp_escape(ltype(l1, typ));
             s2 = regexp_escape(ltype(l2, typ));
         }

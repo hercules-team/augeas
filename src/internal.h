@@ -253,10 +253,14 @@ int pathjoin(char **path, int nseg, ...);
  * Escape nonprintable characters within TEXT, similar to how it's done in
  * C string literals. Caller must free the returned string.
  */
-char *escape(const char *text, int cnt);
+char *escape(const char *text, int cnt, const char *extra);
 
 /* Function: unescape */
-char *unescape(const char *s, int len);
+char *unescape(const char *s, int len, const char *extra);
+
+/* Extra characters to be escaped in strings and regexps respectively */
+#define STR_ESCAPES "\"\\"
+#define RX_ESCAPES  "/"
 
 /* Function: print_chars */
 int print_chars(FILE *out, const char *text, int cnt);

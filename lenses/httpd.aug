@@ -45,13 +45,13 @@ autoload xfm
 let dels (s:string)     = del s s
 
 (* deal with continuation lines *)
-let sep_spc    =  del /([ \t]+|[ \t]*\\\\\n[ \t]*)/ " "
+let sep_spc    =  del /([ \t]+|[ \t]*\\\n[ \t]*)/ " "
 
 let sep_osp             = Sep.opt_space
 let sep_eq              = del /[ \t]*=[ \t]*/ "="
 
-let nmtoken             = /[a-zA-Z:_][a-zA-Z0-9:_\.-]*/
-let word                = /[a-zA-Z][a-zA-Z0-9\._\-]*/
+let nmtoken             = /[a-zA-Z:_][a-zA-Z0-9:_.-]*/
+let word                = /[a-zA-Z][a-zA-Z0-9._-]*/
 
 let comment             = Util.comment
 let eol                 = Util.eol
@@ -59,10 +59,10 @@ let empty               = Util.empty
 let indent              = Util.indent
 
 (* borrowed from shellvars.aug *)
-let char_arg_dir  = /[^ '"\t\n]|\\\\"|\\\\'/
-let char_arg_sec  = /[^ '"\t\n>]|\\\\"|\\\\'/
-let dquot = /"([^"\\\n]|\\\\.)*"/
-let squot = /'([^'\\\n]|\\\\.)*'/
+let char_arg_dir  = /[^ '"\t\n]|\\"|\\'/
+let char_arg_sec  = /[^ '"\t\n>]|\\"|\\'/
+let dquot = /"([^"\\\n]|\\.)*"/
+let squot = /'([^'\\\n]|\\.)*'/
 
 (******************************************************************
  *                            Attributes

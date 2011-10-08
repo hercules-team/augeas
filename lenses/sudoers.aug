@@ -61,10 +61,10 @@ let indent    = del /[ \t]*/ ""
 let sep_spc  = del /[ \t]+/ " "
 
 (* Variable: sep_cont *)
-let sep_cont = del /([ \t]+|[ \t]*\\\\\n[ \t]*)/ " "
+let sep_cont = del /([ \t]+|[ \t]*\\\n[ \t]*)/ " "
 
 (* Variable: sep_cont_opt *)
-let sep_cont_opt = del /([ \t]*|[ \t]*\\\\\n[ \t]*)/ " "
+let sep_cont_opt = del /([ \t]*|[ \t]*\\\n[ \t]*)/ " "
 
 (* Variable: sep_com *)
 let sep_com  = sep_cont_opt . Util.del_str "," . sep_cont_opt
@@ -83,33 +83,33 @@ let sep_dquote   = Util.del_str "\""
 
 (* Variable: sto_to_com_cmnd
 sto_to_com_cmnd does not begin or end with a space *)
-let sto_to_com_cmnd = store /([^,=:#() \t\n\\\\]([^,=:#()\n\\\\]|\\\\[=:,\\\\])*[^,=:#() \t\n\\\\])|[^,=:#() \t\n\\\\]/
+let sto_to_com_cmnd = store /([^,=:#() \t\n\\]([^,=:#()\n\\]|\\[=:,\\])*[^,=:#() \t\n\\])|[^,=:#() \t\n\\]/
 
 (* Variable: sto_to_com
 
 There could be a \ in the middle of a command *)
-let sto_to_com      = store /([^,=:#() \t\n\\\\][^,=:#()\n]*[^,=:#() \t\n\\\\])|[^,=:#() \t\n\\\\]/
+let sto_to_com      = store /([^,=:#() \t\n\\][^,=:#()\n]*[^,=:#() \t\n\\])|[^,=:#() \t\n\\]/
 
 (* Variable: sto_to_com_host *)
-let sto_to_com_host = store /[^,=:#() \t\n\\\\]+/
+let sto_to_com_host = store /[^,=:#() \t\n\\]+/
 
 
 (* Variable: sto_to_com_user
 Escaped spaces are allowed *)
-let sto_to_com_user = store ( /([^,=:#() \t\n]([^,=:#() \t\n]|(\\\\[ \t]))*[^,=:#() \t\n])|[^,=:#() \t\n]/
+let sto_to_com_user = store ( /([^,=:#() \t\n]([^,=:#() \t\n]|(\\[ \t]))*[^,=:#() \t\n])|[^,=:#() \t\n]/
                               - /(User|Runas|Host|Cmnd)_Alias|Defaults.*/ )
 
 (* Variable: sto_to_com_col *)
-let sto_to_com_col      = store /[^",=#() \t\n\\\\]+/ (* " relax emacs *)
+let sto_to_com_col      = store /[^",=#() \t\n\\]+/ (* " relax emacs *)
 
 (* Variable: sto_to_eq *)
-let sto_to_eq  = store /[^,=:#() \t\n\\\\]+/
+let sto_to_eq  = store /[^,=:#() \t\n\\]+/
 
 (* Variable: sto_to_spc *)
-let sto_to_spc = store /[^", \t\n\\\\]+|"[^", \t\n\\\\]+"/
+let sto_to_spc = store /[^", \t\n\\]+|"[^", \t\n\\]+"/
 
 (* Variable: sto_to_spc_no_dquote *)
-let sto_to_spc_no_dquote = store /[^",# \t\n\\\\]+/ (* " relax emacs *)
+let sto_to_spc_no_dquote = store /[^",# \t\n\\]+/ (* " relax emacs *)
 
 (* Variable: sto_integer *)
 let sto_integer = store /[0-9]+/
@@ -247,7 +247,7 @@ let alias = user_alias | runas_alias | host_alias | cmnd_alias
  *     >                  'Defaults' '>' Runas_List
  *************************************************************************)
 let default_type     =
-  let value = store /[@:>][^ \t\n\\\\]+/ in
+  let value = store /[@:>][^ \t\n\\]+/ in
   [ label "type" . value ]
 
 (************************************************************************

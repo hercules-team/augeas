@@ -51,7 +51,7 @@ let tcp_flags =
 let ipt_match =
   let any_key = /[a-zA-Z-][a-zA-Z-]+/ -
     /protocol|source|destination|jump|goto|in-interface|out-interface|fragment|match|tcp-flags/ in
-  let any_val = /([^\" \t\n!-][^ \t\n]*)|\"([^\"\\\n]|\\\\.)*\"/ in
+  let any_val = /([^" \t\n!-][^ \t\n]*)|"([^"\\\n]|\\.)*"/ in
   let any_param =
     [ [ spc . dels "!" . label "not" ]? .
       spc . dels "--" . key any_key . (spc . store any_val)? ] in

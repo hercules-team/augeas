@@ -62,18 +62,18 @@ let multi_line_array_entry (k:regexp) (v:lens) =
 let version_depends =
     [ label "version"
      . [   del / *\( */ " ( " . label "relation" . store /[<>=]+/ ]
-     . [   del_ws_spc . label "number" . store /[a-zA-Z0-9_\.\-]+/
+     . [   del_ws_spc . label "number" . store /[a-zA-Z0-9_.-]+/
          . del / *\)/ " )" ]
     ]
 
 let arch_depends =
     [ label "arch"
     . [  del / *\[ */ " [ " . label "prefix" . store /!?/ ]
-    . [ label "name" . store /[a-zA-Z0-9_\.\-]+/ . del / *\]/ " ]" ] ]
+    . [ label "name" . store /[a-zA-Z0-9_.-]+/ . del / *\]/ " ]" ] ]
 
 
 let package_depends
-  =  [ key ( /[a-zA-Z0-9_\-]+/ | /\$\{[a-zA-Z0-9:]+\}/ )
+  =  [ key ( /[a-zA-Z0-9_-]+/ | /\$\{[a-zA-Z0-9:]+\}/ )
         . ( version_depends | arch_depends ) * ]
 
 
