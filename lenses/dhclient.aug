@@ -42,7 +42,7 @@ let word              = /[A-Za-z0-9_.-]+(\[[0-9]+\])?/
 (* Define fields *)
 
 (* TODO: there could be a " " in the middle of a value ... *)
-let sto_to_spc        = store /[^\\#,;\{\}" \t\n]+|"[^\\#"\n]+"/
+let sto_to_spc        = store /[^\\#,;{}" \t\n]+|"[^\\#"\n]+"/
 let sto_to_scl        = store /[^ \t][^;\n]+[^ \t]|[^ \t;\n]+/
 let rfc_code          = [ key "code" . sep_spc . store word ]
                       . sep_eq

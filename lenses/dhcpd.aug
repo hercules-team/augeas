@@ -81,7 +81,7 @@ let ip                = Rx.ipv4
 
 (* borrowed from sysconfig.aug *)
   (* Chars allowed in a bare string *)
-  let bchar = /[^ \t\n\"'\\{\}#,\(\)]|\\\\./
+  let bchar = /[^ \t\n"'\\{}#,()]|\\\\./
   let qchar = /["']/  (* " *)
 
   (* We split the handling of right hand sides into a few cases:

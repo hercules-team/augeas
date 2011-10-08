@@ -147,7 +147,7 @@ let prefixlen = [ label "prefixlen" . Util.del_str "/" . sto_num ]
 
 (* View: ipaddr
 An IP address or range with an optional mask *)
-let ipaddr = label "ipaddr" . store /[0-9\.-]+/ . prefixlen?
+let ipaddr = label "ipaddr" . store /[0-9.-]+/ . prefixlen?
 
 (* View: ipdev
 A device for IP addresses *)

@@ -25,7 +25,7 @@ module Pg_Hba =
     let word    = Rx.neg1
     (* Variable: ipaddr
        CIDR or ip+netmask *)
-    let ipaddr   = /[0-9a-fA-F:\.]+(\/[0-9]+|[ \t]+[0-9\.]+)/
+    let ipaddr   = /[0-9a-fA-F:.]+(\/[0-9]+|[ \t]+[0-9.]+)/
 
     let comma_sep_list (l:string) =
         let lns = [ label l . store word ] in

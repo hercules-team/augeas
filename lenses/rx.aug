@@ -77,5 +77,5 @@ let device_name = /[a-zA-Z0-9_?.+:!-]+/
  * Variable: email_addr
  *    To be refined
  *)
-let email_addr = /[A-Za-z0-9_\+\.-]+@[A-Za-z0-9_\.-]+/
+let email_addr = /[A-Za-z0-9_+.-]+@[A-Za-z0-9_.-]+/
 

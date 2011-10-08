@@ -15,7 +15,7 @@ module Properties =
   let sepch        = del /[ \t]*=[ \t]*/ "="
   let value_to_eol = /[^ \t\n](.*[^ \t\n])?/
   let indent       = Util.indent
-  let entry        = /[A-Za-z][A-Za-z0-9\.]+/
+  let entry        = /[A-Za-z][A-Za-z0-9.]+/
 
   (* define comments and properties*)
   let comment     = Util.comment

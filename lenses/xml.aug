@@ -19,8 +19,8 @@ let sep_spc           = del /[ \t\n]+/ " "
 let sep_osp           = del /[ \t\n]*/ ""
 let sep_eq            = del /[ \t\n]*=[ \t\n]*/ "="
 
-let nmtoken             = /[a-zA-Z:_][a-zA-Z0-9:_\.-]*/
-let word                = /[a-zA-Z][a-zA-Z0-9\._\-]*/
+let nmtoken             = /[a-zA-Z:_][a-zA-Z0-9:_.-]*/
+let word                = /[a-zA-Z][a-zA-Z0-9._-]*/
 let char                = /.|\n/
 (* if we hide the quotes, then we can only accept single or double quotes *)
 (* otherwise a put ambiguity is raised *)

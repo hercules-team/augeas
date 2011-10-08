@@ -177,7 +177,7 @@ let indented_entry (kw:regexp) (sep:lens) (comment:lens)
 Variable: entry_re
   Default regexp for <entry> keyword
 *)
-let entry_re           = ( /[A-Za-z][A-Za-z0-9\._-]+/ )
+let entry_re           = ( /[A-Za-z][A-Za-z0-9._-]+/ )
 
 
 (************************************************************************
