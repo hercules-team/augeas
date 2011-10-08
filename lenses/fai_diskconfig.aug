@@ -219,7 +219,7 @@ let disk_config_entry (kw:regexp) (opt:lens) (vol:lens) =
 (* Variable: lvmoption *)
 let lvmoption =
      (* preserve partitions -- always *)
-      generic_opt "preserve_always" /[^\/, \t\n-]+-[^\/, \t\n-]+(,[^\/,\s\-]+-[^\/, \t\n-]+)*/
+      generic_opt "preserve_always" /[^\/, \t\n-]+-[^\/, \t\n-]+(,[^\/, \t\n-]+-[^\/, \t\n-]+)*/
      (* preserve partitions -- unless the system is installed
       * for the first time *)
    | generic_opt "preserve_reinstall" /[^\/, \t\n-]+-[^\/, \t\n-]+(,[^\/, \t\n-]+-[^\/, \t\n-]+)*/
