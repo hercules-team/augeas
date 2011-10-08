@@ -26,7 +26,7 @@ module Cgconfig =
    let comment = Util.comment
    let empty   = Util.empty
 
-   let id        = /[a-zA-Z0-9_\-\/\.]+/
+   let id        = /[a-zA-Z0-9_\/.-]+/
    let name      = /[^#= \n\t{}\/]+/
    let cont_name = /(cpuacct|cpu|devices|ns|cpuset|memory|freezer|net_cls)/
    let role_name = /(admin|task)/
