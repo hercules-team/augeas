@@ -18,12 +18,12 @@ let ws         = del /[ \t\n]+/ " "
 let comment    = Util.comment
 let empty      = Util.empty
 
-let word       = /[A-Za-z0-9_.-]+/
-let words      = /[A-Za-z0-9$(){}=!_.,-][A-Za-z0-9$!(){} ="\/_.,-]*[A-Za-z0-9$!(){}="\/_.,-]/
+let word       = /[A-Za-z0-9_.:-]+/
+let words      = /[A-Za-z0-9$(){}=!_.,:@-][A-Za-z0-9$!(){} ="\/_.,:@-]*[A-Za-z0-9$!(){}="\/_.,:@-]/
 
 let bool       = /y|n|-/
 let integer    = /([0-9]+|-)\??/
-let command   = words . (/\n[ \t]+/ . words)*
+let command   = words . (/[ \t]*\n[ \t]+/ . words)*
 
 let field (l:string) (r:regexp)
                = [ label l . store r ]

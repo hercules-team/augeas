@@ -59,3 +59,52 @@ test Postfix_Master.lns get conf3 =
      { "wakeup" = "-" }
      { "limit" = "-" }
      { "command" = "smtpd\n  -o smtpd_client_restrictions=permit_sasl_authenticated,reject" } }
+
+(* : is allowed *)
+let conf4 = "127.0.0.1:10060 inet    n       n       n       -       0       spawn
+   user=nobody argv=/usr/sbin/hapolicy -l --default=DEFER
+"
+
+test Postfix_Master.lns get conf4 =
+  { "127.0.0.1:10060"
+    { "type" = "inet" }
+    { "private" = "n" }
+    { "unpriviliged" = "n" }
+    { "chroot" = "n" }
+    { "wakeup" = "-" }
+    { "limit" = "0" }
+    { "command" = "spawn
+   user=nobody argv=/usr/sbin/hapolicy -l --default=DEFER" }
+  }
+
+
+(* Spaces are allowed after the first word of the command *)
+let conf5 = "sympa     unix  -       n       n       -       -       pipe \n	flags=R user=sympa argv=/home/sympa/bin/queue ${recipient}
+"
+
+test Postfix_Master.lns get conf5 =
+  { "sympa"
+    { "type" = "unix" }
+    { "private" = "-" }
+    { "unpriviliged" = "n" }
+    { "chroot" = "n" }
+    { "wakeup" = "-" }
+    { "limit" = "-" }
+    { "command" = "pipe \n	flags=R user=sympa argv=/home/sympa/bin/queue ${recipient}" }
+  }
+
+(* Arobase is allowed in command *)
+let conf6 = "sympafamilypfs  unix  -       n       n       -       -       pipe
+	flags=R user=sympa argv=/home/sympa/bin/familyqueue ${user}@domain.net pfs
+"
+test Postfix_Master.lns get conf6 =
+  { "sympafamilypfs"
+    { "type" = "unix" }
+    { "private" = "-" }
+    { "unpriviliged" = "n" }
+    { "chroot" = "n" }
+    { "wakeup" = "-" }
+    { "limit" = "-" }
+    { "command" = "pipe
+	flags=R user=sympa argv=/home/sympa/bin/familyqueue ${user}@domain.net pfs" }
+  }
