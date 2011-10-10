@@ -43,7 +43,7 @@ let comment = Util.comment
 let empty   = Util.empty
 
 (* Variable: num *)
-let num        = /[0-9*][0-9\/,*-]*/
+let num        = /[0-9\*][0-9\/,-\*]*/
 
 (* Variable: alpha *)
 let alpha      = /[A-Za-z]{3}/

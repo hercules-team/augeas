@@ -39,7 +39,7 @@ module Cgrules =
 
 (* Group: Generic primitive definitions *)
 (* Variable: name *)
-   let name       = /[^@%# \t\n][^ \t\n]*/
+   let name       = /[^@%\# \t\n][^ \t\n]*/
 (* Variable: ctrl_key *)
    let ctrl_key   = /[^ \t\n\/]+/
 (* Variable: ctrl_value *)

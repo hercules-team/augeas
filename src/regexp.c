@@ -56,7 +56,7 @@ char *regexp_escape(const struct regexp *r) {
 #endif
 
     if (pat == NULL)
-        pat = escape(r->pattern->str, -1, RX_ESCAPES);
+        pat = escape(r->pattern->str, -1);
 
     if (pat == NULL)
         return NULL;
@@ -115,7 +115,7 @@ void print_regexp(FILE *out, struct regexp *r) {
 
 struct regexp *
 make_regexp_unescape(struct info *info, const char *pat, int nocase) {
-    char *p = unescape(pat, strlen(pat), NULL);
+    char *p = unescape(pat, strlen(pat));
 
     if (p == NULL)
         return NULL;

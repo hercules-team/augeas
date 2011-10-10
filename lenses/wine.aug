@@ -21,13 +21,13 @@ let header =
   [ label "version" . store /[0-9.]+/ ] . eol
 
 let qstr =
-  let re = /([^"\n]|\\.)*/ - /@|"@"/ in    (* " Relax, emacs *)
+  let re = /([^"\n]|\\\\.)*/ - /@|"@"/ in    (* " Relax, emacs *)
     dels "\"" . store re . dels "\""
 
 let typed_val =
-  ([ label "type" . store /dword|hex(\([0-9]+\))?/ ] . dels ":" .
-    [ label "value" . store /[a-zA-Z0-9,()]+(\\\r?\n[ \t]*[a-zA-Z0-9,]+)*/])
-  |([ label "type" . store /str\([0-9]+\)/ ] . dels ":" .
+  ([ label "type" . store /dword|hex(\\([0-9]+\\))?/ ] . dels ":" .
+    [ label "value" . store /[a-zA-Z0-9,()]+(\\\\\r?\n[ \t]*[a-zA-Z0-9,]+)*/])
+  |([ label "type" . store /str\\([0-9]+\\)/ ] . dels ":" .
       dels "\"" . [ label "value" . store /[^"\n]*/ ] . dels "\"")   (* " Relax, emacs *)
 
 let entry =
@@ -39,7 +39,7 @@ let entry =
 
 let section =
   let ts = [ label "timestamp" . store Rx.integer ] in
-  [ label "section" . del /[ \t]*\[/ "[" .
+  [ label "section" . del /[ \t]*\\[/ "[" .
     store /[^]\n]+/ . dels "]" . (del_ws . ts)? . eol .
     (entry|empty|comment)* ]
 

@@ -13,8 +13,8 @@ module Shellvars =
   let xchgs   = Build.xchgs
   let semicol = del /;?/ ""
 
-  let char  = /[^;#() '"\t\n]|\\"/
-  let dquot = /"([^"\\\n]|\\.)*"/                    (* " Emacs, relax *)
+  let char  = /[^;#() '"\t\n]|\\\\"/
+  let dquot = /"([^"\\\n]|\\\\.)*"/                    (* " Emacs, relax *)
   let squot = /'[^'\n]*'/
   (* For some reason, `` conflicts with comment_or_eol *)
   let bquot = /`[^#`\n]*`/

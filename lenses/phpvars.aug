@@ -27,7 +27,7 @@ let chr_blank = /[ \t]/
 let chr_nblank = /[^ \t\n]/
 let chr_any    = /./
 let chr_star   = /\*/
-let chr_nstar  = /[^* \t\n]/
+let chr_nstar  = /[^\* \t\n]/
 let chr_slash  = /\//
 let chr_nslash = /[^\/ \t\n]/
 

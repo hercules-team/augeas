@@ -145,7 +145,7 @@ let name = [ label "name" . store /[^\/ \t\n]+/ ]
 let partition = [ label "partition" . Util.del_str "." . store /[0-9]+/ ]
 
 (* Variable: disk *)
-let disk = [ label "disk" . store /[^., \t\n]+/ . partition? ]
+let disk = [ label "disk" . store /[^\., \t\n]+/ . partition? ]
 
 (* Variable: vg_option
    An option for <volume_vg> *)
@@ -165,7 +165,7 @@ let spare_missing = tag /spare|missing/
 
 (* Variable: disk_with_opt
    A <disk> with a spare/missing option for raids *)
-let disk_with_opt = [ label "disk" . store /[^:., \t\n]+/ . partition?
+let disk_with_opt = [ label "disk" . store /[^:\., \t\n]+/ . partition?
                     . spare_missing* ]
 
 (* Variable: disk_list
@@ -219,7 +219,7 @@ let disk_config_entry (kw:regexp) (opt:lens) (vol:lens) =
 (* Variable: lvmoption *)
 let lvmoption =
      (* preserve partitions -- always *)
-      generic_opt "preserve_always" /[^\/, \t\n-]+-[^\/, \t\n-]+(,[^\/, \t\n-]+-[^\/, \t\n-]+)*/
+      generic_opt "preserve_always" /[^\/, \t\n-]+-[^\/, \t\n-]+(,[^\/,\s\-]+-[^\/, \t\n-]+)*/
      (* preserve partitions -- unless the system is installed
       * for the first time *)
    | generic_opt "preserve_reinstall" /[^\/, \t\n-]+-[^\/, \t\n-]+(,[^\/, \t\n-]+-[^\/, \t\n-]+)*/

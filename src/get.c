@@ -243,7 +243,7 @@ static void get_expected_error(struct state *state, struct lens *l) {
     for (p = word; *p != '\0' && *p != '\n'; p++);
     *p = '\0';
 
-    pat = escape(l->ctype->pattern->str, -1, NULL);
+    pat = escape(l->ctype->pattern->str, -1);
     get_error(state, l, "expected %s at '%s'", pat, word);
     free(pat);
 }

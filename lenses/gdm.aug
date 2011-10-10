@@ -18,7 +18,7 @@ let empty    = IniFile.empty
  *                        ENTRY
  * Entry keywords can be bare digits as well (the [server] section)
  *************************************************************************)
-let entry_re = ( /[A-Za-z0-9][A-Za-z0-9._-]*/ )
+let entry_re = ( /[A-Za-z0-9][A-Za-z0-9\._-]*/ )
 let entry    = IniFile.entry entry_re sep comment
 
 

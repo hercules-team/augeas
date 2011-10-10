@@ -85,7 +85,7 @@ test Cgconfig.lns get group1 =
     {  } }
 
 let group2="
-group aa-1{
+group aa{
      perm {
 		 task { }
 		 admin { }
@@ -94,7 +94,7 @@ group aa-1{
 
 test Cgconfig.lns get group2 =
   {  }
-  { "group" = "aa-1"
+  { "group" = "aa"
     {  }
     { "perm"
       {  }

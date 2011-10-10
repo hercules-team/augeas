@@ -86,7 +86,7 @@ module Inetd =
 
 	let del_str = Util.del_str
 
-	let address = [ seq "addrseq" . store /([a-zA-Z0-9.-]+|\*)/ ]
+	let address = [ seq "addrseq" . store /([a-zA-Z0-9\.-]+|\*)/ ]
 	let address_list = ( counter "addrseq" . (address . del_str ",")* . address )
 
 	let argument = [ seq "argseq" . store /[^ \t\n]+/ ]
@@ -109,8 +109,8 @@ module Inetd =
 	             . [ del_str "." . label "max" . store /[0-9]+/ ]?
 	           )
 
-	let usergroup = ( [ label "user" . store /[^ \t\n:.]+/ ]
-	                  . [ del /[:.]/ ":" . label "group" . store /[^ \t\n:.]+/ ]?
+	let usergroup = ( [ label "user" . store /[^ \t\n:\.]+/ ]
+	                  . [ del /[:\.]/ ":" . label "group" . store /[^ \t\n:\.]+/ ]?
 	                )
 
 	let command = ( [ label "command" . store /[^ \t\n]+/ ]

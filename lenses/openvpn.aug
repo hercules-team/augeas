@@ -176,7 +176,7 @@ let remote        = [ key "remote" . sep
 		    ]
 
 let http_proxy    = [ key "http-proxy" .
-                    ( sep . [ label "server" . store /[A-Za-z0-9._-]+/ ] .
+                    ( sep . [ label "server" . store /[A-Za-z0-9\._-]+/ ] .
 		    ( sep . [ label "port"   . num      ] )? )?
 		    . comment_or_eol
 		    ]

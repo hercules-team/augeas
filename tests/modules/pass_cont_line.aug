@@ -5,7 +5,7 @@ module Pass_cont_line =
 
 let list_elt = [ label "element" . store /[a-z]+/ ]
 
-let ws_cont = /([ \t]+|[ \t]*\\\n[ \t]*)/
+let ws_cont = /([ \t]+|[ \t]*\\\\\n[ \t]*)/
 
 let sep = del ws_cont " "
 let eol = del /[ \t]*\n/ "\n"

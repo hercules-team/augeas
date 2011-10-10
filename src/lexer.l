@@ -55,7 +55,7 @@ static void loc_update(YYLTYPE *yylloc, const char *s, int len) {
 }
 
 static char *regexp_literal(const char *s, int len) {
-  char *u = unescape(s, len, RX_ESCAPES);
+  char *u = unescape(s, len);
   size_t u_len = strlen(u);
 
   if (u == NULL)
@@ -89,7 +89,7 @@ ARROW  ->
 {
   \"([^\"]|\\\")*\"   {
                loc_update(yylloc, yytext, yyleng);
-               yylval->string = unescape(yytext+1, yyleng-2, STR_ESCAPES);
+               yylval->string = unescape(yytext+1, yyleng-2);
                return DQUOTED;
   }
 

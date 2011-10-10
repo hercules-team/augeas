@@ -44,7 +44,7 @@ let modpath = [ seq "modpath" . store /[^ :\t\n]+/ ]
 
 (* Variable: set_operator
     Valid set operators: equals, bitwise AND and OR *)
-let set_operators = /[=&|]/
+let set_operators = /[=&\|]/
 
 (* View: set_value
     Sets an integer value or char pointer *)

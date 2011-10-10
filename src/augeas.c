@@ -1366,7 +1366,7 @@ static int print_one(FILE *out, const char *path, const char *value) {
     if (r < 0)
         return -1;
     if (value != NULL) {
-        char *val = escape(value, -1, STR_ESCAPES);
+        char *val = escape(value, -1);
         r = fprintf(out, " = \"%s\"", val);
         free(val);
         if (r < 0)

@@ -33,10 +33,10 @@ module Syslog =
 	(* Variable: eol *)
         let eol        = Util.eol
 	(* Variable: sep_tab *)
-        let sep_tab    = del /([ \t]+|[ \t]*\\\n[ \t]*)/ "\t"
+        let sep_tab    = del /([ \t]+|[ \t]*\\\\\n[ \t]*)/ "\t"
 
 	(* Variable: sep_tab_opt *)
-        let sep_tab_opt = del /([ \t]*|[ \t]*\\\n[ \t]*)/ ""
+        let sep_tab_opt = del /([ \t]*|[ \t]*\\\\\n[ \t]*)/ ""
 
 	(* View: comment
 	  Map comments into "#comment" nodes
