@@ -30,30 +30,17 @@ let sto_to_comment
  *************************************************************************)
 let entry_re   = /[A-Za-z0-9_.-][A-Za-z0-9 _.-]*[A-Za-z0-9_.-]/
 
-let entry      = let kw = entry_re in
-               [ indent
-               . key kw
-               . sep
-               . sto_to_comment?
-               . (comment|eol) ]
-               | comment
-
-let anon_entry = let kw = entry_re in
-               [ key kw
-               . sep
-               . sto_to_comment?
-               . (comment|eol) ]
-               | comment
+let entry      = IniFile.indented_entry entry_re sep comment
 
 (************************************************************************
  *                        RECORD & TITLE
  * We use IniFile.title_label because there can be entries
  * outside of sections whose labels would conflict with section names
  *************************************************************************)
-let title   = IniFile.title ( IniFile.record_re - ".anon" )
+let title   = IniFile.indented_title ( IniFile.record_re - ".anon" )
 let record  = IniFile.record title entry
 
-let record_anon = [ label ".anon" . ( anon_entry | empty )+ ]
+let record_anon = [ label ".anon" . ( entry | empty )+ ]
 
 (************************************************************************
  *                        LENS & FILTER

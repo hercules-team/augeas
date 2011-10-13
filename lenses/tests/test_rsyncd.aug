@@ -4,7 +4,7 @@ module Test_rsyncd =
 # A more sophisticated example would be:
 
 uid = nobody
-gid = nobody
+	gid = nobody
 use chroot = yes
 max connections = 4
 syslog facility = local5
@@ -15,7 +15,7 @@ pid file = /var/run/rsyncd.pid
   path = /var/ftp/./pub
   comment = whole ftp area (approx 6.1 GB)
 
-[cvs]
+   [cvs]
   ; comment with semicolon
   path = /data/cvs
   comment = CVS repository (requires authentication)
