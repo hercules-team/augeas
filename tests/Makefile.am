@@ -106,6 +106,7 @@ lens_tests =			\
   lens-xml.sh			\
   lens-xorg.sh			\
   lens-grub.sh			\
+  lens-schroot.sh			\
   lens-yum.sh
 
 ME = tests/Makefile.am

@@ -79,6 +79,7 @@ Group: Specific Modules  {
    File: Pg_Hba  (pg_hba.aug)
    File: PuppetFileserver  (no auto-title, puppetfileserver.aug)
    File: Resolv  (resolv.aug)
+   File: Schroot  (schroot.aug)
    File: Services  (services.aug)
    File: Shells  (shells.aug)
    File: Solaris_System  (solaris_system.aug)
