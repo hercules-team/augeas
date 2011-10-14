@@ -84,7 +84,7 @@ module Exports =
   let sep_com   = Sep.comma
   let sep_spc   = Sep.space
 
-  let option = [ label "option" . store /[^,)]+/ ]
+  let option = [ label "option" . store /[^,)]*/ ]
 
   let client    = [ label "client" . store client_re .
                     ( Build.brackets lbracket rbracket
