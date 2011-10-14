@@ -2,6 +2,8 @@ module Test_ssh =
 
     let conf =
 "# start
+IdentityFile /etc/ssh/identity.asc
+
 Host suse.cz
    ForwardAgent yes
 SendEnv LC_LANG
@@ -22,6 +24,8 @@ MACs hmac-md5,hmac-sha1,umac-64@openssh.com
 
     test Ssh.lns get conf =
     { "#comment" = "start" }
+    { "IdentityFile" = "/etc/ssh/identity.asc" }
+    { }
     { "Host"	= "suse.cz"
 	{ "ForwardAgent"  = "yes" }
 	{ "SendEnv"

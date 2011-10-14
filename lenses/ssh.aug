@@ -71,7 +71,7 @@ module Ssh =
 
     let host = [ key "Host" . spc . value_to_eol . eol . entry* ]
 
-    let lns = (comment | empty) * . host*
+    let lns = entry* . host*
 
     let xfm = transform lns (incl "/etc/ssh/ssh_config" .
                              incl "~/.ssh/config")
