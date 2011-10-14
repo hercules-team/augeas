@@ -18,12 +18,17 @@ let indent      = Util.indent
 
 let word        =  /[A-Za-z0-9!_.-]+(\[[0-9]+\])?/
 let sto_to_spc  = store /[^# \t\n]+/
+let sto_to_eol  = store /([^# \t\n][^#\n]*[^# \t\n])|[^# \t\n]/
 
 let comment     = Util.comment
 let empty       = Util.empty
 let comment_or_eol = Util.comment_or_eol
 let value (kw:string)
                 = [ spc . label kw . sto_to_spc ]
+
+let value_space_in (kw:string)
+                = [ spc . label kw . sto_to_eol ]
+
 let parameters  = [ label "parameters"
                    . counter "parameters"
                    . [ spc . seq "parameters" . sto_to_spc ]+ ]
@@ -235,6 +240,7 @@ let entry_re =    "accept_filter"
                 | "netdb_low"
                 | "netdb_ping_period"
                 | "never_direct"
+                | "no_cache"
                 | "nonhierarchical_direct"
                 | "offline_mode"
                 | "pconn_timeout"
@@ -352,7 +358,7 @@ let auth        = indent
                   . [ key "auth_param"
                   . value "scheme"
                   . value "parameter"
-                  . (value "setting") ?
+                  . (value_space_in "setting") ?
                   . comment_or_eol ]
 
 (************************************************************************

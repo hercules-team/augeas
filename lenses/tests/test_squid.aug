@@ -62,6 +62,7 @@ http_access deny !Safe_ports
 http_access deny CONNECT !SSL_ports
 http_access allow localhost
 http_access deny all
+no_cache deny query_no_cache
 icp_access allow localnet
 icp_access deny all
 http_port 3128
@@ -154,6 +155,7 @@ test Squid.lns get debian_lenny_default =
   { "http_access"
     { "deny" = "all" }
   }
+  { "no_cache" =  "deny query_no_cache" }
   { "icp_access" = "allow localnet" }
   { "icp_access" = "deny all" }
   { "http_port" = "3128" }
