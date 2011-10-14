@@ -32,13 +32,13 @@ module Ssh =
     let comment = Util.comment
     let empty = Util.empty
     let comma = Util.del_str ","
-    let indent = del /[ \t]*/ ""
+    let indent = Util.indent
     let value_to_eol = store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
     let value_to_spc = store /[^ \t\n]+/
     let value_to_comma = store /[^, \t\n]+/
 
     let array_entry (k:string) =
-        [ key k . counter k . [ spc . seq k . value_to_spc]* . eol ]
+        [ indent . key k . counter k . [ spc . seq k . value_to_spc]* . eol ]
 
     let commas_entry (k:string) =
 	[ key k . counter k . spc .

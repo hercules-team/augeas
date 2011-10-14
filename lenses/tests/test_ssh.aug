@@ -11,7 +11,7 @@ Host *
 ForwardX11Trusted yes
 
 #   IdentityFile ~/.ssh/identity
-SendEnv LC_IDENTIFICATION LC_ALL
+	SendEnv LC_IDENTIFICATION LC_ALL LC_*
 ProxyCommand ssh -q -W %h:%p gateway.example.com
 RemoteForward [1.2.3.4]:20023 localhost:22
 RemoteForward 2221 lhost1:22
@@ -35,7 +35,8 @@ MACs hmac-md5,hmac-sha1,umac-64@openssh.com
 	{ "#comment" = "IdentityFile ~/.ssh/identity" }
 	{ "SendEnv"
 	    { "1" = "LC_IDENTIFICATION" }
-	    { "2" = "LC_ALL" } }
+	    { "2" = "LC_ALL" }
+	    { "3" = "LC_*" } }
 	{ "ProxyCommand" = "ssh -q -W %h:%p gateway.example.com" }
 	{ "RemoteForward"
 	    { "[1.2.3.4]:20023" = "localhost:22" }
