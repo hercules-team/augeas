@@ -74,7 +74,8 @@ let sep_eq  = Util.del_str "="
 
 let shellvar =
   let key_re = Shellvars.key_re - "entry" in
-  [ key key_re . sep_eq . Shellvars.simple_value . eol ]
+  let sto_to_eol = store /[^\n]*[^ \t\n]/ in
+  [ key key_re . sep_eq . sto_to_eol . eol ]
 
 
 (* View: minute *)
