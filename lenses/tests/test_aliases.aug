@@ -15,7 +15,7 @@ daemon:		root
 adm:		root
 file:		/var/foo
 pipe1:		|/bin/ls
-pipe2:		|\"/usr/bin/ls args,\"
+pipe2 :		|\"/usr/bin/ls args,\"
 "
   test Aliases.lns get file =
     { }
