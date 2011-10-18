@@ -64,7 +64,7 @@ const struct type *const t_unit      = &unit_type;
 
 static const char *const type_names[] = {
     "string", "regexp", "lens", "tree", "filter",
-    "transform", "unit", "function", NULL
+    "transform", "function", "unit", NULL
 };
 
 /* The anonymous identifier which we will never bind */
