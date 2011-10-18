@@ -1447,11 +1447,10 @@ static struct value *compile_minus(struct term *exp, struct ctx *ctx) {
 }
 
 static struct value *compile_compose(struct term *exp, struct ctx *ctx) {
-    struct type *t = exp->type;
     struct info *info = exp->info;
     struct value *v;
 
-    if (t->tag == T_ARROW) {
+    if (exp->left->type->tag == T_ARROW) {
         // FIXME: This is really crufty, and should be desugared in the
         // parser so that we don't have to do all this manual type
         // computation. Should we write function compostion as
@@ -1472,7 +1471,16 @@ static struct value *compile_compose(struct term *exp, struct ctx *ctx) {
 
         struct term *func = build_func(param, app);
 
-        assert(type_equal(func->type, exp->type));
+        if (!type_equal(func->type, exp->type)) {
+            char *f = type_string(func->type);
+            char *e = type_string(exp->type);
+            fatal_error(info,
+              "Composition has type %s but should have type %s", f, e);
+            free(f);
+            free(e);
+            unref(func, term);
+            return exn_error();
+        }
         v = make_closure(func, ctx->local);
         unref(func, term);
     } else {
