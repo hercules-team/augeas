@@ -395,4 +395,9 @@ let all_block (body:lens) =
 let rec lns_staging = stmt_entry|all_block lns_staging
 let lns = (lns_staging)*
 
-let xfm = transform lns (incl "/etc/dhcp3/dhcpd.conf")
+let filter = incl "/etc/dhcp3/dhcpd.conf"
+           . incl "/etc/dhcp/dhcpd.conf"
+           . incl "/etc/dhcpd.conf"
+           . Util.stdexcl
+
+let xfm = transform lns filter
