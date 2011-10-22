@@ -312,6 +312,9 @@ test Dhcpd.lns get "option domain-name \"x.example.com y.example.com z.example.c
 test Dhcpd.lns get "include \"/etc/dhcpd.master\";" =
   { "include" = "/etc/dhcpd.master" }
 
+test Dhcpd.lns put "\n" after set "/include" "/etc/dhcpd.master" =
+  "\ninclude \"/etc/dhcpd.master\";\n"
+
 test Dhcpd.fct_args get "(option dhcp-client-identifier, 1, 3)" =
   { "args"
     { "arg" = "option dhcp-client-identifier" }

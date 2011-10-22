@@ -79,23 +79,23 @@ let ip                = Rx.ipv4
 
 (* Define fields *)
 
-(* borrowed from sysconfig.aug *)
+(* adapted from sysconfig.aug *)
   (* Chars allowed in a bare string *)
-  let bchar = /[^ \t\n"'\\{}#,()]|\\\\./
+  let bchar = /[^ \t\n"'\\{}#,()\/]|\\\\./
   let qchar = /["']/  (* " *)
 
   (* We split the handling of right hand sides into a few cases:
    *   bare  - strings that contain no spaces, optionally enclosed in
    *           single or double quotes
-   *   dquot - strings that contain at least one space or apostrophe,
+   *   dquot - strings that contain at least one space, apostrophe or slash
    *           which must be enclosed in double quotes
    *   squot - strings that contain an unescaped double quote
    *)
   let bare = del qchar? "" . store (bchar+) . del qchar? ""
   let dquot =
-    del qchar "\"" . store (bchar* . /[ \t']/ . bchar*)+ . del qchar "\""
+    del qchar "\"" . store (bchar* . /[ \t'\/]/ . bchar*)+ . del qchar "\""
   let squot =
-    dels "'" . store ((bchar|/[ \t]/)* . "\"" . (bchar|/[ \t]/)*)+ . dels "'"
+    dels "'" . store ((bchar|/[ \t\/]/)* . "\"" . (bchar|/[ \t\/]/)*)+ . dels "'"
 
 let sto_to_spc        = store /[^\\#,;\{\}" \t\n]+|"[^\\#"\n]+"/
 let sto_to_scl        = store /[^ \t;][^;\n=]+[^ \t;]|[^ \t;=]+/
