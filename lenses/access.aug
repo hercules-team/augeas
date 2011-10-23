@@ -33,7 +33,7 @@ let empty     = Util.empty
 (* Variable: colon
  *  this is the standard field separator " : "
  *)
-let colon     = Sep.space . Sep.colon . Sep.space
+let colon     = del (Rx.opt_space . ":" . Rx.opt_space) " : "
 
 
 (************************************************************************

@@ -8,6 +8,8 @@ let conf = "+ : ALL : LOCAL
 + : john foo : 2001:4ca0:0:101::1 2001:4ca0:0:101::/64
 # Except
 + : ALL EXCEPT john @wheel : ALL EXCEPT LOCAL .win.tue.nl
+# No spaces
++:root:.example.com
 "
 
 test Access.lns get conf =
@@ -49,6 +51,10 @@ test Access.lns get conf =
         { "except"
            { "origin" = "LOCAL" }
            { "origin" = ".win.tue.nl" } } }
+    { "#comment" = "No spaces" }
+    { "access" = "+"
+        { "user" = "root" }
+        { "origin" = ".example.com" } }
 
 test Access.lns put conf after
     insa "access" "access[last()]" ;
@@ -63,6 +69,8 @@ test Access.lns put conf after
 + : john foo : 2001:4ca0:0:101::1 2001:4ca0:0:101::/64
 # Except
 + : ALL EXCEPT john @wheel : ALL EXCEPT LOCAL .win.tue.nl
+# No spaces
++:root:.example.com
 - : ALL : ALL
 "
 
