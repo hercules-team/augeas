@@ -3,7 +3,7 @@ module Test_access =
 let conf = "+ : ALL : LOCAL
 + : root : localhost.localdomain
 - : root : 127.0.0.1 .localdomain
-+ : root @admins : cron crond :0 tty1 tty2 tty3 tty4 tty5 tty6
++ : root alice@server1 @admins (wheel) : cron crond :0 tty1 tty2 tty3 tty4 tty5 tty6
 # IP v6 support
 + : john foo : 2001:4ca0:0:101::1 2001:4ca0:0:101::/64
 # Except
@@ -25,7 +25,10 @@ test Access.lns get conf =
         { "origin" = ".localdomain" } }
     { "access" = "+"
         { "user" = "root" }
+        { "user" = "alice"
+           { "host" = "server1" } }
         { "netgroup" = "admins" }
+        { "group" = "wheel" }
         { "origin" = "cron" }
         { "origin" = "crond" }
         { "origin" = ":0" }
@@ -64,7 +67,7 @@ test Access.lns put conf after
  = "+ : ALL : LOCAL
 + : root : localhost.localdomain
 - : root : 127.0.0.1 .localdomain
-+ : root @admins : cron crond :0 tty1 tty2 tty3 tty4 tty5 tty6
++ : root alice@server1 @admins (wheel) : cron crond :0 tty1 tty2 tty3 tty4 tty5 tty6
 # IP v6 support
 + : john foo : 2001:4ca0:0:101::1 2001:4ca0:0:101::/64
 # Except

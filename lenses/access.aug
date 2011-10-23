@@ -50,9 +50,18 @@ let access    = label "access" . store /[+-]/
 let user_re = Rx.word - /[Ee][Xx][Cc][Ee][Pp][Tt]/
 
 (* View: user
- * user can be a username or a group
+ * user can be a username, username@hostname or a group
  *)
-let user      = [ label "user" . store user_re ]
+let user      = [ label "user"
+                . ( store user_re
+                  | store Rx.word . Util.del_str "@"
+                    . [ label "host" . store Rx.word ] ) ]
+
+(* View: group
+ * Format is (GROUP)
+ *)
+let group     = [ label "group"
+                  . Util.del_str "(" . store Rx.word . Util.del_str ")" ]
 
 (* View: netgroup
  * Format is @NETGROUP[@@NISDOMAIN]
@@ -64,7 +73,7 @@ let netgroup =
 (* View: user_list
  * A list of users or netgroups to apply the rule to
  *)
-let user_list = Build.opt_list (user|netgroup) Sep.space
+let user_list = Build.opt_list (user|group|netgroup) Sep.space
 
 (* View: origin_list
  * origin_list can be a single ipaddr/originname/domain/fqdn or a list of those values
