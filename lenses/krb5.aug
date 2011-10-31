@@ -121,8 +121,11 @@ let instance_mapping =
 let kdc =
   simple_section "kdc" /profile/
 
+let pam =
+  simple_section "pam" name_re
+
 let lns = (comment|empty)* .
   (libdefaults|login|appdefaults|realms|domain_realm
-  |logging|capaths|dbdefaults|dbmodules|instance_mapping|kdc)*
+  |logging|capaths|dbdefaults|dbmodules|instance_mapping|kdc|pam)*
 
 let xfm = transform lns (incl "/etc/krb5.conf")

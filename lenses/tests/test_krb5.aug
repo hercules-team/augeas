@@ -890,3 +890,20 @@ test Krb5.libdefaults get "[libdefaults]
     { "v4_name_convert"
       { "host" { "rcmd" = "host" } { "ftp" = "ftp" } }
       { "plain" { "something" = "something-else" } } } }
+
+(* Test pam section *)
+let pam_str = "[pam]
+ debug = false
+ ticket_lifetime = 36000
+ renew_lifetime = 36000
+ forwardable = true
+ krb4_convert = false
+"
+
+test Krb5.lns get pam_str =
+  { "pam"
+      { "debug" = "false" }
+      { "ticket_lifetime" = "36000" }
+      { "renew_lifetime" = "36000" }
+      { "forwardable" = "true" }
+      { "krb4_convert" = "false" } }
