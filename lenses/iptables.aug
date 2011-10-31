@@ -49,7 +49,7 @@ let tcp_flags =
 
 (* misses --set-counters *)
 let ipt_match =
-  let any_key = /[a-zA-Z-][a-zA-Z-]+/ -
+  let any_key = /[a-zA-Z-][a-zA-Z0-9-]+/ -
     /protocol|source|destination|jump|goto|in-interface|out-interface|fragment|match|tcp-flags/ in
   let any_val = /([^" \t\n!-][^ \t\n]*)|"([^"\\\n]|\\\\.)*"/ in
   let any_param =

@@ -218,3 +218,7 @@ test ipt_match get " --tcp-flags SYN,RST,ACK,FIN SYN" =
     { "mask" = "ACK" }
     { "mask" = "FIN" }
     { "set" = "SYN" } }
+
+(* Bug #224 *)
+test ipt_match get " --icmpv6-type neighbor-solicitation" = ?
+  { "icmpv6-type" = "neighbor-solicitation" }
