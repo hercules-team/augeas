@@ -26,6 +26,9 @@ autoload xfm
 (* View: comment *)
 let comment = Util.comment_generic /[ \t]*[;#][ \t]*/ "# "
 
+(* View: comment_eol *)
+let comment_eol = Util.comment_generic /[ \t]*[;#][ \t]*/ " # "
+
 (* View: empty *)
 let empty = Util.empty
 
@@ -45,26 +48,28 @@ let ipaddr = [label "ipaddr" . store Rx.ip . netmask?]
 
 (* View: nameserver
      A nameserver entry *)
-let nameserver = Build.key_value_line 
-                    "nameserver" Sep.space (store Rx.ip)
+let nameserver = Build.key_value_line_comment
+                    "nameserver" Sep.space (store Rx.ip) comment_eol
 
 (* View: domain *)
-let domain = Build.key_value_line
-                    "domain" Sep.space (store Rx.word)
+let domain = Build.key_value_line_comment
+                    "domain" Sep.space (store Rx.word) comment_eol
 
 (* View: search *)
-let search = Build.key_value_line
+let search = Build.key_value_line_comment
                     "search" Sep.space
                     (Build.opt_list 
                            [label "domain" . store Rx.word]
                             Sep.space)
+                    comment_eol
 
 (* View: sortlist *)
-let sortlist = Build.key_value_line
+let sortlist = Build.key_value_line_comment
                     "sortlist" Sep.space
                     (Build.opt_list
                            ipaddr
                            Sep.space) 
+                    comment_eol
 
 (************************************************************************
  * Group:                 SPECIAL OPTIONS
@@ -85,11 +90,12 @@ let options =
                                      |"inet6"|"ip6-bytestring"|"edns0")
                         | ip6_dotint
 
-            in Build.key_value_line
+            in Build.key_value_line_comment
                     "options" Sep.space
                     (Build.opt_list
                            options_entry
                            Sep.space)
+                    comment_eol
 
 (* View: entry *)
 let entry = nameserver
