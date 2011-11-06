@@ -137,7 +137,7 @@ struct tree *tree_find(struct augeas *aug, const char *path) {
     struct tree *result = NULL;
     int r;
 
-    p = pathx_aug_parse(aug, aug->origin, path, true);
+    p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), path, true);
     ERR_BAIL(aug);
 
     r = pathx_find_one(p, &result);
@@ -157,7 +157,7 @@ struct tree *tree_find_cr(struct augeas *aug, const char *path) {
     struct tree *result = NULL;
     int r;
 
-    p = pathx_aug_parse(aug, aug->origin, path, true);
+    p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), path, true);
     ERR_BAIL(aug);
 
     r = pathx_expand_tree(p, &result);
@@ -235,6 +235,7 @@ static void store_pathx_error(const struct augeas *aug) {
 
 struct pathx *pathx_aug_parse(const struct augeas *aug,
                               struct tree *tree,
+                              struct tree *root_ctx,
                               const char *path, bool need_nodeset) {
     struct pathx *result;
     struct error *err = err_of_aug(aug);
@@ -242,8 +243,45 @@ struct pathx *pathx_aug_parse(const struct augeas *aug,
     if (tree == NULL)
         tree = aug->origin;
 
-    pathx_parse(tree, err, path, need_nodeset, aug->symtab, &result);
+    pathx_parse(tree, err, path, need_nodeset, aug->symtab, root_ctx, &result);
     return result;
+}
+
+/* Find the tree stored in AUGEAS_CONTEXT */
+struct tree *tree_root_ctx(const struct augeas *aug) {
+    struct pathx *p = NULL;
+    struct tree *match = NULL;
+    const char *ctx_path;
+    int r;
+
+    p = pathx_aug_parse(aug, aug->origin, NULL, AUGEAS_CONTEXT, true);
+    ERR_BAIL(aug);
+
+    r = pathx_find_one(p, &match);
+    ERR_THROW(r > 1, aug, AUG_EMMATCH,
+              "There are %d nodes matching %s, expecting one",
+              r, AUGEAS_CONTEXT);
+
+    if (match == NULL || match->value == NULL || *match->value == '\0')
+        goto error;
+
+    ctx_path = match->value;
+    free_pathx(p);
+
+    p = pathx_aug_parse(aug, aug->origin, NULL, ctx_path, true);
+    ERR_BAIL(aug);
+
+    r = pathx_find_one(p, &match);
+    ERR_THROW(r > 1, aug, AUG_EMMATCH,
+              "There are %d nodes matching the context %s, expecting one",
+              r, ctx_path);
+
+ done:
+    free_pathx(p);
+    return match;
+ error:
+    match = NULL;
+    goto done;
 }
 
 static const char *init_root(const char *root0) {
@@ -453,6 +491,9 @@ struct augeas *aug_init(const char *root, const char *loadpath,
        AUGEAS_META_ROOT getting changed. */
     aug_set(result, AUGEAS_META_ROOT, result->root);
 
+    /* Set the default path context */
+    aug_set(result, AUGEAS_CONTEXT, AUG_CONTEXT_DEFAULT);
+
     for (int i=0; i < ARRAY_CARDINALITY(static_nodes); i++)
         aug_set(result, static_nodes[i][0], static_nodes[i][1]);
 
@@ -643,7 +684,7 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
 
     api_entry(aug);
 
-    p = pathx_aug_parse(aug, aug->origin, path, true);
+    p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), path, true);
     ERR_BAIL(aug);
 
     if (value != NULL)
@@ -693,7 +734,7 @@ int aug_defvar(augeas *aug, const char *name, const char *expr) {
     if (expr == NULL) {
         result = pathx_symtab_undefine(&(aug->symtab), name);
     } else {
-        p = pathx_aug_parse(aug, aug->origin, expr, false);
+        p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), expr, false);
         ERR_BAIL(aug);
         result = pathx_symtab_define(&(aug->symtab), name, p);
     }
@@ -721,7 +762,7 @@ int aug_defnode(augeas *aug, const char *name, const char *expr,
     if (created == NULL)
         created = &cr;
 
-    p = pathx_aug_parse(aug, aug->origin, expr, false);
+    p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), expr, false);
     ERR_BAIL(aug);
 
     if (pathx_first(p) == NULL) {
@@ -778,7 +819,12 @@ int aug_set(struct augeas *aug, const char *path, const char *value) {
 
     api_entry(aug);
 
-    p = pathx_aug_parse(aug, aug->origin, path, true);
+    /* Get-out clause, in case context is broken */
+    struct tree *root_ctx = NULL;
+    if (STRNEQ(path, AUGEAS_CONTEXT))
+        root_ctx = tree_root_ctx(aug);
+
+    p = pathx_aug_parse(aug, aug->origin, root_ctx, path, true);
     ERR_BAIL(aug);
 
     result = tree_set(p, value) == NULL ? -1 : 0;
@@ -799,7 +845,7 @@ int aug_setm(struct augeas *aug, const char *base,
 
     api_entry(aug);
 
-    bx = pathx_aug_parse(aug, aug->origin, base, true);
+    bx = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), base, true);
     ERR_BAIL(aug);
 
     if (sub != NULL && STREQ(sub, "."))
@@ -809,7 +855,7 @@ int aug_setm(struct augeas *aug, const char *base,
     for (bt = pathx_first(bx); bt != NULL; bt = pathx_next(bx)) {
         if (sub != NULL) {
             /* Handle subnodes of BT */
-            sx = pathx_aug_parse(aug, bt, sub, true);
+            sx = pathx_aug_parse(aug, bt, NULL, sub, true);
             ERR_BAIL(aug);
             if (pathx_first(sx) != NULL) {
                 /* Change existing subnodes matching SUB */
@@ -877,7 +923,7 @@ int aug_insert(struct augeas *aug, const char *path, const char *label,
 
     api_entry(aug);
 
-    p = pathx_aug_parse(aug, aug->origin, path, true);
+    p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), path, true);
     ERR_BAIL(aug);
 
     result = tree_insert(p, label, before);
@@ -993,7 +1039,7 @@ int aug_rm(struct augeas *aug, const char *path) {
 
     api_entry(aug);
 
-    p = pathx_aug_parse(aug, aug->origin, path, true);
+    p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), path, true);
     ERR_BAIL(aug);
 
     result = tree_rm(p);
@@ -1017,7 +1063,7 @@ int aug_span(struct augeas *aug, const char *path, char **filename,
 
     api_entry(aug);
 
-    p = pathx_aug_parse(aug, aug->origin, path, true);
+    p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), path, true);
     ERR_BAIL(aug);
 
     tree = pathx_first(p);
@@ -1069,7 +1115,7 @@ int tree_replace(struct augeas *aug, const char *path, struct tree *sub) {
     struct pathx *p = NULL;
     int r;
 
-    p = pathx_aug_parse(aug, aug->origin, path, true);
+    p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), path, true);
     ERR_BAIL(aug);
 
     r = tree_rm(p);
@@ -1099,10 +1145,10 @@ int aug_mv(struct augeas *aug, const char *src, const char *dst) {
     api_entry(aug);
 
     ret = -1;
-    s = pathx_aug_parse(aug, aug->origin, src, true);
+    s = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), src, true);
     ERR_BAIL(aug);
 
-    d = pathx_aug_parse(aug, aug->origin, dst, true);
+    d = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), dst, true);
     ERR_BAIL(aug);
 
     r = find_one_node(s, &ts);
@@ -1158,7 +1204,7 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
         pathin = "/*";
     }
 
-    p = pathx_aug_parse(aug, aug->origin, pathin, true);
+    p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), pathin, true);
     ERR_BAIL(aug);
 
     for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
@@ -1298,7 +1344,7 @@ static int unlink_removed_files(struct augeas *aug,
             /* Unlink all files in tm */
             struct pathx *px = NULL;
             if (pathx_parse(tm, err_of_aug(aug), file_nodes, true,
-                            aug->symtab, &px) != PATHX_NOERROR) {
+                            aug->symtab, NULL, &px) != PATHX_NOERROR) {
                 result = -1;
                 continue;
             }
@@ -1438,7 +1484,7 @@ int dump_tree(FILE *out, struct tree *tree) {
     struct pathx *p;
     int result;
 
-    if (pathx_parse(tree, NULL, "/*", true, NULL, &p) != PATHX_NOERROR)
+    if (pathx_parse(tree, NULL, "/*", true, NULL, NULL, &p) != PATHX_NOERROR)
         return -1;
 
     result = print_tree(out, p, 1);
@@ -1456,7 +1502,7 @@ int aug_print(const struct augeas *aug, FILE *out, const char *pathin) {
         pathin = "/*";
     }
 
-    p = pathx_aug_parse(aug, aug->origin, pathin, true);
+    p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), pathin, true);
     ERR_BAIL(aug);
 
     result = print_tree(out, p, 0);

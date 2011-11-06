@@ -134,6 +134,9 @@ struct step {
     struct pred *predicates;
 };
 
+/* Initialise the root nodeset with the first step */
+static struct tree *step_root(struct step *step, struct tree *ctx,
+                              struct tree *root_ctx);
 /* Iteration over the nodes on a step, ignoring the predicates */
 static struct tree *step_first(struct step *step, struct tree *ctx);
 static struct tree *step_next(struct step *step, struct tree *ctx,
@@ -220,6 +223,8 @@ struct state {
     struct tree *ctx; /* The current node */
     uint            ctx_pos;
     uint            ctx_len;
+
+    struct tree *root_ctx; /* Root context for relative paths */
 
     /* A table of all values. The table is dynamically reallocated, i.e.
      * pointers to struct value should not be used across calls that
@@ -1157,12 +1162,20 @@ static void ns_from_locpath(struct locpath *lp, uint *maxns,
         if (HAS_ERROR(state))
             goto error;
     }
+
     if (root == NULL) {
-        ns_add((*ns)[0], state->ctx, state);
+        struct step *first_step = NULL;
+        if (lp != NULL)
+            first_step = lp->steps;
+
+        struct tree *root_tree;
+        root_tree = step_root(first_step, state->ctx, state->root_ctx);
+        ns_add((*ns)[0], root_tree, state);
     } else {
         for (int i=0; i < root->used; i++)
             ns_add((*ns)[0], root->nodes[i], state);
     }
+
     if (HAS_ERROR(state))
         goto error;
 
@@ -2293,6 +2306,7 @@ int pathx_parse(const struct tree *tree,
                 const char *txt,
                 bool need_nodeset,
                 struct pathx_symtab *symtab,
+                struct tree *root_ctx,
                 struct pathx **pathx) {
     struct state *state = NULL;
 
@@ -2313,6 +2327,7 @@ int pathx_parse(const struct tree *tree,
     state->txt = txt;
     state->pos = txt;
     state->symtab = symtab;
+    state->root_ctx = root_ctx;
     state->error = err;
 
     if (ALLOC_N(state->value_pool, 8) < 0) {
@@ -2376,6 +2391,37 @@ static struct tree *tree_prev(struct tree *pos) {
              node->next != pos;
              node = node->next);
     }
+    return node;
+}
+
+/* When the first step doesn't begin with ROOT then use relative root context
+ * instead. */
+static struct tree *step_root(struct step *step, struct tree *ctx,
+                              struct tree *root_ctx) {
+    struct tree *node = NULL;
+    switch (step->axis) {
+    case SELF:
+    case CHILD:
+    case DESCENDANT:
+    case PARENT:
+    case ANCESTOR:
+    case PRECEDING_SIBLING:
+    case FOLLOWING_SIBLING:
+        /* only use root_ctx when ctx is the absolute tree root */
+        if (ctx == ctx->parent && root_ctx != NULL)
+            node = root_ctx;
+        else
+            node = ctx;
+        break;
+    case ROOT:
+    case DESCENDANT_OR_SELF:
+        node = ctx;
+        break;
+    default:
+        assert(0);
+    }
+    if (node == NULL)
+        return NULL;
     return node;
 }
 

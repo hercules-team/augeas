@@ -300,3 +300,10 @@ test int-bool-f /files[int(1 = 0) > 0]
 
 test int-bool-t /files[int(1 = 1) > 0]
      /files
+
+# Relative paths, relying on default /files context
+test ctx_file etc/network/interfaces
+     /files/etc/network/interfaces
+
+test ctx_file_pred etc/network/interfaces/iface[. = "lo"]
+     /files/etc/network/interfaces/iface[1] = lo

@@ -163,7 +163,7 @@ static struct value *pathx_parse_glue(struct info *info, struct value *tree,
     assert(tree->tag == V_TREE);
 
     if (pathx_parse(tree->origin, info->error, path->string->str, true,
-                    NULL, p) != PATHX_NOERROR) {
+                    NULL, NULL, p) != PATHX_NOERROR) {
         return make_pathx_exn(ref(info), *p);
     } else {
         return NULL;

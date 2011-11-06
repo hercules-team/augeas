@@ -71,6 +71,53 @@ static void testGet(CuTest *tc) {
     CuAssertPtrEquals(tc, NULL, value);
     CuAssertIntEquals(tc, AUG_EMMATCH, aug_error(aug));
 
+    /* augeas should prepend context if relative path given */
+    r = aug_set(aug, "/augeas/context", "/augeas/version");
+    r = aug_get(aug, "save/*[1]", &value);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertPtrNotNull(tc, value);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    /* augeas should still work with an empty context */
+    r = aug_set(aug, "/augeas/context", "");
+    r = aug_get(aug, "/augeas/version", &value);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertPtrNotNull(tc, value);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    aug_close(aug);
+}
+
+static void testSet(CuTest *tc) {
+    int r;
+    const char *value;
+    struct augeas *aug;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    /* aug_set returns 0 for a simple set */
+    r = aug_set(aug, "/augeas/testSet", "foo");
+    CuAssertIntEquals(tc, 0, r);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    /* aug_set returns -1 when cannot set due to multiple nodes */
+    r = aug_set(aug, "/augeas/version/save/*", "foo");
+    CuAssertIntEquals(tc, -1, r);
+    CuAssertIntEquals(tc, AUG_EMMATCH, aug_error(aug));
+
+    /* aug_set is able to set the context, even when currently invalid */
+    r = aug_set(aug, "/augeas/context", "( /files | /augeas )");
+    CuAssertIntEquals(tc, 0, r);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+    r = aug_get(aug, "/augeas/version", &value);
+    CuAssertIntEquals(tc, -1, r);
+    CuAssertIntEquals(tc, AUG_EMMATCH, aug_error(aug));
+    r = aug_set(aug, "/augeas/context", "/files");
+    CuAssertIntEquals(tc, 0, r);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
     aug_close(aug);
 }
 
@@ -357,6 +404,7 @@ int main(void) {
     CuSuiteSetup(suite, NULL, NULL);
 
     SUITE_ADD_TEST(suite, testGet);
+    SUITE_ADD_TEST(suite, testSet);
     SUITE_ADD_TEST(suite, testSetM);
     SUITE_ADD_TEST(suite, testDefVarMeta);
     SUITE_ADD_TEST(suite, testDefNodeExistingMeta);

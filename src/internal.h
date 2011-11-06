@@ -81,6 +81,10 @@
 #define AUGEAS_COPY_IF_RENAME_FAILS \
     AUGEAS_META_SAVE_MODE "/copy_if_rename_fails"
 
+/* Define: AUGEAS_CONTEXT
+ * Context prepended to all non-absolute paths */
+#define AUGEAS_CONTEXT AUGEAS_META_TREE "/context"
+
 /* A hierarchy where we record certain 'events', e.g. which tree
  * nodes actually gotsaved into files */
 #define AUGEAS_EVENTS AUGEAS_META_TREE "/events"
@@ -118,6 +122,9 @@
 /* constants for options in the tree */
 #define AUG_ENABLE "enable"
 #define AUG_DISABLE "disable"
+
+/* default value for the relative path context */
+#define AUG_CONTEXT_DEFAULT "/files"
 
 #ifdef __GNUC__
 
@@ -424,6 +431,12 @@ struct tree *tree_find(struct augeas *aug, const char *path);
  * Returns the node or NULL on error
  */
 struct tree *tree_find_cr(struct augeas *aug, const char *path);
+/* Find the node at the path stored in AUGEAS_CONTEXT, i.e. the root context
+ * node for relative paths.
+ * Errors: EMMATCH - more than one node matches PATH
+ *         ENOMEM  - allocation error
+ */
+struct tree *tree_root_ctx(const struct augeas *aug);
 
 /* Struct: memstream
  * Wrappers to simulate OPEN_MEMSTREAM where that's not available. The
@@ -489,7 +502,8 @@ struct pathx_symtab;
 const char *pathx_error(struct pathx *pathx, const char **txt, int *pos);
 
 /* Parse a path expression PATH rooted at TREE, which is a node somewhere
- * in AUG->ORIGIN. If TREE is NULL, AUG->ORIGIN is used.
+ * in AUG->ORIGIN. If TREE is NULL, AUG->ORIGIN is used. If ROOT_CTX is not
+ * NULL and the PATH isn't absolute then it will be rooted at ROOT_CTX.
  *
  * Use this function rather than PATHX_PARSE for path expressions inside
  * the tree in AUG->ORIGIN.
@@ -502,6 +516,7 @@ const char *pathx_error(struct pathx *pathx, const char **txt, int *pos);
  */
 struct pathx *pathx_aug_parse(const struct augeas *aug,
                               struct tree *tree,
+                              struct tree *root_ctx,
                               const char *path, bool need_nodeset);
 
 /* Parse the string PATH into a path expression PX that will be evaluated
@@ -517,6 +532,7 @@ int pathx_parse(const struct tree *origin,
                 const char *path,
                 bool need_nodeset,
                 struct pathx_symtab *symtab,
+                struct tree *root_ctx,
                 struct pathx **px);
 /* Return the error struct that was passed into pathx_parse */
 struct error *err_of_pathx(struct pathx *px);

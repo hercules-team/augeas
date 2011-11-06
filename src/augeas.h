@@ -74,7 +74,7 @@ augeas *aug_init(const char *root, const char *loadpath, unsigned int flags);
  *
  * Define a variable NAME whose value is the result of evaluating EXPR. If
  * a variable NAME already exists, its name will be replaced with the
- * result of evaluating EXPR.
+ * result of evaluating EXPR.  Context will not be applied to EXPR.
  *
  * If EXPR is NULL, the variable NAME will be removed if it is defined.
  *
