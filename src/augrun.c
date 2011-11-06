@@ -519,16 +519,27 @@ static const struct command_opt_def cmd_mv_opts[] = {
     CMD_OPT_DEF_LAST
 };
 
+static const char const cmd_mv_help[] =
+    "Move node  SRC to DST.  SRC must match  exactly one node in  "
+    "the tree.\n DST  must either  match  exactly one  node  in the  tree,  "
+    "or may  not\n exist  yet. If  DST exists  already, it  and all  its  "
+    "descendants are\n deleted.  If  DST  does  not   exist  yet,  it  and  "
+    "all  its  missing\n ancestors are created.";
+
 static const struct command_def cmd_mv_def = {
     .name = "mv",
     .opts = cmd_mv_opts,
     .handler = cmd_mv,
     .synopsis = "move a subtree",
-    .help = "Move node  SRC to DST.  SRC must match  exactly one node in  "
-    "the tree.\n DST  must either  match  exactly one  node  in the  tree,  "
-    "or may  not\n exist  yet. If  DST exists  already, it  and all  its  "
-    "descendants are\n deleted.  If  DST  does  not   exist  yet,  it  and  "
-    "all  its  missing\n ancestors are created."
+    .help = cmd_mv_help
+};
+
+static const struct command_def cmd_move_def = {
+    .name = "move",
+    .opts = cmd_mv_opts,
+    .handler = cmd_mv,
+    .synopsis = "move a subtree (alias of 'mv')",
+    .help = cmd_mv_help
 };
 
 static void cmd_set(struct command *cmd) {
@@ -879,13 +890,24 @@ static const struct command_opt_def cmd_ins_opts[] = {
     CMD_OPT_DEF_LAST
 };
 
+static const char const cmd_ins_help[] =
+    "Insert a new node with label LABEL right before or after "
+    "PATH into the\n tree. WHERE must be either 'before' or 'after'.";
+
 static const struct command_def cmd_ins_def = {
     .name = "ins",
     .opts = cmd_ins_opts,
     .handler = cmd_ins,
-    .synopsis = "insert new node before/after and existing node",
-    .help = "Insert a new node with label LABEL right before or after "
-    "PATH into the\n tree. WHERE must be either 'before' or 'after'."
+    .synopsis = "insert new node",
+    .help = cmd_ins_help
+};
+
+static const struct command_def cmd_insert_def = {
+    .name = "insert",
+    .opts = cmd_ins_opts,
+    .handler = cmd_ins,
+    .synopsis = "insert new node (alias of 'ins')",
+    .help = cmd_ins_help
 };
 
 static const struct command_def const *commands[] = {
@@ -895,10 +917,12 @@ static const struct command_def const *commands[] = {
     &cmd_defvar_def,
     &cmd_get_def,
     &cmd_ins_def,
+    &cmd_insert_def,
     &cmd_load_def,
     &cmd_ls_def,
     &cmd_match_def,
     &cmd_mv_def,
+    &cmd_move_def,
     &cmd_print_def,
     &cmd_rm_def,
     &cmd_save_def,
