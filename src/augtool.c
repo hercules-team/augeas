@@ -91,15 +91,18 @@ static char *readline_path_generator(const char *text, int state) {
     static int current = 0;
     static char **children = NULL;
     static int nchildren = 0;
+    static char *ctx = NULL;
+
+    char *end = strrchr(text, SEP);
+    if (end != NULL)
+        end += 1;
 
     if (state == 0) {
-        char *end = strrchr(text, SEP);
         char *path;
         if (end == NULL) {
-            if ((path = strdup("/*")) == NULL)
+            if ((path = strdup("*")) == NULL)
                 return NULL;
         } else {
-            end += 1;
             CALLOC(path, end - text + 2);
             if (path == NULL)
                 return NULL;
@@ -112,13 +115,23 @@ static char *readline_path_generator(const char *text, int state) {
         free((void *) children);
         nchildren = aug_match(aug, path, &children);
         current = 0;
+
+        ctx = NULL;
+        if (path[0] != SEP)
+            aug_get(aug, AUGEAS_CONTEXT, (const char **) &ctx);
+
         free(path);
     }
+
+    if (end == NULL)
+        end = (char *) text;
 
     while (current < nchildren) {
         char *child = children[current];
         current += 1;
-        if (STREQLEN(child, text, strlen(text))) {
+
+        char *chend = strrchr(child, SEP) + 1;
+        if (STREQLEN(chend, end, strlen(end))) {
             if (child_count(child) > 0) {
                 char *c = realloc(child, strlen(child)+2);
                 if (c == NULL)
@@ -126,6 +139,19 @@ static char *readline_path_generator(const char *text, int state) {
                 child = c;
                 strcat(child, "/");
             }
+
+            /* strip off context if the user didn't give it */
+            if (ctx != NULL) {
+                char *c = realloc(child, strlen(child)-strlen(ctx)+1);
+                if (c == NULL)
+                    return NULL;
+                int ctxidx = strlen(ctx);
+                if (child[ctxidx] == SEP)
+                    ctxidx++;
+                strcpy(c, &child[ctxidx]);
+                child = c;
+            }
+
             rl_filename_completion_desired = 1;
             rl_completion_append_character = '\0';
             return child;
