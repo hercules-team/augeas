@@ -533,6 +533,37 @@ static struct value *lns_fmt_atype(struct info *info, struct value *l) {
     return result;
 }
 
+/* V_REGEXP -> V_STRING -> V_STRING */
+static struct value *rx_match(struct info *info,
+                              struct value *rx, struct value *s) {
+    struct value *result = NULL;
+    const char *str = s->string->str;
+    struct re_registers regs;
+    int r;
+
+    MEMZERO(&regs, 1);
+    r = regexp_match(rx->regexp, str, strlen(str), 0, &regs);
+    if (r < -1) {
+        result =
+            make_exn_value(ref(info), "regexp match failed (internal error)");
+    } else {
+        char *match = NULL;
+        if (r == -1) {
+            /* No match */
+            match = strdup("");
+        } else {
+            match = strndup(str + regs.start[0], regs.end[0] - regs.start[0]);
+        }
+        if (match == NULL) {
+            result = exn_error();
+        } else {
+            result = make_value(V_STRING, ref(info));
+            result->string = make_string(match);
+        }
+    }
+    return result;
+}
+
 struct module *builtin_init(struct error *error) {
     struct module *modl = module_create("Builtin");
     int r;
@@ -585,6 +616,10 @@ struct module *builtin_init(struct error *error) {
     DEFINE_NATIVE(modl, "lens_ktype", 1, lns_ktype, T_LENS, T_REGEXP);
     DEFINE_NATIVE(modl, "lens_format_atype", 1, lns_fmt_atype,
                   T_LENS, T_STRING);
+
+    /* Regexp matching */
+    DEFINE_NATIVE(modl, "regexp_match", 2, rx_match, T_REGEXP, T_STRING,
+                  T_STRING);
 
     /* System functions */
     struct module *sys = module_create("Sys");
