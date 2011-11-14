@@ -68,16 +68,14 @@ let simplevalue (r:regexp) (lc:string) (uc:string) =
  * DEVICES
  ******************************************************************************)
 
-let dev_re = /[dD][eE][vV]([iI]([cC][eE]?)?)?/
+let dev_re = /dev(i(ce?)?)?/i
 
-let dev_containers_re = /[cC][oO][nN][tT][aA][iI][nN][eE][rR][sS]/
-let dev_partitions_re = /[pP][aA][rR][tT][iI][tT][iI][oO][nN][sS]/
+let dev_containers_re = /containers/i
+let dev_partitions_re = /partitions/i
 
 let dev_containers = [ del dev_containers_re "containers" . label "containers" ]
 let dev_partitions = [ del dev_partitions_re "partitions" . label "partitions" ]
-let dev_device = [ label "name". store ( value
-                                         - dev_containers_re
-                                         - dev_partitions_re ) ]
+let dev_device = [ label "name". store ( value - dev_containers_re) ]
 
 (* Strictly there must be at least 1 device, but we err on the side of parsing
 *)
@@ -92,22 +90,22 @@ let device = [ del dev_re "DEVICE" . label "device" . dev_devices . eol ]
  * ARRAY
  ******************************************************************************)
 
-let array_re  = /[aA][rR][rR]([aA][yY]?)?/
+let array_re  = /arr(ay?)?/i
 
-let arr_auto_re         = /[aA][uU][tT][oO]/
-let arr_bitmap_re       = /[bB][iI][tT][mM][aA][pP]/
-let arr_container_re    = /[cC][oO][nN][tT][aA][iI][nN][eE][rR]/
-let arr_devices_re      = /[dD][eE][vV][iI][cC][eE][sS]/
-let arr_disks_re        = /[dD][iI][sS][kK][sS]/ (* Undocumented *)
-let arr_level_re        = /[lL][eE][vV][eE][lL]/
-let arr_member_re       = /[mM][eE][mM][bB][eE][rR]/
-let arr_metadata_re     = /[mM][eE][tT][aA][dD][aA][tT][aA]/
-let arr_name_re         = /[nN][aA][mM][eE]/
-let arr_num_devices_re  = /[nN][uU][mM]-[dD][eE][vV][iI][cC][eE][sS]/
-let arr_spare_group_re  = /[sS][pP][aA][rR][eE]-[gG][rR][oO][uU][pP]/
-let arr_spares_re       = /[sS][pP][aA][rR][eE][sS]/
-let arr_super_minor_re  = /[sS][uU][pP][eE][rR]-[mM][iI][nN][oO][rR]/
-let arr_uuid_re         = /[uU][uU][iI][dD]/
+let arr_auto_re         = /auto/i
+let arr_bitmap_re       = /bitmap/i
+let arr_container_re    = /container/i
+let arr_devices_re      = /devices/i
+let arr_disks_re        = /disks/i (* Undocumented *)
+let arr_level_re        = /level/i
+let arr_member_re       = /member/i
+let arr_metadata_re     = /metadata/i
+let arr_name_re         = /name/i
+let arr_num_devices_re  = /num-devices/i
+let arr_spare_group_re  = /spare-group/i
+let arr_spares_re       = /spares/i
+let arr_super_minor_re  = /super-minor/i
+let arr_uuid_re         = /uuid/i
 
 let arr_devicename      = [ store value_no_eq . label "devicename" ]
 
@@ -149,7 +147,7 @@ let array  = [ del array_re "ARRAY" . label "array" . arr_options . eol ]
  * MAILADDR
  ******************************************************************************)
 
-let mailaddr_re = /[mM][aA][iI]([lL]([aA]([dD]([dD][rR]?)?)?)?)?/
+let mailaddr_re = /mai(l(a(d(dr?)?)?)?)?/i
 
 (* We intentially allow multiple mailaddr values here, even though this is
 invalid and would produce a warning. This is better than not parsing the file.
@@ -162,7 +160,7 @@ let mailaddr = simplevalue mailaddr_re "mailaddr" "MAILADDR"
  ******************************************************************************)
 
 (* N.B. MAILFROM can only be abbreviated to 5 characters *)
-let mailfrom_re = /[mM][aA][iI][lL][fF]([rR]([oO][mM]?)?)?/
+let mailfrom_re = /mailf(r(om?)?)?/i
 
 let mailfrom = [ del mailfrom_re "MAILFROM" . label "mailfrom"
                  . ( value_sep . [ label "value" . store value ] )* . eol ]
@@ -172,7 +170,7 @@ let mailfrom = [ del mailfrom_re "MAILFROM" . label "mailfrom"
  * PROGRAM
  ******************************************************************************)
 
-let program_re = /[pP][rR][oO]([gG]([rR]([aA][mM]?)?)?)?/
+let program_re = /pro(g(r(am?)?)?)?/i
 
 let program = simplevalue program_re "program" "PROGRAM"
 
@@ -181,14 +179,14 @@ let program = simplevalue program_re "program" "PROGRAM"
  * CREATE
  ******************************************************************************)
 
-let create_re = /[cC][rR][eE]([aA]([tT][eE]?)?)?/
+let create_re = /cre(a(te?)?)?/i
 
-let cre_auto_re     = /[aA][uU][tT][oO]/
-let cre_owner_re    = /[oO][wW][nN][eE][rR]/
-let cre_group_re    = /[gG][rR][oO][uU][pP]/
-let cre_mode_re     = /[mM][oO][dD][eE]/
-let cre_metadata_re = /[mM][eE][tT][aA][dD][aA][tT][aA]/
-let cre_symlinks_re = /[sS][yY][mM][lL][iI][nN][kK][sS]/
+let cre_auto_re     = /auto/i
+let cre_owner_re    = /owner/i
+let cre_group_re    = /group/i
+let cre_mode_re     = /mode/i
+let cre_metadata_re = /metadata/i
+let cre_symlinks_re = /symlinks/i
 
 let cre_auto        = keyvalue cre_auto_re "auto" "AUTO"
 let cre_group       = keyvalue cre_group_re "group" "GROUP"
@@ -211,7 +209,7 @@ let create  = [ del create_re "CREATE" . label "create" . cre_options . eol ]
  * HOMEHOST
  ******************************************************************************)
 
-let homehost_re = /[hH][oO][mM]([eE]([hH]([oO]([sS][tT]?)?)?)?)?/
+let homehost_re = /hom(e(h(o(st?)?)?)?)?/i
 
 let homehost = simplevalue homehost_re "homehost" "HOMEHOST"
 
@@ -220,7 +218,7 @@ let homehost = simplevalue homehost_re "homehost" "HOMEHOST"
  * AUTO
  ******************************************************************************)
 
-let auto_re = /[aA][uU][tT][oO]?/
+let auto_re = /auto?/i
 
 let aut_plus        = [ key "+" . store value ]
 let aut_minus       = [ key "-" . store value ]
@@ -239,9 +237,8 @@ let auto = [ del auto_re "AUTO" . label "auto" . aut_list . eol ]
 suggests it's parsed the same way as POLICY, but treated slightly differently
 thereafter. *)
 
-let policy_re = /[pP][oO][lL]([iI]([cC][yY]?)?)?/
-let part_policy_re =
-    /[pP][aA][rR]([tT](-([pP]([oO]([lL]([iI]([cC][yY]?)?)?)?)?)?)?)?/
+let policy_re = /pol(i(cy?)?)?/i
+let part_policy_re = /par(t(-(p(o(l(i(cy?)?)?)?)?)?)?)?/i
 
 (* Unlike everything else, policy keys are matched case sensitive. This means we
 don't have to mess around with explicit option matching, as the match string is
