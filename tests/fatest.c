@@ -581,6 +581,24 @@ static void testExpandNoCase(CuTest *tc) {
     free(s);
 }
 
+static void testNoCaseComplement(CuTest *tc) {
+    const char *key_s = "keY";
+    struct fa *key = make_good_fa(tc, key_s);
+    struct fa *isect = NULL;
+
+    fa_nocase(key);
+
+    struct fa *comp = mark(fa_complement(key));
+
+    key = make_good_fa(tc, key_s);
+
+    /* We used to have a bug in totalize that caused the intersection
+     * to contain "keY" */
+    isect = fa_intersect(key, comp);
+
+    CuAssertIntEquals(tc, 1, fa_is_basic(isect, FA_EMPTY));
+}
+
 int main(int argc, char **argv) {
     if (argc == 1) {
         char *output = NULL;
@@ -605,6 +623,7 @@ int main(int argc, char **argv) {
         SUITE_ADD_TEST(suite, testExpandCharRanges);
         SUITE_ADD_TEST(suite, testNoCase);
         SUITE_ADD_TEST(suite, testExpandNoCase);
+        SUITE_ADD_TEST(suite, testNoCaseComplement);
 
         CuSuiteRun(suite);
         CuSuiteSummary(suite, &output);

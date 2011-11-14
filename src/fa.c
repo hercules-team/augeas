@@ -60,6 +60,10 @@ int fa_minimization_algorithm = FA_MIN_HOPCROFT;
  * fa_as_regexp, we store regexps on transitions in the re field of each
  * transition. TRANS_RE indicates that we do that, and is used by fa_dot to
  * produce proper graphs of an automaton transitioning on regexps.
+ *
+ * For case-insensitive regexps (nocase == 1), the FA never has transitions
+ * on uppercase letters [A-Z], effectively removing these letters from the
+ * alphabet.
  */
 struct fa {
     struct state *initial;
@@ -2344,6 +2348,34 @@ int fa_contains(struct fa *fa1, struct fa *fa2) {
     goto done;
 }
 
+static int add_crash_trans(struct fa *fa, struct state *s, struct state *crash,
+                           int min, int max) {
+    int result;
+
+    if (fa->nocase) {
+        /* Never transition on anything in [A-Z] */
+        if (min > 'Z' || max < 'A') {
+            result = add_new_trans(s, crash, min, max);
+        } else if (min >= 'A' && max <= 'Z') {
+            result = 0;
+        } else if (max <= 'Z') {
+            /* min < 'A' */
+            result = add_new_trans(s, crash, min, 'A' - 1);
+        } else if (min >= 'A') {
+            /* max > 'Z' */
+            result = add_new_trans(s, crash, 'Z' + 1, max);
+        } else {
+            /* min < 'A' && max > 'Z' */
+            result = add_new_trans(s, crash, min, 'A' - 1);
+            if (result == 0)
+                result = add_new_trans(s, crash, 'Z' + 1, max);
+        }
+    } else {
+        result = add_new_trans(s, crash, min, max);
+    }
+    return result;
+}
+
 static int totalize(struct fa *fa) {
     int r;
     struct state *crash = add_state(fa, 0);
@@ -2352,42 +2384,25 @@ static int totalize(struct fa *fa) {
     F(mark_reachable(fa));
     sort_transition_intervals(fa);
 
-    if (fa->nocase) {
-        r = add_new_trans(crash, crash, UCHAR_MIN, 'A' - 1);
-        if (r < 0)
-            return -1;
-        r = add_new_trans(crash, crash, 'Z' + 1, UCHAR_MAX);
-        if (r < 0)
-            return -1;
-    } else {
-        r = add_new_trans(crash, crash, UCHAR_MIN, UCHAR_MAX);
-        if (r < 0)
-            return -1;
-    }
+    r = add_crash_trans(fa, crash, crash, UCHAR_MIN, UCHAR_MAX);
+    if (r < 0)
+        return -1;
 
     list_for_each(s, fa->initial) {
         int next = UCHAR_MIN;
         int tused = s->tused;
         for (int i=0; i < tused; i++) {
             uchar min = s->trans[i].min, max = s->trans[i].max;
-            if (fa->nocase) {
-                /* Don't add transitions on [A-Z] into crash */
-                if (isupper(min)) min = 'A';
-                if (isupper(max)) max = 'Z';
-            }
             if (min > next) {
-                r = add_new_trans(s, crash, next, min - 1);
+                r = add_crash_trans(fa, s, crash, next, min - 1);
                 if (r < 0)
                     return -1;
             }
-            if (max + 1 > next) {
+            if (max + 1 > next)
                 next = max + 1;
-                if (fa->nocase && isupper(next))
-                    next = 'Z' + 1;
-            }
         }
         if (next <= UCHAR_MAX) {
-            r = add_new_trans(s, crash, next, UCHAR_MAX);
+            r = add_crash_trans(fa, s, crash, next, UCHAR_MAX);
             if (r < 0)
                 return -1;
         }
@@ -3018,6 +3033,10 @@ int fa_nocase(struct fa *fa) {
             } else if (t->max <= 'Z') {
                 /* t->min < 'A' */
                 t->max = 'A' - 1;
+                F(add_new_trans(s, t->to, lc_min, lc_max));
+            } else if (t->min >= 'A') {
+                /* t->max > 'Z' */
+                t->min = 'Z' + 1;
                 F(add_new_trans(s, t->to, lc_min, lc_max));
             } else {
                 /* t->min < 'A' && t->max > 'Z' */

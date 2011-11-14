@@ -10,7 +10,7 @@ test lns1 get "KEY" = { "1" = "KEY" }
 test lns1 get "KeY" = { "1" = "KeY" }
 
 let lns2 =
-  let re = /[a-z]/i - /Key/i in
+  let re = /[A-Za-z]+/ - /Key/i in
   [ label "1" . store re ] | [ label "2" . store /Key/i ]
 
 test lns2 get "Key" = { "2" = "Key" }
