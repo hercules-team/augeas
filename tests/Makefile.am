@@ -47,6 +47,7 @@ lens_tests =			\
   lens-inittab.sh		\
   lens-interfaces.sh		\
   lens-iptables.sh		\
+  lens-kdump.sh			\
   lens-keepalived.sh	\
   lens-krb5.sh			\
   lens-ldap.sh			\
