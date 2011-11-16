@@ -204,6 +204,7 @@ let vrrp_instance_field = field "state" sto_word
                         | flag "smtp_alert"
                         | flag "nopreempt"
                         | flag "ha_suspend"
+                        | flag "debug"
                         | block "authentication" (
                                 field "auth_type" sto_word
                               | field "auth_pass" sto_word
