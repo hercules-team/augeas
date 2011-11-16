@@ -19,9 +19,13 @@ let eol = Util.eol | Util.comment
 let sep_ch = /[ \t]|\\\\\n/
 (* Anything that's not a separator is part of a token *)
 let tok_ch = /[^ \t\n#\\]|\\\\[^ \t\n]/
+let tok_ch_dquote = /[^\n#\\"]|\\\\[^\n]/
 
 let spc = del sep_ch+ " "
-let token = store tok_ch+
+let dquote = del /"?/ ""
+let token_no_dquote = store tok_ch+
+let token_dquote = dquote . store tok_ch_dquote+ . dquote
+let token = token_no_dquote | token_dquote
 let indent = Util.del_opt_ws ""
 
 let cmd (n:regexp) = key n . spc
@@ -30,7 +34,7 @@ let token_to_eol = store (tok_ch . /([^#\n\\]|\\\\\n)*/ . tok_ch | tok_ch)
 
 let options =
   let opt_ch = /[A-Za-z0-9_]/ in
-  let option = [ spc . key opt_ch+ . (del /=/ "=" . token)? ] in
+  let option = [ spc . key opt_ch+ . (Util.del_str "=" . token)? ] in
     [ cmd "options" . token . option* . eol ]
 
 let alias = [ cmd "alias" . token . spc . arg "modulename" . eol ]

@@ -64,6 +64,7 @@ Group: Specific Modules  {
    File: Dpkg  (dpkg.aug)
    File: Exports  (exports.aug)
    File: FAI_DiskConfig (fai_diskconfig.aug)
+   File: Grub (grub.aug)
    File: Iptables  (iptables.aug)
    File: Keepalived  (keepalived.aug)
    File: Login_defs  (login_defs.aug)

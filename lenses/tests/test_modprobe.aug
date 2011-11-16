@@ -75,3 +75,9 @@ test Modprobe.lns get conf =
 test Modprobe.lns get "blacklist brokenmodule # never worked\n" =
   { "blacklist" = "brokenmodule"
     { "#comment" = "never worked" } }
+
+
+(* Ticket 108 *)
+let options_space_quote = "options name attr1=\"val\" attr2=\"val2 val3\"\n"
+
+test Modprobe.entry get options_space_quote = ?
