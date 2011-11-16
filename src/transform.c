@@ -991,6 +991,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
 
     if (fclose(fp) != 0) {
         err_status = "close_augnew";
+        fp = NULL;
         goto done;
     }
 
