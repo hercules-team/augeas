@@ -13,6 +13,10 @@ Pin-Priority: 700
 Package: liferea-data
 Pin: version 1.4.26-4
 Pin-Priority: 600
+
+Package: *
+Pin: origin packages.linuxmint.com
+Pin-Priority: 700
 "
 
     test AptPreferences.lns get conf =
@@ -34,6 +38,11 @@ Pin-Priority: 600
           { "Pin"          = "version"
               { "version" = "1.4.26-4" } }
           { "Pin-Priority" = "600" } }
+       { "4"
+          { "Package"      = "*" }
+          { "Pin"          = "origin"
+              { "origin" = "packages.linuxmint.com" } }
+          { "Pin-Priority" = "700" } }
 
 (*************************************************************************)
 
