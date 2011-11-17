@@ -153,3 +153,12 @@ let key_ws_value (kw:regexp) =
  ************************************************************************)
 let flag (kw:regexp) = [ key kw ]
 
+(************************************************************************
+ * View: flag_line
+ *   A simple flag line, consisting of a single key
+ *
+ *   Parameters:
+ *     kw:regexp - the pattern to match as key
+ ************************************************************************)
+let flag_line (kw:regexp) = [ key kw . eol ]
+
