@@ -78,4 +78,3 @@ let device_name = /[a-zA-Z0-9_?.+:!-]+/
  *    To be refined
  *)
 let email_addr = /[A-Za-z0-9_+.-]+@[A-Za-z0-9_.-]+/
-
