@@ -119,6 +119,7 @@ module Shellvars =
   let filter_misc    = incl "/etc/arno-iptables-firewall/debconf.cfg"
                      . incl "/etc/cron-apt/config"
                      . incl "/etc/environment"
+                     . incl "/etc/blkid.conf"
 
   let filter = filter_sysconfig
              . filter_ifcfg
