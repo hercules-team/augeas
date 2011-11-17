@@ -39,7 +39,11 @@ module Pam =
                ]
   let lns = ( empty | comment | include | record ) *
 
-  let xfm = transform lns ((incl "/etc/pam.d/*") . Util.stdexcl)
+  let filter = incl "/etc/pam.conf"
+             . incl "/etc/pam.d/*"
+             . Util.stdexcl
+
+  let xfm = transform lns filter
 
 (* Local Variables: *)
 (* mode: caml       *)
