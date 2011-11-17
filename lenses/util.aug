@@ -142,7 +142,3 @@ Variable: stdexcl
     (excl "*.dpkg-dist") .
     (excl "*.augsave") .
     (excl "*.augnew")
-
-(* Local Variables: *)
-(* mode: caml       *)
-(* End:             *)
