@@ -75,6 +75,7 @@ Group: Specific Modules  {
    File: Modules_conf  (modules_conf.aug)
    File: NagiosCfg  (no auto-title, nagioscfg.aug)
    File: NagiosObjects  (nagiosobjects.aug)
+   File: Networks  (networks.aug)
    File: Nrpe  (nrpe.aug)
    File: Nsswitch  (nsswitch.aug)
    File: Pbuilder  (pbuilder.aug)
