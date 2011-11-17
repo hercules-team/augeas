@@ -40,6 +40,7 @@ lens_tests =			\
   lens-gdm.sh			\
   lens-group.sh			\
   lens-json.sh          \
+  lens-hostname.sh			\
   lens-hosts.sh			\
   lens-host_conf.sh			\
   lens-httpd.sh         \

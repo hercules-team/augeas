@@ -65,6 +65,7 @@ Group: Specific Modules  {
    File: Exports  (exports.aug)
    File: FAI_DiskConfig (fai_diskconfig.aug)
    File: Grub (grub.aug)
+   File: Hostname (hostname.aug)
    File: Host_Conf (host_conf.aug)
    File: Iptables  (iptables.aug)
    File: Keepalived  (keepalived.aug)
