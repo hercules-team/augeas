@@ -17,7 +17,8 @@ let eol        = Util.eol
 let indent     = Util.indent
 let empty      = Util.empty
 
-let sep_php    = del /<\?php[ \t]*\n/ "<?php\n"
+let open_php   = del /<\?(php)?[ \t]*\n/ "<?php\n"
+let close_php  = del /([ \t]*(php)?\?>\n)?/ "php?>\n"
 let sep_eq     = del /[ \n]*=/ " ="
 let sep_spc    = del /[ \n]+/ " "
 let sep_dollar = del /\$/ "$"
@@ -110,7 +111,7 @@ let entry      = global|variable|include
  *                                LENS
  *************************************************************************)
 
-let lns        = sep_php . (empty|comment|entry)*
+let lns        = open_php . (empty|comment|entry)* . close_php
 
 let filter     = incl "/etc/squirrelmail/config.php"
                . Util.stdexcl
