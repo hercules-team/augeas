@@ -93,10 +93,11 @@ View: comment_generic
   let comment_multiline =
      let mline_re = (/[^ \t\n].*[^ \t\n]|[^ \t\n]/ - /.*\*\/.*/) in
      let mline = [ seq "mline"
+                 . del /[ \t\n]*/ "\n"
                  . store mline_re ] in
-     [ label "#mcomment" . del /[ \t]*\/\*[ \t\n]*/ "/*\n"
+     [ label "#mcomment" . del /[ \t]*\/\*/ "/*"
        . counter "mline"
-       . (mline . (eol . mline)*)
+       . ( mline . (eol . mline)*)?
        . del /[ \t\n]*\*\/[ \t]*\n/ "\n*/\n" ]
 
 (* View: comment_c_style
