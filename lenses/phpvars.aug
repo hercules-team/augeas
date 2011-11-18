@@ -33,7 +33,7 @@ let chr_nstar  = /[^* \t\n]/
 let chr_slash  = /\//
 let chr_nslash = /[^\/ \t\n]/
 
-let sto_to_scl = store /([^ \t\n].*[^ \t\n;]|[^ \t\n;])/
+let sto_to_scl = store (/([^ \t\n].*[^ \t\n;]|[^ \t\n;])/ - /.*;[ \t]*\/\/.*/)
 let sto_to_eol = store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
 
 (************************************************************************
@@ -42,7 +42,7 @@ let sto_to_eol = store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
 
 let comment      = Util.comment_multiline | Util.comment_c_style
 
-let eol_or_comment = eol
+let eol_or_comment = eol | Util.comment_c_style
 
 (************************************************************************
  *                               ENTRIES
