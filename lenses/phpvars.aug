@@ -14,7 +14,6 @@ module Phpvars =
  *************************************************************************)
 
 let eol        = Util.eol
-let indent     = Util.indent
 let empty      = Util.empty
 
 let open_php   = del /<\?(php)?[ \t]*\n/ "<?php\n"
@@ -33,16 +32,20 @@ let chr_nstar  = /[^* \t\n]/
 let chr_slash  = /\//
 let chr_nslash = /[^\/ \t\n]/
 
-let sto_to_scl = store (/([^ \t\n].*[^ \t\n;]|[^ \t\n;])/ - /.*;[ \t]*\/\/.*/)
+let sto_to_scl = store (/([^ \t\n].*[^ \t\n;]|[^ \t\n;])/ - /.*;[ \t]*(\/\/|#).*/)
 let sto_to_eol = store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
 
 (************************************************************************
  *                              COMMENTS
  *************************************************************************)
 
-let comment      = Util.comment_multiline | Util.comment_c_style
+(* Both c-style and shell-style comments are valid
+   Default to c-style *)
+let comment_one_line = Util.comment_generic /[ \t]*(\/\/|#)[ \t]*/ "// "
 
-let eol_or_comment = eol | Util.comment_c_style
+let comment      = Util.comment_multiline | comment_one_line
+
+let eol_or_comment = eol | comment_one_line
 
 (************************************************************************
  *                               ENTRIES
@@ -55,9 +58,9 @@ let global     = [ key "global"
                  . sep_scl
                  . eol_or_comment ]
 
-let variable_re
-               = /\$[][A-Za-z0-9'_-]+/
-let variable   = [ key variable_re
+let variable   =
+  let variable_re = /\$[][A-Za-z0-9'_-]+/ in
+                 [ key variable_re
                  . sep_eq
                  . sto_to_scl
                  . sep_scl
@@ -67,9 +70,23 @@ let include    = [ key "@include"
                  . sep_opt_spc
                  . sto_to_scl
                  . sep_scl
-               .   eol_or_comment ]
+                 . eol_or_comment ]
 
-let entry      = global|variable|include
+let define     =
+  let variable_re = /[A-Za-z0-9'_-]+/ in
+  let lbracket = del /[ \t]*\([ \t]*["']/ "('" in
+  let rbracket = del /["'][ \t]*\)/ "')" in
+  let sep_comma = del /["'][ \t]*,[ \t]*["']/ "', '" in
+                 [ key "define"
+                 . lbracket
+                 . store variable_re
+                 . sep_comma
+                 . [ label "value" . store /[^"'\n]*/ ]
+                 . rbracket
+                 . sep_scl
+                 . eol_or_comment ]
+
+let entry      = Util.indent . (global|variable|include|define)
 
 (************************************************************************
  *                                LENS
