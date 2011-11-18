@@ -51,55 +51,45 @@ let eol_or_comment = eol | comment_one_line
  *                               ENTRIES
  *************************************************************************)
 
-let global     = [ key "global"
-                 . sep_opt_spc
-                 . sep_dollar
-                 . sto_to_scl
+let simple_line (kw:regexp) (lns:lens) = [ key kw
+                 . lns
                  . sep_scl
                  . eol_or_comment ]
 
-let variable   =
-  let variable_re = /\$[][A-Za-z0-9'_-]+/ in
-                 [ key variable_re
-                 . sep_eq
-                 . sto_to_scl
-                 . sep_scl
-                 . eol_or_comment ]
+let global     = simple_line "global" (sep_opt_spc . sep_dollar . sto_to_scl)
 
-let include    = [ key "@include"
-                 . sep_opt_spc
-                 . sto_to_scl
-                 . sep_scl
-                 . eol_or_comment ]
+let variable   = simple_line /\$[][A-Za-z0-9'_:-]+/ (sep_eq . sto_to_scl)
 
-let define     =
-  let variable_re = /[A-Za-z0-9'_-]+/ in
-  let lbracket = del /[ \t]*\([ \t]*["']/ "('" in
-  let rbracket = del /[ \t]*\)/ ")" in
-  let sep_comma = del /["'][ \t]*,[ \t]*/ "', " in
-  let sto_to_rbracket = store (/[^ \t\n][^\n]*[^ \t\n\)]|[^ \t\n\)]/ - /.*;[ \t]*(\/\/|#).*/) in
-                 [ key "define"
-                 . lbracket
-                 . store variable_re
-                 . sep_comma
-                 . [ label "value" . sto_to_rbracket ]
-                 . rbracket
-                 . sep_scl
-                 . eol_or_comment ]
+let include    = simple_line "@include" (sep_opt_spc . sto_to_scl)
 
-let include_once =
-  let variable_re = /[A-Za-z0-9'_-]+/ in
+let generic_function (kw:regexp) (lns:lens) =
   let lbracket = del /[ \t]*\([ \t]*/ "(" in
   let rbracket = del /[ \t]*\)/ ")" in
-  let sto_to_rbracket = store (/[^ \t\n][^\n]*[^ \t\n\)]|[^ \t\n\)]/ - /.*;[ \t]*(\/\/|#).*/) in
-                 [ key "include_once"
-                 . lbracket
-                 . sto_to_rbracket
-                 . rbracket
-                 . sep_scl
-                 . eol_or_comment ]
+    simple_line kw (lbracket . lns . rbracket)
 
-let entry      = Util.indent . (global|variable|include|define|include_once)
+let define     =
+  let variable_re = /[A-Za-z0-9'_:-]+/ in
+  let quote = del /["']/ "'" in
+  let sep_comma = del /["'][ \t]*,[ \t]*/ "', " in
+  let sto_to_rbracket = store (/[^ \t\n][^\n]*[^ \t\n\)]|[^ \t\n\)]/
+                             - /.*;[ \t]*(\/\/|#).*/) in
+    generic_function "define" (quote . store variable_re . sep_comma
+                                     . [ label "value" . sto_to_rbracket ])
+
+let simple_function (kw:regexp) =
+  let lbracket = del /[ \t]*\([ \t]*/ "(" in
+  let rbracket = del /[ \t]*\)/ ")" in
+  let sto_to_rbracket = store (/[^ \t\n][^\n]*[^ \t\n\)]|[^ \t\n\)]/
+                             - /.*;[ \t]*(\/\/|#).*/) in
+    simple_line kw (lbracket . sto_to_rbracket . rbracket)
+
+let entry      = Util.indent
+               . ( global
+                 | variable
+                 | include
+                 | define
+                 | simple_function "include_once"
+                 | simple_function "echo" )
 
 (************************************************************************
  *                                LENS
