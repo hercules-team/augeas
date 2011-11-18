@@ -17,7 +17,7 @@ let eol        = Util.eol
 let empty      = Util.empty
 
 let open_php   = del /<\?(php)?[ \t]*\n/ "<?php\n"
-let close_php  = del /([ \t]*(php)?\?>\n)?/ "php?>\n"
+let close_php  = del /([ \t]*(php)?\?>\n[ \t\n]*)?/ "php?>\n"
 let sep_eq     = del /[ \t\n]*=[ \t\n]*/ " = "
 let sep_opt_spc = Sep.opt_space
 let sep_spc    = Sep.space
