@@ -16,7 +16,7 @@ $config_version = '1.4.0';
 $theme=array();
 
 $theme[0]['NAME'] = 'Default'; // end-of line comment
-$theme[0]['PATH'] = SM_PATH . 'themes/default_theme.php';
+$theme[0][\"PATH\"] = SM_PATH . 'themes/default_theme.php';
 $theme[0]['XPATH'] = '/some//x/path' ;
 define ('MYVAR', ROOT . 'some value'); # end-of line comment
 include_once( ROOT . \"/path/to/conf\"	 );
@@ -44,7 +44,7 @@ test Phpvars.lns get conf =
   {  }
   { "$theme[0]['NAME']" = "'Default'"
     { "#comment" = "end-of line comment"  } }
-  { "$theme[0]['PATH']" = "SM_PATH . 'themes/default_theme.php'" }
+  { "$theme[0][\"PATH\"]" = "SM_PATH . 'themes/default_theme.php'" }
   { "$theme[0]['XPATH']" = "'/some//x/path'" }
   { "define" = "MYVAR"
     { "value" = "ROOT . 'some value'" }
