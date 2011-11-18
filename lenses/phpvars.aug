@@ -20,7 +20,7 @@ let empty      = Util.empty
 let open_php   = del /<\?(php)?[ \t]*\n/ "<?php\n"
 let close_php  = del /([ \t]*(php)?\?>\n)?/ "php?>\n"
 let sep_eq     = del /[ \n]*=/ " ="
-let sep_spc    = del /[ \n]+/ " "
+let sep_spc    = del /[ \n]*/ " "
 let sep_dollar = del /\$/ "$"
 let sep_scl    = del /[ \t]*;/ ";"
 

@@ -13,6 +13,7 @@ let conf = "<?php
 global $version;
 global $config_version;
 $config_version = '1.4.0';
+$theme=array();
 
 $theme[0]['NAME'] = 'Default';
 $theme[0]['PATH'] = SM_PATH . 'themes/default_theme.php';
@@ -34,6 +35,7 @@ test Phpvars.lns get conf =
    { "global" = "version" }
    { "global" = "config_version" }
    { "$config_version" = "'1.4.0'" }
+   { "$theme" = "array()" }
    {}
    { "$theme[0]['NAME']" = "'Default'"}
    { "$theme[0]['PATH']" = "SM_PATH . 'themes/default_theme.php'"}
