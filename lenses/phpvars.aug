@@ -87,7 +87,19 @@ let define     =
                  . sep_scl
                  . eol_or_comment ]
 
-let entry      = Util.indent . (global|variable|include|define)
+let include_once =
+  let variable_re = /[A-Za-z0-9'_-]+/ in
+  let lbracket = del /[ \t]*\([ \t]*/ "(" in
+  let rbracket = del /[ \t]*\)/ ")" in
+  let sto_to_rbracket = store (/[^ \t\n][^\n]*[^ \t\n\)]|[^ \t\n\)]/ - /.*;[ \t]*(\/\/|#).*/) in
+                 [ key "include_once"
+                 . lbracket
+                 . sto_to_rbracket
+                 . rbracket
+                 . sep_scl
+                 . eol_or_comment ]
+
+let entry      = Util.indent . (global|variable|include|define|include_once)
 
 (************************************************************************
  *                                LENS
