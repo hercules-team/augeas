@@ -75,13 +75,14 @@ let include    = [ key "@include"
 let define     =
   let variable_re = /[A-Za-z0-9'_-]+/ in
   let lbracket = del /[ \t]*\([ \t]*["']/ "('" in
-  let rbracket = del /["'][ \t]*\)/ "')" in
-  let sep_comma = del /["'][ \t]*,[ \t]*["']/ "', '" in
+  let rbracket = del /[ \t]*\)/ ")" in
+  let sep_comma = del /["'][ \t]*,[ \t]*/ "', " in
+  let sto_to_rbracket = store (/[^ \t\n][^\n]*[^ \t\n\)]|[^ \t\n\)]/ - /.*;[ \t]*(\/\/|#).*/) in
                  [ key "define"
                  . lbracket
                  . store variable_re
                  . sep_comma
-                 . [ label "value" . store /[^"'\n]*/ ]
+                 . [ label "value" . sto_to_rbracket ]
                  . rbracket
                  . sep_scl
                  . eol_or_comment ]

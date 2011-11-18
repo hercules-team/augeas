@@ -18,7 +18,7 @@ $theme=array();
 $theme[0]['NAME'] = 'Default'; // end-of line comment
 $theme[0]['PATH'] = SM_PATH . 'themes/default_theme.php';
 $theme[0]['XPATH'] = '/some//x/path' ;
-define ('MYVAR', 'some value'); # end-of line comment
+define ('MYVAR', ROOT . 'some value'); # end-of line comment
 @include SM_PATH . 'config/config_local.php';
  ?>
 "
@@ -46,6 +46,6 @@ test Phpvars.lns get conf =
   { "$theme[0]['PATH']" = "SM_PATH . 'themes/default_theme.php'" }
   { "$theme[0]['XPATH']" = "'/some//x/path'" }
   { "define" = "MYVAR"
-    { "value" = "some value" }
+    { "value" = "ROOT . 'some value'" }
     { "#comment" = "end-of line comment" } }
   { "@include" = "SM_PATH . 'config/config_local.php'" }
