@@ -1,6 +1,6 @@
 module Test_phpvars =
 
-let conf = "<?php
+let conf = "<?pHp
 /**/
 /**
  * Multi line comment
