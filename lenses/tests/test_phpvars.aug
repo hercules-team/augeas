@@ -22,21 +22,23 @@ $theme[0]['PATH'] = SM_PATH . 'themes/default_theme.php';
 "
 
 test Phpvars.lns get conf =
-   { "#comment" }
-   { "#comment"
-      { "1" = "*" }
-      { "2" = "* Multi line comment" }
-      { "3" = "*" } }
-   {}
-   { "#comment"
-      { "1" = "One line comment" } }
-   {}
-   { "#inline" = "Inline comment" }
-   { "global" = "version" }
-   { "global" = "config_version" }
-   { "$config_version" = "'1.4.0'" }
-   { "$theme" = "array()" }
-   {}
-   { "$theme[0]['NAME']" = "'Default'"}
-   { "$theme[0]['PATH']" = "SM_PATH . 'themes/default_theme.php'"}
-   { "@include" = "SM_PATH . 'config/config_local.php'"}
+  { "#mcomment" }
+  { "#mcomment"
+    { "1" = "*" }
+    { "2" = "* Multi line comment" }
+    { "3" = "*" }
+  }
+  {  }
+  { "#mcomment"
+    { "1" = "One line comment" }
+  }
+  {  }
+  { "#comment" = "Inline comment" }
+  { "global" = "version" }
+  { "global" = "config_version" }
+  { "$config_version" = "'1.4.0'" }
+  { "$theme" = "array()" }
+  {  }
+  { "$theme[0]['NAME']" = "'Default'" }
+  { "$theme[0]['PATH']" = "SM_PATH . 'themes/default_theme.php'" }
+  { "@include" = "SM_PATH . 'config/config_local.php'" }
