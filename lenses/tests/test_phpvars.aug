@@ -10,6 +10,7 @@ let conf = "<?pHp
 /* One line comment */
 
 // Inline comment
+# Bash-style comment
 global $version;
 global $config_version;
 $config_version = '1.4.0';
@@ -37,6 +38,7 @@ test Phpvars.lns get conf =
   }
   {  }
   { "#comment" = "Inline comment" }
+  { "#comment" = "Bash-style comment" }
   { "global" = "version" }
   { "global" = "config_version" }
   { "$config_version" = "'1.4.0'" }

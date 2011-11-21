@@ -43,9 +43,11 @@ let sto_to_eol = store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
    Default to c-style *)
 let comment_one_line = Util.comment_generic /[ \t]*(\/\/|#)[ \t]*/ "// "
 
+let comment_eol = Util.comment_generic /[ \t]*(\/\/|#)[ \t]*/ " // "
+
 let comment      = Util.comment_multiline | comment_one_line
 
-let eol_or_comment = eol | comment_one_line
+let eol_or_comment = eol | comment_eol
 
 (************************************************************************
  *                               ENTRIES
@@ -77,11 +79,9 @@ let define     =
                                      . [ label "value" . sto_to_rbracket ])
 
 let simple_function (kw:regexp) =
-  let lbracket = del /[ \t]*\([ \t]*/ "(" in
-  let rbracket = del /[ \t]*\)/ ")" in
   let sto_to_rbracket = store (/[^ \t\n][^\n]*[^ \t\n\)]|[^ \t\n\)]/
                              - /.*;[ \t]*(\/\/|#).*/) in
-    simple_line kw (lbracket . sto_to_rbracket . rbracket)
+    generic_function kw sto_to_rbracket
 
 let entry      = Util.indent
                . ( global
