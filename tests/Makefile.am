@@ -42,6 +42,7 @@ lens_tests =			\
   lens-json.sh          \
   lens-hostname.sh			\
   lens-hosts.sh			\
+  lens-hosts_access.sh			\
   lens-host_conf.sh			\
   lens-httpd.sh         \
   lens-inetd.sh         \
