@@ -3,12 +3,16 @@
 module Shellvars =
   autoload xfm
 
-  let eol = Util.eol
+  let eol = del /[ \t]+|[ \t]*[;\n]/ "\n"
+  let semicol_eol = del /[ \t]*[;\n]/ "\n"
 
   let key_re = /[A-Za-z0-9_]+(\[[0-9]+\])?/ - "unset" - "export"
   let eq = Util.del_str "="
+
   let comment = Util.comment
-  let comment_or_eol = Util.comment_or_eol
+  let comment_eol = Util.comment_eol
+  let comment_or_eol = comment_eol | semicol_eol
+
   let empty   = Util.empty
   let xchgs   = Build.xchgs
   let semicol = del /;?/ ""
@@ -18,6 +22,8 @@ module Shellvars =
   let squot = /'[^'\n]*'/
   (* For some reason, `` conflicts with comment_or_eol *)
   let bquot = /`[^#`\n]*`/
+
+  let sto_to_semicol = store /[^#; \t\n][^#;\n]+[^#; \t\n]|[^#; \t\n]+/
 
   (* Array values of the form '(val1 val2 val3)'. We do not handle empty *)
   (* arrays here because of typechecking headaches. Instead, they are    *)
@@ -36,30 +42,44 @@ module Shellvars =
       store (char* | dquot | squot | bquot | empty_array)
 
   let export = [ key "export" . Util.del_ws_spc ]
-  let kv = [ export? . key key_re . eq . (simple_value | array) . semicol . comment_or_eol ]
+  let kv = [ Util.indent . export? . key key_re
+           . eq . (simple_value | array) . semicol . comment_or_eol ]
 
   let var_action (name:string) =
-    [ xchgs name ("@" . name) . Util.del_ws_spc . store key_re . semicol . comment_or_eol ]
+    [ Util.indent . xchgs name ("@" . name) . Util.del_ws_spc
+    . store key_re . semicol . comment_or_eol ]
 
   let unset = var_action "unset"
   let bare_export = var_action "export"
 
   let source =
-    [
-      del /\.|source/ "." . label ".source" .
-      Util.del_ws_spc . store /[^;= \t\n]+/ . semicol . eol
-    ]
+    [ Util.indent
+      . del /\.|source/ "." . label ".source"
+      . Util.del_ws_spc . store /[^;=# \t\n]+/ . comment_or_eol ]
 
   let shell_builtin_cmds = "ulimit"
 
   let builtin =
-    [ label "@builtin"
+    [ Util.indent . label "@builtin"
       . store shell_builtin_cmds
       . Util.del_ws_spc
-      . [ label "args" . store /[^; \t\n][^;\n]+[^; \t\n]|[^ \t;\n]+/ ]
-      . semicol . eol ]
+      . [ label "args" . sto_to_semicol ]
+      . comment_or_eol ]
 
-  let lns = (comment | empty | source | kv | unset | bare_export | builtin) *
+  let rec cond_if =
+    let entry = comment | empty | source | kv
+              | unset | bare_export | builtin | cond_if in
+    let keyword (kw:string) = Util.indent . Util.del_str kw in
+    let keyword_label (kw:string) (lbl:string) = keyword kw . label lbl in
+      [ keyword_label "if" "@if" . Sep.space
+        . sto_to_semicol . semicol_eol
+        . keyword "then" . eol
+        . entry+
+        . [ keyword_label "else" "@else"
+          . eol . entry+ ]?
+        . keyword "fi" . comment_or_eol ]
+
+  let lns = (comment | empty | source | kv | unset | bare_export | builtin | cond_if) *
 
   let sc_incl (n:string) = (incl ("/etc/sysconfig/" . n))
   let filter_sysconfig =

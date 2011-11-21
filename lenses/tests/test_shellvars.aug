@@ -142,6 +142,37 @@ unset ONBOOT    #   We do not want this var
   { "VAR1" = "\"this;is;a;test\"" }
   { "VAR2" = "this" }
 
+  (* Bug 230: parse conditions *)
+  test Shellvars.lns get "if [ -f /etc/default/keyboard ]; then\n. /etc/default/keyboard\nfi\n" =
+  { "@if" = "[ -f /etc/default/keyboard ]" { ".source" = "/etc/default/keyboard" } }
+
+  (* Recursive condition *)
+  test Shellvars.lns get "if [ -f /tmp/file1 ]; then
+  if [ -f /tmp/file2 ]
+  then
+    . /tmp/file2; else; . /tmp/file4
+  fi
+else
+  . /tmp/file3
+fi\n" =
+  { "@if" = "[ -f /tmp/file1 ]"
+    { "@if" = "[ -f /tmp/file2 ]"
+      { ".source" = "/tmp/file2" }
+      { "@else"
+        { ".source" = "/tmp/file4" }
+      }
+    }
+    { "@else"
+      { ".source" = "/tmp/file3" }
+    }
+  }
+
+  (* Comment or eol *)
+  test Shellvars.lns get "VAR=value # eol-comment\n" =
+  { "VAR" = "value"
+    { "#comment" = "eol-comment" }
+  }
+
 
 (* Local Variables: *)
 (* mode: caml       *)
