@@ -1,6 +1,6 @@
 (*
 Module: Hostname
-  Parses /etc/hostname
+  Parses /etc/hostname and /etc/mailname
 
 Author: Raphael Pinson <raphink@gmail.com>
 
@@ -17,5 +17,6 @@ let lns = [ label "hostname" . store Rx.word . Util.eol ]
 
 (* View: filter *)
 let filter = incl "/etc/hostname"
+           . incl "/etc/mailname"
 
 let xfm = transform lns filter
