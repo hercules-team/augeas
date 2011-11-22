@@ -31,19 +31,23 @@ remove export_nodep-$BITNESS echo Removing export_nodep\n"
 test Modprobe.lns get conf =
   { "#comment" = "Various aliases" }
   { "alias" = "alias_to_foo"
-    { "modulename" = "foo" } }
+    { "modulename" = "foo" }
+  }
   { "alias" = "alias_to_bar"
-    { "modulename" = "bar" } }
+    { "modulename" = "bar" }
+  }
   { "alias" = "alias_to_export_dep-$BITNESS"
-    { "modulename" = "export_dep-$BITNESS" } }
-  { }
+    { "modulename" = "export_dep-$BITNESS" }
+  }
+  {  }
   { "#comment" = "Various options, including options to aliases." }
   { "options" = "alias_to_export_dep-$BITNESS"
     { "I" }
     { "am" }
     { "alias" }
     { "to" }
-    { "export_dep" } }
+    { "export_dep" }
+  }
   { "options" = "alias_to_noexport_nodep-$BITNESS_with_tabbed_options"
     { "index" = "0" }
     { "id" = "\"Thinkpad\"" }
@@ -57,21 +61,36 @@ test Modprobe.lns get conf =
     { "dma1" = "1" }
     { "dma2" = "3" }
     { "enable" = "1" }
-    { "isapnp" = "0" } }
-  { }
+    { "isapnp" = "0" }
+  }
+  {  }
   { "#comment" = "Blacklist" }
   { "blacklist" = "watchdog_drivers" }
-  { }
+  {  }
   { "#comment" = "Install commands" }
-  { "install" = "bar echo Installing bar" }
-  { "install" = "foo echo Installing foo" }
-  { "install" = "export_nodep-$BITNESS echo Installing export_nodep" }
-  { }
+  { "install" = "bar"
+    { "command" = "echo Installing bar" }
+  }
+  { "install" = "foo"
+    { "command" = "echo Installing foo" }
+  }
+  { "install" = "export_nodep-$BITNESS"
+    { "command" = "echo Installing export_nodep" }
+  }
+  {  }
   { "#comment" = "Remove commands" }
-  { "remove" = "bar echo Removing bar" }
-  { "remove" = "foo echo Removing foo" }
-  { "remove" = "export_nodep-$BITNESS echo Removing export_nodep" }
+  { "remove" = "bar"
+    { "command" = "echo Removing bar" }
+  }
+  { "remove" = "foo"
+    { "command" = "echo Removing foo" }
+  }
+  { "remove" = "export_nodep-$BITNESS"
+    { "command" = "echo Removing export_nodep" }
+  }
 
+
+(* eol-comments *)
 test Modprobe.lns get "blacklist brokenmodule # never worked\n" =
   { "blacklist" = "brokenmodule"
     { "#comment" = "never worked" } }
@@ -80,4 +99,8 @@ test Modprobe.lns get "blacklist brokenmodule # never worked\n" =
 (* Ticket 108 *)
 let options_space_quote = "options name attr1=\"val\" attr2=\"val2 val3\"\n"
 
-test Modprobe.entry get options_space_quote = ?
+test Modprobe.entry get options_space_quote =
+  { "options" = "name"
+    { "attr1" = "\"val\"" }
+    { "attr2" = "\"val2 val3\"" }
+  }

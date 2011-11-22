@@ -2,56 +2,98 @@
 Module: Modprobe
   Parses /etc/modprobe.conf and /etc/modprobe.d/*
 *)
+(*
+Module: Keepalived
+  Parses /etc/modprobe.conf and /etc/modprobe.d/*
+
+Original Author: David Lutterkort <lutter@redhat.com>
+
+Author: Raphael Pinson <raphink@gmail.com>
+
+About: Reference
+  This lens tries to keep as close as possible to `man 5 modprobe.conf` where possible.
+
+About: License
+   This file is licenced under the LGPLv2+, like the rest of Augeas.
+
+About: Lens Usage
+   To be documented
+
+About: Configuration files
+   This lens applies to /etc/modprobe.conf and /etc/modprobe.d/*. See <filter>.
+*)
+
 module Modprobe =
 autoload xfm
 
+(************************************************************************
+ * Group:                 USEFUL PRIMITIVES
+ *************************************************************************)
+
+(* View: comment *)
 let comment = Util.comment
+
+(* View: empty *)
 let empty = Util.empty
-let eol = Util.eol | Util.comment
 
-(* modprobe.conf allows continuing a line by ending it with backslash +
-   newline; the backslash + newline token is suppressed We handle an
-   approximation of that by classifying backslash + newline as a
-   separator.
-*)
+(* View: sep_space *)
+let sep_space = del /([ \t]|(\\\\\n))+/ " "
 
-(* A separator is either whitespace or \ followed by newline *)
-let sep_ch = /[ \t]|\\\\\n/
-(* Anything that's not a separator is part of a token *)
-let tok_ch = /[^ \t\n#\\]|\\\\[^ \t\n]/
-let tok_ch_dquote = /[^\n#\\"]|\\\\[^\n]/
+(* View: sto_no_spaces *)
+let sto_no_spaces = store /[^# \t\n\\\\]+/
 
-let spc = del sep_ch+ " "
-let dquote = del /"?/ ""
-let token_no_dquote = store tok_ch+
-let token_dquote = dquote . store tok_ch_dquote+ . dquote
-let token = token_no_dquote | token_dquote
-let indent = Util.del_opt_ws ""
+(* View: sto_to_eol *)
+let sto_to_eol = store /[^# \t\n\\\\][^#\n\\\\]*[^# \t\n\\\\]|[^# \t\n\\\\]/
 
-let cmd (n:regexp) = key n . spc
-let arg (n:string) = [ label n . token ]
-let token_to_eol = store (tok_ch . /([^#\n\\]|\\\\\n)*/ . tok_ch | tok_ch)
+(* View: alias *)
+let alias =
+  let modulename = [ label "modulename" . sto_no_spaces ] in
+  Build.key_value_line_comment "alias" sep_space
+                       (sto_no_spaces . sep_space . modulename)
+                       comment
 
+(************************************************************************
+ * Group:                 ENTRY TYPES
+ *************************************************************************)
+
+(* View: options *)
 let options =
-  let opt_ch = /[A-Za-z0-9_]/ in
-  let option = [ spc . key opt_ch+ . (Util.del_str "=" . token)? ] in
-    [ cmd "options" . token . option* . eol ]
+  let opt_value = /[^#" \t\n\\\\]+|"[^#"\n\\\\]*"/ in
+  let option = [ key Rx.word . (Util.del_str "=" . store opt_value)? ] in
+  [ key "options" . sep_space . sto_no_spaces
+                  . (sep_space . option)* . Util.comment_or_eol ]
 
-let alias = [ cmd "alias" . token . spc . arg "modulename" . eol ]
+(* View: install_remove *)
+let install_remove =
+  let command = [ label "command" . sto_to_eol ] in
+  [ key /install|remove/ . sep_space . sto_no_spaces
+                         . sep_space . command . Util.comment_or_eol ]
 
-let include = [ cmd "include" . token . eol ]
+(* View: blacklist *)
+let blacklist = Build.key_value_line_comment "blacklist" sep_space
+                       sto_no_spaces
+                       comment
 
-let cmd_token_to_eol (n:regexp) = [ cmd n . token_to_eol . eol ]
+(* View: config *)
+let config = Build.key_value_line_comment "config" sep_space
+                       (store /binary_indexes|yes|no/)
+                       comment
 
+(* View: entry *)
 let entry = alias
-  | include
-  | options
-  | cmd_token_to_eol /install|remove/
-  | [ cmd "blacklist" . token . eol ]
-  | [ cmd "config" . store /binary_indexes|yes|no/ ]
+          | options
+          | install_remove
+          | blacklist
+          | config
 
+(************************************************************************
+ * Group:                 LENS AND FILTER
+ *************************************************************************)
+
+(* View: lns *)
 let lns = (comment|empty|entry)*
 
+(* View: filter *)
 let filter = (incl "/etc/modprobe.conf") .
   (incl "/etc/modprobe.d/*").
   (incl "/etc/modprobe.conf.local").
