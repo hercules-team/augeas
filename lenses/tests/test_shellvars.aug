@@ -182,6 +182,16 @@ fi\n" =
     }
   }
 
+  (* Loops *)
+  test Shellvars.lns get "for f in /tmp/file*; do
+  while [ 1 ]; do . $f; done
+done\n" =
+  { "@for" = "f in /tmp/file*"
+    { "@while" = "[ 1 ]"
+      { ".source" = "$f" }
+    }
+  }
+
 
 (* Local Variables: *)
 (* mode: caml       *)

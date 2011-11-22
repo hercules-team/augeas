@@ -66,20 +66,40 @@ module Shellvars =
       . [ label "args" . sto_to_semicol ]
       . comment_or_eol ]
 
-  let rec cond_if =
-    let entry = comment | empty | source | kv
-              | unset | bare_export | builtin | cond_if in
-    let keyword (kw:string) = Util.indent . Util.del_str kw in
-    let keyword_label (kw:string) (lbl:string) = keyword kw . label lbl in
-      [ keyword_label "if" "@if" . Sep.space
-        . sto_to_semicol . semicol_eol
-        . keyword "then" . eol
-        . entry+
-        . [ keyword_label "else" "@else"
-          . eol . entry+ ]?
-        . keyword "fi" . comment_or_eol ]
+  let keyword (kw:string) = Util.indent . Util.del_str kw
+  let keyword_label (kw:string) (lbl:string) = keyword kw . label lbl
 
-  let lns = (comment | empty | source | kv | unset | bare_export | builtin | cond_if) *
+
+(************************************************************************
+ * Group:                 CONDITIONALS AND LOOPS
+ *************************************************************************)
+
+  let generic_cond (start_kw:string) (lbl:string)
+                       (then_kw:string) (contents:lens) (end_kw:string) =
+      [ keyword_label start_kw lbl . Sep.space
+        . sto_to_semicol . semicol_eol
+        . keyword then_kw . eol
+        . contents
+        . keyword end_kw . comment_or_eol ]
+
+  let cond_if (entry:lens) =
+    let else = [ keyword_label "else" "@else" . eol . entry+ ] in
+    generic_cond "if" "@if" "then" (entry+ . else?) "fi"
+
+  let loop_for (entry:lens) =
+    generic_cond "for" "@for" "do" entry+ "done"
+
+  let loop_while (entry:lens) =
+    generic_cond "while" "@while" "do" entry+ "done"
+
+  let rec rec_entry =
+    let entry = comment | empty | source | kv
+              | unset | bare_export | builtin | rec_entry in
+        cond_if entry
+      | loop_for entry
+      | loop_while entry
+
+  let lns = (comment | empty | source | kv | unset | bare_export | builtin | rec_entry) *
 
   let sc_incl (n:string) = (incl ("/etc/sysconfig/" . n))
   let filter_sysconfig =
