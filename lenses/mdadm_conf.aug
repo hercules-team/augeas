@@ -75,7 +75,7 @@ let dev_partitions_re = /partitions/i
 
 let dev_containers = [ del dev_containers_re "containers" . label "containers" ]
 let dev_partitions = [ del dev_partitions_re "partitions" . label "partitions" ]
-let dev_device = [ label "name". store ( value - dev_containers_re) ]
+let dev_device = [ label "name". store ( value - dev_containers_re - dev_partitions_re) ]
 
 (* Strictly there must be at least 1 device, but we err on the side of parsing
 *)
