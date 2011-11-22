@@ -192,6 +192,26 @@ done\n" =
     }
   }
 
+  (* Case *)
+  test Shellvars.lns get "case $f in
+  /tmp/file1)
+    . /tmp/file1
+    ;;
+  /tmp/file2)
+    . /tmp/file2
+    ;;
+  *)
+    unset f
+    ;;
+esac\n" =
+  { "@case" = "$f"
+    { "@case_entry" = "/tmp/file1"
+      { ".source" = "/tmp/file1" } }
+    { "@case_entry" = "/tmp/file2"
+      { ".source" = "/tmp/file2" } }
+    { "@case_entry" = "*"
+      { "@unset" = "f" } } }
+
 
 (* Local Variables: *)
 (* mode: caml       *)

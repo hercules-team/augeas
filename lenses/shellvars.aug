@@ -92,12 +92,25 @@ module Shellvars =
   let loop_while (entry:lens) =
     generic_cond "while" "@while" "do" entry+ "done"
 
+  let case (entry:lens) =
+    let case_entry = [ label "@case_entry"
+                       . Util.indent . store /[^ \t\n\)]+/
+                       . Util.del_str ")" . eol
+                       . entry+
+                       . Util.indent . Util.del_str ";;" . eol ] in
+      [ keyword_label "case" "@case" . Sep.space
+        . store char+
+        . del /[ \t\n]+/ " " . Util.del_str "in" . eol
+        . case_entry+
+        . keyword "esac" . comment_or_eol ]
+
   let rec rec_entry =
     let entry = comment | empty | source | kv
               | unset | bare_export | builtin | rec_entry in
         cond_if entry
       | loop_for entry
       | loop_while entry
+      | case entry
 
   let lns = (comment | empty | source | kv | unset | bare_export | builtin | rec_entry) *
 
