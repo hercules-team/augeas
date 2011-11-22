@@ -15,19 +15,20 @@ let empty = Util.empty
 let eol = Util.eol | Util.comment
 
 (* Basic file structure is the same as modprobe.conf *)
-let cmd (n:regexp) = Modprobe.cmd n
-let token_to_eol = Modprobe.token_to_eol
+let sto_to_eol = Modprobe.sto_to_eol
+let sep_space = Modprobe.sep_space
 
-let path = [ key "path" . del "=" "=" . token_to_eol . eol ]
+let path = [ key "path" . Util.del_str "=" . sto_to_eol . eol ]
 let keep = [ key "keep" . eol ]
-let probeall = [ cmd "probeall" . token_to_eol . eol ]
+let probeall = Build.key_value_line_comment "probeall"  sep_space
+                                            sto_to_eol
+                                            comment
 
 let entry =
     Modprobe.alias
   | Modprobe.options
-  | Modprobe.include
-  | Modprobe.cmd_token_to_eol /install|pre-install|post-install/
-  | Modprobe.cmd_token_to_eol /remove|pre-remove|post-remove/
+  | Modprobe.kv_line_command /install|pre-install|post-install/
+  | Modprobe.kv_line_command /remove|pre-remove|post-remove/
   | keep
   | path
   | probeall

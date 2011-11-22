@@ -64,9 +64,9 @@ let options =
                   . (sep_space . option)* . Util.comment_or_eol ]
 
 (* View: install_remove *)
-let install_remove =
+let kv_line_command (kw:regexp) =
   let command = [ label "command" . sto_to_eol ] in
-  [ key /install|remove/ . sep_space . sto_no_spaces
+  [ key kw . sep_space . sto_no_spaces
                          . sep_space . command . Util.comment_or_eol ]
 
 (* View: blacklist *)
@@ -82,7 +82,7 @@ let config = Build.key_value_line_comment "config" sep_space
 (* View: entry *)
 let entry = alias
           | options
-          | install_remove
+          | kv_line_command /install|remove/
           | blacklist
           | config
 
