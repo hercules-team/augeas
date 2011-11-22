@@ -56,6 +56,7 @@ Group: Specific Modules  {
    File: Access  (access.aug)
    File: Aliases  (aliases.aug)
    File: AptConf  (aptconf.aug)
+   File: BackupPCHosts  (backuppchosts.aug)
    File: Cgconfig  (no auto-title, cgconfig.aug)
    File: Cgrules  (no auto-title, cgrules.aug)
    File: Cron  (cron.aug)
