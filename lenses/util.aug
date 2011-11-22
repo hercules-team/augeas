@@ -97,7 +97,7 @@ View: comment_generic
                  . store mline_re ] in
      [ label "#mcomment" . del /[ \t]*\/\*/ "/*"
        . counter "mline"
-       . ( mline . (eol . mline)*)?
+       . mline . (eol . mline)*
        . del /[ \t\n]*\*\/[ \t]*\n/ "\n*/\n" ]
 
 (* View: comment_c_style

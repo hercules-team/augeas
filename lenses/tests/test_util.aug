@@ -1,7 +1,7 @@
 module Test_Util =
 
-test Util.comment_multiline get "/* */\n" =
-  { "#mcomment" }
+test Util.empty_c_style get "/* */\n" =
+  {  }
 
 test Util.comment_multiline get "/* comment */\n" =
   { "#mcomment"

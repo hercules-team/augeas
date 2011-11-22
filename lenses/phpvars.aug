@@ -14,7 +14,7 @@ module Phpvars =
  *************************************************************************)
 
 let eol        = Util.eol
-let empty      = Util.empty
+let empty      = Util.empty_c_style
 
 let open_php   = del /<\?(php)?[ \t]*\n/i "<?php\n"
 let close_php  = del /([ \t]*(php)?\?>\n[ \t\n]*)?/i "php?>\n"
