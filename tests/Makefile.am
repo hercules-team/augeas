@@ -17,6 +17,7 @@ lens_tests =			\
   lens-aliases.sh		\
   lens-approx.sh		\
   lens-aptpreferences.sh	\
+  lens-aptconf.sh	\
   lens-aptsource.sh		\
   lens-bbhosts.sh		\
   lens-cgconfig.sh		\
@@ -27,6 +28,7 @@ lens_tests =			\
   lens-crypttab.sh		\
   lens-darkice.sh		\
   lens-debctrl.sh		\
+  lens-desktop.sh	\
   lens-device_map.sh    \
   lens-dhclient.sh		\
   lens-dhcpd.sh		\
