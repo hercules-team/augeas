@@ -1,10 +1,6 @@
 (*
 Module: Modprobe
   Parses /etc/modprobe.conf and /etc/modprobe.d/*
-*)
-(*
-Module: Keepalived
-  Parses /etc/modprobe.conf and /etc/modprobe.d/*
 
 Original Author: David Lutterkort <lutter@redhat.com>
 
