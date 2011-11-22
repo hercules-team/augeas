@@ -173,6 +173,15 @@ fi\n" =
     { "#comment" = "eol-comment" }
   }
 
+  (* One-liners *)
+  test Shellvars.lns get "if [ -f /tmp/file1 ]; then . /tmp/file1; else . /tmp/file2; fi\n" =
+  { "@if" = "[ -f /tmp/file1 ]"
+    { ".source" = "/tmp/file1" }
+    { "@else"
+      { ".source" = "/tmp/file2" }
+    }
+  }
+
 
 (* Local Variables: *)
 (* mode: caml       *)
