@@ -26,7 +26,7 @@ include_once( ROOT . \"/path/to/conf\"	 );
 "
 
 test Phpvars.lns get conf =
-  { "#mcomment" }
+  {  }
   { "#mcomment"
     { "1" = "*" }
     { "2" = "* Multi line comment" }
