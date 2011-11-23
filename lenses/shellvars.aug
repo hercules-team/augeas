@@ -74,17 +74,22 @@ module Shellvars =
  * Group:                 CONDITIONALS AND LOOPS
  *************************************************************************)
 
+  let generic_cond_start (start_kw:string) (lbl:string)
+                         (then_kw:string) (contents:lens) =
+      keyword_label start_kw lbl . Sep.space
+      . sto_to_semicol . semicol_eol
+      . keyword then_kw . eol
+      . contents
+
   let generic_cond (start_kw:string) (lbl:string)
                        (then_kw:string) (contents:lens) (end_kw:string) =
-      [ keyword_label start_kw lbl . Sep.space
-        . sto_to_semicol . semicol_eol
-        . keyword then_kw . eol
-        . contents
+      [ generic_cond_start start_kw lbl then_kw contents
         . keyword end_kw . comment_or_eol ]
 
   let cond_if (entry:lens) =
+    let elif = [ generic_cond_start "elif" "@elif" "then" entry+ ] in
     let else = [ keyword_label "else" "@else" . eol . entry+ ] in
-    generic_cond "if" "@if" "then" (entry+ . else?) "fi"
+    generic_cond "if" "@if" "then" (entry+ . elif? . else?) "fi"
 
   let loop_for (entry:lens) =
     generic_cond "for" "@for" "do" entry+ "done"

@@ -150,7 +150,9 @@ unset ONBOOT    #   We do not want this var
   test Shellvars.lns get "if [ -f /tmp/file1 ]; then
   if [ -f /tmp/file2 ]
   then
-    . /tmp/file2; else; . /tmp/file4
+    . /tmp/file2
+  elif [ -f /tmp/file3 ]; then
+    . /tmp/file3; else; . /tmp/file4
   fi
 else
   . /tmp/file3
@@ -158,6 +160,8 @@ fi\n" =
   { "@if" = "[ -f /tmp/file1 ]"
     { "@if" = "[ -f /tmp/file2 ]"
       { ".source" = "/tmp/file2" }
+      { "@elif" = "[ -f /tmp/file3 ]"
+        { ".source" = "/tmp/file3" } }
       { "@else"
         { ".source" = "/tmp/file4" }
       }
