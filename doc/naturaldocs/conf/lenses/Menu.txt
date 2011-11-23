@@ -77,6 +77,7 @@ Group: Specific Modules  {
    File: Lokkit  (lokkit.aug)
    File: Mke2fs  (mke2fs.aug)
    File: Modprobe  (modprobe.aug)
+   File: Modules  (modules.aug)
    File: Modules_conf  (modules_conf.aug)
    File: NagiosCfg  (no auto-title, nagioscfg.aug)
    File: NagiosObjects  (nagiosobjects.aug)
