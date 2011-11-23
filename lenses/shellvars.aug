@@ -97,6 +97,12 @@ module Shellvars =
   let loop_while (entry:lens) =
     generic_cond "while" "@while" "do" entry+ "done"
 
+  let loop_until (entry:lens) =
+    generic_cond "until" "@until" "do" entry+ "done"
+
+  let loop_select (entry:lens) =
+    generic_cond "select" "@select" "do" entry+ "done"
+
   let case (entry:lens) =
     let case_entry = [ label "@case_entry"
                        . Util.indent . store /[^ \t\n\)]+/
@@ -114,7 +120,9 @@ module Shellvars =
               | unset | bare_export | builtin | rec_entry in
         cond_if entry
       | loop_for entry
+      | loop_select entry
       | loop_while entry
+      | loop_until entry
       | case entry
 
   let lns = (comment | empty | source | kv | unset | bare_export | builtin | rec_entry) *

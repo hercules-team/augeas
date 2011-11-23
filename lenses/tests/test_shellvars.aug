@@ -216,6 +216,12 @@ esac\n" =
     { "@case_entry" = "*"
       { "@unset" = "f" } } }
 
+  (* Select *)
+  test Shellvars.lns get "select i in a b c; do . /tmp/file$i
+   done\n" =
+  { "@select" = "i in a b c"
+    { ".source" = "/tmp/file$i" }
+  }
 
 (* Local Variables: *)
 (* mode: caml       *)
