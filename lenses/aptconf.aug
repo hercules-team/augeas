@@ -66,7 +66,36 @@ let name_re_colons = /[A-Za-z][A-Za-z:-]*/
 
 
 (* View: entry
-   An apt.conf entry, recursive *)
+   An apt.conf entry, recursive
+
+   WARNING:
+     This lens exploits a put ambiguity
+     since apt.conf allows for both
+     APT { Clean-Installed { "true" } }
+     and APT::Clean-Installed "true";
+     but we're chosing to map them the same way
+
+     The recursive lens doesn't seem
+     to care and defaults to the first
+     item in the union.
+
+     This is why the APT { Clean-Installed { "true"; } }
+     form is listed first, since it supports
+     all subnodes (which Dpkg::Conf) doesn't.
+
+     Exchanging these two expressions in the union
+     makes tests fails since the tree cannot
+     be mapped back.
+
+     This situation results in existing
+     configuration being modified when the
+     associated tree is modified. For example,
+     changing the value of
+     APT::Clean-Installed "true"; to "false"
+     results in
+     APT { Clean-Installed "false"; }
+     (see unit tests)
+ *)
 let rec entry_noeol =
  let value =
     Util.del_str "\"" . store /[^"\n]+/
