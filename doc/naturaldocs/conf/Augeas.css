@@ -105,7 +105,7 @@ blockquote {
     position: absolute;
     top: 0;
     left: 0;
-    width: 31ex;
+    width: 200px;
     overflow: hidden;
     }
 .ContentPage .Firefox #Menu,
@@ -407,6 +407,7 @@ blockquote {
     padding: 5px 3ex;
     border-width: 1px; border-style: solid;
     margin: 0 5ex 1.5em 5ex;
+    background: #EBF8D5;
     }
 
     .Prototype td {
