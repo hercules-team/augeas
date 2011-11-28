@@ -14,29 +14,29 @@ test Reprepro_Uploaders.entry get "allow * by key ABCD1234\n" =
 (* Simple condition *)
 test Reprepro_Uploaders.entry get "allow source 'bash' by anybody\n" =
   { "allow"
-    { "and" { "or" { "source" { "or" = "bash" } } } }
+    { "and" { "or" = "source" { "or" = "bash" } } }
     { "by" = "anybody" } }
 
 (* Simple 'and' *)
 test Reprepro_Uploaders.entry get "allow source 'bash' and binaries contain 'bash-doc' by anybody\n" =
   { "allow"
-    { "and" { "or" { "source" { "or" = "bash" } } } }
-    { "and" { "or" { "binaries contain" { "or" = "bash-doc" } } } }
+    { "and" { "or" = "source" { "or" = "bash" } } }
+    { "and" { "or" = "binaries contain" { "or" = "bash-doc" } } }
     { "by" = "anybody" } }
 
 (* Simple 'or' *)
 test Reprepro_Uploaders.entry get "allow source 'bash' or binaries contain 'bash-doc' by anybody\n" =
   { "allow"
-    { "and" { "or" { "source" { "or" = "bash" } } }
-            { "or" { "binaries contain" { "or" = "bash-doc" } } } }
+    { "and" { "or" = "source" { "or" = "bash" } }
+            { "or" = "binaries contain" { "or" = "bash-doc" } } }
     { "by" = "anybody" } }
 
 (* 'and' + 'or' *)
 test Reprepro_Uploaders.entry get "allow sections 'main'|'restricted' and source 'bash' or binaries contain 'bash-doc' by anybody\n" =
   { "allow"
-    { "and" { "or" { "sections" { "or" =  "main" } { "or" = "restricted" } } } }
-    { "and" { "or" { "source" { "or" = "bash" } } }
-            { "or" { "binaries contain" { "or" = "bash-doc" } } } }
+    { "and" { "or" = "sections" { "or" =  "main" } { "or" = "restricted" } } }
+    { "and" { "or" = "source" { "or" = "bash" } }
+            { "or" = "binaries contain" { "or" = "bash-doc" } } }
     { "by" = "anybody" } }
 
 
@@ -54,11 +54,11 @@ test Reprepro_Uploaders.lns get conf =
       { "key" = "74BF771E" } } }
   { }
   { "allow"
-    { "and" { "or" { "sections" { "or" = "desktop/*" } } } }
+    { "and" { "or" = "sections" { "or" = "desktop/*" } } }
     { "by" = "anybody" } }
   { "allow"
-    { "and" { "or" { "sections" { "or" = "gforge/*" } } } }
-    { "and" { "or" { "binaries contain" { "or" = "bzr" } } }
-            { "or" { "source" { "or" = "*melanie*" } { "or" = "katya" } } } }
+    { "and" { "or" = "sections" { "or" = "gforge/*" } } }
+    { "and" { "or" = "binaries contain" { "or" = "bzr" } }
+            { "or" = "source" { "or" = "*melanie*" } { "or" = "katya" } } }
     { "by" = "key"
       { "key" = "any" } } }

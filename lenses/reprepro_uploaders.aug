@@ -39,8 +39,8 @@ let logic_construct_field (kw:string) (sep:string) (lns:lens) =
    A single condition field *)
 let condition_field =
   let sto_condition = Util.del_str "'" . store /[^'\n]+/ . Util.del_str "'" in
-  [ key condition_re . Sep.space
-  . logic_construct_field "or" "|" sto_condition ]
+  store condition_re . Sep.space
+  . logic_construct_field "or" "|" sto_condition
 
 (* View: logic_construct_condition
    A logical construction for <condition> and <condition_list> *)
