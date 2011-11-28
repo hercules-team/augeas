@@ -29,27 +29,34 @@ let condition_re =
                  | contain "architectures"
                  | "byhand"
 
-(* View: logic_construct
+(* View: logic_construct_field
+   A generic definition for <logic_construct>s *)
+let logic_construct_field (kw:string) (sep:string) (lns:lens) =
+  [ label kw . lns ]
+  . [ Build.xchgs sep kw . lns ]*
+
+(* View: condition_field
+   A single condition field *)
+let condition_field =
+  let sto_condition = Util.del_str "'" . store /[^'\n]+/ . Util.del_str "'" in
+  [ key condition_re . Sep.space
+  . logic_construct_field "or" "|" sto_condition ]
+
+(* View: logic_construct_condition
    A logical construction for <condition> and <condition_list> *)
-let logic_construct (kw:string) (lns:lens) =
+let logic_construct_condition (kw:string) (lns:lens) =
   [ label kw . lns ]
   . [ Sep.space . key kw . Sep.space . lns ]*
 
-(* View: conditionf_field
-   A single condition field *)
-let condition_field =
-  [ key condition_re . Sep.space
-  . Util.del_str "'" . store /[^'\n]+/ . Util.del_str "'" ]
-
 (* View: condition *)
 let condition =
-  logic_construct "or" condition_field
+  logic_construct_condition "or" condition_field
 
 (* View: condition_list
    A list of <condition>s, inspired by Debctrl.dependency_list *)
 let condition_list =
   store "*"
-  | logic_construct "and" condition
+  | logic_construct_condition "and" condition
 
 (* View: by_key *)
 let by_key =
