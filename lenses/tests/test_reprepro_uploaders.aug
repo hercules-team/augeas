@@ -1,3 +1,8 @@
+(*
+Module: Test_Reprepro_Uploaders
+  Provides unit tests and examples for the <Reprepro_Uploaders> lens.
+*)
+
 module Test_Reprepro_Uploaders =
 
 (* Star condition *)
@@ -21,14 +26,14 @@ test Reprepro_Uploaders.entry get "allow source 'bash' by anybody\n" =
 test Reprepro_Uploaders.entry get "allow source 'bash' and binaries contain 'bash-doc' by anybody\n" =
   { "allow"
     { "and" { "or" = "source" { "or" = "bash" } } }
-    { "and" { "or" = "binaries contain" { "or" = "bash-doc" } } }
+    { "and" { "or" = "binaries" { "contain" } { "or" = "bash-doc" } } }
     { "by" = "anybody" } }
 
 (* Simple 'or' *)
 test Reprepro_Uploaders.entry get "allow source 'bash' or binaries contain 'bash-doc' by anybody\n" =
   { "allow"
     { "and" { "or" = "source" { "or" = "bash" } }
-            { "or" = "binaries contain" { "or" = "bash-doc" } } }
+            { "or" = "binaries" { "contain" } { "or" = "bash-doc" } } }
     { "by" = "anybody" } }
 
 (* 'and' + 'or' *)
@@ -36,7 +41,7 @@ test Reprepro_Uploaders.entry get "allow sections 'main'|'restricted' and source
   { "allow"
     { "and" { "or" = "sections" { "or" =  "main" } { "or" = "restricted" } } }
     { "and" { "or" = "source" { "or" = "bash" } }
-            { "or" = "binaries contain" { "or" = "bash-doc" } } }
+            { "or" = "binaries" { "contain" } { "or" = "bash-doc" } } }
     { "by" = "anybody" } }
 
 
@@ -58,7 +63,7 @@ test Reprepro_Uploaders.lns get conf =
     { "by" = "anybody" } }
   { "allow"
     { "and" { "or" = "sections" { "or" = "gforge/*" } } }
-    { "and" { "or" = "binaries contain" { "or" = "bzr" } }
+    { "and" { "or" = "binaries" { "contain" } { "or" = "bzr" } }
             { "or" = "source" { "or" = "*melanie*" } { "or" = "katya" } } }
     { "by" = "key"
       { "key" = "any" } } }
