@@ -1,5 +1,15 @@
-(* Generic lens for shell-script config files like the ones found *)
-(* in /etc/sysconfig                                              *)
+(*
+Module: Shellvars
+ Generic lens for shell-script config files like the ones found
+ in /etc/sysconfig
+
+About: License
+   This file is licenced under the LGPLv2+, like the rest of Augeas.
+
+About: Lens Usage
+   To be documented
+*)
+
 module Shellvars =
   autoload xfm
 
