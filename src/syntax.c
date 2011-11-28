@@ -652,6 +652,10 @@ static void dump_ctx(struct ctx *ctx) {
  * Values
  */
 static void print_tree(FILE *out, int indent, struct tree *tree) {
+    if (tree == NULL) {
+        fprintf(out, "(null tree)\n");
+        return;
+    }
     list_for_each(t, tree) {
         for (int i=0; i < indent; i++) fputc(' ', out);
         fprintf(out, "{ ");
