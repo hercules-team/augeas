@@ -19,8 +19,14 @@ About: Configuration files
 
 module Reprepro_Uploaders =
 
+(* View: logic_construct_condition
+   A logical construction for <condition> and <condition_list> *)
+let logic_construct_condition (kw:string) (lns:lens) =
+    [ label kw . lns ]
+  . [ Sep.space . key kw . Sep.space . lns ]*
+
 (* View: logic_construct_field
-   A generic definition for <logic_construct>s *)
+   A generic definition for <condition_field> *)
 let logic_construct_field (kw:string) (sep:string) (lns:lens) =
     [ label kw . lns ]
   . [ Build.xchgs sep kw . lns ]*
@@ -51,12 +57,6 @@ let condition_re =
   | "binaries"
   | "architectures"
 
-(* View: logic_construct_condition
-   A logical construction for <condition> and <condition_list> *)
-let logic_construct_condition (kw:string) (lns:lens) =
-    [ label kw . lns ]
-  . [ Sep.space . key kw . Sep.space . lns ]*
-
 (* View: condition_field
    A single condition field is an 'or' node.
    It may contain several values, listed in 'or' subnodes:
@@ -76,7 +76,7 @@ let condition_field =
 
 (* View: condition
    A condition is an 'and' node,
-   representing a union of <condition_field>s,
+   representing a union of <condition_fields>,
    listed under 'or' subnodes:
 
    > $reprepro/allow[1]/and
@@ -90,7 +90,7 @@ let condition =
     logic_construct_condition "or" condition_field
 
 (* View: condition_list
-   A list of <condition>s, inspired by Debctrl.dependency_list
+   A list of <conditions>, inspired by Debctrl.dependency_list
    An upload condition list is either the wildcard '*', stored verbatim,
    or an intersection of conditions listed under 'and' subnodes:
 
