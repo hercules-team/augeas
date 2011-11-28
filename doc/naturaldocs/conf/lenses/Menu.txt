@@ -87,6 +87,7 @@ Group: Specific Modules  {
    File: Pbuilder  (pbuilder.aug)
    File: Pg_Hba  (pg_hba.aug)
    File: PuppetFileserver  (no auto-title, puppetfileserver.aug)
+   File: Reprepro_Uploaders  (reprepro_uploaders.aug)
    File: Resolv  (resolv.aug)
    File: Schroot  (schroot.aug)
    File: Services  (services.aug)

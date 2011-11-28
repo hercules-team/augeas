@@ -89,6 +89,7 @@ lens_tests =			\
   lens-properties.sh    \
   lens-puppet.sh		\
   lens-puppetfileserver.sh		\
+  lens-reprepro_uploaders.sh		\
   lens-resolv.sh		\
   lens-rsyncd.sh		\
   lens-rx.sh			\
