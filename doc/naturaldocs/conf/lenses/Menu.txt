@@ -110,6 +110,10 @@ Group: Generic Modules  {
    File: Util  (util.aug)
    }  # Group: Generic Modules
 
+Group: Tests and Examples {
+   File: Test_Reprepro_Uploaders (test_reprepro_uploaders.aug)
+   } # Group: Tests and Examples
+
 Group: Index  {
 
    Augeas Lens Index: Lenses
