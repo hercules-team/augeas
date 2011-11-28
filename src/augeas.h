@@ -248,7 +248,7 @@ int aug_match(const augeas *aug, const char *path, char ***matches);
  * 0 on success. Only files that had any changes made to them are written.
  *
  * If AUG_SAVE_NEWFILE is set in the FLAGS passed to AUG_INIT, create
- * changed files as new files with the extension ".augnew", and leave teh
+ * changed files as new files with the extension ".augnew", and leave the
  * original file unmodified.
  *
  * Otherwise, if AUG_SAVE_BACKUP is set in the FLAGS passed to AUG_INIT,
