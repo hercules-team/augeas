@@ -527,7 +527,7 @@ static int load_file(struct augeas *aug, struct lens *lens,
     tree_replace(aug, path, tree);
 
     /* top level node span entire file length */
-    if (span != NULL) {
+    if (span != NULL && tree != NULL) {
         tree->parent->span = span;
         tree->parent->span->span_start = 0;
         tree->parent->span->span_end = text_len;
