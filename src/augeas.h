@@ -336,7 +336,8 @@ typedef enum {
     AUG_EMXFM,          /* Multiple transforms */
     AUG_ENOSPAN,        /* No span for this node */
     AUG_EMVDESC,        /* Cannot move node into its descendant */
-    AUG_ECMDRUN         /* Failed to execute command */
+    AUG_ECMDRUN,        /* Failed to execute command */
+    AUG_EBADARG         /* Invalid argument in funcion call */
 } aug_errcode_t;
 
 /* Return the error code from the last API call */

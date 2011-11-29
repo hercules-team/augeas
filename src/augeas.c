@@ -74,7 +74,8 @@ static const char *const errcodes[] = {
     "Multiple transforms",                              /* AUG_EMXFM */
     "Node has no span info",                            /* AUG_ENOSPAN */
     "Cannot move node into its descendant",             /* AUG_EMVDESC */
-    "Failed to execute command"                         /* AUG_ECMDRUN */
+    "Failed to execute command",                        /* AUG_ECMDRUN */
+    "Invalid argument in function call"                 /* AUG_EBADARG */
 };
 
 static void tree_mark_dirty(struct tree *tree) {

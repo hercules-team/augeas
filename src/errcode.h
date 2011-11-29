@@ -79,6 +79,14 @@ void reset_error(struct error *err);
         }                                               \
     } while(0)
 
+#define ARG_CHECK(cond, obj, fmt ...)                           \
+    do {                                                        \
+        if (cond) {                                             \
+            report_error((obj)->error, AUG_EBADARG, ## fmt);    \
+            goto error;                                         \
+        }                                                       \
+    } while(0)
+
 /* A variant of assert that uses our error reporting infrastructure
  * instead of aborting
  */
