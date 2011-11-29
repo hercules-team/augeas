@@ -5,7 +5,9 @@ Module: Test_Reprepro_Uploaders
 
 module Test_Reprepro_Uploaders =
 
-(* Star condition *)
+(* View: Reprepro_Uploaders.entry
+     Star condition gets mapped as direct value
+     of the "allow" node *)
 test Reprepro_Uploaders.entry get "allow * by anybody\n" =
   { "allow" = "*"
     { "by" = "anybody" } }

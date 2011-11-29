@@ -20,12 +20,14 @@ use base 'NaturalDocs::Languages::Simple';
 
 
 my $pastFirstLet;
+my $pastFirstTest;
 
 
 sub OnCode {
    my ($self, @params) = @_;
 
-   $pastFirstLet = 0;
+   $pastFirstLet  = 0;
+   $pastFirstTest = 0;
 
    return $self->SUPER::OnCode(@params);
 };
@@ -70,6 +72,12 @@ sub OnPrototypeEnd {
               (!$pastFirstLet || $$prototypeRef =~ /\=[ \t\r\n]*$/
                               || $$prototypeRef =~ /in[ \t\r\n]+$/) ) {
       $pastFirstLet = 1;
+      return ::ENDER_IGNORE();
+   } elsif ( ($type eq "augeasvariable" || $type eq "augeaslens") &&
+              $ender eq "test" &&
+              (!$pastFirstTest || $$prototypeRef =~ /\=[ \t\r\n]*$/
+                               || $$prototypeRef =~ /in[ \t\r\n]+$/) ) {
+      $pastFirstTest = 1;
       return ::ENDER_IGNORE();
    } else {
       return ::ENDER_ACCEPT();
