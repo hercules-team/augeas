@@ -614,8 +614,17 @@ int transform_validate(struct augeas *aug, struct tree *xfm) {
     struct tree *l = NULL;
 
     for (struct tree *t = xfm->children; t != NULL; ) {
-        if (streqv(t->label, "lens"))
+        if (streqv(t->label, "lens")) {
             l = t;
+        } else if ((is_incl(t) || is_excl(t)) && t->value[0] != SEP) {
+            /* Normalize relative paths to absolute ones */
+            int r;
+            r = REALLOC_N(t->value, strlen(t->value) + 2);
+            ERR_NOMEM(r < 0, aug);
+            memmove(t->value + 1, t->value, strlen(t->value) + 1);
+            t->value[0] = SEP;
+        }
+
         if (streqv(t->label, "error")) {
             struct tree *del = t;
             t = del->next;
@@ -634,11 +643,12 @@ int transform_validate(struct augeas *aug, struct tree *xfm) {
         return -1;
     }
     lens_from_name(aug, l->value);
-    if (HAS_ERR(aug)) {
-        xfm_error(xfm, aug->error->details);
-        return -1;
-    }
+    ERR_BAIL(aug);
+
     return 0;
+ error:
+    xfm_error(xfm, aug->error->details);
+    return -1;
 }
 
 void transform_file_error(struct augeas *aug, const char *status,
