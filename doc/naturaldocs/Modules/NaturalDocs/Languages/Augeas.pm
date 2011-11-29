@@ -22,14 +22,13 @@ use base 'NaturalDocs::Languages::Simple';
 my $pastFirstLet;
 
 
-sub OnCode #(...)
-   {
+sub OnCode {
    my ($self, @params) = @_;
 
    $pastFirstLet = 0;
 
    return $self->SUPER::OnCode(@params);
-   };
+};
 
 
 #
@@ -61,22 +60,21 @@ sub OnCode #(...)
 #       ENDER_REVERT_TO_ACCEPTED - The expedition from ENDER_ACCEPT_AND_CONTINUE failed.  Use the last accepted
 #                                                        version and end parsing.
 #
-sub OnPrototypeEnd #(type, prototypeRef, ender)
-   {
+sub OnPrototypeEnd {
    my ($self, $type, $prototypeRef, $ender) = @_;
 
-   if ($ender eq "\n")
-       {  return ::ENDER_ACCEPT_AND_CONTINUE();  }
-       elsif ( ($type eq "augeasvariable" || $type eq "augeaslens") &&
-                        $ender eq "let" &&
-                        (!$pastFirstLet || $$prototypeRef =~ /\=[ \t\r\n]*$/) )
-               {
-       $pastFirstLet = 1;
-       return ::ENDER_IGNORE();
-               }
-   else
-       {  return ::ENDER_ACCEPT();  };
+   if ($ender eq "\n") {
+      return ::ENDER_ACCEPT_AND_CONTINUE();
+   } elsif ( ($type eq "augeasvariable" || $type eq "augeaslens") &&
+              $ender eq "let" &&
+              (!$pastFirstLet || $$prototypeRef =~ /\=[ \t\r\n]*$/
+                              || $$prototypeRef =~ /in[ \t\r\n]+$/) ) {
+      $pastFirstLet = 1;
+      return ::ENDER_IGNORE();
+   } else {
+      return ::ENDER_ACCEPT();
    };
+};
 
 
 1;
