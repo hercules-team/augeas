@@ -69,6 +69,7 @@ let condition_re =
  *)
 let condition_field =
   let sto_condition = Util.del_str "'" . store /[^'\n]+/ . Util.del_str "'" in
+    [ key "not" . Sep.space ]? .
     store condition_re
   . [ Sep.space . key "contain" ]?
   . Sep.space

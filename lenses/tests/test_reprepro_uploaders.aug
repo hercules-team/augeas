@@ -44,12 +44,18 @@ test Reprepro_Uploaders.entry get "allow sections 'main'|'restricted' and source
             { "or" = "binaries" { "contain" } { "or" = "bash-doc" } } }
     { "by" = "anybody" } }
 
+(* Not *)
+test Reprepro_Uploaders.entry get "allow not source 'bash' by anybody\n" =
+  { "allow" { "and" { "or" = "source" { "not" } { "or" = "bash" } } }
+    { "by" = "anybody" } }
+
+
 
 let conf = "# ftpmaster
 allow * by key 74BF771E
 
 allow sections 'desktop/*' by anybody
-allow sections 'gforge/*' and binaries contain 'bzr' or source '*melanie*'|'katya' by any key
+allow sections 'gforge/*' and binaries contain 'bzr' or not source '*melanie*'|'katya' by any key
 "
 
 test Reprepro_Uploaders.lns get conf =
@@ -64,6 +70,6 @@ test Reprepro_Uploaders.lns get conf =
   { "allow"
     { "and" { "or" = "sections" { "or" = "gforge/*" } } }
     { "and" { "or" = "binaries" { "contain" } { "or" = "bzr" } }
-            { "or" = "source" { "or" = "*melanie*" } { "or" = "katya" } } }
+            { "or" = "source" { "not" } { "or" = "*melanie*" } { "or" = "katya" } } }
     { "by" = "key"
       { "key" = "any" } } }
