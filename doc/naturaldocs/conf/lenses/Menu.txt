@@ -1,4 +1,4 @@
-Format: 1.4
+Format: 1.51
 
 
 Title: Augeas Documentation
@@ -54,23 +54,23 @@ Group: Main Site  {
 Group: Specific Modules  {
 
    File: Access  (access.aug)
-   File: Aliases  (aliases.aug)
+   File: aliases.aug  (aliases.aug)
    File: AptConf  (aptconf.aug)
    File: BackupPCHosts  (backuppchosts.aug)
    File: Cgconfig  (no auto-title, cgconfig.aug)
    File: Cgrules  (no auto-title, cgrules.aug)
    File: Cron  (cron.aug)
-   File: Crypttab  (crypttab.aug)
+   File: crypttab.aug  (crypttab.aug)
    File: Debctrl  (no auto-title, debctrl.aug)
    File: Desktop  (desktop.aug)
    File: Dhcpd  (dhcpd.aug)
    File: Dpkg  (dpkg.aug)
    File: Exports  (exports.aug)
-   File: FAI_DiskConfig (fai_diskconfig.aug)
-   File: Grub (grub.aug)
-   File: Hostname (hostname.aug)
-   File: Hosts_Access (hosts_access.aug)
-   File: Host_Conf (host_conf.aug)
+   File: FAI_DiskConfig  (fai_diskconfig.aug)
+   File: Grub  (grub.aug)
+   File: Hostname  (hostname.aug)
+   File: Hosts_Access  (hosts_access.aug)
+   File: Host_Conf  (host_conf.aug)
    File: Iptables  (iptables.aug)
    File: Kdump  (kdump.aug)
    File: Keepalived  (keepalived.aug)
@@ -101,6 +101,7 @@ Group: Specific Modules  {
    File: Test_login_defs  (tests/test_login_defs.aug)
    File: Xinetd  (xinetd.aug)
    File: Xorg  (xorg.aug)
+   File: Shellvars  (shellvars.aug)
    }  # Group: Specific Modules
 
 Group: Generic Modules  {
@@ -112,9 +113,10 @@ Group: Generic Modules  {
    File: Util  (util.aug)
    }  # Group: Generic Modules
 
-Group: Tests and Examples {
-   File: Test_Reprepro_Uploaders (test_reprepro_uploaders.aug)
-   } # Group: Tests and Examples
+Group: Tests and Examples  {
+
+   File: Test_Reprepro_Uploaders  (tests/test_reprepro_uploaders.aug)
+   }  # Group: Tests and Examples
 
 Group: Index  {
 
@@ -123,5 +125,6 @@ Group: Index  {
    Augeas Variable Index: Variables
    Index: Everything
    File Index: Files
+   Variable Index: Variables
    }  # Group: Index
 

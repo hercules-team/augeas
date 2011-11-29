@@ -6,19 +6,30 @@ Module: Test_Reprepro_Uploaders
 module Test_Reprepro_Uploaders =
 
 (* View: Reprepro_Uploaders.entry
-     Star condition gets mapped as direct value
-     of the "allow" node *)
+     A star condition gets mapped as direct value
+     of the "allow" node.
+
+     "anybody" and "unsigned" get mapped as direct
+     values of the "by" subnode. *)
 test Reprepro_Uploaders.entry get "allow * by anybody\n" =
   { "allow" = "*"
     { "by" = "anybody" } }
 
-(* Simple key *)
+(* View: Reprepro_Uploaders.entry
+     For simple keys, the "by" node gets the value "key"
+     and the key ID gets mapped in a "key" subnode. *)
 test Reprepro_Uploaders.entry get "allow * by key ABCD1234\n" =
   { "allow" = "*"
     { "by" = "key"
       { "key" = "ABCD1234" } } }
 
-(* Simple condition *)
+(* View: Reprepro_Uploaders.entry
+     Conditions are mapped inside a tree containing
+     at least an "and" node and an "or" subnode.
+
+     The value of each "or" subnode is the type of check
+     (e.g. "source"), and this node contains "or" subnodes
+     with the value(s) allowed for the check (e.g. "bash"). *)
 test Reprepro_Uploaders.entry get "allow source 'bash' by anybody\n" =
   { "allow"
     { "and" { "or" = "source" { "or" = "bash" } } }
