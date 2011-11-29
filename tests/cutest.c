@@ -75,6 +75,9 @@ CuTest* CuTestNew(const char* name, TestFunction function) {
 
 void CuTestRun(CuTest* tc, TestFunction setup, TestFunction teardown) {
 	jmp_buf buf;
+
+    if (getenv("CUTEST") && STRNEQ(getenv("CUTEST"), tc->name))
+        return;
 	tc->jumpBuf = &buf;
 	if (setjmp(buf) == 0) {
         if (setup)
