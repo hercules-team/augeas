@@ -68,6 +68,7 @@ blockquote {
     padding: 0;
     margin: 0;
     overflow: auto;
+    margin-left: 5ex;
     }
 
 
@@ -405,8 +406,8 @@ blockquote {
 .Prototype {
     font: 10pt "Courier New", Courier, monospace;
     padding: 5px 3ex;
-    border-width: 1px; border-style: solid;
-    margin: 0 5ex 1.5em 5ex;
+    border: 1px solid #65A703;
+    margin: 0 5ex 1.5em 0;
     background: #EBF8D5;
     }
 
