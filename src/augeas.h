@@ -21,6 +21,7 @@
  */
 
 #include <stdio.h>
+#include <libxml/tree.h>
 
 #ifndef AUGEAS_H_
 #define AUGEAS_H_
@@ -297,6 +298,19 @@ int aug_load(augeas *aug);
  * 0 on success, or a negative value on failure
  */
 int aug_print(const augeas *aug, FILE *out, const char *path);
+
+/* Function: aug_to_xml
+ *
+ * Turn the Augeas tree(s) matching PATH into an XML tree XMLDOC. The
+ * parameter FLAGS is currently unused and must be set to 0.
+ *
+ * Returns:
+ * 0 on success, or a negative value on failure
+ *
+ * In case of failure, *xmldoc is set to NULL
+ */
+int aug_to_xml(const augeas *aug, const char *path, xmlNode **xmldoc,
+               unsigned int flags);
 
 /*
  * Function: aug_srun

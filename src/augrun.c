@@ -27,6 +27,7 @@
 #include "errcode.h"
 
 #include <ctype.h>
+#include <libxml/tree.h>
 
 static char *cleanstr(char *path, const char sep) {
     if (path == NULL || strlen(path) == 0)
@@ -808,6 +809,43 @@ static const struct command_def cmd_print_def = {
     .help = "Print entries in the tree.  If PATH is given, printing starts there,\n otherwise the whole tree is printed"
 };
 
+static void cmd_print_xml(struct command *cmd) {
+    const char *path = arg_value(cmd, "path");
+    const char *filename = arg_value(cmd, "filename");
+    xmlNodePtr xmldoc;
+    int r;
+
+    r = aug_to_xml(cmd->aug, path, &xmldoc, 0);
+    if (r < 0)
+        ERR_REPORT(cmd, AUG_ECMDRUN,
+                   "XML export of path %s to file %s failed", path, filename);
+
+    xmlElemDump(stdout, NULL, xmldoc);
+    printf("\n");
+
+    if (filename != NULL) {
+        printf("Saving to %s\n", filename);
+    }
+
+    xmlFreeNode(xmldoc);
+}
+
+static const struct command_opt_def cmd_print_xml_opts[] = {
+    { .type = CMD_PATH, .name = "path", .optional = true,
+      .help = "print this subtree" },
+    { .type = CMD_NONE, .name = "filename", .optional = true,
+      .help = "save to this file" },
+    CMD_OPT_DEF_LAST
+};
+
+static const struct command_def cmd_print_xml_def = {
+    .name = "print-xml",
+    .opts = cmd_print_xml_opts,
+    .handler = cmd_print_xml,
+    .synopsis = "print a subtree as XML",
+    .help = "Export entries in the tree as XML. If PATH is given, printing starts there,\n otherwise the whole tree is printed.\n  If FILENAME is given, the XML is saved to the given file."
+};
+
 static void cmd_save(struct command *cmd) {
     int r;
     r = aug_save(cmd->aug);
@@ -924,6 +962,7 @@ static const struct command_def const *commands[] = {
     &cmd_mv_def,
     &cmd_move_def,
     &cmd_print_def,
+    &cmd_print_xml_def,
     &cmd_rm_def,
     &cmd_save_def,
     &cmd_set_def,

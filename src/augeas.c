@@ -33,6 +33,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <locale.h>
+#include <libxml/tree.h>
 
 /* Some popular labels that we use in /augeas */
 static const char *const s_augeas = "augeas";
@@ -1491,6 +1492,124 @@ int dump_tree(FILE *out, struct tree *tree) {
     result = print_tree(out, p, 1);
     free_pathx(p);
     return result;
+}
+
+static int to_xml_one(xmlNodePtr elem, const struct tree *tree,
+                      const char *pathin) {
+    xmlNodePtr value;
+    xmlAttrPtr prop;
+
+    prop = xmlSetProp(elem, BAD_CAST "label", BAD_CAST tree->label);
+    if (prop == NULL)
+        goto error;
+
+    if (tree->span) {
+        prop = xmlSetProp(elem, BAD_CAST "file",
+                          BAD_CAST tree->span->filename->str);
+        if (prop == NULL)
+            goto error;
+    }
+
+    if (pathin != NULL) {
+        prop = xmlSetProp(elem, BAD_CAST "path", BAD_CAST pathin);
+        if (prop == NULL)
+            goto error;
+    }
+    if (tree->value != NULL) {
+        value = xmlNewTextChild(elem, NULL, BAD_CAST "value",
+                                BAD_CAST tree->value);
+        if (value == NULL)
+            goto error;
+    }
+    return 0;
+ error:
+    return -1;
+}
+
+static int to_xml_rec(xmlNodePtr pnode, struct tree *start,
+                      const char *pathin) {
+    int r;
+    xmlNodePtr elem;
+
+    elem = xmlNewChild(pnode, NULL, BAD_CAST "node", NULL);
+    if (elem == NULL)
+        goto error;
+    r = to_xml_one(elem, start, pathin);
+    if (r < 0)
+        goto error;
+
+    list_for_each(tree, start->children) {
+        if (TREE_HIDDEN(tree))
+            continue;
+        r = to_xml_rec(elem, tree, NULL);
+        if (r < 0)
+            goto error;
+    }
+
+    return 0;
+ error:
+    return -1;
+}
+
+static int tree_to_xml(struct pathx *p, xmlNode **xml, const char *pathin) {
+    char *path = NULL;
+    struct tree *tree;
+    xmlAttrPtr expr;
+    int r;
+
+    *xml = xmlNewNode(NULL, BAD_CAST "augeas");
+    if (*xml == NULL)
+        goto error;
+    expr = xmlSetProp(*xml, BAD_CAST "path", BAD_CAST pathin);
+    if (expr == NULL)
+        goto error;
+
+    for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
+        if (TREE_HIDDEN(tree))
+            continue;
+        path = path_of_tree(tree);
+        if (path == NULL)
+            goto error;
+        r = to_xml_rec(*xml, tree, path);
+        if (r < 0)
+            goto error;
+        FREE(path);
+    }
+    return 0;
+ error:
+    free(path);
+    xmlFree(*xml);
+    *xml = NULL;
+    return -1;
+}
+
+int aug_to_xml(const struct augeas *aug, const char *pathin,
+               xmlNode **xmldoc, unsigned int flags) {
+    struct pathx *p;
+    int result;
+
+    api_entry(aug);
+
+    ARG_CHECK(flags == 0, aug, "aug_to_xml: FLAGS must be 0");
+    ARG_CHECK(xmldoc != NULL, aug, "aug_to_xml: XMLDOC must be non-NULL");
+
+    if (pathin == NULL || strlen(pathin) == 1) {
+        pathin = "/*";
+    }
+
+    p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), pathin, true);
+    ERR_BAIL(aug);
+    result = tree_to_xml(p, xmldoc, pathin);
+    ERR_THROW(result < 0, aug, AUG_ENOMEM, NULL);
+    free_pathx(p);
+    api_exit(aug);
+
+    return result;
+ error:
+    if (xmldoc !=NULL)
+        *xmldoc = NULL;
+    api_exit(aug);
+    return -1;
 }
 
 int aug_print(const struct augeas *aug, FILE *out, const char *pathin) {
