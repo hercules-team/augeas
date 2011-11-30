@@ -1590,8 +1590,8 @@ int aug_to_xml(const struct augeas *aug, const char *pathin,
 
     api_entry(aug);
 
-    ARG_CHECK(flags == 0, aug, "aug_to_xml: FLAGS must be 0");
-    ARG_CHECK(xmldoc != NULL, aug, "aug_to_xml: XMLDOC must be non-NULL");
+    ARG_CHECK(flags != 0, aug, "aug_to_xml: FLAGS must be 0");
+    ARG_CHECK(xmldoc == NULL, aug, "aug_to_xml: XMLDOC must be non-NULL");
 
     if (pathin == NULL || strlen(pathin) == 1) {
         pathin = "/*";
