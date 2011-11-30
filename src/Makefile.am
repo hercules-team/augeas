@@ -35,7 +35,7 @@ endif
 
 libaugeas_la_LDFLAGS = $(AUGEAS_VERSION_SCRIPT) \
     -version-info $(LIBAUGEAS_VERSION_INFO)
-libaugeas_la_LIBADD = liblexer.la libfa.la $(LIB_SELINUX) $(GNULIB)
+libaugeas_la_LIBADD = liblexer.la libfa.la $(LIB_SELINUX) $(LIBXML_LIBS) $(GNULIB)
 
 augtool_SOURCES = augtool.c
 augtool_LDADD = libaugeas.la $(READLINE_LIBS) $(LIBXML_LIBS) $(GNULIB)
