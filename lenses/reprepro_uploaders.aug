@@ -15,6 +15,9 @@ About: Lens Usage
 
 About: Configuration files
    This lens applies to reprepro's uploaders files.
+
+About: Examples
+   The <Test_Reprepro_Uploaders> file contains various examples and tests.
 *)
 
 module Reprepro_Uploaders =
