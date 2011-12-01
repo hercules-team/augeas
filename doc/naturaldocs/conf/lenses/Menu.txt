@@ -119,6 +119,7 @@ Group: Tests and Examples  {
    File: Test_Reprepro_Uploaders  (tests/test_reprepro_uploaders.aug)
    File: Test_IniFile  (tests/test_inifile.aug)
    File: Test_Keepalived  (tests/test_keepalived.aug)
+   File: Test_Xml  (tests/test_xml.aug)
    }  # Group: Tests and Examples
 
 Group: Index  {
