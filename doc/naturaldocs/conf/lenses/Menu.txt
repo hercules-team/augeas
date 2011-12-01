@@ -116,6 +116,7 @@ Group: Generic Modules  {
 Group: Tests and Examples  {
 
    File: Test_Reprepro_Uploaders  (tests/test_reprepro_uploaders.aug)
+   File: Test_IniFile  (tests/test_inifile.aug)
    }  # Group: Tests and Examples
 
 Group: Index  {
