@@ -101,6 +101,17 @@ module Test_fstab =
     { "dump" = "0" }
     { "passno" = "0" } }
 
+  (* BZ https://bugzilla.redhat.com/show_bug.cgi?id=751342
+   * Mounting multiple cgroups together results in path with ','
+   *)
+  test Fstab.lns get "spec /path/file1,file2 vfs opts 0 0\n" =
+  { "1"
+    { "spec" = "spec" }
+    { "file" = "/path/file1,file2" }
+    { "vfstype" = "vfs" }
+    { "opt" = "opts" }
+    { "dump" = "0" }
+    { "passno" = "0" } }
 
 (* Local Variables: *)
 (* mode: caml       *)

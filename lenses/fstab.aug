@@ -11,6 +11,8 @@ module Fstab =
   let comment = Util.comment
   let empty   = Util.empty
 
+  let file    = /[^# \t\n]+/
+
   (* An option label can't contain comma, comment, equals, or space *)
   let optlabel = /[^,#= \n\t]+/
   let spec    = /[^,# \n\t][^ \n\t]*/
@@ -22,7 +24,7 @@ module Fstab =
 
   let record = [ seq "mntent" .
                    [ label "spec" . store spec ] . sep_tab .
-                   [ label "file" . store Rx.neg1 ] . sep_tab .
+                   [ label "file" . store file ] . sep_tab .
                    comma_sep_list "vfstype" . sep_tab .
                    comma_sep_list "opt" .
                    (sep_tab . [ label "dump" . store /[0-9]+/ ] .
