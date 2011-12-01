@@ -641,14 +641,14 @@ test FAI_DiskConfig.lns get config3 =
   }
 
 
-(* Variable: white_spaces *)
+(* Variable: with_spaces *)
 let with_spaces = "disk_config disk2
 
 raw-disk - 0 - -
 "
 
 (* Test: FAI_DiskConfig.lns
-   Testing <FAI_DiskConfig.lns> with <white_spaces> *)
+   Testing <FAI_DiskConfig.lns> with <with_spaces> *)
 test FAI_DiskConfig.lns get with_spaces =
   { "disk_config" = "disk2"
     {  }
