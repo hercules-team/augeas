@@ -11,7 +11,8 @@ About: Reference
 About: License
   This file is licensed under the LGPLv2+, like the rest of Augeas.
 
-About: Lens Usage
+About: Examples
+   The <Test_FAI_DiskConfig> file contains various examples and tests.
 *)
 
 module FAI_DiskConfig =

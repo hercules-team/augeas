@@ -1,92 +1,100 @@
+(*
+Module: Test_FAI_DiskConfig
+  Provides unit tests and examples for the <FAI_DiskConfig> lens.
+*)
+
 module Test_FAI_DiskConfig =
 
 
-(* Test disk_config *)
-let disk_config_test = "disk_config hda   preserve_always:6,7   disklabel:msdos  bootable:3
-"
+(* Test: FAI_DiskConfig.disk_config
+   Test <FAI_DiskConfig.disk_config> *)
+test FAI_DiskConfig.disk_config get
+    "disk_config hda   preserve_always:6,7   disklabel:msdos  bootable:3\n" =
 
-test FAI_DiskConfig.disk_config get disk_config_test =
   { "disk_config" = "hda"
-    { "preserve_always"
-      { "1" = "6" }
-      { "2" = "7" }
-    }
-    { "disklabel" = "msdos" }
-    { "bootable" = "3" }
-  }
+                    { "preserve_always"
+                              { "1" = "6" }
+                              { "2" = "7" } }
+                    { "disklabel" = "msdos" }
+                    { "bootable" = "3" } }
 
-(* Test volume *)
+(* Test: FAI_DiskConfig.volume
+   Test <FAI_DiskConfig.volume> *)
+test FAI_DiskConfig.volume get
+      "primary /boot     20-100        ext3            rw\n" =
 
-let volume_test1 = "primary /boot     20-100        ext3            rw\n"
-test FAI_DiskConfig.volume get volume_test1 =
     { "primary"
       { "mountpoint" = "/boot" }
       { "size" = "20-100" }
       { "filesystem" = "ext3" }
       { "mount_options"
-        { "1" = "rw" }
-      }
-    }
+        { "1" = "rw" } } }
 
-let volume_test2 = "primary swap      1000     swap       sw\n"
-test FAI_DiskConfig.volume get volume_test2 =
+(* Test: FAI_DiskConfig.volume
+   Testing <FAI_DiskConfig.volume> *)
+test FAI_DiskConfig.volume get
+      "primary swap      1000     swap       sw\n" =
+
     { "primary"
       { "mountpoint" = "swap" }
       { "size" = "1000" }
       { "filesystem" = "swap" }
       { "mount_options"
-        { "1" = "sw" }
-      }
-    }
+        { "1" = "sw" } } }
 
-let volume_test3 = "primary /         12000      ext3           rw        createopts=\"-b 2048\"\n"
-test FAI_DiskConfig.volume get volume_test3 =
+(* Test: FAI_DiskConfig.volume
+   Testing <FAI_DiskConfig.volume> *)
+test FAI_DiskConfig.volume get
+      "primary /         12000      ext3           rw        createopts=\"-b 2048\"\n" =
+
     { "primary"
       { "mountpoint" = "/" }
       { "size" = "12000" }
       { "filesystem" = "ext3" }
       { "mount_options"
-        { "1" = "rw" }
-      }
+        { "1" = "rw" } }
       { "fs_options"
-        { "createopts" = "-b 2048" }
-      }
-    }
+        { "createopts" = "-b 2048" } } }
 
-let volume_test4 = "logical /tmp      1000      ext3            rw,nosuid\n"
-test FAI_DiskConfig.volume get volume_test4 =
+(* Test: FAI_DiskConfig.volume
+   Testing <FAI_DiskConfig.volume> *)
+test FAI_DiskConfig.volume get
+      "logical /tmp      1000      ext3            rw,nosuid\n" =
+
     { "logical"
       { "mountpoint" = "/tmp" }
       { "size" = "1000" }
       { "filesystem" = "ext3" }
       { "mount_options"
         { "1" = "rw" }
-        { "2" = "nosuid" }
-      }
-    }
+        { "2" = "nosuid" } } }
 
-let volume_test5 = "logical /var      10%-      ext3               rw\n"
-test FAI_DiskConfig.volume get volume_test5 =
+(* Test: FAI_DiskConfig.volume
+   Testing <FAI_DiskConfig.volume> *)
+test FAI_DiskConfig.volume get
+      "logical /var      10%-      ext3               rw\n" =
+
     { "logical"
       { "mountpoint" = "/var" }
       { "size" = "10%-" }
       { "filesystem" = "ext3" }
       { "mount_options"
-        { "1" = "rw" }
-      }
-    }
+        { "1" = "rw" } } }
 
-let volume_test6 = "logical /nobackup 0-        xfs                rw\n"
-test FAI_DiskConfig.volume get volume_test6 =
+(* Test: FAI_DiskConfig.volume
+   Testing <FAI_DiskConfig.volume> *)
+test FAI_DiskConfig.volume get
+      "logical /nobackup 0-        xfs                rw\n" =
+
     { "logical"
       { "mountpoint" = "/nobackup" }
       { "size" = "0-" }
       { "filesystem" = "xfs" }
       { "mount_options"
-        { "1" = "rw" }
-      }
-    }
+        { "1" = "rw" } } }
 
+(* Variable: simple_config
+   A simple configuration file *)
 let simple_config = "# A comment
 disk_config disk2
 raw-disk - 0 - -
@@ -107,6 +115,8 @@ disk_config tmpfs
 tmpfs                           /var/opt/hosting/tmp    500             defaults
 "
 
+(* Test: FAI_DiskConfig.lns
+   Testing the full <FAI_DiskConfig.lns> on <simple_config> *)
 test FAI_DiskConfig.lns get simple_config =
   { "#comment" = "A comment" }
   { "disk_config" = "disk2"
@@ -263,6 +273,8 @@ test FAI_DiskConfig.lns get simple_config =
   }
 
 
+(* Variable: config1
+   Another full configuration *)
 let config1 = "disk_config disk1 bootable:1 preserve_always:all always_format:5,6,7,8,9,10,11
 primary  -         0   -     -
 primary  -         0   -     -
@@ -276,6 +288,8 @@ logical  /wrk      0   ext3  rw,relatime,nosuid,nodev        createopts=\"-m 1 -
 logical  /transfer 0   vfat  rw
 "
 
+(* Test: FAI_DiskConfig.lns
+   Testing <FAI_DiskConfig.lns> on <config1> *)
 test FAI_DiskConfig.lns get config1 =
   { "disk_config" = "disk1"
     { "bootable" = "1" }
@@ -404,6 +418,8 @@ test FAI_DiskConfig.lns get config1 =
   }
 
 
+(* Variable: config2
+   Another full configuration *)
 let config2 = "disk_config /dev/sda
 primary  -  250M  -  -
 primary  -  20G   -  -
@@ -421,6 +437,8 @@ raid1  /tmp   sda6,sdb6  ext3  defaults createopts=\"-m 1\"
 raid1  /var   sda7,sdb7  ext3  defaults
 "
 
+(* Test: FAI_DiskConfig.lns
+   Testing <FAI_DiskConfig.lns> on <config2> *)
 test FAI_DiskConfig.lns get config2 =
   { "disk_config" = "/dev/sda"
     { "primary"
@@ -524,6 +542,8 @@ test FAI_DiskConfig.lns get config2 =
   }
 
 
+(* Variable: config3
+   Another full configuration *)
 let config3 = "disk_config /dev/sdb
 primary  /      21750  ext3  defaults,errors=remount-ro
 primary  /boot  250    ext3  defaults
@@ -537,6 +557,8 @@ tmp   /tmp      /dev/sdb6  ext2  defaults
 luks  /local00  /dev/sdb7  ext3  defaults,errors=remount-ro  createopts=\"-m 0\"
 "
 
+(* Test: FAI_DiskConfig.lns
+   Testing <FAI_DiskConfig.lns> on <config3> *)
 test FAI_DiskConfig.lns get config3 =
   { "disk_config" = "/dev/sdb"
     { "primary"
@@ -619,11 +641,14 @@ test FAI_DiskConfig.lns get config3 =
   }
 
 
+(* Variable: white_spaces *)
 let with_spaces = "disk_config disk2
 
 raw-disk - 0 - -
 "
 
+(* Test: FAI_DiskConfig.lns
+   Testing <FAI_DiskConfig.lns> with <white_spaces> *)
 test FAI_DiskConfig.lns get with_spaces =
   { "disk_config" = "disk2"
     {  }
