@@ -1,5 +1,3 @@
-test mv-into-multiple -1 EMMATCH
-  mv /files /augeas/version/save/*
 # Tests for aug_srun
 
 # Blank lines and lines starting with '#' are ignored. This file is
@@ -65,6 +63,19 @@ test comment 1
 prints
   /augeas (none)
 
+# TODO: currently not supported
+#test get_wspace 2
+#  :  get /augeas 	#
+#  :  rm /augeas/root 	#
+#prints
+#  /augeas (none)
+#  rm : /augeas/root 1
+
+test get_wspace_between 1
+  :  get 	 /augeas
+prints
+  /augeas (none)
+
 test unknown-cmd -1 ECMDRUN
   nocommand
 
@@ -91,6 +102,11 @@ test match-root 1
   match /
 prints
   /augeas = (none)
+  /files = (none)
+
+test match-context 1
+  match .
+prints
   /files = (none)
 
 test match-root-star 1
@@ -209,6 +225,12 @@ test set-existing 2
 prints
   /files = value
 
+test set-trailing-slash 2
+  set /files/ value
+  get /files
+prints
+  /files = value
+
 test set-bad-pathx -1 EPATHX
   set /files[] 1
 
@@ -217,6 +239,64 @@ test set-multiple -1 EMMATCH
 
 test set-args -1 ECMDRUN
   set /files
+
+#
+# test set/get parsing with quoting, whitespace and escaping
+#
+test set-single-quotes 2
+  set /files 'a test value'
+  get /files
+prints
+  /files = a test value
+
+test set-double-quotes 2
+  set /files "a test value"
+  get /files
+prints
+  /files = a test value
+
+test set-mixed-quotes1 2
+  set /files "a 'mixed quotes' test"
+  get /files
+prints
+  /files = a 'mixed quotes' test
+
+test set-mixed-quotes2 2
+  set /files 'a "mixed quotes" test'
+  get /files
+prints
+  /files = a "mixed quotes" test
+
+# TODO: currently not supported
+#test set-escaped-quotes 2
+#  set /files "''\"''"
+#  get /files
+#prints
+#  /files = ''"''
+
+#test set-escaped-path 2
+#  set /white\ space value
+#  get /white\ space
+#prints
+#  /white space = value
+
+#test set-escaped-path-bracket 2
+#  set /white\ space/\[section value
+#  get /white\ space/\[section
+#prints
+#  /white space/[section = value
+
+test set-squote-escaped-path 2
+  set '/white\ space' value
+  get '/white\ space'
+prints
+  /white\ space = value
+
+test set-dquote-escaped-path 2
+  set "/white\ space" value
+  get "/white\ space"
+prints
+  /white\ space = value
 
 #
 # test clear
