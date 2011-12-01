@@ -15,6 +15,9 @@ About: Lens Usage
 
 About: Configuration files
    This lens applies to /etc/keepalived/keepalived.conf. See <filter>.
+
+About: Examples
+   The <Test_Keepalived> file contains various examples and tests.
 *)
 
 
