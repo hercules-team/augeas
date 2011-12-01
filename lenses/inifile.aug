@@ -15,6 +15,8 @@ About: Lens usage
   This lens is made to provide generic primitives to construct INI File lenses.
   See <Puppet>, <PHP>, <MySQL> or <Dput> for examples of real life lenses using it.
 
+About: Examples
+  The <Test_Reprepro_Uploaders> file contains various examples and tests.
 *)
 
 module IniFile  =
