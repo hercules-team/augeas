@@ -1,7 +1,12 @@
-(* Test for keepalived lens *)
+(*
+Module: Test_Keepalived
+  Provides unit tests and examples for the <Keepalived> lens.
+*)
 
-module Test_keepalived =
+module Test_Keepalived =
 
+(* Variable: conf
+   A full configuration file *)
    let conf = "! This is a comment 
 ! Configuration File for keepalived 
 
@@ -151,6 +156,8 @@ weight 2                        # add 2 points of prio if OK
 "
 
 
+(* Test: Keepalived.lns
+   Test the full <conf> *)
    test Keepalived.lns get conf =
      { "#comment" = "This is a comment" }
      { "#comment" = "Configuration File for keepalived" }
