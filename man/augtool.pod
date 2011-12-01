@@ -142,6 +142,12 @@ it and all its ancestors will be created.
 Set the value for PATH to NULL. If PATH is not in the tree yet, it and all
 its ancestors will be created.
 
+=item B<setm> E<lt>BASEE<gt> E<lt>SUBE<gt> E<lt>VALUEE<gt>
+
+Set multiple nodes in one operation.  Find or create a node matching SUB by
+interpreting SUB as a path expression relative to each node matching
+BASE. If SUB is '.', the nodes matching BASE will be modified.
+
 =item B<get> E<lt>PATHE<gt>
 
 Print the value associated with PATH
@@ -150,6 +156,12 @@ Print the value associated with PATH
 
 Print entries in the tree. If PATH is given, printing starts there,
 otherwise the whole tree is printed
+
+=item B<print-xml> I<[E<lt>PATHE<gt>]> I<[E<lt>FILENAMEE<gt>]>
+
+Print entries in the tree as XML. If PATH is given, printing starts there,
+otherwise the whole tree is printed. If FILENAME is given, the XML is saved
+to the given file.
 
 =item B<ins> I<E<lt>LABELE<gt>> I<E<lt>WHEREE<gt>> I<E<lt>PATHE<gt>>
 
@@ -179,6 +191,15 @@ refer to it. If VALUE is given, this is the same as 'set EXPR VALUE'; if
 VALUE is not given, the node is created as if with 'clear EXPR' would and
 NAME refers to that node.
 
+=item B<span> E<lt>PATHE<gt>
+
+Print the name of the file from which the node PATH was generated, as well
+as information about the positions in the file corresponding to the label,
+the value, and the entire node. PATH must match exactly one node.
+
+You need to run 'set /augeas/span enable' prior to loading files to enable
+recording of span information. It is disabled by default.
+
 =item B<help>
 
 Print this help text
@@ -206,6 +227,12 @@ but before the default directory F</usr/share/augeas/lenses>
 
 Normally, exit status is 0. If one or more commands fail, the exit status
 is set to a non-zero value.
+
+Note though that failure to load some of the files specified by transforms
+in C</augeas/load> is not considered a failure. If it is important to know
+that all files were loaded, you need to issue a C<match /augeas//error>
+after loading to find out details about what files could not be loaded and
+why.
 
 =head1 EXAMPLES
 

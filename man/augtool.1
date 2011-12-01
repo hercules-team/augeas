@@ -242,6 +242,11 @@ it and all its ancestors will be created.
 .IX Item "clear <PATH>"
 Set the value for \s-1PATH\s0 to \s-1NULL\s0. If \s-1PATH\s0 is not in the tree yet, it and all
 its ancestors will be created.
+.IP "\fBsetm\fR <\s-1BASE\s0> <\s-1SUB\s0> <\s-1VALUE\s0>" 4
+.IX Item "setm <BASE> <SUB> <VALUE>"
+Set multiple nodes in one operation.  Find or create a node matching \s-1SUB\s0 by
+interpreting \s-1SUB\s0 as a path expression relative to each node matching
+\&\s-1BASE\s0. If \s-1SUB\s0 is '.', the nodes matching \s-1BASE\s0 will be modified.
 .IP "\fBget\fR <\s-1PATH\s0>" 4
 .IX Item "get <PATH>"
 Print the value associated with \s-1PATH\s0
@@ -249,6 +254,11 @@ Print the value associated with \s-1PATH\s0
 .IX Item "print [<PATH>]"
 Print entries in the tree. If \s-1PATH\s0 is given, printing starts there,
 otherwise the whole tree is printed
+.IP "\fBprint-xml\fR \fI[<\s-1PATH\s0>]\fR \fI[<\s-1FILENAME\s0>]\fR" 4
+.IX Item "print-xml [<PATH>] [<FILENAME>]"
+Print entries in the tree as \s-1XML\s0. If \s-1PATH\s0 is given, printing starts there,
+otherwise the whole tree is printed. If \s-1FILENAME\s0 is given, the \s-1XML\s0 is saved
+to the given file.
 .IP "\fBins\fR \fI<\s-1LABEL\s0>\fR \fI<\s-1WHERE\s0>\fR \fI<\s-1PATH\s0>\fR" 4
 .IX Item "ins <LABEL> <WHERE> <PATH>"
 Insert a new node with label \s-1LABEL\s0 right before or after \s-1PATH\s0 into the
@@ -272,6 +282,14 @@ nodeset. If no node matching \s-1EXPR\s0 exists yet, one is created and \s-1NAME
 refer to it. If \s-1VALUE\s0 is given, this is the same as 'set \s-1EXPR\s0 \s-1VALUE\s0'; if
 \&\s-1VALUE\s0 is not given, the node is created as if with 'clear \s-1EXPR\s0' would and
 \&\s-1NAME\s0 refers to that node.
+.IP "\fBspan\fR <\s-1PATH\s0>" 4
+.IX Item "span <PATH>"
+Print the name of the file from which the node \s-1PATH\s0 was generated, as well
+as information about the positions in the file corresponding to the label,
+the value, and the entire node. \s-1PATH\s0 must match exactly one node.
+.Sp
+You need to run 'set /augeas/span enable' prior to loading files to enable
+recording of span information. It is disabled by default.
 .IP "\fBhelp\fR" 4
 .IX Item "help"
 Print this help text
@@ -290,6 +308,12 @@ but before the default directory \fI/usr/share/augeas/lenses\fR
 .IX Header "DIAGNOSTICS"
 Normally, exit status is 0. If one or more commands fail, the exit status
 is set to a non-zero value.
+.PP
+Note though that failure to load some of the files specified by transforms
+in \f(CW\*(C`/augeas/load\*(C'\fR is not considered a failure. If it is important to know
+that all files were loaded, you need to issue a \f(CW\*(C`match /augeas//error\*(C'\fR
+after loading to find out details about what files could not be loaded and
+why.
 .SH "EXAMPLES"
 .IX Header "EXAMPLES"
 .Vb 2

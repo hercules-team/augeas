@@ -646,7 +646,7 @@ static void cmd_span(struct command *cmd) {
 
 static const struct command_opt_def cmd_span_opts[] = {
     { .type = CMD_PATH, .name = "path", .optional = false,
-      .help = "node path" },
+      .help = "path matching exactly one node" },
     CMD_OPT_DEF_LAST
 };
 
@@ -654,8 +654,8 @@ static const struct command_def cmd_span_def = {
     .name = "span",
     .opts = cmd_span_opts,
     .handler = cmd_span,
-    .synopsis = "get the filename, label and value position in the text of this node",
-    .help = "get the filename, label and value position in the text of this node"
+    .synopsis = "Print information get the filename, label and value position in the text of this node",
+    .help = "Print the name of the file from which the node PATH was generated, as\n well as information about the positions in the file  corresponding to\n the label, the value, and the  entire  node. PATH must match  exactly\n one node.\n\n You need to run 'set /augeas/span enable' prior to  loading files to\n enable recording of span information. It is disabled by default."
 };
 
 static void cmd_defvar(struct command *cmd) {
@@ -827,7 +827,7 @@ static const struct command_def cmd_print_xml_def = {
     .opts = cmd_print_xml_opts,
     .handler = cmd_print_xml,
     .synopsis = "print a subtree as XML",
-    .help = "Export entries in the tree as XML. If PATH is given, printing starts there,\n otherwise the whole tree is printed.\n  If FILENAME is given, the XML is saved to the given file."
+    .help = "Export entries in the tree as XML. If PATH is given, printing starts there,\n otherwise the whole tree is printed. If FILENAME is given, the XML is saved\n to the given file."
 };
 
 static void cmd_save(struct command *cmd) {
