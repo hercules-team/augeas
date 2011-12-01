@@ -10,7 +10,6 @@ module Test_Reprepro_Uploaders =
      of the "allow" node.
  *)
 test Reprepro_Uploaders.entry get
-
     "allow * by anybody\n" =
 
   { "allow" = "*"
@@ -21,7 +20,6 @@ test Reprepro_Uploaders.entry get
      and the key ID gets mapped in a "key" subnode.
  *)
 test Reprepro_Uploaders.entry get
-
     "allow * by key ABCD1234\n" =
 
   { "allow" = "*"
@@ -36,7 +34,6 @@ test Reprepro_Uploaders.entry get
      (e.g. "source"), and this node contains "or" subnodes
      with the value(s) allowed for the check (e.g. "bash"). *)
 test Reprepro_Uploaders.entry get
-
     "allow      source 'bash' by anybody\n" =
 
   { "allow"
@@ -46,9 +43,11 @@ test Reprepro_Uploaders.entry get
     { "by" = "anybody" } }
 
 (* Test: Reprepro_Uploaders.entry
-     Simple 'and' *)
+     Some checks use the "contain" keyword to loosen the condition.
+     In that case, a "contain" subnode is added. Be sure to check for it
+     to know how the condition has to be checked.
+ *)
 test Reprepro_Uploaders.entry get
-
     "allow      source 'bash' and binaries contain 'bash-doc' by anybody\n" =
 
   { "allow"
@@ -62,22 +61,8 @@ test Reprepro_Uploaders.entry get
     { "by" = "anybody" } }
 
 (* Test: Reprepro_Uploaders.entry
-    Simple 'or' *)
-test Reprepro_Uploaders.entry get
-
-    "allow      source 'bash' or binaries contain 'bash-doc' by anybody\n" =
-
-  { "allow"
-    { "and"
-      { "or" = "source"
-              { "or" = "bash" } }
-              { "or" = "binaries"
-                                       { "contain" }
-                                       { "or" = "bash-doc" } } }
-    { "by" = "anybody" } }
-
-(* Test: Reprepro_Uploaders.entry
-    Test 'and' + 'or'
+    Some checks support multiple values, separated by '|'.
+    In this case, each value gets added to an "or" subnode.
  *)
 test Reprepro_Uploaders.entry get
 
@@ -97,7 +82,7 @@ test Reprepro_Uploaders.entry get
     { "by" = "anybody" } }
 
 (* Test: Reprepro_Uploaders.entry
-     Not *)
+     Negated conditions are mapped with a "not" subnode. *)
 test Reprepro_Uploaders.entry get
 
     "allow  not source 'bash' by anybody\n" =
