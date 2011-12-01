@@ -16,7 +16,7 @@ About: Lens usage
   See <Puppet>, <PHP>, <MySQL> or <Dput> for examples of real life lenses using it.
 
 About: Examples
-  The <Test_Reprepro_Uploaders> file contains various examples and tests.
+  The <Test_IniFile> file contains various examples and tests.
 *)
 
 module IniFile  =
