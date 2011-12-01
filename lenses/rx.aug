@@ -11,35 +11,62 @@ About: License
 
 module Rx =
 
-(* Spaces *)
+(* Group: Spaces *)
+(* Variable: space
+   A mandatory space or tab *)
 let space     = /[ \t]+/
+(* Variable: opt_space
+   An optional space or tab *)
 let opt_space = /[ \t]*/
+
+(* Group: General strings *)
+
+(* Variable: space_in
+   A string which not starting or ending with a space *)
 let space_in  = /[^ \t\n].*[^ \t\n]|[^ \t\n]/
+
+(* Variable: no_spaces
+   A string with no spaces *)
 let no_spaces = /[^ \t\n]+/
 
-(* Generic fields *)
+(* Variable: word
+   An alphanumeric string *)
 let word       = /[A-Za-z0-9_.-]+/
+
+(* Variable: integer
+   One or more digits *)
 let integer    = /[0-9]+/
+
+(* Variable: integer
+   A relative <integer> *)
 let relinteger = /-?[0-9]+/
+
+(* Variable: decimal
+   A decimal value (using ',' or '.' as a separator) *)
 let decimal    = /[0-9]+([.,][0-9]+)?/
 
-(* A filesystem path *)
+(* Variable: fspath
+   A filesystem path *)
 let fspath    = /[^ \t\n]+/
 
-(* All but... *)
-(* Anything but a space, a comma or a comment sign *)
+(* Group: All but... *)
+(* Variable: neg1
+   Anything but a space, a comma or a comment sign *)
 let neg1      = /[^,# \n\t]+/
 
 
 (*
- * IPs
+ * Group: IPs
  * Cf. http://blog.mes-stats.fr/2008/10/09/regex-ipv4-et-ipv6/ (in fr)
  *)
+
+(* Variable: ipv4 *)
 let ipv4 =
   let dot     = "." in
   let digits  = /(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/ in
     digits . dot . digits . dot . digits . dot . digits
 
+(* Variable: ipv6 *)
 let ipv6 =
   /(([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4})/
   | /(([0-9A-Fa-f]{1,4}:){6}:[0-9A-Fa-f]{1,4})/
@@ -65,9 +92,14 @@ let ipv6 =
   | /(::([0-9A-Fa-f]{1,4}:){0,6}[0-9A-Fa-f]{1,4})/
   | /(([0-9A-Fa-f]{1,4}:){1,7}:)/
 
+
+(* Variable: ip
+   An <ipv4> or <ipv6> *)
 let ip        = ipv4 | ipv6
 
+
 (*
+ * Variable: device_name
  * A Linux device name like eth0 or i2c-0. Might still be too restrictive
  *)
 
