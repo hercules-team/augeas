@@ -224,6 +224,7 @@ static int parseline(struct command *cmd, char *line) {
         opt->value = tok;
         curarg += 1;
         def += 1;
+        while (*line && isblank(*line)) line += 1;
     }
 
     if (curarg < narg - nopt) {

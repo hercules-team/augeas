@@ -131,6 +131,12 @@ static struct test *read_tests(void) {
             continue;
         if (*s == ':')
             s += 1;
+        char *eos = s + strlen(s) - 2;
+        if (eos >= s && *eos == ':') {
+            *eos++ = '\n';
+            *eos = '\0';
+        }
+
         if (looking_at(s, KW_TEST)) {
             if (ALLOC(t) < 0)
                 die_oom();

@@ -23,8 +23,8 @@
 # The prints keyword and OUTPUT are optional; if they are not provided, the
 # output of aug_srun must be empty
 #
-# Leading spaces are stripped from COMMANDS and OUTPUT; a leading ':' is
-# also stripped, but the rest of the line is used verbatim.
+# Leading spaces are stripped from COMMANDS and OUTPUT; a leading or trailing
+# ':' is also stripped, but the rest of the line is used verbatim.
 #
 # A test passes when RESULT and ERRCODE agree with what aug_srun given
 # COMMANDS produces, and OUTPUT coincides with what aug_srun prints on its
@@ -63,13 +63,12 @@ test comment 1
 prints
   /augeas (none)
 
-# TODO: currently not supported
-#test get_wspace 2
-#  :  get /augeas 	#
-#  :  rm /augeas/root 	#
-#prints
-#  /augeas (none)
-#  rm : /augeas/root 1
+test get_wspace 2
+  :  get /augeas 	:
+  :  rm /augeas/root 	:
+prints
+  /augeas (none)
+  rm : /augeas/root 1
 
 test get_wspace_between 1
   :  get 	 /augeas
