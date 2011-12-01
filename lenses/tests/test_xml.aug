@@ -1,21 +1,48 @@
-module Test_xml =
+(*
+Module: Test_Xml
+  Provides unit tests and examples for the <Xml> lens.
+*)
 
+module Test_Xml =
+
+(* View: knode
+   A simple flag function
+
+   Parameters:
+    r:regexp - the pattern for the flag
+*)
 let knode (r:regexp) = [ key r ]
 
 (************************************************************************
- *                           Utilities lens
+ *                          Group: Utilities lens
  *************************************************************************)
 (*
 let _ = print_regexp(lens_ctype(Xml.text))
 let _ = print_endline ""
 *)
 
-test Xml.comment get "<!-- declarations for <head> & <body> -->" =
+(* Group: Comments *)
+
+(* Test: Xml.comment
+   Comments get mapped into "#comment" nodes. *)
+test Xml.comment get
+ "<!-- declarations for <head> & <body> -->" =
+
   { "#comment" = " declarations for <head> & <body> " }
 
-test Xml.comment get "<!-- B+, B, or B--->" = *
+(* Test: Xml.comment
+   This syntax is not understood. *)
+test Xml.comment get
+ "<!-- B+, B, or B--->" = *
 
-test Xml.prolog get "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" =
+(* Group: Prolog and declarations *)
+
+(* Test: Xml.prolog
+   The XML prolog tag is mapped in a "#declaration" node,
+   which contains an "#attribute" node with various attributes of the tag. *)
+test Xml.prolog get
+ "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" =
+
   { "#declaration"
     { "#attribute"
       { "version" = "1.0" }
@@ -23,25 +50,43 @@ test Xml.prolog get "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" =
     }
   }
 
-test Xml.decl_def_item get "<!ELEMENT greeting (#PCDATA)>" =
+(* Test: Xml.decl_def_item
+   !ELEMENT declaration tags are mapped in "!ELEMENT" nodes.
+   The associated declaration attribute is mapped in a "#decl" subnode. *)
+test Xml.decl_def_item get
+ "<!ELEMENT greeting (#PCDATA)>" =
+
   { "!ELEMENT" = "greeting"
     { "#decl" = "(#PCDATA)" }
   }
 
-test Xml.decl_def_item get "<!ENTITY da \"&#xD;&#xA;\">" =
+(* Test: Xml.decl_def_item
+   !ENTITY declaration tags are mapped in "!ENTITY" nodes.
+   The associated declaration attribute is mapped in a "#decl" subnode. *)
+test Xml.decl_def_item get
+ "<!ENTITY da \"&#xD;&#xA;\">" =
+
   { "!ENTITY" = "da"
     { "#decl" = "&#xD;&#xA;" }
   }
 
-test Xml.doctype get "<!DOCTYPE greeting SYSTEM \"hello.dtd\">" =
+(* Test: Xml.doctype
+   !DOCTYPE tags are mapped in "!DOCTYPE" nodes.
+   The associated system attribute is mapped in a "SYSTEM" subnode. *)
+test Xml.doctype get
+ "<!DOCTYPE greeting SYSTEM \"hello.dtd\">" =
+
   { "!DOCTYPE" = "greeting"
     { "SYSTEM" = "hello.dtd" }
   }
 
+(* Test: Xml.doctype
+   This is an example of a !DOCTYPE tag with !ELEMENT children tags. *)
 test Xml.doctype get "<!DOCTYPE foo [
 <!ELEMENT bar (#PCDATA)>
 <!ELEMENT baz (bar)* >
 ]>" =
+
   { "!DOCTYPE" = "foo"
     { "!ELEMENT" = "bar"
       { "#decl" = "(#PCDATA)" }
@@ -51,15 +96,23 @@ test Xml.doctype get "<!DOCTYPE foo [
     }
   }
 
+(* Group: Attributes *)
+
+(* Variable: att_def1 *)
 let att_def1 = "<!ATTLIST termdef
 id      ID      #REQUIRED
 name    CDATA   #IMPLIED>"
+(* Variable: att_def2 *)
 let att_def2 = "<!ATTLIST list
 type    (bullets|ordered|glossary)  \"ordered\">"
+(* Variable: att_def3 *)
 let att_def3 = "<!ATTLIST form
 method  CDATA   #FIXED \"POST\">"
 
-test Xml.att_list_def get att_def1 =
+(* Test: Xml.att_list_def *)
+test Xml.att_list_def get
+ att_def1 =
+
   { "!ATTLIST" = "termdef"
     { "1"
       { "#name" = "id" }
@@ -73,7 +126,10 @@ test Xml.att_list_def get att_def1 =
     }
   }
 
-test Xml.att_list_def get att_def2 =
+(* Test: Xml.att_list_def *)
+test Xml.att_list_def get
+ att_def2 =
+
   { "!ATTLIST" = "list"
     { "1"
       { "#name" = "type" }
@@ -82,7 +138,10 @@ test Xml.att_list_def get att_def2 =
     }
   }
 
-test Xml.att_list_def get att_def3 =
+(* Test: Xml.att_list_def *)
+test Xml.att_list_def get
+ att_def3 =
+
   { "!ATTLIST" = "form"
     { "1"
       { "#name" = "method" }
@@ -91,49 +150,75 @@ test Xml.att_list_def get att_def3 =
     }
   }
 
-test Xml.notation_def get "<!NOTATION not3 SYSTEM \"\">" =
+(* Test: Xml.notation_def *)
+test Xml.notation_def get
+ "<!NOTATION not3 SYSTEM \"\">" =
+
   { "!NOTATION" = "not3"
     { "SYSTEM" = "" }
   }
 
+(* Variable: cdata1 *)
 let cdata1 = "<![CDATA[testing]]>"
+(* Test: Xml.cdata *)
 test Xml.cdata get cdata1 = { "#CDATA" = "testing" }
 
+(* Variable: attr1 *)
 let attr1 = " attr1=\"value1\" attr2=\"value2\""
+(* Variable: attr2 *)
 let attr2 = " attr2=\"foo\""
+(* Test: Xml.attributes *)
 test Xml.attributes get attr1 =
   { "#attribute"
     { "attr1" = "value1" }
     { "attr2" = "value2" }
   }
 
+(* Test: Xml.attributes *)
 test Xml.attributes get " refs=\"A1\nA2  A3\"" =
   { "#attribute"
     { "refs" = "A1\nA2  A3" }
   }
 
+(* Test: Xml.attributes *)
 test Xml.attributes put attr1 after rm "/#attribute[1]";
                                     set "/#attribute/attr2" "foo" = attr2
 
+(* Group: empty *)
+
+(* Variable: empty1 *)
 let empty1 = "<a/>"
+(* Variable: empty2 *)
 let empty2 = "<a foo=\"bar\"/>"
+(* Variable: empty3 *)
 let empty3 = "<a foo=\"bar\"></a>\n"
+(* Variable: empty4 *)
 let empty4 = "<a foo=\"bar\" far=\"baz\"/>"
+(* Test: Xml.empty_element *)
 test Xml.empty_element get empty1 = { "a" = "#empty" }
+(* Test: Xml.empty_element *)
 test Xml.empty_element get empty2 =
   { "a" = "#empty" { "#attribute" { "foo" = "bar"} } }
 
+(* Test: Xml.empty_element *)
 test Xml.empty_element put empty1 after set "/a/#attribute/foo" "bar" = empty2
 
-(* the attribute node must be the first child of the element *)
+(* Test: Xml.empty_element
+   The attribute node must be the first child of the element *)
 test Xml.empty_element put empty1 after set "/a/#attribute/foo" "bar";
                                         set "/a/#attribute/far" "baz" = empty4
 
+(* Test: Xml.content *)
 test Xml.content put "<a><b/></a>" after clear "/a/b" = "<a><b></b>\n</a>"
 
+
+(* Group: Full lens *)
+
+(* Test: Xml.lns *)
 test Xml.lns put "<a></a >" after set "/a/#text[1]" "foo";
                                  set "/a/#text[2]" "bar" = "<a>foobar</a >"
 
+(* Test: Xml.lns *)
 test Xml.lns get "<?xml version=\"1.0\"?>
 <!DOCTYPE catalog PUBLIC \"-//OASIS//DTD XML Catalogs V1.0//EN\"
   \"file:///usr/share/xml/schema/xml-core/catalog.dtd\">
@@ -151,6 +236,7 @@ test Xml.lns get "<?xml version=\"1.0\"?>
   }
   { "doc" = "#empty" }
 
+(* Test: Xml.lns *)
 test Xml.lns get "<oor:component-data xmlns:oor=\"http://openoffice.org/2001/registry\"/>
 " =
   { "oor:component-data" = "#empty"
@@ -159,6 +245,7 @@ test Xml.lns get "<oor:component-data xmlns:oor=\"http://openoffice.org/2001/reg
     }
   }
 
+(* Variable: input1 *)
 let input1 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <html>
     <head>
@@ -176,6 +263,8 @@ let input1 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 </html>
 "
 
+(* Test: Xml.doc
+   Test <input1> with <Xml.doc> *)
 test Xml.doc get input1 =
   { "#declaration"
     { "#attribute"
@@ -229,6 +318,8 @@ test Xml.doc get input1 =
     }
   }
 
+(* Test: Xml.doc
+   Modify <input1> with <Xml.doc> *)
 test Xml.doc put input1 after rm "/html/body" =
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <html>
@@ -239,6 +330,7 @@ test Xml.doc put input1 after rm "/html/body" =
 "
 
 
+(* Variable: ul1 *)
 let ul1 = "
 <ul>
  <li>test1</li>
