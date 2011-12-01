@@ -236,7 +236,7 @@ Lenses and schema definitions in F</usr/share/augeas/lenses>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2007, 2008 Red Hat Inc.
+Copyright 2007-2011 Red Hat Inc.
 
 Augeas (and augtool) are distributed under the GNU Lesser General Public
 License (LGPL)
