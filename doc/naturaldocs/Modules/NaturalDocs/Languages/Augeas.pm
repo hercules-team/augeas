@@ -18,8 +18,6 @@ package NaturalDocs::Languages::Augeas;
 
 use base 'NaturalDocs::Languages::Simple';
 
-use Sub::Install qw(reinstall_sub);
-
 
 my $pastFirstLet;
 my $pastFirstTest;
@@ -36,29 +34,17 @@ sub OnCode {
 
 
 # Override NormalizePrototype and ParsePrototype
-sub NormalizePrototypeOverride {
+sub NormalizePrototype {
    my ($self, $prototype) = @_;
    return $prototype;
 }
 
-sub ParsePrototypeOverride {
+sub ParsePrototype {
    my ($self, $type, $prototype) = @_;
 
    my $object = NaturalDocs::Languages::Prototype->New($prototype);
    return $object;
 }
-
-reinstall_sub ({
-   code => 'NormalizePrototypeOverride',
-   into => 'NaturalDocs::Languages::Base',
-   as   => 'NormalizePrototype',
-});
-
-reinstall_sub ({
-   code => 'ParsePrototypeOverride',
-   into => 'NaturalDocs::Languages::Base',
-   as   => 'ParsePrototype',
-});
 
 
 
