@@ -1,5 +1,12 @@
+(*
+Module: Test_Access
+  Provides unit tests and examples for the <Access> lens.
+*)
+
 module Test_access =
 
+(* Variable: conf
+    A full configuration *)
 let conf = "+ : ALL : LOCAL
 + : root : localhost.localdomain
 - : root : 127.0.0.1 .localdomain
@@ -12,6 +19,8 @@ let conf = "+ : ALL : LOCAL
 +:root:.example.com
 "
 
+(* Test: Access.lns
+     Test the full <conf> *)
 test Access.lns get conf =
     { "access" = "+"
         { "user" = "ALL" }
@@ -77,13 +86,20 @@ test Access.lns put conf after
 - : ALL : ALL
 "
 
-(* Bug #190 *)
+(* Test: Access.lns
+     - netgroups (starting with '@') are mapped as "netgroup" nodes;
+     - nisdomains (starting with '@@') are mapped as "nisdomain" nodes.
+
+ This closes <ticket #190 at https://fedorahosted.org/augeas/ticket/190>.
+ *)
 test Access.lns get "+ : @group@@domain : ALL \n" =
   { "access" = "+"
     { "netgroup" = "group"
       { "nisdomain" = "domain" } }
     { "origin" = "ALL" } }
 
+(* Test Access.lns
+   Put test for netgroup and nisdomain *)
 test Access.lns put "+ : @group : ALL \n" after
   set "/access/netgroup[. = 'group']/nisdomain" "domain" =
 "+ : @group@@domain : ALL \n"

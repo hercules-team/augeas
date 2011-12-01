@@ -20,6 +20,9 @@ About: Lens Usage
 
 About: Configuration files
   This lens applies to /etc/security/access.conf. See <filter>.
+
+About: Examples
+   The <Test_Access> file contains various examples and tests.
 *)
 module Access =
   autoload xfm
@@ -27,8 +30,9 @@ module Access =
 (* Group: Comments and empty lines *)
 (* Variable: comment *)
 let comment   = Util.comment
-(* Variable: empty line *)
+(* Variable: empty *)
 let empty     = Util.empty
+
 (* Group: Useful primitives *)
 (* Variable: colon
  *  this is the standard field separator " : "
@@ -116,4 +120,5 @@ let lns       = (comment|empty|entry) *
 (* Variable: filter *)
 let filter    = incl "/etc/security/access.conf"
 
+(* xfm *)
 let xfm       = transform lns filter
