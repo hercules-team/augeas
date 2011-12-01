@@ -123,6 +123,7 @@ Group: Index  {
    Augeas Lens Index: Lenses
    Augeas Module Index: Modules
    Augeas Variable Index: Variables
+   Augeas Test Index: Tests
    Index: Everything
    File Index: Files
    Variable Index: Variables

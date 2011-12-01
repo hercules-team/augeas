@@ -1,4 +1,4 @@
-Format: 1.4
+Format: 1.51
 
 # This is the Natural Docs topics file for this project.  If you change anything
 # here, it will apply to THIS PROJECT ONLY.  If you'd like to change something
@@ -86,6 +86,13 @@ Topic Type: Augeas Variable
    Plural: Augeas Variables
    Keywords:
       variable, variables
+
+
+Topic Type: Augeas Test
+
+   Plural: Augeas Tests
+   Keywords:
+      test, tests
 
 
 Topic Type: Augeas Module

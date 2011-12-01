@@ -1,4 +1,4 @@
-Format: 1.4
+Format: 1.51
 
 # This is the Natural Docs languages file for this project.  If you change
 # anything here, it will apply to THIS PROJECT ONLY.  If you'd like to change
@@ -119,4 +119,5 @@ Language: Augeas
    Block Comment: (* *)
    Augeas Variable Prototype Enders: \n let test module filter
    Augeas Lens Prototype Enders: \n let test module filter
+   Augeas Test Prototype Enders: \n let test module filter
    Perl Package: NaturalDocs::Languages::Augeas

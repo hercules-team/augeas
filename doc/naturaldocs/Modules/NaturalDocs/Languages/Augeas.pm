@@ -18,6 +18,8 @@ package NaturalDocs::Languages::Augeas;
 
 use base 'NaturalDocs::Languages::Simple';
 
+use Sub::Install qw(reinstall_sub);
+
 
 my $pastFirstLet;
 my $pastFirstTest;
@@ -31,6 +33,33 @@ sub OnCode {
 
    return $self->SUPER::OnCode(@params);
 };
+
+
+# Override NormalizePrototype and ParsePrototype
+sub NormalizePrototypeOverride {
+   my ($self, $prototype) = @_;
+   return $prototype;
+}
+
+sub ParsePrototypeOverride {
+   my ($self, $type, $prototype) = @_;
+
+   my $object = NaturalDocs::Languages::Prototype->New($prototype);
+   return $object;
+}
+
+reinstall_sub ({
+   code => 'NormalizePrototypeOverride',
+   into => 'NaturalDocs::Languages::Base',
+   as   => 'NormalizePrototype',
+});
+
+reinstall_sub ({
+   code => 'ParsePrototypeOverride',
+   into => 'NaturalDocs::Languages::Base',
+   as   => 'ParsePrototype',
+});
+
 
 
 #
@@ -67,13 +96,13 @@ sub OnPrototypeEnd {
 
    if ($ender eq "\n") {
       return ::ENDER_ACCEPT_AND_CONTINUE();
-   } elsif ( ($type eq "augeasvariable" || $type eq "augeaslens") &&
+   } elsif ( ($type eq "augeasvariable" || $type eq "augeaslens" || $type eq "augeastest") &&
               $ender eq "let" &&
               (!$pastFirstLet || $$prototypeRef =~ /\=[ \t\r\n]*$/
                               || $$prototypeRef =~ /in[ \t\r\n]+$/) ) {
       $pastFirstLet = 1;
       return ::ENDER_IGNORE();
-   } elsif ( ($type eq "augeasvariable" || $type eq "augeaslens") &&
+   } elsif ( ($type eq "augeasvariable" || $type eq "augeaslens" || $type eq "augeastest") &&
               $ender eq "test" &&
               (!$pastFirstTest || $$prototypeRef =~ /\=[ \t\r\n]*$/
                                || $$prototypeRef =~ /in[ \t\r\n]+$/) ) {

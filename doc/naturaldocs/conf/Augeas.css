@@ -736,7 +736,6 @@ blockquote {
         }
 
 
-
 #Footer {
     font-size: 8pt;
     color: #989898;
@@ -765,3 +764,19 @@ blockquote {
     #Footer a:hover,
     #Footer a:visited { color: #989898 }
     #Footer a:active { color: #A00000 }
+
+.CAugeasLens td {
+    white-space: pre !important;
+}
+
+.CAugeasVariable td {
+    white-space: pre !important;
+}
+
+.CAugeasModule td {
+    white-space: pre !important;
+}
+
+.CAugeasTest td {
+    white-space: pre !important;
+}
