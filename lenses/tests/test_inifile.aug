@@ -212,7 +212,7 @@ test_bcf =
   (* Test: lns_bcf
       Testing the b/c/f combination *)
   test lns_bcf get conf_bcf =
-      { "#comment" = "comment with sharp" }
+      { "#comment" = "conf with sharp" }
       { "section1"
           { "test_bcf" = "value"
 	     { "#comment" = "end of line comment" } }
