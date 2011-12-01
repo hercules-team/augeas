@@ -267,7 +267,8 @@ struct tree *tree_root_ctx(const struct augeas *aug) {
     if (match == NULL || match->value == NULL || *match->value == '\0')
         goto error;
 
-    ctx_path = match->value;
+    /* Clean via augrun's helper to ensure it's valid */
+    ctx_path = cleanpath(match->value);
     free_pathx(p);
 
     p = pathx_aug_parse(aug, aug->origin, NULL, ctx_path, true);

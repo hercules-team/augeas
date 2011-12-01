@@ -29,23 +29,6 @@
 #include <ctype.h>
 #include <libxml/tree.h>
 
-static char *cleanstr(char *path, const char sep) {
-    if (path == NULL || strlen(path) == 0)
-        return path;
-    char *e = path + strlen(path) - 1;
-    while (e >= path && (*e == sep || isspace(*e)))
-        *e-- = '\0';
-    return path;
-}
-
-static char *cleanpath(char *path) {
-    if (path == NULL || strlen(path) == 0)
-        return path;
-    if (STREQ(path, "/"))
-        return path;
-    return cleanstr(path, SEP);
-}
-
 /*
  * Command handling infrastructure
  */

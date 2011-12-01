@@ -375,6 +375,24 @@ char *path_of_tree(struct tree *tree) {
     return path;
 }
 
+/* User-facing path cleaning */
+static char *cleanstr(char *path, const char sep) {
+    if (path == NULL || strlen(path) == 0)
+        return path;
+    char *e = path + strlen(path) - 1;
+    while (e >= path && (*e == sep || isspace(*e)))
+        *e-- = '\0';
+    return path;
+}
+
+char *cleanpath(char *path) {
+    if (path == NULL || strlen(path) == 0)
+        return path;
+    if (STREQ(path, "/"))
+        return path;
+    return cleanstr(path, SEP);
+}
+
 const char *xstrerror(int errnum, char *buf, size_t len) {
 #ifdef HAVE_STRERROR_R
 # ifdef __USE_GNU

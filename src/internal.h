@@ -297,6 +297,9 @@ int xstrtoint64(char const *s, int base, int64_t *result);
 /* Calculate line and column number of character POS in TEXT */
 void calc_line_ofs(const char *text, size_t pos, size_t *line, size_t *ofs);
 
+/* Cleans path from user, removing trailing slashes and whitespace */
+char *cleanpath(char *path);
+
 /* Take the first LEN characters from the regexp *U and expand any
  * character ranges in it. The expanded regexp, if expansion is necessary,
  * is in U, and the old string is freed. If expansion is not needed or an

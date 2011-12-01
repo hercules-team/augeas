@@ -87,6 +87,13 @@ static void testGet(CuTest *tc) {
     CuAssertPtrNotNull(tc, value);
     CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
 
+    /* augeas should ignore trailing slashes in context */
+    r = aug_set(aug, "/augeas/context", "/augeas/version/");
+    r = aug_get(aug, "save/*[1]", &value);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertPtrNotNull(tc, value);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
     aug_close(aug);
 }
 
