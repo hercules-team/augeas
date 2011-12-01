@@ -29,6 +29,8 @@
 
 #include <unistd.h>
 
+#include <libxml/tree.h>
+
 static const char *abs_top_srcdir;
 static char *root;
 static char *loadpath;
@@ -398,6 +400,37 @@ static void testMv(CuTest *tc) {
     aug_close(aug);
 }
 
+
+static void testToXml(CuTest *tc) {
+    struct augeas *aug;
+    int r;
+    xmlNodePtr xmldoc;
+    const xmlChar *value;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_to_xml(aug, "/files/etc/passwd", &xmldoc, 0);
+    CuAssertRetSuccess(tc, r);
+
+    value = xmlGetProp(xmldoc, BAD_CAST "path");
+    CuAssertStrEquals(tc, (const char*)value, "/files/etc/passwd");
+
+    xmldoc = xmlFirstElementChild(xmldoc);
+    value = xmlGetProp(xmldoc, BAD_CAST "label");
+    CuAssertStrEquals(tc, (const char*)value, "passwd");
+
+    value = xmlGetProp(xmldoc, BAD_CAST "path");
+    CuAssertStrEquals(tc, (const char*)value, "/files/etc/passwd");
+
+    xmldoc = xmlFirstElementChild(xmldoc);
+    value = xmlGetProp(xmldoc, BAD_CAST "label");
+    CuAssertStrEquals(tc, (const char*)value, "root");
+
+    aug_close(aug);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -411,6 +444,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testDefNodeCreateMeta);
     SUITE_ADD_TEST(suite, testNodeInfo);
     SUITE_ADD_TEST(suite, testMv);
+    SUITE_ADD_TEST(suite, testToXml);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)
