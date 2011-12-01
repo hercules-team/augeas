@@ -54,7 +54,7 @@ static void print_version_info(struct augeas *aug) {
         goto error;
 
     fprintf(stderr, "augparse %s <http://augeas.net/>\n", version);
-    fprintf(stderr, "Copyright (C) 2009-2010 David Lutterkort\n");
+    fprintf(stderr, "Copyright (C) 2009-2011 David Lutterkort\n");
     fprintf(stderr, "License LGPLv2+: GNU LGPL version 2.1 or later\n");
     fprintf(stderr, "                 <http://www.gnu.org/licenses/lgpl-2.1.html>\n");
     fprintf(stderr, "This is free software: you are free to change and redistribute it.\n");
