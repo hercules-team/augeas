@@ -398,6 +398,21 @@ static int run_command(const char *line) {
     return result;
 }
 
+static void print_aug_error(void) {
+    if (aug_error(aug) == AUG_ENOMEM) {
+        fprintf(stderr, "Out of memory.\n");
+        return;
+    }
+    if (aug_error(aug) != AUG_NOERROR) {
+        fprintf(stderr, "error: %s\n", aug_error_message(aug));
+        if (aug_error_minor_message(aug) != NULL)
+            fprintf(stderr, "error: %s\n",
+                    aug_error_minor_message(aug));
+        if (aug_error_details(aug) != NULL)
+            fputs(aug_error_details(aug), stderr);
+    }
+}
+
 static int main_loop(void) {
     char *line = NULL;
     int ret = 0;
@@ -478,18 +493,7 @@ static int main_loop(void) {
             return ret;
         if (code < 0) {
             ret = -1;
-            if (aug_error(aug) == AUG_ENOMEM) {
-                fprintf(stderr, "Out of memory.\n");
-                return -1;
-            }
-            if (aug_error(aug) != AUG_NOERROR) {
-                fprintf(stderr, "error: %s\n", aug_error_message(aug));
-                if (aug_error_minor_message(aug) != NULL)
-                    fprintf(stderr, "error: %s\n",
-                            aug_error_minor_message(aug));
-                if (aug_error_details(aug) != NULL)
-                    fprintf(stderr, "error: %s\n", aug_error_details(aug));
-            }
+            print_aug_error();
         }
     }
 }
@@ -521,9 +525,11 @@ int main(int argc, char **argv) {
 
     parse_opts(argc, argv);
 
-    aug = aug_init(root, loadpath, flags);
-    if (aug == NULL) {
+    aug = aug_init(root, loadpath, flags|AUG_NO_ERR_CLOSE);
+    if (aug == NULL || aug_error(aug) != AUG_NOERROR) {
         fprintf(stderr, "Failed to initialize Augeas\n");
+        if (aug != NULL)
+            print_aug_error();
         exit(EXIT_FAILURE);
     }
     if (print_version) {

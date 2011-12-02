@@ -412,6 +412,7 @@ struct augeas *aug_init(const char *root, const char *loadpath,
     struct augeas *result;
     struct tree *tree_root = make_tree(NULL, NULL, NULL, NULL);
     int r;
+    bool close_on_error = true;
 
     if (tree_root == NULL)
         return NULL;
@@ -441,6 +442,10 @@ struct augeas *aug_init(const char *root, const char *loadpath,
     result->root = init_root(root);
 
     result->origin->children->label = strdup(s_augeas);
+
+    /* We are now initialized enough that we can dare return RESULT even
+     * when we encounter errors if the caller so wishes */
+    close_on_error = !(flags & AUG_NO_ERR_CLOSE);
 
     result->modpathz = NULL;
     result->nmodpath = 0;
@@ -538,8 +543,11 @@ struct augeas *aug_init(const char *root, const char *loadpath,
 
  error:
     api_exit(result);
-    aug_close(result);
-    return NULL;
+    if (close_on_error) {
+        aug_close(result);
+        result = NULL;
+    }
+    return result;
 }
 
 void tree_unlink_children(struct augeas *aug, struct tree *tree) {

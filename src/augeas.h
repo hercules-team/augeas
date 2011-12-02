@@ -49,7 +49,9 @@ enum aug_flags {
                                      what would have changed */
     AUG_NO_LOAD      = (1 << 5),  /* Do not load the tree from AUG_INIT */
     AUG_NO_MODL_AUTOLOAD = (1 << 6),
-    AUG_ENABLE_SPAN  = (1 << 7)   /* Track the span in the input of nodes */
+    AUG_ENABLE_SPAN  = (1 << 7),  /* Track the span in the input of nodes */
+    AUG_NO_ERR_CLOSE = (1 << 8)   /* Do not close automatically when
+                                     encountering error during aug_init */
 };
 
 /* Function: aug_init
@@ -63,11 +65,20 @@ enum aug_flags {
  * searched in. This is in addition to the standard load path and the
  * directories in AUGEAS_LENS_LIB
  *
- * FLAGS is a bitmask made up of values from AUG_FLAGS.
+ * FLAGS is a bitmask made up of values from AUG_FLAGS. The flag
+ * AUG_NO_ERR_CLOSE can be used to get more information on why
+ * initialization failed. If it is set in FLAGS, the caller must check that
+ * aug_error returns AUG_NOERROR before using the returned augeas handle
+ * for any other operation. If the handle reports any error, the caller
+ * should only call the aug_error functions an aug_close on this handle.
  *
  * Returns:
  * a handle to the Augeas tree upon success. If initialization fails,
- * returns NULL.
+ * returns NULL if AUG_NO_ERR_CLOSE is not set in FLAGS. If
+ * AUG_NO_ERR_CLOSE is set, might return an Augeas handle even on
+ * failure. In that case, caller must check for errors using augeas_error,
+ * and, if an error is reported, only use the handle with the aug_error
+ * functions and aug_close.
  */
 augeas *aug_init(const char *root, const char *loadpath, unsigned int flags);
 
