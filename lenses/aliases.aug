@@ -14,7 +14,7 @@ About: Lens Usage
    See <lns>.
 
 About: Configuration files
-   This lens applies to reprepro's uploaders files.
+   This lens applies to /etc/aliases.
 
 About: Examples
    The <Test_Aliases> file contains various examples and tests.
