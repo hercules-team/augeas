@@ -55,6 +55,7 @@ Group: Specific Modules  {
 
    File: Access  (access.aug)
    File: Aliases  (aliases.aug)
+   File: Approx (approx.aug)
    File: AptConf  (aptconf.aug)
    File: BackupPCHosts  (backuppchosts.aug)
    File: Cgconfig  (no auto-title, cgconfig.aug)
@@ -115,6 +116,7 @@ Group: Generic Modules  {
 Group: Tests and Examples  {
 
    File: Test_Access  (tests/test_access.aug)
+   File: Test_Approx  (tests/test_approx.aug)
    File: Test_Aliases  (tests/test_aliases.aug)
    File: Test_Reprepro_Uploaders  (tests/test_reprepro_uploaders.aug)
    File: Test_FAI_DiskConfig  (tests/test_faidiskconfig.aug)
