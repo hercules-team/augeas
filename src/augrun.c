@@ -116,9 +116,10 @@ static const char *arg_value(const struct command *cmd, const char *name) {
 }
 
 static char *nexttoken(struct command *cmd, char **line, bool path) {
-    char *r, *s;
+    char *r, *s, *w;
     char quot = '\0';
     int nbracket = 0;
+    int nescaped = 0;
 
     s = *line;
 
@@ -128,25 +129,55 @@ static char *nexttoken(struct command *cmd, char **line, bool path) {
         s += 1;
     }
     r = s;
+    w = s;
     while (*s) {
-        if (*s == '[') nbracket += 1;
-        if (*s == ']') nbracket -= 1;
-        if (nbracket < 0) {
-            ERR_REPORT(cmd, AUG_ECMDRUN, "unmatched [");
-            return NULL;
+        if (*s == '\\') {
+            switch (*(s+1)) {
+                case '[':
+                case ']':  /* pass both literally */
+                    nescaped = 2;
+                    break;
+                case ' ':
+                case '\t':
+                    if (quot) break;
+                case '\'':
+                case '"':
+                    if (quot && quot != *(s+1)) break;
+                case '\\':
+                    nescaped = 1;
+                    s += 1;
+                    break;
+                default:
+                    ERR_REPORT(cmd, AUG_ECMDRUN, "unknown escape sequence");
+                    return NULL;
+            }
         }
-        if ((quot && *s == quot)
-            || (!quot && isblank(*s) && (!path || nbracket == 0)))
-            break;
+
+        if (nescaped == 0) {
+            if (*s == '[') nbracket += 1;
+            if (*s == ']') nbracket -= 1;
+            if (nbracket < 0) {
+                ERR_REPORT(cmd, AUG_ECMDRUN, "unmatched [");
+                return NULL;
+            }
+            if ((quot && *s == quot)
+                || (!quot && isblank(*s) && (!path || nbracket == 0)))
+                break;
+        } else {
+            nescaped -= 1;
+        }
+
+        *w = *s;
         s += 1;
+        w += 1;
     }
     if (*s == '\0' && path && nbracket > 0) {
         ERR_REPORT(cmd, AUG_ECMDRUN, "unmatched [");
         return NULL;
     }
-    if (*s)
-        *s++ = '\0';
-    *line = s;
+    while (*w && w <= s)
+        *w++ = '\0';
+    *line = w;
     return r;
 }
 

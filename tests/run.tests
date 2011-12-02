@@ -266,24 +266,29 @@ test set-mixed-quotes2 2
 prints
   /files = a "mixed quotes" test
 
-# TODO: currently not supported
-#test set-escaped-quotes 2
-#  set /files "''\"''"
-#  get /files
-#prints
-#  /files = ''"''
+test set-escaped-quotes 2
+  set /files "''\"''"
+  get /files
+prints
+  /files = ''"''
 
-#test set-escaped-path 2
-#  set /white\ space value
-#  get /white\ space
-#prints
-#  /white space = value
+test set-escaped-path 2
+  set /white\ space\	tab value
+  get /white\ space\	tab
+prints
+  /white space	tab = value
 
-#test set-escaped-path-bracket 2
-#  set /white\ space/\[section value
-#  get /white\ space/\[section
-#prints
-#  /white space/[section = value
+test set-escaped-path-bracket 2
+  set /white\ space/\[section value
+  print /white\ space/\[section
+prints
+  /white space/[section = "value"
+
+test set-squote-escaped-bracket 2
+  set '/augeas/\[section' value
+  print '/augeas/\[section'
+prints
+  /augeas/[section = "value"
 
 test set-squote-escaped-path 2
   set '/white\ space' value
