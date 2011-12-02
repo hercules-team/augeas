@@ -49,6 +49,8 @@ static const char *const s_vars   = "variables";
 #define AUGEAS_META_PATHX_FUNC AUGEAS_META_TREE "/version/pathx/functions"
 
 static const char *const static_nodes[][2] = {
+    { AUGEAS_FILES_TREE, NULL },
+    { AUGEAS_META_TREE "/variables", NULL },
     { AUGEAS_META_TREE "/version", PACKAGE_VERSION },
     { AUGEAS_META_TREE "/version/save/mode[1]", AUG_SAVE_BACKUP_TEXT },
     { AUGEAS_META_TREE "/version/save/mode[2]", AUG_SAVE_NEWFILE_TEXT },
@@ -463,6 +465,20 @@ static int init_loadpath(struct augeas *aug, const char *loadpath) {
     return 0;
 }
 
+static void init_save_mode(struct augeas *aug) {
+    const char *v = AUG_SAVE_OVERWRITE_TEXT;
+
+    if (aug->flags & AUG_SAVE_NEWFILE) {
+        v = AUG_SAVE_NEWFILE_TEXT;
+    } else if (aug->flags & AUG_SAVE_BACKUP) {
+        v = AUG_SAVE_BACKUP_TEXT;
+    } else if (aug->flags & AUG_SAVE_NOOP) {
+        v = AUG_SAVE_NOOP_TEXT;
+    }
+
+    aug_set(aug, AUGEAS_META_SAVE_MODE, v);
+}
+
 struct augeas *aug_init(const char *root, const char *loadpath,
                         unsigned int flags) {
     struct augeas *result;
@@ -511,32 +527,23 @@ struct augeas *aug_init(const char *root, const char *loadpath,
        value we store internally, to avoid any problems with
        AUGEAS_META_ROOT getting changed. */
     aug_set(result, AUGEAS_META_ROOT, result->root);
+    ERR_BAIL(result);
 
     /* Set the default path context */
     aug_set(result, AUGEAS_CONTEXT, AUG_CONTEXT_DEFAULT);
+    ERR_BAIL(result);
 
-    for (int i=0; i < ARRAY_CARDINALITY(static_nodes); i++)
+    for (int i=0; i < ARRAY_CARDINALITY(static_nodes); i++) {
         aug_set(result, static_nodes[i][0], static_nodes[i][1]);
-
-    if (flags & AUG_SAVE_NEWFILE) {
-        aug_set(result, AUGEAS_META_SAVE_MODE, AUG_SAVE_NEWFILE_TEXT);
-    } else if (flags & AUG_SAVE_BACKUP) {
-        aug_set(result, AUGEAS_META_SAVE_MODE, AUG_SAVE_BACKUP_TEXT);
-    } else if (flags & AUG_SAVE_NOOP) {
-        aug_set(result, AUGEAS_META_SAVE_MODE, AUG_SAVE_NOOP_TEXT);
-    } else {
-        aug_set(result, AUGEAS_META_SAVE_MODE, AUG_SAVE_OVERWRITE_TEXT);
+        ERR_BAIL(result);
     }
 
-    if (flags & AUG_ENABLE_SPAN) {
-        aug_set(result, AUGEAS_SPAN_OPTION, AUG_ENABLE);
-    } else {
-        aug_set(result, AUGEAS_SPAN_OPTION, AUG_DISABLE);
-    }
+    init_save_mode(result);
+    ERR_BAIL(result);
 
-    /* Make sure we always have /files and /augeas/variables */
-    tree_path_cr(result->origin, 1, s_files);
-    tree_path_cr(result->origin, 2, s_augeas, s_vars);
+    const char *v = (flags & AUG_ENABLE_SPAN) ? AUG_ENABLE : AUG_DISABLE;
+    aug_set(result, AUGEAS_SPAN_OPTION, v);
+    ERR_BAIL(result);
 
     if (interpreter_init(result) == -1)
         goto error;
@@ -546,6 +553,7 @@ struct augeas *aug_init(const char *root, const char *loadpath,
         if (xform == NULL)
             continue;
         tree_from_transform(result, modl->name, xform);
+        ERR_BAIL(result);
     }
     if (!(result->flags & AUG_NO_LOAD))
         if (aug_load(result) < 0)
@@ -555,11 +563,12 @@ struct augeas *aug_init(const char *root, const char *loadpath,
     return result;
 
  error:
-    api_exit(result);
     if (close_on_error) {
         aug_close(result);
         result = NULL;
     }
+    if (result != NULL && result->api_entries > 0)
+        api_exit(result);
     return result;
 }
 
