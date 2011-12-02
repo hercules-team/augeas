@@ -1,3 +1,88 @@
+0.10.0 - 2011-12-02
+  - support relative paths by taking them relative to the value
+    of /augeas/context in all API functions where paths are used
+  - add aug_to_xml to API: transform tree(s) into XML, exposed as dump-xml
+    in aug_srun and augtool. Introduces dependency on libxml2
+  - fix regular expression escaping. Previously, /[\/]/ match either a
+    backslash or a slash. Now it only matches a slash
+  - path expressions: add function 'int' to convert a node value (string)
+    to an integer
+  - path expressions: make sure the regexp produced by empty nodesets from
+    regexp() and glob() matches nothing, rather than the empty word
+  - fix --autosave when running single command from command line, BZ 743023
+  - aug_srun: support 'insert' and 'move' as aliases for 'ins' and 'mv'
+  - aug_srun: allow escaping of spaces, quotes and brackets with \
+  - aug_init: accept AUG_NO_ERR_CLOSE flag; return augeas handle even when
+    intialization fails so that caller gets some details about why
+    initialization failed
+  - aug_srun: tolerate trailing white space in commands
+  - much improved, expanded documentation of many lenses
+  - always interpret lens filter paths as absolute, bug #238
+  - fix bug in libfa that would incorrectly calculate the difference of a
+    case sensistive and case insensitive regexp (/[a-zA-Z]+/ - /word/i
+    would match 'worD')
+  - new builtin 'regexp_match' for .aug files to make testing regexp
+    matching easier during development
+  - fix 'span' command, bug #220
+  - Lens changes/additions
+    * Access: parse user@host and (group) in users field; field separator
+      need not be surrounded by spaces
+    * Aliases: allow spaces before colons
+    * Aptconf: new lens for /etc/apt/apt.conf
+    * Aptpreferences: support origin entries
+    * Backuppchosts: new lens for /etc/backuppc/hosts, bug 233 (Adam Helms)
+    * Bbhosts: various fixes
+    * Cgconfig: id allowed too many characters
+    * Cron: variables aren't set like shellvars, semicolons are allowed in
+      email addresses; fix parsing of numeric fields, previously upper case
+      chars were allowed; support ranges in time specs
+    * Desktop: new lens for .desktop files
+    * Dhcpd: slashes must be double-quoted; add Red Hat's dhcpd.conf
+      locations
+    * Exports: allow empty options
+    * Fai_diskconfig: new lens for FAI disk_config files
+    * Fstab: allow ',' in file names, BZ 751342
+    * Host_access: new lens for /etc/hosts.{allow,deny}
+    * Host_conf: new lens for /etc/host.conf
+    * Hostname: new lens for /etc/hostname
+    * Hosts: also load /etc/mailname by default
+    * Iptables: allow digits in ipt_match keys, bug #224
+    * Json: fix whitespace handling, removing some cf ambiguities
+    * Kdump: new lens for /etc/kdump.conf (Roman Rakus)
+    * Keepalived: support many more flags, fields and blocks
+    * Krb5: support [pam] section, bug #225
+    * Logrotate: be more tolerant of whitespace in odd places
+    * Mdadm_conf: new lens for /etc/mdadm.conf
+    * Modprobe: Parse commands in install/remove stanzas (this introduces a
+      backwards incompatibility); Drop support for include as it is not
+      documented in manpages and no unit tests are shipped.
+    * Modules: new lens for /etc/modules
+    * Multipath: add support for seveal options in defaults section, bug #207
+    * Mysql: includedir statements are not part of sections; support
+      \!include; allow indentation of entries and flags
+    * Networks: new lens for /etc/networks
+    * Nrpe: allow '=' in commands, bug #218 (Marc Fournier)
+    * Php: allow indented entries
+    * Phpvars: allow double quotes in variable names; accept case
+      insensitive PHP tags; accept 'include_once'; allow empty lines at
+      EOF; support define() and bash-style and end-of-line comments
+    * Postfix_master: allow a lot more chars in words/commands, including
+      commas
+    * PuppetFileserver: support same-line comments and trailing whitespace,
+      bug #214
+    * Reprepo_uploaders: new lens for reprepro's uploaders files
+    * Resolv: permit end-of-line comments
+    * Schroot: new lens for /etc/schroot/schroot.conf
+    * Shellvars: greatly expand shell syntax understood; support various
+      syntactic constructs like if/then/elif/else, for, while, until, case,
+      and select; load /etc/blkid.conf by default
+    * Spacevars: add toplevel lens 'lns' for consistency
+    * Ssh: new lens for ssh_config (Jiri Suchomel)
+    * Stunnel: new lens for /etc/stunnel/stunnel.conf (Oliver Beattie)
+    * Sudoers: support more parameter flags/options, bug #143
+    * Xendconfsxp: lens for Xen configuration (Tom Limoncelli)
+    * Xinetd: allow spaces after '{'
+
 0.9.0 - 2011-07-25
   - augtool: keep history in ~/.augeas/history
   - add aug_srun API function; this makes it possible to run a sequence of

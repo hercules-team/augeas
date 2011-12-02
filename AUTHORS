@@ -6,6 +6,9 @@ Written by:
 
 Committers:
 
+  Matthew Booth               <mbooth@redhat.com>
+  Michael Chapman             <mike@very.puzzling.org>
+  Dominic Cleal               <dcleal@redhat.com>
   Francis Giraldeau           <francis.giraldeau@revolutionlinux.com>
   Raphael Pinson              <raphink@gmail.com>
 
@@ -16,17 +19,16 @@ Contributions by:
   Mathieu Arnold              <mat@FreeBSD.org>
   Sergio Ballestrero
   Sylvain Baubeau             <bob@glumol.com>
+  Oliver Beattie              <oliver@obeattie com>
   Anders F Björklund          <afb@users.sourceforge.net>
   Aurelien Bompard            <aurelien@bompard.org>
-  Matthew Booth               <mbooth@redhat.com>
-  Michael Chapman             <mike@very.puzzling.org>
-  Dominic Cleal               <dcleal@redhat.com>
   Lorenzo Dalrio              <lorenzo.dalrio@gmail.com>
   Francois Deppierraz         <francois.deppierraz@camptocamp.com>
   Dominique Dumont            <dominique.dumont@hp.com>
   Craig Dunn                  <craig@craigdunn.org>
   Free Ekanayaka              <free@64studio.com>
   Marc Fournier               <marc.fournier@camptocamp.com>
+  Adam Helms                  <helms.adam@gmail.com>
   Harald Hoyer                <harald@redhat.com>
   Shannon Hughes              <shughes@redhat.com>
   Richard W.M. Jones          <rjones@redhat.com>
@@ -48,6 +50,7 @@ Contributions by:
   Nahum Shalman               <nshalman elys com>
   Tim Stoop                   <tim.stoop@gmail.com>
   Laine Stump                 <laine@laine.org>
+  Jiri Suchomel               <jsuchome@suse.cz>
   Ivana Hutarova Varekova     <varekova@redhat.com>
   Frederik Wagner             <wagner@lrz.de>
   Dean Wilson                 <dwilson@blueowl.it>
