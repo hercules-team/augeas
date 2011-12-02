@@ -1,4 +1,25 @@
-(* Parse mail aliases in /etc/aliases *)
+(*
+Module: Aliases
+  Parses /etc/aliases
+
+Author: David Lutterkort <lutter@redhat.com>
+
+About: Reference
+  This lens tries to keep as close as possible to `man 5 aliases` where possible.
+
+About: License
+   This file is licenced under the LGPLv2+, like the rest of Augeas.
+
+About: Lens Usage
+   See <lns>.
+
+About: Configuration files
+   This lens applies to reprepro's uploaders files.
+
+About: Examples
+   The <Test_Aliases> file contains various examples and tests.
+*)
+
 module Aliases =
    autoload xfm
 
@@ -58,6 +79,7 @@ module Aliases =
                     value_list
                 ] . eol
 
+  (* View: lns *)
   let lns = (comment | empty | alias)*
 
   let xfm = transform lns (incl "/etc/aliases")

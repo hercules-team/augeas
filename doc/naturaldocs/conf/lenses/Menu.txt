@@ -54,7 +54,7 @@ Group: Main Site  {
 Group: Specific Modules  {
 
    File: Access  (access.aug)
-   File: aliases.aug  (aliases.aug)
+   File: Aliases  (aliases.aug)
    File: AptConf  (aptconf.aug)
    File: BackupPCHosts  (backuppchosts.aug)
    File: Cgconfig  (no auto-title, cgconfig.aug)
@@ -98,7 +98,6 @@ Group: Specific Modules  {
    File: Sshd  (sshd.aug)
    File: Sudoers  (sudoers.aug)
    File: Syslog  (syslog.aug)
-   File: Test_login_defs  (tests/test_login_defs.aug)
    File: Xinetd  (xinetd.aug)
    File: Xorg  (xorg.aug)
    File: Shellvars  (shellvars.aug)
@@ -116,10 +115,12 @@ Group: Generic Modules  {
 Group: Tests and Examples  {
 
    File: Test_Access  (tests/test_access.aug)
+   File: Test_Aliases  (tests/test_aliases.aug)
    File: Test_Reprepro_Uploaders  (tests/test_reprepro_uploaders.aug)
    File: Test_FAI_DiskConfig  (tests/test_faidiskconfig.aug)
    File: Test_IniFile  (tests/test_inifile.aug)
    File: Test_Keepalived  (tests/test_keepalived.aug)
+   File: Test_login_defs  (tests/test_login_defs.aug)
    File: Test_Xml  (tests/test_xml.aug)
    }  # Group: Tests and Examples
 
