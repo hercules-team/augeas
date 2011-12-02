@@ -793,7 +793,7 @@ static const struct command_def cmd_print_def = {
     .help = "Print entries in the tree.  If PATH is given, printing starts there,\n otherwise the whole tree is printed"
 };
 
-static void cmd_print_xml(struct command *cmd) {
+static void cmd_dump_xml(struct command *cmd) {
     const char *path = arg_value(cmd, "path");
     const char *filename = arg_value(cmd, "filename");
     xmlNodePtr xmldoc;
@@ -814,7 +814,7 @@ static void cmd_print_xml(struct command *cmd) {
     xmlFreeNode(xmldoc);
 }
 
-static const struct command_opt_def cmd_print_xml_opts[] = {
+static const struct command_opt_def cmd_dump_xml_opts[] = {
     { .type = CMD_PATH, .name = "path", .optional = true,
       .help = "print this subtree" },
     { .type = CMD_NONE, .name = "filename", .optional = true,
@@ -822,10 +822,10 @@ static const struct command_opt_def cmd_print_xml_opts[] = {
     CMD_OPT_DEF_LAST
 };
 
-static const struct command_def cmd_print_xml_def = {
-    .name = "print-xml",
-    .opts = cmd_print_xml_opts,
-    .handler = cmd_print_xml,
+static const struct command_def cmd_dump_xml_def = {
+    .name = "dump-xml",
+    .opts = cmd_dump_xml_opts,
+    .handler = cmd_dump_xml,
     .synopsis = "print a subtree as XML",
     .help = "Export entries in the tree as XML. If PATH is given, printing starts there,\n otherwise the whole tree is printed. If FILENAME is given, the XML is saved\n to the given file."
 };
@@ -946,7 +946,7 @@ static const struct command_def const *commands[] = {
     &cmd_mv_def,
     &cmd_move_def,
     &cmd_print_def,
-    &cmd_print_xml_def,
+    &cmd_dump_xml_def,
     &cmd_rm_def,
     &cmd_save_def,
     &cmd_set_def,

@@ -157,7 +157,7 @@ Print the value associated with PATH
 Print entries in the tree. If PATH is given, printing starts there,
 otherwise the whole tree is printed
 
-=item B<print-xml> I<[E<lt>PATHE<gt>]> I<[E<lt>FILENAMEE<gt>]>
+=item B<dump-xml> I<[E<lt>PATHE<gt>]> I<[E<lt>FILENAMEE<gt>]>
 
 Print entries in the tree as XML. If PATH is given, printing starts there,
 otherwise the whole tree is printed. If FILENAME is given, the XML is saved
