@@ -80,7 +80,7 @@ bin:		root , ruth,
       set "/3/value/2" "ruth"
     = *
 
-  (* Variable: nocommand
+  (* Variable: nocomma
      Don't have to have whitespace after a comma *)
   let nocomma = "alias: target1,target2\n"
 
