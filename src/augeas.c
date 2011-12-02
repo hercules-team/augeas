@@ -297,42 +297,55 @@ struct tree *tree_append(struct tree *parent,
     return result;
 }
 
+static struct tree *tree_append_s(struct tree *parent,
+                                  const char *l0, char *v) {
+    struct tree *result;
+    char *l = strdup(l0);
+
+    if (l == NULL)
+        return NULL;
+    result = tree_append(parent, l, v);
+    if (result == NULL)
+        free(l);
+    return result;
+}
+
 static struct tree *tree_from_transform(struct augeas *aug,
                                         const char *modname,
                                         struct transform *xfm) {
     struct tree *meta = tree_child_cr(aug->origin, s_augeas);
-    struct tree *load = NULL, *txfm = NULL;
-    char *m = NULL, *q = NULL;
+    struct tree *load = NULL, *txfm = NULL, *t;
+    char *v = NULL;
+    int r;
 
-    if (meta == NULL)
-        goto error;
+    ERR_NOMEM(meta == NULL, aug);
 
     load = tree_child_cr(meta, s_load);
-    if (load == NULL)
-            goto error;
-    if (modname != NULL) {
-        m = strdup(modname);
-        if (m == NULL)
-            goto error;
-    } else {
-        m = strdup("_");
-    }
-    txfm = tree_append(load, m, NULL);
-    if (txfm == NULL)
-        goto error;
+    ERR_NOMEM(load == NULL, aug);
 
-    if (asprintf(&q, "@%s", modname) < 0)
-        goto error;
+    if (modname == NULL)
+        modname = "_";
 
-    m = strdup("lens");
-    tree_append(txfm, m, q);
+    txfm = tree_append_s(load, modname, NULL);
+    ERR_NOMEM(txfm == NULL, aug);
+
+    r = asprintf(&v, "@%s", modname);
+    ERR_NOMEM(r < 0, aug);
+
+    t = tree_append_s(txfm, "lens", v);
+    ERR_NOMEM(t == NULL, aug);
+    v = NULL;
+
     list_for_each(f, xfm->filter) {
-        char *glob = strdup(f->glob->str);
-        char *l = f->include ? strdup("incl") : strdup("excl");
-        tree_append(txfm, l, glob);
+        const char *l = f->include ? strdup("incl") : strdup("excl");
+        v = strdup(f->glob->str);
+        ERR_NOMEM(v == NULL, aug);
+        t = tree_append_s(txfm, l, v);
+        ERR_NOMEM(t == NULL, aug);
     }
     return txfm;
  error:
+    free(v);
     tree_unlink(txfm);
     return NULL;
 }
