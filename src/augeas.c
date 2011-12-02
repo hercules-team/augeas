@@ -405,6 +405,64 @@ static int init_root(struct augeas *aug, const char *root0) {
     return 0;
 }
 
+static int init_loadpath(struct augeas *aug, const char *loadpath) {
+    int r;
+
+    aug->modpathz = NULL;
+    aug->nmodpath = 0;
+    if (loadpath != NULL) {
+        r = argz_add_sep(&aug->modpathz, &aug->nmodpath,
+                         loadpath, PATH_SEP_CHAR);
+        if (r != 0)
+            return -1;
+    }
+    char *env = getenv(AUGEAS_LENS_ENV);
+    if (env != NULL) {
+        r = argz_add_sep(&aug->modpathz, &aug->nmodpath,
+                         env, PATH_SEP_CHAR);
+        if (r != 0)
+            return -1;
+    }
+    if (!(aug->flags & AUG_NO_STDINC)) {
+        r = argz_add(&aug->modpathz, &aug->nmodpath, AUGEAS_LENS_DIR);
+        if (r != 0)
+            return -1;
+        r = argz_add(&aug->modpathz, &aug->nmodpath,
+                     AUGEAS_LENS_DIST_DIR);
+        if (r != 0)
+            return -1;
+    }
+    /* Clean up trailing slashes */
+    if (aug->nmodpath > 0) {
+        argz_stringify(aug->modpathz, aug->nmodpath, PATH_SEP_CHAR);
+        char *s, *t;
+        const char *e = aug->modpathz + strlen(aug->modpathz);
+        for (s = aug->modpathz, t = aug->modpathz; s < e; s++) {
+            char *p = s;
+            if (*p == '/') {
+                while (*p == '/') p += 1;
+                if (*p == '\0' || *p == PATH_SEP_CHAR)
+                    s = p;
+            }
+            if (t != s)
+                *t++ = *s;
+            else
+                t += 1;
+        }
+        if (t != s) {
+            *t = '\0';
+        }
+        s = aug->modpathz;
+        aug->modpathz = NULL;
+        r = argz_create_sep(s, PATH_SEP_CHAR, &aug->modpathz,
+                            &aug->nmodpath);
+        free(s);
+        if (r != 0)
+            return -1;
+    }
+    return 0;
+}
+
 struct augeas *aug_init(const char *root, const char *loadpath,
                         unsigned int flags) {
     struct augeas *result;
@@ -446,52 +504,8 @@ struct augeas *aug_init(const char *root, const char *loadpath,
      * when we encounter errors if the caller so wishes */
     close_on_error = !(flags & AUG_NO_ERR_CLOSE);
 
-    result->modpathz = NULL;
-    result->nmodpath = 0;
-    if (loadpath != NULL) {
-        r = argz_add_sep(&result->modpathz, &result->nmodpath,
-                         loadpath, PATH_SEP_CHAR);
-        ERR_NOMEM(r != 0, result);
-    }
-    char *env = getenv(AUGEAS_LENS_ENV);
-    if (env != NULL) {
-        r = argz_add_sep(&result->modpathz, &result->nmodpath,
-                         env, PATH_SEP_CHAR);
-        ERR_NOMEM(r != 0, result);
-    }
-    if (!(flags & AUG_NO_STDINC)) {
-        r = argz_add(&result->modpathz, &result->nmodpath, AUGEAS_LENS_DIR);
-        ERR_NOMEM(r != 0, result);
-        r = argz_add(&result->modpathz, &result->nmodpath,
-                     AUGEAS_LENS_DIST_DIR);
-        ERR_NOMEM(r != 0, result);
-    }
-    /* Clean up trailing slashes */
-    if (result->nmodpath > 0) {
-        argz_stringify(result->modpathz, result->nmodpath, PATH_SEP_CHAR);
-        char *s, *t;
-        const char *e = result->modpathz + strlen(result->modpathz);
-        for (s = result->modpathz, t = result->modpathz; s < e; s++) {
-            char *p = s;
-            if (*p == '/') {
-                while (*p == '/') p += 1;
-                if (*p == '\0' || *p == PATH_SEP_CHAR)
-                    s = p;
-            }
-            if (t != s)
-                *t++ = *s;
-            else
-                t += 1;
-        }
-        if (t != s) {
-            *t = '\0';
-        }
-        s = result->modpathz;
-        r = argz_create_sep(s, PATH_SEP_CHAR, &result->modpathz,
-                            &result->nmodpath);
-        free(s);
-        ERR_NOMEM(r != 0, result);
-    }
+    r = init_loadpath(result, loadpath);
+    ERR_NOMEM(r < 0, result);
 
     /* We report the root dir in AUGEAS_META_ROOT, but we only use the
        value we store internally, to avoid any problems with
