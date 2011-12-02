@@ -287,26 +287,6 @@ struct tree *tree_root_ctx(const struct augeas *aug) {
     goto done;
 }
 
-static const char *init_root(const char *root0) {
-    char *root;
-
-    if (root0 == NULL)
-        root0 = getenv(AUGEAS_ROOT_ENV);
-    if (root0 == NULL || root0[0] == '\0')
-        root0 = "/";
-    root = strdup(root0);
-    if (root == NULL)
-        return NULL;
-    if (root[strlen(root)-1] != SEP) {
-        if (REALLOC_N(root, strlen(root) + 2) == -1) {
-            FREE(root);
-            return NULL;
-        }
-        strcat(root, "/");
-    }
-    return root;
-}
-
 struct tree *tree_append(struct tree *parent,
                          char *label, char *value) {
     struct tree *result = make_tree(label, value, parent, NULL);
@@ -407,6 +387,24 @@ void api_exit(const struct augeas *aug) {
     }
 }
 
+static int init_root(struct augeas *aug, const char *root0) {
+    if (root0 == NULL)
+        root0 = getenv(AUGEAS_ROOT_ENV);
+    if (root0 == NULL || root0[0] == '\0')
+        root0 = "/";
+
+    aug->root = strdup(root0);
+    if (aug->root == NULL)
+        return -1;
+
+    if (aug->root[strlen(aug->root)-1] != SEP) {
+        if (REALLOC_N(aug->root, strlen(aug->root) + 2) < 0)
+            return -1;
+        strcat((char *) aug->root, "/");
+    }
+    return 0;
+}
+
 struct augeas *aug_init(const char *root, const char *loadpath,
                         unsigned int flags) {
     struct augeas *result;
@@ -439,7 +437,8 @@ struct augeas *aug_init(const char *root, const char *loadpath,
 
     result->flags = flags;
 
-    result->root = init_root(root);
+    r = init_root(result, root);
+    ERR_NOMEM(r < 0, result);
 
     result->origin->children->label = strdup(s_augeas);
 
