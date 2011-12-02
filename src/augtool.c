@@ -408,8 +408,10 @@ static void print_aug_error(void) {
         if (aug_error_minor_message(aug) != NULL)
             fprintf(stderr, "error: %s\n",
                     aug_error_minor_message(aug));
-        if (aug_error_details(aug) != NULL)
+        if (aug_error_details(aug) != NULL) {
             fputs(aug_error_details(aug), stderr);
+            fprintf(stderr, "\n");
+        }
     }
 }
 
