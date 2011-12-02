@@ -1569,7 +1569,7 @@ static int tree_to_xml(struct pathx *p, xmlNode **xml, const char *pathin) {
     *xml = xmlNewNode(NULL, BAD_CAST "augeas");
     if (*xml == NULL)
         goto error;
-    expr = xmlSetProp(*xml, BAD_CAST "path", BAD_CAST pathin);
+    expr = xmlSetProp(*xml, BAD_CAST "match", BAD_CAST pathin);
     if (expr == NULL)
         goto error;
 

@@ -421,7 +421,7 @@ static void testToXml(CuTest *tc) {
     r = aug_to_xml(aug, "/files/etc/passwd", &xmldoc, 0);
     CuAssertRetSuccess(tc, r);
 
-    value = xmlGetProp(xmldoc, BAD_CAST "path");
+    value = xmlGetProp(xmldoc, BAD_CAST "match");
     CuAssertStrEquals(tc, (const char*)value, "/files/etc/passwd");
 
     xmldoc = xmlFirstElementChild(xmldoc);
