@@ -88,6 +88,7 @@ let entry      = Util.indent
                  | variable
                  | include
                  | define
+                 | simple_function "include"
                  | simple_function "include_once"
                  | simple_function "echo" )
 

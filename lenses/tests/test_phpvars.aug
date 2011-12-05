@@ -21,6 +21,7 @@ $theme[0][\"PATH\"] = SM_PATH . 'themes/default_theme.php';
 $theme[0]['XPATH'] = '/some//x/path' ;
 define ('MYVAR', ROOT . 'some value'); # end-of line comment
 include_once( ROOT . \"/path/to/conf\"	 );
+include( ROOT . \"/path/to/conf\"	 );
 @include SM_PATH . 'config/config_local.php';
  ?>
 "
@@ -52,4 +53,5 @@ test Phpvars.lns get conf =
     { "value" = "ROOT . 'some value'" }
     { "#comment" = "end-of line comment" } }
   { "include_once" = "ROOT . \"/path/to/conf\"" }
+  { "include" = "ROOT . \"/path/to/conf\"" }
   { "@include" = "SM_PATH . 'config/config_local.php'" }
