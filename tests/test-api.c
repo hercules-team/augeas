@@ -435,6 +435,15 @@ static void testToXml(CuTest *tc) {
     value = xmlGetProp(xmldoc, BAD_CAST "label");
     CuAssertStrEquals(tc, "root", (const char*)value);
 
+    /* Bug #239 */
+    r = aug_set(aug, "/augeas/context", "/files/etc/passwd");
+    CuAssertRetSuccess(tc, r);
+    r = aug_to_xml(aug, ".", &xmldoc, 0);
+    CuAssertRetSuccess(tc, r);
+    xmldoc = xmlFirstElementChild(xmldoc);
+    value = xmlGetProp(xmldoc, BAD_CAST "label");
+    CuAssertStrEquals(tc, "passwd", (const char*)value);
+
     aug_close(aug);
 }
 
