@@ -274,5 +274,6 @@ let lns = (comment
            | part_policy )*
 
 let filter     = incl "/etc/mdadm.conf"
+               . incl "/etc/mdadm/mdadm.conf"
 
 let xfm        = transform lns filter
