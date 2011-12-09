@@ -16,6 +16,7 @@ Building from git
     * Bison
     * Flex
     * readline-devel
+    * libxml2-devel
     * libselinux-devel (optional)
 
   Augeas uses gnulib, and you need a checkout of gnulib. The build scripts
