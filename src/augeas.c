@@ -276,10 +276,19 @@ struct tree *tree_root_ctx(const struct augeas *aug) {
     p = pathx_aug_parse(aug, aug->origin, NULL, ctx_path, true);
     ERR_BAIL(aug);
 
-    r = pathx_find_one(p, &match);
-    ERR_THROW(r > 1, aug, AUG_EMMATCH,
-              "There are %d nodes matching the context %s, expecting one",
-              r, ctx_path);
+    if (pathx_first(p) == NULL) {
+        r = pathx_expand_tree(p, &match);
+        if (r < 0)
+            goto done;
+        r = tree_set_value(match, NULL);
+        if (r < 0)
+            goto done;
+    } else {
+        r = pathx_find_one(p, &match);
+        ERR_THROW(r > 1, aug, AUG_EMMATCH,
+                  "There are %d nodes matching the context %s, expecting one",
+                  r, ctx_path);
+    }
 
  done:
     free_pathx(p);

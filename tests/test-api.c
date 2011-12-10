@@ -94,6 +94,14 @@ static void testGet(CuTest *tc) {
     CuAssertPtrNotNull(tc, value);
     CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
 
+    /* augeas should create non-existent context path */
+    r = aug_set(aug, "/augeas/context", "/context/foo");
+    r = aug_set(aug, "bar", "value");
+    r = aug_get(aug, "/context/foo/bar", &value);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertPtrNotNull(tc, value);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
     aug_close(aug);
 }
 
