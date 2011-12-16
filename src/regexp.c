@@ -50,7 +50,7 @@ char *regexp_escape(const struct regexp *r) {
     ret = fa_restrict_alphabet(r->pattern->str, strlen(r->pattern->str),
                                &nre, &nre_len, 2, 1);
     if (ret == 0) {
-        pat = escape(nre, nre_len);
+        pat = escape(nre, nre_len, RX_ESCAPES);
         free(nre);
     }
 #endif
