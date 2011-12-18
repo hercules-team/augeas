@@ -87,7 +87,8 @@ let options =
       let options_entry = Build.key_value ("ndots"|"timeout"|"attempts") 
                                           (Util.del_str ":") (store Rx.integer)
                         | Build.flag ("debug"|"rotate"|"no-check-names"
-                                     |"inet6"|"ip6-bytestring"|"edns0")
+                                     |"inet6"|"ip6-bytestring"|"edns0"
+				     |"single-request-reopen")
                         | ip6_dotint
 
             in Build.key_value_line_comment
