@@ -38,7 +38,7 @@ module Aliases =
     * a command can contain spaces, if enclosed in double quotes, the case
     * without spaces is taken care with <word>
     *)
-   let command = /\|([^", \t\n]+|"[^"\n]+")/
+   let command = /(\|([^", \t\n]+|"[^"\n]+"))|("\|[^"\n]+")/
 
    (* Group: Comments and empty lines *)
 

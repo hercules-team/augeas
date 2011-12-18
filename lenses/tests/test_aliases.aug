@@ -92,6 +92,13 @@ bin:		root , ruth,
         { "value" = "target1" }
         { "value" = "target2" } }
 
+  (* Test: Aliases.lns
+     Ticket #229: commands can be fully enclosed in quotes *)
+  test Aliases.lns get "somebody: \"|exit 67\"\n" =
+    { "1"
+        { "name" = "somebody" }
+        { "value" = "\"|exit 67\"" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
