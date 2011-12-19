@@ -97,6 +97,7 @@ Group: Specific Modules  {
    File: Solaris_System  (solaris_system.aug)
    File: Ssh  (ssh.aug)
    File: Sshd  (sshd.aug)
+   File: Sssd  (sssd.aug)
    File: Sudoers  (sudoers.aug)
    File: Syslog  (syslog.aug)
    File: Xinetd  (xinetd.aug)

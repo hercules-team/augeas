@@ -106,6 +106,7 @@ lens_tests =			\
   lens-squid.sh			\
   lens-ssh.sh			\
   lens-sshd.sh			\
+  lens-sssd.sh			\
   lens-stunnel.sh			\
   lens-sysconfig.sh		\
   lens-syslog.sh		\
