@@ -73,8 +73,15 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-remi
   let cont = "[main]\nbaseurl=url1\n   url2 , url3\n   \n"
 
   test Yum.lns get yum_simple =
-    { "sec1" {} { "key" = "value" } }
-    { "sec-two" { "key1" = "value1" } {} { "key2" = "value2" } }
+  { "sec1"
+    { "#comment" = "comment" }
+    { "key" = "value" }
+  }
+  { "sec-two"
+    { "key1" = "value1" }
+    { "#comment" = "comment" }
+    { "key2" = "value2" }
+  }
 
   test Yum.lns put yum_conf after
       rm "main"
@@ -120,7 +127,7 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-remi
   test Yum.lns get "[repo]\nbaseurl=url1\nbaseurl=url2\n" = *
 
   (* This checks that we take the right branch in the section lens.     *)
-  test Yum.section get "[repo]\nname=A name\nbaseurl=url1\n" =
+  test Yum.record get "[repo]\nname=A name\nbaseurl=url1\n" =
     { "repo"
         { "name" = "A name" }
         { "baseurl" = "url1" } }
@@ -135,7 +142,7 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-remi
   { "fedora"
     { "name" = "Fedora $releasever - $basearch" }
     { "failovermethod" = "priority" }
-    {  }
+    { "#comment" = "baseurl=http://download.fedora.redhat.com/pub/fedora/linux/releases/$releasever/Everything/$basearch/os/" }
     { "mirrorlist" = "http://mirrors.fedoraproject.org/mirrorlist?repo=fedora-$releasever&arch=$basearch" }
     { "enabled" = "1" }
     { "gpgcheck" = "1" }
@@ -146,7 +153,7 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-remi
   { "fedora-debuginfo"
     { "name" = "Fedora $releasever - $basearch - Debug" }
     { "failovermethod" = "priority" }
-    {  }
+    { "#comment" = "baseurl=http://download.fedora.redhat.com/pub/fedora/linux/releases/$releasever/Everything/$basearch/debug/" }
     { "mirrorlist" = "http://mirrors.fedoraproject.org/mirrorlist?repo=fedora-debug-$releasever&arch=$basearch" }
     { "enabled" = "0" }
     { "gpgcheck" = "1" }
@@ -157,14 +164,13 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-remi
   { "fedora-source"
     { "name" = "Fedora $releasever - Source" }
     { "failovermethod" = "priority" }
-    {  }
+    { "#comment" = "baseurl=http://download.fedora.redhat.com/pub/fedora/linux/releases/$releasever/Everything/source/SRPMS/" }
     { "mirrorlist" = "http://mirrors.fedoraproject.org/mirrorlist?repo=fedora-source-$releasever&arch=$basearch" }
     { "enabled" = "0" }
     { "gpgcheck" = "1" }
     { "gpgkey" = "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora" }
     { "gpgkey" = "file:///etc/pki/rpm-gpg/RPM-GPG-KEY" }
   }
-
 
 
   test Yum.lns get yum_repo2 =
