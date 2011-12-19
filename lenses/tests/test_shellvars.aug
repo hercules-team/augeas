@@ -223,6 +223,11 @@ esac\n" =
     { ".source" = "/tmp/file$i" }
   }
 
+  (* Return *)
+  test Shellvars.lns get "return\nreturn 2\n" =
+  { "@return" }
+  { "@return" = "2" }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

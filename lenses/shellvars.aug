@@ -79,6 +79,12 @@ module Shellvars =
   let keyword (kw:string) = Util.indent . Util.del_str kw
   let keyword_label (kw:string) (lbl:string) = keyword kw . label lbl
 
+  let return =
+    [ Util.indent . label "@return"
+      . Util.del_str "return"
+      . ( Util.del_ws_spc . store Rx.integer )?
+      . comment_or_eol ]
+
 
 (************************************************************************
  * Group:                 CONDITIONALS AND LOOPS
@@ -127,7 +133,7 @@ module Shellvars =
 
   let rec rec_entry =
     let entry = comment | empty | source | kv
-              | unset | bare_export | builtin | rec_entry in
+              | unset | bare_export | builtin | return | rec_entry in
         cond_if entry
       | loop_for entry
       | loop_select entry
@@ -135,7 +141,7 @@ module Shellvars =
       | loop_until entry
       | case entry
 
-  let lns = (comment | empty | source | kv | unset | bare_export | builtin | rec_entry) *
+  let lns = (comment | empty | source | kv | unset | bare_export | builtin | return | rec_entry) *
 
   let sc_incl (n:string) = (incl ("/etc/sysconfig/" . n))
   let filter_sysconfig =
