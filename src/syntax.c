@@ -1443,6 +1443,7 @@ static struct value *compile_minus(struct term *exp, struct ctx *ctx) {
             v->regexp = re;
         }
     } else {
+        v = NULL;
         fatal_error(info, "Tried to subtract a %s and a %s to yield a %s",
                     type_name(exp->left->type), type_name(exp->right->type),
                     type_name(t));
@@ -1549,6 +1550,7 @@ static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
         struct lens *l2 = v2->lens;
         v = lns_make_concat(ref(info), ref(l1), ref(l2), LNS_TYPE_CHECK(ctx));
     } else {
+        v = NULL;
         fatal_error(info, "Tried to concat a %s and a %s to yield a %s",
                     type_name(exp->left->type), type_name(exp->right->type),
                     type_name(t));
