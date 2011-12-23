@@ -179,6 +179,8 @@ static int filter_generate(struct tree *xfm, const char *root,
     int gl_flags = glob_flags;
     int r;
     int ret = 0;
+    char **pathv = NULL;
+    int pathc = 0;
 
     *nmatches = 0;
     *matches = NULL;
@@ -199,8 +201,8 @@ static int filter_generate(struct tree *xfm, const char *root,
         gl_flags |= GLOB_APPEND;
     }
 
-    char **pathv = NULL;
-    int pathc = globbuf.gl_pathc, pathind = 0;
+    pathc = globbuf.gl_pathc;
+    int pathind = 0;
 
     if (ALLOC_N(pathv, pathc) < 0)
         goto error;
