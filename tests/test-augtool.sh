@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 TOP_DIR=$(cd $(dirname $0)/.. && pwd)
 TOP_BUILDDIR="$abs_top_builddir"
@@ -12,6 +12,9 @@ export PATH="$TOP_BUILDDIR/src:${PATH}"
 
 export AUGEAS_ROOT="$TOP_BUILDDIR/build/test-augtool"
 export AUGEAS_LENS_LIB="$TOP_SRCDIR/lenses"
+
+GSED=sed
+type gsed 2>&- >&2 && GSED=gsed
 
 fail() {
     [ -z "$failed" ] && echo FAIL
@@ -67,13 +70,13 @@ quit"
         fail "Expected file $file.augnew"
     else
         act=$(diff -u "$abs_file" "${abs_file}.augnew" \
-            | sed -r -e "s/^ $//;s!^(---|\+\+\+) ${AUGEAS_ROOT}($file(\.augnew)?)(.*)\$!\1 \2!;s/\\t/\\\\t/g")
+            | $GSED -r -e "s/^ $//;s!^(---|\+\+\+) ${AUGEAS_ROOT}($file(\.augnew)?)(.*)\$!\1 \2!;s/\\t/\\\\t/g")
 
         if [ "$act" != "$diff" ] ; then
             fail "$act"
         fi
     fi
-    other_files=$(find "$AUGEAS_ROOT" -name \*.augnew -not -path "$abs_file.augnew")
+    other_files=$(find "$AUGEAS_ROOT" -name \*.augnew | grep -v "$abs_file.augnew")
     [ -n "$other_files" ] && fail "Unexpected file(s) $other_files"
     [ -z "$failed" ] && echo OK
 done

@@ -13,7 +13,7 @@ mkdir -p $(dirname $hosts)
 }
 
 stat_inode() {
-ls -il $1 | cut -d ' ' -f 1
+ls -il $1 | awk '{ print $1 }'
 }
 
 AUGTOOL="augtool --nostdinc -r $root -I $abs_top_srcdir/lenses"

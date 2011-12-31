@@ -437,7 +437,8 @@ static void testReloadExternalMod(CuTest *tc) {
     r = aug_get(aug, "/augeas/root", &aug_root);
     CuAssertIntEquals(tc, 1, r);
 
-    run(tc, "sed -i -e '1,2d' %setc/hosts", aug_root);
+    run(tc, "sed -e '1,2d' %setc/hosts > %setc/hosts.new", aug_root, aug_root);
+    run(tc, "mv %setc/hosts.new %setc/hosts", aug_root, aug_root);
 
     /* Reload and save again */
     r = aug_load(aug);
