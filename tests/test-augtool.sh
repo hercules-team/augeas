@@ -14,7 +14,7 @@ export AUGEAS_ROOT="$TOP_BUILDDIR/build/test-augtool"
 export AUGEAS_LENS_LIB="$TOP_SRCDIR/lenses"
 
 GSED=sed
-type gsed 2>&- >&2 && GSED=gsed
+type gsed >/dev/null 2>&1 && GSED=gsed
 
 fail() {
     [ -z "$failed" ] && echo FAIL
