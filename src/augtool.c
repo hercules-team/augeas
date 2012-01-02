@@ -423,8 +423,6 @@ static int main_loop(void) {
     bool end_reached = false;
     bool get_line = true;
     bool in_interactive = false;
-    // make readline silent by default
-    rl_outstream = fopen("/dev/null", "w");
 
     if (inputfile) {
         if (freopen(inputfile, "r", stdin) == NULL) {
@@ -437,10 +435,12 @@ static int main_loop(void) {
         }
     }
 
+    // make readline silent by default
     echo = echo || isatty(fileno(stdin));
-
     if (echo)
         rl_outstream = NULL;
+    else
+        rl_outstream = fopen("/dev/null", "w");
 
     while(1) {
         if (get_line) {
@@ -451,22 +451,31 @@ static int main_loop(void) {
 
         if (line == NULL) {
             if (!isatty(fileno(stdin)) && interactive && !in_interactive) {
-               in_interactive = true;
-               echo = true;
-               // reopen in and out streams
-               if ((rl_instream = fopen("/dev/tty", "r")) == NULL) {
-                   perror("Failed to open terminal for reading");
-                   return -1;
-               }
-               if (rl_outstream != NULL) {
-                   fclose(rl_outstream);
-                   rl_outstream = NULL;
-               }
-               if ((rl_outstream = fopen("/dev/stdout", "w")) == NULL) {
-                   perror("Failed to reopen stdout");
-                   return -1;
-               }
-               continue;
+                in_interactive = true;
+                if (echo)
+                    printf("\n");
+                echo = true;
+
+                // reopen in stream
+                if ((rl_instream = fopen("/dev/tty", "r")) == NULL) {
+                    perror("Failed to open terminal for reading");
+                    return -1;
+                }
+
+                // reopen stdout and stream to a tty if originally silenced or
+                // not connected to a tty, for full interactive mode
+                if (rl_outstream == NULL || !isatty(fileno(rl_outstream))) {
+                    if (rl_outstream != NULL) {
+                        fclose(rl_outstream);
+                        rl_outstream = NULL;
+                    }
+                    if (freopen("/dev/tty", "w", stdout) == NULL) {
+                        perror("Failed to reopen stdout");
+                        return -1;
+                    }
+                    rl_outstream = stdout;
+                }
+                continue;
             }
 
             if (auto_save) {
