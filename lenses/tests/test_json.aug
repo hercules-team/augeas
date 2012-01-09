@@ -30,6 +30,11 @@ test lns get "{ \"0\": true, \"1\":false }" =
 test lns get "{\"menu\": \"entry one\"}" =
   { "dict" { "entry" = "menu" { "string" = "entry one" } } }
 
+test lns get "[ ]" =
+  { "array" }
+
+test lns get "{}" =
+  { "dict" }
 
 let s = "{\"menu\": {
   \"id\": \"file\",
