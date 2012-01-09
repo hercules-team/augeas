@@ -29,7 +29,7 @@ let str_store =
   let q =  del "\"" "\"" in
   q . store /[^"]*/ . q . ws             (* " Emacs, relax *)
 
-let number = [ label "number" . store /-?[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?/ ]
+let number = [ label "number" . store /-?[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?/ . ws ]
 let str = [ label "string" . str_store ]
 
 let const (r:regexp) = [ label "const" . store r . ws ]
