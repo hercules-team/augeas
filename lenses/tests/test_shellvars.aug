@@ -1,6 +1,8 @@
 (* Test for shell lens *)
 module Test_shellvars =
 
+  let lns = Shellvars.lns
+
   let eth_static = "# Intel Corporation PRO/100 VE Network Connection
 DEVICE=eth0
 BOOTPROTO=static
@@ -16,7 +18,7 @@ unset ONBOOT    #   We do not want this var
 
   let key_brack = "SOME_KEY[1]=\nDEVICE=eth0\n"
 
-  test Shellvars.lns get eth_static =
+  test lns get eth_static =
     { "#comment" = "Intel Corporation PRO/100 VE Network Connection" }
     { "DEVICE" = "eth0" }
     { "BOOTPROTO" = "static" }
@@ -31,7 +33,7 @@ unset ONBOOT    #   We do not want this var
     { "@unset"   = "ONBOOT"
         { "#comment" = "We do not want this var" } }
 
-  test Shellvars.lns put eth_static after
+  test lns put eth_static after
       set "BOOTPROTO" "dhcp" ;
       rm "IPADDR" ;
       rm "BROADCAST" ;
@@ -44,100 +46,100 @@ HWADDR=ab:cd:ef:12:34:56
 #DHCP_HOSTNAME=host.example.com
 unset ONBOOT    #   We do not want this var
 "
-  test Shellvars.lns get empty_val =
+  test lns get empty_val =
     { "EMPTY" = "" } { "DEVICE" = "eth0" }
 
-  test Shellvars.lns get key_brack =
+  test lns get key_brack =
     { "SOME_KEY[1]" = "" } { "DEVICE" = "eth0" }
 
-  test Shellvars.lns get "smartd_opts=\"-q never\"\n" =
+  test lns get "smartd_opts=\"-q never\"\n" =
     { "smartd_opts" = "\"-q never\"" }
 
-  test Shellvars.lns get "var=val  \n" = { "var" = "val" }
+  test lns get "var=val  \n" = { "var" = "val" }
 
-  test Shellvars.lns get ". /etc/java/java.conf\n" =
+  test lns get ". /etc/java/java.conf\n" =
     { ".source" = "/etc/java/java.conf" }
 
   (* Quoted strings and other oddities *)
-  test Shellvars.lns get "var=\"foo 'bar'\"\n" =
+  test lns get "var=\"foo 'bar'\"\n" =
     { "var" = "\"foo 'bar'\"" }
 
-  test Shellvars.lns get "var='Some \"funny\" value'\n" =
+  test lns get "var='Some \"funny\" value'\n" =
     { "var" = "'Some \"funny\" value'" }
 
-  test Shellvars.lns get "var=\"\\\"\"\n" =
+  test lns get "var=\"\\\"\"\n" =
     { "var" = "\"\\\"\"" }
 
-  test Shellvars.lns get "var=\\\"\n" =
+  test lns get "var=\\\"\n" =
     { "var" = "\\\"" }
 
-  test Shellvars.lns get "var=ab#c\n" =
+  test lns get "var=ab#c\n" =
     { "var" = "ab#c" }
 
-  test Shellvars.lns get "var=ab #c\n" =
+  test lns get "var=ab #c\n" =
     { "var" = "ab"
       { "#comment" = "c" } }
 
-  test Shellvars.lns get "var='ab#c'\n" =
+  test lns get "var='ab#c'\n" =
     { "var" = "'ab#c'" }
 
-  test Shellvars.lns get "var=\"ab#c\"\n" =
+  test lns get "var=\"ab#c\"\n" =
     { "var" = "\"ab#c\"" }
 
-  test Shellvars.lns get "ESSID='Joe'\"'\"'s net'\n" =
+  test lns get "ESSID='Joe'\"'\"'s net'\n" =
     { "ESSID" = "'Joe'\"'\"'s net'" }
 
-  test Shellvars.lns get "var=`ab#c`\n" =
+  test lns get "var=`ab#c`\n" =
     { "var" = "`ab#c`" }
 
-  test Shellvars.lns get "var=`grep nameserver /etc/resolv.conf | head -1`\n" =
+  test lns get "var=`grep nameserver /etc/resolv.conf | head -1`\n" =
     { "var" = "`grep nameserver /etc/resolv.conf | head -1`" }
 
-  test Shellvars.lns put "var=ab #c\n"
+  test lns put "var=ab #c\n"
     after rm "/var/#comment" = "var=ab\n"
 
-  test Shellvars.lns put "var=ab\n"
+  test lns put "var=ab\n"
     after set "/var/#comment" "this is a var" =
        "var=ab # this is a var\n"
 
   (* Handling of arrays *)
-  test Shellvars.lns get "var=(val1 \"val\\\"2\\\"\" val3)\n" =
+  test lns get "var=(val1 \"val\\\"2\\\"\" val3)\n" =
     { "var"
         { "1" = "val1" }
         { "2" = "\"val\\\"2\\\"\"" }
         { "3" = "val3" } }
 
-  test Shellvars.lns get "var=()\n" = { "var" = "()" }
+  test lns get "var=()\n" = { "var" = "()" }
 
-  test Shellvars.lns put "var=()\n" after
+  test lns put "var=()\n" after
       set "var" "value"
   = "var=value\n"
 
-  test Shellvars.lns put "var=(v1 v2)\n" after
+  test lns put "var=(v1 v2)\n" after
       rm "var/*" ;
       set "var" "value"
   = "var=value\n"
 
-  test Shellvars.lns put "var=(v1 v2)\n" after
+  test lns put "var=(v1 v2)\n" after
     set "var/3" "v3"
   = "var=(v1 v2 v3)\n"
 
-  test Shellvars.lns get "var=(v1 v2   \n    \t v3)\n" =
+  test lns get "var=(v1 v2   \n    \t v3)\n" =
   { "var"
     { "1" = "v1" }
     { "2" = "v2" }
     { "3" = "v3" } }
 
   (* Allow spaces after/before opening/closing parens for array *)
-  test Shellvars.lns get "config_eth1=( \"10.128.0.48/24\" )\n" =
+  test lns get "config_eth1=( \"10.128.0.48/24\" )\n" =
   { "config_eth1"  { "1" = "\"10.128.0.48/24\"" } }
 
   (* Bug 109: allow a bare export *)
-  test Shellvars.lns get "export FOO\n" =
+  test lns get "export FOO\n" =
   { "@export" = "FOO" }
 
   (* Bug 73: allow ulimit builtin *)
-  test Shellvars.lns get "ulimit -c unlimited\n" =
+  test lns get "ulimit -c unlimited\n" =
   { "@builtin" = "ulimit" { "args" = "-c unlimited" } }
 
   (* Allow shift builtin *)
@@ -151,16 +153,16 @@ unset ONBOOT    #   We do not want this var
   { "@builtin" = "exit" { "args" = "2" } }
 
   (* Test semicolons *)
-  test Shellvars.lns get "VAR1=\"this;is;a;test\"\nVAR2=this;\n" =
+  test lns get "VAR1=\"this;is;a;test\"\nVAR2=this;\n" =
   { "VAR1" = "\"this;is;a;test\"" }
   { "VAR2" = "this" }
 
   (* Bug 230: parse conditions *)
-  test Shellvars.lns get "if [ -f /etc/default/keyboard ]; then\n. /etc/default/keyboard\nfi\n" =
+  test lns get "if [ -f /etc/default/keyboard ]; then\n. /etc/default/keyboard\nfi\n" =
   { "@if" = "[ -f /etc/default/keyboard ]" { ".source" = "/etc/default/keyboard" } }
 
   (* Recursive condition *)
-  test Shellvars.lns get "if [ -f /tmp/file1 ]; then
+  test lns get "if [ -f /tmp/file1 ]; then
   if [ -f /tmp/file2 ]
   then
     . /tmp/file2
@@ -204,13 +206,13 @@ fi\n" =
 
 
   (* Comment or eol *)
-  test Shellvars.lns get "VAR=value # eol-comment\n" =
+  test lns get "VAR=value # eol-comment\n" =
   { "VAR" = "value"
     { "#comment" = "eol-comment" }
   }
 
   (* One-liners *)
-  test Shellvars.lns get "if [ -f /tmp/file1 ]; then . /tmp/file1; else . /tmp/file2; fi\n" =
+  test lns get "if [ -f /tmp/file1 ]; then . /tmp/file1; else . /tmp/file2; fi\n" =
   { "@if" = "[ -f /tmp/file1 ]"
     { ".source" = "/tmp/file1" }
     { "@else"
@@ -219,7 +221,7 @@ fi\n" =
   }
 
   (* Loops *)
-  test Shellvars.lns get "for f in /tmp/file*; do
+  test lns get "for f in /tmp/file*; do
   while [ 1 ]; do . $f; done
 done\n" =
   { "@for" = "f in /tmp/file*"
@@ -229,7 +231,7 @@ done\n" =
   }
 
   (* Case *)
-  test Shellvars.lns get "case $f in
+  test lns get "case $f in
   /tmp/file1)
     . /tmp/file1
     ;;
@@ -249,14 +251,14 @@ esac\n" =
       { "@unset" = "f" } } }
 
   (* Select *)
-  test Shellvars.lns get "select i in a b c; do . /tmp/file$i
+  test lns get "select i in a b c; do . /tmp/file$i
    done\n" =
   { "@select" = "i in a b c"
     { ".source" = "/tmp/file$i" }
   }
 
   (* Return *)
-  test Shellvars.lns get "return\nreturn 2\n" =
+  test lns get "return\nreturn 2\n" =
   { "@return" }
   { "@return" = "2" }
 
