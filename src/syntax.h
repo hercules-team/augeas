@@ -172,9 +172,6 @@ struct value {
     };
 };
 
-/* Return an exception value with error == 1 (and seen == 1) */
-struct value *exn_error(void);
-
 /* All types except for T_ARROW (functions) are simple. Subtype relations
  * for the simple types:
  *   T_STRING <: T_REGEXP

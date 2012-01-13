@@ -44,6 +44,10 @@ struct error {
      * gives a convenient way to get at the overall state
      */
     const struct augeas *aug;
+    /* A preallocated exception so that we can throw something, even
+     * under OOM conditions
+     */
+    struct value *exn;
 };
 
 void report_error(struct error *err, aug_errcode_t errcode,

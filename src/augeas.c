@@ -1695,6 +1695,11 @@ void aug_close(struct augeas *aug) {
     /* There's no point in bothering with api_entry/api_exit here */
     free_tree(aug->origin);
     unref(aug->modules, module);
+    if (aug->error->exn != NULL) {
+        aug->error->exn->ref = 0;
+        free_value(aug->error->exn);
+        aug->error->exn = NULL;
+    }
     free((void *) aug->root);
     free(aug->modpathz);
     free_symtab(aug->symtab);

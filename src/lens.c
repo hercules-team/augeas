@@ -134,7 +134,7 @@ static struct value *str_to_fa(struct info *info, const char *pattern,
  error:
     fa_free(*fa);
     *fa = NULL;
-    exn = exn_error();
+    exn = info->error->exn;
     goto done;
 }
 
@@ -692,7 +692,7 @@ ambig_check(struct info *info, struct fa *fa1, struct fa *fa2,
             return exn;
         } else {
             ERR_REPORT(info, AUG_ENOMEM, NULL);
-            return exn_error();
+            return info->error->exn;
         }
     }
 
@@ -1692,7 +1692,7 @@ static void collapse_trans(struct rtn *rtn,
 
     return;
  error:
-    rtn->exn = exn_error();
+    rtn->exn = rtn->info->error->exn;
     return;
 }
 
@@ -2003,7 +2003,7 @@ static struct value *rtn_approx(struct lens *rec, enum lens_type lt) {
     return result;
  error:
     if (rtn->exn == NULL)
-        result = exn_error();
+        result = rec->info->error->exn;
     else
         result = ref(rtn->exn);
     goto done;
@@ -2161,7 +2161,7 @@ struct value *lns_check_rec(struct info *info,
     if (result != NULL && result->tag != V_EXN)
         unref(result, value);
     if (result == NULL)
-        result = exn_error();
+        result = info->error->exn;
     return result;
 }
 

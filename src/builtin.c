@@ -102,7 +102,7 @@ static struct value *make_exn_lns_error(struct info *info,
     struct value *v;
 
     if (HAS_ERR(info))
-        return exn_error();
+        return info->error->exn;
 
     v = make_exn_value(ref(info), "%s", err->message);
     if (err->lens != NULL) {
@@ -527,7 +527,7 @@ static struct value *lns_fmt_atype(struct info *info, struct value *l) {
 
     r = lns_format_atype(l->lens, &s);
     if (r < 0)
-        return exn_error();
+        return info->error->exn;
     result = make_value(V_STRING, ref(info));
     result->string = make_string(s);
     return result;
@@ -555,7 +555,7 @@ static struct value *rx_match(struct info *info,
             match = strndup(str + regs.start[0], regs.end[0] - regs.start[0]);
         }
         if (match == NULL) {
-            result = exn_error();
+            result = info->error->exn;
         } else {
             result = make_value(V_STRING, ref(info));
             result->string = make_string(match);

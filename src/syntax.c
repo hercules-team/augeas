@@ -81,6 +81,20 @@ struct ctx {
     struct binding *local;
 };
 
+static int init_fatal_exn(struct error *error) {
+    if (error->exn != NULL)
+        return 0;
+    error->exn = make_exn_value(ref(error->info), "Error during evaluation");
+    if (error->exn == NULL)
+        return -1;
+    error->exn->exn->seen = 1;
+    error->exn->exn->error = 1;
+    error->exn->exn->lines = NULL;
+    error->exn->exn->nlines = 0;
+    error->exn->ref = REF_MAX;
+    return 0;
+}
+
 static void format_error(struct info *info, aug_errcode_t code,
                          const char *format, va_list ap) {
     struct error *error = info->error;
@@ -432,18 +446,6 @@ void exn_printf_line(struct value *exn, const char *format, ...) {
     va_end(ap);
     if (r >= 0)
         exn_add_lines(exn, 1, line);
-}
-
-struct value *exn_error(void) {
-    static const struct exn exn = {
-        .info = NULL, .seen = 1, .error = 1,
-        .message = (char *) "Error during evaluation",
-        .nlines = 0, .lines = NULL };
-    static const struct value value = {
-        .ref = REF_MAX, /* Protect against being freed */
-        .info = NULL, .tag = V_EXN,
-        { .exn = (struct exn *) &exn } };
-    return (struct value *) &value;
 }
 
 /*
@@ -1483,7 +1485,7 @@ static struct value *compile_compose(struct term *exp, struct ctx *ctx) {
             free(f);
             free(e);
             unref(func, term);
-            return exn_error();
+            return info->error->exn;
         }
         v = make_closure(func, ctx->local);
         unref(func, term);
@@ -2002,8 +2004,11 @@ static int load_module(struct augeas *aug, const char *name) {
 int interpreter_init(struct augeas *aug) {
     int r;
 
-    aug->modules = builtin_init(aug->error);
+    r = init_fatal_exn(aug->error);
+    if (r < 0)
+        return -1;
 
+    aug->modules = builtin_init(aug->error);
     if (aug->flags & AUG_NO_MODL_AUTOLOAD)
         return 0;
 
