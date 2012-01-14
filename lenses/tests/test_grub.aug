@@ -151,6 +151,24 @@ initrd\t\t/boot/initrd.img-2.6.18-6-vserver-686
   test Grub.savedefault put "savedefault\n" after
     set "/savedefault" "3" = "savedefault 3\n"
 
+  test Grub.lns get
+"password foo
+password foo /boot/grub/custom.lst
+password --md5 $1$Ahx/T0$Sgcp7Z0xgGlyANIJCdESi.
+password --encrypted ^9^32kwzzX./3WISQ0C
+password --encrypted ^9^32kwzzX./3WISQ0C /boot/grub/custom.lst
+" =
+    { "password" = "foo" }
+    { "password" = "foo"
+        { "file" = "/boot/grub/custom.lst" } }
+    { "password" = "$1$Ahx/T0$Sgcp7Z0xgGlyANIJCdESi."
+        { "md5" } }
+    { "password" = "^9^32kwzzX./3WISQ0C"
+        { "encrypted" } }
+    { "password" = "^9^32kwzzX./3WISQ0C"
+        { "encrypted" }
+        { "file" = "/boot/grub/custom.lst" } }
+
   (* BZ 590067 - handle comments in a title section *)
   (* Comments within a boot stanza belong to that boot stanza *)
   test Grub.lns get "title Red Hat Enterprise Linux AS (2.4.21-63.ELsmp)

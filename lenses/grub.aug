@@ -86,7 +86,8 @@ module Grub =
     (* View: password_arg *)
     let password_arg = [ key "password" .
       (spc . [ switch "md5" ])? .
-      spc . store (/[^ \t\n]+/ - "--md5") .
+      (spc . [ switch "encrypted" ])? .
+      spc . store (/[^ \t\n]+/ - /--[^ \t\n]+/) .
       (spc . [ label "file" . store /[^ \t\n]+/ ])? .
       eol ]
 
