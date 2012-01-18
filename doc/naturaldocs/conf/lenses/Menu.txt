@@ -60,6 +60,7 @@ Group: Specific Modules  {
    File: BackupPCHosts  (backuppchosts.aug)
    File: Cgconfig  (no auto-title, cgconfig.aug)
    File: Cgrules  (no auto-title, cgrules.aug)
+   File: Channels  (channels.aug)
    File: Cron  (cron.aug)
    File: crypttab.aug  (crypttab.aug)
    File: Debctrl  (no auto-title, debctrl.aug)
@@ -119,11 +120,12 @@ Group: Tests and Examples  {
    File: Test_Access  (tests/test_access.aug)
    File: Test_Approx  (tests/test_approx.aug)
    File: Test_Aliases  (tests/test_aliases.aug)
-   File: Test_Reprepro_Uploaders  (tests/test_reprepro_uploaders.aug)
+   File: Test_Channels  (tests/test_channels.aug)
    File: Test_FAI_DiskConfig  (tests/test_faidiskconfig.aug)
    File: Test_IniFile  (tests/test_inifile.aug)
    File: Test_Keepalived  (tests/test_keepalived.aug)
    File: Test_login_defs  (tests/test_login_defs.aug)
+   File: Test_Reprepro_Uploaders  (tests/test_reprepro_uploaders.aug)
    File: Test_Xml  (tests/test_xml.aug)
    }  # Group: Tests and Examples
 

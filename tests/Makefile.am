@@ -23,6 +23,7 @@ lens_tests =			\
   lens-bbhosts.sh		\
   lens-cgconfig.sh		\
   lens-cgrules.sh  		\
+  lens-channels.sh  		\
   lens-cobblersettings.sh	\
   lens-cobblermodules.sh	\
   lens-cron.sh			\
