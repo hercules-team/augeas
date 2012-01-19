@@ -77,6 +77,9 @@ let database =
                   | "services"
                   | "shadow"
                   | "sudoers"
+                  | "passwd_compat"
+                  | "group_compat"
+                  | "shadow_compat"
     in [ label "database" . store database_kw
                . sep_colon
                . (Build.opt_list
