@@ -140,6 +140,10 @@ let lns = ( empty | comment | shellvar | entry )*
 let filter =
   incl "/etc/cron.d/*" .
   incl "/etc/crontab" .
+  excl "/etc/cron.d/at.allow" .
+  excl "/etc/cron.d/at.deny" .
+  excl "/etc/cron.d/cron.allow" .
+  excl "/etc/cron.d/cron.deny" .
   Util.stdexcl
 
 let xfm = transform lns filter
