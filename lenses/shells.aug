@@ -23,7 +23,8 @@ module Shells =
 
 let empty = Util.empty
 let comment = Util.comment
-let shell = [ seq "shell" . store /[^# \t\n]+/ . Util.eol ]
+let comment_or_eol = Util.comment_or_eol
+let shell = [ seq "shell" . store /[^# \t\n]+/ . comment_or_eol ]
 
 (* View: lns
      The shells lens

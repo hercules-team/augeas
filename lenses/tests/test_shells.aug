@@ -6,6 +6,7 @@ module Test_shells =
 
 /bin/bash
 /bin/tcsh
+/opt/csw/bin/bash   # CSWbash
 "
 
    test Shells.lns get conf =
@@ -13,3 +14,5 @@ module Test_shells =
       {}
       { "1" = "/bin/bash" }
       { "2" = "/bin/tcsh" }
+      { "3" = "/opt/csw/bin/bash"
+        { "#comment" = "CSWbash" } }
