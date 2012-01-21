@@ -80,6 +80,7 @@ lens_tests =			\
   lens-odbc.sh          \
   lens-openvpn.sh		\
   lens-pam.sh			\
+  lens-pamconf.sh		\
   lens-passwd.sh		\
   lens-pbuilder.sh		\
   lens-pg_hba.sh		\
