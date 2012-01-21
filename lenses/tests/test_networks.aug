@@ -4,6 +4,9 @@ let conf = "# Sample networks
 default         0.0.0.0         # default route    - mandatory
 loopnet         127.0.0.0    loopnet_alias  loopnet_alias2   # loopback network - mandatory
 mynet           128.253.154   # Modify for your own network address
+
+loopback        127
+arpanet         10      arpa    # Historical
 "
 
 test Networks.lns get conf =
@@ -26,4 +29,17 @@ test Networks.lns get conf =
     { "name" = "mynet" }
     { "number" = "128.253.154" }
     { "#comment" = "Modify for your own network address" }
+  }
+  {}
+  { "4"
+    { "name" = "loopback" }
+    { "number" = "127" }
+  }
+  { "5"
+    { "name" = "arpanet" }
+    { "number" = "10" }
+    { "aliases"
+      { "1" = "arpa" }
+    }
+    { "#comment" = "Historical" }
   }
