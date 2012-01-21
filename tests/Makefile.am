@@ -19,6 +19,7 @@ lens_tests =			\
   lens-aptpreferences.sh	\
   lens-aptconf.sh	\
   lens-aptsource.sh		\
+  lens-automaster.sh	\
   lens-backuppchosts.sh		\
   lens-bbhosts.sh		\
   lens-cgconfig.sh		\
