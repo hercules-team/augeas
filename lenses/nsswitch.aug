@@ -33,6 +33,10 @@ let empty = Util.empty
     The separator for database entries *)
 let sep_colon = del /:[ \t]*/ ": "
 
+(* View: database_kw
+    The database specification like `passwd', `shadow', or `hosts' *)
+let database_kw = Rx.word
+
 (* View: service
     The service specification like `files', `db', or `nis' *)
 let service = [ label "service" . store Rx.word ]
@@ -60,39 +64,12 @@ let reaction =
 
 (* View: database *)
 let database = 
-  let database_kw = "aliases"
-                  | "auth_attr"
-                  | "automount"
-                  | "bootparams"
-                  | "ethers"
-                  | "group"
-                  | "group_compat"
-                  | "hosts"
-                  | "ipnodes"
-                  | "netgroup"
-                  | "netmasks"
-                  | "networks"
-                  | "passwd"
-                  | "passwd_compat"
-                  | "printers"
-                  | "prof_attr"
-                  | "project"
-                  | "protocols"
-                  | "publickey"
-                  | "rpc"
-                  | "sendmailvars"
-                  | "services"
-                  | "shadow"
-                  | "shadow_compat"
-                  | "sudoers"
-                  | "tnrhtp"
-                  | "tnrhdb"
-    in [ label "database" . store database_kw
-               . sep_colon
-               . (Build.opt_list
-                    (service|reaction)
-                    Sep.space)
-               . Util.eol ]
+    [ label "database" . store database_kw
+       . sep_colon
+       . (Build.opt_list
+            (service|reaction)
+            Sep.space)
+       . Util.eol ]
 
 (* View: lns *)
 let lns = ( empty | comment | database )*
