@@ -72,6 +72,7 @@ lens_tests =			\
   lens-mysql.sh			\
   lens-nagioscfg.sh     \
   lens-nagiosobjects.sh     \
+  lens-netmasks.sh     \
   lens-networks.sh     \
   lens-ntp.sh			\
   lens-nrpe.sh          \
