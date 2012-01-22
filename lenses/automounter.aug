@@ -52,6 +52,10 @@ let weight = Rx.integer
 (* View: map_name *)
 let map_name = /[^: \t\n]+/
 
+(* View: entry_multimount_sep
+   Separator for multimount entries, permits line spanning with "\" *)
+let entry_multimount_sep = del /[ \t]+(\\\\[ \t]*\n[ \t]+)?/ " "
+
 (************************************************************************
  * Group:                 ENTRIES
  *************************************************************************)
@@ -95,10 +99,6 @@ let entry_locations = [ label "location" . counter "location"
    Parses one of many mountpoints given for a multimount line *)
 let entry_multimount = entry_mkey . Util.del_ws_tab . entry_options? . entry_locations
 
-(* View: entry_multimount_sep
-   Separator for multimount entries, permits line spanning with "\" *)
-let entry_multimount_sep = del /[ \t]+(\\\\[ \t]*\n[ \t]+)?/ " "
-
 (* View: entry_multimounts
    Parses multiple mountpoints given on an entry line *)
 let entry_multimounts = [ label "mount" . counter "mount"
@@ -123,6 +123,7 @@ let lns = ( empty | comment | entry | include ) *
 let filter = incl "/etc/auto.*"
            . incl "/etc/auto_*"
            . excl "/etc/auto.master"
+           . excl "/etc/auto_master"
            . excl "/etc/auto.net"
            . excl "/etc/auto.smb"
            . Util.stdexcl
