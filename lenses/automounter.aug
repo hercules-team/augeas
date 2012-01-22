@@ -122,6 +122,7 @@ let lns = ( empty | comment | entry | include ) *
    Exclude scripts/executable maps from here *)
 let filter = incl "/etc/auto.*"
            . incl "/etc/auto_*"
+           . excl "/etc/auto.master"
            . excl "/etc/auto.net"
            . excl "/etc/auto.smb"
            . Util.stdexcl
