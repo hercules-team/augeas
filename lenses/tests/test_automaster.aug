@@ -16,7 +16,7 @@ module Test_automaster =
 + auto.master
 "
 
-  test AutoMaster.lns get example =
+  test Automaster.lns get example =
     { }
     { "#comment" = "Sample auto.master file" }
     { }

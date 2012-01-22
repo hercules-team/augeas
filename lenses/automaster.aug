@@ -1,5 +1,5 @@
 (*
-Module: AutoMaster
+Module: Automaster
   Parses autofs' auto.master files
 
 Author: Dominic Cleal <dcleal@redhat.com>
@@ -18,10 +18,10 @@ About: Configuration files
    files.
 
 About: Examples
-   The <Test_AutoMaster> file contains various examples and tests.
+   The <Test_Automaster> file contains various examples and tests.
 *)
 
-module AutoMaster =
+module Automaster =
 autoload xfm
 
 (************************************************************************
