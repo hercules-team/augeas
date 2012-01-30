@@ -60,6 +60,7 @@ module Pam =
   let lns = ( empty | comment | include | record_svc ) *
 
   let filter = incl "/etc/pam.d/*"
+             . excl "/etc/pam.d/allow.pamlist"
              . Util.stdexcl
 
   let xfm = transform lns filter
