@@ -202,6 +202,16 @@ module Shellvars =
                      . incl "/etc/cron-apt/config"
                      . incl "/etc/environment"
                      . incl "/etc/blkid.conf"
+                     . incl "/etc/adduser.conf"
+                     . incl "/etc/cowpoke"
+                     . incl "/etc/cvs-cron.conf"
+                     . incl "/etc/cvs-pserver.conf"
+                     . incl "/etc/devscripts.conf"
+                     . incl "/etc/lintianrc"
+                     . incl "/etc/lsb-release"
+                     . incl "/etc/popularity-contest.conf"
+                     . incl "/etc/ucf.conf"
+                     . incl "/etc/updatedb.conf"
 
   let filter = filter_sysconfig
              . filter_ifcfg
