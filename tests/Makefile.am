@@ -44,6 +44,7 @@ lens_tests =			\
   lens-exports.sh		\
   lens-fai_diskconfig.sh	\
   lens-fstab.sh			\
+  lens-fuse.sh			\
   lens-gdm.sh			\
   lens-group.sh			\
   lens-json.sh          \
