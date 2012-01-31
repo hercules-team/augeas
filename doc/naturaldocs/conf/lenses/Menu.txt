@@ -98,6 +98,7 @@ Group: Specific Modules  {
    File: Schroot  (schroot.aug)
    File: Services  (services.aug)
    File: Shells  (shells.aug)
+   File: Simplevars  (simplevars.aug)
    File: Solaris_System  (solaris_system.aug)
    File: Ssh  (ssh.aug)
    File: Sshd  (sshd.aug)
@@ -132,6 +133,7 @@ Group: Tests and Examples  {
    File: Test_Keepalived  (tests/test_keepalived.aug)
    File: Test_login_defs  (tests/test_login_defs.aug)
    File: Test_Reprepro_Uploaders  (tests/test_reprepro_uploaders.aug)
+   File: Test_Simplevars  (tests/test_simplevars.aug)
    File: Test_Xml  (tests/test_xml.aug)
    }  # Group: Tests and Examples
 
