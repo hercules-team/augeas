@@ -64,6 +64,7 @@ lens_tests =			\
   lens-keepalived.sh	\
   lens-krb5.sh			\
   lens-ldap.sh			\
+  lens-ldso.sh			\
   lens-limits.sh		\
   lens-login_defs.sh 	\
   lens-logrotate.sh		\
