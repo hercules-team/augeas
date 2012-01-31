@@ -203,7 +203,7 @@ module Shellvars =
                      . incl "/etc/environment"
                      . incl "/etc/blkid.conf"
                      . incl "/etc/adduser.conf"
-                     . incl "/etc/cowpoke"
+                     . incl "/etc/cowpoke.conf"
                      . incl "/etc/cvs-cron.conf"
                      . incl "/etc/cvs-pserver.conf"
                      . incl "/etc/devscripts.conf"
