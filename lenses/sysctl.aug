@@ -2,7 +2,7 @@
 Module: Sysctl
   Parses /etc/sysctl.conf and /etc/sysctl.d/*
 
-Author: Raphael Pinson <raphink@gmail.com>
+Author: David Lutterkort <lutter@redhat.com>
 
 About: Reference
 
