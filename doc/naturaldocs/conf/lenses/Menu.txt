@@ -106,6 +106,7 @@ Group: Specific Modules  {
    File: Sshd  (sshd.aug)
    File: Sssd  (sssd.aug)
    File: Sudoers  (sudoers.aug)
+   File: Sysctl  (sysctl.aug)
    File: Syslog  (syslog.aug)
    File: Xinetd  (xinetd.aug)
    File: Xorg  (xorg.aug)
@@ -138,6 +139,7 @@ Group: Tests and Examples  {
    File: Test_Reprepro_Uploaders  (tests/test_reprepro_uploaders.aug)
    File: Test_Simplelines  (tests/test_simplelines.aug)
    File: Test_Simplevars  (tests/test_simplevars.aug)
+   File: Test_Sysctl  (tests/test_sysctl.aug)
    File: Test_Xml  (tests/test_xml.aug)
    }  # Group: Tests and Examples
 

@@ -1,21 +1,38 @@
+(*
+Module: Sysctl
+  Parses /etc/sysctl.conf and /etc/sysctl.d/*
+
+Author: Raphael Pinson <raphink@gmail.com>
+
+About: Reference
+
+About: License
+   This file is licenced under the LGPLv2+, like the rest of Augeas.
+
+About: Lens Usage
+   To be documented
+
+About: Configuration files
+   This lens applies to /etc/sysctl.conf and /etc/sysctl.d/*. See <filter>.
+
+About: Examples
+   The <Test_Sysctl> file contains various examples and tests.
+*)
+
 module Sysctl =
-  autoload xfm
+autoload xfm
 
-  let filter = incl "/etc/sysctl.conf"
+(* Variable: filter *)
+let filter = incl "/etc/sysctl.conf"
+           . incl "/etc/sysctl.d/*"
+           . excl "/etc/sysctl.d/README"
+           . Util.stdexcl
 
-  let eol = Util.eol
-  let indent = Util.indent
-  let key_re = /[A-Za-z0-9_.-]+/
-  let eq = del /[ \t]*=[ \t]*/ " = "
-  let value_re = /[^ \t\n](.*[^ \t\n])?/
+(* View: comment *)
+let comment = Util.comment_generic /[ \t]*[#;][ \t]*/ "# "
 
-  let comment = [ indent . label "#comment" . del /[#;][ \t]*/ "# "
-        . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ . eol ]
+(* View: lns
+     The sysctl lens *)
+let lns = (Util.empty | comment | Simplevars.entry)*
 
-  let empty = Util.empty
-
-  let kv = [ indent . key key_re . eq . store value_re . eol ]
-
-  let lns = (empty | comment | kv) *
-
-  let xfm = transform lns filter
+let xfm = transform lns filter
