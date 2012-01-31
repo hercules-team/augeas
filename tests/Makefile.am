@@ -57,6 +57,7 @@ lens_tests =			\
   lens-inetd.sh         \
   lens-inifile.sh		\
   lens-inittab.sh		\
+  lens-inputrc.sh		\
   lens-interfaces.sh		\
   lens-iptables.sh		\
   lens-kdump.sh			\
