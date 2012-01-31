@@ -15,6 +15,7 @@ lens_tests =			\
   lens-sudoers.sh		\
   lens-access.sh		\
   lens-aliases.sh		\
+  lens-anacron.sh		\
   lens-approx.sh		\
   lens-aptpreferences.sh	\
   lens-aptconf.sh	\

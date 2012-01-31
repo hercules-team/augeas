@@ -55,6 +55,7 @@ Group: Specific Modules  {
 
    File: Access  (access.aug)
    File: Aliases  (aliases.aug)
+   File: Anacron  (anacron.aug)
    File: Approx (approx.aug)
    File: AptConf  (aptconf.aug)
    File: BackupPCHosts  (backuppchosts.aug)
@@ -119,6 +120,7 @@ Group: Generic Modules  {
 Group: Tests and Examples  {
 
    File: Test_Access  (tests/test_access.aug)
+   File: Test_Anacron  (tests/test_anacron.aug)
    File: Test_Approx  (tests/test_approx.aug)
    File: Test_Aliases  (tests/test_aliases.aug)
    File: Test_Channels  (tests/test_channels.aug)
