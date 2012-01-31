@@ -96,6 +96,7 @@ lens_tests =			\
   lens-postfix_main.sh		\
   lens-postfix_master.sh	\
   lens-properties.sh    \
+  lens-protocols.sh    \
   lens-puppet.sh		\
   lens-puppetfileserver.sh		\
   lens-reprepro_uploaders.sh		\
