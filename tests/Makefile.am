@@ -108,6 +108,7 @@ lens_tests =			\
   lens-shells.sh		\
   lens-shellvars.sh		\
   lens-shellvars_list.sh	\
+  lens-simplelines.sh	\
   lens-simplevars.sh	\
   lens-slapd.sh			\
   lens-solaris_system.sh		\
