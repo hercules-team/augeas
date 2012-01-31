@@ -30,7 +30,6 @@ lens_tests =			\
   lens-cobblersettings.sh	\
   lens-cobblermodules.sh	\
   lens-cron.sh			\
-  lens-cronallow.sh		\
   lens-crypttab.sh		\
   lens-darkice.sh		\
   lens-debctrl.sh		\

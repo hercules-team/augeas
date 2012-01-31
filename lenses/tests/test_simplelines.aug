@@ -22,3 +22,21 @@ test Simplelines.lns get conf =
    { "2" = "a line" }
    { "3" = "indented line" }
    { "4" = "with $péci@l cH@r2ct3rs" }
+
+(* Variable: cronallow *)
+  let cronallow = "# Test comment
+#
+user1
+another
+
+user2
+"
+
+(* Test: cron.allow file *)
+  test SimpleLines.lns get cronallow =
+    { "#comment" = "Test comment" }
+    { }
+    { "1" = "user1" }
+    { "2" = "another" }
+    { }
+    { "3" = "user2" }

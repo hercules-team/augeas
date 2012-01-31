@@ -33,6 +33,14 @@ let line =
 let lns = (Util.empty | Util.comment | line)*
 
 (* Variable: filter *)
-let filter = incl "/etc/pam.d/allow.pamlist"
+let filter = incl "/etc/at.allow"
+           . incl "/etc/at.deny"
+           . incl "/etc/cron.allow"
+           . incl "/etc/cron.deny"
+           . incl "/etc/cron.d/at.allow"
+           . incl "/etc/cron.d/at.deny"
+           . incl "/etc/cron.d/cron.allow"
+           . incl "/etc/cron.d/cron.deny"
+           . incl "/etc/pam.d/allow.pamlist"
 
 let xfm = transform lns filter
