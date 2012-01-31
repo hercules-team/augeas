@@ -44,6 +44,7 @@ lens_tests =			\
   lens-ethers.sh		\
   lens-exports.sh		\
   lens-fai_diskconfig.sh	\
+  lens-fonts.sh	\
   lens-fstab.sh			\
   lens-fuse.sh			\
   lens-gdm.sh			\
