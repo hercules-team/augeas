@@ -247,6 +247,22 @@ esac\n" =
   { "@return" }
   { "@return" = "2" }
 
+  (* Functions *)
+  test Shellvars.lns get "foo() {
+  . /tmp/bar
+  }\n" =
+  { "@function" = "foo"
+    { ".source" = "/tmp/bar" }
+  }
+
+  test Shellvars.lns get "function foo () {
+  . /tmp/bar
+  }\n" =
+  { "@function" = "foo"
+    { ".source" = "/tmp/bar" }
+  }
+
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

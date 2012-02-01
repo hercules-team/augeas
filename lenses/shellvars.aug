@@ -131,6 +131,14 @@ module Shellvars =
         . case_entry+
         . keyword "esac" . comment_or_eol ]
 
+  let function (entry:lens) =
+    [ Util.indent . label "@function"
+      . del /(function[ \t]+)?/ ""
+      . store Rx.word . del /[ \t]*\(\)/ "()"
+      . eol . Util.del_str "{" . eol
+      . entry+
+      . Util.indent . Util.del_str "}" . eol ]
+
   let rec rec_entry =
     let entry = comment | empty | source | kv
               | unset | bare_export | builtin | return | rec_entry in
@@ -140,6 +148,7 @@ module Shellvars =
       | loop_while entry
       | loop_until entry
       | case entry
+      | function entry
 
   let lns = (comment | empty | source | kv | unset | bare_export | builtin | return | rec_entry) *
 
