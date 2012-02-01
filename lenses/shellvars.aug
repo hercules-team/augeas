@@ -105,7 +105,7 @@ module Shellvars =
   let cond_if (entry:lens) =
     let elif = [ generic_cond_start "elif" "@elif" "then" entry+ ] in
     let else = [ keyword_label "else" "@else" . eol . entry+ ] in
-    generic_cond "if" "@if" "then" (entry+ . elif? . else?) "fi"
+    generic_cond "if" "@if" "then" (entry+ . elif* . else?) "fi"
 
   let loop_for (entry:lens) =
     generic_cond "for" "@for" "do" entry+ "done"

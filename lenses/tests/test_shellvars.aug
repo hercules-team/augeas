@@ -171,6 +171,25 @@ fi\n" =
     }
   }
 
+  (* Multiple elif *)
+  test Shellvars.lns get "if [ -f /tmp/file1 ]; then
+  . /tmp/file1
+  elif [ -f /tmp/file2 ]; then
+  . /tmp/file2
+  elif [ -f /tmp/file3 ]; then
+  . /tmp/file3
+  fi\n" =
+  { "@if" = "[ -f /tmp/file1 ]"
+    { ".source" = "/tmp/file1" }
+    { "@elif" = "[ -f /tmp/file2 ]"
+      { ".source" = "/tmp/file2" }
+    }
+    { "@elif" = "[ -f /tmp/file3 ]"
+      { ".source" = "/tmp/file3" }
+    }
+  }
+
+
   (* Comment or eol *)
   test Shellvars.lns get "VAR=value # eol-comment\n" =
   { "VAR" = "value"
