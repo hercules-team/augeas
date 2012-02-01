@@ -262,6 +262,10 @@ esac\n" =
     { ".source" = "/tmp/bar" }
   }
 
+  (* Dollar assignment *)
+  test Shellvars.lns get "FOO=$(bar arg)\n" =
+  { "FOO" = "$(bar arg)" }
+
 
 (* Local Variables: *)
 (* mode: caml       *)

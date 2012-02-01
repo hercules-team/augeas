@@ -32,6 +32,7 @@ module Shellvars =
   let squot = /'[^'\n]*'/
   (* For some reason, `` conflicts with comment_or_eol *)
   let bquot = /`[^#`\n]*`/
+  let dollar_assign = /\$\([^#`\n]*\)/
 
   let sto_to_semicol = store /[^#; \t\n][^#;\n]+[^#; \t\n]|[^#; \t\n]+/
 
@@ -49,7 +50,7 @@ module Shellvars =
   (* but fairly close.                                                *)
   let simple_value =
     let empty_array = /\([ \t]*\)/ in
-      store (char* | dquot | squot | bquot | empty_array)
+      store (char* | dquot | squot | bquot | dollar_assign | empty_array)
 
   let export = [ key "export" . Util.del_ws_spc ]
   let kv = [ Util.indent . export? . key key_re
