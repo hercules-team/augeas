@@ -15,38 +15,38 @@ let block = Build.block block_entry
 
 (* Test: block
      Simple test for <block> *)
-test block get "{test=1}" =
+test block get " {test=1}" =
   { "test" = "1" }
 
 (* Test: block
      Simple test for <block> with newlines *)
-test block get "{\n test=1\n}" =
+test block get " {\n test=1\n}" =
   { "test" = "1" }
 
 (* Test: block
      Simple test for <block> two indented entries *)
-test block get "{\n test=1 \n  test=2 \n}" =
+test block get " {\n test=1 \n  test=2 \n}" =
   { "test" = "1" }
   { "test" = "2" }
 
 (* Test: block
      Test <block> with a comment *)
-test block get "{ # This is a comment\n}" =
+test block get " { # This is a comment\n}" =
   { "#comment" = "This is a comment" }
 
 (* Test: block
      Test <block> with comments and newlines *)
-test block get "{ # This is a comment\n# Another comment\n}" =
+test block get " { # This is a comment\n# Another comment\n}" =
   { "#comment" = "This is a comment" }
   { "#comment" = "Another comment" }
 
 (* Test: block
      Test defaults for blocks *)
-test block put "{ test=1 }" after
+test block put " { test=1 }" after
    set "/#comment" "a comment";
    rm "/test";
    set "/test" "2" =
-  "{ # a comment\ntest=2 }"
+  " { # a comment\ntest=2 }"
 
 (* View: named_block
     The named block used for testing *)

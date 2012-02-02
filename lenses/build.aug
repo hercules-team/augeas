@@ -181,23 +181,25 @@ let flag_line (kw:regexp) = [ key kw . eol ]
  *     comment:lens              - the comment lens used in the block
  *     comment_noindent:lens     - the comment lens used in the block,
  *                                 without indentation.
- *     default_lbracket:string   - default value for the left bracket
- *     default_rbracket:string   - default value for the right bracket
+ *     lbracket_re:regexp        - regexp for the left bracket
+ *     rbracket_re:regexp        - regexp for the right bracket
+ *     lbracket_default:string   - default value for the left bracket
+ *     rbracket_default:string   - default value for the right bracket
  ************************************************************************)
 let block_generic
      (entry:lens) (entry_noindent:lens)
      (entry_noeol:lens) (entry_noindent_noeol:lens)
      (comment:lens) (comment_noindent:lens)
-     (default_lbracket:string)
-     (default_rbracket:string) =
+     (lbracket_re:regexp) (rbracket_re:regexp)
+     (lbracket_default:string) (rbracket_default:string) =
      let block_single = entry_noindent_noeol | comment_noindent
   in let block_start  = entry_noindent | comment_noindent
   in let block_middle = (Util.empty | entry | comment)*
   in let block_end    = entry_noeol | comment
-  in del /[ \t\n]*\{[ \t\n]*/ default_lbracket
+  in del lbracket_re lbracket_default
      . ( ( block_start . block_middle . block_end )
        | block_single )
-     . del /[ \t\n]*\}/ default_rbracket
+     . del rbracket_re rbracket_default
 
 (************************************************************************
  * View: block_setdefault
@@ -217,6 +219,7 @@ let block_setdefault (entry:lens)
     block_generic (Util.indent . entry . eol)
                   (entry . eol) (Util.indent . entry) entry
                   Util.comment Util.comment_noindent
+                  /[ \t\n]+\{[ \t\n]*/ /[ \t\n]*\}/
                   default_lbracket default_rbracket
 
 (************************************************************************
