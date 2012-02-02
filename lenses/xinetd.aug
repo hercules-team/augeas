@@ -17,32 +17,22 @@
 module Xinetd =
   autoload xfm
 
-  let comment = Util.comment
-  let empty   = Util.empty
+  let op = ([ label "add" . Util.delim "+=" ]
+           |[ label "del" . Util.delim "-=" ]
+           | Sep.space_equal)
 
-  let name = key /[^ \t\n\/=+-]+/
-  let bol_spc = del /[ \t]*/ "\t"
-  let spc = del /[ \t]+/ " "
-  let eol = del /[ \t]*\n/ "\n"
+  let value = store Rx.no_spaces
 
-  let op_delim (op:string) = del (/[ \t]*/ . op . /[ \t]*/) (" " . op . " ")
-  let eq       = op_delim "="
-
-  let op = ([ label "add" . op_delim "+=" ]
-           |[ label "del" . op_delim "-=" ]
-           | eq)
-
-  let value = store /[^ \t\n]+/
+  let indent = del Rx.opt_space "\t"
 
   let attr_one (n:regexp) =
-    [ bol_spc . key n . eq . value . eol ]
+    Build.key_value n Sep.space_equal value
 
   let attr_lst (n:regexp) (op_eq: lens) =
-    [ bol_spc . key n . op_eq .
-        [label "value" . value] . [label "value" . spc . value]* .
-      eol ]
+    let value_entry =  [ label "value" . value ] in
+    Build.key_value n op_eq (Build.opt_list value_entry Sep.space)
 
-  let attr_lst_eq (n:regexp) = attr_lst n eq
+  let attr_lst_eq (n:regexp) = attr_lst n Sep.space_equal
 
   let attr_lst_op (n:regexp) = attr_lst n op
 
@@ -53,7 +43,6 @@ module Xinetd =
    *      using lens union (attr_one "a" | attr_one "b"|..) because the latter
    *      causes the type checker to work _very_ hard.
    *)
-
   let service_attr =
     attr_one ("socket_type" | "protocol" | "wait" | "user" | "group"
              |"server" | "instances"  | "rpc_version" | "rpc_number"
@@ -86,9 +75,13 @@ module Xinetd =
    *       about how to write that down. The resulting regular expressions
    *       would simply be prohibitively large.
    *)
-  let body (attr:lens) = del /\n\{[ \t]*\n/ "\n{\n"
-                       . (empty|comment|attr)*
-                       . del /[ \t]*\}[ \t]*\n/ "}\n"
+  let body (attr:lens) =
+     let entry = indent . attr . Util.eol in
+     let comment = indent . Util.comment_noindent in
+     Build.block_generic entry entry entry entry (* ignore noindent and noeol *)
+                         comment comment         (* ignore noindent and noeol *)
+                         /[ \t\n]+\{[ \t]*\n/ /[ \t]*\}/  (* force newlines *)
+                         "\n{\n" "}"                      (* force newlines *)
 
   (* View: includes
    *  Note:
@@ -98,16 +91,16 @@ module Xinetd =
    *   currently not possible, and implementing that has a good amount of
    *   hairy corner cases to consider.
    *)
-  let includes = [ key /include|includedir/
-                     . Util.del_ws_spc . store /[^ \t\n]+/ . eol ]
+  let includes =
+     Build.key_value_line /include(dir)?/ Sep.space (store Rx.no_spaces)
 
   let service =
      let sto_re = /[^# \t\n\/]+/ in
-     [ key "service" . Sep.space . store sto_re . body service_attr ]
+     Build.key_value_line "service" Sep.space (store sto_re . body service_attr)
 
-  let defaults = [ key "defaults" . del /[ \t]*/ "" . body default_attr ]
+  let defaults = [ key "defaults" . body default_attr . Util.eol ]
 
-  let lns = ( empty | comment | includes | defaults | service )*
+  let lns = ( Util.empty | Util.comment | includes | defaults | service )*
 
   let filter = incl "/etc/xinetd.d/*"
              . incl "/etc/xinetd.conf"
