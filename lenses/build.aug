@@ -200,6 +200,26 @@ let block_generic
      . del /[ \t\n]*\}/ default_rbracket
 
 (************************************************************************
+ * View: block_setdefault
+ *   A block enclosed in brackets
+ *
+ *   Parameters:
+ *     entry:lens - the entry to be stored inside the block.
+ *                  This entry should not include <Util.empty>,
+ *                  <Util.comment> or <Util.comment_noindent>,
+ *                  should not be indented or finish with an eol.
+ *     default_lbracket:string   - default value for the left bracket
+ *     default_rbracket:string   - default value for the right bracket
+ ************************************************************************)
+let block_setdefault (entry:lens)
+                     (default_lbracket:string)
+                     (default_rbracket:string) =
+    block_generic (Util.indent . entry . eol)
+                  (entry . eol) (Util.indent . entry) entry
+                  Util.comment Util.comment_noindent
+                  default_lbracket default_rbracket
+
+(************************************************************************
  * View: block
  *   A block enclosed in brackets
  *
@@ -209,10 +229,7 @@ let block_generic
  *                  <Util.comment> or <Util.comment_noindent>,
  *                  should not be indented or finish with an eol.
  ************************************************************************)
-let block (entry:lens) = block_generic (Util.indent . entry . eol)
-                         (entry . eol) (Util.indent . entry) entry
-                         Util.comment Util.comment_noindent
-                         " {\n" "}"
+let block (entry:lens) = block_setdefault entry " {\n" "}"
 
 (************************************************************************
  * View: named_block
@@ -224,3 +241,4 @@ let block (entry:lens) = block_generic (Util.indent . entry . eol)
  *                   this entry should not include <Util.empty>
  ************************************************************************)
 let named_block (kw:regexp) (entry:lens) = [ key kw . block entry . eol ]
+
