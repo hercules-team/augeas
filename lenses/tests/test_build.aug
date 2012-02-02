@@ -5,6 +5,102 @@ Module: Test_Build
 
 module Test_Build =
 
+(************************************************************************
+ * Group:               GENERIC CONSTRUCTIONS
+ ************************************************************************)
+
+(* View: brackets
+    Test brackets *)
+let brackets = [ Build.brackets Sep.lbracket Sep.rbracket  (key Rx.word) ]
+
+(* Test: brackets *)
+test brackets get "(foo)" = { "foo" }
+
+
+(************************************************************************
+ * Group:             LIST CONSTRUCTIONS
+ ************************************************************************)
+
+(* View: list *)
+let list = Build.list [ key Rx.word ] Sep.space
+
+(* Test: list *)
+test list get "foo bar baz" = { "foo" } { "bar" } { "baz" }
+
+(* Test: list *)
+test list get "foo" = * 
+
+(* View: opt_list *)
+let opt_list = Build.opt_list [ key Rx.word ] Sep.space
+
+(* Test: opt_list *)
+test opt_list get "foo bar baz" = { "foo" } { "bar" } { "baz" }
+
+
+(************************************************************************
+ * Group:                   LABEL OPERATIONS
+ ************************************************************************)
+
+(* View: xchg *)
+let xchg = [ Build.xchg Rx.space " " "space" ]
+
+(* Test: xchg *)
+test xchg get " \t " = { "space" }
+
+(* View: xchgs *)
+let xchgs = [ Build.xchgs " " "space" ]
+
+(* Test: xchgs *)
+test xchgs get " " = { "space" }
+
+
+(************************************************************************
+ * Group:                   SUBNODE CONSTRUCTIONS
+ ************************************************************************)
+
+(* View: key_value_line *)
+let key_value_line = Build.key_value_line Rx.word Sep.equal (store Rx.word)
+
+(* Test: key_value_line *)
+test key_value_line get "foo=bar\n" = { "foo" = "bar" }
+
+(* View: key_value_line_comment *)
+let key_value_line_comment = Build.key_value_line_comment Rx.word
+                             Sep.equal (store Rx.word) Util.comment
+
+(* Test: key_value_line_comment *)
+test key_value_line_comment get "foo=bar # comment\n" =
+    { "foo" = "bar" { "#comment" = "comment" } }
+
+(* View: key_value *)
+let key_value = Build.key_value Rx.word Sep.equal (store Rx.word)
+
+(* Test: key_value *)
+test key_value get "foo=bar" = { "foo" = "bar" }
+
+(* View: key_ws_value *)
+let key_ws_value = Build.key_ws_value Rx.word
+
+(* Test: key_ws_value *)
+test key_ws_value get "foo bar\n" = { "foo" = "bar" }
+
+(* View: flag *)
+let flag = Build.flag Rx.word
+
+(* Test: flag *)
+test flag get "foo" = { "foo" }
+
+(* View: flag_line *)
+let flag_line = Build.flag_line Rx.word
+
+(* Test: flag_line *)
+test flag_line get "foo\n" = { "foo" }
+
+
+(************************************************************************
+ * Group:                   BLOCK CONSTRUCTIONS
+ ************************************************************************)
+
 (* View: block_entry
     The block entry used for testing *)
 let block_entry = Build.key_value "test" Sep.equal (store Rx.word)
