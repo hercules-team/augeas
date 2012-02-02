@@ -181,18 +181,23 @@ let flag_line (kw:regexp) = [ key kw . eol ]
  *     comment:lens              - the comment lens used in the block
  *     comment_noindent:lens     - the comment lens used in the block,
  *                                 without indentation.
+ *     default_lbracket:string   - default value for the left bracket
+ *     default_rbracket:string   - default value for the right bracket
  ************************************************************************)
-let block_generic (entry:lens) (entry_noindent:lens)
-                  (entry_noeol:lens) (entry_noindent_noeol:lens)
-                  (comment:lens) (comment_noindent:lens) =
+let block_generic
+     (entry:lens) (entry_noindent:lens)
+     (entry_noeol:lens) (entry_noindent_noeol:lens)
+     (comment:lens) (comment_noindent:lens)
+     (default_lbracket:string)
+     (default_rbracket:string) =
      let block_single = entry_noindent_noeol | comment_noindent
   in let block_start  = entry_noindent | comment_noindent
   in let block_middle = (Util.empty | entry | comment)*
   in let block_end    = entry_noeol | comment
-  in del /[ \t\n]*\{[ \t\n]*/ " {\n"
+  in del /[ \t\n]*\{[ \t\n]*/ default_lbracket
      . ( ( block_start . block_middle . block_end )
        | block_single )
-     . del /[ \t\n]*\}/ "}"
+     . del /[ \t\n]*\}/ default_rbracket
 
 (************************************************************************
  * View: block
@@ -207,6 +212,7 @@ let block_generic (entry:lens) (entry_noindent:lens)
 let block (entry:lens) = block_generic (Util.indent . entry . eol)
                          (entry . eol) (Util.indent . entry) entry
                          Util.comment Util.comment_noindent
+                         " {\n" "}"
 
 (************************************************************************
  * View: named_block
