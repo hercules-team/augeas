@@ -1,6 +1,20 @@
 module Test_logrotate =
 
-   let conf = "# see man logrotate for details
+test Logrotate.body get "\n{\n monthly\n}" =
+  { "schedule" = "monthly" }
+
+test Logrotate.rule get "/var/log/foo\n{\n monthly\n}\n" =
+  { "rule"
+    { "file" = "/var/log/foo" }
+    { "schedule" = "monthly" } }
+
+test Logrotate.rule get "/var/log/foo /var/log/bar\n{\n monthly\n}\n" =
+  { "rule"
+    { "file" = "/var/log/foo" }
+    { "file" = "/var/log/bar" }
+    { "schedule" = "monthly" } }
+
+let conf = "# see man logrotate for details
 # rotate log files weekly
 weekly
 
@@ -61,7 +75,7 @@ include /etc/logrotate.d
 }
 "
 
-   test Logrotate.lns get conf =
+test Logrotate.lns get conf =
       { "#comment" = "see man logrotate for details" }
       { "#comment" = "rotate log files weekly" }
       { "schedule" = "weekly" }
@@ -129,50 +143,50 @@ include /etc/logrotate.d
                         /etc/init.d/apache2 restart > /dev/null
                 fi" } }
 
-  test Logrotate.lns get "/var/log/file {\n dateext\n}\n" =
+test Logrotate.lns get "/var/log/file {\n dateext\n}\n" =
     { "rule"
       { "file" = "/var/log/file" }
       { "dateext" = "dateext" } }
 
   (* Make sure 'minsize 1M' works *)
-  test Logrotate.lns get "/avr/log/wtmp {\n minsize 1M\n}\n" =
+test Logrotate.lns get "/avr/log/wtmp {\n minsize 1M\n}\n" =
   { "rule"
       { "file" = "/avr/log/wtmp" }
       { "minsize" = "1M" } }
 
   (* '=' is a legal separator, file names can be indented *)
-   test Logrotate.lns get " \t /file {\n size=5M\n}\n" =
+test Logrotate.lns get " \t /file {\n size=5M\n}\n" =
      { "rule"
          { "file" = "/file" }
          { "size" = "5M" } }
 
   (* Can leave owner/group off a create statement *)
-  test Logrotate.lns get "/file {
+test Logrotate.lns get "/file {
 	create 600\n}\n" =
      { "rule"
          { "file" = "/file" }
          { "create"
              { "mode" = "600" } } }
 
-  test Logrotate.lns put "/file {\n	create 600\n}\n" after
+test Logrotate.lns put "/file {\n	create 600\n}\n" after
     set "/rule/create/owner" "user"
   = "/file {\n	create 600 user\n}\n"
 
   (* The newline at the end of a script is optional *)
-  test Logrotate.lns put "/file {\n size=5M\n}\n" after
+test Logrotate.lns put "/file {\n size=5M\n}\n" after
     set "/rule/prerotate" "\tfoobar"
   =
 "/file {
- size=5M
+\tsize=5M
 \tprerotate
 \tfoobar
 \tendscript\n}\n"
 
-  test Logrotate.lns put "/file {\n size=5M\n}\n" after
+test Logrotate.lns put "/file {\n size=5M\n}\n" after
     set "/rule/prerotate" "\tfoobar\n"
   =
 "/file {
- size=5M
+\tsize=5M
 \tprerotate
 \tfoobar\n
 \tendscript\n}\n"

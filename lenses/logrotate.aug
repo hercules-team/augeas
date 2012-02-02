@@ -14,101 +14,96 @@
 module Logrotate =
    autoload xfm
 
-   let sep_spc = Util.del_ws_spc
+   let sep_spc = Sep.space
    let sep_val = del /[ \t]*=[ \t]*|[ \t]+/ " "
    let eol = Util.eol
-   let num = /[0-9]+/
+   let num = Rx.integer
    let word = /[^,#= \n\t{}]+/
    let filename = /\/[^,#= \n\t{}]+/
    let size = num . /[kMG]?/
 
-   (* define comments and empty lines *)
-   let comment (indent:string) =
-     let nl = Util.del_str "\n" in
-     [ label "#comment" . del /[ \t]*/ indent . del /#[ \t]*/ "# " .  store /([^ \t\n].*)?/ . nl ]
-   let empty   = [ del /[ \t]*\n/ "\n" ]
+   (* define omments and empty lines *)
+   let comment = Util.comment
+   let empty   = Util.empty
 
 
    (* Useful functions *)
 
    let list_item = [ sep_spc . key /[^\/+,# \n\t{}]+/ ]
-   let select_to_eol (kw:string) (select:regexp) (indent:string) = [ del /[ \t]*/ indent . label kw . store select . eol ]
-   let value_to_eol (kw:string) (value:regexp) (indent:string )  = [ del /[ \t]*/ indent . key kw . sep_val . store value . eol ]
-   let flag_to_eol (kw:string) (indent:string)                   = [ del /[ \t]*/ indent . key kw . eol ]
-   let list_to_eol (kw:string) (indent:string)                   = [ del /[ \t]*/ indent . key kw . list_item+ . eol ]
+   let select_to_eol (kw:string) (select:regexp) = [ label kw . store select ]
+   let value_to_eol (kw:string) (value:regexp)  = Build.key_value kw sep_val (store value)
+   let flag_to_eol (kw:string) = Build.flag kw
+   let list_to_eol (kw:string) = [ key kw . list_item+ ]
 
 
    (* Defaults *)
 
-   let create (indent:string ) =
+   let create =
      let mode = sep_spc . [ label "mode" . store num ] in
      let owner = sep_spc . [ label "owner" . store word ] in
      let group = sep_spc . [ label "group" . store word ] in
-     [ del /[ \t]*/ indent . key "create" .
-         ( mode | mode . owner | mode . owner . group )?
-		    . eol ]
+     [ key "create" .
+         ( mode | mode . owner | mode . owner . group )? ]
 
-   let tabooext (indent:string) = [ del /[ \t]*/ indent . key "tabooext" . ( sep_spc . store /\+/ )? . list_item+ . eol ]
+   let tabooext = [ key "tabooext" . ( sep_spc . store /\+/ )? . list_item+ ]
 
-   let attrs (indent:string) = select_to_eol "schedule" /(daily|weekly|monthly|yearly)/ indent
-                | value_to_eol "rotate" num indent
-		| create indent
-		| flag_to_eol "nocreate" indent
-		| value_to_eol "include" word indent
-		| select_to_eol "missingok" /(no)?missingok/ indent
-		| select_to_eol "compress" /(no)?compress/ indent
-		| select_to_eol "delaycompress" /(no)?delaycompress/ indent
-		| select_to_eol "ifempty" /(not)?ifempty/ indent
-		| select_to_eol "sharedscripts" /(no)?sharedscripts/ indent
-		| value_to_eol "size" size indent
-		| tabooext indent
-		| value_to_eol "olddir" word indent
-		| flag_to_eol "noolddir" indent
-		| value_to_eol "mail" word indent
-		| flag_to_eol "mailfirst" indent
-		| flag_to_eol "maillast" indent
-		| flag_to_eol "nomail" indent
-		| value_to_eol "errors" word indent
-		| value_to_eol "extension" word indent
-		| select_to_eol "dateext" /(no)?dateext/ indent
-		| value_to_eol "compresscmd" word indent
-		| value_to_eol "uncompresscmd" word indent
-		| value_to_eol "compressext" word indent
-		| list_to_eol "compressoptions" indent
-		| select_to_eol "copy" /(no)?copy/ indent
-		| select_to_eol "copytruncate" /(no)?copytruncate/ indent
-		| value_to_eol "maxage" num indent
-		| value_to_eol "minsize" size indent
-		| select_to_eol "shred" /(no)?shred/ indent
-		| value_to_eol "shredcycles" num indent
-		| value_to_eol "start" num indent
+   let attrs = select_to_eol "schedule" /(daily|weekly|monthly|yearly)/
+                | value_to_eol "rotate" num
+		| create
+		| flag_to_eol "nocreate"
+		| value_to_eol "include" word
+		| select_to_eol "missingok" /(no)?missingok/
+		| select_to_eol "compress" /(no)?compress/
+		| select_to_eol "delaycompress" /(no)?delaycompress/
+		| select_to_eol "ifempty" /(not)?ifempty/
+		| select_to_eol "sharedscripts" /(no)?sharedscripts/
+		| value_to_eol "size" size
+		| tabooext
+		| value_to_eol "olddir" word
+		| flag_to_eol "noolddir"
+		| value_to_eol "mail" word
+		| flag_to_eol "mailfirst"
+		| flag_to_eol "maillast"
+		| flag_to_eol "nomail"
+		| value_to_eol "errors" word
+		| value_to_eol "extension" word
+		| select_to_eol "dateext" /(no)?dateext/
+		| value_to_eol "compresscmd" word
+		| value_to_eol "uncompresscmd" word
+		| value_to_eol "compressext" word
+		| list_to_eol "compressoptions"
+		| select_to_eol "copy" /(no)?copy/
+		| select_to_eol "copytruncate" /(no)?copytruncate/
+		| value_to_eol "maxage" num
+		| value_to_eol "minsize" size
+		| select_to_eol "shred" /(no)?shred/
+		| value_to_eol "shredcycles" num
+		| value_to_eol "start" num
 
    (* Define hooks *)
 
 
    let hook_lines =
      let line_re = /.*/ - /[ \t]*endscript[ \t]*/ in
-       store ( line_re . ("\n" . line_re)* )? . del "\n" "\n"
+       store ( line_re . ("\n" . line_re)* )? . Util.del_str "\n"
 
    let hooks =
      let hook_names = /(pre|post)rotate|(first|last)action/ in
-     [ del /[ \t]*/ "\t" . key hook_names . eol .
+     [ key hook_names . eol .
        hook_lines? .
-       del /[ \t]*endscript[ \t]*\n/ "\tendscript\n" ]
+       del /[ \t]*endscript/ "\tendscript" ]
 
    (* Define rule *)
 
-   let body = del /\{[ \t]*\n/ "{\n"
-                       . ( comment "\t" | attrs "\t" | hooks | empty )*
-                       . del /[ \t]*\}[ \t]*\n/ "}\n"
+   let body = Build.block_newlines (attrs | hooks)
 
    let rule =
-     [ label "rule" . Util.indent .
-         [ label "file" . store filename ] .
-	 [ del /[ \t\n]+/ " " . label "file" . store filename ]* .
-	 del /[ \t\n]*/ " " . body ]
+     let filename_entry = [ label "file" . store filename ] in
+     let filename_sep = del /[ \t\n]+/ " " in
+     let filenames = Build.opt_list filename_entry filename_sep in
+     [ label "rule" . Util.indent . filenames . body . eol ]
 
-   let lns = ( comment "" | empty | attrs "" | rule )*
+   let lns = ( comment | empty | (attrs . eol) | rule )*
 
    let filter = incl "/etc/logrotate.d/*"
               . incl "/etc/logrotate.conf"
