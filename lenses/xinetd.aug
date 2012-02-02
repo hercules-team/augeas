@@ -75,13 +75,7 @@ module Xinetd =
    *       about how to write that down. The resulting regular expressions
    *       would simply be prohibitively large.
    *)
-  let body (attr:lens) =
-     let entry = indent . attr . Util.eol in
-     let comment = indent . Util.comment_noindent in
-     Build.block_generic entry entry entry entry (* ignore noindent and noeol *)
-                         comment comment         (* ignore noindent and noeol *)
-                         /[ \t\n]+\{[ \t]*\n/ /[ \t]*\}/  (* force newlines *)
-                         "\n{\n" "}"                      (* force newlines *)
+  let body (attr:lens) = Build.block_newlines attr
 
   (* View: includes
    *  Note:

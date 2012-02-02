@@ -181,25 +181,25 @@ let flag_line (kw:regexp) = [ key kw . eol ]
  *     comment:lens              - the comment lens used in the block
  *     comment_noindent:lens     - the comment lens used in the block,
  *                                 without indentation.
- *     lbracket_re:regexp        - regexp for the left bracket
- *     rbracket_re:regexp        - regexp for the right bracket
- *     lbracket_default:string   - default value for the left bracket
- *     rbracket_default:string   - default value for the right bracket
+ *     ldelim_re:regexp          - regexp for the left delimiter
+ *     rdelim_re:regexp          - regexp for the right delimiter
+ *     ldelim_default:string     - default value for the left delimiter
+ *     rdelim_default:string     - default value for the right delimiter
  ************************************************************************)
 let block_generic
      (entry:lens) (entry_noindent:lens)
      (entry_noeol:lens) (entry_noindent_noeol:lens)
      (comment:lens) (comment_noindent:lens)
-     (lbracket_re:regexp) (rbracket_re:regexp)
-     (lbracket_default:string) (rbracket_default:string) =
+     (ldelim_re:regexp) (rdelim_re:regexp)
+     (ldelim_default:string) (rdelim_default:string) =
      let block_single = entry_noindent_noeol | comment_noindent
   in let block_start  = entry_noindent | comment_noindent
   in let block_middle = (Util.empty | entry | comment)*
   in let block_end    = entry_noeol | comment
-  in del lbracket_re lbracket_default
+  in del ldelim_re ldelim_default
      . ( ( block_start . block_middle . block_end )
        | block_single )
-     . del rbracket_re rbracket_default
+     . del rdelim_re rdelim_default
 
 (************************************************************************
  * View: block_setdefault
@@ -210,17 +210,21 @@ let block_generic
  *                  This entry should not include <Util.empty>,
  *                  <Util.comment> or <Util.comment_noindent>,
  *                  should not be indented or finish with an eol.
- *     default_lbracket:string   - default value for the left bracket
- *     default_rbracket:string   - default value for the right bracket
+ *     ldelim_re:regexp      - regexp for the left delimiter
+ *     rdelim_re:regexp      - regexp for the left delimiter
+ *     ldelim_default:string - default value for the left delimiter
+ *     rdelim_default:string - default value for the right delimiter
  ************************************************************************)
-let block_setdefault (entry:lens)
-                     (default_lbracket:string)
-                     (default_rbracket:string) =
+let block_setdelim (entry:lens)
+                     (ldelim_re:regexp)
+                     (rdelim_re:regexp)
+                     (ldelim_default:string)
+                     (rdelim_default:string) =
     block_generic (Util.indent . entry . eol)
                   (entry . eol) (Util.indent . entry) entry
                   Util.comment Util.comment_noindent
-                  /[ \t\n]+\{[ \t\n]*/ /[ \t\n]*\}/
-                  default_lbracket default_rbracket
+                  ldelim_re rdelim_re
+                  ldelim_default rdelim_default
 
 (************************************************************************
  * View: block
@@ -232,7 +236,29 @@ let block_setdefault (entry:lens)
  *                  <Util.comment> or <Util.comment_noindent>,
  *                  should not be indented or finish with an eol.
  ************************************************************************)
-let block (entry:lens) = block_setdefault entry " {\n" "}"
+let block (entry:lens) = block_setdelim entry
+                         /[ \t\n]+\{[ \t\n]*/ /[ \t\n]*\}/ " {\n" "}"
+
+(************************************************************************
+ * View: block_newline
+ *   A block enclosed in brackets, with newlines forced
+ *   and indentation defaulting to a tab.
+ *
+ *   Parameters:
+ *     entry:lens - the entry to be stored inside the block.
+ *                  This entry should not include <Util.empty>,
+ *                  <Util.comment> or <Util.comment_noindent>,
+ *                  should not be indented or finish with an eol.
+ ************************************************************************)
+let block_newlines (entry:lens) =
+     let indent = del Rx.opt_space "\t"
+  in let full_entry = indent . entry . eol
+  in let comment = indent . Util.comment_noindent
+  in block_generic full_entry full_entry   (* ignore noindent and noeol *)
+                   full_entry full_entry   (* ignore noindent and noeol *)
+                   comment comment         (* ignore noindent and noeol *)
+                   /[ \t\n]+\{[ \t]*\n/ /[ \t]*\}/  (* force newlines *)
+                   "\n{\n" "}"                      (* force newlines *)
 
 (************************************************************************
  * View: named_block
