@@ -21,7 +21,7 @@ let comma = Util.del_str ","
 let equal = Util.del_str "="
 
 (* Variable: space_equal *)
-let space_equal = del /[ \t]*=[ \t]*/ "="
+let space_equal = Util.delim "="
 
 (* Variable: space
    Deletes a <Rx.space> and default to a single space *)

@@ -134,6 +134,10 @@ View: comment_generic
     let sym = gensym "split" in
     counter sym . ( [ seq sym . sep . elt ] ) *
 
+(* View: delim *)
+  let delim (op:string) = del (/[ \t]*/ . op . /[ \t]*/)
+                              (" " . op . " ")
+
 (* Group: Exclusions
 
 Variable: stdexcl
