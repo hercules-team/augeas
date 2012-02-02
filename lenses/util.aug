@@ -78,6 +78,11 @@ View: comment_generic
 *)
   let comment = comment_generic /[ \t]*#[ \t]*/ "# "
 
+(* View: comment_noindent
+  Map comments into "#comment" nodes, without indentation
+*)
+  let comment_noindent = comment_generic /#[ \t]*/ "# "
+
 (* View: comment_eol
   Map eol comments into "#comment" nodes
   Add a space before # for end of line comments

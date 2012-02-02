@@ -24,6 +24,7 @@ lens_tests =			\
   lens-automounter.sh	\
   lens-backuppchosts.sh		\
   lens-bbhosts.sh		\
+  lens-build.sh		\
   lens-cgconfig.sh		\
   lens-cgrules.sh  		\
   lens-channels.sh  		\

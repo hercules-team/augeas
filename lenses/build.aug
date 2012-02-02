@@ -162,3 +162,59 @@ let flag (kw:regexp) = [ key kw ]
  ************************************************************************)
 let flag_line (kw:regexp) = [ key kw . eol ]
 
+(************************************************************************
+ * View: block_generic
+ *   A block enclosed in brackets
+ *
+ *   Parameters:
+ *     entry:lens                - the entry to be stored inside the block.
+ *                                 This entry should not include <Util.empty>
+ *     entry_noindent:lens       - the entry to be stored inside the block,
+ *                                 without indentation.
+ *                                 This entry should not include <Util.empty>
+ *     entry_noeol:lens          - the entry to be stored inside the block,
+ *                                 without eol.
+ *                                 This entry should not include <Util.empty>
+ *     entry_noindent_noeol:lens - the entry to be stored inside the block,
+ *                                 without indentation or eol.
+ *                                 This entry should not include <Util.empty>
+ *     comment:lens              - the comment lens used in the block
+ *     comment_noindent:lens     - the comment lens used in the block,
+ *                                 without indentation.
+ ************************************************************************)
+let block_generic (entry:lens) (entry_noindent:lens)
+                  (entry_noeol:lens) (entry_noindent_noeol:lens)
+                  (comment:lens) (comment_noindent:lens) =
+     let block_single = entry_noindent_noeol | comment_noindent
+  in let block_start  = entry_noindent | comment_noindent
+  in let block_middle = (Util.empty | entry | comment)*
+  in let block_end    = entry_noeol | comment
+  in del /[ \t\n]*\{[ \t\n]*/ " {\n"
+     . ( ( block_start . block_middle . block_end )
+       | block_single )
+     . del /[ \t\n]*\}/ "}"
+
+(************************************************************************
+ * View: block
+ *   A block enclosed in brackets
+ *
+ *   Parameters:
+ *     entry:lens - the entry to be stored inside the block.
+ *                  This entry should not include <Util.empty>,
+ *                  <Util.comment> or <Util.comment_noindent>,
+ *                  should not be indented or finish with an eol.
+ ************************************************************************)
+let block (entry:lens) = block_generic (Util.indent . entry . eol)
+                         (entry . eol) (Util.indent . entry) entry
+                         Util.comment Util.comment_noindent
+
+(************************************************************************
+ * View: named_block
+ *   A named <block> enclosed in brackets
+ *
+ *   Parameters:
+ *     kw:regexp  - the regexp for the block name
+ *     entry:lens - the entry to be stored inside the block
+ *                   this entry should not include <Util.empty>
+ ************************************************************************)
+let named_block (kw:regexp) (entry:lens) = [ key kw . block entry . eol ]
