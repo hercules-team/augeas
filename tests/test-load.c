@@ -481,6 +481,29 @@ static void testParseErrorReported(CuTest *tc) {
     aug_close(aug);
 }
 
+/* Test bug #252 - excl patterns have no effect when loading with a root */
+static void testLoadExclWithRoot(CuTest *tc) {
+    augeas *aug = NULL;
+    static const char *const cmds =
+        "set /augeas/context /augeas/load\n"
+        "set Hosts/lens Hosts.lns\n"
+        "set Hosts/incl /etc/hosts\n"
+        "set Fstab/lens Fstab.lns\n"
+        "set Fstab/incl /etc/ho*\n"
+        "set Fstab/excl /etc/hosts\n"
+        "load";
+    int r;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_MODL_AUTOLOAD);
+    CuAssertPtrNotNull(tc, aug);
+
+    r = aug_srun(aug, stderr, cmds);
+    CuAssertIntEquals(tc, 7, r);
+
+    r = aug_match(aug, "/augeas//error", NULL);
+    CuAssertIntEquals(tc, 0, r);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -498,6 +521,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testReloadDeletedMeta);
     SUITE_ADD_TEST(suite, testReloadExternalMod);
     SUITE_ADD_TEST(suite, testParseErrorReported);
+    SUITE_ADD_TEST(suite, testLoadExclWithRoot);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)

@@ -181,6 +181,7 @@ static int filter_generate(struct tree *xfm, const char *root,
     int ret = 0;
     char **pathv = NULL;
     int pathc = 0;
+    int root_prefix = strlen(root) - 1;
 
     *nmatches = 0;
     *matches = NULL;
@@ -217,7 +218,7 @@ static int filter_generate(struct tree *xfm, const char *root,
 
             if (strchr(e->value, SEP) == NULL)
                 path = pathbase(path);
-            if ((r = fnmatch(e->value, path, fnm_flags)) == 0) {
+            if ((r = fnmatch(e->value, path + root_prefix, fnm_flags)) == 0) {
                 include = false;
             }
         }
