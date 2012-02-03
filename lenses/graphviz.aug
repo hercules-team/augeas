@@ -21,8 +21,11 @@ About: Examples
 
 module Graphviz =
 
-(* View: node_name *)
-let node_name = store (/[A-Za-z0-9_.]+/ - "node")
+(* View: name *)
+let name =
+   let reserved = "node" | "graph"
+   in  store ( ("\"" . /[^"]+/ . "\"")
+               | (/[A-Za-z0-9_.]+/ - reserved) )
 
 (* View: eol
      Special eol using semicolons and/or newlines *)
@@ -33,7 +36,7 @@ let eol = del /[ \t]*((;\n?)|\n)/ ";\n"
      in order to pass our special definition of <eol> *)
 let block (kw:regexp) (entry:lens) =
    [ key kw
-   . Sep.space . store Rx.word
+   . Sep.space . name
    . Build.block_generic  (* Use our definition of eol *)
         (Util.indent . entry . eol)
         (entry . eol) (Util.indent . entry) entry
@@ -45,10 +48,7 @@ let block (kw:regexp) (entry:lens) =
      A generic way of parsing variables
      with or without double quotes *)
 let variable_generic (reserved:regexp) =
-   let value = store ( ("\"" . /[^"]+/ . "\"")
-                     | Rx.word )
-   in Build.key_value (Rx.word - reserved) Sep.space_equal
-                      value
+   Build.key_value (Rx.word - reserved) Sep.space_equal name
 
 (* View: variable *)
 let variable =
@@ -60,13 +60,14 @@ let variable =
 let options = 
       let reserved = "node" | "link_type"
    in let option = variable_generic reserved
+   in let comma = del /,[ \t\n]*/ ","
    in Sep.space . del /\[[ \t]*/ "["
-                . Build.opt_list option Sep.comma
+                . Build.opt_list option comma
                 . del /[ \t]*\]/ "]"
 
 (* View: link *)
 let link =
-      let link_node = [ label "node" . node_name ]
+      let link_node = [ label "node" . name ]
    in let link_type = [ label "link_type" . Sep.opt_space
                       . store /\<?\-\-?\>?/ . Sep.opt_space ]
    in [ label "link"
@@ -74,7 +75,7 @@ let link =
       . options? ]
 
 (* View: node *)
-let node = [ label "node" . node_name . options? ]
+let node = [ label "node" . name . options? ]
 
 (* View: nodelist
      Several <nodes> can be declared at once in a nodelist.
@@ -83,13 +84,17 @@ let node = [ label "node" . node_name . options? ]
 let nodelist = [ label "nodelist" . Build.list node Sep.space ]
 
 (* View: default_node
-     General settings for nodes *)
+     General settings for <nodes> *)
 let default_node = [ Build.xchgs "node" "@node" . options ]
+
+(* View: default_graph
+     General settings for <graphs> *)
+let default_graph = [ Build.xchgs "graph" "@graph" . options ]
 
 (* View: entry
      A general entry *)
 let entry = (link | variable | node | nodelist
-           | default_node)
+           | default_node | default_graph)
 
 (* View: subgraph
      Recursive *)
