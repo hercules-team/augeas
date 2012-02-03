@@ -47,6 +47,7 @@ lens_tests =			\
   lens-fonts.sh	\
   lens-fstab.sh			\
   lens-fuse.sh			\
+  lens-graphviz.sh			\
   lens-gdm.sh			\
   lens-group.sh			\
   lens-json.sh          \
