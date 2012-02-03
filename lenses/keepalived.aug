@@ -96,10 +96,12 @@ A single word *)
 let flag (kw:regexp) = [ indent . key kw . comment_or_eol ]
 
 (* View: lens_block 
-A generic block with a title lens *)
-let lens_block (title:lens) (sto:lens) = [ indent . title . opt_eol . lbracket
-                                         . (sto | empty | comment)+
-                                         . indent . rbracket . eol ]
+A generic block with a title lens.
+The definition is very similar to Build.block_newlines
+but uses a different type of <comment>. *)
+let lens_block (title:lens) (sto:lens) =
+   [ indent . title
+   . Build.block_newlines sto comment . eol ]
 
 (* View: block
 A simple block with just a block title *)
