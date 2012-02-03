@@ -24,7 +24,7 @@ module Graphviz =
 (* View: name *)
 let name =
    let reserved = "node" | "graph"
-   in  store ( ("\"" . /[^"]+/ . "\"")
+   in  store ( ("\"" . /[^"]*/ . "\"")
                | (/[A-Za-z0-9_.]+/ - reserved) )
 
 (* View: eol
