@@ -22,6 +22,8 @@ module Logrotate =
    let filename = /\/[^,#= \n\t{}]+/
    let size = num . /[kMG]?/
 
+   let indent = del Rx.opt_space "\t"
+
    (* define omments and empty lines *)
    let comment = Util.comment
    let empty   = Util.empty
@@ -95,7 +97,9 @@ module Logrotate =
 
    (* Define rule *)
 
-   let body = Build.block_newlines (attrs | hooks)
+   let body = Build.block_newlines
+                 (indent . (attrs | hooks) . eol)
+                 Util.comment
 
    let rule =
      let filename_entry = [ label "file" . store filename ] in

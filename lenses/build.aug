@@ -258,7 +258,7 @@ let block (entry:lens) = block_setdelim entry
                          block_ldelim_default block_rdelim_default
 
 (* Variable: block_ldelim_newlines_re *)
-let block_ldelim_newlines_re = /[ \t\n]+\{[ \t]*\n/
+let block_ldelim_newlines_re = /[ \t\n]+\{([ \t\n]*\n)?/
 
 (* Variable: block_rdelim_newlines_re *)
 let block_rdelim_newlines_re = /[ \t]*\}/
@@ -278,17 +278,13 @@ let block_rdelim_newlines_default = "}"
  *     entry:lens - the entry to be stored inside the block.
  *                  This entry should not include <Util.empty>,
  *                  <Util.comment> or <Util.comment_noindent>,
- *                  should not be indented or finish with an eol.
+ *                  should be indented and finish with an eol.
  ************************************************************************)
-let block_newlines (entry:lens) =
-     let indent = del Rx.opt_space "\t"
-  in let full_entry = indent . entry . eol
-  in let comment = indent . Util.comment_noindent
-  in block_generic full_entry full_entry   (* ignore noindent and noeol *)
-                   full_entry full_entry   (* ignore noindent and noeol *)
-                   comment comment         (* ignore noindent and noeol *)
-                   block_ldelim_newlines_re block_rdelim_newlines_re           (* force newlines *)
-                   block_ldelim_newlines_default block_rdelim_newlines_default (* force newlines *)
+let block_newlines (entry:lens) (comment:lens) =
+      let indent = del Rx.opt_space "\t"
+   in del block_ldelim_newlines_re block_ldelim_newlines_default
+ . ((entry | comment) . (Util.empty | entry | comment)*)?
+ . del block_rdelim_newlines_re block_rdelim_newlines_default
 
 (************************************************************************
  * View: named_block
