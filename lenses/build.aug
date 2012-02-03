@@ -231,6 +231,18 @@ let block_setdelim (entry:lens)
                   ldelim_re rdelim_re
                   ldelim_default rdelim_default
 
+(* Variable: block_ldelim_re *)
+let block_ldelim_re = /[ \t\n]+\{[ \t\n]*/
+
+(* Variable: block_rdelim_re *)
+let block_rdelim_re = /[ \t\n]*\}/
+
+(* Variable: block_ldelim_default *)
+let block_ldelim_default = " {\n"
+
+(* Variable: block_rdelim_default *)
+let block_rdelim_default = "}"
+
 (************************************************************************
  * View: block
  *   A block enclosed in brackets
@@ -242,7 +254,20 @@ let block_setdelim (entry:lens)
  *                  should not be indented or finish with an eol.
  ************************************************************************)
 let block (entry:lens) = block_setdelim entry
-                         /[ \t\n]+\{[ \t\n]*/ /[ \t\n]*\}/ " {\n" "}"
+                         block_ldelim_re block_rdelim_re
+                         block_ldelim_default block_rdelim_default
+
+(* Variable: block_ldelim_newlines_re *)
+let block_ldelim_newlines_re = /[ \t\n]+\{[ \t]*\n/
+
+(* Variable: block_rdelim_newlines_re *)
+let block_rdelim_newlines_re = /[ \t]*\}/
+
+(* Variable: block_ldelim_newlines_default *)
+let block_ldelim_newlines_default = "\n{\n"
+
+(* Variable: block_rdelim_newlines_default *)
+let block_rdelim_newlines_default = "}"
 
 (************************************************************************
  * View: block_newline
@@ -262,8 +287,8 @@ let block_newlines (entry:lens) =
   in block_generic full_entry full_entry   (* ignore noindent and noeol *)
                    full_entry full_entry   (* ignore noindent and noeol *)
                    comment comment         (* ignore noindent and noeol *)
-                   /[ \t\n]+\{[ \t]*\n/ /[ \t]*\}/  (* force newlines *)
-                   "\n{\n" "}"                      (* force newlines *)
+                   block_ldelim_newlines_re block_rdelim_newlines_re           (* force newlines *)
+                   block_ldelim_newlines_default block_rdelim_newlines_default (* force newlines *)
 
 (************************************************************************
  * View: named_block
