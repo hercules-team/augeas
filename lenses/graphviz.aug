@@ -61,7 +61,7 @@ let options =
       let reserved = "node" | "link_type"
    in let option = variable_generic reserved
    in let comma = del /,[ \t\n]*/ ","
-   in Sep.space . del /\[[ \t]*/ "["
+   in Sep.opt_space . del /\[[ \t]*/ "["
                 . Build.opt_list option comma
                 . del /[ \t]*\]/ "]"
 
