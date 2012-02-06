@@ -35,7 +35,7 @@ test Graphviz.lns get entries =
   { "graph" = "A"
     { "style" = "filled" }
     { "color" = "lightgrey" }
-    { "@node"
+    { "@default" = "node"
       { "style" = "filled" }
       { "color" = "white" } }
     { "label" = "\"process #1\"" } }
@@ -97,9 +97,10 @@ test Graphviz.lns get cluster =
     { "subgraph" = "cluster_0"
       { "style" = "filled" }
       { "color" = "lightgrey" }
-      { "@node"
+      { "@default" = "node"
         { "style" = "filled" }
-        { "color" = "white" } }
+        { "color" = "white" }
+      }
       { "link"
         { "node" = "a0" }
         { "link_type" = "->" }
@@ -107,12 +108,14 @@ test Graphviz.lns get cluster =
         { "link_type" = "->" }
         { "node" = "a2" }
         { "link_type" = "->" }
-        { "node" = "a3" } }
-      { "label" = "\"process #1\"" } }
-    {  }
+        { "node" = "a3" }
+      }
+      { "label" = "\"process #1\"" }
+    }
     { "subgraph" = "cluster_1"
-      { "@node"
-        { "style" = "filled" } }
+      { "@default" = "node"
+        { "style" = "filled" }
+      }
       { "link"
         { "node" = "b0" }
         { "link_type" = "->" }
@@ -120,42 +123,58 @@ test Graphviz.lns get cluster =
         { "link_type" = "->" }
         { "node" = "b2" }
         { "link_type" = "->" }
-        { "node" = "b3" } }
+        { "node" = "b3" }
+      }
       { "label" = "\"process #2\"" }
-      { "color" = "blue" } }
+      { "color" = "blue" }
+    }
     { "link"
       { "node" = "start" }
       { "link_type" = "->" }
-      { "node" = "a0" } }
+      { "node" = "a0" }
+    }
     { "link"
       { "node" = "start" }
       { "link_type" = "->" }
-      { "node" = "b0" } }
+      { "node" = "b0" }
+    }
     { "link"
       { "node" = "a1" }
       { "link_type" = "->" }
-      { "node" = "b3" } }
+      { "node" = "b3" }
+    }
     { "link"
       { "node" = "b2" }
       { "link_type" = "->" }
-      { "node" = "a3" } }
+      { "node" = "a3" }
+    }
     { "link"
       { "node" = "a3" }
       { "link_type" = "->" }
-      { "node" = "a0" } }
+      { "node" = "a0" }
+    }
     { "link"
       { "node" = "a3" }
       { "link_type" = "->" }
-      { "node" = "end" } }
+      { "node" = "end" }
+    }
     { "link"
       { "node" = "b3" }
       { "link_type" = "->" }
-      { "node" = "end" } }
-    {  }
-    { "node" = "start"
-      { "shape" = "Mdiamond" } }
-    { "node" = "end"
-      { "shape" = "Msquare" } } } 
+      { "node" = "end" }
+    }
+    { "nodelist"
+      { "node" = "start"
+        { "shape" = "Mdiamond" }
+      }
+    }
+    { "nodelist"
+      { "node" = "end"
+        { "shape" = "Msquare" }
+      }
+    }
+  }
+
 
 (* Variable: fdpclust
      From http://www.graphviz.org/content/fdpclust *)
@@ -178,34 +197,47 @@ let fdpclust = "graph G {
 (* Test: Graphviz.lns *)
 test Graphviz.lns get fdpclust =
   { "graph" = "G"
-    { "node" = "e" }
+    { "nodelist"
+      { "node" = "e" }
+    }
     { "subgraph" = "clusterA"
       { "link"
         { "node" = "a" }
         { "link_type" = "--" }
-        { "node" = "b" } }
+        { "node" = "b" }
+      }
       { "subgraph" = "clusterC"
         { "link"
           { "node" = "C" }
           { "link_type" = "--" }
-          { "node" = "D" } } } }
+          { "node" = "D" }
+        }
+      }
+    }
     { "subgraph" = "clusterB"
       { "link"
         { "node" = "d" }
         { "link_type" = "--" }
-        { "node" = "f" } } }
+        { "node" = "f" }
+      }
+    }
     { "link"
       { "node" = "d" }
       { "link_type" = "--" }
-      { "node" = "D" } }
+      { "node" = "D" }
+    }
     { "link"
       { "node" = "e" }
       { "link_type" = "--" }
-      { "node" = "clusterB" } }
+      { "node" = "clusterB" }
+    }
     { "link"
       { "node" = "clusterC" }
       { "link_type" = "--" }
-      { "node" = "clusterB" } } } 
+      { "node" = "clusterB" }
+    }
+  }
+
 
 (* Test: Graphviz.nodelist *)
 test Graphviz.nodelist get "LR_0 LR_3 LR_4 LR_8" =
@@ -245,85 +277,103 @@ test Graphviz.lns get fsm =
   { "digraph" = "finite_state_machine"
     { "rankdir" = "LR" }
     { "size" = "\"8,5\"" }
-    { "@node"
-      { "shape" = "doublecircle" } }
+    { "@default" = "node"
+      { "shape" = "doublecircle" }
+    }
     { "nodelist"
       { "node" = "LR_0" }
       { "node" = "LR_3" }
       { "node" = "LR_4" }
-      { "node" = "LR_8" } }
-    { "@node"
-      { "shape" = "circle" } }
+      { "node" = "LR_8" }
+    }
+    { "@default" = "node"
+      { "shape" = "circle" }
+    }
     { "link"
       { "node" = "LR_0" }
       { "link_type" = "->" }
       { "node" = "LR_2" }
-      { "label" = "\"SS(B)\"" } }
+      { "label" = "\"SS(B)\"" }
+    }
     { "link"
       { "node" = "LR_0" }
       { "link_type" = "->" }
       { "node" = "LR_1" }
-      { "label" = "\"SS(S)\"" } }
+      { "label" = "\"SS(S)\"" }
+    }
     { "link"
       { "node" = "LR_1" }
       { "link_type" = "->" }
       { "node" = "LR_3" }
-      { "label" = "\"S($end)\"" } }
+      { "label" = "\"S($end)\"" }
+    }
     { "link"
       { "node" = "LR_2" }
       { "link_type" = "->" }
       { "node" = "LR_6" }
-      { "label" = "\"SS(b)\"" } }
+      { "label" = "\"SS(b)\"" }
+    }
     { "link"
       { "node" = "LR_2" }
       { "link_type" = "->" }
       { "node" = "LR_5" }
-      { "label" = "\"SS(a)\"" } }
+      { "label" = "\"SS(a)\"" }
+    }
     { "link"
       { "node" = "LR_2" }
       { "link_type" = "->" }
       { "node" = "LR_4" }
-      { "label" = "\"S(A)\"" } }
+      { "label" = "\"S(A)\"" }
+    }
     { "link"
       { "node" = "LR_5" }
       { "link_type" = "->" }
       { "node" = "LR_7" }
-      { "label" = "\"S(b)\"" } }
+      { "label" = "\"S(b)\"" }
+    }
     { "link"
       { "node" = "LR_5" }
       { "link_type" = "->" }
       { "node" = "LR_5" }
-      { "label" = "\"S(a)\"" } }
+      { "label" = "\"S(a)\"" }
+    }
     { "link"
       { "node" = "LR_6" }
       { "link_type" = "->" }
       { "node" = "LR_6" }
-      { "label" = "\"S(b)\"" } }
+      { "label" = "\"S(b)\"" }
+    }
     { "link"
       { "node" = "LR_6" }
       { "link_type" = "->" }
       { "node" = "LR_5" }
-      { "label" = "\"S(a)\"" } }
+      { "label" = "\"S(a)\"" }
+    }
     { "link"
       { "node" = "LR_7" }
       { "link_type" = "->" }
       { "node" = "LR_8" }
-      { "label" = "\"S(b)\"" } }
+      { "label" = "\"S(b)\"" }
+    }
     { "link"
       { "node" = "LR_7" }
       { "link_type" = "->" }
       { "node" = "LR_5" }
-      { "label" = "\"S(a)\"" } }
+      { "label" = "\"S(a)\"" }
+    }
     { "link"
       { "node" = "LR_8" }
       { "link_type" = "->" }
       { "node" = "LR_6" }
-      { "label" = "\"S(b)\"" } }
+      { "label" = "\"S(b)\"" }
+    }
     { "link"
       { "node" = "LR_8" }
       { "link_type" = "->" }
       { "node" = "LR_5" }
-      { "label" = "\"S(a)\"" } } }
+      { "label" = "\"S(a)\"" }
+    }
+  }
 
 (* Variable: crazy
     From http://www.graphviz.org/content/crazy *)
@@ -435,13 +485,13 @@ let crazy = "digraph \"unix\" {
 (* Test: Graphviz.lns *)
 test Graphviz.lns get crazy =
   { "digraph" = "\"unix\""
-    { "@graph"
+    { "@default" = "graph"
       { "fontname" = "\"Helvetica-Oblique\"" }
       { "fontsize" = "36" }
       { "label" = "\"\n\n\n\nObject Oriented Graphs\nStephen North, 3/19/93\"" }
       { "size" = "\"6,6\"" }
     }
-    { "@node"
+    { "@default" = "node"
       { "shape" = "polygon" }
       { "sides" = "4" }
       { "distortion" = "\"0.0\"" }
@@ -451,281 +501,363 @@ test Graphviz.lns get crazy =
       { "style" = "filled" }
       { "fontname" = "\"Helvetica-Outline\"" }
     }
-    { "node" = "\"5th Edition\""
-      { "sides" = "9" }
-      { "distortion" = "\"0.936354\"" }
-      { "orientation" = "28" }
-      { "skew" = "\"-0.126818\"" }
-      { "color" = "salmon2" }
+    { "nodelist"
+      { "node" = "\"5th Edition\""
+        { "sides" = "9" }
+        { "distortion" = "\"0.936354\"" }
+        { "orientation" = "28" }
+        { "skew" = "\"-0.126818\"" }
+        { "color" = "salmon2" }
+      }
     }
-    { "node" = "\"6th Edition\""
-      { "sides" = "5" }
-      { "distortion" = "\"0.238792\"" }
-      { "orientation" = "11" }
-      { "skew" = "\"0.995935\"" }
-      { "color" = "deepskyblue" }
+    { "nodelist"
+      { "node" = "\"6th Edition\""
+        { "sides" = "5" }
+        { "distortion" = "\"0.238792\"" }
+        { "orientation" = "11" }
+        { "skew" = "\"0.995935\"" }
+        { "color" = "deepskyblue" }
+      }
     }
-    { "node" = "\"PWB 1.0\""
-      { "sides" = "8" }
-      { "distortion" = "\"0.019636\"" }
-      { "orientation" = "79" }
-      { "skew" = "\"-0.440424\"" }
-      { "color" = "goldenrod2" }
+    { "nodelist"
+      { "node" = "\"PWB 1.0\""
+        { "sides" = "8" }
+        { "distortion" = "\"0.019636\"" }
+        { "orientation" = "79" }
+        { "skew" = "\"-0.440424\"" }
+        { "color" = "goldenrod2" }
+      }
     }
-    { "node" = "LSX"
-      { "sides" = "9" }
-      { "distortion" = "\"-0.698271\"" }
-      { "orientation" = "22" }
-      { "skew" = "\"-0.195492\"" }
-      { "color" = "burlywood2" }
+    { "nodelist"
+      { "node" = "LSX"
+        { "sides" = "9" }
+        { "distortion" = "\"-0.698271\"" }
+        { "orientation" = "22" }
+        { "skew" = "\"-0.195492\"" }
+        { "color" = "burlywood2" }
+      }
     }
-    { "node" = "\"1 BSD\""
-      { "sides" = "7" }
-      { "distortion" = "\"0.265084\"" }
-      { "orientation" = "26" }
-      { "skew" = "\"0.403659\"" }
-      { "color" = "gold1" }
+    { "nodelist"
+      { "node" = "\"1 BSD\""
+        { "sides" = "7" }
+        { "distortion" = "\"0.265084\"" }
+        { "orientation" = "26" }
+        { "skew" = "\"0.403659\"" }
+        { "color" = "gold1" }
+      }
     }
-    { "node" = "\"Mini Unix\""
-      { "distortion" = "\"0.039386\"" }
-      { "orientation" = "2" }
-      { "skew" = "\"-0.461120\"" }
-      { "color" = "greenyellow" }
+    { "nodelist"
+      { "node" = "\"Mini Unix\""
+        { "distortion" = "\"0.039386\"" }
+        { "orientation" = "2" }
+        { "skew" = "\"-0.461120\"" }
+        { "color" = "greenyellow" }
+      }
     }
-    { "node" = "Wollongong"
-      { "sides" = "5" }
-      { "distortion" = "\"0.228564\"" }
-      { "orientation" = "63" }
-      { "skew" = "\"-0.062846\"" }
-      { "color" = "darkseagreen" }
+    { "nodelist"
+      { "node" = "Wollongong"
+        { "sides" = "5" }
+        { "distortion" = "\"0.228564\"" }
+        { "orientation" = "63" }
+        { "skew" = "\"-0.062846\"" }
+        { "color" = "darkseagreen" }
+      }
     }
-    { "node" = "Interdata"
-      { "distortion" = "\"0.624013\"" }
-      { "orientation" = "56" }
-      { "skew" = "\"0.101396\"" }
-      { "color" = "dodgerblue1" }
+    { "nodelist"
+      { "node" = "Interdata"
+        { "distortion" = "\"0.624013\"" }
+        { "orientation" = "56" }
+        { "skew" = "\"0.101396\"" }
+        { "color" = "dodgerblue1" }
+      }
     }
-    { "node" = "\"Unix/TS 3.0\""
-      { "sides" = "8" }
-      { "distortion" = "\"0.731383\"" }
-      { "orientation" = "43" }
-      { "skew" = "\"-0.824612\"" }
-      { "color" = "thistle2" }
+    { "nodelist"
+      { "node" = "\"Unix/TS 3.0\""
+        { "sides" = "8" }
+        { "distortion" = "\"0.731383\"" }
+        { "orientation" = "43" }
+        { "skew" = "\"-0.824612\"" }
+        { "color" = "thistle2" }
+      }
     }
-    { "node" = "\"PWB 2.0\""
-      { "sides" = "6" }
-      { "distortion" = "\"0.592100\"" }
-      { "orientation" = "34" }
-      { "skew" = "\"-0.719269\"" }
-      { "color" = "darkolivegreen3" }
+    { "nodelist"
+      { "node" = "\"PWB 2.0\""
+        { "sides" = "6" }
+        { "distortion" = "\"0.592100\"" }
+        { "orientation" = "34" }
+        { "skew" = "\"-0.719269\"" }
+        { "color" = "darkolivegreen3" }
+      }
     }
-    { "node" = "\"7th Edition\""
-      { "sides" = "10" }
-      { "distortion" = "\"0.298417\"" }
-      { "orientation" = "65" }
-      { "skew" = "\"0.310367\"" }
-      { "color" = "chocolate" }
+    { "nodelist"
+      { "node" = "\"7th Edition\""
+        { "sides" = "10" }
+        { "distortion" = "\"0.298417\"" }
+        { "orientation" = "65" }
+        { "skew" = "\"0.310367\"" }
+        { "color" = "chocolate" }
+      }
     }
-    { "node" = "\"8th Edition\""
-      { "distortion" = "\"-0.997093\"" }
-      { "orientation" = "50" }
-      { "skew" = "\"-0.061117\"" }
-      { "color" = "turquoise3" }
+    { "nodelist"
+      { "node" = "\"8th Edition\""
+        { "distortion" = "\"-0.997093\"" }
+        { "orientation" = "50" }
+        { "skew" = "\"-0.061117\"" }
+        { "color" = "turquoise3" }
+      }
     }
-    { "node" = "\"32V\""
-      { "sides" = "7" }
-      { "distortion" = "\"0.878516\"" }
-      { "orientation" = "19" }
-      { "skew" = "\"0.592905\"" }
-      { "color" = "steelblue3" }
+    { "nodelist"
+      { "node" = "\"32V\""
+        { "sides" = "7" }
+        { "distortion" = "\"0.878516\"" }
+        { "orientation" = "19" }
+        { "skew" = "\"0.592905\"" }
+        { "color" = "steelblue3" }
+      }
     }
-    { "node" = "V7M"
-      { "sides" = "10" }
-      { "distortion" = "\"-0.960249\"" }
-      { "orientation" = "32" }
-      { "skew" = "\"0.460424\"" }
-      { "color" = "navy" }
+    { "nodelist"
+      { "node" = "V7M"
+        { "sides" = "10" }
+        { "distortion" = "\"-0.960249\"" }
+        { "orientation" = "32" }
+        { "skew" = "\"0.460424\"" }
+        { "color" = "navy" }
+      }
     }
-    { "node" = "\"Ultrix-11\""
-      { "sides" = "10" }
-      { "distortion" = "\"-0.633186\"" }
-      { "orientation" = "10" }
-      { "skew" = "\"0.333125\"" }
-      { "color" = "darkseagreen4" }
+    { "nodelist"
+      { "node" = "\"Ultrix-11\""
+        { "sides" = "10" }
+        { "distortion" = "\"-0.633186\"" }
+        { "orientation" = "10" }
+        { "skew" = "\"0.333125\"" }
+        { "color" = "darkseagreen4" }
+      }
     }
-    { "node" = "Xenix"
-      { "sides" = "8" }
-      { "distortion" = "\"-0.337997\"" }
-      { "orientation" = "52" }
-      { "skew" = "\"-0.760726\"" }
-      { "color" = "coral" }
+    { "nodelist"
+      { "node" = "Xenix"
+        { "sides" = "8" }
+        { "distortion" = "\"-0.337997\"" }
+        { "orientation" = "52" }
+        { "skew" = "\"-0.760726\"" }
+        { "color" = "coral" }
+      }
     }
-    { "node" = "\"UniPlus+\""
-      { "sides" = "7" }
-      { "distortion" = "\"0.788483\"" }
-      { "orientation" = "39" }
-      { "skew" = "\"-0.526284\"" }
-      { "color" = "darkolivegreen3" }
+    { "nodelist"
+      { "node" = "\"UniPlus+\""
+        { "sides" = "7" }
+        { "distortion" = "\"0.788483\"" }
+        { "orientation" = "39" }
+        { "skew" = "\"-0.526284\"" }
+        { "color" = "darkolivegreen3" }
+      }
     }
-    { "node" = "\"9th Edition\""
-      { "sides" = "7" }
-      { "distortion" = "\"0.138690\"" }
-      { "orientation" = "55" }
-      { "skew" = "\"0.554049\"" }
-      { "color" = "coral3" }
+    { "nodelist"
+      { "node" = "\"9th Edition\""
+        { "sides" = "7" }
+        { "distortion" = "\"0.138690\"" }
+        { "orientation" = "55" }
+        { "skew" = "\"0.554049\"" }
+        { "color" = "coral3" }
+      }
     }
-    { "node" = "\"2 BSD\""
-      { "sides" = "7" }
-      { "distortion" = "\"-0.010661\"" }
-      { "orientation" = "84" }
-      { "skew" = "\"0.179249\"" }
-      { "color" = "blanchedalmond" }
+    { "nodelist"
+      { "node" = "\"2 BSD\""
+        { "sides" = "7" }
+        { "distortion" = "\"-0.010661\"" }
+        { "orientation" = "84" }
+        { "skew" = "\"0.179249\"" }
+        { "color" = "blanchedalmond" }
+      }
     }
-    { "node" = "\"2.8 BSD\""
-      { "distortion" = "\"-0.239422\"" }
-      { "orientation" = "44" }
-      { "skew" = "\"0.053841\"" }
-      { "color" = "lightskyblue1" }
+    { "nodelist"
+      { "node" = "\"2.8 BSD\""
+        { "distortion" = "\"-0.239422\"" }
+        { "orientation" = "44" }
+        { "skew" = "\"0.053841\"" }
+        { "color" = "lightskyblue1" }
+      }
     }
-    { "node" = "\"2.9 BSD\""
-      { "distortion" = "\"-0.843381\"" }
-      { "orientation" = "70" }
-      { "skew" = "\"-0.601395\"" }
-      { "color" = "aquamarine2" }
+    { "nodelist"
+      { "node" = "\"2.9 BSD\""
+        { "distortion" = "\"-0.843381\"" }
+        { "orientation" = "70" }
+        { "skew" = "\"-0.601395\"" }
+        { "color" = "aquamarine2" }
+      }
     }
-    { "node" = "\"3 BSD\""
-      { "sides" = "10" }
-      { "distortion" = "\"0.251820\"" }
-      { "orientation" = "18" }
-      { "skew" = "\"-0.530618\"" }
-      { "color" = "lemonchiffon" }
+    { "nodelist"
+      { "node" = "\"3 BSD\""
+        { "sides" = "10" }
+        { "distortion" = "\"0.251820\"" }
+        { "orientation" = "18" }
+        { "skew" = "\"-0.530618\"" }
+        { "color" = "lemonchiffon" }
+      }
     }
-    { "node" = "\"4 BSD\""
-      { "sides" = "5" }
-      { "distortion" = "\"-0.772300\"" }
-      { "orientation" = "24" }
-      { "skew" = "\"-0.028475\"" }
-      { "color" = "darkorange1" }
+    { "nodelist"
+      { "node" = "\"4 BSD\""
+        { "sides" = "5" }
+        { "distortion" = "\"-0.772300\"" }
+        { "orientation" = "24" }
+        { "skew" = "\"-0.028475\"" }
+        { "color" = "darkorange1" }
+      }
     }
-    { "node" = "\"4.1 BSD\""
-      { "distortion" = "\"-0.226170\"" }
-      { "orientation" = "38" }
-      { "skew" = "\"0.504053\"" }
-      { "color" = "lightyellow1" }
+    { "nodelist"
+      { "node" = "\"4.1 BSD\""
+        { "distortion" = "\"-0.226170\"" }
+        { "orientation" = "38" }
+        { "skew" = "\"0.504053\"" }
+        { "color" = "lightyellow1" }
+      }
     }
-    { "node" = "\"4.2 BSD\""
-      { "sides" = "10" }
-      { "distortion" = "\"-0.807349\"" }
-      { "orientation" = "50" }
-      { "skew" = "\"-0.908842\"" }
-      { "color" = "darkorchid4" }
+    { "nodelist"
+      { "node" = "\"4.2 BSD\""
+        { "sides" = "10" }
+        { "distortion" = "\"-0.807349\"" }
+        { "orientation" = "50" }
+        { "skew" = "\"-0.908842\"" }
+        { "color" = "darkorchid4" }
+      }
     }
-    { "node" = "\"4.3 BSD\""
-      { "sides" = "10" }
-      { "distortion" = "\"-0.030619\"" }
-      { "orientation" = "76" }
-      { "skew" = "\"0.985021\"" }
-      { "color" = "lemonchiffon2" }
+    { "nodelist"
+      { "node" = "\"4.3 BSD\""
+        { "sides" = "10" }
+        { "distortion" = "\"-0.030619\"" }
+        { "orientation" = "76" }
+        { "skew" = "\"0.985021\"" }
+        { "color" = "lemonchiffon2" }
+      }
     }
-    { "node" = "\"Ultrix-32\""
-      { "distortion" = "\"-0.644209\"" }
-      { "orientation" = "21" }
-      { "skew" = "\"0.307836\"" }
-      { "color" = "goldenrod3" }
+    { "nodelist"
+      { "node" = "\"Ultrix-32\""
+        { "distortion" = "\"-0.644209\"" }
+        { "orientation" = "21" }
+        { "skew" = "\"0.307836\"" }
+        { "color" = "goldenrod3" }
+      }
     }
-    { "node" = "\"PWB 1.2\""
-      { "sides" = "7" }
-      { "distortion" = "\"0.640971\"" }
-      { "orientation" = "84" }
-      { "skew" = "\"-0.768455\"" }
-      { "color" = "cyan" }
+    { "nodelist"
+      { "node" = "\"PWB 1.2\""
+        { "sides" = "7" }
+        { "distortion" = "\"0.640971\"" }
+        { "orientation" = "84" }
+        { "skew" = "\"-0.768455\"" }
+        { "color" = "cyan" }
+      }
     }
-    { "node" = "\"USG 1.0\""
-      { "distortion" = "\"0.758942\"" }
-      { "orientation" = "42" }
-      { "skew" = "\"0.039886\"" }
-      { "color" = "blue" }
+    { "nodelist"
+      { "node" = "\"USG 1.0\""
+        { "distortion" = "\"0.758942\"" }
+        { "orientation" = "42" }
+        { "skew" = "\"0.039886\"" }
+        { "color" = "blue" }
+      }
     }
-    { "node" = "\"CB Unix 1\""
-      { "sides" = "9" }
-      { "distortion" = "\"-0.348692\"" }
-      { "orientation" = "42" }
-      { "skew" = "\"0.767058\"" }
-      { "color" = "firebrick" }
+    { "nodelist"
+      { "node" = "\"CB Unix 1\""
+        { "sides" = "9" }
+        { "distortion" = "\"-0.348692\"" }
+        { "orientation" = "42" }
+        { "skew" = "\"0.767058\"" }
+        { "color" = "firebrick" }
+      }
     }
-    { "node" = "\"USG 2.0\""
-      { "distortion" = "\"0.748625\"" }
-      { "orientation" = "74" }
-      { "skew" = "\"-0.647656\"" }
-      { "color" = "chartreuse4" }
+    { "nodelist"
+      { "node" = "\"USG 2.0\""
+        { "distortion" = "\"0.748625\"" }
+        { "orientation" = "74" }
+        { "skew" = "\"-0.647656\"" }
+        { "color" = "chartreuse4" }
+      }
     }
-    { "node" = "\"CB Unix 2\""
-      { "sides" = "10" }
-      { "distortion" = "\"0.851818\"" }
-      { "orientation" = "32" }
-      { "skew" = "\"-0.020120\"" }
-      { "color" = "greenyellow" }
+    { "nodelist"
+      { "node" = "\"CB Unix 2\""
+        { "sides" = "10" }
+        { "distortion" = "\"0.851818\"" }
+        { "orientation" = "32" }
+        { "skew" = "\"-0.020120\"" }
+        { "color" = "greenyellow" }
+      }
     }
-    { "node" = "\"CB Unix 3\""
-      { "sides" = "10" }
-      { "distortion" = "\"0.992237\"" }
-      { "orientation" = "29" }
-      { "skew" = "\"0.256102\"" }
-      { "color" = "bisque4" }
+    { "nodelist"
+      { "node" = "\"CB Unix 3\""
+        { "sides" = "10" }
+        { "distortion" = "\"0.992237\"" }
+        { "orientation" = "29" }
+        { "skew" = "\"0.256102\"" }
+        { "color" = "bisque4" }
+      }
     }
-    { "node" = "\"Unix/TS++\""
-      { "sides" = "6" }
-      { "distortion" = "\"0.545461\"" }
-      { "orientation" = "16" }
-      { "skew" = "\"0.313589\"" }
-      { "color" = "mistyrose2" }
+    { "nodelist"
+      { "node" = "\"Unix/TS++\""
+        { "sides" = "6" }
+        { "distortion" = "\"0.545461\"" }
+        { "orientation" = "16" }
+        { "skew" = "\"0.313589\"" }
+        { "color" = "mistyrose2" }
+      }
     }
-    { "node" = "\"PDP-11 Sys V\""
-      { "sides" = "9" }
-      { "distortion" = "\"-0.267769\"" }
-      { "orientation" = "40" }
-      { "skew" = "\"0.271226\"" }
-      { "color" = "cadetblue1" }
+    { "nodelist"
+      { "node" = "\"PDP-11 Sys V\""
+        { "sides" = "9" }
+        { "distortion" = "\"-0.267769\"" }
+        { "orientation" = "40" }
+        { "skew" = "\"0.271226\"" }
+        { "color" = "cadetblue1" }
+      }
     }
-    { "node" = "\"USG 3.0\""
-      { "distortion" = "\"-0.848455\"" }
-      { "orientation" = "44" }
-      { "skew" = "\"0.267152\"" }
-      { "color" = "bisque2" }
+    { "nodelist"
+      { "node" = "\"USG 3.0\""
+        { "distortion" = "\"-0.848455\"" }
+        { "orientation" = "44" }
+        { "skew" = "\"0.267152\"" }
+        { "color" = "bisque2" }
+      }
     }
-    { "node" = "\"Unix/TS 1.0\""
-      { "distortion" = "\"0.305594\"" }
-      { "orientation" = "75" }
-      { "skew" = "\"0.070516\"" }
-      { "color" = "orangered" }
+    { "nodelist"
+      { "node" = "\"Unix/TS 1.0\""
+        { "distortion" = "\"0.305594\"" }
+        { "orientation" = "75" }
+        { "skew" = "\"0.070516\"" }
+        { "color" = "orangered" }
+      }
     }
-    { "node" = "\"TS 4.0\""
-      { "sides" = "10" }
-      { "distortion" = "\"-0.641701\"" }
-      { "orientation" = "50" }
-      { "skew" = "\"-0.952502\"" }
-      { "color" = "crimson" }
+    { "nodelist"
+      { "node" = "\"TS 4.0\""
+        { "sides" = "10" }
+        { "distortion" = "\"-0.641701\"" }
+        { "orientation" = "50" }
+        { "skew" = "\"-0.952502\"" }
+        { "color" = "crimson" }
+      }
     }
-    { "node" = "\"System V.0\""
-      { "sides" = "9" }
-      { "distortion" = "\"0.021556\"" }
-      { "orientation" = "26" }
-      { "skew" = "\"-0.729938\"" }
-      { "color" = "darkorange1" }
+    { "nodelist"
+      { "node" = "\"System V.0\""
+        { "sides" = "9" }
+        { "distortion" = "\"0.021556\"" }
+        { "orientation" = "26" }
+        { "skew" = "\"-0.729938\"" }
+        { "color" = "darkorange1" }
+      }
     }
-    { "node" = "\"System V.2\""
-      { "sides" = "6" }
-      { "distortion" = "\"0.985153\"" }
-      { "orientation" = "33" }
-      { "skew" = "\"-0.399752\"" }
-      { "color" = "darkolivegreen4" }
+    { "nodelist"
+      { "node" = "\"System V.2\""
+        { "sides" = "6" }
+        { "distortion" = "\"0.985153\"" }
+        { "orientation" = "33" }
+        { "skew" = "\"-0.399752\"" }
+        { "color" = "darkolivegreen4" }
+      }
     }
-    { "node" = "\"System V.3\""
-      { "sides" = "7" }
-      { "distortion" = "\"-0.687574\"" }
-      { "orientation" = "58" }
-      { "skew" = "\"-0.180116\"" }
-      { "color" = "lightsteelblue1" }
+    { "nodelist"
+      { "node" = "\"System V.3\""
+        { "sides" = "7" }
+        { "distortion" = "\"-0.687574\"" }
+        { "orientation" = "58" }
+        { "skew" = "\"-0.180116\"" }
+        { "color" = "lightsteelblue1" }
+      }
     }
     { "link"
       { "node" = "\"5th Edition\"" }

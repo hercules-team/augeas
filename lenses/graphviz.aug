@@ -21,22 +21,28 @@ About: Examples
 
 module Graphviz =
 
+(* Variable: name_re *)
+let name_re = /[A-Za-z0-9_.]+/
+
+(* View: graph_name *)
+let graph_name = 
+   store ( ("\"" . /[^"]*/ . "\"") | name_re )
+
 (* View: name *)
-let name =
+let node_name =
    let reserved = "node" | "graph"
-   in  store ( ("\"" . /[^"]*/ . "\"")
-               | (/[A-Za-z0-9_.]+/ - reserved) )
+   in  store ( ("\"" . /[^"]*/ . "\"") | (name_re - reserved) )
 
 (* View: eol
      Special eol using semicolons and/or newlines *)
-let eol = del /[ \t]*((;\n?)|\n)/ ";\n"
+let eol = del /[ \t]*((;([ \t\n]*\n)?)|\n([ \t]*\n)?)/ ";\n"
 
 (* View: block
      A block construct, using Build.block_generic
      in order to pass our special definition of <eol> *)
 let block (kw:regexp) (entry:lens) =
    [ key kw
-   . Sep.space . name
+   . Sep.space . graph_name
    . Build.block_generic  (* Use our definition of eol *)
         (Util.indent . entry . eol)
         (entry . eol) (Util.indent . entry) entry
@@ -47,19 +53,18 @@ let block (kw:regexp) (entry:lens) =
 (* View: variable_generic
      A generic way of parsing variables
      with or without double quotes *)
-let variable_generic (reserved:regexp) =
-   Build.key_value (Rx.word - reserved) Sep.space_equal name
+let variable_generic (kw:regexp) =
+   Build.key_value kw Sep.space_equal node_name
 
 (* View: variable *)
 let variable =
    let reserved = "subgraph" | "node"
-   in variable_generic reserved
+   in variable_generic (Rx.word - reserved)
 
 (* View: options
      A list of options for <nodes> or <links> *)
-let options = 
-      let reserved = "node" | "link_type"
-   in let option = variable_generic reserved
+let options (kw:regexp) = 
+   let option = variable_generic kw
    in let comma = del /,[ \t\n]*/ ","
    in Sep.opt_space . del /\[[ \t]*/ "["
                 . Build.opt_list option comma
@@ -67,34 +72,30 @@ let options =
 
 (* View: link *)
 let link =
-      let link_node = [ label "node" . name ]
+      let link_node = [ label "node" . node_name ]
    in let link_type = [ label "link_type" . Sep.opt_space
                       . store /\<?\-\-?\>?/ . Sep.opt_space ]
    in [ label "link"
       . Build.list link_node link_type
-      . options? ]
+      . (options (Rx.word - "link_type"))? ]
 
 (* View: node *)
-let node = [ label "node" . name . options? ]
+let node = [ label "node" . node_name . (options Rx.word)? ]
 
 (* View: nodelist
      Several <nodes> can be declared at once in a nodelist.
      This cannot be declared as simply a list of <nodes>,
      since it would be ambiguous in the put direction. *)
-let nodelist = [ label "nodelist" . Build.list node Sep.space ]
+let nodelist = [ label "nodelist" . Build.opt_list node Sep.space ]
 
-(* View: default_node
-     General settings for <nodes> *)
-let default_node = [ Build.xchgs "node" "@node" . options ]
-
-(* View: default_graph
-     General settings for <graphs> *)
-let default_graph = [ Build.xchgs "graph" "@graph" . options ]
+(* View: default
+     Default options for <nodes> or <graphs> *)
+let default = [ label "@default" . store ("node" | "graph")
+              . options Rx.word ]
 
 (* View: entry
      A general entry *)
-let entry = (link | variable | node | nodelist
-           | default_node | default_graph)
+let entry = (link | variable | nodelist | default)
 
 (* View: subgraph
      Recursive *)
@@ -108,4 +109,11 @@ let graph = block /(di)?graph/ (subgraph | entry) . Util.eol
      The graphviz lens *)
 let lns = (Util.comment | Util.empty)* . graph
 
+
+(******************************************************************************
+ * Group: NON RECURSIVE DEFINITIONS FOR TESTS
+ *****************************************************************************)
+
+(* View: subgraph_nonrec *)
+let subgraph_nonrec = block "subgraph" entry
 

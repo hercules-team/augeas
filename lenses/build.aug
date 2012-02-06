@@ -173,7 +173,8 @@ let flag_line (kw:regexp) = [ key kw . eol ]
  *
  *   Parameters:
  *     entry:lens                - the entry to be stored inside the block.
- *                                 This entry should not include <Util.empty>
+ *                                 This entry should include <Util.empty>
+ *                                 or its equivalent if necessary.
  *     entry_noindent:lens       - the entry to be stored inside the block,
  *                                 without indentation.
  *                                 This entry should not include <Util.empty>
@@ -199,7 +200,7 @@ let block_generic
      (ldelim_default:string) (rdelim_default:string) =
      let block_single = entry_noindent_noeol | comment_noindent
   in let block_start  = entry_noindent | comment_noindent
-  in let block_middle = (Util.empty | entry | comment)*
+  in let block_middle = (entry | comment)*
   in let block_end    = entry_noeol | comment
   in del ldelim_re ldelim_default
      . ( ( block_start . block_middle . block_end )
@@ -225,7 +226,7 @@ let block_setdelim (entry:lens)
                      (rdelim_re:regexp)
                      (ldelim_default:string)
                      (rdelim_default:string) =
-    block_generic (Util.indent . entry . eol)
+    block_generic (Util.empty | Util.indent . entry . eol)
                   (entry . eol) (Util.indent . entry) entry
                   Util.comment Util.comment_noindent
                   ldelim_re rdelim_re
