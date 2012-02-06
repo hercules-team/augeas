@@ -1011,7 +1011,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
     fp = NULL;
 
     if (err != NULL) {
-        err_status = "put_failed";
+        err_status = err->pos >= 0 ? "parse_skel_failed" : "put_failed";
         unlink(augnew);
         goto done;
     }
@@ -1075,7 +1075,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
     {
         const char *emsg =
             dyn_err_status == NULL ? err_status : dyn_err_status;
-        store_error(aug, filename, path, emsg, errno, err, NULL);
+        store_error(aug, filename, path, emsg, errno, err, text);
     }
     free(dyn_err_status);
     lens_release(lens);
