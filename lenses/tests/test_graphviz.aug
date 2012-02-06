@@ -40,6 +40,17 @@ test Graphviz.lns get entries =
       { "color" = "white" } }
     { "label" = "\"process #1\"" } }
 
+(* Test: Graphviz.lns
+     Set test *)
+test Graphviz.lns put entries after
+   set "/graph/@default/color" "red" =
+"graph A {
+style=filled;
+color=lightgrey;
+node [style=filled,color=red];
+label = \"process #1\";
+}\n"
+
 (* Variable: simple_cluster *)
 let simple_cluster = "digraph G {
 	subgraph cluster_0 {

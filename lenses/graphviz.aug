@@ -97,23 +97,21 @@ let default = [ label "@default" . store ("node" | "graph")
      A general entry *)
 let entry = (link | variable | nodelist | default)
 
+(* View: subgraph_nonrec
+     Non recursive lens, for tests *)
+let subgraph_nonrec = block "subgraph" entry
+
 (* View: subgraph
-     Recursive *)
-let rec subgraph = block "subgraph" (subgraph | entry)
+     Recursive mode doesn't work in the put direction
+     so this is resctricted to two levels for now.
+     TODO: See why recursive mode won't work. *)
+let subgraph = block "subgraph" (subgraph_nonrec | entry)
 
 (* View: graph
-     The top-level graph *)
+     The top-level graph
+     Use <subgraph_nonrec> for debug *)
 let graph = block /(di)?graph/ (subgraph | entry) . Util.eol
 
 (* View: lns
      The graphviz lens *)
-let lns = (Util.comment | Util.empty)* . graph
-
-
-(******************************************************************************
- * Group: NON RECURSIVE DEFINITIONS FOR TESTS
- *****************************************************************************)
-
-(* View: subgraph_nonrec *)
-let subgraph_nonrec = block "subgraph" entry
-
+let lns = (Util.comment | Util.empty)* . graph . (Util.comment | Util.empty)*
