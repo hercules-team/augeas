@@ -46,7 +46,7 @@ let record      = [ title . entries ]
 (************************************************************************
  *                         LENS & FILTER
  *************************************************************************)
-let lns    = record*
+let lns    = (empty | comment)* . record*
 
   let filter = (incl "/etc/yum.conf")
       . (incl "/etc/yum.repos.d/*")

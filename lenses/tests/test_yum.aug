@@ -192,6 +192,10 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-remi
     { "gpgkey" = "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-remi" }
   }
 
+  (* Test: Yum.lns
+      Check that we can parse an empty line, to fix test-save *)
+  test Yum.lns get "\n" = { }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
