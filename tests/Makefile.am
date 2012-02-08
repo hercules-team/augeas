@@ -4,12 +4,16 @@ GNULIB_CFLAGS= -I $(top_srcdir)/gnulib/lib
 AM_CFLAGS = $(AUGEAS_CFLAGS) $(WARN_CFLAGS) $(GNULIB_CFLAGS) \
 	 $(LIBXML_CFLAGS) -I $(top_builddir)/src
 
+VALGRIND=libtool --mode=execute valgrind --quiet --leak-check=full
 valgrind:
 	make check \
-	  VALGRIND="libtool --mode=execute valgrind --quiet --leak-check=full" \
+	  VALGRIND="$(VALGRIND)" \
 	  AUGPARSE=$(abs_top_builddir)/src/augparse \
 	  AUGTOOL=$(abs_top_builddir)/src/augtool
-	libtool --mode=execute valgrind --quiet --leak-check=full ./fatest
+	$(VALGRIND) ./fatest
+
+valgrind-leak: leak
+	$(TESTS_ENVIRONMENT) $(VALGRIND) ./leak
 
 lens_tests =			\
   lens-sudoers.sh		\
@@ -178,6 +182,8 @@ EXTRA_DIST = \
 
 noinst_SCRIPTS = $(check_SCRIPTS)
 
+noinst_PROGRAMS = leak
+
 check_PROGRAMS = fatest test-xpath test-load test-save test-api test-run
 
 TESTS_ENVIRONMENT = \
@@ -207,6 +213,9 @@ test_api_LDADD = $(top_builddir)/src/libaugeas.la $(LIBXML_LIBS) $(GNULIB)
 
 test_run_SOURCES = test-run.c cutest.c cutest.h $(top_srcdir)/src/memory.c $(top_srcdir)/src/memory.h
 test_run_LDADD = $(top_builddir)/src/libaugeas.la $(LIBXML_LIBS) $(GNULIB)
+
+leak_SOURCES = leak.c
+leak_LDADD =  $(top_builddir)/src/libaugeas.la $(LIBXML_LIBS) $(GNULIB)
 
 FAILMALLOC_START ?= 1
 FAILMALLOC_REP   ?= 20

@@ -36,6 +36,7 @@ src/lexer.[ch]
 src/augtool
 src/augparse
 tests/fatest
+tests/leak
 tests/lens-*.sh
 tests/test-api
 tests/test-xpath
