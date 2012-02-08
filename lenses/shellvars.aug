@@ -205,6 +205,139 @@ module Shellvars =
       sc_incl "xend" .
       sc_incl "xendomains"
 
+  let filter_sysconfig_suse =
+      sc_incl "abuild" .
+      sc_incl "add-on-creator" .
+      sc_incl "amavis" .
+      sc_incl "amazon" .
+      sc_incl "apache2" .
+      sc_incl "argus" .
+      sc_incl "arpwatch" .
+      sc_incl "auditd" .
+      sc_incl "autoinstall" .
+      sc_incl "autoupdate" .
+      sc_incl "backup" .
+      sc_incl "bigsister" .
+      sc_incl "bluetooth" .
+      sc_incl "boot" .
+      sc_incl "bootloader" .
+      sc_incl "bootsplash" .
+      sc_incl "cgred" .
+      sc_incl "console" .
+      sc_incl "cron" .
+      sc_incl "ctdb" .
+      sc_incl "cups" .
+      sc_incl "ddclient" .
+      sc_incl "dhcpd" .
+      sc_incl "dhcrelay" .
+      sc_incl "displaymanager" .
+      sc_incl "dmraid" .
+      sc_incl "dracd" .
+      sc_incl "esound" .
+      sc_incl "fam" .
+      sc_incl "festival" .
+      sc_incl "fetchmail" .
+      sc_incl "fonts-config" .
+      sc_incl "git-daemon" .
+      sc_incl "gpsd" .
+      sc_incl "hardware" .
+      sc_incl "hardware/*" .
+      sc_incl "icecream" .
+      sc_incl "ide" .
+      sc_incl "infiniband" .
+      sc_incl "inputattach" .
+      sc_incl "ipmi" .
+      sc_incl "ipvsadm" .
+      sc_incl "ispell" .
+      sc_incl "joystick" .
+      sc_incl "kernel-tunables" .
+      sc_incl "language" .
+      sc_incl "ldap" .
+      sc_incl "lighttpd" .
+      sc_incl "lirc" .
+      sc_incl "locate" .
+      sc_incl "lvm" .
+      sc_incl "mail" .
+      sc_incl "mailman" .
+      sc_incl "mdadm" .
+      sc_incl "media-changer" .
+      sc_incl "memcached" .
+      sc_incl "mouse" .
+      sc_incl "mpi-selector" .
+      sc_incl "mysql" .
+      sc_incl "nagios" .
+      sc_incl "named" .
+      sc_incl "ncpfs" .
+      sc_incl "net-snmp" .
+      sc_incl "network/config" .
+      sc_incl "network/dhcp" .
+      sc_incl "network/dhcp6r" .
+      sc_incl "network/dhcp6s" .
+      sc_incl "network/ifcfg-*" .
+      sc_incl "network/if-down.d/*" .
+      sc_incl "network/ifroute-*" .
+      sc_incl "network/if-up.d/*" .
+      sc_incl "network/providers/*" .
+      sc_incl "news" .
+      sc_incl "ntp" .
+      sc_incl "obs-server" .
+      sc_incl "obs-worker" .
+      sc_incl "openldap" .
+      sc_incl "opensm" .
+      sc_incl "osa-dispatcher" .
+      sc_incl "pm-profiler" .
+      sc_incl "portmap" .
+      sc_incl "postfix" .
+      sc_incl "postgresql" .
+      sc_incl "product-creator" .
+      sc_incl "proxy" .
+      sc_incl "ptpd" .
+      sc_incl "radvd" .
+      sc_incl "readonlyroot" .
+      sc_incl "rpcbind" .
+      sc_incl "sapconf" .
+      sc_incl "scpm" .
+      sc_incl "seccheck" .
+      sc_incl "security" .
+      sc_incl "services" .
+      sc_incl "shutdown" .
+      sc_incl "smt-client" .
+      sc_incl "sound" .
+      sc_incl "spamd" .
+      sc_incl "squid" .
+      sc_incl "ssh" .
+      sc_incl "storage" .
+      sc_incl "SuSEfirewall2" .
+      sc_incl "SuSEfirewall2.d/cobbler" .
+      sc_incl "SuSEfirewall2.d/services/*" .
+      sc_incl "susehelp" .
+      sc_incl "suse_register" .
+      sc_incl "sysctl" .
+      sc_incl "syslog" .
+      sc_incl "texlive" .
+      sc_incl "ulimit" .
+      sc_incl "websphere-as_ce-2.1" .
+      sc_incl "windowmanager" .
+      sc_incl "wondershaper" .
+      sc_incl "words" .
+      sc_incl "yast2" .
+      sc_incl "ypbind" .
+      sc_incl "ypserv"
+
+  let filter_sysconfig_rhn =
+      sc_incl "rhn/allowed-actions/*" .
+      sc_incl "rhn/allowed-actions/script/*" .
+      sc_incl "rhn/clientCaps.d/*" .
+      sc_incl "rhn/osad-auth.conf" .
+      sc_incl "rhn/osad.conf" .
+      sc_incl "rhn/rhncfg-client.conf" .
+      sc_incl "rhn/rhncfg-manager.conf" .
+      sc_incl "rhn/rhnpushrc" .
+      sc_incl "rhn/rhnsd" .
+      sc_incl "rhn/up2date" .
+      sc_incl "rhn/virt" .
+      sc_incl "rhn/virt/auto"
+
   let filter_ifcfg   = incl "/etc/sysconfig/network-scripts/ifcfg-*"
                      . incl "/etc/sysconfig/network/ifcfg-*"
   let filter_default = incl "/etc/default/*"
@@ -224,6 +357,8 @@ module Shellvars =
                      . incl "/etc/updatedb.conf"
 
   let filter = filter_sysconfig
+             . filter_sysconfig_suse
+             . filter_sysconfig_rhn
              . filter_ifcfg
              . filter_default
              . filter_misc
