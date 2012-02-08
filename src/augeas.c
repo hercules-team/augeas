@@ -346,7 +346,7 @@ static struct tree *tree_from_transform(struct augeas *aug,
     v = NULL;
 
     list_for_each(f, xfm->filter) {
-        const char *l = f->include ? strdup("incl") : strdup("excl");
+        const char *l = f->include ? "incl" : "excl";
         v = strdup(f->glob->str);
         ERR_NOMEM(v == NULL, aug);
         t = tree_append_s(txfm, l, v);

@@ -889,7 +889,6 @@ void free_lens(struct lens *lens) {
     case L_REC:
         if (!lens->rec_internal) {
             unref(lens->body, lens);
-            jmt_free(lens->jmt);
         }
         break;
     default:
@@ -901,7 +900,7 @@ void free_lens(struct lens *lens) {
         unref(ltype(lens, t), regexp);
 
     unref(lens->info, info);
-
+    jmt_free(lens->jmt);
     free(lens);
  error:
     return;
@@ -928,10 +927,8 @@ void lens_release(struct lens *lens) {
         }
     }
 
-    if (lens->tag == L_REC) {
-        jmt_free(lens->jmt);
-        lens->jmt = NULL;
-    }
+    jmt_free(lens->jmt);
+    lens->jmt = NULL;
 }
 
 /*
