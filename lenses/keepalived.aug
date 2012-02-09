@@ -42,18 +42,6 @@ let opt_eol = del /[ \t]*\n?/ " "
 (* View: sep_spc *)
 let sep_spc = Sep.space
 
-(* View: sep_opt_spc *)
-let sep_opt_spc = Sep.opt_space
-
-(* View: sep_dquot *)
-let sep_dquot = Util.del_str "\""
-
-(* View: lbracket *)
-let lbracket = Util.del_str "{"
-
-(* View: rbracket *)
-let rbracket = Util.del_str "}"
-
 (* View: comment
 Map comments in "#comment" nodes *)
 let comment = Util.comment_generic /[ \t]*[#!][ \t]*/ "# "
@@ -89,7 +77,7 @@ let sto_num = store Rx.relinteger
 let sto_to_eol = store /[^#! \t\n][^#!\n]*[^#! \t\n]|[^#! \t\n]/
 
 (* View: field *)
-let field (kw:string) (sto:lens) = indent . Build.key_value_line_comment kw sep_spc sto comment_eol
+let field (kw:regexp) (sto:lens) = indent . Build.key_value_line_comment kw sep_spc sto comment_eol
 
 (* View: flag
 A single word *)
@@ -105,7 +93,7 @@ let lens_block (title:lens) (sto:lens) =
 
 (* View: block
 A simple block with just a block title *)
-let block (kw:string) (sto:lens) = lens_block (key kw) sto
+let block (kw:regexp) (sto:lens) = lens_block (key kw) sto
 
 (* View: named_block 
 A block with a block title and name *)
@@ -135,12 +123,13 @@ let email = [ indent . label "email" . sto_email_addr . comment_or_eol ]
 
 (* View: global_defs_field
 Possible fields in the global_defs block *)
-let global_defs_field = block "notification_email" email
-                      | field "notification_email_from" sto_email_addr
-                      | field "smtp_server" sto_word
-                      | field "smtp_connect_timeout" sto_num
-                      | field "lvs_id" sto_word
-                      | field "router_id" sto_word
+let global_defs_field =
+      let word_re = "smtp_server"|"lvs_id"|"router_id"
+   in let num_re = "smtp_connect_timeout"
+   in block "notification_email" email
+    | field "notification_email_from" sto_email_addr
+    | field word_re sto_word
+    | field num_re sto_num
 
 (* View: global_defs
 A global_defs block *)
@@ -196,35 +185,30 @@ let vrrp_sync_group_field = block "group" [ indent . key word . comment_or_eol ]
 let vrrp_sync_group = named_block "vrrp_sync_group" vrrp_sync_group_field
 
 (* View: vrrp_instance_field *)
-let vrrp_instance_field = field "state" sto_word
-                        | field "interface" sto_word
-                        | field "lvs_sync_daemon_interface" sto_word
-                        | field "virtual_router_id" sto_num
-                        | field "priority" sto_num
-                        | field "advert_int" sto_num
-                        | field "garp_master_delay" sto_num
-                        | field "notify_master" sto_to_eol
-                        | field "notify_backup" sto_to_eol
-                        | field "notify_fault" sto_to_eol
-                        | flag "smtp_alert"
-                        | flag "nopreempt"
-                        | flag "ha_suspend"
-                        | flag "debug"
-                        | block "authentication" (
-                                field "auth_type" sto_word
-                              | field "auth_pass" sto_word
-                              )
-                        | block "virtual_ipaddress" static_ipaddress_field
-                        | block "track_interface" ( flag word )
-                        | block "track_script" ( flag word )
+let vrrp_instance_field =
+      let word_re = "state" | "interface" | "lvs_sync_daemon_interface"
+   in let num_re = "virtual_router_id" | "priority" | "advert_int" | "garp_master_delay"
+   in let to_eol_re = /notify_(master|backup|fault)/
+   in let flag_re = "smtp_alert" | "nopreempt" | "ha_suspend" | "debug"
+   in field word_re sto_word
+    | field num_re sto_num
+    | field to_eol_re sto_to_eol
+    | flag flag_re
+    | block "authentication" (
+         field /auth_(type|pass)/ sto_word
+         )
+    | block "virtual_ipaddress" static_ipaddress_field
+    | block /track_(interface|script)/ ( flag word )
 
 (* View: vrrp_instance *)
 let vrrp_instance = named_block "vrrp_instance" vrrp_instance_field
 
 (* View: vrrp_script_field *)
-let vrrp_script_field = field "script" sto_to_eol
-                      | field "interval" sto_num
-                      | field "weight" sto_num
+let vrrp_script_field =
+      let num_re = "interval" | "weight"
+   in let to_eol_re = "script"
+   in field to_eol_re sto_to_eol
+    | field num_re sto_num
 
 (* View: vrrp_script *)
 let vrrp_script = named_block "vrrp_script" vrrp_script_field
@@ -240,20 +224,19 @@ let vrrpd_conf = vrrp_sync_group | vrrp_instance | vrrp_script
  *************************************************************************)
 
 (* View: tcp_check_field *)
-let tcp_check_field = field "connect_timeout" sto_num
-                    | field "connect_port" sto_num
+let tcp_check_field = field /connect_(timeout|port)/ sto_num
 
 (* View: real_server_field *)
 let real_server_field = field "weight" sto_num
                       | block "TCP_CHECK" tcp_check_field
 
 (* View: virtual_server_field *)
-let virtual_server_field = field "delay_loop" sto_num
-                         | field "lb_algo" sto_word
-                         | field "lb_kind" sto_word
-                         | field "nat_mask" sto_word
-                         | field "protocol" sto_word
-                         | named_block_arg "real_server" "ip" "port" real_server_field
+let virtual_server_field =
+      let num_re = "delay_loop"
+   in let word_re = /lb_(algo|kind)/ | "nat_mask" | "protocol"
+   in field num_re sto_num
+    | field word_re sto_word
+    | named_block_arg "real_server" "ip" "port" real_server_field
 
 (* View: virtual_server *)
 let virtual_server = named_block_arg "virtual_server" "ip" "port" virtual_server_field
