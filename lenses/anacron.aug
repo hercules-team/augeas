@@ -33,10 +33,7 @@ module Anacron =
  *   A shell variable in crontab
  *************************************************************************)
 
-let shellvar =
-  let key_re = Shellvars.key_re - "entry" in
-  let sto_to_eol = store /[^\n]*[^ \t\n]/ in
-  [ key key_re . Sep.equal . sto_to_eol . Util.eol ]
+let shellvar = Cron.shellvar
 
 
 (* View: period *)
