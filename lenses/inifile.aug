@@ -83,7 +83,8 @@ let sto_to_eol         = Sep.opt_space . store Rx.space_in
 Variable: to_comment_re
   Regex until comment
 *)
-let to_comment_re = /[^;# \t\n][^;#\n]*[^;# \t\n]|[^;# \t\n]/
+let to_comment_re = /[^";# \t\n][^";#\n]*[^";# \t\n]|[^";# \t\n]/
+                  | /"[^\n"]*"/
 
 (*
 Variable: sto_to_comment

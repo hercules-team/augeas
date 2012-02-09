@@ -296,3 +296,13 @@ test_bdf =
   test multiline_ace get multiline_test =
       { "test_ace" = "val1\n  val2\n   val3" }
 
+  (* Test: lns_ace
+       Ticket #243 *)
+  test lns_ace get "[section1]
+ticket_243 = \"value1;value2#value3\" # end of line comment
+" =
+  { "section1"
+    { "ticket_243" = "\"value1;value2#value3\""
+      { "#comment" = "end of line comment" }
+    }
+  }
