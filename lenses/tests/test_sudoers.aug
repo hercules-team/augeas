@@ -1,6 +1,23 @@
 module Test_sudoers =
 
-   let conf = "
+let test_user = [ label "user" . Sudoers.sto_to_com_user . Util.eol ]*
+
+(* Test: test_user *)
+test test_user get "root
+@pbuilder
++secre-taries
+@my\ admin\ group
+EXAMPLE\\\\cslack
+MY\ EX-AMPLE\ 9\\\\cslack\ group
+" =
+  { "user" = "root" }
+  { "user" = "@pbuilder" }
+  { "user" = "+secre-taries" }
+  { "user" = "@my\\ admin\\ group" }
+  { "user" = "EXAMPLE\\\\cslack" }
+  { "user" = "MY\\ EX-AMPLE\\ 9\\\\cslack\\ group" }
+
+let conf = "
   Host_Alias LOCALNET = 192.168.0.0/24, localhost
 
    # User alias specification

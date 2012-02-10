@@ -49,31 +49,35 @@ module Sudoers =
 
 (* Group: Generic primitives *)
 (* Variable: eol *)
-let eol       = del /[ \t]*\n/ "\n"
+let eol       = Util.eol
 
 (* Variable: indent *)
-let indent    = del /[ \t]*/ ""
+let indent    = Util.indent
 
 
 (* Group: Separators *)
 
 (* Variable: sep_spc *)
-let sep_spc  = del /[ \t]+/ " "
+let sep_spc  = Sep.space
 
 (* Variable: sep_cont *)
-let sep_cont = del /([ \t]+|[ \t]*\\\\\n[ \t]*)/ " "
+let sep_cont = Sep.cl_or_space
 
 (* Variable: sep_cont_opt *)
-let sep_cont_opt = del /([ \t]*|[ \t]*\\\\\n[ \t]*)/ " "
+let sep_cont_opt = Sep.cl_or_opt_space
+
+(* Variable: sep_cont_opt_build *)
+let sep_cont_opt_build (sep:string) =
+   del (Rx.cl_or_opt_space . sep . Rx.cl_or_opt_space) (" " . sep . " ")
 
 (* Variable: sep_com *)
-let sep_com  = sep_cont_opt . Util.del_str "," . sep_cont_opt
+let sep_com = sep_cont_opt_build ","
 
 (* Variable: sep_eq *)
-let sep_eq   = sep_cont_opt . Util.del_str "=" . sep_cont_opt
+let sep_eq   = sep_cont_opt_build "="
 
 (* Variable: sep_col *)
-let sep_col  = sep_cont_opt . Util.del_str ":" . sep_cont_opt
+let sep_col  = sep_cont_opt_build ":"
 
 (* Variable: sep_dquote *)
 let sep_dquote   = Util.del_str "\""
@@ -95,9 +99,11 @@ let sto_to_com_host = store /[^,=:#() \t\n\\]+/
 
 
 (* Variable: sto_to_com_user
-Escaped spaces are allowed *)
-let sto_to_com_user = store ( /([^,=:#() \t\n]([^,=:#() \t\n]|(\\\\[ \t]))*[^,=:#() \t\n])|[^,=:#() \t\n]/
-                              - /(User|Runas|Host|Cmnd)_Alias|Defaults.*/ )
+Escaped spaces and NIS domains and allowed*)
+let sto_to_com_user =
+      let nis_re = /([A-Z]([-A-Z0-9]|(\\\\[ \t]))*+\\\\\\\\)/
+   in let user_re = /[%+@a-z]([-a-z0-9]|(\\\\[ \t]))*/
+   in store (nis_re? . user_re)
 
 (* Variable: sto_to_com_col *)
 let sto_to_com_col      = store /[^",=#() \t\n\\]+/ (* " relax emacs *)
@@ -163,7 +169,7 @@ let alias_field (kw:string) (sto:lens) = [ label kw . sto ]
 (* View: alias_list
      List of <alias_fields>, separated by commas *)
 let alias_list  (kw:string) (sto:lens) =
-  alias_field kw sto . ( sep_com . alias_field kw sto )*
+  Build.opt_list (alias_field kw sto) sep_com
 
 (************************************************************************
  * View: alias_name
