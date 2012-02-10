@@ -39,6 +39,14 @@ let opt_space = del Rx.opt_space ""
    Deletes a <Rx.opt_space> and default to a tab *)
 let opt_tab   = del Rx.opt_space "\t"
 
+(* Variable: cl_or_space
+   Deletes a <Rx.cl_or_space> and default to a single space *)
+let cl_or_space = del Rx.cl_or_space " "
+
+(* Variable: cl_or_opt_space
+   Deletes a <Rx.cl_or_opt_space> and default to a single space *)
+let cl_or_opt_space = del Rx.cl_or_opt_space " "
+
 (* Variable: lbracket *)
 let lbracket = Util.del_str "("
 

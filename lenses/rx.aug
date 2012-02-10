@@ -15,9 +15,22 @@ module Rx =
 (* Variable: space
    A mandatory space or tab *)
 let space     = /[ \t]+/
+
 (* Variable: opt_space
    An optional space or tab *)
 let opt_space = /[ \t]*/
+
+(* Variable: cl
+   A continued line with a backslash *)
+let cl = /[ \t]*\\\\\n[ \t]*/
+
+(* Variable: cl_or_space
+   A <cl> or a <space> *)
+let cl_or_space = cl | space
+
+(* Variable: cl_or_opt_space
+   A <cl> or a <opt_space> *)
+let cl_or_opt_space = cl | opt_space
 
 (* Group: General strings *)
 
