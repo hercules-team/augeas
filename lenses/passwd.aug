@@ -32,7 +32,7 @@ let integer    = /[0-9]+/
 
 let entry     = [ key word
                 . colon
-                . [ label "password" . store word    . colon ]
+                . [ label "password" . sto_to_col?   . colon ]
                 . [ label "uid"      . store integer . colon ]
                 . [ label "gid"      . store integer . colon ]
                 . [ label "name"     . sto_to_col?   . colon ]

@@ -3,6 +3,7 @@ module Test_Passwd =
 let conf = "root:x:0:0:root:/root:/bin/bash
 libuuid:x:100:101::/var/lib/libuuid:/bin/sh
 free:x:1000:1000:Free Ekanayaka,,,:/home/free:/bin/bash
+root:*:0:0:Charlie &:/root:/bin/csh
 "
 
 test Passwd.lns get conf =
@@ -27,6 +28,13 @@ test Passwd.lns get conf =
      { "name" = "Free Ekanayaka,,," }
      { "home" = "/home/free" }
      { "shell" = "/bin/bash" } }
+   { "root"
+     { "password" = "*" }
+     { "uid" = "0" }
+     { "gid" = "0" }
+     { "name" = "Charlie &" }
+     { "home" = "/root" }
+     { "shell" = "/bin/csh" } }
 
 (* Popular on Solaris *)
 test Passwd.lns get "+@some-nis-group::::::\n" =
