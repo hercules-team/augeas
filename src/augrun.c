@@ -120,17 +120,15 @@ static char *nexttoken(struct command *cmd, char **line, bool path) {
     char quot = '\0';
     int nbracket = 0;
     int nescaped = 0;
+    bool copy;
 
     s = *line;
 
     while (*s && isblank(*s)) s+= 1;
-    if (*s == '\'' || *s == '"') {
-        quot = *s;
-        s += 1;
-    }
     r = s;
     w = s;
     while (*s) {
+        copy = true;
         if (*s == '\\') {
             switch (*(s+1)) {
                 case '[':
@@ -160,19 +158,35 @@ static char *nexttoken(struct command *cmd, char **line, bool path) {
                 ERR_REPORT(cmd, AUG_ECMDRUN, "unmatched [");
                 return NULL;
             }
-            if ((quot && *s == quot)
-                || (!quot && isblank(*s) && (!path || nbracket == 0)))
-                break;
+
+            if (!path || nbracket == 0) {
+                if (!quot && (*s == '\'' || *s == '"')) {
+                    quot = *s;
+                    copy = false;
+                } else if (quot && *s == quot) {
+                    quot = '\0';
+                    copy = false;
+                }
+
+                if (!quot && isblank(*s))
+                    break;
+            }
         } else {
             nescaped -= 1;
         }
 
-        *w = *s;
+        if (copy) {
+            *w = *s;
+            w += 1;
+        }
         s += 1;
-        w += 1;
     }
     if (*s == '\0' && path && nbracket > 0) {
         ERR_REPORT(cmd, AUG_ECMDRUN, "unmatched [");
+        return NULL;
+    }
+    if (*s == '\0' && quot) {
+        ERR_REPORT(cmd, AUG_ECMDRUN, "unmatched %c", quot);
         return NULL;
     }
     while (*w && w <= s)

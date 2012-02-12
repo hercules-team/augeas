@@ -240,69 +240,6 @@ test set-args -1 ECMDRUN
   set /files
 
 #
-# test set/get parsing with quoting, whitespace and escaping
-#
-test set-single-quotes 2
-  set /files 'a test value'
-  get /files
-prints
-  /files = a test value
-
-test set-double-quotes 2
-  set /files "a test value"
-  get /files
-prints
-  /files = a test value
-
-test set-mixed-quotes1 2
-  set /files "a 'mixed quotes' test"
-  get /files
-prints
-  /files = a 'mixed quotes' test
-
-test set-mixed-quotes2 2
-  set /files 'a "mixed quotes" test'
-  get /files
-prints
-  /files = a "mixed quotes" test
-
-test set-escaped-quotes 2
-  set /files "''\"''"
-  get /files
-prints
-  /files = ''"''
-
-test set-escaped-path 2
-  set /white\ space\	tab value
-  get /white\ space\	tab
-prints
-  /white space	tab = value
-
-test set-escaped-path-bracket 2
-  set /white\ space/\[section value
-  print /white\ space/\[section
-prints
-  /white space/[section = "value"
-
-test set-squote-escaped-bracket 2
-  set '/augeas/\[section' value
-  print '/augeas/\[section'
-prints
-  /augeas/[section = "value"
-
-test set-squote-escaped-path 2
-  set '/white\ space' value
-  get '/white\ space'
-prints
-  /white\ space = value
-
-test set-dquote-escaped-path 2
-  set "/white\ space" value
-  get "/white\ space"
-prints
-  /white\ space = value
-
-#
 # test clear
 #
 test clear-not-there 2
@@ -359,3 +296,296 @@ prints
 
 test print-root 1
   print /
+
+#
+# test set/get parsing with quoting, whitespace and escaping
+#
+test set-single-quotes 2
+  set /files 'a test value'
+  get /files
+prints
+  /files = a test value
+
+test set-double-quotes 2
+  set /files "a test value"
+  get /files
+prints
+  /files = a test value
+
+test set-mixed-quotes1 2
+  set /files "a 'mixed quotes' test"
+  get /files
+prints
+  /files = a 'mixed quotes' test
+
+test set-mixed-quotes2 2
+  set /files 'a "mixed quotes" test'
+  get /files
+prints
+  /files = a "mixed quotes" test
+
+test set-mixed-quotes-expr 2
+  clear /foo
+  print "/*[ label() != 'augeas' and label() != 'files']"
+prints
+  /foo
+
+test set-quote-concat 2
+  set "/fi"les test
+  get "/fi"les
+prints
+  /files = test
+
+test set-escaped-quotes 2
+  set /files "''\"''"
+  get /files
+prints
+  /files = ''"''
+
+test set-escaped-path 2
+  set /white\ space\	tab value
+  get /white\ space\	tab
+prints
+  /white space	tab = value
+
+test set-escaped-path-bracket 2
+  set /white\ space/\[section value
+  print /white\ space/\[section
+prints
+  /white space/[section = "value"
+
+test set-squote-escaped-bracket 2
+  set '/augeas/\[section' value
+  print '/augeas/\[section'
+prints
+  /augeas/[section = "value"
+
+test set-squote-escaped-path 2
+  set '/white\ space' value
+  get '/white\ space'
+prints
+  /white\ space = value
+
+test set-dquote-escaped-path 2
+  set "/white\ space" value
+  get "/white\ space"
+prints
+  /white\ space = value
+
+# Combinations of quotes in values, some unmatched
+# Tests from David Schmitt (Puppet bug #12199)
+test quot_sq -1 ECMDRUN
+  set /test '
+
+test quot_sq_sq -1 ECMDRUN
+  set /test '''
+
+test quot_sq_dq 2
+  set /test "'"
+  get /test
+prints
+  /test = '
+
+test quot_sqsq 2
+  set /test ''
+  get /test
+prints
+  /test = 
+
+test quot_sqsq_sq 2
+  set /test ''''
+  get /test
+prints
+  /test = 
+
+test quot_sqsq_dq 2
+  set /test "''"
+  get /test
+prints
+  /test = ''
+
+test quot_sqsqsq -1 ECMDRUN
+  set /test '''
+
+test quot_sqsqsq_sq -1 ECMDRUN
+  set /test '''''
+
+test quot_sqsqsq_dq 2
+  set /test "'''"
+  get /test
+prints
+  /test = '''
+
+test quot_sqsqsqsq 2
+  set /test ''''
+  get /test
+prints
+  /test = 
+
+test quot_sqsqsqsq_sq 2
+  set /test ''''''
+  get /test
+prints
+  /test = 
+
+test quot_sqsqsqsq_dq 2
+  set /test "''''"
+  get /test
+prints
+  /test = ''''
+
+test quot_dq -1 ECMDRUN
+  set /test "
+
+test quot_dq_sq 2
+  set /test '"'
+  get /test
+prints
+  /test = "
+
+test quot_dq_dq -1 ECMDRUN
+  set /test """
+
+test quot_dqdq 2
+  set /test ""
+  get /test
+prints
+  /test = 
+
+test quot_dqdq_sq 2
+  set /test '""'
+  get /test
+prints
+  /test = ""
+
+test quot_dqdq_dq 2
+  set /test """"
+  get /test
+prints
+  /test = 
+
+test quot_dqdqdq -1 ECMDRUN
+  set /test """
+
+test quot_dqdqdq_sq 2
+  set /test '"""'
+  get /test
+prints
+  /test = """
+
+test quot_dqdqdq_dq -1 ECMDRUN
+  set /test """""
+
+test quot_dqdqdqdq 2
+  set /test """"
+  get /test
+prints
+  /test = 
+
+test quot_dqdqdqdq_sq 2
+  set /test '""""'
+  get /test
+prints
+  /test = """"
+
+test quot_dqdqdqdq_dq 2
+  set /test """"""
+  get /test
+prints
+  /test = 
+
+test quot_truncated_dq 2
+  set /test "s"bc"d"ef
+  get /test
+prints
+  /test = sbcdef
+
+test quot_truncated_dq_sq 2
+  set /test '"s"bc"d"ef'
+  get /test
+prints
+  /test = "s"bc"d"ef
+
+test quot_truncated_dq_dq 2
+  set /test ""s"bc"d"ef"
+  get /test
+prints
+  /test = sbcdef
+
+test quot_truncated_sq 2
+  set /test 's'bc'd'ef
+  get /test
+prints
+  /test = sbcdef
+
+test quot_truncated_sq_sq 2
+  set /test ''s'bc'd'ef'
+  get /test
+prints
+  /test = sbcdef
+
+test quot_truncated_sq_dq 2
+  set /test "'s'bc'd'ef"
+  get /test
+prints
+  /test = 's'bc'd'ef
+
+test quot_truncated_dq_mix 2
+  set /test "s"bc'd'ef
+  get /test
+prints
+  /test = sbcdef
+
+test quot_truncated_dq_mix_sq 2
+  set /test '"s"bc'd'ef'
+  get /test
+prints
+  /test = "s"bcdef
+
+test quot_truncated_dq_mix_dq 2
+  set /test ""s"bc'd'ef"
+  get /test
+prints
+  /test = sbc'd'ef
+
+test quot_truncated_sq_mix 2
+  set /test 's'bc"d"ef
+  get /test
+prints
+  /test = sbcdef
+
+test quot_truncated_sq_mix_sq 2
+  set /test ''s'bc"d"ef'
+  get /test
+prints
+  /test = sbc"d"ef
+
+test quot_truncated_sq_mix_dq 2
+  set /test "'s'bc"d"ef"
+  get /test
+prints
+  /test = 's'bcdef
+
+test quot_truncated_space -1 ECMDRUN
+  set /test before after
+
+test quot_truncated_space_sq 2
+  set /test 'before after'
+  get /test
+prints
+  /test = before after
+
+test quot_truncated_space_dq 2
+  set /test "before after"
+  get /test
+prints
+  /test = before after
+
+test quot_mix -1 ECMDRUN
+  set /test a"b'c"d'e
+
+test quot_mix_sq -1 ECMDRUN
+  set /test 'a"b'c"d'e'
+
+test quot_mix_dq -1 ECMDRUN
+  set /test "a"b'c"d'e"
