@@ -125,8 +125,7 @@ fread_file_lim (FILE *stream, size_t max_len, size_t *length)
     return NULL;
 }
 
-char* xread_file(const char *path) {
-    FILE *fp = fopen(path, "r");
+char* xfread_file(FILE *fp) {
     char *result;
     size_t len;
 
@@ -134,7 +133,6 @@ char* xread_file(const char *path) {
         return NULL;
 
     result = fread_file_lim(fp, MAX_READ_LEN, &len);
-    fclose (fp);
 
     if (result != NULL
         && len <= MAX_READ_LEN
@@ -143,6 +141,17 @@ char* xread_file(const char *path) {
 
     free(result);
     return NULL;
+}
+
+char* xread_file(const char *path) {
+    FILE *fp;
+    char *result;
+
+    fp = fopen(path, "r");
+    result = xfread_file(fp);
+    fclose (fp);
+
+    return result;
 }
 
 /*

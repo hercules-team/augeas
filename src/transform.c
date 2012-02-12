@@ -799,35 +799,38 @@ int transform_applies(struct tree *xfm, const char *path) {
     return filter_matches(xfm, path + strlen(AUGEAS_FILES_TREE));
 }
 
-static int transfer_file_attrs(const char *from, const char *to,
+static int transfer_file_attrs(FILE *from, FILE *to,
                                const char **err_status) {
     struct stat st;
     int ret = 0;
     int selinux_enabled = (is_selinux_enabled() > 0);
     security_context_t con = NULL;
 
-    ret = lstat(from, &st);
+    int from_fd = fileno(from);
+    int to_fd = fileno(to);
+
+    ret = fstat(from_fd, &st);
     if (ret < 0) {
         *err_status = "replace_stat";
         return -1;
     }
     if (selinux_enabled) {
-        if (lgetfilecon(from, &con) < 0 && errno != ENOTSUP) {
+        if (fgetfilecon(from_fd, &con) < 0 && errno != ENOTSUP) {
             *err_status = "replace_getfilecon";
             return -1;
         }
     }
 
-    if (lchown(to, st.st_uid, st.st_gid) < 0) {
+    if (fchown(to_fd, st.st_uid, st.st_gid) < 0) {
         *err_status = "replace_chown";
         return -1;
     }
-    if (chmod(to, st.st_mode) < 0) {
+    if (fchmod(to_fd, st.st_mode) < 0) {
         *err_status = "replace_chmod";
         return -1;
     }
     if (selinux_enabled && con != NULL) {
-        if (lsetfilecon(to, con) < 0 && errno != ENOTSUP) {
+        if (fsetfilecon(to_fd, con) < 0 && errno != ENOTSUP) {
             *err_status = "replace_setfilecon";
             return -1;
         }
@@ -869,7 +872,7 @@ static int clone_file(const char *from, const char *to,
         goto done;
     }
 
-    if (transfer_file_attrs(from, to, err_status) < 0)
+    if (transfer_file_attrs(from_fp, to_fp, err_status) < 0)
         goto done;
 
     while ((len = fread(buf, 1, BUFSIZ, from_fp)) > 0) {
@@ -946,19 +949,38 @@ static int file_saved_event(struct augeas *aug, const char *path) {
  * are noted in the /augeas/files hierarchy in AUG->ORIGIN under
  * PATH/error.
  *
- * Writing the file happens by first writing into PATH.augnew, transferring
- * all file attributes of PATH to PATH.augnew, and then renaming
- * PATH.augnew to PATH. If the rename fails, and the entry
- * AUGEAS_COPY_IF_FAILURE exists in AUG->ORIGIN, PATH is overwritten by
- * copying file contents
+ * Writing the file happens by first writing into a temp file, transferring all
+ * file attributes of PATH to the temp file, and then renaming the temp file
+ * back to PATH.
+ *
+ * Temp files are created alongside the destination file to enable the rename,
+ * which may be the canonical path (PATH_canon) if PATH is a symlink.
+ *
+ * If the AUG_SAVE_NEWFILE flag is set, instead rename to PATH.augnew rather
+ * than PATH.  If AUG_SAVE_BACKUP is set, move the original to PATH.augsave.
+ * (Always PATH.aug{new,save} irrespective of whether PATH is a symlink.)
+ *
+ * If the rename fails, and the entry AUGEAS_COPY_IF_FAILURE exists in
+ * AUG->ORIGIN, PATH is instead overwritten by copying file contents.
+ *
+ * The table below shows the locations for each permutation.
+ *
+ * PATH       save flag    temp file           dest file      backup?
+ * regular    -            PATH.augnew.XXXX    PATH           -
+ * regular    BACKUP       PATH.augnew.XXXX    PATH           PATH.augsave
+ * regular    NEWFILE      PATH.augnew.XXXX    PATH.augnew    -
+ * symlink    -            PATH_canon.XXXX     PATH_canon     -
+ * symlink    BACKUP       PATH_canon.XXXX     PATH_canon     PATH.augsave
+ * symlink    NEWFILE      PATH.augnew.XXXX    PATH.augnew    -
  *
  * Return 0 on success, -1 on failure.
  */
 int transform_save(struct augeas *aug, struct tree *xfm,
                    const char *path, struct tree *tree) {
-    FILE *fp = NULL;
-    char *augnew = NULL, *augorig = NULL, *augsave = NULL;
-    char *augorig_canon = NULL;
+    int   fd;
+    FILE *fp = NULL, *augorig_canon_fp = NULL;
+    char *augtemp = NULL, *augnew = NULL, *augorig = NULL, *augsave = NULL;
+    char *augorig_canon = NULL, *augdest = NULL;
     int   augorig_exists;
     int   copy_if_rename_fails = 0;
     char *text = NULL;
@@ -986,19 +1008,6 @@ int transform_save(struct augeas *aug, struct tree *xfm,
         goto done;
     }
 
-    if (access(augorig, R_OK) == 0) {
-        text = xread_file(augorig);
-    } else {
-        text = strdup("");
-    }
-
-    if (text == NULL) {
-        err_status = "put_read";
-        goto done;
-    }
-
-    text = append_newline(text, strlen(text));
-
     augorig_canon = canonicalize_file_name(augorig);
     augorig_exists = 1;
     if (augorig_canon == NULL) {
@@ -1011,31 +1020,53 @@ int transform_save(struct augeas *aug, struct tree *xfm,
         }
     }
 
-    /* Figure out where to put the .augnew file. If we need to rename it
-       later on, put it next to augorig_canon */
+    if (access(augorig_canon, R_OK) == 0) {
+        augorig_canon_fp = fopen(augorig_canon, "r");
+        text = xfread_file(augorig_canon_fp);
+    } else {
+        text = strdup("");
+    }
+
+    if (text == NULL) {
+        err_status = "put_read";
+        goto done;
+    }
+
+    text = append_newline(text, strlen(text));
+
+    /* Figure out where to put the .augnew and temp file. If no .augnew file
+       then put the temp file next to augorig_canon, else next to .augnew. */
     if (aug->flags & AUG_SAVE_NEWFILE) {
         if (xasprintf(&augnew, "%s" EXT_AUGNEW, augorig) < 0) {
             err_status = "augnew_oom";
             goto done;
         }
+        augdest = augnew;
     } else {
-        if (xasprintf(&augnew, "%s" EXT_AUGNEW, augorig_canon) < 0) {
-            err_status = "augnew_oom";
-            goto done;
-        }
+        augdest = augorig_canon;
+    }
+
+    if (xasprintf(&augtemp, "%s.XXXXXX", augdest) < 0) {
+        err_status = "augtemp_oom";
+        goto done;
     }
 
     // FIXME: We might have to create intermediate directories
     // to be able to write augnew, but we have no idea what permissions
     // etc. they should get. Just the process default ?
-    fp = fopen(augnew, "w");
+    fd = mkstemp(augtemp);
+    if (fd < 0) {
+        err_status = "mk_augtemp";
+        goto done;
+    }
+    fp = fdopen(fd, "w");
     if (fp == NULL) {
-        err_status = "open_augnew";
+        err_status = "open_augtemp";
         goto done;
     }
 
     if (augorig_exists) {
-        if (transfer_file_attrs(augorig_canon, augnew, &err_status) != 0) {
+        if (transfer_file_attrs(augorig_canon_fp, fp, &err_status) != 0) {
             err_status = "xfer_attrs";
             goto done;
         }
@@ -1045,22 +1076,22 @@ int transform_save(struct augeas *aug, struct tree *xfm,
         lns_put(fp, lens, tree->children, text, &err);
 
     if (ferror(fp)) {
-        err_status = "error_augnew";
+        err_status = "error_augtemp";
         goto done;
     }
 
     if (fflush(fp) != 0) {
-        err_status = "flush_augnew";
+        err_status = "flush_augtemp";
         goto done;
     }
 
     if (fsync(fileno(fp)) < 0) {
-        err_status = "sync_augnew";
+        err_status = "sync_augtemp";
         goto done;
     }
 
     if (fclose(fp) != 0) {
-        err_status = "close_augnew";
+        err_status = "close_augtemp";
         fp = NULL;
         goto done;
     }
@@ -1069,33 +1100,33 @@ int transform_save(struct augeas *aug, struct tree *xfm,
 
     if (err != NULL) {
         err_status = err->pos >= 0 ? "parse_skel_failed" : "put_failed";
-        unlink(augnew);
+        unlink(augtemp);
         goto done;
     }
 
     {
-        char *new_text = xread_file(augnew);
+        char *new_text = xread_file(augtemp);
         int same = 0;
         if (new_text == NULL) {
-            err_status = "read_augnew";
+            err_status = "read_augtemp";
             goto done;
         }
         same = STREQ(text, new_text);
         FREE(new_text);
         if (same) {
             result = 0;
-            unlink(augnew);
+            unlink(augtemp);
             goto done;
         } else if (aug->flags & AUG_SAVE_NOOP) {
             result = 1;
-            unlink(augnew);
+            unlink(augtemp);
             goto done;
         }
     }
 
     if (!(aug->flags & AUG_SAVE_NEWFILE)) {
         if (augorig_exists && (aug->flags & AUG_SAVE_BACKUP)) {
-            r = asprintf(&augsave, "%s%s" EXT_AUGSAVE, aug->root, filename);
+            r = xasprintf(&augsave, "%s" EXT_AUGSAVE, augorig);
             if (r == -1) {
                 augsave = NULL;
                 goto done;
@@ -1107,13 +1138,14 @@ int transform_save(struct augeas *aug, struct tree *xfm,
                 goto done;
             }
         }
-        r = clone_file(augnew, augorig_canon, &err_status,
-                       copy_if_rename_fails);
-        if (r != 0) {
-            dyn_err_status = strappend(err_status, "_augnew");
-            goto done;
-        }
     }
+
+    r = clone_file(augtemp, augdest, &err_status, copy_if_rename_fails);
+    if (r != 0) {
+        dyn_err_status = strappend(err_status, "_augtemp");
+        goto done;
+    }
+
     result = 1;
 
  done:
@@ -1138,6 +1170,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
     free(dyn_err_status);
     lens_release(lens);
     free(text);
+    free(augtemp);
     free(augnew);
     if (augorig_canon != augorig)
         free(augorig_canon);
@@ -1147,6 +1180,8 @@ int transform_save(struct augeas *aug, struct tree *xfm,
 
     if (fp != NULL)
         fclose(fp);
+    if (augorig_canon_fp != NULL)
+        fclose(augorig_canon_fp);
     return result;
 }
 

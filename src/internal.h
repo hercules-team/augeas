@@ -287,6 +287,9 @@ char *format_pos(const char *text, int pos);
  */
 char* xread_file(const char *path);
 
+/* Like xread_file, but caller supplies a file pointer */
+char* xfread_file(FILE *fp);
+
 /* Get the error message for ERRNUM in a threadsafe way. Based on libvirt's
  * virStrError
  */
