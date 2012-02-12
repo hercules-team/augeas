@@ -61,6 +61,7 @@ module Pam =
 
   let filter = incl "/etc/pam.d/*"
              . excl "/etc/pam.d/allow.pamlist"
+             . excl "/etc/pam.d/README"
              . Util.stdexcl
 
   let xfm = transform lns filter
