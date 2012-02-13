@@ -353,6 +353,7 @@ module Shellvars =
                      . incl "/etc/lintianrc"
                      . incl "/etc/lsb-release"
                      . incl "/etc/popularity-contest.conf"
+                     . incl "/etc/rc.conf"
                      . incl "/etc/ucf.conf"
                      . incl "/etc/updatedb.conf"
 
