@@ -478,7 +478,7 @@ let cmnd_spec  =
  *     > Cmnd_Spec_List ::= Cmnd_Spec |
  *     >                    Cmnd_Spec ',' Cmnd_Spec_List
  *************************************************************************)
-let cmnd_spec_list = cmnd_spec . ( sep_com . cmnd_spec )*
+let cmnd_spec_list = Build.opt_list cmnd_spec sep_com
 
 
 (************************************************************************
@@ -498,8 +498,8 @@ let spec_list = [ label "host_group" . alias_list "host" sto_to_com_host
  *************************************************************************)
 let spec = [ label "spec" . indent
                . alias_list "user" sto_to_com_user . sep_cont
-               . spec_list
-               . ( sep_col . spec_list )* . comment_or_eol ]
+               . Build.opt_list spec_list sep_col
+               . comment_or_eol ]
 
 
 (************************************************************************
