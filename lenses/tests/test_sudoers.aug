@@ -231,10 +231,19 @@ test Sudoers.lns get commenteol =
     { "#comment" = "all root" } }
 
 (* Allow = in commands *)
-test Sudoers.spec get "root ALL=(ALL) /usr/bin/mylvmbackup --configfile=/etc/mylvbackup_amanda.conf\n" =
+test Sudoers.spec get "root ALL= /usr/bin/mylvmbackup --configfile=/etc/mylvbackup_amanda.conf\n" =
   { "spec"
     { "user" = "root" }
     { "host_group"
       { "host" = "ALL" }
-      { "command" = "/usr/bin/mylvmbackup --configfile=/etc/mylvbackup_amanda.conf"
-        { "runas_user" = "ALL" } } } }
+      { "command" = "/usr/bin/mylvmbackup --configfile=/etc/mylvbackup_amanda.conf" } } }
+
+(* Allow commands without full path
+   -- if they begin with a lowcase letter *)
+test Sudoers.spec get "root ALL= sudoedit /etc/passwd\n" =
+  { "spec"
+    { "user" = "root" }
+    { "host_group"
+      { "host" = "ALL" }
+      { "command" = "sudoedit /etc/passwd" } } }
+
