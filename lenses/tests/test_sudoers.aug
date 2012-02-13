@@ -229,3 +229,12 @@ test Sudoers.lns get commenteol =
     { "command" = "ALL"
         { "runas_user"  = "ALL" } } }
     { "#comment" = "all root" } }
+
+(* Allow = in commands *)
+test Sudoers.spec get "root ALL=(ALL) /usr/bin/mylvmbackup --configfile=/etc/mylvbackup_amanda.conf\n" =
+  { "spec"
+    { "user" = "root" }
+    { "host_group"
+      { "host" = "ALL" }
+      { "command" = "/usr/bin/mylvmbackup --configfile=/etc/mylvbackup_amanda.conf"
+        { "runas_user" = "ALL" } } } }

@@ -87,7 +87,10 @@ let sep_dquote   = Util.del_str "\""
 
 (* Variable: sto_to_com_cmnd
 sto_to_com_cmnd does not begin or end with a space *)
-let sto_to_com_cmnd = store /([^,=:#() \t\n\\]([^,=:#()\n\\]|\\\\[=:,\\])*[^,=:#() \t\n\\])|[^,=:#() \t\n\\]/
+let sto_to_com_cmnd =
+      let alias = Rx.word - /(NO)?(PASSWD|EXEC|SETENV)/
+   in let non_alias = /(!?\/([^,:#()\n\\]|\\\\[=:,\\])*[^,=:#() \t\n\\])|[^,=:#() \t\n\\]/
+   in store (alias | non_alias)
 
 (* Variable: sto_to_com
 
