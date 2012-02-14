@@ -802,7 +802,6 @@ static int clone_file(const char *from, const char *to,
     }
 
     /* rename not possible, copy file contents */
-    from_fp = fopen(from, "r");
     if (!(from_fp = fopen(from, "r"))) {
         *err_status = "clone_open_src";
         goto done;
