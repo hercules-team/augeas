@@ -13,15 +13,15 @@ autoload xfm
  *************************************************************************)
 
 let dels (s:string)   = del s s
-let spc               = /[ \t\n]+/
-let osp               = /[ \t\n]*/
-let sep_spc           = del /[ \t\n]+/ " "
-let sep_osp           = del /[ \t\n]*/ ""
-let sep_eq            = del /[ \t\n]*=[ \t\n]*/ "="
+let spc               = /[ \t\r\n]+/
+let osp               = /[ \t\r\n]*/
+let sep_spc           = del /[ \t\r\n]+/ " "
+let sep_osp           = del /[ \t\r\n]*/ ""
+let sep_eq            = del /[ \t\r\n]*=[ \t\r\n]*/ "="
 
 let nmtoken             = /[a-zA-Z:_][a-zA-Z0-9:_.-]*/
 let word                = /[a-zA-Z][a-zA-Z0-9._-]*/
-let char                = /.|\n/
+let char                = /.|(\r?\n)/
 (* if we hide the quotes, then we can only accept single or double quotes *)
 (* otherwise a put ambiguity is raised *)
 let sto_dquote          = dels "\"" . store /[^"]*/ . dels "\""
@@ -34,7 +34,7 @@ let comment             = [ label "#comment" .
 
 let pi_target           = nmtoken - /[Xx][Mm][Ll]/
 let empty               = Util.empty
-let del_end             = del />[\n]?/ ">\n"
+let del_end             = del />[\r?\n]?/ ">\n"
 let del_end_simple      = dels ">"
 
 (* This is siplified version of processing instruction
@@ -42,7 +42,7 @@ let del_end_simple      = dels ">"
  * must not contain "?>". We restrict too much by not allowing any
  * "?" nor ">" in PI
  *)
-let pi                  = /[^ \n\t]|[^ \n\t][^?>]*[^ \n\t]/
+let pi                  = /[^ \r\n\t]|[^ \r\n\t][^?>]*[^ \r\n\t]/
 
 (************************************************************************
  *                            Attributes
@@ -74,7 +74,7 @@ let att_def       = counter "att_id" .
                       [ label "#name" . store word . sep_spc ] .
                       [ label "#type" . store att_type . sep_spc ] .
                       ([ key   /#REQUIRED|#IMPLIED/ ] |
-                       [ label "#FIXED" . del /#FIXED[ \n\t]*|/ "" . sto_dquote ]) ]*
+                       [ label "#FIXED" . del /#FIXED[ \r\n\t]*|/ "" . sto_dquote ]) ]*
 
 let att_list_def = decl_def /!ATTLIST/ att_def
 
@@ -114,7 +114,7 @@ let element (body:lens) =
         [ dels "<" . square nmtoken h . sep_osp . del_end ]
 
 let empty_element = [ dels "<" . key nmtoken . value "#empty" .
-                      attributes? . sep_osp . del /\/>[\n]?/ "/>\n" ]
+                      attributes? . sep_osp . del /\/>[\r?\n]?/ "/>\n" ]
 
 let pi_instruction = [ dels "<?" . label "#pi" .
                        [ label "#target" . store pi_target ] .
