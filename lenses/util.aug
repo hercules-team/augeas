@@ -79,7 +79,7 @@ View: comment_generic
 
   let comment_generic (r:regexp) (d:string) =
     [ label "#comment" . del r d
-        . store /([^ \t\r\n].*[^ \t\r\n]|[^ \t\r\n])/ . eol ]
+        . store /([^ \t\r\n].*[^ \t\r\n]|[^ \t\r\n])/ . doseol ]
 
 (* View: comment
   Map comments into "#comment" nodes
@@ -132,6 +132,10 @@ View: comment_generic
   Map empty lines, including C-style empty comment *)
   let empty_c_style =
     empty_generic /[ \t]*((\/\/)|(\/\*[ \t]*\*\/))?[ \t]*/
+
+(* View: empty_dos *)
+  let empty_dos =
+    [ del /[ \t]*#?[ \t]*/ "" . del /\r?\n/ "\n" ]
 
 
 (* View: Split *)
