@@ -54,6 +54,14 @@ Variable: eol
   let eol = del /[ \t]*\n/ "\n"
 
 (*
+Variable: doseol
+  Delete end of line with optional carriage return,
+  including optional trailing whitespace
+*)
+  let doseol = del /[ \t]*\r?\n/ "\n"
+   
+
+(*
 Variable: indent
   Delete indentation, including leading whitespace
 *)
@@ -71,7 +79,7 @@ View: comment_generic
 
   let comment_generic (r:regexp) (d:string) =
     [ label "#comment" . del r d
-        . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ . eol ]
+        . store /([^ \t\r\n].*[^ \t\r\n]|[^ \t\r\n])/ . eol ]
 
 (* View: comment
   Map comments into "#comment" nodes
@@ -91,19 +99,19 @@ View: comment_generic
 
 (* View: comment_or_eol
     A <comment_eol> or <eol>, with an optional empty comment *)
- let comment_or_eol = comment_eol | (del /[ \t]*(#[ \t]*)?\n/ "\n")
+ let comment_or_eol = comment_eol | (del /[ \t]*(#[ \t]*)?\r?\n/ "\n")
 
 (* View: comment_multiline
     A C-style multiline comment *)
   let comment_multiline =
-     let mline_re = (/[^ \t\n].*[^ \t\n]|[^ \t\n]/ - /.*\*\/.*/) in
+     let mline_re = (/[^ \t\r\n].*[^ \t\r\n]|[^ \t\r\n]/ - /.*\*\/.*/) in
      let mline = [ seq "mline"
-                 . del /[ \t\n]*/ "\n"
+                 . del /[ \t\r\n]*/ "\n"
                  . store mline_re ] in
      [ label "#mcomment" . del /[ \t]*\/\*/ "/*"
        . counter "mline"
        . mline . (eol . mline)*
-       . del /[ \t\n]*\*\/[ \t]*\n/ "\n*/\n" ]
+       . del /[ \t\r\n]*\*\/[ \t]*\r?\n/ "\n*/\n" ]
 
 (* View: comment_c_style
     A comment line, C-style *)
