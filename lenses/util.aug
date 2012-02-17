@@ -99,7 +99,7 @@ View: comment_generic
 
 (* View: comment_or_eol
     A <comment_eol> or <eol>, with an optional empty comment *)
- let comment_or_eol = comment_eol | (del /[ \t]*(#[ \t]*)?\r?\n/ "\n")
+ let comment_or_eol = comment_eol | (del /[ \t]*(#[ \t]*)?\n/ "\n")
 
 (* View: comment_multiline
     A C-style multiline comment *)
