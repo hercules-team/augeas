@@ -111,6 +111,7 @@ Group: Specific Modules  {
    File: Sudoers  (sudoers.aug)
    File: Sysctl  (sysctl.aug)
    File: Syslog  (syslog.aug)
+   File: Up2date  (up2date.aug)
    File: Xinetd  (xinetd.aug)
    File: Xorg  (xorg.aug)
    File: Shellvars  (shellvars.aug)
@@ -145,6 +146,7 @@ Group: Tests and Examples  {
    File: Test_Simplelines  (tests/test_simplelines.aug)
    File: Test_Simplevars  (tests/test_simplevars.aug)
    File: Test_Sysctl  (tests/test_sysctl.aug)
+   File: Test_Up2date  (tests/test_up2date.aug)
    File: Test_Xml  (tests/test_xml.aug)
    }  # Group: Tests and Examples
 
