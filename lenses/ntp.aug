@@ -98,7 +98,7 @@ module Ntp =
 
     (* Authentication commands, see authopt.html#cmd; incomplete *)
     let auth_command =
-      [ key /controlkey|keys|keysdir|requestkey/ .
+      [ key /controlkey|keys|keysdir|requestkey|authenticate/ .
             sep_spc . store word . eol ]
      | [ key /autokey|revoke/ . [sep_spc . store word]? . eol ]
      | [ key /trustedkey/ . [ sep_spc . label "key" . store word ]+ . eol ]
