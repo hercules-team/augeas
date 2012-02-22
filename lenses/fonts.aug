@@ -31,6 +31,7 @@ let lns = Xml.lns
 let filter = incl "/etc/fonts/fonts.conf"
            . incl "/etc/fonts/conf.avail/*"
            . incl "/etc/fonts/conf.d/*"
+           . excl "/etc/fonts/conf.d/README"
            . Util.stdexcl
 
 let xfm = transform lns filter

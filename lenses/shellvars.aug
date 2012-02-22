@@ -327,16 +327,7 @@ module Shellvars =
   let filter_sysconfig_rhn =
       sc_incl "rhn/allowed-actions/*" .
       sc_incl "rhn/allowed-actions/script/*" .
-      sc_incl "rhn/clientCaps.d/*" .
-      sc_incl "rhn/osad-auth.conf" .
-      sc_incl "rhn/osad.conf" .
-      sc_incl "rhn/rhncfg-client.conf" .
-      sc_incl "rhn/rhncfg-manager.conf" .
-      sc_incl "rhn/rhnpushrc" .
-      sc_incl "rhn/rhnsd" .
-      sc_incl "rhn/up2date" .
-      sc_incl "rhn/virt" .
-      sc_incl "rhn/virt/auto"
+      sc_incl "rhn/rhnsd"
 
   let filter_ifcfg   = incl "/etc/sysconfig/network-scripts/ifcfg-*"
                      . incl "/etc/sysconfig/network/ifcfg-*"
@@ -355,7 +346,6 @@ module Shellvars =
                      . incl "/etc/popularity-contest.conf"
                      . incl "/etc/rc.conf"
                      . incl "/etc/ucf.conf"
-                     . incl "/etc/updatedb.conf"
 
   let filter = filter_sysconfig
              . filter_sysconfig_suse
