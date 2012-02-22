@@ -14,6 +14,9 @@ module Sep =
 (* Variable: colon *)
 let colon = Util.del_str ":"
 
+(* Variable: semicolon *)
+let semicolon = Util.del_str ";"
+
 (* Variable: comma *)
 let comma = Util.del_str ","
 
