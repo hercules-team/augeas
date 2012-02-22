@@ -25,16 +25,21 @@ module Protocols =
 
 autoload xfm
 
-(* View: protocol *)
-let protocol =
-   let alias = [ label "alias" . store Rx.word ]
-   in [ key Rx.word . Sep.space . store Rx.integer
+let protoname = /[^# \t\n]+/
+
+(* View: entry *)
+let entry =
+      let protocol = [ label "protocol" . store protoname ]
+   in let number   = [ label "number" . store Rx.integer ]
+   in let alias    = [ label "alias" . store protoname ]
+   in [ seq "protocol" . protocol
+      . Sep.space . number
       . (Sep.space . Build.opt_list alias Sep.space)?
       . Util.comment_or_eol ]
 
 (* View: lns
      The protocols lens *)
-let lns = (Util.empty | Util.comment | protocol)*
+let lns = (Util.empty | Util.comment | entry)*
 
 (* Variable: filter *)
 let filter = incl "/etc/protocols"
