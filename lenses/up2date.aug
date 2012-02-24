@@ -20,20 +20,60 @@ About: Examples
    The <Test_Up2date> file contains various examples and tests.
 *)
 
-
 module Up2date =
 
 autoload xfm
 
-let key_re = /[^=# \t\n]+/
+(************************************************************************
+ * Group:                 USEFUL PRIMITIVES
+ *************************************************************************)
+
+(* Variable: key_re *)
+let key_re   = /[^=# \t\n]+/
+
+(* Variable: value_re *)
+let value_re = /[^ \t\n;][^\n;]*[^ \t\n;]|[^ \t\n;]/
+
+(* View: sep_semi *)
+let sep_semi = Sep.semicolon
+
+(************************************************************************
+ * Group:                 ENTRIES
+ *************************************************************************)
+
+(* View: single_entry
+   key=foo *)
+let single_entry = [ label "value" . store value_re ]
+
+(* View: multi_empty
+   key=; *)
+let multi_empty  = sep_semi
+
+(* View: multi_value
+   One value in a list setting *)
+let multi_value  = [ seq "multi" . store value_re ]
+
+(* View: multi_single
+   key=foo;  (parsed as a list) *)
+let multi_single = multi_value . sep_semi
+
+(* View: multi_values
+   key=foo;bar
+   key=foo;bar; *)
+let multi_values = multi_value . ( sep_semi . multi_value )+ . del /;?/ ";"
+
+(* View: multi_entry
+   List settings go under a 'values' node *)
+let multi_entry  = [ label "values" . counter "multi"
+                     . ( multi_single | multi_values | multi_empty ) ]
 
 (* View: entry *)
-let entry =
-      let multi_value = [ seq "multi" . store /[^ \t\n;][^\n;]*[^ \t\n;]|[^ \t\n;]/ ]
-   in let multi_entry  = counter "multi"
-        . Build.opt_list multi_value Sep.semicolon . del /;?/ ""
-   in [ seq "entry" . store key_re . Sep.equal
-        . multi_entry? . Util.eol ]
+let entry = [ seq "entry" . store key_re . Sep.equal
+              . ( multi_entry | single_entry )? . Util.eol ]
+
+(************************************************************************
+ * Group:                 LENS
+ *************************************************************************)
 
 (* View: lns *)
 let lns = (Util.empty | Util.comment | entry)*
