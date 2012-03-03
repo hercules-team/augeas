@@ -45,7 +45,7 @@ static unsigned int flags = AUG_NONE;
 const char *root = NULL;
 char *loadpath = NULL;
 const char *inputfile = NULL;
-int echo = 0;         /* Gets also changed in main_loop */
+int echo_commands = 0;         /* Gets also changed in main_loop */
 bool print_version = false;
 bool auto_save = false;
 bool interactive = false;
@@ -334,7 +334,7 @@ static void parse_opts(int argc, char **argv) {
             argz_add(&loadpath, &loadpathlen, optarg);
             break;
         case 'e':
-            echo = 1;
+            echo_commands = 1;
             break;
         case 'f':
             inputfile = optarg;
@@ -436,8 +436,8 @@ static int main_loop(void) {
     }
 
     // make readline silent by default
-    echo = echo || isatty(fileno(stdin));
-    if (echo)
+    echo_commands = echo_commands || isatty(fileno(stdin));
+    if (echo_commands)
         rl_outstream = NULL;
     else
         rl_outstream = fopen("/dev/null", "w");
@@ -452,9 +452,9 @@ static int main_loop(void) {
         if (line == NULL) {
             if (!isatty(fileno(stdin)) && interactive && !in_interactive) {
                 in_interactive = true;
-                if (echo)
+                if (echo_commands)
                     printf("\n");
-                echo = true;
+                echo_commands = true;
 
                 // reopen in stream
                 if ((rl_instream = fopen("/dev/tty", "r")) == NULL) {
@@ -481,7 +481,7 @@ static int main_loop(void) {
             if (auto_save) {
                 strncpy(inputline, "save", sizeof(inputline));
                 line = inputline;
-                if (echo)
+                if (echo_commands)
                     printf("%s\n", line);
                 auto_save = false;
             } else {
@@ -491,7 +491,7 @@ static int main_loop(void) {
         }
 
         if (end_reached) {
-            if (echo)
+            if (echo_commands)
                 printf("\n");
             return ret;
         }
