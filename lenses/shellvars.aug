@@ -194,6 +194,7 @@ module Shellvars =
                      . incl "/etc/lsb-release"
                      . incl "/etc/popularity-contest.conf"
                      . incl "/etc/rc.conf"
+                     . incl "/etc/selinux/config"
                      . incl "/etc/ucf.conf"
 
   let filter = filter_sysconfig
