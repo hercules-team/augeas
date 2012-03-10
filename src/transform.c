@@ -209,7 +209,7 @@ static int filter_generate(struct tree *xfm, const char *root,
         goto error;
 
     for (int i=0; i < pathc; i++) {
-        const char *path = globbuf.gl_pathv[i];
+        const char *path = globbuf.gl_pathv[i] + root_prefix;
         bool include = true;
 
         list_for_each(e, xfm->children) {
@@ -218,7 +218,7 @@ static int filter_generate(struct tree *xfm, const char *root,
 
             if (strchr(e->value, SEP) == NULL)
                 path = pathbase(path);
-            if ((r = fnmatch(e->value, path + root_prefix, fnm_flags)) == 0) {
+            if ((r = fnmatch(e->value, path, fnm_flags)) == 0) {
                 include = false;
             }
         }
@@ -619,7 +619,8 @@ int transform_validate(struct augeas *aug, struct tree *xfm) {
     for (struct tree *t = xfm->children; t != NULL; ) {
         if (streqv(t->label, "lens")) {
             l = t;
-        } else if ((is_incl(t) || is_excl(t)) && t->value[0] != SEP) {
+        } else if ((is_incl(t) || (is_excl(t) && strchr(t->value, SEP) != NULL))
+                       && t->value[0] != SEP) {
             /* Normalize relative paths to absolute ones */
             int r;
             r = REALLOC_N(t->value, strlen(t->value) + 2);

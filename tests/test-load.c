@@ -504,6 +504,30 @@ static void testLoadExclWithRoot(CuTest *tc) {
     CuAssertIntEquals(tc, 0, r);
 }
 
+/* Test excl patterns matching the end of a filename work, e.g. *.bak */
+static void testLoadTrailingExcl(CuTest *tc) {
+    augeas *aug = NULL;
+    static const char *const cmds =
+        "set /augeas/context /augeas/load/Shellvars\n"
+        "set lens Shellvars.lns\n"
+        "set incl /etc/sysconfig/network-scripts/ifcfg-lo*\n"
+        "set excl *.rpmsave\n"
+        "load";
+    int r;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_MODL_AUTOLOAD);
+    CuAssertPtrNotNull(tc, aug);
+
+    r = aug_srun(aug, stderr, cmds);
+    CuAssertIntEquals(tc, 5, r);
+
+    r = aug_match(aug, "/augeas/files/etc/sysconfig/network-scripts/ifcfg-lo", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    r = aug_match(aug, "/augeas/files/etc/sysconfig/network-scripts/ifcfg-lo.rpmsave", NULL);
+    CuAssertIntEquals(tc, 0, r);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -522,6 +546,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testReloadExternalMod);
     SUITE_ADD_TEST(suite, testParseErrorReported);
     SUITE_ADD_TEST(suite, testLoadExclWithRoot);
+    SUITE_ADD_TEST(suite, testLoadTrailingExcl);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)
