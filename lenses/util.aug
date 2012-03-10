@@ -163,4 +163,6 @@ Variable: stdexcl
     (excl "*.dpkg-bak") .
     (excl "*.dpkg-dist") .
     (excl "*.augsave") .
-    (excl "*.augnew")
+    (excl "*.augnew") .
+    (excl "*.bak") .
+    (excl "*.old")
