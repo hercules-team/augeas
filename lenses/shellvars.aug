@@ -158,10 +158,14 @@ module Shellvars =
 
   let filter_sysconfig =
       sc_incl "*" .
-      sc_excl "kernel" .
+      sc_excl "hw-uuid" .
+      sc_excl "hwconf" .
       sc_excl "ip*tables" .
+      sc_excl "kernel" .
+      sc_excl "*.pub" .
       sc_excl "sysstat.ioconf" .
       sc_excl "system-config-firewall" .
+      sc_excl "system-config-securitylevel" .
       sc_incl "network/config" .
       sc_incl "network/dhcp" .
       sc_incl "network/dhcp6r" .
