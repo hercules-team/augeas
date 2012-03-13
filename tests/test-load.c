@@ -454,6 +454,36 @@ static void testReloadExternalMod(CuTest *tc) {
     CuAssertIntEquals(tc, 5, r);
 }
 
+/* Bug #259 - after save with /augeas/save = newfile, make sure we discard
+ * changes and reload files.
+ */
+static void testReloadAfterSaveNewfile(CuTest *tc) {
+    augeas *aug = NULL;
+    int r;
+
+    aug = setup_writable_hosts(tc);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_set(aug, "/augeas/save", "newfile");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_set(aug, "/files/etc/hosts/1/ipaddr", "127.0.0.2");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_save(aug);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_match(aug, "/files/etc/hosts/1[ipaddr = '127.0.0.1']", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    aug_close(aug);
+}
+
 /* Make sure parse errors from applying a lens to a file that does not
  * match get reported under /augeas//error
  *
@@ -544,6 +574,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testReloadDeleted);
     SUITE_ADD_TEST(suite, testReloadDeletedMeta);
     SUITE_ADD_TEST(suite, testReloadExternalMod);
+    SUITE_ADD_TEST(suite, testReloadAfterSaveNewfile);
     SUITE_ADD_TEST(suite, testParseErrorReported);
     SUITE_ADD_TEST(suite, testLoadExclWithRoot);
     SUITE_ADD_TEST(suite, testLoadTrailingExcl);

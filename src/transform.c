@@ -405,7 +405,7 @@ static int store_error(struct augeas *aug,
  */
 static int add_file_info(struct augeas *aug, const char *node,
                          struct lens *lens, const char *lens_name,
-                         const char *filename) {
+                         const char *filename, bool force_reload) {
     struct tree *file, *tree;
     char *tmp = NULL;
     int r;
@@ -428,8 +428,13 @@ static int add_file_info(struct augeas *aug, const char *node,
     ERR_NOMEM(r < 0, aug);
 
     /* Set 'mtime' */
-    tmp = mtime_as_string(aug, filename);
-    ERR_BAIL(aug);
+    if (force_reload) {
+        tmp = strdup("0");
+        ERR_NOMEM(tmp == NULL, aug);
+    } else {
+        tmp = mtime_as_string(aug, filename);
+        ERR_BAIL(aug);
+    }
     tree = tree_child_cr(file, s_mtime);
     ERR_NOMEM(tree == NULL, aug);
     tree_store_value(tree, &tmp);
@@ -493,7 +498,7 @@ static int load_file(struct augeas *aug, struct lens *lens,
     path = file_name_path(aug, filename);
     ERR_NOMEM(path == NULL, aug);
 
-    r = add_file_info(aug, path, lens, lens_name, filename);
+    r = add_file_info(aug, path, lens, lens_name, filename, false);
     if (r < 0)
         goto done;
 
@@ -913,6 +918,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
     const char *lens_name;
     struct lens *lens = xfm_lens(aug, xfm, &lens_name);
     int result = -1, r;
+    bool force_reload;
 
     errno = 0;
 
@@ -1060,7 +1066,8 @@ int transform_save(struct augeas *aug, struct tree *xfm,
     result = 1;
 
  done:
-    r = add_file_info(aug, path, lens, lens_name, augorig);
+    force_reload = aug->flags & AUG_SAVE_NEWFILE;
+    r = add_file_info(aug, path, lens, lens_name, augorig, force_reload);
     if (r < 0) {
         err_status = "file_info";
         result = -1;
