@@ -105,6 +105,7 @@ lens_tests =			\
   lens-protocols.sh    \
   lens-puppet.sh		\
   lens-puppetfileserver.sh		\
+  lens-qpid.sh		\
   lens-reprepro_uploaders.sh		\
   lens-resolv.sh		\
   lens-rsyncd.sh		\
