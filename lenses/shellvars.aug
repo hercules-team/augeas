@@ -196,6 +196,7 @@ module Shellvars =
                      . incl "/etc/devscripts.conf"
                      . incl "/etc/lintianrc"
                      . incl "/etc/lsb-release"
+                     . incl "/etc/os-release"
                      . incl "/etc/popularity-contest.conf"
                      . incl "/etc/rc.conf"
                      . incl "/etc/selinux/config"
