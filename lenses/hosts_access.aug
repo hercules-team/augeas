@@ -63,9 +63,13 @@ let client =
   let user = [ label "user"
              . store Rx.word
              . Util.del_str "@" ] in
+  let netmask = [ Util.del_str "/"
+                . label "netmask"
+                . store Rx.word ] in
     [ label "client"
     . user?
-    . store Rx.word ]
+    . store Rx.word
+    . netmask? ]
 
 (* View: client_list
     A list of <client>s *)
