@@ -184,8 +184,9 @@ check_SCRIPTS = \
   $(lens_tests) \
   test-get.sh test-augtool.sh \
   test-put-symlink.sh test-put-symlink-augnew.sh \
-  test-put-symlink-augsave.sh test-put-symlink-augtemp.sh test-save-empty.sh \
-  test-bug-1.sh test-idempotent.sh test-preserve.sh \
+  test-put-symlink-augsave.sh test-put-symlink-augtemp.sh \
+  test-put-mount.sh test-put-mount-augnew.sh test-put-mount-augsave.sh \
+  test-save-empty.sh test-bug-1.sh test-idempotent.sh test-preserve.sh \
   test-events-saved.sh test-save-mode.sh test-unlink-error.sh \
   test-augtool-empty-line.sh test-augtool-modify-root.sh
 

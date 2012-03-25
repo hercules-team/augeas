@@ -27,6 +27,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <selinux/selinux.h>
 #include <stdbool.h>
@@ -844,14 +845,21 @@ static int transfer_file_attrs(FILE *from, FILE *to,
  * means that FROM or TO is a bindmounted file), and COPY_IF_RENAME_FAILS
  * is true, copy the contents of FROM into TO and delete FROM.
  *
+ * If COPY_IF_RENAME_FAILS and UNLINK_IF_RENAME_FAILS are true, and the above
+ * copy mechanism is used, it will unlink the TO path and open with O_EXCL
+ * to ensure we only copy *from* a bind mount rather than into an attacker's
+ * mount placed at TO (e.g. for .augsave).
+ *
  * Return 0 on success (either rename succeeded or we copied the contents
  * over successfully), -1 on failure.
  */
 static int clone_file(const char *from, const char *to,
-                      const char **err_status, int copy_if_rename_fails) {
+                      const char **err_status, int copy_if_rename_fails,
+                      int unlink_if_rename_fails) {
     FILE *from_fp = NULL, *to_fp = NULL;
     char buf[BUFSIZ];
     size_t len;
+    int to_fd = -1, to_oflags, r;
     int result = -1;
 
     if (rename(from, to) == 0)
@@ -867,8 +875,21 @@ static int clone_file(const char *from, const char *to,
         goto done;
     }
 
-    if (!(to_fp = fopen(to, "w"))) {
+    if (unlink_if_rename_fails) {
+        r = unlink(to);
+        if (r < 0) {
+            *err_status = "clone_unlink_dst";
+            goto done;
+        }
+    }
+
+    to_oflags = unlink_if_rename_fails ? O_EXCL : O_TRUNC;
+    if ((to_fd = open(to, O_WRONLY|O_CREAT|to_oflags, S_IRUSR|S_IWUSR)) < 0) {
         *err_status = "clone_open_dst";
+        goto done;
+    }
+    if (!(to_fp = fdopen(to_fd, "w"))) {
+        *err_status = "clone_fdopen_dst";
         goto done;
     }
 
@@ -897,8 +918,15 @@ static int clone_file(const char *from, const char *to,
  done:
     if (from_fp != NULL)
         fclose(from_fp);
-    if (to_fp != NULL && fclose(to_fp) != 0)
+    if (to_fp != NULL) {
+        if (fclose(to_fp) != 0) {
+            *err_status = "clone_fclose_dst";
+            result = -1;
+        }
+    } else if (to_fd >= 0 && close(to_fd) < 0) {
+        *err_status = "clone_close_dst";
         result = -1;
+    }
     if (result != 0)
         unlink(to);
     if (result == 0)
@@ -1132,7 +1160,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
                 goto done;
             }
 
-            r = clone_file(augorig_canon, augsave, &err_status, 1);
+            r = clone_file(augorig_canon, augsave, &err_status, 1, 1);
             if (r != 0) {
                 dyn_err_status = strappend(err_status, "_augsave");
                 goto done;
@@ -1140,7 +1168,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
         }
     }
 
-    r = clone_file(augtemp, augdest, &err_status, copy_if_rename_fails);
+    r = clone_file(augtemp, augdest, &err_status, copy_if_rename_fails, 0);
     if (r != 0) {
         dyn_err_status = strappend(err_status, "_augtemp");
         goto done;
@@ -1298,7 +1326,7 @@ int remove_file(struct augeas *aug, struct tree *tree) {
                 goto error;
         }
 
-        r = clone_file(augorig_canon, augsave, &err_status, 1);
+        r = clone_file(augorig_canon, augsave, &err_status, 1, 1);
         if (r != 0) {
             dyn_err_status = strappend(err_status, "_augsave");
             goto error;
