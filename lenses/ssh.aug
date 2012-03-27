@@ -74,4 +74,4 @@ module Ssh =
     let lns = entry* . host*
 
     let xfm = transform lns (incl "/etc/ssh/ssh_config" .
-                             incl "~/.ssh/config")
+                             incl (Sys.getenv("HOME") . "/.ssh/config"))
