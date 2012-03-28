@@ -158,6 +158,7 @@ module Shellvars =
 
   let filter_sysconfig =
       sc_incl "*" .
+      sc_excl "bootloader" .
       sc_excl "hw-uuid" .
       sc_excl "hwconf" .
       sc_excl "ip*tables" .
