@@ -372,6 +372,27 @@ test set-dquote-escaped-path 2
 prints
   /white\ space = value
 
+test set-tabnline 2
+  set /files newl\ntab\tend
+  get /files
+prints
+  /files = newl
+tab	end
+
+test set-tabnline-squote 2
+  set /files 'newl\ntab\tend'
+  get /files
+prints
+  /files = newl
+tab	end
+
+test set-tabnline-dquote 2
+  set /files "newl\ntab\tend"
+  get /files
+prints
+  /files = newl
+tab	end
+
 # Combinations of quotes in values, some unmatched
 # Tests from David Schmitt (Puppet bug #12199)
 test quot_sq -1 ECMDRUN

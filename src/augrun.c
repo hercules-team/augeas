@@ -135,13 +135,23 @@ static char *nexttoken(struct command *cmd, char **line, bool path) {
                 case ']':  /* pass both literally */
                     nescaped = 2;
                     break;
+                case 't':  /* insert tab */
+                    *(s+1) = '\t';
+                    nescaped = 1;
+                    s += 1;
+                    break;
+                case 'n':  /* insert newline */
+                    *(s+1) = '\n';
+                    nescaped = 1;
+                    s += 1;
+                    break;
                 case ' ':
-                case '\t':
+                case '\t': /* pass both through if quoted, else fall */
                     if (quot) break;
                 case '\'':
-                case '"':
+                case '"':  /* pass both through if opposite quote, else fall */
                     if (quot && quot != *(s+1)) break;
-                case '\\':
+                case '\\': /* pass next character through */
                     nescaped = 1;
                     s += 1;
                     break;
