@@ -253,10 +253,11 @@ let alias = user_alias | runas_alias | host_alias | cmnd_alias
  *     > Default_Type ::= 'Defaults' |
  *     >                  'Defaults' '@' Host_List |
  *     >                  'Defaults' ':' User_List |
+ *     >                  'Defaults' '!' Cmnd_List |
  *     >                  'Defaults' '>' Runas_List
  *************************************************************************)
 let default_type     =
-  let value = store /[@:>][^ \t\n\\]+/ in
+  let value = store /[@:!>][^ \t\n\\]+/ in
   [ label "type" . value ]
 
 (************************************************************************
