@@ -273,7 +273,8 @@ module Grub =
     let lns = (comment | empty | menu_setting | boot | debian)*
 
     (* View: filter *)
-    let filter = incl "/boot/grub/menu.lst"
+    let filter = incl "/boot/grub/grub.conf"
+               . incl "/boot/grub/menu.lst"
                . incl "/etc/grub.conf"
 
     let xfm = transform lns filter
