@@ -140,6 +140,7 @@ lens_tests =			\
   lens-xinetd.sh		\
   lens-xml.sh			\
   lens-xorg.sh			\
+  lens-xymon.sh			\
   lens-grub.sh			\
   lens-schroot.sh			\
   lens-xendconfsxp.sh	\
