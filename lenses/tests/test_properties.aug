@@ -6,6 +6,8 @@ module Test_properties =
 tomcat.port = 8080
 tomcat.application.name=testapp
     tomcat.application.description=my test application
+property.with_underscore=works
+empty.property=
 "
 
 let lns = Properties.lns
@@ -18,6 +20,8 @@ test lns get conf =
     { "tomcat.port" = "8080" }
     { "tomcat.application.name" = "testapp" }
     { "tomcat.application.description" = "my test application" }
+    { "property.with_underscore" = "works" }
+    { "empty.property" = "" }
 
 test lns put conf after
     set "tomcat.port" "99";
@@ -29,5 +33,7 @@ test lns put conf after
 tomcat.port = 99
 tomcat.application.name=testapp
     tomcat.application.description=my test application
+property.with_underscore=works
+empty.property=
 tomcat.application.host=foo.network.com
 "
