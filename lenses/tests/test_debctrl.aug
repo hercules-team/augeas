@@ -362,3 +362,73 @@ test DebCtrl.lns get augeas_control =
     }
   }
 
+(* Bug #267: Python module extensions, from Debian Python Policy, chapter 2 *)
+let python_control = "Source: graphite-web
+Maintainer: Will Pearson (Editure Key) <wpearson@editure.co.uk>
+Section: python
+Priority: optional
+Build-Depends: debhelper (>= 7), python-support (>= 0.8.4)
+Standards-Version: 3.7.2
+XS-Python-Version: current
+
+Package: python-graphite-web
+Architecture: all
+Depends: ${python:Depends}
+XB-Python-Version: ${python:Versions}
+Provides: ${python:Provides}
+Description: Enterprise scalable realtime graphing
+"
+test Debctrl.lns get python_control =
+  { "srcpkg"
+    { "Source" = "graphite-web" }
+    { "Maintainer" = "Will Pearson (Editure Key) <wpearson@editure.co.uk>" }
+    { "Section" = "python" }
+    { "Priority" = "optional" }
+    { "Build-Depends"
+      { "and"
+        { "or"
+          { "debhelper"
+            { "version"
+              { "relation" = ">=" }
+              { "number" = "7" }
+            }
+          }
+        }
+      }
+      { "and"
+        { "or"
+          { "python-support"
+            { "version"
+              { "relation" = ">=" }
+              { "number" = "0.8.4" }
+            }
+          }
+        }
+      }
+    }
+    { "Standards-Version" = "3.7.2" }
+    { "XS-Python-Version" = "current" }
+  }
+  { "binpkg"
+    { "Package" = "python-graphite-web" }
+    { "Architecture" = "all" }
+    { "Depends"
+      { "and"
+        { "or"
+          { "${python:Depends}" }
+        }
+      }
+    }
+    { "XB-Python-Version" = "${python:Versions}" }
+    { "Provides"
+      { "and"
+        { "or"
+          { "${python:Provides}" }
+        }
+      }
+    }
+    { "Description"
+      { "summary" = "Enterprise scalable realtime graphing" }
+    }
+  }
+

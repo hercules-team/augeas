@@ -93,7 +93,7 @@ let uploaders  =
 
 let simple_src_keyword = "Source" | "Section" | "Priority"
     | "Standards\-Version" | "Homepage" | /Vcs\-Svn/ | /Vcs\-Browser/
-    | "Maintainer" | "DM-Upload-Allowed"
+    | "Maintainer" | "DM-Upload-Allowed" | /XS?-Python-Version/
 let depend_src_keywords = /Build\-Depends/ | /Build\-Depends\-Indep/
 
 let src_entries = (   simple_entry simple_src_keyword
@@ -115,8 +115,8 @@ let description
 
 (* binary package *)
 let simple_bin_keywords = "Package" | "Architecture" |  "Section"
-    | "Priority" | "Essential" | "Homepage"
-let depend_bin_keywords = "Depends" | "Recommends" | "Suggests"
+    | "Priority" | "Essential" | "Homepage" | "XB-Python-Version"
+let depend_bin_keywords = "Depends" | "Recommends" | "Suggests" | "Provides"
 
 let bin_entries = ( simple_entry simple_bin_keywords
                   | dependency_list depend_bin_keywords
