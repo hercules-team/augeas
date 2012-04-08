@@ -21,7 +21,7 @@ test lns get conf =
     { "tomcat.application.name" = "testapp" }
     { "tomcat.application.description" = "my test application" }
     { "property.with_underscore" = "works" }
-    { "empty.property" = "" }
+    { "empty.property" }
 
 test lns put conf after
     set "tomcat.port" "99";
