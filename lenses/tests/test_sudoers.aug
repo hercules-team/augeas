@@ -257,3 +257,10 @@ test Sudoers.spec get "root ALL= sudoedit /etc/passwd\n" =
       { "host" = "ALL" }
       { "command" = "sudoedit /etc/passwd" } } }
 
+(* Ticket #263, quoted values in defaults line *)
+let defaults_spaces = "Defaults       passprompt=\"Your SecurID Passcode: \"\n"
+test Sudoers.lns get defaults_spaces =
+  { "Defaults"
+    { "passprompt" = "\"Your SecurID Passcode: \"" }
+  }
+
