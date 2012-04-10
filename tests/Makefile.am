@@ -85,6 +85,7 @@ lens_tests =			\
   lens-nagioscfg.sh     \
   lens-nagiosobjects.sh     \
   lens-netmasks.sh     \
+  lens-networkmanager.sh     \
   lens-networks.sh     \
   lens-ntp.sh			\
   lens-nrpe.sh          \
