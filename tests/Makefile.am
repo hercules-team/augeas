@@ -128,6 +128,7 @@ lens_tests =			\
   lens-sshd.sh			\
   lens-sssd.sh			\
   lens-stunnel.sh			\
+  lens-subversion.sh		\
   lens-sysconfig.sh		\
   lens-syslog.sh		\
   lens-sysctl.sh		\
