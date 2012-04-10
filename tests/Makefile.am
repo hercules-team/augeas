@@ -102,6 +102,7 @@ lens_tests =			\
   lens-postfix_access.sh \
   lens-postfix_main.sh		\
   lens-postfix_master.sh	\
+  lens-postfix_transport.sh	\
   lens-properties.sh    \
   lens-protocols.sh    \
   lens-puppet.sh		\
