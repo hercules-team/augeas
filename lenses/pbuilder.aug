@@ -8,7 +8,7 @@ About: Reference
   Pbuilderrc is a standard shellvars file.
 
 About: License
-  This file is licensed under the LGPLv2+, like the rest of Augeas.
+  This file is licensed under the LGPL v2+, like the rest of Augeas.
 
 About: Configuration files
   This lens applies to /etc/pbuilderrc and /etc/pbuilder/pbuilderrc.

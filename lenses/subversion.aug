@@ -7,7 +7,7 @@ Authors:
    Raphael Pinson <raphael.pinson@camptocamp.com>
 
 About: License
-   This file is licenced under the LGPLv2+, like the rest of Augeas.
+   This file is licenced under the LGPL v2+, like the rest of Augeas.
 
 About: Examples
    The <Test_Subversion> file contains various examples and tests.

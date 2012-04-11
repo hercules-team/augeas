@@ -11,7 +11,7 @@ Reference:
     config.c and policy.c from mdadm-3.2.2
 
 License:
-    This file is licensed under the LGPLv2+.
+    This file is licensed under the LGPL v2+.
 
 This is a lens for /etc/mdadm.conf. It aims to parse every valid configuration
 file as of version 3.2.2, and many invalid ones too. This last point is a

@@ -8,7 +8,7 @@ About: References
   manual page kdump.conf(5)
 
 About: License
-   This file is licenced under the LGPLv2+, like the rest of Augeas.
+   This file is licenced under the LGPL v2+, like the rest of Augeas.
 
 About: Configuration files
    This lens applies to /etc/kdump.conf. See <filter>.

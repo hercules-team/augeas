@@ -11,7 +11,7 @@ Reference: Freedesktop.org
    http://standards.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html
 
 About: License
-   This file is licenced under the LGPLv2+, like the rest of Augeas.
+   This file is licenced under the LGPL v2+, like the rest of Augeas.
 *)
 
 

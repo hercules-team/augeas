@@ -8,7 +8,7 @@ About: Reference
   Some examples of valid entries can be found in access.conf or "man access.conf"
 
 About: License
-  This file is licensed under the LGPLv2+, like the rest of Augeas.
+  This file is licensed under the LGPL v2+, like the rest of Augeas.
 
 About: Lens Usage
   Sample usage of this lens in augtool

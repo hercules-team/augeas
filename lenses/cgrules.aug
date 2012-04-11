@@ -7,7 +7,7 @@ Author:
     Ivana Hutarova Varekova <varekova@redhat.com>
 
 About: Licence
-    This file is licensed under the LGPLv2+, like the rest of Augeas.
+    This file is licensed under the LGPL v2+, like the rest of Augeas.
 
 About: Lens Usage
     Sample usage of this lens in augtool:
