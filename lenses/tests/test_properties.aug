@@ -30,19 +30,23 @@ short.break = a\
 
 cheeses
 
+spaces only
+multi  spaces
+  indented spaces
+
+\= =A
+space and = equals
+space with \
+   multiline
+
 escaped\:colon=value
 escaped\=equals=value
+escaped\ space=value
 "
 
 (* Other tests that aren't supported yet
 overflow.description=\
   just wanted to indent it
-
-spaces only
-multi  spaces
-  indented spaces
-
-escaped\ space=value
 *)
 
 let lns = Properties.lns
@@ -83,8 +87,20 @@ test lns get conf =
     {}
     { "cheeses" }
     {}
+    { "spaces" = "only" }
+    { "multi" = "spaces" }
+    { "indented" = "spaces" }
+    {}
+    { "\\=" = "A" }
+    { "space" = "and = equals" }
+    { "space" = " < multi > "
+        { = "with " }
+        { = "multiline" }
+    }
+    {}
     { "escaped\:colon" = "value" }
     { "escaped\=equals" = "value" }
+    { "escaped\ space" = "value" }
 test lns put conf after
     set "tomcat.port" "99";
     set "tomcat.application.host" "foo.network.com"
@@ -119,7 +135,17 @@ short.break = a\
 
 cheeses
 
+spaces only
+multi  spaces
+  indented spaces
+
+\= =A
+space and = equals
+space with \
+   multiline
+
 escaped\:colon=value
 escaped\=equals=value
+escaped\ space=value
 tomcat.application.host=foo.network.com
 "
