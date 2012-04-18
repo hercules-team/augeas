@@ -81,6 +81,9 @@ unset ONBOOT    #   We do not want this var
   test Shellvars.lns get "var=\"ab#c\"\n" =
     { "var" = "\"ab#c\"" }
 
+  test Shellvars.lns get "ESSID='Joe'\"'\"'s net'\n" =
+    { "ESSID" = "'Joe'\"'\"'s net'" }
+
   (* For some reason, `` conflicts with comment_eol *)
   test Shellvars.lns get "var=`ab#c`\n" =
     { "var" = "`ab"
