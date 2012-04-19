@@ -60,7 +60,9 @@ let simple_line (kw:regexp) (lns:lens) = [ key kw
 
 let global     = simple_line "global" (sep_opt_spc . sep_dollar . sto_to_scl)
 
-let variable   = simple_line /\$[][A-Za-z0-9'"_:-]+/ (sep_eq . sto_to_scl)
+let variable   =
+     let arraykey = [ label "@arraykey" . store /\[[][A-Za-z0-9'"_:-]+\]/ ]
+  in simple_line /\$[A-Za-z0-9'"_:-]+/ (arraykey? . (sep_eq . sto_to_scl))
 
 let include    = simple_line "@include" (sep_opt_spc . sto_to_scl)
 
