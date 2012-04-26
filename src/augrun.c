@@ -587,6 +587,9 @@ static void cmd_set(struct command *cmd) {
     const char *val = arg_value(cmd, "value");
     int r;
 
+    if (val != NULL && strlen(val) == 0)
+        val = NULL;
+
     r = aug_set(cmd->aug, path, val);
     if (r < 0)
         ERR_REPORT(cmd, AUG_ECMDRUN, "Setting %s failed", path);
@@ -595,7 +598,7 @@ static void cmd_set(struct command *cmd) {
 static const struct command_opt_def cmd_set_opts[] = {
     { .type = CMD_PATH, .name = "path", .optional = false,
       .help = "set the value of this node" },
-    { .type = CMD_STR, .name = "value", .optional = false,
+    { .type = CMD_STR, .name = "value", .optional = true,
       .help = "the new value for the node" },
     CMD_OPT_DEF_LAST
 };
@@ -615,6 +618,9 @@ static void cmd_setm(struct command *cmd) {
     const char *sub  = arg_value(cmd, "sub");
     const char *val  = arg_value(cmd, "value");
 
+    if (val != NULL && strlen(val) == 0)
+        val = NULL;
+
     aug_setm(cmd->aug, base, sub, val);
 }
 
@@ -623,7 +629,7 @@ static const struct command_opt_def cmd_setm_opts[] = {
       .help = "the base node" },
     { .type = CMD_PATH, .name = "sub", .optional = false,
       .help = "the subtree relative to the base" },
-    { .type = CMD_STR, .name = "value", .optional = false,
+    { .type = CMD_STR, .name = "value", .optional = true,
       .help = "the value for the nodes" },
     CMD_OPT_DEF_LAST
 };
@@ -795,6 +801,34 @@ static const struct command_def cmd_clear_def = {
     .help = "Set the value for PATH to NULL. If PATH is not in the tree yet, "
     "it and\n all its ancestors will be created.  These new tree entries "
     "will appear\n last amongst their siblings"
+};
+
+static void cmd_touch(struct command *cmd) {
+    const char *path = arg_value(cmd, "path");
+    int r;
+
+    r = aug_match(cmd->aug, path, NULL);
+    if (r == 0) {
+        r = aug_set(cmd->aug, path, NULL);
+        if (r < 0)
+            ERR_REPORT(cmd, AUG_ECMDRUN, "Touching %s failed", path);
+    }
+}
+
+static const struct command_opt_def cmd_touch_opts[] = {
+    { .type = CMD_PATH, .name = "path", .optional = false,
+      .help = "touch this node" },
+    CMD_OPT_DEF_LAST
+};
+
+static const struct command_def cmd_touch_def = {
+    .name = "touch",
+    .opts = cmd_touch_opts,
+    .handler = cmd_touch,
+    .synopsis = "create a new node",
+    .help = "Create PATH with the value NULL if it is not in the tree yet.  "
+    "All its\n ancestors will also be created.  These new tree entries will "
+    "appear\n last amongst their siblings."
 };
 
 static void cmd_get(struct command *cmd) {
@@ -1008,6 +1042,7 @@ static const struct command_def const *commands[] = {
     &cmd_setm_def,
     &cmd_clearm_def,
     &cmd_span_def,
+    &cmd_touch_def,
     &cmd_help_def,
     &cmd_def_last
 };
