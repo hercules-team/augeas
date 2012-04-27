@@ -54,6 +54,10 @@ enum aug_flags {
                                      encountering error during aug_init */
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Function: aug_init
  *
  * Initialize the library.
@@ -381,6 +385,12 @@ const char *aug_error_minor_message(augeas *aug);
  * occurred. The returned value can only be used until the next API call
  */
 const char *aug_error_details(augeas *aug);
+
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 
 
