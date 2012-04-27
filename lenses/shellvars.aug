@@ -124,12 +124,13 @@ module Shellvars =
     let case_entry = [ label "@case_entry"
                        . Util.indent . store /[^ \t\n\)]+/
                        . Util.del_str ")" . eol
-                       . entry+
+                       . entry*
                        . Util.indent . Util.del_str ";;" . eol ] in
       [ keyword_label "case" "@case" . Sep.space
         . store char+
         . del /[ \t\n]+/ " " . Util.del_str "in" . eol
-        . case_entry+
+        . ((empty|comment)* . case_entry)*
+        . (empty|comment)*
         . keyword "esac" . comment_or_eol ]
 
   let function (entry:lens) =
