@@ -105,6 +105,7 @@ View: lns
 let lns = IniFile.lns record comment
 
 (* Variable: filter *)
-let filter = (incl "/etc/puppet/fileserver.conf")
+let filter = (incl "/etc/puppet/fileserver.conf"
+             .incl "/usr/local/etc/puppet/fileserver.conf")
 
 let xfm = transform lns filter
