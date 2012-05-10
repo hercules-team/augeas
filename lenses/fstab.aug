@@ -18,7 +18,7 @@ module Fstab =
   let spec    = /[^,# \n\t][^ \n\t]*/
 
   let comma_sep_list (l:string) =
-    let value = [ label "value" . Util.del_str "=" . store Rx.neg1 ] in
+    let value = [ label "value" . Util.del_str "=" . ( store Rx.neg1 )? ] in
       let lns = [ label l . store optlabel . value? ] in
          Build.opt_list lns comma
 

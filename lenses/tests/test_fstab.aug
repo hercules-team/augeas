@@ -113,6 +113,20 @@ module Test_fstab =
     { "dump" = "0" }
     { "passno" = "0" } }
 
+  (* Parse when empty option value given, only equals sign *)
+  test Fstab.lns get "//host.example.org/a_share /mnt cifs defaults,ro,password= 0 0\n" =
+  { "1"
+    { "spec" = "//host.example.org/a_share" }
+    { "file" = "/mnt" }
+    { "vfstype" = "cifs" }
+    { "opt" = "defaults" }
+    { "opt" = "ro" }
+    { "opt" = "password"
+      { "value" }
+    }
+    { "dump" = "0" }
+    { "passno" = "0" }
+  }
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
