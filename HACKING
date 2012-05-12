@@ -48,8 +48,9 @@ of the ones that might be installed on your system)
 The script can be used for the following; OPTS are options that are passed
 to augtool verbatim
 
-  ./src/try OPTS     - run the commands from /tmp/augcmds.txt
+  ./src/try OPTS     - run the commands from build/augcmds.txt
   ./src/try cli OPTS - start an interactive session with augtool
-  ./src/try gdb      - start gdb and set it up for debugging augtool
-  ./src/try valgrind - run the commands from /tmp/augcmds.txt through augtool
+  ./src/try gdb      - start gdb and set it up from build/gdbcmds.txt for
+                       debugging augtool with commands in build/augcmds.txt
+  ./src/try valgrind - run the commands from build/augcmds.txt through augtool
                        under valgrind to check for memory leaks
