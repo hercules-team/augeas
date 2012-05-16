@@ -236,9 +236,11 @@ test set-bad-pathx -1 EPATHX
 test set-multiple -1 EMMATCH
   set /augeas/version/save/mode value
 
-test set-args -1 ECMDRUN
+test set-args 2
   set /files
-
+  get /files
+prints
+  /files (none)
 #
 # test clear
 #

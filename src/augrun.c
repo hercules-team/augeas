@@ -587,9 +587,6 @@ static void cmd_set(struct command *cmd) {
     const char *val = arg_value(cmd, "value");
     int r;
 
-    if (val != NULL && strlen(val) == 0)
-        val = NULL;
-
     r = aug_set(cmd->aug, path, val);
     if (r < 0)
         ERR_REPORT(cmd, AUG_ECMDRUN, "Setting %s failed", path);
@@ -617,9 +614,6 @@ static void cmd_setm(struct command *cmd) {
     const char *base = arg_value(cmd, "base");
     const char *sub  = arg_value(cmd, "sub");
     const char *val  = arg_value(cmd, "value");
-
-    if (val != NULL && strlen(val) == 0)
-        val = NULL;
 
     aug_setm(cmd->aug, base, sub, val);
 }
@@ -750,8 +744,7 @@ static void cmd_defnode(struct command *cmd) {
     const char *path = arg_value(cmd, "expr");
     const char *value = arg_value(cmd, "value");
 
-    /* Our simple minded line parser treats non-existant and empty values
-     * the same. We choose to take the empty string to mean NULL */
+    /* Make 'defnode foo ""' mean the same as 'defnode foo' */
     if (value != NULL && strlen(value) == 0)
         value = NULL;
     aug_defnode(cmd->aug, name, path, value, NULL);
