@@ -488,7 +488,6 @@ static int load_file(struct augeas *aug, struct lens *lens,
                      const char *lens_name, char *filename) {
     char *text = NULL;
     const char *err_status = NULL;
-    struct aug_file *file = NULL;
     struct tree *tree = NULL;
     char *path = NULL;
     struct lns_error *err = NULL;
@@ -551,7 +550,6 @@ static int load_file(struct augeas *aug, struct lens *lens,
     free_lns_error(err);
     free(path);
     free_tree(tree);
-    free(file);
     free(text);
     return result;
 }
