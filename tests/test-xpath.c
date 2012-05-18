@@ -30,6 +30,8 @@
 #include <internal.h>
 #include <memory.h>
 
+#include "cutest.h"
+
 static const char *abs_top_srcdir;
 static char *root;
 
@@ -336,11 +338,7 @@ static int run_tests(struct test *tests, int argc, char **argv) {
         die("aug_defvar $php");
 
     list_for_each(t, tests) {
-        int skip = (argc > 0);
-        for (int i=0; i < argc; i++)
-            if (STREQ(argv[i], t->name))
-                skip = 0;
-        if (skip)
+        if (! should_run(t->name, argc, argv))
             continue;
         if (run_one_test(aug, t) < 0)
             result = EXIT_FAILURE;

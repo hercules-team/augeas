@@ -222,17 +222,19 @@ static int run_one_test(struct test *test) {
     goto done;
 }
 
-static int run_tests(struct test *tests) {
+static int run_tests(struct test *tests, int argc, char **argv) {
     int result = EXIT_SUCCESS;
 
     list_for_each(t, tests) {
+        if (! should_run(t->name, argc, argv))
+            continue;
         if (run_one_test(t) < 0)
             result = EXIT_FAILURE;
     }
     return result;
 }
 
-int main(void) {
+int main(int argc, char **argv) {
     struct test *tests;
 
     abs_top_srcdir = getenv("abs_top_srcdir");
@@ -240,7 +242,7 @@ int main(void) {
         die("env var abs_top_srcdir must be set");
 
     tests = read_tests();
-    return run_tests(tests);
+    return run_tests(tests, argc - 1, argv + 1);
 }
 
 /*

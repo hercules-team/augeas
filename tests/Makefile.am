@@ -209,7 +209,7 @@ INCLUDES = -I$(top_srcdir)/src
 fatest_SOURCES = fatest.c cutest.c cutest.h $(top_srcdir)/src/memory.c $(top_srcdir)/src/memory.h
 fatest_LDADD = $(top_builddir)/src/libfa.la $(LIBXML_LIBS) $(GNULIB)
 
-test_xpath_SOURCES = test-xpath.c $(top_srcdir)/src/memory.c
+test_xpath_SOURCES = test-xpath.c cutest.c cutest.h $(top_srcdir)/src/memory.c
 test_xpath_LDADD = $(top_builddir)/src/libaugeas.la $(LIBXML_LIBS) $(GNULIB)
 
 test_load_SOURCES = test-load.c cutest.c cutest.h $(top_srcdir)/src/memory.c $(top_srcdir)/src/memory.h
