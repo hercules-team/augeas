@@ -305,6 +305,31 @@ int aug_save(augeas *aug);
  */
 int aug_load(augeas *aug);
 
+/* Function: aug_text_store
+ *
+ * Use the value of node NODE as a string and transform it into a tree
+ * using the lens LENS and store it in the tree at PATH, which will be
+ * overwritten. PATH and NODE are path expressions.
+ *
+ * Returns:
+ * 0 on success, or a negative value on failure
+ */
+int aug_text_store(augeas *aug, const char *lens, const char *node,
+                   const char *path);
+
+/* Function: aug_text_retrieve
+ *
+ * Transform the tree at PATH into a string using lens LENS and store it in
+ * the node NODE_OUT, assuming the tree was initially generated using the
+ * value of node NODE_IN. PATH, NODE_IN, and NODE_OUT are path expressions.
+ *
+ * Returns:
+ * 0 on success, or a negative value on failure
+ */
+int aug_text_retrieve(struct augeas *aug, const char *lens,
+                      const char *node_in, const char *path,
+                      const char *node_out);
+
 /* Function: aug_print
  *
  * Print each node matching PATH and its descendants to OUT.

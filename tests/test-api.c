@@ -455,6 +455,38 @@ static void testToXml(CuTest *tc) {
     aug_close(aug);
 }
 
+static void testTextStore(CuTest *tc) {
+    static const char *const hosts = "192.168.0.1 rtr.example.com router\n";
+    /* Not acceptable for Hosts.lns - missing \n */
+    static const char *const hosts_bad = "192.168.0.1";
+
+    struct augeas *aug;
+    int r;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+
+    r = aug_text_store(aug, "Hosts.lns", "/text/t1", hosts, strlen(hosts));
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_match(aug, "/text/t1/*", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    // FIXME: Test bad lens name
+    // FIXME: Test parse error
+    r = aug_text_store(aug, "Hosts.lns", "text/t3", hosts_bad,
+                       strlen(hosts_bad));
+    CuAssertIntEquals(tc, -1, r);
+    r = aug_match(aug, "/text/t3", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    aug_print(aug, stdout, "/augeas//error");
+    r = aug_match(aug, "/augeas/text/text/t3/error", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    // FIXME: Test invalid PATH
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -469,6 +501,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testNodeInfo);
     SUITE_ADD_TEST(suite, testMv);
     SUITE_ADD_TEST(suite, testToXml);
+    SUITE_ADD_TEST(suite, testTextStore);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)

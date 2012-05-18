@@ -1635,6 +1635,67 @@ static int tree_to_xml(struct pathx *p, xmlNode **xml, const char *pathin) {
     return -1;
 }
 
+int aug_text_store(augeas *aug, const char *lens, const char *node,
+                   const char *path) {
+
+    struct pathx *p;
+    const char *src;
+    int result = -1, r;
+
+    api_entry(aug);
+
+    /* Validate PATH is syntactically correct */
+    p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), path, true);
+    ERR_BAIL(aug);
+    free_pathx(p);
+
+    r = aug_get(aug, node, &src);
+    ERR_BAIL(aug);
+    ERR_THROW(r == 0, aug, AUG_ENOMATCH,
+              "Source node %s has a NULL value", node);
+
+    result = text_store(aug, lens, path, src);
+ error:
+    api_exit(aug);
+    return result;
+}
+
+int aug_text_retrieve(struct augeas *aug, const char *lens,
+                      const char *node_in, const char *path,
+                      const char *node_out) {
+    struct tree *tree = NULL;
+    const char *src;
+    char *out = NULL;
+    struct tree *tree_out;
+    int r;
+
+    api_entry(aug);
+
+    tree = tree_find(aug, path);
+    ERR_BAIL(aug);
+
+    r = aug_get(aug, node_in, &src);
+    ERR_BAIL(aug);
+    ERR_THROW(r == 0, aug, AUG_ENOMATCH,
+              "Source node %s has a NULL value", node_in);
+
+    r = text_retrieve(aug, lens, path, tree, src, &out);
+    if (r < 0)
+        goto error;
+
+    tree_out = tree_find_cr(aug, node_out);
+    ERR_BAIL(aug);
+
+    tree_store_value(tree_out, &out);
+
+    api_exit(aug);
+    return 0;
+ error:
+    free(out);
+    api_exit(aug);
+    return -1;
+}
+
 int aug_to_xml(const struct augeas *aug, const char *pathin,
                xmlNode **xmldoc, unsigned int flags) {
     struct pathx *p;
