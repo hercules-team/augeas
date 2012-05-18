@@ -65,6 +65,10 @@
  * Information about files */
 #define AUGEAS_META_FILES AUGEAS_META_TREE AUGEAS_FILES_TREE
 
+/* Define: AUGEAS_META_TEXT
+ * Information about text (see aug_text_store and aug_text_retrieve) */
+#define AUGEAS_META_TEXT AUGEAS_META_TREE "/text"
+
 /* Define: AUGEAS_META_ROOT
  * The root directory */
 #define AUGEAS_META_ROOT AUGEAS_META_TREE "/root"

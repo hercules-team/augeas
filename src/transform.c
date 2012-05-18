@@ -325,8 +325,9 @@ static void err_set(struct augeas *aug,
 }
 
 /* Record an error in the tree. The error will show up underneath
- * /augeas/FILENAME/error. PATH is the path to the toplevel node in the
- * tree where the lens application happened. When STATUS is NULL, just
+ * /augeas/FILENAME/error if filename is not NULL, and underneath
+ * /augeas/text/PATH otherwise. PATH is the path to the toplevel node in
+ * the tree where the lens application happened. When STATUS is NULL, just
  * clear any error associated with FILENAME in the tree.
  */
 static int store_error(struct augeas *aug,
@@ -338,7 +339,11 @@ static int store_error(struct augeas *aug,
     int r;
     int result = -1;
 
-    r = pathjoin(&fip, 2, AUGEAS_META_FILES, filename);
+    if (filename != NULL) {
+        r = pathjoin(&fip, 2, AUGEAS_META_FILES, filename);
+    } else {
+        r = pathjoin(&fip, 2, AUGEAS_META_TEXT, path);
+    }
     ERR_NOMEM(r < 0, aug);
 
     finfo = tree_find_cr(aug, fip);
@@ -580,6 +585,54 @@ static struct lens *lens_from_name(struct augeas *aug, const char *name) {
     return result;
  error:
     return NULL;
+}
+
+int text_store(struct augeas *aug, const char *lens_path,
+               const char *path, const char *text) {
+    struct info *info = NULL;
+    struct lns_error *err = NULL;
+    struct tree *tree = NULL;
+    struct span *span = NULL;
+    int result = -1;
+    const char *err_status = NULL;
+    struct lens *lens = NULL;
+
+    lens = lens_from_name(aug, lens_path);
+    if (lens == NULL) {
+        goto done;
+    }
+
+    make_ref(info);
+    info->first_line = 1;
+    info->last_line = 1;
+    info->first_column = 1;
+    info->last_column = strlen(text);
+
+    tree = lns_get(info, lens, text, &err);
+    if (err != NULL) {
+        err_status = "parse_failed";
+        goto done;
+    }
+
+    unref(info, info);
+
+    tree_replace(aug, path, tree);
+
+    /* top level node span entire file length */
+    if (span != NULL && tree != NULL) {
+        tree->parent->span = span;
+        tree->parent->span->span_start = 0;
+        tree->parent->span->span_end = strlen(text);
+    }
+
+    tree = NULL;
+
+    result = 0;
+done:
+    store_error(aug, NULL, path, err_status, errno, err, text);
+    free_tree(tree);
+    free_lns_error(err);
+    return result;
 }
 
 const char *xfm_lens_name(struct tree *xfm) {
