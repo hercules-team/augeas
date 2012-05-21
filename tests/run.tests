@@ -5,6 +5,7 @@
 #
 # The syntax for a test specification is
 #   test NAME RESULT ERRCODE
+#   [use MODULE]
 #     COMMANDS
 #   prints
 #     OUTPUT
@@ -16,6 +17,7 @@
 #   ERRCODE  - one of the error codes defined in enum errcode_t in augeas.h
 #              without the AUG_ prefix, i.e. NOERROR, EMMATCH etc. If ERRCODE
 #              is ommitted, it defaults to NOERROR
+#   MODULE   - the name of a module that should be loaded before the test
 #   COMMANDS - the commands to hand to aug_srun; can be multiple lines,
 #              which are passed as one string.
 #   OUTPUT   - the string that aug_srun should print on the OUT file stream

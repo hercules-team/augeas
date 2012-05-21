@@ -35,10 +35,12 @@
 #include <unistd.h>
 
 static const char *abs_top_srcdir;
+static char *lensdir;
 
 #define KW_TEST "test"
 #define KW_PRINTS "prints"
 #define KW_SOMETHING "something"
+#define KW_USE "use"
 
 /* This array needs to be kept in sync with aug_errcode_t, and
  * the entries need to be in the same order as in that enum; used
@@ -53,6 +55,7 @@ static const char *const errtokens[] = {
 struct test {
     struct test *next;
     char *name;
+    char *module;
     int  result;
     int  errcode;
     char *cmd;
@@ -149,6 +152,10 @@ static struct test *read_tests(void) {
             s = skipws(s + strlen(KW_PRINTS));
             t->out_present = looking_at(s, KW_SOMETHING);
             append_cmd = false;
+        } else if (looking_at(s, KW_USE)) {
+            if (t->module !=NULL)
+                die("Can use at most one module in a test");
+            s = token(s + strlen(KW_USE), &(t->module));
         } else {
             char **buf = append_cmd ? &(t->cmd) : &(t->out);
             if (*buf == NULL) {
@@ -175,18 +182,44 @@ static struct test *read_tests(void) {
         goto error;                             \
     }
 
+static int load_module(struct augeas *aug, struct test *test) {
+    char *fname;
+    int r;
+
+    if (test->module == NULL)
+        return 0;
+
+    if (asprintf(&fname, "%s/%s.aug", lensdir, test->module) == -1)
+        fail(true, "asprintf test->module");
+    for (int i=0; i < strlen(fname); i++)
+        fname[i] = tolower(fname[i]);
+
+    r = __aug_load_module_file(aug, fname);
+    fail(r < 0, "Could not load %s", fname);
+
+    return 0;
+ error:
+    return -1;
+}
+
 static int run_one_test(struct test *test) {
     int r;
     struct augeas *aug = NULL;
     struct memstream ms;
     int result = 0;
 
-    aug = aug_init("/dev/null", NULL, AUG_NO_STDINC|AUG_NO_LOAD);
+    MEMZERO(&ms, 1);
+
+    aug = aug_init("/dev/null", lensdir, AUG_NO_STDINC|AUG_NO_MODL_AUTOLOAD);
     fail(aug == NULL, "aug_init");
     fail(aug_error(aug) != AUG_NOERROR, "aug_init: errcode was %d",
          aug_error(aug));
 
     printf("%-30s ... ", test->name);
+
+    r = load_module(aug, test);
+    if (r < 0)
+        goto error;
 
     r = init_memstream(&ms);
     fail(r < 0, "init_memstream");
@@ -240,6 +273,9 @@ int main(int argc, char **argv) {
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)
         die("env var abs_top_srcdir must be set");
+
+    if (asprintf(&lensdir, "%s/lenses", abs_top_srcdir) < 0)
+        die("out of memory setting lensdir");
 
     tests = read_tests();
     return run_tests(tests, argc - 1, argv + 1);
