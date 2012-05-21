@@ -47,7 +47,7 @@ static const char *abs_top_srcdir;
 static const char *const errtokens[] = {
     "NOERROR", "ENOMEM", "EINTERNAL", "EPATHX", "ENOMATCH",
     "EMMATCH", "ESYNTAX", "ENOLENS", "EMXFM", "ENOSPAN",
-    "EMVDESC", "ECMDRUN"
+    "EMVDESC", "ECMDRUN", "EBADARG"
 };
 
 struct test {
