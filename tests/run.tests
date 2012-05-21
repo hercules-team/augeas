@@ -413,13 +413,13 @@ test quot_sqsq 2
   set /test ''
   get /test
 prints
-  /test = 
+  /test = :
 
 test quot_sqsq_sq 2
   set /test ''''
   get /test
 prints
-  /test = 
+  /test = :
 
 test quot_sqsq_dq 2
   set /test "''"
@@ -443,13 +443,13 @@ test quot_sqsqsqsq 2
   set /test ''''
   get /test
 prints
-  /test = 
+  /test = :
 
 test quot_sqsqsqsq_sq 2
   set /test ''''''
   get /test
 prints
-  /test = 
+  /test = :
 
 test quot_sqsqsqsq_dq 2
   set /test "''''"
@@ -473,7 +473,7 @@ test quot_dqdq 2
   set /test ""
   get /test
 prints
-  /test = 
+  /test = :
 
 test quot_dqdq_sq 2
   set /test '""'
@@ -485,7 +485,7 @@ test quot_dqdq_dq 2
   set /test """"
   get /test
 prints
-  /test = 
+  /test = :
 
 test quot_dqdqdq -1 ECMDRUN
   set /test """
@@ -503,7 +503,7 @@ test quot_dqdqdqdq 2
   set /test """"
   get /test
 prints
-  /test = 
+  /test = :
 
 test quot_dqdqdqdq_sq 2
   set /test '""""'
@@ -515,7 +515,7 @@ test quot_dqdqdqdq_dq 2
   set /test """"""
   get /test
 prints
-  /test = 
+  /test = :
 
 test quot_truncated_dq 2
   set /test "s"bc"d"ef
