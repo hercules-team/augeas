@@ -33,7 +33,8 @@
 # OUT stream.
 #
 # The test is run against a tree initialized with AUG_NO_STDINC|AUG_NO_LOAD
-# and file system root /dev/null
+# and file system root /dev/null. The Hosts module is loaded
+
 
 #
 # Various corner cases
@@ -614,3 +615,95 @@ test quot_mix_sq -1 ECMDRUN
 
 test quot_mix_dq -1 ECMDRUN
   set /test "a"b'c"d'e"
+
+#
+# Tests for aug_text_store
+#
+test store_hosts 3
+ use Hosts
+  set /text/in/t1 "192.168.0.1 rtr.example.com foo\n"
+  store Hosts.lns /text/in/t1 /text/tree/t1
+  print /text/tree/t1
+prints
+  /text/tree/t1
+  /text/tree/t1/1
+  /text/tree/t1/1/ipaddr = "192.168.0.1"
+  /text/tree/t1/1/canonical = "rtr.example.com"
+  /text/tree/t1/1/alias = "foo"
+
+test store_nolens -1 ENOLENS
+  set /text/in/t1 "192.168.0.1 rtr.example.com foo\n"
+  store Nomodule.lns /text/in/t1 /text/tree/t1
+
+test store_epathx_node -1 EPATHX
+ use Hosts
+  store Hosts.lns [garbage] /text/tree/t1
+
+test store_epathx_path -1 EPATHX
+ use Hosts
+  store Hosts.lns /text/in/t1 [garbage]
+
+test store_null_text -1 ENOMATCH
+ use Hosts
+  store Hosts.lns /text/in/t1 /text/tree/t1
+
+test store_esyntax 3
+ use Hosts
+  set /text/in/t1 "not a hosts file entry"
+  store Hosts.lns /text/in/t1 /text/tree/t1
+  match /augeas/text/text/tree/t1/error
+prints
+  /augeas/text/text/tree/t1/error = parse_failed
+
+#
+# Tests for aug_text_retrieve
+#
+test retrieve_hosts 5
+ use Hosts
+  set /text/in/t1 "192.168.0.1 rtr.example.com foo\n"
+  store Hosts.lns /text/in/t1 /text/tree/t1
+  set /text/tree/t1/1/alias[1] bar
+  retrieve Hosts.lns /text/in/t1 /text/tree/t1 /text/out/t1
+  print /text/out/t1
+prints
+  /text/out/t1 = "192.168.0.1 rtr.example.com bar\n"
+
+test retrieve_nolens -1 ENOLENS
+  set /text/in/t1 "192.168.0.1 rtr.example.com foo\n"
+  store Hosts.lns /text/in/t1 /text/tree/t1
+  retrieve Nomodule.lns /text/in/t1 /text/tree/t1 /text/out/t1
+
+test retrieve_epathx_node_in -1 EPATHX
+ use Hosts
+  retrieve Hosts.lns [garbage] /text/tree/t1 /text/out/t1
+
+test retrieve_epathx_path -1 EPATHX
+ use Hosts
+  retrieve Hosts.lns /text/in/t1 [garbage] /text/out/t1
+
+test retrieve_epathx_node_out -1 EPATHX
+ use Hosts
+  set /text/in/t1 "192.168.0.1 rtr.example.com foo\n"
+  retrieve Hosts.lns /text/in/t1 /text/tree/t1 [garbage]
+
+test retrieve_no_node_in -1 ENOMATCH
+ use Hosts
+  retrieve Hosts.lns /text/in/t1 /text/tree/t1 /text/out/t1
+
+test retrieve_no_tree 3
+ use Hosts
+  set /text/in/t1 "192.168.0.1 rtr.example.com foo\n"
+  retrieve Hosts.lns /text/in/t1 /text/tree/t1 /text/out/t1
+  print /text/out/t1
+prints
+  /text/out/t1 = ""
+
+test retrieve_esyntax 5
+ use Hosts
+  set /text/in/t1 "192.168.0.1 rtr.example.com foo\n"
+  store Hosts.lns /text/in/t1 /text/tree/t1
+  set /text/in/t1 "not a hosts file entry"
+  retrieve Hosts.lns /text/in/t1 /text/tree/t1 /text/out/t1
+  match /augeas//error
+prints
+  /augeas/text/text/tree/t1/error = parse_skel_failed
