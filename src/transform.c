@@ -1150,6 +1150,72 @@ int transform_save(struct augeas *aug, struct tree *xfm,
     return result;
 }
 
+int text_retrieve(struct augeas *aug, const char *lens_name,
+                  const char *path, struct tree *tree,
+                  const char *text_in, char **text_out) {
+    struct memstream ms;
+    bool ms_open;
+    const char *err_status = NULL;
+    char *dyn_err_status = NULL;
+    struct lns_error *err = NULL;
+    struct lens *lens = NULL;
+    int result = -1, r;
+
+    MEMZERO(&ms, 1);
+    errno = 0;
+
+    lens = lens_from_name(aug, lens_name);
+    if (lens == NULL) {
+        err_status = "lens_name";
+        goto done;
+    }
+
+    r = init_memstream(&ms);
+    if (r < 0) {
+        err_status = "init_memstream";
+        goto done;
+    }
+    ms_open = true;
+
+    if (tree != NULL)
+        lns_put(ms.stream, lens, tree->children, text_in, &err);
+
+    r = close_memstream(&ms);
+    ms_open = false;
+    if (r < 0) {
+        err_status = "close_memstream";
+        goto done;
+    }
+
+    *text_out = ms.buf;
+    ms.buf = NULL;
+
+    if (err != NULL) {
+        err_status = err->pos >= 0 ? "parse_skel_failed" : "put_failed";
+        goto done;
+    }
+
+    result = 0;
+
+ done:
+    {
+        const char *emsg =
+            dyn_err_status == NULL ? err_status : dyn_err_status;
+        store_error(aug, NULL, path, emsg, errno, err, text_in);
+    }
+    free(dyn_err_status);
+    lens_release(lens);
+    if (result < 0) {
+        free(*text_out);
+        *text_out = NULL;
+    }
+    free_lns_error(err);
+
+    if (ms_open)
+        close_memstream(&ms);
+    return result;
+}
+
 int remove_file(struct augeas *aug, struct tree *tree) {
     char *path = NULL;
     const char *filename = NULL;
