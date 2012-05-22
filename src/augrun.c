@@ -709,7 +709,7 @@ static const struct command_def cmd_span_def = {
     .name = "span",
     .opts = cmd_span_opts,
     .handler = cmd_span,
-    .synopsis = "Print information get the filename, label and value position in the text of this node",
+    .synopsis = "print position in input file corresponding to tree",
     .help = "Print the name of the file from which the node PATH was generated, as\n well as information about the positions in the file  corresponding to\n the label, the value, and the  entire  node. PATH must match  exactly\n one node.\n\n You need to run 'set /augeas/span enable' prior to  loading files to\n enable recording of span information. It is disabled by default."
 };
 
