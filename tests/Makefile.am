@@ -121,6 +121,7 @@ lens_tests =			\
   lens-simplelines.sh	\
   lens-simplevars.sh	\
   lens-slapd.sh			\
+  lens-smbusers.sh			\
   lens-solaris_system.sh		\
   lens-soma.sh			\
   lens-spacevars.sh		\
