@@ -36,6 +36,7 @@ lens_tests =			\
   lens-cobblermodules.sh	\
   lens-cron.sh			\
   lens-crypttab.sh		\
+  lens-cups.sh		\
   lens-darkice.sh		\
   lens-debctrl.sh		\
   lens-desktop.sh	\
