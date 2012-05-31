@@ -8,11 +8,14 @@ module Test_Simplevars =
 (* Variable: conf *)
 let conf = "# this is a comment
 
-mykey = myvalue
+mykey = myvalue # eol comment
+anotherkey = another value
 "
 
 (* Test: Simplevars.lns *)
 test Simplevars.lns get conf =
    { "#comment" = "this is a comment" }
    { }
-   { "mykey" = "myvalue" }
+   { "mykey" = "myvalue"
+     { "#comment" = "eol comment" } }
+   { "anotherkey" = "another value" }
