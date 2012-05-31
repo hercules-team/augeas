@@ -21,6 +21,7 @@ service cvspserver
         server_args             = -f --allow-root=/var/cvs pserver
 #       bind                    = 127.0.0.1
         log_on_failure         += HOST
+        FLAGS                   = IPv6 IPv4
 }
 "
 
@@ -60,7 +61,10 @@ test Xinetd.lns get cvs =
           { "value" = "--allow-root=/var/cvs" }
           { "value" = "pserver" } }
       { "#comment" = "bind                    = 127.0.0.1" }
-      { "log_on_failure" { "add" } { "value" = "HOST" } } }
+      { "log_on_failure" { "add" } { "value" = "HOST" } }
+      { "FLAGS"
+          { "value" = "IPv6" }
+          { "value" = "IPv4" } } }
 
 (* Switch the '+=' to a simple '=' *)
 test Xinetd.lns put lst_add after rm "/service/log_on_failure/add" =
