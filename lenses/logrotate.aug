@@ -47,12 +47,19 @@ module Logrotate =
      [ key "create" .
          ( mode | mode . owner | mode . owner . group )? ]
 
+   let su =
+     let owner = sep_spc . [ label "owner" . store word ] in
+     let group = sep_spc . [ label "group" . store word ] in
+     [ key "create" .
+         ( owner | owner . group )? ]
+
    let tabooext = [ key "tabooext" . ( sep_spc . store /\+/ )? . list_item+ ]
 
    let attrs = select_to_eol "schedule" /(daily|weekly|monthly|yearly)/
                 | value_to_eol "rotate" num
 		| create
 		| flag_to_eol "nocreate"
+		| su
 		| value_to_eol "include" word
 		| select_to_eol "missingok" /(no)?missingok/
 		| select_to_eol "compress" /(no)?compress/
