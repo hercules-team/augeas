@@ -58,7 +58,7 @@ let alias =
 (* View: options *)
 let options =
   let opt_value = /[^#" \t\n\\\\]+|"[^#"\n\\\\]*"/ in
-  let option = [ key Rx.word . (Util.del_str "=" . store opt_value)? ] in
+  let option = [ key Rx.word . (del /[ \t]*=[ \t]*/ "=" . store opt_value)? ] in
   [ key "options" . sep_space . sto_no_spaces
                   . (sep_space . option)* . Util.comment_or_eol ]
 

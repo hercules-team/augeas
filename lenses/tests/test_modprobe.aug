@@ -124,3 +124,8 @@ test Modprobe.entry get options_space_quote =
     { "attr1" = "\"val\"" }
     { "attr2" = "\"val2 val3\"" }
   }
+
+(* Allow spaces around the '=', BZ 826752 *)
+test Modprobe.entry get "options ipv6 disable = 1\n" =
+  { "options" = "ipv6"
+    { "disable" = "1" } }
