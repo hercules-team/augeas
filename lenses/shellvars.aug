@@ -168,6 +168,7 @@ module Shellvars =
       sc_excl "sysstat.ioconf" .
       sc_excl "system-config-firewall" .
       sc_excl "system-config-securitylevel" .
+      sc_excl "network" .
       sc_incl "network/config" .
       sc_incl "network/dhcp" .
       sc_incl "network/dhcp6r" .
@@ -177,15 +178,18 @@ module Shellvars =
       sc_incl "network/ifroute-*" .
       sc_incl "network/if-up.d/*" .
       sc_incl "network/providers/*" .
+      sc_excl "network-scripts" .
+      sc_incl "network-scripts/ifcfg-*" .
+      sc_excl "rhn" .
       sc_incl "rhn/allowed-actions/*" .
+      sc_excl "rhn/allowed-actions/script" .
       sc_incl "rhn/allowed-actions/script/*" .
       sc_incl "rhn/rhnsd" .
+      sc_excl "SuSEfirewall2.d" .
       sc_incl "SuSEfirewall2.d/cobbler" .
       sc_incl "SuSEfirewall2.d/services/*" .
       sc_excl "SuSEfirewall2.d/services/TEMPLATE"
 
-  let filter_ifcfg   = incl "/etc/sysconfig/network-scripts/ifcfg-*"
-                     . incl "/etc/sysconfig/network/ifcfg-*"
   let filter_default = incl "/etc/default/*"
                      . excl "/etc/default/whoopsie"
   let filter_misc    = incl "/etc/arno-iptables-firewall/debconf.cfg"
@@ -206,7 +210,6 @@ module Shellvars =
                      . incl "/etc/ucf.conf"
 
   let filter = filter_sysconfig
-             . filter_ifcfg
              . filter_default
              . filter_misc
              . Util.stdexcl
