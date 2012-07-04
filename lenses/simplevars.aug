@@ -23,7 +23,7 @@ autoload xfm
 let to_comment_re =
      let to_comment_squote = /'[^\n']*'/
   in let to_comment_dquote = /"[^\n"]*"/
-  in let to_comment_noquote = /[^\n \t'"#][^\n'"#]*[^\n \t'"#]|[^\n \t'"#]/
+  in let to_comment_noquote = /[^\n \t'"#][^\n#]*[^\n \t#]|[^\n \t'"#]/
   in to_comment_squote | to_comment_dquote | to_comment_noquote
 
 (* View: entry *)
