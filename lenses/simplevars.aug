@@ -38,5 +38,6 @@ let filter = incl "/etc/kernel-img.conf"
            . incl "/etc/kerneloops.conf"
            . incl "/etc/updatedb.conf"
            . incl "/etc/wgetrc"
+           . incl "/etc/zabbix/*.conf"
 
 let xfm = transform lns filter
