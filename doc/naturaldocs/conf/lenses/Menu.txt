@@ -58,6 +58,7 @@ Group: Specific Modules  {
    File: Anacron  (anacron.aug)
    File: Approx (approx.aug)
    File: AptConf  (aptconf.aug)
+   File: Authorized_Keys  (authorized_keys.aug)
    File: BackupPCHosts  (backuppchosts.aug)
    File: Cgconfig  (no auto-title, cgconfig.aug)
    File: Cgrules  (no auto-title, cgrules.aug)

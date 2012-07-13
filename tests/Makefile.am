@@ -24,6 +24,7 @@ lens_tests =			\
   lens-aptpreferences.sh	\
   lens-aptconf.sh	\
   lens-aptsource.sh		\
+  lens-authorized_keys.sh	\
   lens-automaster.sh	\
   lens-automounter.sh	\
   lens-backuppchosts.sh		\
