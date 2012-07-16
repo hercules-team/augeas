@@ -34,6 +34,13 @@ module Test_fstab =
         { "vfstype" = "ext3" }
         { "opt" = "defaults" } }
 
+  let no_opts = "/dev/vg00/lv00\t /\t ext3\n"
+
+  let no_opts_tree =
+    { "1"
+        { "spec" = "/dev/vg00/lv00" }
+        { "file" = "/" }
+        { "vfstype" = "ext3" } }
 
   let multi_opts = "devpts\t /dev/pts\t devpts  gid=5,mode=620,fscontext=system_u:object_r:removable_t  0 0\n"
 
@@ -60,6 +67,8 @@ module Test_fstab =
   test Fstab.lns put no_passno after set "/1/passno" "1" = gen_no_passno " 1"
 
   test Fstab.lns get no_dump = no_dump_tree
+
+  test Fstab.lns get no_opts = no_opts_tree
 
   test Fstab.lns get multi_opts = multi_opts_tree
 

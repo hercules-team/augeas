@@ -25,10 +25,10 @@ module Fstab =
   let record = [ seq "mntent" .
                    [ label "spec" . store spec ] . sep_tab .
                    [ label "file" . store file ] . sep_tab .
-                   comma_sep_list "vfstype" . sep_tab .
-                   comma_sep_list "opt" .
-                   (sep_tab . [ label "dump" . store /[0-9]+/ ] .
-                    ( sep_spc . [ label "passno" . store /[0-9]+/ ])? )?
+                   comma_sep_list "vfstype" .
+                   (sep_tab . comma_sep_list "opt" .
+                    (sep_tab . [ label "dump" . store /[0-9]+/ ] .
+                     ( sep_spc . [ label "passno" . store /[0-9]+/ ])? )? )?
                  . eol ]
 
   let lns = ( empty | comment | record ) *
