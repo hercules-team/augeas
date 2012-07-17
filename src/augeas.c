@@ -1652,6 +1652,8 @@ int aug_text_store(augeas *aug, const char *lens, const char *node,
     r = aug_get(aug, node, &src);
     ERR_BAIL(aug);
     ERR_THROW(r == 0, aug, AUG_ENOMATCH,
+              "Source node %s does not exist", node);
+    ERR_THROW(src == NULL, aug, AUG_ENOMATCH,
               "Source node %s has a NULL value", node);
 
     result = text_store(aug, lens, path, src);
@@ -1677,6 +1679,8 @@ int aug_text_retrieve(struct augeas *aug, const char *lens,
     r = aug_get(aug, node_in, &src);
     ERR_BAIL(aug);
     ERR_THROW(r == 0, aug, AUG_ENOMATCH,
+              "Source node %s does not exist", node_in);
+    ERR_THROW(src == NULL, aug, AUG_ENOMATCH,
               "Source node %s has a NULL value", node_in);
 
     r = text_retrieve(aug, lens, path, tree, src, &out);

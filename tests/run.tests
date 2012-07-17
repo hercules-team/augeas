@@ -655,6 +655,12 @@ test store_esyntax 3
 prints
   /augeas/text/text/tree/t1/error = parse_failed
 
+# Bug #283; /text is actually NULL
+test store_null -1 ENOMATCH
+ use Hosts
+  set /text/1 "192.168.0.1 toto\n"
+  store Hosts.lns /text /hosts
+
 #
 # Tests for aug_text_retrieve
 #
@@ -707,3 +713,9 @@ test retrieve_esyntax 5
   match /augeas//error
 prints
   /augeas/text/text/tree/t1/error = parse_skel_failed
+
+# Bug #283; /text is actually NULL
+test retrieve_null -1 ENOMATCH
+ use Hosts
+  set /text/1 "192.168.0.1 toto\n"
+  retrieve Hosts.lns /text /hosts /out
