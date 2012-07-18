@@ -486,6 +486,13 @@ static struct value *pr_endline(struct info *info, struct value *s) {
     return make_unit(ref(info));
 }
 
+/* V_TREE -> V_TREE */
+static struct value *pr_tree(ATTRIBUTE_UNUSED struct info *info,
+                             struct value *t) {
+    print_tree_braces(stdout, 0, t->origin);
+    return ref(t);
+}
+
 /*
  * Lens inspection
  */
@@ -608,6 +615,7 @@ struct module *builtin_init(struct error *error) {
     DEFINE_NATIVE(modl, "print_string", 1, pr_string, T_STRING, T_UNIT);
     DEFINE_NATIVE(modl, "print_regexp", 1, pr_regexp, T_REGEXP, T_UNIT);
     DEFINE_NATIVE(modl, "print_endline", 1, pr_endline, T_STRING, T_UNIT);
+    DEFINE_NATIVE(modl, "print_tree", 1, pr_tree, T_TREE, T_TREE);
 
     /* Lens inspection */
     DEFINE_NATIVE(modl, "lens_ctype", 1, lns_ctype, T_LENS, T_REGEXP);

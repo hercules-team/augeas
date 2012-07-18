@@ -653,7 +653,7 @@ static void dump_ctx(struct ctx *ctx) {
 /*
  * Values
  */
-static void print_tree(FILE *out, int indent, struct tree *tree) {
+void print_tree_braces(FILE *out, int indent, struct tree *tree) {
     if (tree == NULL) {
         fprintf(out, "(null tree)\n");
         return;
@@ -667,7 +667,7 @@ static void print_tree(FILE *out, int indent, struct tree *tree) {
             fprintf(out, " = \"%s\"", t->value);
         if (t->children != NULL) {
             fputc('\n', out);
-            print_tree(out, indent + 2, t->children);
+            print_tree_braces(out, indent + 2, t->children);
             for (int i=0; i < indent; i++) fputc(' ', out);
         } else {
             fputc(' ', out);
@@ -695,7 +695,7 @@ static void print_value(FILE *out, struct value *v) {
         fprintf(out, ">");
         break;
     case V_TREE:
-        print_tree(out, 0, v->origin);
+        print_tree_braces(out, 0, v->origin);
         break;
     case V_FILTER:
         fprintf(out, "<filter:");
@@ -1737,7 +1737,7 @@ static int compile_test(struct term *term, struct ctx *ctx) {
             print_info(stdout, term->info);
             printf("\n");
             if (actual->tag == V_TREE) {
-                print_tree(stdout, 2, actual->origin->children);
+                print_tree_braces(stdout, 2, actual->origin->children);
             } else {
                 print_value(stdout, actual);
             }
