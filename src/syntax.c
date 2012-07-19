@@ -1774,7 +1774,7 @@ static int compile_decl(struct term *term, struct ctx *ctx) {
             free(error->details);
             error->details = ms.buf;
         }
-        result = ! EXN(v);
+        result = !(EXN(v) || HAS_ERR(ctx->aug));
         unref(v, value);
         return result;
     } else if (term->tag == A_TEST) {

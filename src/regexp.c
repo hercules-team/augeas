@@ -237,10 +237,11 @@ regexp_union(struct info *info, struct regexp *r1, struct regexp *r2) {
 }
 
 char *regexp_expand_nocase(struct regexp *r) {
-    const char *p = r->pattern->str;
+    const char *p = r->pattern->str, *t;
     char *s = NULL;
     size_t len;
     int ret;
+    int psub = 0, rsub = 0;
 
     if (! r->nocase)
         return strdup(p);
@@ -248,6 +249,26 @@ char *regexp_expand_nocase(struct regexp *r) {
     ret = fa_expand_nocase(p, strlen(p), &s, &len);
     ERR_NOMEM(ret == REG_ESPACE, r->info);
     BUG_ON(ret != REG_NOERROR, r->info, NULL);
+
+    /* Make sure that r->pattern->str and ret have the same number
+     * of parentheses/groups, since our parser critically depends
+     * on the fact that the regexp for a union/concat and those
+     * of its children have groups that are in direct relation */
+    for (t = p; *t; t++) if (*t == '(') psub += 1;
+    for (t = s; *t; t++) if (*t == '(') rsub += 1;
+    BUG_ON(psub < rsub, r->info, NULL);
+    psub -= rsub;
+    if (psub > 0) {
+        char *adjusted = NULL, *a;
+        if (ALLOC_N(adjusted, strlen(s) + 2*psub + 1) < 0)
+            ERR_NOMEM(true, r->info);
+        a = adjusted;
+        for (int i=0; i < psub; i++) *a++ = '(';
+        a = stpcpy(a, s);
+        for (int i=0; i < psub; i++) *a++ = ')';
+        free(s);
+        s = adjusted;
+    }
  error:
     return s;
 }
