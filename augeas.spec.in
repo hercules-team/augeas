@@ -11,6 +11,8 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  readline-devel libselinux-devel libxml2-devel
 Requires:       %{name}-libs = %{version}-%{release}
+# Bundling exception for gnulib: https://fedorahosted.org/fpc/ticket/174
+Provides:       bundled(gnulib)
 
 %description
 A library for programmatically editing configuration files. Augeas parses
