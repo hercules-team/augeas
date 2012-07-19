@@ -252,12 +252,31 @@ char *regexp_expand_nocase(struct regexp *r) {
     return s;
 }
 
+static char *append_expanded(struct regexp *r, char **pat, char *p,
+                             size_t *len) {
+    char *expanded = NULL;
+    size_t ofs = p - *pat;
+    int ret;
+
+    expanded = regexp_expand_nocase(r);
+    ERR_BAIL(r->info);
+
+    *len += strlen(expanded) - strlen(r->pattern->str);
+
+    ret = REALLOC_N(*pat, *len);
+    ERR_NOMEM(ret < 0, r->info);
+
+    p = stpcpy(*pat + ofs, expanded);
+ error:
+    FREE(expanded);
+    return p;
+}
+
 struct regexp *
 regexp_union_n(struct info *info, int n, struct regexp **r) {
     size_t len = 0;
     char *pat = NULL, *p, *expanded = NULL;
     int nnocase = 0, npresent = 0;
-    int ret;
 
     for (int i=0; i < n; i++)
         if (r[i] != NULL) {
@@ -284,14 +303,8 @@ regexp_union_n(struct info *info, int n, struct regexp **r) {
             *p++ = '|';
         *p++ = '(';
         if (mixedcase && r[i]->nocase) {
-            expanded = regexp_expand_nocase(r[i]);
+            p = append_expanded(r[i], &pat, p, &len);
             ERR_BAIL(r[i]->info);
-            len += strlen(expanded) - strlen(r[i]->pattern->str);
-            ret = REALLOC_N(pat, len);
-            ERR_NOMEM(ret < 0, info);
-            p = pat + strlen(pat);
-            p = stpcpy(p, expanded);
-            FREE(expanded);
         } else {
             p = stpcpy(p, r[i]->pattern->str);
         }
@@ -320,7 +333,6 @@ regexp_concat_n(struct info *info, int n, struct regexp **r) {
     size_t len = 0;
     char *pat = NULL, *p, *expanded = NULL;
     int nnocase = 0, npresent = 0;
-    int ret;
 
     for (int i=0; i < n; i++)
         if (r[i] != NULL) {
@@ -345,14 +357,8 @@ regexp_concat_n(struct info *info, int n, struct regexp **r) {
             continue;
         *p++ = '(';
         if (mixedcase && r[i]->nocase) {
-            expanded = regexp_expand_nocase(r[i]);
+            p = append_expanded(r[i], &pat, p, &len);
             ERR_BAIL(r[i]->info);
-            len += strlen(expanded) - strlen(r[i]->pattern->str);
-            ret = REALLOC_N(pat, len);
-            ERR_NOMEM(ret < 0, info);
-            p = pat + strlen(pat);
-            p = stpcpy(p, expanded);
-            FREE(expanded);
         } else {
             p = stpcpy(p, r[i]->pattern->str);
         }
