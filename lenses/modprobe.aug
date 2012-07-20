@@ -10,7 +10,7 @@ About: Reference
   This lens tries to keep as close as possible to `man 5 modprobe.conf` where possible.
 
 About: License
-   This file is licenced under the LGPLv2+, like the rest of Augeas.
+   This file is licenced under the LGPL v2+, like the rest of Augeas.
 
 About: Lens Usage
    To be documented
@@ -38,6 +38,9 @@ let sep_space = del /([ \t]|(\\\\\n))+/ " "
 (* View: sto_no_spaces *)
 let sto_no_spaces = store /[^# \t\n\\\\]+/
 
+(* View: sto_no_colons *)
+let sto_no_colons = store /[^:# \t\n\\\\]+/
+
 (* View: sto_to_eol *)
 let sto_to_eol = store /[^# \t\n\\\\][^#\n\\\\]*[^# \t\n\\\\]|[^# \t\n\\\\]/
 
@@ -55,7 +58,7 @@ let alias =
 (* View: options *)
 let options =
   let opt_value = /[^#" \t\n\\\\]+|"[^#"\n\\\\]*"/ in
-  let option = [ key Rx.word . (Util.del_str "=" . store opt_value)? ] in
+  let option = [ key Rx.word . (del /[ \t]*=[ \t]*/ "=" . store opt_value)? ] in
   [ key "options" . sep_space . sto_no_spaces
                   . (sep_space . option)* . Util.comment_or_eol ]
 
@@ -75,12 +78,22 @@ let config = Build.key_value_line_comment "config" sep_space
                        (store /binary_indexes|yes|no/)
                        comment
 
+(* View: softdep *)
+let softdep =
+  let premod  = [ label "pre" . sep_space . sto_no_colons ] in
+    let pre   = sep_space . Util.del_str "pre:" . premod+ in
+  let postmod = [ label "post" . sep_space . sto_no_colons ] in
+    let post  = sep_space . Util.del_str "post:" . postmod+ in
+  [ key "softdep" . sep_space . sto_no_colons . pre? . post?
+    . Util.comment_or_eol ]
+
 (* View: entry *)
 let entry = alias
           | options
           | kv_line_command /install|remove/
           | blacklist
           | config
+          | softdep
 
 (************************************************************************
  * Group:                 LENS AND FILTER

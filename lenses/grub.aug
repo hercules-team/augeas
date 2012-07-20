@@ -5,7 +5,7 @@ Module: Grub
 Author: David Lutterkort <lutter@redhat.com>
 
 About: License
-   This file is licenced under the LGPLv2+, like the rest of Augeas.
+   This file is licenced under the LGPL v2+, like the rest of Augeas.
 
 About: Lens Usage
    To be documented
@@ -273,7 +273,8 @@ module Grub =
     let lns = (comment | empty | menu_setting | boot | debian)*
 
     (* View: filter *)
-    let filter = incl "/boot/grub/menu.lst"
+    let filter = incl "/boot/grub/grub.conf"
+               . incl "/boot/grub/menu.lst"
                . incl "/etc/grub.conf"
 
     let xfm = transform lns filter

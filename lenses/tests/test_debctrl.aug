@@ -205,3 +205,230 @@ Description: dummy2
  dummy text 2
 "
 
+(* Test Augeas' own control file *)
+let augeas_control = "Source: augeas
+Priority: optional
+Maintainer: Nicolas Valcárcel Scerpella (Canonical) <nicolas.valcarcel@canonical.com>
+Uploaders: Free Ekanayaka <freee@debian.org>, Micah Anderson <micah@debian.org>
+Build-Depends: debhelper (>= 5), autotools-dev, libreadline-dev, chrpath,
+ naturaldocs (>= 1.51-1), texlive-latex-base
+Standards-Version: 3.9.2
+Section: libs
+Homepage: http://augeas.net/
+DM-Upload-Allowed: yes
+
+Package: augeas-tools
+Section: admin
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Augeas command line tools
+ Augeas is a configuration editing tool. It parses configuration files in their
+ native formats and transforms them into a tree. Configuration changes are made
+ by manipulating this tree and saving it back into native config files.
+ .
+ This package provides command line tools based on libaugeas0:
+ - augtool, a tool to manage configuration files.
+ - augparse, a testing and debugging tool for augeas lenses.
+
+Package: libaugeas-dev
+Section: libdevel
+Architecture: any
+Depends: libaugeas0 (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: Development files for writing applications based on libaugeas0
+ Augeas is a configuration editing tool. It parses configuration files in their
+ native formats and transforms them into a tree. Configuration changes are made
+ by manipulating this tree and saving it back into native config files.
+ .
+ This package includes the development files to write programs using the Augeas
+ API.
+"
+test DebCtrl.lns get augeas_control =
+  { "srcpkg"
+    { "Source" = "augeas" }
+    { "Priority" = "optional" }
+    { "Maintainer" = "Nicolas Valcárcel Scerpella (Canonical) <nicolas.valcarcel@canonical.com>" }
+    { "Uploaders"
+      { "1" = "Free Ekanayaka <freee@debian.org>" }
+      { "2" = "Micah Anderson <micah@debian.org>" }
+    }
+    { "Build-Depends"
+      { "and"
+        { "or"
+          { "debhelper"
+            { "version"
+              { "relation" = ">=" }
+              { "number" = "5" }
+            }
+          }
+        }
+      }
+      { "and"
+        { "or"
+          { "autotools-dev" }
+        }
+      }
+      { "and"
+        { "or"
+          { "libreadline-dev" }
+        }
+      }
+      { "and"
+        { "or"
+          { "chrpath" }
+        }
+      }
+      { "and"
+        { "or"
+          { "naturaldocs"
+            { "version"
+              { "relation" = ">=" }
+              { "number" = "1.51-1" }
+            }
+          }
+        }
+      }
+      { "and"
+        { "or"
+          { "texlive-latex-base" }
+        }
+      }
+    }
+    { "Standards-Version" = "3.9.2" }
+    { "Section" = "libs" }
+    { "Homepage" = "http://augeas.net/" }
+    { "DM-Upload-Allowed" = "yes" }
+  }
+  { "binpkg"
+    { "Package" = "augeas-tools" }
+    { "Section" = "admin" }
+    { "Architecture" = "any" }
+    { "Depends"
+      { "and"
+        { "or"
+          { "${shlibs:Depends}" }
+        }
+      }
+      { "and"
+        { "or"
+          { "${misc:Depends}" }
+        }
+      }
+    }
+    { "Description"
+      { "summary" = "Augeas command line tools" }
+      { "text" = "Augeas is a configuration editing tool. It parses configuration files in their" }
+      { "text" = "native formats and transforms them into a tree. Configuration changes are made" }
+      { "text" = "by manipulating this tree and saving it back into native config files." }
+      { "text" = "." }
+      { "text" = "This package provides command line tools based on libaugeas0:" }
+      { "text" = "- augtool, a tool to manage configuration files." }
+      { "text" = "- augparse, a testing and debugging tool for augeas lenses." }
+    }
+  }
+  { "binpkg"
+    { "Package" = "libaugeas-dev" }
+    { "Section" = "libdevel" }
+    { "Architecture" = "any" }
+    { "Depends"
+      { "and"
+        { "or"
+          { "libaugeas0"
+            { "version"
+              { "relation" = "=" }
+              { "number" = "${binary:Version}" }
+            }
+          }
+        }
+      }
+      { "and"
+        { "or"
+          { "${shlibs:Depends}" }
+        }
+      }
+      { "and"
+        { "or"
+          { "${misc:Depends}" }
+        }
+      }
+    }
+    { "Description"
+      { "summary" = "Development files for writing applications based on libaugeas0" }
+      { "text" = "Augeas is a configuration editing tool. It parses configuration files in their" }
+      { "text" = "native formats and transforms them into a tree. Configuration changes are made" }
+      { "text" = "by manipulating this tree and saving it back into native config files." }
+      { "text" = "." }
+      { "text" = "This package includes the development files to write programs using the Augeas" }
+      { "text" = "API." }
+    }
+  }
+
+(* Bug #267: Python module extensions, from Debian Python Policy, chapter 2 *)
+let python_control = "Source: graphite-web
+Maintainer: Will Pearson (Editure Key) <wpearson@editure.co.uk>
+Section: python
+Priority: optional
+Build-Depends: debhelper (>= 7), python-support (>= 0.8.4)
+Standards-Version: 3.7.2
+XS-Python-Version: current
+
+Package: python-graphite-web
+Architecture: all
+Depends: ${python:Depends}
+XB-Python-Version: ${python:Versions}
+Provides: ${python:Provides}
+Description: Enterprise scalable realtime graphing
+"
+test Debctrl.lns get python_control =
+  { "srcpkg"
+    { "Source" = "graphite-web" }
+    { "Maintainer" = "Will Pearson (Editure Key) <wpearson@editure.co.uk>" }
+    { "Section" = "python" }
+    { "Priority" = "optional" }
+    { "Build-Depends"
+      { "and"
+        { "or"
+          { "debhelper"
+            { "version"
+              { "relation" = ">=" }
+              { "number" = "7" }
+            }
+          }
+        }
+      }
+      { "and"
+        { "or"
+          { "python-support"
+            { "version"
+              { "relation" = ">=" }
+              { "number" = "0.8.4" }
+            }
+          }
+        }
+      }
+    }
+    { "Standards-Version" = "3.7.2" }
+    { "XS-Python-Version" = "current" }
+  }
+  { "binpkg"
+    { "Package" = "python-graphite-web" }
+    { "Architecture" = "all" }
+    { "Depends"
+      { "and"
+        { "or"
+          { "${python:Depends}" }
+        }
+      }
+    }
+    { "XB-Python-Version" = "${python:Versions}" }
+    { "Provides"
+      { "and"
+        { "or"
+          { "${python:Provides}" }
+        }
+      }
+    }
+    { "Description"
+      { "summary" = "Enterprise scalable realtime graphing" }
+    }
+  }
+

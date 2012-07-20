@@ -17,3 +17,9 @@ test lns2 get "Key" = { "2" = "Key" }
 test lns2 get "key" = { "2" = "key" }
 test lns2 get "KEY" = { "2" = "KEY" }
 test lns2 get "KeY" = { "2" = "KeY" }
+
+let lns3 =
+  let rx = /type/i|/flags/i in
+  [ key rx . del "=" "=" . store /[0-9]+/ ]
+
+test lns3 get "FLAGS=1" = { "FLAGS" = "1" }

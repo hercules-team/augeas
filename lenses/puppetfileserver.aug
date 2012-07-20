@@ -10,7 +10,7 @@ About: Reference
   http://docs.puppetlabs.com/guides/file_serving.html
 
 About: License
-  This file is licensed under the LGPLv2+, like the rest of Augeas.
+  This file is licensed under the LGPL v2+, like the rest of Augeas.
 
 About: Lens Usage
   Sample usage of this lens in augtool
@@ -105,6 +105,7 @@ View: lns
 let lns = IniFile.lns record comment
 
 (* Variable: filter *)
-let filter = (incl "/etc/puppet/fileserver.conf")
+let filter = (incl "/etc/puppet/fileserver.conf"
+             .incl "/usr/local/etc/puppet/fileserver.conf")
 
 let xfm = transform lns filter

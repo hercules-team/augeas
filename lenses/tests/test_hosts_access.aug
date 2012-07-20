@@ -128,3 +128,11 @@ test Hosts_Access.lns get sample_hosts_deny =
     { "client" = "64.179." }
     { "client" = "65." }
   }
+
+
+let ip_mask = "sshd: 61./255.255.255.255\n"
+
+test Hosts_Access.lns get ip_mask =
+  { "1"
+    { "process" = "sshd" }
+    { "client" = "61." { "netmask" = "255.255.255.255" } } }

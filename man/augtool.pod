@@ -46,8 +46,8 @@ root set with the AUGEAS_ROOT environment variable.
 
 Add DIR to the module loadpath. Can be given multiple times. The
 directories set here are searched before any directories specified in the
-AUGEAS_LENS_LIB environment variable, and before the default directory
-F</usr/share/augeas/lenses>.
+AUGEAS_LENS_LIB environment variable, and before the default directories
+F</usr/share/augeas/lenses> and F</usr/share/augeas/lenses/dist>.
 
 =item B<-f>, B<--file>=I<FILE>
 
@@ -219,7 +219,8 @@ the B<-r> command line option
 
 Colon separated list of directories with lenses. Directories specified here
 are searched after any directories set with the B<-I> command line option,
-but before the default directory F</usr/share/augeas/lenses>
+but before the default directories F</usr/share/augeas/lenses> and
+F</usr/share/augeas/lenses/dist>
 
 =back
 
@@ -255,7 +256,8 @@ why.
 
 =head1 FILES
 
-Lenses and schema definitions in F</usr/share/augeas/lenses>
+Lenses and schema definitions in F</usr/share/augeas/lenses> and
+F</usr/share/augeas/lenses/dist>
 
 =head1 AUTHOR
 
@@ -263,7 +265,7 @@ Lenses and schema definitions in F</usr/share/augeas/lenses>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2007-2011 Red Hat Inc.
+Copyright 2007-2012 Red Hat Inc.
 
 Augeas (and augtool) are distributed under the GNU Lesser General Public
 License (LGPL)

@@ -229,6 +229,9 @@ struct term *make_app_term(struct term *func, struct term *arg,
                            struct info *info);
 struct term *make_app_ident(char *id, struct term *func, struct info *info);
 
+/* Print a tree in the braces style used in modules */
+void print_tree_braces(FILE *out, int indent, struct tree *tree);
+
 /* Make an EXN value
  * Receive ownership of INFO
  *

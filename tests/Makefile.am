@@ -24,6 +24,7 @@ lens_tests =			\
   lens-aptpreferences.sh	\
   lens-aptconf.sh	\
   lens-aptsource.sh		\
+  lens-authorized_keys.sh	\
   lens-automaster.sh	\
   lens-automounter.sh	\
   lens-backuppchosts.sh		\
@@ -36,6 +37,7 @@ lens_tests =			\
   lens-cobblermodules.sh	\
   lens-cron.sh			\
   lens-crypttab.sh		\
+  lens-cups.sh		\
   lens-darkice.sh		\
   lens-debctrl.sh		\
   lens-desktop.sh	\
@@ -85,6 +87,7 @@ lens_tests =			\
   lens-nagioscfg.sh     \
   lens-nagiosobjects.sh     \
   lens-netmasks.sh     \
+  lens-networkmanager.sh     \
   lens-networks.sh     \
   lens-ntp.sh			\
   lens-nrpe.sh          \
@@ -101,10 +104,14 @@ lens_tests =			\
   lens-postfix_access.sh \
   lens-postfix_main.sh		\
   lens-postfix_master.sh	\
+  lens-postfix_transport.sh	\
+  lens-postgresql.sh \
   lens-properties.sh    \
   lens-protocols.sh    \
   lens-puppet.sh		\
   lens-puppetfileserver.sh		\
+  lens-pythonpaste.sh	\
+  lens-qpid.sh		\
   lens-reprepro_uploaders.sh		\
   lens-resolv.sh		\
   lens-rsyncd.sh		\
@@ -118,6 +125,7 @@ lens_tests =			\
   lens-simplelines.sh	\
   lens-simplevars.sh	\
   lens-slapd.sh			\
+  lens-smbusers.sh			\
   lens-solaris_system.sh		\
   lens-soma.sh			\
   lens-spacevars.sh		\
@@ -126,9 +134,11 @@ lens_tests =			\
   lens-sshd.sh			\
   lens-sssd.sh			\
   lens-stunnel.sh			\
+  lens-subversion.sh		\
   lens-sysconfig.sh		\
   lens-syslog.sh		\
   lens-sysctl.sh		\
+  lens-systemd.sh		\
   lens-up2date.sh		\
   lens-util.sh		\
   lens-vfstab.sh		\
@@ -138,6 +148,7 @@ lens_tests =			\
   lens-xinetd.sh		\
   lens-xml.sh			\
   lens-xorg.sh			\
+  lens-xymon.sh			\
   lens-grub.sh			\
   lens-schroot.sh			\
   lens-xendconfsxp.sh	\
@@ -200,7 +211,7 @@ INCLUDES = -I$(top_srcdir)/src
 fatest_SOURCES = fatest.c cutest.c cutest.h $(top_srcdir)/src/memory.c $(top_srcdir)/src/memory.h
 fatest_LDADD = $(top_builddir)/src/libfa.la $(LIBXML_LIBS) $(GNULIB)
 
-test_xpath_SOURCES = test-xpath.c $(top_srcdir)/src/memory.c
+test_xpath_SOURCES = test-xpath.c cutest.c cutest.h $(top_srcdir)/src/memory.c
 test_xpath_LDADD = $(top_builddir)/src/libaugeas.la $(LIBXML_LIBS) $(GNULIB)
 
 test_load_SOURCES = test-load.c cutest.c cutest.h $(top_srcdir)/src/memory.c $(top_srcdir)/src/memory.h

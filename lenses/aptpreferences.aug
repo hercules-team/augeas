@@ -37,6 +37,7 @@ module AptPreferences =
                | simple_entry "Package"
                | simple_entry "Pin-Priority"
                | pin
+               | Util.comment
 
    let record = [ seq "record" . entries+ ]
 

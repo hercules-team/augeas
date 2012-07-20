@@ -44,15 +44,21 @@ module Xinetd =
    *      causes the type checker to work _very_ hard.
    *)
   let service_attr =
-   attr_one (/socket_type|protocol|wait|user|group|server|instances|rpc_version|rpc_number|id|port|nice|banner|bind|interface|per_source|groups|banner_success|banner_fail|disable|max_load|rlimit_as|rlimit_cpu|rlimit_data|rlimit_rss|rlimit_stack|v6only|deny_time|umask|mdns|libwrap/i)
+   attr_one (/socket_type|protocol|wait|user|group|server|instances/i
+     |/rpc_version|rpc_number|id|port|nice|banner|bind|interface/i
+     |/per_source|groups|banner_success|banner_fail|disable|max_load/i
+     |/rlimit_as|rlimit_cpu|rlimit_data|rlimit_rss|rlimit_stack|v6only/i
+     |/deny_time|umask|mdns|libwrap/i)
    (* redirect and cps aren't really lists, they take exactly two values *)
    |attr_lst_eq (/server_args|log_type|access_times|type|flags|redirect|cps/i)
    |attr_lst_op (/log_on_success|log_on_failure|only_from|no_access|env|passenv/i)
 
   let default_attr =
-    attr_one (/instances|banner|bind|interface|per_source|groups|banner_success|banner_fail|max_load|v6only|umask|mdns/i)
+    attr_one (/instances|banner|bind|interface|per_source|groups/i
+      |/banner_success|banner_fail|max_load|v6only|umask|mdns/i)
    |attr_lst_eq /cps/i       (* really only two values, not a whole list *)
-   |attr_lst_op (/log_type|log_on_success|log_on_failure|disabled|no_access|only_from|passenv|enabled/i)
+   |attr_lst_op (/log_type|log_on_success|log_on_failure|disabled/i
+      |/no_access|only_from|passenv|enabled/i)
 
   (* View: body
    *   Note:

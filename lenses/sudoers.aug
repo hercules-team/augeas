@@ -21,7 +21,7 @@ The definitions from `man sudoers` are put as commentaries for reference
 throughout the file. More information can be found in the manual.
 
 About: License
-  This file is licensed under the LGPLv2+, like the rest of Augeas.
+  This file is licensed under the LGPL v2+, like the rest of Augeas.
 
 
 About: Lens Usage
@@ -108,8 +108,17 @@ let sto_to_com_user =
    in let user_re = /[%+@a-z]([-a-z0-9]|(\\\\[ \t]))*/
    in store (nis_re? . user_re)
 
+(* Variable: to_com_dquot *)
+let to_com_chars        = /[^",=#() \t\n\\]+/ (* " relax emacs *)
+
+(* Variable: to_com_dquot *)
+let to_com_dquot        = /"[^",=#()\n\\]+"/ (* " relax emacs *)
+
+(* Variable: sto_to_com_dquot *)
+let sto_to_com_dquot    = store (to_com_chars|to_com_dquot)
+
 (* Variable: sto_to_com_col *)
-let sto_to_com_col      = store /[^",=#() \t\n\\]+/ (* " relax emacs *)
+let sto_to_com_col      = store to_com_chars
 
 (* Variable: sto_to_eq *)
 let sto_to_eq  = store /[^,=:#() \t\n\\]+/
@@ -253,10 +262,11 @@ let alias = user_alias | runas_alias | host_alias | cmnd_alias
  *     > Default_Type ::= 'Defaults' |
  *     >                  'Defaults' '@' Host_List |
  *     >                  'Defaults' ':' User_List |
+ *     >                  'Defaults' '!' Cmnd_List |
  *     >                  'Defaults' '>' Runas_List
  *************************************************************************)
 let default_type     =
-  let value = store /[@:>][^ \t\n\\]+/ in
+  let value = store /[@:!>][^ \t\n\\]+/ in
   [ label "type" . value ]
 
 (************************************************************************
@@ -336,8 +346,7 @@ let parameter_string_nobool_kw = "badpass_message" | "editor" | "mailsub"
                                | "timestampdir" | "timestampowner" | "secure_path"
 
 let parameter_string_nobool    = [ key parameter_string_nobool_kw . sep_eq
-                                     . del /"?/ "" . sto_to_com_col
-                                     . del /"?/ "" ]
+                                     . sto_to_com_dquot ]
 
 let parameter_string_bool_kw   = "exempt_group" | "lecture" | "lecture_file"
                                | "listpw" | "logfile" | "mailerflags"

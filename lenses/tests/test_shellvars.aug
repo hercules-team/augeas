@@ -269,6 +269,73 @@ esac\n" =
   test Shellvars.lns get "FOO=$(bar arg)\n" =
   { "FOO" = "$(bar arg)" }
 
+  (* Empty lines before esac *)
+  test Shellvars.lns get "case $f in
+  a)
+    B=C
+    ;;
+
+  esac\n" =
+  { "@case" = "$f"
+    { "@case_entry" = "a"
+      { "B" = "C" } }
+    {  } }
+
+
+  (* Empty lines before a case_entry *)
+  test Shellvars.lns get "case $f in
+
+  a)
+    B=C
+    ;;
+
+  b)
+    A=D
+    ;;
+  esac\n" =
+  { "@case" = "$f"
+    {  }
+    { "@case_entry" = "a"
+      { "B" = "C" } }
+    {  }
+    { "@case_entry" = "b"
+      { "A" = "D" } } }
+
+
+  (* Comments anywhere *)
+  test Shellvars.lns get "case ${INTERFACE} in
+# comment before
+eth0)
+# comment in
+OPTIONS=()
+;;
+
+# comment before 2
+*)
+# comment in 2
+unset f
+;;
+# comment after
+esac\n" =
+  { "@case" = "${INTERFACE}"
+    { "#comment" = "comment before" }
+    { "@case_entry" = "eth0"
+      { "#comment" = "comment in" }
+      { "OPTIONS" = "()" } }
+    {  }
+    { "#comment" = "comment before 2" }
+    { "@case_entry" = "*"
+      { "#comment" = "comment in 2" }
+      { "@unset" = "f" } }
+    { "#comment" = "comment after" } }
+
+  (* Empty case *)
+  test Shellvars.lns get "case $a in
+  *)
+  ;;
+  esac\n" =
+  { "@case" = "$a"
+    { "@case_entry" = "*" } }
 
 (* Local Variables: *)
 (* mode: caml       *)

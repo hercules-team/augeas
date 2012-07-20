@@ -168,7 +168,7 @@ static char *readline_command_generator(const char *text, int state) {
         "quit", "clear", "defnode", "defvar",
         "get", "ins", "load", "ls", "match",
         "mv", "print", "dump-xml", "rm", "save", "set", "setm",
-        "clearm", "span", "help", NULL };
+        "clearm", "span", "store", "retrieve", "help", NULL };
 
     static int current = 0;
     const char *name;

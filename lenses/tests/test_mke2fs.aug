@@ -7,6 +7,8 @@ module Test_mke2fs =
 
 [defaults]
 	base_features = sparse_super,filetype,resize_inode,dir_index,ext_attr
+	default_mntopts = acl,user_xattr
+	enable_periodic_fsck = 0
 	blocksize = 4096
 	inode_size = 256
         ; here goes inode_ratio
@@ -18,6 +20,7 @@ module Test_mke2fs =
                 # this is ext4dev conf
 
 		features = has_journal,^extent
+		auto_64-bit_support = 1
 		inode_size = 256
 		options = test_fs=1
 	}
@@ -43,6 +46,10 @@ module Test_mke2fs =
              { "resize_inode" }
              { "dir_index" }
              { "ext_attr" } }
+        { "default_mntopts"
+             { "acl" }
+             { "user_xattr" } }
+        { "enable_periodic_fsck" = "0" }
         { "blocksize" = "4096" }
         { "inode_size" = "256" }
         { "#comment" = "here goes inode_ratio" }
@@ -57,6 +64,7 @@ module Test_mke2fs =
                 { "has_journal" }
                 { "extent"
                    { "disable" } } }
+             { "auto_64-bit_support" = "1" }
              { "inode_size" = "256" }
              { "options"
                 { "test_fs" = "1" } } }

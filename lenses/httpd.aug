@@ -9,7 +9,7 @@ About: Reference
   Online Apache configuration manual: http://httpd.apache.org/docs/trunk/
 
 About: License
-    This file is licensed under the LGPLv2+.
+    This file is licensed under the LGPL v2+.
 
 About: Lens Usage
   Sample usage of this lens in augtool

@@ -5,6 +5,7 @@ Package: *
 Pin: release a=backports
 Pin-Priority: 100
 
+# This is a comment
 Explanation: My packages are the most prioritary
 Package: *
 Pin: release l=Raphink, v=3.0
@@ -27,6 +28,7 @@ Pin-Priority: 700
               { "a" = "backports" } }
           { "Pin-Priority" = "100" } }
        { "2"
+          { "#comment"     = "This is a comment" }
           { "Explanation"  = "My packages are the most prioritary" }
           { "Package"      = "*" }
           { "Pin"          = "release"

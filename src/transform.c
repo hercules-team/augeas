@@ -325,8 +325,9 @@ static void err_set(struct augeas *aug,
 }
 
 /* Record an error in the tree. The error will show up underneath
- * /augeas/FILENAME/error. PATH is the path to the toplevel node in the
- * tree where the lens application happened. When STATUS is NULL, just
+ * /augeas/FILENAME/error if filename is not NULL, and underneath
+ * /augeas/text/PATH otherwise. PATH is the path to the toplevel node in
+ * the tree where the lens application happened. When STATUS is NULL, just
  * clear any error associated with FILENAME in the tree.
  */
 static int store_error(struct augeas *aug,
@@ -338,7 +339,11 @@ static int store_error(struct augeas *aug,
     int r;
     int result = -1;
 
-    r = pathjoin(&fip, 2, AUGEAS_META_FILES, filename);
+    if (filename != NULL) {
+        r = pathjoin(&fip, 2, AUGEAS_META_FILES, filename);
+    } else {
+        r = pathjoin(&fip, 2, AUGEAS_META_TEXT, path);
+    }
     ERR_NOMEM(r < 0, aug);
 
     finfo = tree_find_cr(aug, fip);
@@ -488,7 +493,6 @@ static int load_file(struct augeas *aug, struct lens *lens,
                      const char *lens_name, char *filename) {
     char *text = NULL;
     const char *err_status = NULL;
-    struct aug_file *file = NULL;
     struct tree *tree = NULL;
     char *path = NULL;
     struct lns_error *err = NULL;
@@ -551,7 +555,6 @@ static int load_file(struct augeas *aug, struct lens *lens,
     free_lns_error(err);
     free(path);
     free_tree(tree);
-    free(file);
     free(text);
     return result;
 }
@@ -582,6 +585,54 @@ static struct lens *lens_from_name(struct augeas *aug, const char *name) {
     return result;
  error:
     return NULL;
+}
+
+int text_store(struct augeas *aug, const char *lens_path,
+               const char *path, const char *text) {
+    struct info *info = NULL;
+    struct lns_error *err = NULL;
+    struct tree *tree = NULL;
+    struct span *span = NULL;
+    int result = -1;
+    const char *err_status = NULL;
+    struct lens *lens = NULL;
+
+    lens = lens_from_name(aug, lens_path);
+    if (lens == NULL) {
+        goto done;
+    }
+
+    make_ref(info);
+    info->first_line = 1;
+    info->last_line = 1;
+    info->first_column = 1;
+    info->last_column = strlen(text);
+
+    tree = lns_get(info, lens, text, &err);
+    if (err != NULL) {
+        err_status = "parse_failed";
+        goto done;
+    }
+
+    unref(info, info);
+
+    tree_replace(aug, path, tree);
+
+    /* top level node span entire file length */
+    if (span != NULL && tree != NULL) {
+        tree->parent->span = span;
+        tree->parent->span->span_start = 0;
+        tree->parent->span->span_end = strlen(text);
+    }
+
+    tree = NULL;
+
+    result = 0;
+done:
+    store_error(aug, NULL, path, err_status, errno, err, text);
+    free_tree(tree);
+    free_lns_error(err);
+    return result;
 }
 
 const char *xfm_lens_name(struct tree *xfm) {
@@ -1096,6 +1147,72 @@ int transform_save(struct augeas *aug, struct tree *xfm,
 
     if (fp != NULL)
         fclose(fp);
+    return result;
+}
+
+int text_retrieve(struct augeas *aug, const char *lens_name,
+                  const char *path, struct tree *tree,
+                  const char *text_in, char **text_out) {
+    struct memstream ms;
+    bool ms_open;
+    const char *err_status = NULL;
+    char *dyn_err_status = NULL;
+    struct lns_error *err = NULL;
+    struct lens *lens = NULL;
+    int result = -1, r;
+
+    MEMZERO(&ms, 1);
+    errno = 0;
+
+    lens = lens_from_name(aug, lens_name);
+    if (lens == NULL) {
+        err_status = "lens_name";
+        goto done;
+    }
+
+    r = init_memstream(&ms);
+    if (r < 0) {
+        err_status = "init_memstream";
+        goto done;
+    }
+    ms_open = true;
+
+    if (tree != NULL)
+        lns_put(ms.stream, lens, tree->children, text_in, &err);
+
+    r = close_memstream(&ms);
+    ms_open = false;
+    if (r < 0) {
+        err_status = "close_memstream";
+        goto done;
+    }
+
+    *text_out = ms.buf;
+    ms.buf = NULL;
+
+    if (err != NULL) {
+        err_status = err->pos >= 0 ? "parse_skel_failed" : "put_failed";
+        goto done;
+    }
+
+    result = 0;
+
+ done:
+    {
+        const char *emsg =
+            dyn_err_status == NULL ? err_status : dyn_err_status;
+        store_error(aug, NULL, path, emsg, errno, err, text_in);
+    }
+    free(dyn_err_status);
+    lens_release(lens);
+    if (result < 0) {
+        free(*text_out);
+        *text_out = NULL;
+    }
+    free_lns_error(err);
+
+    if (ms_open)
+        close_memstream(&ms);
     return result;
 }
 

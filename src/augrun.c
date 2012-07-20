@@ -135,13 +135,23 @@ static char *nexttoken(struct command *cmd, char **line, bool path) {
                 case ']':  /* pass both literally */
                     nescaped = 2;
                     break;
+                case 't':  /* insert tab */
+                    *(s+1) = '\t';
+                    nescaped = 1;
+                    s += 1;
+                    break;
+                case 'n':  /* insert newline */
+                    *(s+1) = '\n';
+                    nescaped = 1;
+                    s += 1;
+                    break;
                 case ' ':
-                case '\t':
+                case '\t': /* pass both through if quoted, else fall */
                     if (quot) break;
                 case '\'':
-                case '"':
+                case '"':  /* pass both through if opposite quote, else fall */
                     if (quot && quot != *(s+1)) break;
-                case '\\':
+                case '\\': /* pass next character through */
                     nescaped = 1;
                     s += 1;
                     break;
@@ -585,7 +595,7 @@ static void cmd_set(struct command *cmd) {
 static const struct command_opt_def cmd_set_opts[] = {
     { .type = CMD_PATH, .name = "path", .optional = false,
       .help = "set the value of this node" },
-    { .type = CMD_STR, .name = "value", .optional = false,
+    { .type = CMD_STR, .name = "value", .optional = true,
       .help = "the new value for the node" },
     CMD_OPT_DEF_LAST
 };
@@ -613,7 +623,7 @@ static const struct command_opt_def cmd_setm_opts[] = {
       .help = "the base node" },
     { .type = CMD_PATH, .name = "sub", .optional = false,
       .help = "the subtree relative to the base" },
-    { .type = CMD_STR, .name = "value", .optional = false,
+    { .type = CMD_STR, .name = "value", .optional = true,
       .help = "the value for the nodes" },
     CMD_OPT_DEF_LAST
 };
@@ -699,7 +709,7 @@ static const struct command_def cmd_span_def = {
     .name = "span",
     .opts = cmd_span_opts,
     .handler = cmd_span,
-    .synopsis = "Print information get the filename, label and value position in the text of this node",
+    .synopsis = "print position in input file corresponding to tree",
     .help = "Print the name of the file from which the node PATH was generated, as\n well as information about the positions in the file  corresponding to\n the label, the value, and the  entire  node. PATH must match  exactly\n one node.\n\n You need to run 'set /augeas/span enable' prior to  loading files to\n enable recording of span information. It is disabled by default."
 };
 
@@ -734,8 +744,7 @@ static void cmd_defnode(struct command *cmd) {
     const char *path = arg_value(cmd, "expr");
     const char *value = arg_value(cmd, "value");
 
-    /* Our simple minded line parser treats non-existant and empty values
-     * the same. We choose to take the empty string to mean NULL */
+    /* Make 'defnode foo ""' mean the same as 'defnode foo' */
     if (value != NULL && strlen(value) == 0)
         value = NULL;
     aug_defnode(cmd->aug, name, path, value, NULL);
@@ -785,6 +794,34 @@ static const struct command_def cmd_clear_def = {
     .help = "Set the value for PATH to NULL. If PATH is not in the tree yet, "
     "it and\n all its ancestors will be created.  These new tree entries "
     "will appear\n last amongst their siblings"
+};
+
+static void cmd_touch(struct command *cmd) {
+    const char *path = arg_value(cmd, "path");
+    int r;
+
+    r = aug_match(cmd->aug, path, NULL);
+    if (r == 0) {
+        r = aug_set(cmd->aug, path, NULL);
+        if (r < 0)
+            ERR_REPORT(cmd, AUG_ECMDRUN, "Touching %s failed", path);
+    }
+}
+
+static const struct command_opt_def cmd_touch_opts[] = {
+    { .type = CMD_PATH, .name = "path", .optional = false,
+      .help = "touch this node" },
+    CMD_OPT_DEF_LAST
+};
+
+static const struct command_def cmd_touch_def = {
+    .name = "touch",
+    .opts = cmd_touch_opts,
+    .handler = cmd_touch,
+    .synopsis = "create a new node",
+    .help = "Create PATH with the value NULL if it is not in the tree yet.  "
+    "All its\n ancestors will also be created.  These new tree entries will "
+    "appear\n last amongst their siblings."
 };
 
 static void cmd_get(struct command *cmd) {
@@ -977,6 +1014,68 @@ static const struct command_def cmd_insert_def = {
     .help = cmd_ins_help
 };
 
+static void cmd_store(struct command *cmd) {
+    const char *lens = arg_value(cmd, "lens");
+    const char *path = arg_value(cmd, "path");
+    const char *node = arg_value(cmd, "node");
+
+    aug_text_store(cmd->aug, lens, node, path);
+}
+
+static const struct command_opt_def cmd_store_opts[] = {
+    { .type = CMD_STR, .name = "lens", .optional = false,
+      .help = "the name of the lens" },
+    { .type = CMD_PATH, .name = "node", .optional = false,
+      .help = "where to find the input text" },
+    { .type = CMD_PATH, .name = "path", .optional = false,
+      .help = "where to store parsed text" },
+    CMD_OPT_DEF_LAST
+};
+
+static const char const cmd_store_help[] =
+    "Parse NODE using LENS and store the resulting tree at PATH.";
+
+static const struct command_def cmd_store_def = {
+    .name = "store",
+    .opts = cmd_store_opts,
+    .handler = cmd_store,
+    .synopsis = "parse text into tree",
+    .help = cmd_store_help
+};
+
+static void cmd_retrieve(struct command *cmd) {
+    const char *lens = arg_value(cmd, "lens");
+    const char *node_in = arg_value(cmd, "node_in");
+    const char *path = arg_value(cmd, "path");
+    const char *node_out = arg_value(cmd, "node_out");
+
+    aug_text_retrieve(cmd->aug, lens, node_in, path, node_out);
+}
+
+static const struct command_opt_def cmd_retrieve_opts[] = {
+    { .type = CMD_STR, .name = "lens", .optional = false,
+      .help = "the name of the lens" },
+    { .type = CMD_PATH, .name = "node_in", .optional = false,
+      .help = "the node containing the initial text (path expression)" },
+    { .type = CMD_PATH, .name = "path", .optional = false,
+      .help = "the tree to transform (path expression)" },
+    { .type = CMD_PATH, .name = "node_out", .optional = false,
+      .help = "where to store the resulting text (path expression)" },
+    CMD_OPT_DEF_LAST
+};
+
+static const char const cmd_retrieve_help[] =
+    "Transform tree at PATH back into text using lens LENS and store the resulting string at NODE_OUT. Assume that the tree was initially read in with the\n"
+    " same lens and the string stored at NODE_IN as input.";
+
+static const struct command_def cmd_retrieve_def = {
+    .name = "retrieve",
+    .opts = cmd_retrieve_opts,
+    .handler = cmd_retrieve,
+    .synopsis = "transform tree into text",
+    .help = cmd_retrieve_help
+};
+
 static const struct command_def const *commands[] = {
     &cmd_quit_def,
     &cmd_clear_def,
@@ -998,6 +1097,9 @@ static const struct command_def const *commands[] = {
     &cmd_setm_def,
     &cmd_clearm_def,
     &cmd_span_def,
+    &cmd_store_def,
+    &cmd_retrieve_def,
+    &cmd_touch_def,
     &cmd_help_def,
     &cmd_def_last
 };

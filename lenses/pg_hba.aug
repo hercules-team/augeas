@@ -9,7 +9,7 @@ About: Reference
   http://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
 
 About: License
-  This file is licensed under the LGPLv2+, like the rest of Augeas.
+  This file is licensed under the LGPL v2+, like the rest of Augeas.
 
 About: Configuration files
   This lens applies to pg_hba.conf. See <filter> for exact locations.

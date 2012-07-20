@@ -5,7 +5,7 @@ Module Sssd
 Author: Erinn Looney-Triggs <erinn.looneytriggs@gmail.com>
 
 About: License
-  This file is licensed under the LGPLv2+, like the rest of Augeas.
+  This file is licensed under the LGPL v2+, like the rest of Augeas.
 
 About: Configuration files
    This lens applies to /etc/sssd/sssd.conf. See <filter>.

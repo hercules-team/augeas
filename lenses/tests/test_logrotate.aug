@@ -73,6 +73,19 @@ include /etc/logrotate.d
                 fi
         endscript
 }
+/var/log/mailman/digest {
+    su root list
+    monthly
+    missingok
+    create 0664 list list
+    rotate 4
+    compress
+    delaycompress
+        sharedscripts
+        postrotate
+            [ -f '/var/run/mailman/mailman.pid' ] && /usr/lib/mailman/bin/mailmanctl -q reopen || exit 0
+        endscript
+}
 "
 
 test Logrotate.lns get conf =
@@ -119,7 +132,7 @@ test Logrotate.lns get conf =
            { "rotate" = "1" } }
       { "rule"
            { "file"      = "/var/log/vsftpd.log" }
-           { "#comment"   = "ftpd doesn't handle SIGHUP properly" }
+           { "#comment"  = "ftpd doesn't handle SIGHUP properly" }
            { "compress"  = "nocompress" }
            { "missingok" = "missingok" }
            { "ifempty"   = "notifempty" }
@@ -142,6 +155,22 @@ test Logrotate.lns get conf =
            { "prerotate" = "                if [ -f /var/run/apache2.pid ]; then
                         /etc/init.d/apache2 restart > /dev/null
                 fi" } }
+      { "rule"
+           { "file" = "/var/log/mailman/digest" }
+           { "su"
+               { "owner" = "root" }
+               { "group" = "list" } }
+           { "schedule"  = "monthly" }
+           { "missingok" = "missingok" }
+           { "create"
+               { "mode"  = "0664" }
+               { "owner" = "list" }
+               { "group" = "list" } }
+           { "rotate"        = "4" }
+           { "compress"      = "compress" }
+           { "delaycompress" = "delaycompress" }
+           { "sharedscripts" = "sharedscripts" }
+           { "postrotate"    = "            [ -f '/var/run/mailman/mailman.pid' ] && /usr/lib/mailman/bin/mailmanctl -q reopen || exit 0" } }
 
 test Logrotate.lns get "/var/log/file {\n dateext\n}\n" =
     { "rule"

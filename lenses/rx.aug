@@ -5,7 +5,7 @@ Module: Rx
 Author: Raphael Pinson <raphink@gmail.com>
 
 About: License
-  This file is licensed under the LGPLv2+, like the rest of Augeas.
+  This file is licensed under the LGPL v2+, like the rest of Augeas.
 *)
 
 

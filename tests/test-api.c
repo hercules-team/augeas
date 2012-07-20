@@ -455,6 +455,88 @@ static void testToXml(CuTest *tc) {
     aug_close(aug);
 }
 
+static void testTextStore(CuTest *tc) {
+    static const char *const hosts = "192.168.0.1 rtr.example.com router\n";
+    /* Not acceptable for Hosts.lns - missing canonical and \n */
+    static const char *const hosts_bad = "192.168.0.1";
+    const char *v;
+
+    struct augeas *aug;
+    int r;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+
+    r = aug_set(aug, "/raw/hosts", hosts);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_text_store(aug, "Hosts.lns", "/raw/hosts", "/t1");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_match(aug, "/t1/*", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    /* Test bad lens name */
+    r = aug_text_store(aug, "Notthere.lns", "/raw/hosts", "/t2");
+    CuAssertIntEquals(tc, -1, r);
+    CuAssertIntEquals(tc, AUG_ENOLENS, aug_error(aug));
+
+    r = aug_match(aug, "/t2", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    /* Test parse error */
+    r = aug_set(aug, "/raw/hosts_bad", hosts_bad);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_text_store(aug, "Hosts.lns", "/raw/hosts_bad", "/t3");
+    CuAssertIntEquals(tc, -1, r);
+
+    r = aug_match(aug, "/t3", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_get(aug, "/augeas/text/t3/error", &v);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertStrEquals(tc, "parse_failed", v);
+
+    r = aug_text_store(aug, "Hosts.lns", "/raw/hosts", "/t3");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_match(aug, "/augeas/text/t3/error", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    /* Test invalid PATH */
+    r = aug_text_store(aug, "Hosts.lns", "/raw/hosts", "[garbage]");
+    CuAssertIntEquals(tc, -1, r);
+    CuAssertIntEquals(tc, AUG_EPATHX, aug_error(aug));
+
+    r = aug_match(aug, "/t2", NULL);
+    CuAssertIntEquals(tc, 0, r);
+}
+
+static void testTextRetrieve(CuTest *tc) {
+    static const char *const hosts = "192.168.0.1 rtr.example.com router\n";
+    const char *hosts_out;
+    struct augeas *aug;
+    int r;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+
+    r = aug_set(aug, "/raw/hosts", hosts);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_text_store(aug, "Hosts.lns", "/raw/hosts", "/t1");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_text_retrieve(aug, "Hosts.lns", "/raw/hosts", "/t1", "/out/hosts");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_get(aug, "/out/hosts", &hosts_out);
+    CuAssertIntEquals(tc, 1, r);
+
+    CuAssertStrEquals(tc, hosts, hosts_out);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -469,6 +551,8 @@ int main(void) {
     SUITE_ADD_TEST(suite, testNodeInfo);
     SUITE_ADD_TEST(suite, testMv);
     SUITE_ADD_TEST(suite, testToXml);
+    SUITE_ADD_TEST(suite, testTextStore);
+    SUITE_ADD_TEST(suite, testTextRetrieve);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)

@@ -8,7 +8,7 @@ About: Reference
   This lens tries to keep as close as possible to `man 4 system` where possible.
 
 About: Licence
-  This file is licensed under the LGPLv2+, like the rest of Augeas.
+  This file is licensed under the LGPL v2+, like the rest of Augeas.
 
 About: Lens Usage
 

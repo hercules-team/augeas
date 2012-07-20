@@ -43,6 +43,7 @@ Cmnd_Alias \
 Defaults   !visiblepw
 
 Defaults:buildd env_keep+=\"APT_CONFIG DEBIAN_FRONTEND SHELL\"
+Defaults!PBUILDER env_keep+=\"HOME ARCH DIST DISTRIBUTION PDEBUILD_PBUILDER\"
 
 # User privilege specification
 root    ALL=(ALL) ALL
@@ -117,6 +118,15 @@ www-data +biglab=(rpinson)NOEXEC: ICAL \
               { "var" = "APT_CONFIG" }
               { "var" = "DEBIAN_FRONTEND" }
               { "var" = "SHELL" } } }
+      { "Defaults"
+          { "type" = "!PBUILDER" }
+          { "env_keep"
+              { "append" }
+              { "var" = "HOME" }
+              { "var" = "ARCH" }
+              { "var" = "DIST" }
+              { "var" = "DISTRIBUTION" }
+              { "var" = "PDEBUILD_PBUILDER" } } }
       {}
       { "#comment" = "User privilege specification" }
       { "spec"
@@ -246,4 +256,11 @@ test Sudoers.spec get "root ALL= sudoedit /etc/passwd\n" =
     { "host_group"
       { "host" = "ALL" }
       { "command" = "sudoedit /etc/passwd" } } }
+
+(* Ticket #263, quoted values in defaults line *)
+let defaults_spaces = "Defaults       passprompt=\"Your SecurID Passcode: \"\n"
+test Sudoers.lns get defaults_spaces =
+  { "Defaults"
+    { "passprompt" = "\"Your SecurID Passcode: \"" }
+  }
 

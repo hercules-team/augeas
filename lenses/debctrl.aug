@@ -62,7 +62,8 @@ let multi_line_array_entry (k:regexp) (v:lens) =
 let version_depends =
     [ label "version"
      . [   del / *\( */ " ( " . label "relation" . store /[<>=]+/ ]
-     . [   del_ws_spc . label "number" . store /[a-zA-Z0-9_.-]+/
+     . [   del_ws_spc . label "number"
+           . store ( /[a-zA-Z0-9_.-]+/ | /\$\{[a-zA-Z0-9:]+\}/ )
          . del / *\)/ " )" ]
     ]
 
@@ -92,7 +93,7 @@ let uploaders  =
 
 let simple_src_keyword = "Source" | "Section" | "Priority"
     | "Standards\-Version" | "Homepage" | /Vcs\-Svn/ | /Vcs\-Browser/
-    | "Maintainer"
+    | "Maintainer" | "DM-Upload-Allowed" | /XS?-Python-Version/
 let depend_src_keywords = /Build\-Depends/ | /Build\-Depends\-Indep/
 
 let src_entries = (   simple_entry simple_src_keyword
@@ -101,12 +102,6 @@ let src_entries = (   simple_entry simple_src_keyword
 
 
 (* package paragraph *)
-
-let simple_bin_keyword = "Package" | "Architecture" |  "Section"
-    | "Priority" | "Essential" | "Homepage"
-
-let simple_bin_entry = simple_entry simple_bin_keyword
-
 let multi_line_entry (k:string) =
      let line = /.*[^ \t\n].*/ in
       [ label k .  del / / " " .  store line . hardeol ] *
@@ -119,8 +114,9 @@ let description
 
 
 (* binary package *)
-let simple_bin_keywords = "Package" | "Architecture"
-let depend_bin_keywords = "Depends" | "Recommends" | "Suggests"
+let simple_bin_keywords = "Package" | "Architecture" |  "Section"
+    | "Priority" | "Essential" | "Homepage" | "XB-Python-Version"
+let depend_bin_keywords = "Depends" | "Recommends" | "Suggests" | "Provides"
 
 let bin_entries = ( simple_entry simple_bin_keywords
                   | dependency_list depend_bin_keywords

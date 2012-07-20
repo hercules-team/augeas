@@ -69,8 +69,9 @@ quit"
     if [ ! -f "${abs_file}.augnew" ]; then
         fail "Expected file $file.augnew"
     else
+        safe_augeas_root=$(printf "%s\n" "$AUGEAS_ROOT" | sed 's/[][\.*^$(){}?+|/]/\\&/g')
         act=$(diff -u "$abs_file" "${abs_file}.augnew" \
-            | $GSED -r -e "s/^ $//;s!^(---|\+\+\+) ${AUGEAS_ROOT}($file(\.augnew)?)(.*)\$!\1 \2!;s/\\t/\\\\t/g")
+            | $GSED -r -e "s/^ $//;s!^(---|\+\+\+) ${safe_augeas_root}($file(\.augnew)?)(.*)\$!\1 \2!;s/\\t/\\\\t/g")
 
         if [ "$act" != "$diff" ] ; then
             fail "$act"

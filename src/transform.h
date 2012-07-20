@@ -80,6 +80,18 @@ int transform_applies(struct tree *xfm, const char *path);
 int transform_save(struct augeas *aug, struct tree *xfm,
                    const char *path, struct tree *tree);
 
+/* Transform TEXT into a tree and store it at PATH
+ */
+int text_store(struct augeas *aug, const char *lens_name,
+               const char *path, const char *text);
+
+/* Transform the tree at PATH back into TEXT_OUT, assuming TEXT_IN was
+ * used to initially generate the tree
+ */
+int text_retrieve(struct augeas *aug, const char *lens_name,
+                  const char *path, struct tree *tree,
+                  const char *text_in, char **text_out);
+
 /* Remove the file for TREE, either by moving it to a .augsave file or by
  * unlinking it, depending on aug->flags. TREE must be the node underneath
  * /augeas/files corresponding to the file to be removed.

@@ -8,7 +8,7 @@ About: Reference
   This lens tries to keep as close as possible to `man 5 hosts_access` where possible.
 
 About: License
-   This file is licenced under the LGPLv2+, like the rest of Augeas.
+   This file is licenced under the LGPL v2+, like the rest of Augeas.
 
 About: Lens Usage
    To be documented
@@ -63,9 +63,13 @@ let client =
   let user = [ label "user"
              . store Rx.word
              . Util.del_str "@" ] in
+  let netmask = [ Util.del_str "/"
+                . label "netmask"
+                . store Rx.word ] in
     [ label "client"
     . user?
-    . store Rx.word ]
+    . store Rx.word
+    . netmask? ]
 
 (* View: client_list
     A list of <client>s *)

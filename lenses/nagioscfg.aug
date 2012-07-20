@@ -6,7 +6,7 @@ Authors: Sebastien Aperghis-Tramoni <sebastien@aperghis.net>
          Raphaël Pinson <raphink@gmail.com>
 
 About: License
-  This file is licenced under the LGPLv2+, like the rest of Augeas.
+  This file is licenced under the LGPL v2+, like the rest of Augeas.
 
 About: Lens Usage
   To be documented
@@ -21,9 +21,10 @@ module NagiosCfg =
     (* View: param_def
         define a field *)
     let param_def =
-               key /[A-Za-z0-9_]+/
-             . Sep.opt_space . Sep.equal
-             . Sep.opt_space . store Rx.no_spaces
+         let space_in  = /[^ \t\n][^\n=]*[^ \t\n]|[^ \t\n]/
+      in key /[A-Za-z0-9_]+/
+       . Sep.space_equal
+       . store space_in
 
     (* View: param
         Params can have sub params *)
@@ -38,6 +39,8 @@ module NagiosCfg =
 
     (* View: filter *)
     let filter = incl "/etc/nagios3/*.cfg"
+               . excl "/etc/nagios3/commands.cfg"
+               . excl "/etc/nagios3/resource.cfg"
                . Util.stdexcl
 
     let xfm = transform lns filter

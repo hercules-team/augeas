@@ -26,7 +26,13 @@ install export_nodep-$BITNESS echo Installing export_nodep
 # Remove commands
 remove bar echo Removing bar
 remove foo echo Removing foo
-remove export_nodep-$BITNESS echo Removing export_nodep\n"
+remove export_nodep-$BITNESS echo Removing export_nodep
+
+# Softdep
+softdep uhci-hcd post: foo
+softdep uhci-hcd pre: ehci-hcd foo
+softdep uhci-hcd pre: ehci-hcd foo post: foo
+"
 
 test Modprobe.lns get conf =
   { "#comment" = "Various aliases" }
@@ -88,6 +94,20 @@ test Modprobe.lns get conf =
   { "remove" = "export_nodep-$BITNESS"
     { "command" = "echo Removing export_nodep" }
   }
+  {  }
+  { "#comment" = "Softdep" }
+  { "softdep" = "uhci-hcd"
+    { "post" = "foo" }
+  }
+  { "softdep" = "uhci-hcd"
+    { "pre" = "ehci-hcd" }
+    { "pre" = "foo" }
+  }
+  { "softdep" = "uhci-hcd"
+    { "pre" = "ehci-hcd" }
+    { "pre" = "foo" }
+    { "post" = "foo" }
+  }
 
 
 (* eol-comments *)
@@ -104,3 +124,8 @@ test Modprobe.entry get options_space_quote =
     { "attr1" = "\"val\"" }
     { "attr2" = "\"val2 val3\"" }
   }
+
+(* Allow spaces around the '=', BZ 826752 *)
+test Modprobe.entry get "options ipv6 disable = 1\n" =
+  { "options" = "ipv6"
+    { "disable" = "1" } }

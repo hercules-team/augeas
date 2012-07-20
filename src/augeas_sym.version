@@ -51,3 +51,9 @@ AUGEAS_0.15.0 {
     global:
       aug_to_xml;
 } AUGEAS_0.14.0;
+
+AUGEAS_0.16.0 {
+    global:
+      aug_text_store;
+      aug_text_retrieve;
+} AUGEAS_0.15.0;

@@ -130,6 +130,10 @@ void CuSuiteDetails(CuSuite* testSuite, char **details);
 
 /* Run a command */
 void run(CuTest *tc, const char *format, ...);
+
+/* Return 1 if NAME is one of the ARGV, or if ARGC == 0; return 0 otherwise */
+int should_run(const char *name, int argc, char **argv);
+
 #endif /* CU_TEST_H */
 
 /*

@@ -9,7 +9,7 @@ About: Reference
  http://wiki.fai-project.org/wiki/Setup-storage#New_configuration_file_syntax
 
 About: License
-  This file is licensed under the LGPLv2+, like the rest of Augeas.
+  This file is licensed under the LGPL v2+, like the rest of Augeas.
 
 About: Examples
    The <Test_FAI_DiskConfig> file contains various examples and tests.

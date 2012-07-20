@@ -4,7 +4,7 @@ Module: Shellvars
  in /etc/sysconfig
 
 About: License
-   This file is licenced under the LGPLv2+, like the rest of Augeas.
+   This file is licenced under the LGPL v2+, like the rest of Augeas.
 
 About: Lens Usage
    To be documented
@@ -124,12 +124,13 @@ module Shellvars =
     let case_entry = [ label "@case_entry"
                        . Util.indent . store /[^ \t\n\)]+/
                        . Util.del_str ")" . eol
-                       . entry+
+                       . entry*
                        . Util.indent . Util.del_str ";;" . eol ] in
       [ keyword_label "case" "@case" . Sep.space
         . store char+
         . del /[ \t\n]+/ " " . Util.del_str "in" . eol
-        . case_entry+
+        . ((empty|comment)* . case_entry)*
+        . (empty|comment)*
         . keyword "esac" . comment_or_eol ]
 
   let function (entry:lens) =
@@ -158,6 +159,7 @@ module Shellvars =
 
   let filter_sysconfig =
       sc_incl "*" .
+      sc_excl "bootloader" .
       sc_excl "hw-uuid" .
       sc_excl "hwconf" .
       sc_excl "ip*tables" .
@@ -166,6 +168,7 @@ module Shellvars =
       sc_excl "sysstat.ioconf" .
       sc_excl "system-config-firewall" .
       sc_excl "system-config-securitylevel" .
+      sc_excl "network" .
       sc_incl "network/config" .
       sc_incl "network/dhcp" .
       sc_incl "network/dhcp6r" .
@@ -175,16 +178,20 @@ module Shellvars =
       sc_incl "network/ifroute-*" .
       sc_incl "network/if-up.d/*" .
       sc_incl "network/providers/*" .
+      sc_excl "network-scripts" .
+      sc_incl "network-scripts/ifcfg-*" .
+      sc_excl "rhn" .
       sc_incl "rhn/allowed-actions/*" .
+      sc_excl "rhn/allowed-actions/script" .
       sc_incl "rhn/allowed-actions/script/*" .
       sc_incl "rhn/rhnsd" .
+      sc_excl "SuSEfirewall2.d" .
       sc_incl "SuSEfirewall2.d/cobbler" .
       sc_incl "SuSEfirewall2.d/services/*" .
       sc_excl "SuSEfirewall2.d/services/TEMPLATE"
 
-  let filter_ifcfg   = incl "/etc/sysconfig/network-scripts/ifcfg-*"
-                     . incl "/etc/sysconfig/network/ifcfg-*"
   let filter_default = incl "/etc/default/*"
+                     . excl "/etc/default/whoopsie"
   let filter_misc    = incl "/etc/arno-iptables-firewall/debconf.cfg"
                      . incl "/etc/cron-apt/config"
                      . incl "/etc/environment"
@@ -196,13 +203,13 @@ module Shellvars =
                      . incl "/etc/devscripts.conf"
                      . incl "/etc/lintianrc"
                      . incl "/etc/lsb-release"
+                     . incl "/etc/os-release"
                      . incl "/etc/popularity-contest.conf"
                      . incl "/etc/rc.conf"
                      . incl "/etc/selinux/config"
                      . incl "/etc/ucf.conf"
 
   let filter = filter_sysconfig
-             . filter_ifcfg
              . filter_default
              . filter_misc
              . Util.stdexcl

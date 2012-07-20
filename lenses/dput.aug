@@ -62,7 +62,7 @@ let record  = IniFile.record title entry
 let lns    = IniFile.lns record comment
 
 let filter = (incl "/etc/dput.cf")
-           . (incl "~/.dput.cf")
+           . (incl (Sys.getenv("HOME") . "/.dput.cf"))
            . Util.stdexcl
 
 let xfm = transform lns filter
