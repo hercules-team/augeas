@@ -1,9 +1,9 @@
 install:
   - sudo apt-get update
-  - sudo apt-get install libxml2-dev libreadline-dev
+  - sudo apt-get install libxml2-dev libreadline-dev valgrind
   - ./autogen.sh
   - sed -i '41s/ENOENT/ENOENT || errno == EINVAL/' gnulib/tests/test-readlink.h
 language: c
 notifications:
   email: false
-script: ./configure && make && make check
+script: ./configure && make && make check && ./src/try valgrind
