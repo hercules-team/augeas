@@ -86,6 +86,19 @@ include /etc/logrotate.d
             [ -f '/var/run/mailman/mailman.pid' ] && /usr/lib/mailman/bin/mailmanctl -q reopen || exit 0
         endscript
 }
+/var/log/ntp {
+    compress
+    dateext
+    maxage 365
+    rotate 99
+    size=+2048k
+    notifempty
+    missingok
+    copytruncate
+    postrotate
+        chmod 644 /var/log/ntp
+    endscript
+}
 "
 
 test Logrotate.lns get conf =
@@ -171,6 +184,17 @@ test Logrotate.lns get conf =
            { "delaycompress" = "delaycompress" }
            { "sharedscripts" = "sharedscripts" }
            { "postrotate"    = "            [ -f '/var/run/mailman/mailman.pid' ] && /usr/lib/mailman/bin/mailmanctl -q reopen || exit 0" } }
+      { "rule"
+           { "file" = "/var/log/ntp" }
+           { "compress" = "compress" }
+           { "dateext" = "dateext" }
+           { "maxage" = "365" }
+           { "rotate" = "99" }
+           { "size" = "+2048k" }
+           { "ifempty" = "notifempty" }
+           { "missingok" = "missingok" }
+           { "copytruncate" = "copytruncate" }
+           { "postrotate" = "        chmod 644 /var/log/ntp" } }
 
 test Logrotate.lns get "/var/log/file {\n dateext\n}\n" =
     { "rule"

@@ -52,7 +52,7 @@ let integer    = /[0-9]+/
 
 (* Variable: integer
    A relative <integer> *)
-let relinteger = /-?[0-9]+/
+let relinteger = /[-+]?[0-9]+/
 
 (* Variable: decimal
    A decimal value (using ',' or '.' as a separator) *)
