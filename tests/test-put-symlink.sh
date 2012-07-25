@@ -41,3 +41,8 @@ if [ "x$LINK" != "x../other/hosts" ] ; then
     echo "/etc/hosts does not link to ../other/hosts"
     exit 1
 fi
+
+if ! grep myhost $REAL_HOSTS >/dev/null; then
+    echo "/other/hosts does not contain the modification"
+    exit 1
+fi
