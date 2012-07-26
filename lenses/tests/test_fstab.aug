@@ -136,6 +136,22 @@ module Test_fstab =
     { "dump" = "0" }
     { "passno" = "0" }
   }
+
+  (* Allow end of line comments *)
+  test Fstab.lns get "UUID=0314be77-bb1e-47d4-b2a2-e69ae5bc954f	/	ext4	rw,errors=remount-ro	0	1	# device at install: /dev/sda3\n" =
+  { "1"
+    { "spec" = "UUID=0314be77-bb1e-47d4-b2a2-e69ae5bc954f" }
+    { "file" = "/" }
+    { "vfstype" = "ext4" }
+    { "opt" = "rw" }
+    { "opt" = "errors"
+      { "value" = "remount-ro" }
+    }
+    { "dump" = "0" }
+    { "passno" = "1" }
+    { "#comment" = "device at install: /dev/sda3" }
+  }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
