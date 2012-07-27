@@ -6,4 +6,7 @@ install:
 language: c
 notifications:
   email: false
+  irc:
+    channels:
+      - "irc.freenode.org#augeas"
 script: ./configure && make && make check && ./src/try valgrind
