@@ -359,6 +359,10 @@ esac\n" =
   test Shellvars.lns get "FOO=$(echo `date`)\n" =
   { "FOO" = "$(echo `date`)" }
 
+  (* dbquot *)
+  test Shellvars.lns get "FOO=``bar``\n" =
+  { "FOO" = "``bar``" }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
