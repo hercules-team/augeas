@@ -124,9 +124,12 @@ View: comment_generic
   let empty_generic (r:regexp) =
     [ del r "" . del_str "\n" ]
 
+(* Variable: empty_generic_re *)
+  let empty_generic_re = /[ \t]*#?[ \t]*/
+
 (* View: empty
   Map empty lines, including empty comments *)
-  let empty = empty_generic /[ \t]*#?[ \t]*/
+  let empty = empty_generic empty_generic_re
 
 (* View: empty_c_style
   Map empty lines, including C-style empty comment *)

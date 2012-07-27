@@ -386,6 +386,15 @@ esac\n" =
   test Shellvars.lns get "unset ${!LC_*}\n" =
   { "@unset" = "${!LC_*}" }
 
+  (* Empty comment before entries *)
+  test Shellvars.lns get "# \nfoo=bar\n" =
+  { }
+  { "foo" = "bar" }
+
+  (* Empty comment after entries *)
+  test Shellvars.lns get "foo=bar\n# \n\n" =
+  { "foo" = "bar" }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

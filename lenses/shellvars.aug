@@ -13,9 +13,10 @@ About: Lens Usage
 module Shellvars =
   autoload xfm
 
-  let eol = del /[ \t]+|[ \t]*(;|\n)\n*/ "\n"
-  let semicol_eol = del /[ \t]*(;|\n)\n*/ "\n"
   let empty   = Util.empty
+  let empty_part_re = Util.empty_generic_re . /\n+/
+  let eol = del (/[ \t]+|[ \t]*[;\n]/ . empty_part_re*) "\n"
+  let semicol_eol = del (/[ \t]*[;\n]/ . empty_part_re*) "\n"
 
   let key_re = /[A-Za-z0-9_]+(\[[0-9]+\])?/ - "unset" - "export"
   let matching_re = "${!" . key_re . /[\*@]\}/
