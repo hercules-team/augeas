@@ -131,7 +131,7 @@ module Shellvars =
                        . entry*
                        . Util.indent . Util.del_str ";;" . eol ] in
       [ keyword_label "case" "@case" . Sep.space
-        . store char+
+        . store (char+ | ("\"" . char+ . "\""))
         . del /[ \t\n]+/ " " . Util.del_str "in" . eol
         . (empty* . comment* . case_entry)*
         . empty* . comment*

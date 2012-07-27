@@ -344,6 +344,16 @@ esac\n" =
   { "@case" = "$a"
     { "@case_entry" = "*" } }
 
+  (* case variables can be surrounded by double quotes *)
+  test Shellvars.lns get "case \"${options}\" in
+*debug*)
+  shift
+  ;;
+esac\n" =
+  { "@case" = "\"${options}\""
+    { "@case_entry" = "*debug*"
+      { "@builtin" = "shift" } } }
+
   (* Double quoted values can have newlines *)
   test Shellvars.lns get "FOO=\"123\n456\"\n" =
   { "FOO" = "\"123\n456\"" }
