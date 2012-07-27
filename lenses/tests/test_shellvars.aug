@@ -84,10 +84,8 @@ unset ONBOOT    #   We do not want this var
   test Shellvars.lns get "ESSID='Joe'\"'\"'s net'\n" =
     { "ESSID" = "'Joe'\"'\"'s net'" }
 
-  (* For some reason, `` conflicts with comment_eol *)
   test Shellvars.lns get "var=`ab#c`\n" =
-    { "var" = "`ab"
-       { "#comment" = "c`" } }
+    { "var" = "`ab#c`" }
 
   test Shellvars.lns get "var=`grep nameserver /etc/resolv.conf | head -1`\n" =
     { "var" = "`grep nameserver /etc/resolv.conf | head -1`" }
@@ -341,6 +339,14 @@ esac\n" =
   (* Single quoted values can have newlines *)
   test Shellvars.lns get "FOO='123\n456'\n" =
   { "FOO" = "'123\n456'" }
+
+  (* bquoted values can have semi-colons *)
+  test Shellvars.lns get "FOO=`bar=date;$bar`\n" =
+  { "FOO" = "`bar=date;$bar`" }
+
+  (* dollar-assigned values can have semi-colons *)
+  test Shellvars.lns get "FOO=$(bar=date;$bar)\n" =
+  { "FOO" = "$(bar=date;$bar)" }
 
 (* Local Variables: *)
 (* mode: caml       *)

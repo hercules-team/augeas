@@ -27,12 +27,12 @@ module Shellvars =
   let xchgs   = Build.xchgs
   let semicol = del /;?/ ""
 
-  let char  = /[^;#() '"\t\n]|\\\\"/
+  let char  = /[^`;#() '"\t\n]|\\\\"/
   let dquot = /"([^"\\]|\\\\.)*"/                    (* " Emacs, relax *)
   let squot = /'[^']*'/
   (* For some reason, `` conflicts with comment_or_eol *)
-  let bquot = /`[^#`\n;]*`/
-  let dollar_assign = /\$\([^#`\n;]*\)/
+  let bquot = /`[^`\n]*`/
+  let dollar_assign = /\$\([^\)#\n]*\)/
 
   let sto_to_semicol = store /[^#; \t\n][^#;\n]+[^#; \t\n]|[^#; \t\n]+/
 
