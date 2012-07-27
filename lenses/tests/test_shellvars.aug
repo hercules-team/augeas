@@ -140,6 +140,15 @@ unset ONBOOT    #   We do not want this var
   test Shellvars.lns get "ulimit -c unlimited\n" =
   { "@builtin" = "ulimit" { "args" = "-c unlimited" } }
 
+  (* Allow shift builtin *)
+  test Shellvars.lns get "shift\nshift 2\n" =
+  { "@builtin" = "shift" }
+  { "@builtin" = "shift" { "args" = "2" } }
+
+  (* Allow exit builtin *)
+  test Shellvars.lns get "exit\nexit 2\n" =
+  { "@builtin" = "exit" }
+  { "@builtin" = "exit" { "args" = "2" } }
 
   (* Test semicolons *)
   test Shellvars.lns get "VAR1=\"this;is;a;test\"\nVAR2=this;\n" =

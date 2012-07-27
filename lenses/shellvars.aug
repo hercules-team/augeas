@@ -72,13 +72,13 @@ module Shellvars =
       . del /\.|source/ "." . label ".source"
       . Util.del_ws_spc . store /[^;=# \t\n]+/ . comment_or_eol ]
 
-  let shell_builtin_cmds = "ulimit"
+  let shell_builtin_cmds = "ulimit" | "shift" | "exit"
 
   let builtin =
     [ Util.indent . label "@builtin"
       . store shell_builtin_cmds
-      . Util.del_ws_spc
-      . [ label "args" . sto_to_semicol ]
+      . (Util.del_ws_spc
+      . [ label "args" . sto_to_semicol ])?
       . comment_or_eol ]
 
   let keyword (kw:string) = Util.indent . Util.del_str kw
