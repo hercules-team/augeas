@@ -72,8 +72,11 @@ unset ONBOOT    #   We do not want this var
     { "var" = "\\\"" }
 
   test Shellvars.lns get "var=ab#c\n" =
+    { "var" = "ab#c" }
+
+  test Shellvars.lns get "var=ab #c\n" =
     { "var" = "ab"
-        { "#comment" = "c" } }
+      { "#comment" = "c" } }
 
   test Shellvars.lns get "var='ab#c'\n" =
     { "var" = "'ab#c'" }
@@ -84,10 +87,8 @@ unset ONBOOT    #   We do not want this var
   test Shellvars.lns get "ESSID='Joe'\"'\"'s net'\n" =
     { "ESSID" = "'Joe'\"'\"'s net'" }
 
-  (* For some reason, `` conflicts with comment_eol *)
   test Shellvars.lns get "var=`ab#c`\n" =
-    { "var" = "`ab"
-       { "#comment" = "c`" } }
+    { "var" = "`ab#c`" }
 
   test Shellvars.lns get "var=`grep nameserver /etc/resolv.conf | head -1`\n" =
     { "var" = "`grep nameserver /etc/resolv.conf | head -1`" }
@@ -139,6 +140,15 @@ unset ONBOOT    #   We do not want this var
   test Shellvars.lns get "ulimit -c unlimited\n" =
   { "@builtin" = "ulimit" { "args" = "-c unlimited" } }
 
+  (* Allow shift builtin *)
+  test Shellvars.lns get "shift\nshift 2\n" =
+  { "@builtin" = "shift" }
+  { "@builtin" = "shift" { "args" = "2" } }
+
+  (* Allow exit builtin *)
+  test Shellvars.lns get "exit\nexit 2\n" =
+  { "@builtin" = "exit" }
+  { "@builtin" = "exit" { "args" = "2" } }
 
   (* Test semicolons *)
   test Shellvars.lns get "VAR1=\"this;is;a;test\"\nVAR2=this;\n" =
@@ -279,7 +289,7 @@ esac\n" =
   { "@case" = "$f"
     { "@case_entry" = "a"
       { "B" = "C" } }
-    {  } }
+    }
 
 
   (* Empty lines before a case_entry *)
@@ -294,10 +304,8 @@ esac\n" =
     ;;
   esac\n" =
   { "@case" = "$f"
-    {  }
     { "@case_entry" = "a"
       { "B" = "C" } }
-    {  }
     { "@case_entry" = "b"
       { "A" = "D" } } }
 
@@ -322,7 +330,6 @@ esac\n" =
     { "@case_entry" = "eth0"
       { "#comment" = "comment in" }
       { "OPTIONS" = "()" } }
-    {  }
     { "#comment" = "comment before 2" }
     { "@case_entry" = "*"
       { "#comment" = "comment in 2" }
@@ -336,6 +343,57 @@ esac\n" =
   esac\n" =
   { "@case" = "$a"
     { "@case_entry" = "*" } }
+
+  (* case variables can be surrounded by double quotes *)
+  test Shellvars.lns get "case \"${options}\" in
+*debug*)
+  shift
+  ;;
+esac\n" =
+  { "@case" = "\"${options}\""
+    { "@case_entry" = "*debug*"
+      { "@builtin" = "shift" } } }
+
+  (* Double quoted values can have newlines *)
+  test Shellvars.lns get "FOO=\"123\n456\"\n" =
+  { "FOO" = "\"123\n456\"" }
+
+  (* Single quoted values can have newlines *)
+  test Shellvars.lns get "FOO='123\n456'\n" =
+  { "FOO" = "'123\n456'" }
+
+  (* bquoted values can have semi-colons *)
+  test Shellvars.lns get "FOO=`bar=date;$bar`\n" =
+  { "FOO" = "`bar=date;$bar`" }
+
+  (* dollar-assigned values can have semi-colons *)
+  test Shellvars.lns get "FOO=$(bar=date;$bar)\n" =
+  { "FOO" = "$(bar=date;$bar)" }
+
+  (* dollar-assigned value in bquot *)
+  test Shellvars.lns get "FOO=`echo $(date)`\n" =
+  { "FOO" = "`echo $(date)`" }
+
+  (* bquot value in dollar-assigned value *)
+  test Shellvars.lns get "FOO=$(echo `date`)\n" =
+  { "FOO" = "$(echo `date`)" }
+
+  (* dbquot *)
+  test Shellvars.lns get "FOO=``bar``\n" =
+  { "FOO" = "``bar``" }
+
+  (* unset can be used on wildcard variables *)
+  test Shellvars.lns get "unset ${!LC_*}\n" =
+  { "@unset" = "${!LC_*}" }
+
+  (* Empty comment before entries *)
+  test Shellvars.lns get "# \nfoo=bar\n" =
+  { }
+  { "foo" = "bar" }
+
+  (* Empty comment after entries *)
+  test Shellvars.lns get "foo=bar\n# \n\n" =
+  { "foo" = "bar" }
 
 (* Local Variables: *)
 (* mode: caml       *)

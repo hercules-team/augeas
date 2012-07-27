@@ -13,26 +13,30 @@ About: Lens Usage
 module Shellvars =
   autoload xfm
 
-  let eol = del /[ \t]+|[ \t]*[;\n]/ "\n"
-  let semicol_eol = del /[ \t]*[;\n]/ "\n"
+  let empty   = Util.empty
+  let empty_part_re = Util.empty_generic_re . /\n+/
+  let eol = del (/[ \t]+|[ \t]*[;\n]/ . empty_part_re*) "\n"
+  let semicol_eol = del (/[ \t]*[;\n]/ . empty_part_re*) "\n"
 
   let key_re = /[A-Za-z0-9_]+(\[[0-9]+\])?/ - "unset" - "export"
+  let matching_re = "${!" . key_re . /[\*@]\}/
   let eq = Util.del_str "="
 
-  let comment = Util.comment
-  let comment_eol = Util.comment_eol
+  let comment = Util.comment . empty*
+  (* comment_eol in shell MUST begin with a space *)
+  let comment_eol = Util.comment_generic /[ \t]+#[ \t]*/ " # "
   let comment_or_eol = comment_eol | semicol_eol
 
-  let empty   = Util.empty
   let xchgs   = Build.xchgs
   let semicol = del /;?/ ""
 
-  let char  = /[^;#() '"\t\n]|\\\\"/
-  let dquot = /"([^"\\\n]|\\\\.)*"/                    (* " Emacs, relax *)
-  let squot = /'[^'\n]*'/
-  (* For some reason, `` conflicts with comment_or_eol *)
-  let bquot = /`[^#`\n]*`/
-  let dollar_assign = /\$\([^#`\n]*\)/
+  let char  = /[^`;() '"\t\n]|\\\\"/
+  let dquot = /"([^"\\]|\\\\.)*"/                    (* " Emacs, relax *)
+  let squot = /'[^']*'/
+  let bquot = /`[^`\n]*`/
+  (* dbquot don't take spaces or semi-colons *)
+  let dbquot = /``[^` \t\n;]+``/
+  let dollar_assign = /\$\([^\)#\n]*\)/
 
   let sto_to_semicol = store /[^#; \t\n][^#;\n]+[^#; \t\n]|[^#; \t\n]+/
 
@@ -50,15 +54,16 @@ module Shellvars =
   (* but fairly close.                                                *)
   let simple_value =
     let empty_array = /\([ \t]*\)/ in
-      store (char* | (dquot | squot)+ | bquot | dollar_assign | empty_array)
+      store (char* | (dquot | squot)+
+            | bquot | dbquot | dollar_assign | empty_array)
 
   let export = [ key "export" . Util.del_ws_spc ]
   let kv = [ Util.indent . export? . key key_re
-           . eq . (simple_value | array) . semicol . comment_or_eol ]
+           . eq . (simple_value | array) . comment_or_eol ]
 
   let var_action (name:string) =
     [ Util.indent . xchgs name ("@" . name) . Util.del_ws_spc
-    . store key_re . semicol . comment_or_eol ]
+    . store (key_re | matching_re) . comment_or_eol ]
 
   let unset = var_action "unset"
   let bare_export = var_action "export"
@@ -68,13 +73,13 @@ module Shellvars =
       . del /\.|source/ "." . label ".source"
       . Util.del_ws_spc . store /[^;=# \t\n]+/ . comment_or_eol ]
 
-  let shell_builtin_cmds = "ulimit"
+  let shell_builtin_cmds = "ulimit" | "shift" | "exit"
 
   let builtin =
     [ Util.indent . label "@builtin"
       . store shell_builtin_cmds
-      . Util.del_ws_spc
-      . [ label "args" . sto_to_semicol ]
+      . (Util.del_ws_spc
+      . [ label "args" . sto_to_semicol ])?
       . comment_or_eol ]
 
   let keyword (kw:string) = Util.indent . Util.del_str kw
@@ -127,10 +132,10 @@ module Shellvars =
                        . entry*
                        . Util.indent . Util.del_str ";;" . eol ] in
       [ keyword_label "case" "@case" . Sep.space
-        . store char+
+        . store (char+ | ("\"" . char+ . "\""))
         . del /[ \t\n]+/ " " . Util.del_str "in" . eol
-        . ((empty|comment)* . case_entry)*
-        . (empty|comment)*
+        . (empty* . comment* . case_entry)*
+        . empty* . comment*
         . keyword "esac" . comment_or_eol ]
 
   let function (entry:lens) =
@@ -142,7 +147,7 @@ module Shellvars =
       . Util.indent . Util.del_str "}" . eol ]
 
   let rec rec_entry =
-    let entry = comment | empty | source | kv
+    let entry = comment | source | kv
               | unset | bare_export | builtin | return | rec_entry in
         cond_if entry
       | loop_for entry
@@ -152,7 +157,9 @@ module Shellvars =
       | case entry
       | function entry
 
-  let lns = (comment | empty | source | kv | unset | bare_export | builtin | return | rec_entry) *
+  let lns_norec = empty* . (comment | source | kv | unset | bare_export | builtin | return) *
+
+  let lns = empty* . (comment | source | kv | unset | bare_export | builtin | return | rec_entry) *
 
   let sc_incl (n:string) = (incl ("/etc/sysconfig/" . n))
   let sc_excl (n:string) = (excl ("/etc/sysconfig/" . n))

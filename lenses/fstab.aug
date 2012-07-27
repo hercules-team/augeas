@@ -29,7 +29,7 @@ module Fstab =
                    (sep_tab . comma_sep_list "opt" .
                     (sep_tab . [ label "dump" . store /[0-9]+/ ] .
                      ( sep_spc . [ label "passno" . store /[0-9]+/ ])? )? )?
-                 . eol ]
+                 . Util.comment_or_eol ]
 
   let lns = ( empty | comment | record ) *
   let filter = (incl "/etc/fstab")
