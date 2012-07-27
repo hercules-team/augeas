@@ -72,8 +72,11 @@ unset ONBOOT    #   We do not want this var
     { "var" = "\\\"" }
 
   test Shellvars.lns get "var=ab#c\n" =
+    { "var" = "ab#c" }
+
+  test Shellvars.lns get "var=ab #c\n" =
     { "var" = "ab"
-        { "#comment" = "c" } }
+      { "#comment" = "c" } }
 
   test Shellvars.lns get "var='ab#c'\n" =
     { "var" = "'ab#c'" }

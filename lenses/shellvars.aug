@@ -20,17 +20,17 @@ module Shellvars =
   let eq = Util.del_str "="
 
   let comment = Util.comment
-  let comment_eol = Util.comment_eol
+  (* comment_eol in shell MUST begin with a space *)
+  let comment_eol = Util.comment_generic /[ \t]+#[ \t]*/ " # "
   let comment_or_eol = comment_eol | semicol_eol
 
   let empty   = Util.empty
   let xchgs   = Build.xchgs
   let semicol = del /;?/ ""
 
-  let char  = /[^`;#() '"\t\n]|\\\\"/
+  let char  = /[^`;() '"\t\n]|\\\\"/
   let dquot = /"([^"\\]|\\\\.)*"/                    (* " Emacs, relax *)
   let squot = /'[^']*'/
-  (* For some reason, `` conflicts with comment_or_eol *)
   let bquot = /`[^`\n]*`/
   let dollar_assign = /\$\([^\)#\n]*\)/
 
