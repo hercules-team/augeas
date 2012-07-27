@@ -15,17 +15,17 @@ module Shellvars =
 
   let eol = del /[ \t]+|[ \t]*(;|\n)\n*/ "\n"
   let semicol_eol = del /[ \t]*(;|\n)\n*/ "\n"
+  let empty   = Util.empty
 
   let key_re = /[A-Za-z0-9_]+(\[[0-9]+\])?/ - "unset" - "export"
   let matching_re = "${!" . key_re . /[\*@]\}/
   let eq = Util.del_str "="
 
-  let comment = Util.comment
+  let comment = Util.comment . empty*
   (* comment_eol in shell MUST begin with a space *)
   let comment_eol = Util.comment_generic /[ \t]+#[ \t]*/ " # "
   let comment_or_eol = comment_eol | semicol_eol
 
-  let empty   = Util.empty
   let xchgs   = Build.xchgs
   let semicol = del /;?/ ""
 
@@ -133,8 +133,8 @@ module Shellvars =
       [ keyword_label "case" "@case" . Sep.space
         . store char+
         . del /[ \t\n]+/ " " . Util.del_str "in" . eol
-        . ((empty|comment)* . case_entry)*
-        . (empty|comment)*
+        . (empty* . comment* . case_entry)*
+        . empty* . comment*
         . keyword "esac" . comment_or_eol ]
 
   let function (entry:lens) =
@@ -146,7 +146,7 @@ module Shellvars =
       . Util.indent . Util.del_str "}" . eol ]
 
   let rec rec_entry =
-    let entry = comment | empty | source | kv
+    let entry = comment | source | kv
               | unset | bare_export | builtin | return | rec_entry in
         cond_if entry
       | loop_for entry
