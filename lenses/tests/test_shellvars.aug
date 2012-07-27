@@ -334,6 +334,14 @@ esac\n" =
   { "@case" = "$a"
     { "@case_entry" = "*" } }
 
+  (* Double quoted values can have newlines *)
+  test Shellvars.lns get "FOO=\"123\n456\"\n" =
+  { "FOO" = "\"123\n456\"" }
+
+  (* Single quoted values can have newlines *)
+  test Shellvars.lns get "FOO='123\n456'\n" =
+  { "FOO" = "'123\n456'" }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

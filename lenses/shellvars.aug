@@ -28,8 +28,8 @@ module Shellvars =
   let semicol = del /;?/ ""
 
   let char  = /[^;#() '"\t\n]|\\\\"/
-  let dquot = /"([^"\\\n]|\\\\.)*"/                    (* " Emacs, relax *)
-  let squot = /'[^'\n]*'/
+  let dquot = /"([^"\\]|\\\\.)*"/                    (* " Emacs, relax *)
+  let squot = /'[^']*'/
   (* For some reason, `` conflicts with comment_or_eol *)
   let bquot = /`[^#`\n;]*`/
   let dollar_assign = /\$\([^#`\n;]*\)/
