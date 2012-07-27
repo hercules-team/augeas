@@ -363,6 +363,10 @@ esac\n" =
   test Shellvars.lns get "FOO=``bar``\n" =
   { "FOO" = "``bar``" }
 
+  (* unset can be used on wildcard variables *)
+  test Shellvars.lns get "unset ${!LC_*}\n" =
+  { "@unset" = "${!LC_*}" }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
