@@ -348,6 +348,14 @@ esac\n" =
   test Shellvars.lns get "FOO=$(bar=date;$bar)\n" =
   { "FOO" = "$(bar=date;$bar)" }
 
+  (* dollar-assigned value in bquot *)
+  test Shellvars.lns get "FOO=`echo $(date)`\n" =
+  { "FOO" = "`echo $(date)`" }
+
+  (* bquot value in dollar-assigned value *)
+  test Shellvars.lns get "FOO=$(echo `date`)\n" =
+  { "FOO" = "$(echo `date`)" }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
