@@ -13,8 +13,8 @@ About: Lens Usage
 module Shellvars =
   autoload xfm
 
-  let eol = del /[ \t]+|[ \t]*[;\n]/ "\n"
-  let semicol_eol = del /[ \t]*[;\n]/ "\n"
+  let eol = del /[ \t]+|[ \t]*(;|\n)\n*/ "\n"
+  let semicol_eol = del /[ \t]*(;|\n)\n*/ "\n"
 
   let key_re = /[A-Za-z0-9_]+(\[[0-9]+\])?/ - "unset" - "export"
   let eq = Util.del_str "="
@@ -54,11 +54,11 @@ module Shellvars =
 
   let export = [ key "export" . Util.del_ws_spc ]
   let kv = [ Util.indent . export? . key key_re
-           . eq . (simple_value | array) . semicol . comment_or_eol ]
+           . eq . (simple_value | array) . comment_or_eol ]
 
   let var_action (name:string) =
     [ Util.indent . xchgs name ("@" . name) . Util.del_ws_spc
-    . store key_re . semicol . comment_or_eol ]
+    . store key_re . comment_or_eol ]
 
   let unset = var_action "unset"
   let bare_export = var_action "export"
@@ -152,7 +152,9 @@ module Shellvars =
       | case entry
       | function entry
 
-  let lns = (comment | empty | source | kv | unset | bare_export | builtin | return | rec_entry) *
+  let lns_norec = empty* . (comment | source | kv | unset | bare_export | builtin | return) *
+
+  let lns = empty* . (comment | source | kv | unset | bare_export | builtin | return | rec_entry) *
 
   let sc_incl (n:string) = (incl ("/etc/sysconfig/" . n))
   let sc_excl (n:string) = (excl ("/etc/sysconfig/" . n))

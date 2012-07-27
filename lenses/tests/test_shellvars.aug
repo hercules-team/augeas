@@ -279,7 +279,7 @@ esac\n" =
   { "@case" = "$f"
     { "@case_entry" = "a"
       { "B" = "C" } }
-    {  } }
+    }
 
 
   (* Empty lines before a case_entry *)
@@ -294,10 +294,8 @@ esac\n" =
     ;;
   esac\n" =
   { "@case" = "$f"
-    {  }
     { "@case_entry" = "a"
       { "B" = "C" } }
-    {  }
     { "@case_entry" = "b"
       { "A" = "D" } } }
 
@@ -322,7 +320,6 @@ esac\n" =
     { "@case_entry" = "eth0"
       { "#comment" = "comment in" }
       { "OPTIONS" = "()" } }
-    {  }
     { "#comment" = "comment before 2" }
     { "@case_entry" = "*"
       { "#comment" = "comment in 2" }
