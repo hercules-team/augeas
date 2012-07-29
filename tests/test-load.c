@@ -38,10 +38,8 @@ static char *loadpath;
         exit(EXIT_FAILURE);                                         \
     } while(0)
 
-static struct augeas *setup_writable_hosts(CuTest *tc) {
+static char *setup_hosts(CuTest *tc) {
     char *etcdir, *build_root;
-    struct augeas *aug = NULL;
-    int r;
 
     if (asprintf(&build_root, "%s/build/test-load/%s",
                  abs_top_builddir, tc->name) < 0) {
@@ -51,11 +49,18 @@ static struct augeas *setup_writable_hosts(CuTest *tc) {
     if (asprintf(&etcdir, "%s/etc", build_root) < 0)
         CuFail(tc, "asprintf etcdir failed");
 
-    run(tc, "test -d %s && chmod -R u+w %s || :", build_root, build_root);
+    run(tc, "test -d %s && chmod -R u+rw %s || :", build_root, build_root);
     run(tc, "rm -rf %s", build_root);
     run(tc, "mkdir -p %s", etcdir);
     run(tc, "cp -pr %s/etc/hosts %s", root, etcdir);
-    run(tc, "chmod -R u+w %s", build_root);
+
+    free(etcdir);
+    return build_root;
+}
+
+static struct augeas *setup_hosts_aug(CuTest *tc, char *build_root) {
+    struct augeas *aug = NULL;
+    int r;
 
     aug = aug_init(build_root, loadpath, AUG_NO_MODL_AUTOLOAD);
     CuAssertPtrNotNull(tc, aug);
@@ -67,8 +72,19 @@ static struct augeas *setup_writable_hosts(CuTest *tc) {
     CuAssertRetSuccess(tc, r);
 
     free(build_root);
-    free(etcdir);
     return aug;
+}
+
+static struct augeas *setup_writable_hosts(CuTest *tc) {
+    char *build_root = setup_hosts(tc);
+    run(tc, "chmod -R u+w %s", build_root);
+    return setup_hosts_aug(tc, build_root);
+}
+
+static struct augeas *setup_unreadable_hosts(CuTest *tc) {
+    char *build_root = setup_hosts(tc);
+    run(tc, "chmod -R a-r %s/etc/hosts", build_root);
+    return setup_hosts_aug(tc, build_root);
 }
 
 static void testDefault(CuTest *tc) {
@@ -511,6 +527,28 @@ static void testParseErrorReported(CuTest *tc) {
     aug_close(aug);
 }
 
+/* Test failed file opening is reported, e.g. EACCES */
+static void testPermsErrorReported(CuTest *tc) {
+    augeas *aug = NULL;
+    int r;
+    const char *s;
+
+    aug = setup_unreadable_hosts(tc);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_match(aug, "/files/etc/hosts", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_get(aug, "/augeas/files/etc/hosts/error", &s);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertStrEquals(tc, "read_failed", s);
+
+    r = aug_get(aug, "/augeas/files/etc/hosts/error/message", &s);
+    CuAssertIntEquals(tc, 1, r);
+}
+
 /* Test bug #252 - excl patterns have no effect when loading with a root */
 static void testLoadExclWithRoot(CuTest *tc) {
     augeas *aug = NULL;
@@ -576,6 +614,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testReloadExternalMod);
     SUITE_ADD_TEST(suite, testReloadAfterSaveNewfile);
     SUITE_ADD_TEST(suite, testParseErrorReported);
+    SUITE_ADD_TEST(suite, testPermsErrorReported);
     SUITE_ADD_TEST(suite, testLoadExclWithRoot);
     SUITE_ADD_TEST(suite, testLoadTrailingExcl);
 

@@ -148,8 +148,11 @@ char* xread_file(const char *path) {
     char *result;
 
     fp = fopen(path, "r");
+    if (!fp)
+        return NULL;
+
     result = xfread_file(fp);
-    fclose (fp);
+    fclose(fp);
 
     return result;
 }
