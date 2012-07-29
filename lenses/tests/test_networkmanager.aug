@@ -9,6 +9,7 @@ module Test_NetworkManager =
 let conf = "[connection]
 id=wifoobar
 uuid=16fa8830-cf15-4523-8c1f-c6c635246855
+permissions=user:foo:;
 type=802-11-wireless
 
 [802-11-wireless]
@@ -25,13 +26,18 @@ wep-key0=123abc123abc
 method=auto
 
 [ipv6]
-method=auto\n"
+method=auto
+
+[vpn]
+NAT Traversal Mode=natt
+DPD idle timeout (our side)=0\n"
 
 (* Test: NetworkManager.lns *)
 test NetworkManager.lns get conf =
   { "connection"
     { "id" = "wifoobar" }
     { "uuid" = "16fa8830-cf15-4523-8c1f-c6c635246855" }
+    { "permissions" = "user:foo:;" }
     { "type" = "802-11-wireless" }
     {  }
   }
@@ -53,5 +59,10 @@ test NetworkManager.lns get conf =
   }
   { "ipv6"
     { "method" = "auto" }
+    {  }
+  }
+  { "vpn"
+    { "NAT Traversal Mode" = "natt" }
+    { "DPD idle timeout (our side)" = "0" }
   }
 
