@@ -1063,8 +1063,9 @@ static const struct command_opt_def cmd_retrieve_opts[] = {
 };
 
 static const char const cmd_retrieve_help[] =
-    "Transform tree at PATH back into text using lens LENS and store the resulting string at NODE_OUT. Assume that the tree was initially read in with the\n"
-    " same lens and the string stored at NODE_IN as input.";
+    "Transform tree at PATH back into text using lens LENS and store the\n"
+    " resulting string at NODE_OUT. Assume that the tree was initially read in\n"
+    " with the same lens and the string stored at NODE_IN as input.";
 
 static const struct command_def cmd_retrieve_def = {
     .name = "retrieve",
