@@ -496,16 +496,24 @@ static int main_loop(void) {
             return ret;
         }
 
-        if (*line == '\0' || *line == '#')
+        if (*line == '\0' || *line == '#') {
+            free(line);
             continue;
+        }
 
         code = run_command(line);
-        if (code == -2)
+        if (code == -2) {
+            free(line);
             return ret;
+        }
+
         if (code < 0) {
             ret = -1;
             print_aug_error();
         }
+
+        if (line != inputline)
+            free(line);
     }
 }
 

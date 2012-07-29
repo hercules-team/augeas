@@ -235,8 +235,6 @@ static int parseline(struct command *cmd, char *line) {
     int narg = 0, nopt = 0;
     const struct command_opt_def *def;
 
-    free_command_opts(cmd);
-
     tok = nexttoken(cmd, &line, false);
     if (tok == NULL)
         return -1;
@@ -1145,6 +1143,8 @@ int aug_srun(augeas *aug, FILE *out, const char *text) {
             result = -2;
             goto done;
         }
+
+        free_command_opts(&cmd);
         FREE(line);
         text = (*eol == '\0') ? eol : eol + 1;
     }
