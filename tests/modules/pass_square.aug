@@ -112,3 +112,9 @@ test sqr3 put input3 after clear "/x[1]" = input3
 let b4 = del "x" "x"
 let rec sqr4 = [ del /[a]+/ "a" . square /[b]|[c]/ (b4|sqr4) ]
 test sqr4 put "aabaaacxcb" after rm "x" = "aabaaacxcb"
+
+(* matches can be case-insensitive *)
+let s5 = store /[yz]/
+let sqr5 = [ square /x/i s ] *
+test sqr5 get "xyXXyxXyx" = { "x" = "y" }{ "X" = "y" }{ "X" = "y" }
+test sqr5 put "xyX" after set "/x[3]" "z" = "xyxxzx"

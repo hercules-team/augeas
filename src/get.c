@@ -737,7 +737,7 @@ static struct tree *get_square(struct lens *lens, struct state *state) {
     ensure0(key != NULL, state->info);
     ensure0(square != NULL, state->info);
 
-    if (strcmp(key, square) != 0) {
+    if (STRCASENEQ(key, square)) {
         get_error(state, lens, "%s \"%s\" %s \"%s\"",
                 "Parse error: mismatched key in square lens, expecting", key,
                 "but got", square);
@@ -1064,7 +1064,7 @@ static void visit_exit(struct lens *lens,
             ensure(square != NULL, state->info);
 
             // raise syntax error if they are not equals
-            if (strcmp(key, square) != 0){
+            if (STRCASENEQ(key, square)){
                 get_error(state, lens, "%s \"%s\" %s \"%s\"",
                         "Parse error: mismatched key in square lens, expecting",
                         key, "but got", square);
