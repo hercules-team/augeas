@@ -268,7 +268,7 @@ static inline int streqx(const char *s1, const char *s2) {
 
 /* Functions */
 
-typedef void (*func_impl_t)(struct state *state);
+typedef void (*func_impl_t)(struct state *state, int nargs);
 
 struct func {
     const char      *name;
@@ -278,13 +278,13 @@ struct func {
     func_impl_t      impl;
 };
 
-static void func_last(struct state *state);
-static void func_position(struct state *state);
-static void func_count(struct state *state);
-static void func_label(struct state *state);
-static void func_regexp(struct state *state);
-static void func_glob(struct state *state);
-static void func_int(struct state *state);
+static void func_last(struct state *state, int nargs);
+static void func_position(struct state *state, int nargs);
+static void func_count(struct state *state, int nargs);
+static void func_label(struct state *state, int nargs);
+static void func_regexp(struct state *state, int nargs);
+static void func_glob(struct state *state, int nargs);
+static void func_int(struct state *state, int nargs);
 
 static const enum type const arg_types_nodeset[] = { T_NODESET };
 static const enum type const arg_types_string[] = { T_STRING };
@@ -612,7 +612,15 @@ static struct value *expr_value(struct expr *expr, struct state *state) {
  ************************************************************************/
 static void eval_expr(struct expr *expr, struct state *state);
 
-static void func_last(struct state *state) {
+
+#define ensure_arity(min, max)                                          \
+    if (nargs < min || nargs > max) {                                   \
+        STATE_ERROR(state, PATHX_EINTERNAL);                            \
+        return;                                                         \
+    }
+
+static void func_last(struct state *state, int nargs) {
+    ensure_arity(0, 0);
     value_ind_t vind = make_value(T_NUMBER, state);
     RET_ON_ERROR;
 
@@ -620,7 +628,8 @@ static void func_last(struct state *state) {
     push_value(vind, state);
 }
 
-static void func_position(struct state *state) {
+static void func_position(struct state *state, int nargs) {
+    ensure_arity(0, 0);
     value_ind_t vind = make_value(T_NUMBER, state);
     RET_ON_ERROR;
 
@@ -628,7 +637,8 @@ static void func_position(struct state *state) {
     push_value(vind, state);
 }
 
-static void func_count(struct state *state) {
+static void func_count(struct state *state, int nargs) {
+    ensure_arity(1, 1);
     value_ind_t vind = make_value(T_NUMBER, state);
     RET_ON_ERROR;
 
@@ -637,7 +647,8 @@ static void func_count(struct state *state) {
     push_value(vind, state);
 }
 
-static void func_label(struct state *state) {
+static void func_label(struct state *state, int nargs) {
+    ensure_arity(0, 0);
     value_ind_t vind = make_value(T_STRING, state);
     char *s;
 
@@ -655,7 +666,8 @@ static void func_label(struct state *state) {
     push_value(vind, state);
 }
 
-static void func_int(struct state *state) {
+static void func_int(struct state *state, int nargs) {
+    ensure_arity(1, 1);
     value_ind_t vind = make_value(T_NUMBER, state);
     int64_t i = -1;
     RET_ON_ERROR;
@@ -766,11 +778,13 @@ static void func_regexp_or_glob(struct state *state, int glob) {
     push_value(vind, state);
 }
 
-static void func_regexp(struct state *state) {
+static void func_regexp(struct state *state, int nargs) {
+    ensure_arity(1, 1);
     func_regexp_or_glob(state, 0);
 }
 
-static void func_glob(struct state *state) {
+static void func_glob(struct state *state, int nargs) {
+    ensure_arity(1, 1);
     func_regexp_or_glob(state, 1);
 }
 
@@ -1079,7 +1093,7 @@ static void eval_app(struct expr *expr, struct state *state) {
         eval_expr(expr->args[i], state);
         RET_ON_ERROR;
     }
-    expr->func->impl(state);
+    expr->func->impl(state, expr->func->arity);
 }
 
 static bool eval_pred(struct expr *expr, struct state *state) {
