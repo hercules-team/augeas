@@ -580,6 +580,38 @@ static const struct command_def cmd_move_def = {
     .help = cmd_mv_help
 };
 
+static void cmd_rename(struct command *cmd) {
+    const char *src = arg_value(cmd, "src");
+    const char *lbl = arg_value(cmd, "lbl");
+    int cnt;
+
+    cnt = aug_rename(cmd->aug, src, lbl);
+    if (cnt < 0)
+        ERR_REPORT(cmd, AUG_ECMDRUN,
+                   "Renaming %s to %s failed", src, lbl);
+    if (! HAS_ERR(cmd))
+        fprintf(cmd->out, "rename : %s to %s %d\n", src, lbl, cnt);
+}
+
+static const struct command_opt_def cmd_rename_opts[] = {
+    { .type = CMD_PATH, .name = "src", .optional = false,
+      .help = "the tree to rename" },
+    { .type = CMD_STR, .name = "lbl", .optional = false,
+      .help = "the new label" },
+    CMD_OPT_DEF_LAST
+};
+
+static const char const cmd_rename_help[] =
+    "Rename the label of all nodes matching SRC to LBL.";
+
+static const struct command_def cmd_rename_def = {
+    .name = "rename",
+    .opts = cmd_rename_opts,
+    .handler = cmd_rename,
+    .synopsis = "rename a subtree label",
+    .help = cmd_rename_help
+};
+
 static void cmd_set(struct command *cmd) {
     const char *path = arg_value(cmd, "path");
     const char *val = arg_value(cmd, "value");
@@ -1088,6 +1120,7 @@ static const struct command_def const *commands[] = {
     &cmd_match_def,
     &cmd_mv_def,
     &cmd_move_def,
+    &cmd_rename_def,
     &cmd_print_def,
     &cmd_dump_xml_def,
     &cmd_rm_def,

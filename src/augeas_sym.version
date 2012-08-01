@@ -56,4 +56,5 @@ AUGEAS_0.16.0 {
     global:
       aug_text_store;
       aug_text_retrieve;
+      aug_rename;
 } AUGEAS_0.15.0;

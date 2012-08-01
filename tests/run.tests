@@ -213,6 +213,58 @@ prints
   /x/y/b/c = "value"
 
 #
+# test rename
+#
+test rename 1
+  rename /augeas/version version2
+prints
+  rename : /augeas/version to version2 1
+
+test rename-into-self 1
+  rename /augeas augeas
+prints
+  rename : /augeas to augeas 1
+
+test rename-tree1 3
+  set /a/b/c value
+  rename /a/b/c x
+  print /*[ label() != 'augeas' and label() != 'files']
+prints
+  rename : /a/b/c to x 1
+  /a
+  /a/b
+  /a/b/x = "value"
+
+test rename-tree2 4
+  set /a/b/c value
+  set /a/b/d value2
+  rename /a/b/c x
+  print /*[ label() != 'augeas' and label() != 'files']
+prints
+  rename : /a/b/c to x 1
+  /a
+  /a/b
+  /a/b/x = "value"
+  /a/b/d = "value2"
+
+test rename-multiple 4
+  set /a/b/d value
+  set /a/c/d value2
+  rename //d x
+  print /*[ label() != 'augeas' and label() != 'files']
+prints
+  rename : //d to x 2
+  /a
+  /a/b
+  /a/b/x = "value"
+  /a/c
+  /a/c/x = "value2"
+
+test rename-slash -1 ELABEL
+  set /a/b/c value
+  rename /a/b/c va/lue
+
+#
 # test set
 #
 test set-not-there 2

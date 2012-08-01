@@ -225,6 +225,15 @@ int aug_rm(augeas *aug, const char *path);
  */
 int aug_mv(augeas *aug, const char *src, const char *dst);
 
+/* Function: aug_rename
+ *
+ * Rename the label of all nodes matching SRC to LBL.
+ *
+ * Returns:
+ * The number of nodes renamed on success and -1 on failure.
+ */
+int aug_rename(augeas *aug, const char *src, const char *lbl);
+
 /* Function: aug_match
  *
  * Returns:
@@ -391,7 +400,8 @@ typedef enum {
     AUG_ENOSPAN,        /* No span for this node */
     AUG_EMVDESC,        /* Cannot move node into its descendant */
     AUG_ECMDRUN,        /* Failed to execute command */
-    AUG_EBADARG         /* Invalid argument in funcion call */
+    AUG_EBADARG,        /* Invalid argument in funcion call */
+    AUG_ELABEL          /* Invalid label */
 } aug_errcode_t;
 
 /* Return the error code from the last API call */

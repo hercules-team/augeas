@@ -416,6 +416,34 @@ static void testMv(CuTest *tc) {
 }
 
 
+static void testRename(CuTest *tc) {
+    struct augeas *aug;
+    int r;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+
+    r = aug_set(aug, "/a/b/c", "value");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_rename(aug, "/a/b/c", "d");
+    CuAssertIntEquals(tc, 1, r);
+
+    r = aug_set(aug, "/a/e/d", "value2");
+    CuAssertRetSuccess(tc, r);
+
+    // Multiple rename
+    r = aug_rename(aug, "/a//d", "x");
+    CuAssertIntEquals(tc, 2, r);
+
+    // Label with a /
+    r = aug_rename(aug, "/a/e/x", "a/b");
+    CuAssertIntEquals(tc, -1, r);
+    CuAssertIntEquals(tc, AUG_ELABEL, aug_error(aug));
+
+    aug_close(aug);
+}
+
 static void testToXml(CuTest *tc) {
     struct augeas *aug;
     int r;
@@ -550,6 +578,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testDefNodeCreateMeta);
     SUITE_ADD_TEST(suite, testNodeInfo);
     SUITE_ADD_TEST(suite, testMv);
+    SUITE_ADD_TEST(suite, testRename);
     SUITE_ADD_TEST(suite, testToXml);
     SUITE_ADD_TEST(suite, testTextStore);
     SUITE_ADD_TEST(suite, testTextRetrieve);

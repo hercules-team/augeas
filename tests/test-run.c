@@ -49,7 +49,7 @@ static char *lensdir;
 static const char *const errtokens[] = {
     "NOERROR", "ENOMEM", "EINTERNAL", "EPATHX", "ENOMATCH",
     "EMMATCH", "ESYNTAX", "ENOLENS", "EMXFM", "ENOSPAN",
-    "EMVDESC", "ECMDRUN", "EBADARG"
+    "EMVDESC", "ECMDRUN", "EBADARG", "ELABEL"
 };
 
 struct test {

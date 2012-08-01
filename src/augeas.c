@@ -78,7 +78,8 @@ static const char *const errcodes[] = {
     "Node has no span info",                            /* AUG_ENOSPAN */
     "Cannot move node into its descendant",             /* AUG_EMVDESC */
     "Failed to execute command",                        /* AUG_ECMDRUN */
-    "Invalid argument in function call"                 /* AUG_EBADARG */
+    "Invalid argument in function call",                /* AUG_EBADARG */
+    "Invalid label"                                     /* AUG_ELABEL */
 };
 
 static void tree_mark_dirty(struct tree *tree) {
@@ -1241,6 +1242,37 @@ int aug_mv(struct augeas *aug, const char *src, const char *dst) {
  error:
     free_pathx(s);
     free_pathx(d);
+    api_exit(aug);
+    return ret;
+}
+
+int aug_rename(struct augeas *aug, const char *src, const char *lbl) {
+    struct pathx *s = NULL;
+    struct tree *ts;
+    int ret;
+    int count = 0;
+
+    api_entry(aug);
+
+    ret = -1;
+    ERR_THROW(strchr(lbl, '/') != NULL, aug, AUG_ELABEL,
+              "Label %s contains a /", lbl);
+
+    s = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), src, true);
+    ERR_BAIL(aug);
+
+    for (ts = pathx_first(s); ts != NULL; ts = pathx_next(s)) {
+        free(ts->label);
+        ts->label = strdup(lbl);
+        tree_mark_dirty(ts);
+        count ++;
+    }
+
+    free_pathx(s);
+    api_exit(aug);
+    return count;
+ error:
+    free_pathx(s);
     api_exit(aug);
     return ret;
 }
