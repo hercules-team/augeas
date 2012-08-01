@@ -233,6 +233,14 @@ test regexp3 /files/etc/hosts/*[ipaddr =~ regexp(/files/etc/hosts/*/ipaddr)]
 # Check that we don't crash when the nodeset contains all NULL's
 test regexp4 /files/etc/hosts/*[ipaddr =~ regexp(/files/etc/hosts/*[ipaddr])]
 
+# Check case-insensitive matches
+test regexp5 /files/etc/sysconfig/network-scripts/*[label() =~ regexp('.*-ETH0', 'i')]
+     /files/etc/sysconfig/network-scripts/ifcfg-eth0
+
+test regexp6 /files/etc/hosts/*[ipaddr =~ regexp(/files/etc/hosts/*/ipaddr, 'i')]
+     /files/etc/hosts/1
+     /files/etc/hosts/2
+
 test glob1 /files[ 'axxa' =~ glob('a*a') ]
      /files
 

@@ -316,6 +316,21 @@ static int test_invalid_regexp(struct augeas *aug) {
     return -1;
 }
 
+static int test_wrong_regexp_flag(struct augeas *aug) {
+    int r;
+
+    printf("%-30s ... ", "wrong_regexp_flag");
+    r = aug_match(aug, "/files/*[ * =~ regexp('abc', 'o')]", NULL);
+    if (r >= 0)
+        goto fail;
+
+    printf("PASS\n");
+    return 0;
+ fail:
+    printf("FAIL\n");
+    return -1;
+}
+
 static int run_tests(struct test *tests, int argc, char **argv) {
     char *lensdir;
     struct augeas *aug = NULL;
@@ -355,6 +370,9 @@ static int run_tests(struct test *tests, int argc, char **argv) {
             result = EXIT_FAILURE;
 
         if (test_invalid_regexp(aug) < 0)
+            result = EXIT_FAILURE;
+
+        if (test_wrong_regexp_flag(aug) < 0)
             result = EXIT_FAILURE;
     }
     aug_close(aug);
