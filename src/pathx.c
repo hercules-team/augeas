@@ -1347,6 +1347,8 @@ static void check_app(struct expr *expr, struct state *state) {
         const struct func *fn = builtin_funcs + f;
         if (STRNEQ(expr->func->name, fn->name))
             continue;
+        if (expr->func->arity != fn->arity)
+            continue;
 
         int match = 1;
         for (int i=0; i < expr->func->arity; i++) {
@@ -1920,11 +1922,13 @@ static void parse_literal(struct state *state) {
 static void parse_function_call(struct state *state) {
     const struct func *func = NULL;
     struct expr *expr = NULL;
-    int nargs = 0;
+    int nargs = 0, find = 0;
 
-    for (int i=0; i < ARRAY_CARDINALITY(builtin_funcs); i++) {
-        if (looking_at(state, builtin_funcs[i].name, "("))
-            func = builtin_funcs + i;
+    for (; find < ARRAY_CARDINALITY(builtin_funcs); find++) {
+        if (looking_at(state, builtin_funcs[find].name, "(")) {
+            func = builtin_funcs + find;
+            break;
+        }
     }
     if (func == NULL) {
         STATE_ERROR(state, PATHX_ENAME);
@@ -1944,7 +1948,18 @@ static void parse_function_call(struct state *state) {
         }
     }
 
-    if (nargs != func->arity) {
+    int found = 0; /* Whether there is a builtin matching in name and arity */
+    for (int i=find; i < ARRAY_CARDINALITY(builtin_funcs); i++) {
+        if (STRNEQ(func->name, builtin_funcs[i].name))
+            break;
+        if (builtin_funcs[i].arity == nargs) {
+            func = builtin_funcs + i;
+            found = 1;
+            break;
+        }
+    }
+
+    if (! found) {
         STATE_ERROR(state, PATHX_EARITY);
         return;
     }
