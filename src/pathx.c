@@ -49,7 +49,8 @@ static const char *const errcodes[] = {
     "no match for path expression",               /* PATHX_ENOMATCH */
     "wrong number of arguments in function call", /* PATHX_EARITY */
     "invalid regular expression",                 /* PATHX_EREGEXP */
-    "too many matches"                            /* PATHX_EMMATCH */
+    "too many matches",                           /* PATHX_EMMATCH */
+    "wrong flag for regexp"                       /* PATHX_EREGEXPFLAG */
 };
 
 /*
@@ -283,12 +284,15 @@ static void func_position(struct state *state, int nargs);
 static void func_count(struct state *state, int nargs);
 static void func_label(struct state *state, int nargs);
 static void func_regexp(struct state *state, int nargs);
+static void func_regexp_flag(struct state *state, int nargs);
 static void func_glob(struct state *state, int nargs);
 static void func_int(struct state *state, int nargs);
 
 static const enum type const arg_types_nodeset[] = { T_NODESET };
 static const enum type const arg_types_string[] = { T_STRING };
 static const enum type const arg_types_bool[] = { T_BOOLEAN };
+static const enum type const arg_types_string_string[] = { T_STRING, T_STRING };
+static const enum type const arg_types_nodeset_string[] = { T_NODESET, T_STRING };
 
 static const struct func builtin_funcs[] = {
     { .name = "last", .arity = 0, .type = T_NUMBER, .arg_types = NULL,
@@ -306,6 +310,12 @@ static const struct func builtin_funcs[] = {
     { .name = "regexp", .arity = 1, .type = T_REGEXP,
       .arg_types = arg_types_nodeset,
       .impl = func_regexp },
+    { .name = "regexp", .arity = 2, .type = T_REGEXP,
+      .arg_types = arg_types_string_string,
+      .impl = func_regexp_flag },
+    { .name = "regexp", .arity = 2, .type = T_REGEXP,
+      .arg_types = arg_types_nodeset_string,
+      .impl = func_regexp_flag },
     { .name = "glob", .arity = 1, .type = T_REGEXP,
       .arg_types = arg_types_string,
       .impl = func_glob },
@@ -701,7 +711,7 @@ static void func_int(struct state *state, int nargs) {
 }
 
 static struct regexp *
-nodeset_as_regexp(struct info *info, struct nodeset *ns, int glob) {
+nodeset_as_regexp(struct info *info, struct nodeset *ns, int glob, int nocase) {
     struct regexp *result = NULL;
     struct regexp **rx = NULL;
     int used = 0;
@@ -714,7 +724,7 @@ nodeset_as_regexp(struct info *info, struct nodeset *ns, int glob) {
     if (used == 0) {
         /* If the nodeset is empty, make sure we produce a regexp
          * that never matches anything */
-        result = make_regexp_unescape(info, "[^\001-\7ff]", 0);
+        result = make_regexp_unescape(info, "[^\001-\7ff]", nocase);
     } else {
         if (ALLOC_N(rx, ns->used) < 0)
             goto error;
@@ -741,7 +751,7 @@ nodeset_as_regexp(struct info *info, struct nodeset *ns, int glob) {
     return result;
 }
 
-static void func_regexp_or_glob(struct state *state, int glob) {
+static void func_regexp_or_glob(struct state *state, int glob, int nocase) {
     value_ind_t vind = make_value(T_REGEXP, state);
     int r;
 
@@ -754,9 +764,9 @@ static void func_regexp_or_glob(struct state *state, int glob) {
         if (glob)
             rx = make_regexp_from_glob(state->error->info, v->string);
         else
-            rx = make_regexp_unescape(state->error->info, v->string, 0);
+            rx = make_regexp_unescape(state->error->info, v->string, nocase);
     } else if (v->tag == T_NODESET) {
-        rx = nodeset_as_regexp(state->error->info, v->nodeset, glob);
+        rx = nodeset_as_regexp(state->error->info, v->nodeset, glob, nocase);
     } else {
         assert(0);
     }
@@ -780,12 +790,25 @@ static void func_regexp_or_glob(struct state *state, int glob) {
 
 static void func_regexp(struct state *state, int nargs) {
     ensure_arity(1, 1);
-    func_regexp_or_glob(state, 0);
+    func_regexp_or_glob(state, 0, 0);
+}
+
+static void func_regexp_flag(struct state *state, int nargs) {
+    ensure_arity(2, 2);
+    int nocase = 0;
+    struct value *f = pop_value(state);
+
+    if (STREQ("i", f->string))
+        nocase = 1;
+    else
+        STATE_ERROR(state, PATHX_EREGEXPFLAG);
+
+    func_regexp_or_glob(state, 0, nocase);
 }
 
 static void func_glob(struct state *state, int nargs) {
     ensure_arity(1, 1);
-    func_regexp_or_glob(state, 1);
+    func_regexp_or_glob(state, 1, 0);
 }
 
 static bool coerce_to_bool(struct value *v) {

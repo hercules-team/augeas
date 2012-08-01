@@ -503,7 +503,8 @@ typedef enum {
     PATHX_ENOMATCH,
     PATHX_EARITY,
     PATHX_EREGEXP,
-    PATHX_EMMATCH
+    PATHX_EMMATCH,
+    PATHX_EREGEXPFLAG
 } pathx_errcode_t;
 
 struct pathx;
