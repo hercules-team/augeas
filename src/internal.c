@@ -248,7 +248,7 @@ int print_chars(FILE *out, const char *text, int cnt) {
     if (cnt < 0)
         cnt = strlen(text);
 
-    esc = escape(text, cnt, NULL);
+    esc = escape(text, cnt, "\"");
     total = strlen(esc);
     if (out != NULL)
         fprintf(out, "%s", esc);
