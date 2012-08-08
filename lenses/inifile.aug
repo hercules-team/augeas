@@ -224,6 +224,36 @@ let indented_entry (kw:regexp) (sep:lens) (comment:lens)
                            (comment|eol)
                          ]
                          | comment
+(*
+View: entry_list
+  Generic INI File list entry
+
+  Parameters:
+    kw:regexp     - keyword regexp for the label
+    sep:lens      - lens to use as key/value separator
+    sto:regexp    - store regexp for the values
+    list_sep:lens - lens to use as list separator
+    comment:lens  - lens to use as comment
+*)
+let entry_list (kw:regexp) (sep:lens) (sto:regexp) (list_sep:lens) (comment:lens) =
+  let list = counter "elem"
+      . Build.opt_list [ seq "elem" . store sto ] list_sep
+  in Build.key_value_line_comment kw sep (Sep.opt_space . list) comment
+
+(*
+View: entry_list_nocomment
+  Generic INI File list entry without an end-of-line comment
+
+  Parameters:
+    kw:regexp     - keyword regexp for the label
+    sep:lens      - lens to use as key/value separator
+    sto:regexp    - store regexp for the values
+    list_sep:lens - lens to use as list separator
+*)
+let entry_list_nocomment (kw:regexp) (sep:lens) (sto:regexp) (list_sep:lens) =
+  let list = counter "elem"
+      . Build.opt_list [ seq "elem" . store sto ] list_sep
+  in Build.key_value_line kw sep (Sep.opt_space . list)
 
 (*
 Variable: entry_re

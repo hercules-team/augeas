@@ -37,22 +37,14 @@ let sep      = IniFile.sep IniFile.sep_default IniFile.sep_default
  *
  *************************************************************************)
 
-(* View: list_entry
-     A generic entry with listed items *)
-let list_entry (kw:regexp) (sto_re:regexp) (sep:lens) =
-  Build.key_value_line kw Sep.space_equal
-    (counter "elem" . Build.opt_list
-      [ seq "elem" . store sto_re ]
-      sep)
-
 (* View: entry *)
 let entry    =
      let comma_list_re = "password-stores"
   in let space_list_re = "global-ignores" | "preserved-conflict-file-exts"
   in let std_re = /[^ \t\n\/=#]+/ - comma_list_re - space_list_re
   in IniFile.entry_multiline_nocomment std_re sep comment
-   | list_entry comma_list_re Rx.word Sep.comma
-   | list_entry space_list_re Rx.no_spaces (del /\n?[ \t]+/ " ")
+   | IniFile.entry_list_nocomment comma_list_re sep Rx.word Sep.comma
+   | IniFile.entry_list_nocomment space_list_re sep Rx.no_spaces (del /\n?[ \t]+/ " ")
 
 
 
