@@ -362,6 +362,20 @@ int aug_to_xml(const augeas *aug, const char *path, xmlNode **xmldoc,
                unsigned int flags);
 
 /*
+ * Function: aug_transform
+ *
+ * Add a transform for FILE using LENS.
+ * EXCL specifies if this the file is to be included (0)
+ * or excluded (1) from the LENS.
+ * The LENS maybe be a module name or a full lens name.
+ * If a module name is given, then lns will be the lens assumed.
+ *
+ * Returns:
+ * 1 on success, -1 on failure
+ */
+int aug_transform(augeas *aug, const char *lens, const char *file, int excl);
+
+/*
  * Function: aug_srun
  *
  * Run one or more newline-separated commands. The output of the commands

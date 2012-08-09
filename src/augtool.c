@@ -44,6 +44,8 @@ static const char *const progname = "augtool";
 static unsigned int flags = AUG_NONE;
 const char *root = NULL;
 char *loadpath = NULL;
+char *transforms = NULL;
+size_t transformslen = 0;
 const char *inputfile = NULL;
 int echo_commands = 0;         /* Gets also changed in main_loop */
 bool print_version = false;
@@ -168,7 +170,8 @@ static char *readline_command_generator(const char *text, int state) {
         "quit", "clear", "defnode", "defvar",
         "get", "ins", "load", "ls", "match",
         "mv", "rename", "print", "dump-xml", "rm", "save", "set", "setm",
-        "clearm", "span", "store", "retrieve", "help", NULL };
+        "clearm", "span", "store", "retrieve", "transform",
+        "help", NULL };
 
     static int current = 0;
     const char *name;
@@ -266,22 +269,25 @@ static void usage(void) {
     fprintf(stderr, "Run '%s help' to get a list of possible commands.\n",
             progname);
     fprintf(stderr, "\nOptions:\n\n");
-    fprintf(stderr, "  -c, --typecheck    typecheck lenses\n");
-    fprintf(stderr, "  -b, --backup       preserve originals of modified files with\n"
-                    "                     extension '.augsave'\n");
-    fprintf(stderr, "  -n, --new          save changes in files with extension '.augnew',\n"
-                    "                     leave original unchanged\n");
-    fprintf(stderr, "  -r, --root ROOT    use ROOT as the root of the filesystem\n");
-    fprintf(stderr, "  -I, --include DIR  search DIR for modules; can be given mutiple times\n");
-    fprintf(stderr, "  -e, --echo         echo commands when reading from a file\n");
-    fprintf(stderr, "  -f, --file FILE    read commands from FILE\n");
-    fprintf(stderr, "  -s, --autosave     automatically save at the end of instructions\n");
-    fprintf(stderr, "  -i, --interactive  run an interactive shell after evaluating the commands in STDIN and FILE\n");
-    fprintf(stderr, "  -S, --nostdinc     do not search the builtin default directories for modules\n");
-    fprintf(stderr, "  -L, --noload       do not load any files into the tree on startup\n");
-    fprintf(stderr, "  -A, --noautoload   do not autoload modules from the search path\n");
-    fprintf(stderr, "  --span             load span positions for nodes related to a file\n");
-    fprintf(stderr, "  --version          print version information and exit.\n");
+    fprintf(stderr, "  -c, --typecheck            typecheck lenses\n");
+    fprintf(stderr, "  -b, --backup               preserve originals of modified files with\n"
+                    "                             extension '.augsave'\n");
+    fprintf(stderr, "  -n, --new                  save changes in files with extension '.augnew',\n"
+                    "                             leave original unchanged\n");
+    fprintf(stderr, "  -r, --root ROOT            use ROOT as the root of the filesystem\n");
+    fprintf(stderr, "  -I, --include DIR          search DIR for modules; can be given mutiple times\n");
+    fprintf(stderr, "  -t, --transform LENS=FILE  add a transform for FILE using LENS\n");
+    fprintf(stderr, "  -e, --echo                 echo commands when reading from a file\n");
+    fprintf(stderr, "  -f, --file FILE            read commands from FILE\n");
+    fprintf(stderr, "  -s, --autosave             automatically save at the end of instructions\n");
+    fprintf(stderr, "  -i, --interactive          run an interactive shell after evaluating\n"
+                    "                             the commands in STDIN and FILE\n");
+    fprintf(stderr, "  -S, --nostdinc             do not search the builtin default directories\n"
+                    "                             for modules\n");
+    fprintf(stderr, "  -L, --noload               do not load any files into the tree on startup\n");
+    fprintf(stderr, "  -A, --noautoload           do not autoload modules from the search path\n");
+    fprintf(stderr, "  --span                     load span positions for nodes related to a file\n");
+    fprintf(stderr, "  --version                  print version information and exit.\n");
 
     exit(EXIT_FAILURE);
 }
@@ -294,26 +300,27 @@ static void parse_opts(int argc, char **argv) {
         VAL_SPAN = VAL_VERSION + 1
     };
     struct option options[] = {
-        { "help",      0, 0, 'h' },
-        { "typecheck", 0, 0, 'c' },
-        { "backup",    0, 0, 'b' },
-        { "new",       0, 0, 'n' },
-        { "root",      1, 0, 'r' },
-        { "include",   1, 0, 'I' },
-        { "echo",      0, 0, 'e' },
-        { "file",      1, 0, 'f' },
-        { "autosave",  0, 0, 's' },
-        { "interactive",  0, 0, 'i' },
-        { "nostdinc",  0, 0, 'S' },
-        { "noload",    0, 0, 'L' },
-        { "noautoload", 0, 0, 'A' },
-        { "span",      0, 0, VAL_SPAN },
-        { "version",   0, 0, VAL_VERSION },
+        { "help",        0, 0, 'h' },
+        { "typecheck",   0, 0, 'c' },
+        { "backup",      0, 0, 'b' },
+        { "new",         0, 0, 'n' },
+        { "root",        1, 0, 'r' },
+        { "include",     1, 0, 'I' },
+        { "transform",   1, 0, 't' },
+        { "echo",        0, 0, 'e' },
+        { "file",        1, 0, 'f' },
+        { "autosave",    0, 0, 's' },
+        { "interactive", 0, 0, 'i' },
+        { "nostdinc",    0, 0, 'S' },
+        { "noload",      0, 0, 'L' },
+        { "noautoload",  0, 0, 'A' },
+        { "span",        0, 0, VAL_SPAN },
+        { "version",     0, 0, VAL_VERSION },
         { 0, 0, 0, 0}
     };
     int idx;
 
-    while ((opt = getopt_long(argc, argv, "hnbcr:I:ef:siSLA", options, &idx)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hnbcr:I:t:ef:siSLA", options, &idx)) != -1) {
         switch(opt) {
         case 'c':
             flags |= AUG_TYPE_CHECK;
@@ -332,6 +339,9 @@ static void parse_opts(int argc, char **argv) {
             break;
         case 'I':
             argz_add(&loadpath, &loadpathlen, optarg);
+            break;
+        case 't':
+            argz_add(&transforms, &transformslen, optarg);
             break;
         case 'e':
             echo_commands = 1;
@@ -537,6 +547,33 @@ static int run_args(int argc, char **argv) {
     return (code == 0 || code == -2) ? 0 : -1;
 }
 
+static void add_transforms(char *ts, size_t tslen) {
+    char *command;
+    int r;
+    char *t = NULL;
+    bool added_transform = false;
+
+    while ((t = argz_next(ts, tslen, t))) {
+        r = xasprintf(&command, "transform %s", t);
+        if (r < 0)
+            fprintf(stderr, "error: Failed to add transform %s: could not allocate memory\n", t);
+
+        r = aug_srun(aug, stdout, command);
+        if (r < 0)
+            fprintf(stderr, "error: Failed to add transform %s: %s\n", t, aug_error_message(aug));
+
+	added_transform = true;
+    }
+
+    if (added_transform) {
+        r = aug_load(aug);
+        if (r < 0)
+            fprintf(stderr, "error: Failed to load with new transforms: %s\n", aug_error_message(aug));
+    }
+
+    free(command);
+}
+
 int main(int argc, char **argv) {
     int r;
 
@@ -551,6 +588,7 @@ int main(int argc, char **argv) {
             print_aug_error();
         exit(EXIT_FAILURE);
     }
+    add_transforms(transforms, transformslen);
     if (print_version) {
         print_version_info();
         return EXIT_SUCCESS;

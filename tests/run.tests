@@ -340,6 +340,37 @@ test get-bad-pathx -1 EPATHX
   get /files[]
 
 #
+# test transform
+#
+test transform-1 3
+  transform Test incl /tmp/bar
+  get /augeas/load/Test/lens
+  get /augeas/load/Test/incl
+prints
+  /augeas/load/Test/lens = Test.lns
+  /augeas/load/Test/incl = /tmp/bar
+
+test transform-2 4
+  transform Bar incl /tmp/foo/*
+  transform Bar incl /tmp/bar/*
+  transform Bar excl /tmp/foo/baz
+  print /augeas/load/Bar
+prints
+  /augeas/load/Bar
+  /augeas/load/Bar/lens = "Bar.lns"
+  /augeas/load/Bar/incl[1] = "/tmp/foo/*"
+  /augeas/load/Bar/incl[2] = "/tmp/bar/*"
+  /augeas/load/Bar/excl = "/tmp/foo/baz"
+
+test transform-3 2
+  transform Bar.lns incl /tmp/foo/*
+  print /augeas/load/Bar
+prints
+  /augeas/load/Bar
+  /augeas/load/Bar/lens = "Bar.lns"
+  /augeas/load/Bar/incl = "/tmp/foo/*"
+
+#
 # test print
 #
 test print-save 1

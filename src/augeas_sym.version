@@ -57,4 +57,5 @@ AUGEAS_0.16.0 {
       aug_text_store;
       aug_text_retrieve;
       aug_rename;
+      aug_transform;
 } AUGEAS_0.15.0;

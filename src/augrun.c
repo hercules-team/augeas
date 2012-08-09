@@ -942,6 +942,51 @@ static const struct command_def cmd_dump_xml_def = {
     .help = "Export entries in the tree as XML. If PATH is given, printing starts there,\n otherwise the whole tree is printed. If FILENAME is given, the XML is saved\n to the given file."
 };
 
+static void cmd_transform(struct command *cmd) {
+    const char *lens = arg_value(cmd, "lens");
+    const char *filter = arg_value(cmd, "filter");
+    const char *file = arg_value(cmd, "file");
+    int r, excl = 0;
+
+    if (STREQ("excl", filter))
+        excl = 1;
+    else if (STREQ("incl", filter))
+        excl = 0;
+    else
+        ERR_REPORT(cmd, AUG_ECMDRUN,
+                   "FILTER must be \"incl\" or \"excl\"");
+
+    r = aug_transform(cmd->aug, lens, file, excl);
+    if (r < 0)
+        ERR_REPORT(cmd, AUG_ECMDRUN,
+                   "Adding transform for %s on lens %s failed", lens, file);
+}
+
+static const struct command_opt_def cmd_transform_opts[] = {
+    { .type = CMD_PATH, .name = "lens", .optional = false,
+      .help = "the lens to use" },
+    { .type = CMD_PATH, .name = "filter", .optional = false,
+      .help = "the type of filter, either \"incl\" or \"excl\"" },
+    { .type = CMD_PATH, .name = "file", .optional = false,
+      .help = "the file to associate to the lens" },
+    CMD_OPT_DEF_LAST
+};
+
+static const char const cmd_transform_help[] =
+    "Add a transform for FILE using LENS. The LENS may be a module name or a\n"
+    " full lens name.  If a module name is given, then \"lns\" will be the lens\n"
+    " assumed.  The FILTER must be either \"incl\" or \"excl\".  If the filter is\n"
+    " \"incl\",  the FILE will be parsed by the LENS.  If the filter is \"excl\",\n"
+    " the FILE will be excluded from the LENS. FILE may contain wildcards." ;
+
+static const struct command_def cmd_transform_def = {
+    .name = "transform",
+    .opts = cmd_transform_opts,
+    .handler = cmd_transform,
+    .synopsis = "add a transform",
+    .help = cmd_transform_help
+};
+
 static void cmd_save(struct command *cmd) {
     int r;
     r = aug_save(cmd->aug);
@@ -1132,6 +1177,7 @@ static const struct command_def const *commands[] = {
     &cmd_store_def,
     &cmd_retrieve_def,
     &cmd_touch_def,
+    &cmd_transform_def,
     &cmd_help_def,
     &cmd_def_last
 };

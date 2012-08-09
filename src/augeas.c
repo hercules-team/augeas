@@ -1764,6 +1764,68 @@ int aug_to_xml(const struct augeas *aug, const char *pathin,
     return -1;
 }
 
+int aug_transform(struct augeas *aug, const char *lens,
+                  const char *file, int excl) {
+    struct tree *meta = tree_child_cr(aug->origin, s_augeas);
+    struct tree *load = tree_child_cr(meta, s_load);
+
+    int r = 0, result = -1;
+    struct tree *xfm = NULL, *lns = NULL, *t = NULL;
+    const char *filter = NULL;
+    char *p;
+    int exists;
+    char *lensname = NULL, *xfmname = NULL;
+
+    api_entry(aug);
+
+    ERR_NOMEM(meta == NULL || load == NULL, aug);
+
+    ARG_CHECK(STREQ("", lens), aug, "aug_transform: LENS must not be empty");
+    ARG_CHECK(STREQ("", file), aug, "aug_transform: FILE must not be empty");
+
+    if ((p = strrchr(lens, '.'))) {
+        lensname = strdup(lens);
+        xfmname = strndup(lens, p - lens);
+        ERR_NOMEM(lensname == NULL || xfmname == NULL, aug);
+    } else {
+        r = xasprintf(&lensname, "%s.lns", lens);
+        xfmname = strdup(lens);
+        ERR_NOMEM(r < 0 || xfmname == NULL, aug);
+    }
+
+    xfm = tree_child_cr(load, xfmname);
+    ERR_NOMEM(xfm == NULL, aug);
+
+    lns = tree_child_cr(xfm, s_lens);
+    ERR_NOMEM(lns == NULL, aug);
+
+    tree_store_value(lns, &lensname);
+
+    exists = 0;
+
+    filter = excl ? s_excl : s_incl;
+    list_for_each(c, xfm->children) {
+        if (c->value != NULL && STREQ(c->value, file)
+            && streqv(c->label, filter)) {
+            exists = 1;
+            break;
+        }
+    }
+    if (! exists) {
+        t = tree_append_s(xfm, filter, NULL);
+        ERR_NOMEM(t == NULL, aug);
+        r = tree_set_value(t, file);
+        ERR_NOMEM(r < 0, aug);
+    }
+
+    result = 0;
+ error:
+    free(lensname);
+    free(xfmname);
+    api_exit(aug);
+    return result;
+}
+
 int aug_print(const struct augeas *aug, FILE *out, const char *pathin) {
     struct pathx *p;
     int result;
