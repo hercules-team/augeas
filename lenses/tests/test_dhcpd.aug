@@ -373,3 +373,20 @@ test Dhcpd.lns get "subclass \"allocation-class-1\" 1:8:0:2b:4c:39:ad;" =
 
 (* overall test *)
 test Dhcpd.lns put conf after rm "/x" = conf
+
+(* bug #293: primary should support primary with argument *)
+let input293 = "zone EXAMPLE.ORG. {
+  primary 127.0.0.1;
+}"
+
+test Dhcpd.lns get input293 = 
+  { "zone" = "EXAMPLE.ORG."
+    { "primary" = "127.0.0.1" }
+  }
+
+test Dhcpd.lns get input293 = 
+  { "zone" = "EXAMPLE.ORG."
+    { "primary" = "127.0.0.1" }
+  }
+
+

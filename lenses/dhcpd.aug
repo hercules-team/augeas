@@ -194,6 +194,7 @@ let stmt_string_re    = "ddns-update-style"
                       | "use-host-decl-names"
                       | "use-lease-addr-for-default-route"
                       | "vendor-option-space"
+                      | "primary"
 
 let stmt_string_tpl (l:lens) = [ indent
                         . key stmt_string_re
