@@ -43,6 +43,9 @@ static const char *const s_pathx  = "pathx";
 static const char *const s_error  = "error";
 static const char *const s_pos    = "pos";
 static const char *const s_vars   = "variables";
+static const char *const s_lens   = "lens";
+static const char *const s_excl   = "excl";
+static const char *const s_incl   = "incl";
 
 #define TREE_HIDDEN(tree) ((tree)->label == NULL)
 
@@ -342,12 +345,12 @@ static struct tree *tree_from_transform(struct augeas *aug,
     r = asprintf(&v, "@%s", modname);
     ERR_NOMEM(r < 0, aug);
 
-    t = tree_append_s(txfm, "lens", v);
+    t = tree_append_s(txfm, s_lens, v);
     ERR_NOMEM(t == NULL, aug);
     v = NULL;
 
     list_for_each(f, xfm->filter) {
-        const char *l = f->include ? "incl" : "excl";
+        const char *l = f->include ? s_incl : s_excl;
         v = strdup(f->glob->str);
         ERR_NOMEM(v == NULL, aug);
         t = tree_append_s(txfm, l, v);
