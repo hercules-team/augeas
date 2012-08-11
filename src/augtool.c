@@ -562,7 +562,8 @@ static void add_transforms(char *ts, size_t tslen) {
         if (r < 0)
             fprintf(stderr, "error: Failed to add transform %s: %s\n", t, aug_error_message(aug));
 
-	added_transform = true;
+        free(command);
+        added_transform = true;
     }
 
     if (added_transform) {
@@ -570,8 +571,6 @@ static void add_transforms(char *ts, size_t tslen) {
         if (r < 0)
             fprintf(stderr, "error: Failed to load with new transforms: %s\n", aug_error_message(aug));
     }
-
-    free(command);
 }
 
 int main(int argc, char **argv) {
