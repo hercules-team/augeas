@@ -298,15 +298,15 @@ static ind_t parse_add_item(struct jmt_parse *parse, ind_t j,
                             ind_t from_item, ind_t to_item,
                             ind_t caller) {
 
-    ensure(from_item == EPS || from_item < parse->sets[from_set]->items.used,
-           parse);
-    ensure(to_item == EPS || to_item < parse->sets[j]->items.used,
-           parse);
-
     int r;
     struct item_set *set = parse->sets[j];
     struct item *item = NULL;
     ind_t result = IND_MAX;
+
+    ensure(from_item == EPS || from_item < parse->sets[from_set]->items.used,
+           parse);
+    ensure(to_item == EPS || to_item < parse->sets[j]->items.used,
+           parse);
 
     if (set == NULL) {
         r = ALLOC(parse->sets[j]);

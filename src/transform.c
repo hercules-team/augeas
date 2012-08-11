@@ -196,10 +196,8 @@ static int filter_generate(struct tree *xfm, const char *root,
         r = glob(globpat, gl_flags, NULL, &globbuf);
         free(globpat);
 
-        if (r != 0 && r != GLOB_NOMATCH) {
-            ret = -1;
+        if (r != 0 && r != GLOB_NOMATCH)
             goto error;
-        }
         gl_flags |= GLOB_APPEND;
     }
 
@@ -1217,7 +1215,7 @@ int text_retrieve(struct augeas *aug, const char *lens_name,
                   const char *path, struct tree *tree,
                   const char *text_in, char **text_out) {
     struct memstream ms;
-    bool ms_open;
+    bool ms_open = false;
     const char *err_status = NULL;
     char *dyn_err_status = NULL;
     struct lns_error *err = NULL;
