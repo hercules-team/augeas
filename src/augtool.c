@@ -269,25 +269,26 @@ static void usage(void) {
     fprintf(stderr, "Run '%s help' to get a list of possible commands.\n",
             progname);
     fprintf(stderr, "\nOptions:\n\n");
-    fprintf(stderr, "  -c, --typecheck            typecheck lenses\n");
-    fprintf(stderr, "  -b, --backup               preserve originals of modified files with\n"
-                    "                             extension '.augsave'\n");
-    fprintf(stderr, "  -n, --new                  save changes in files with extension '.augnew',\n"
-                    "                             leave original unchanged\n");
-    fprintf(stderr, "  -r, --root ROOT            use ROOT as the root of the filesystem\n");
-    fprintf(stderr, "  -I, --include DIR          search DIR for modules; can be given mutiple times\n");
-    fprintf(stderr, "  -t, --transform LENS=FILE  add a transform for FILE using LENS\n");
-    fprintf(stderr, "  -e, --echo                 echo commands when reading from a file\n");
-    fprintf(stderr, "  -f, --file FILE            read commands from FILE\n");
-    fprintf(stderr, "  -s, --autosave             automatically save at the end of instructions\n");
-    fprintf(stderr, "  -i, --interactive          run an interactive shell after evaluating\n"
-                    "                             the commands in STDIN and FILE\n");
-    fprintf(stderr, "  -S, --nostdinc             do not search the builtin default directories\n"
-                    "                             for modules\n");
-    fprintf(stderr, "  -L, --noload               do not load any files into the tree on startup\n");
-    fprintf(stderr, "  -A, --noautoload           do not autoload modules from the search path\n");
-    fprintf(stderr, "  --span                     load span positions for nodes related to a file\n");
-    fprintf(stderr, "  --version                  print version information and exit.\n");
+    fprintf(stderr, "  -c, --typecheck      typecheck lenses\n");
+    fprintf(stderr, "  -b, --backup         preserve originals of modified files with\n"
+                    "                       extension '.augsave'\n");
+    fprintf(stderr, "  -n, --new            save changes in files with extension '.augnew',\n"
+                    "                       leave original unchanged\n");
+    fprintf(stderr, "  -r, --root ROOT      use ROOT as the root of the filesystem\n");
+    fprintf(stderr, "  -I, --include DIR    search DIR for modules; can be given mutiple times\n");
+    fprintf(stderr, "  -t, --transform XFM  add a file transform; uses the 'transform' command\n"
+                    "                       syntax, e.g. -t 'Fstab incl /etc/fstab.bak'\n");
+    fprintf(stderr, "  -e, --echo           echo commands when reading from a file\n");
+    fprintf(stderr, "  -f, --file FILE      read commands from FILE\n");
+    fprintf(stderr, "  -s, --autosave       automatically save at the end of instructions\n");
+    fprintf(stderr, "  -i, --interactive    run an interactive shell after evaluating\n"
+                    "                       the commands in STDIN and FILE\n");
+    fprintf(stderr, "  -S, --nostdinc       do not search the builtin default directories\n"
+                    "                       for modules\n");
+    fprintf(stderr, "  -L, --noload         do not load any files into the tree on startup\n");
+    fprintf(stderr, "  -A, --noautoload     do not autoload modules from the search path\n");
+    fprintf(stderr, "  --span               load span positions for nodes related to a file\n");
+    fprintf(stderr, "  --version            print version information and exit.\n");
 
     exit(EXIT_FAILURE);
 }

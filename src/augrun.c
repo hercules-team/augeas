@@ -940,7 +940,7 @@ static const struct command_def cmd_transform_def = {
     .name = "transform",
     .opts = cmd_transform_opts,
     .handler = cmd_transform,
-    .synopsis = "add a transform",
+    .synopsis = "add a file transform",
     .help = cmd_transform_help
 };
 
