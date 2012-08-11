@@ -59,9 +59,12 @@ if [ $selinux = yes -a xetc_t != "x$act_con" ] ; then
     exit 1
 fi
 
-# Check that we create new files without error
+# Check that we create new files without error and with permissions implied
+# from the umask
 init_dirs
 
+oldumask=$(umask)
+umask 0002
 $AUGTOOL > /dev/null <<EOF
 set /files/etc/hosts/1/ipaddr 127.0.0.1
 set /files/etc/hosts/1/canonical host.example.com
@@ -71,6 +74,16 @@ if [ $? != 0 ] ; then
     echo "augtool failed on new file"
     exit 1
 fi
+if [ ! -e $hosts ]; then
+    echo "augtool didn't create new /etc/hosts file"
+    exit 1
+fi
+act_mode=$(ls -l $hosts | cut -b 1-10)
+if [ x-rw-rw-r-- != "x$act_mode" ] ; then
+    echo "Expected mode 0664 due to $(umask) umask but got $act_mode"
+    exit 1
+fi
+umask $oldumask
 
 # Check that we create new files without error when backups are requested
 init_dirs

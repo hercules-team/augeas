@@ -1096,6 +1096,16 @@ int transform_save(struct augeas *aug, struct tree *xfm,
             err_status = "xfer_attrs";
             goto done;
         }
+    } else {
+        /* Since mkstemp is used, the temp file will have secure permissions
+         * instead of those implied by umask, so change them for new files */
+        mode_t curumsk = umask(022);
+        umask(curumsk);
+
+        if (fchmod(fileno(fp), 0666 - curumsk) < 0) {
+            err_status = "create_chmod";
+            return -1;
+        }
     }
 
     if (tree != NULL)
