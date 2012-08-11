@@ -60,13 +60,12 @@ typedef void (*cmd_handler)(struct command*);
 
 struct command_def {
     const char                   *name;
+    const char                   *category;
     const struct command_opt_def *opts;
     cmd_handler                   handler;
     const char                   *synopsis;
     const char                   *help;
 };
-
-static const struct command_def const *commands[];
 
 static const struct command_def cmd_def_last =
     { .name = NULL, .opts = NULL, .handler = NULL,
@@ -78,13 +77,15 @@ struct command_opt {
     char                         *value;
 };
 
-static const struct command_def *lookup_cmd_def(const char *name) {
-    for (int i = 0; commands[i]->name != NULL; i++) {
-        if (STREQ(name, commands[i]->name))
-            return commands[i];
-    }
-    return NULL;
-}
+struct command_grp_def {
+    const char                     *name;
+    const struct command_def const *commands[];
+};
+
+static const struct command_grp_def cmd_grp_def_last =
+    { .name = NULL, .commands = { } };
+
+static const struct command_def *lookup_cmd_def(const char *name);
 
 static const struct command_opt_def *
 find_def(const struct command *cmd, const char *name) {
@@ -317,51 +318,7 @@ static void format_defname(char *buf, const struct command_opt_def *def,
     *p = '\0';
 }
 
-static void cmd_help(struct command *cmd) {
-    const char *name = arg_value(cmd, "command");
-    char buf[100];
-
-    if (name == NULL) {
-        fprintf(cmd->out, "Commands:\n\n");
-        for (int i=0; commands[i]->name != NULL; i++) {
-            const struct command_def *def = commands[i];
-            fprintf(cmd->out, "    %-10s - %s\n", def->name, def->synopsis);
-        }
-        fprintf(cmd->out,
-           "\nType 'help <command>' for more information on a command\n\n");
-    } else {
-        const struct command_def *def = lookup_cmd_def(name);
-        const struct command_opt_def *odef = NULL;
-
-        ERR_THROW(def == NULL, cmd->aug, AUG_ECMDRUN,
-                  "unknown command %s\n", name);
-        fprintf(cmd->out, "  COMMAND\n");
-        fprintf(cmd->out, "    %s - %s\n\n", name, def->synopsis);
-        fprintf(cmd->out, "  SYNOPSIS\n");
-        fprintf(cmd->out, "    %s", name);
-
-        for (odef = def->opts; odef->name != NULL; odef++) {
-            format_defname(buf, odef, true);
-            fprintf(cmd->out, "%s", buf);
-        }
-        fprintf(cmd->out, "\n\n");
-        fprintf(cmd->out, "  DESCRIPTION\n");
-        format_desc(def->help);
-        if (def->opts->name != NULL) {
-            fprintf(cmd->out, "  OPTIONS\n");
-            for (odef = def->opts; odef->name != NULL; odef++) {
-                const char *help = odef->help;
-                if (help == NULL)
-                    help = "";
-                format_defname(buf, odef, false);
-                fprintf(cmd->out, "    %-10s %s\n", buf, help);
-            }
-        }
-        fprintf(cmd->out, "\n");
-    }
- error:
-    return;
-}
+static void cmd_help(struct command *cmd);
 
 static const struct command_opt_def cmd_help_opts[] = {
     { .type = CMD_STR, .name = "command", .optional = true,
@@ -1152,35 +1109,129 @@ static const struct command_def cmd_retrieve_def = {
     .help = cmd_retrieve_help
 };
 
-static const struct command_def const *commands[] = {
-    &cmd_quit_def,
-    &cmd_clear_def,
-    &cmd_defnode_def,
-    &cmd_defvar_def,
-    &cmd_get_def,
-    &cmd_ins_def,
-    &cmd_insert_def,
-    &cmd_load_def,
-    &cmd_ls_def,
-    &cmd_match_def,
-    &cmd_mv_def,
-    &cmd_move_def,
-    &cmd_rename_def,
-    &cmd_print_def,
-    &cmd_dump_xml_def,
-    &cmd_rm_def,
-    &cmd_save_def,
-    &cmd_set_def,
-    &cmd_setm_def,
-    &cmd_clearm_def,
-    &cmd_span_def,
-    &cmd_store_def,
-    &cmd_retrieve_def,
-    &cmd_touch_def,
-    &cmd_transform_def,
-    &cmd_help_def,
-    &cmd_def_last
+/* Groups of commands */
+static const struct command_grp_def cmd_grp_admin_def = {
+    .name = "Admin",
+    .commands = {
+        &cmd_help_def,
+        &cmd_load_def,
+        &cmd_quit_def,
+        &cmd_retrieve_def,
+        &cmd_save_def,
+        &cmd_store_def,
+        &cmd_transform_def,
+        &cmd_def_last
+    }
 };
+
+static const struct command_grp_def cmd_grp_read_def = {
+    .name = "Read",
+    .commands = {
+        &cmd_dump_xml_def,
+        &cmd_get_def,
+        &cmd_ls_def,
+        &cmd_match_def,
+        &cmd_print_def,
+        &cmd_span_def,
+        &cmd_def_last
+    }
+};
+
+static const struct command_grp_def cmd_grp_write_def = {
+    .name = "Write",
+    .commands = {
+        &cmd_clear_def,
+        &cmd_clearm_def,
+        &cmd_ins_def,
+        &cmd_insert_def,
+        &cmd_mv_def,
+        &cmd_move_def,
+        &cmd_rename_def,
+        &cmd_rm_def,
+        &cmd_set_def,
+        &cmd_setm_def,
+        &cmd_touch_def,
+        &cmd_def_last
+    }
+};
+
+static const struct command_grp_def cmd_grp_pathx_def = {
+    .name = "Path expression",
+    .commands = {
+        &cmd_defnode_def,
+        &cmd_defvar_def,
+        &cmd_def_last
+    }
+};
+
+static const struct command_grp_def const *cmd_groups[] = {
+    &cmd_grp_admin_def,
+    &cmd_grp_read_def,
+    &cmd_grp_write_def,
+    &cmd_grp_pathx_def,
+    &cmd_grp_def_last
+};
+
+static const struct command_def *lookup_cmd_def(const char *name) {
+    for (int i = 0; cmd_groups[i]->name != NULL; i++) {
+        for (int j = 0; cmd_groups[i]->commands[j]->name != NULL; j++) {
+            if (STREQ(name, cmd_groups[i]->commands[j]->name))
+                return cmd_groups[i]->commands[j];
+        }
+    }
+    return NULL;
+}
+
+static void cmd_help(struct command *cmd) {
+    const char *name = arg_value(cmd, "command");
+    char buf[100];
+
+    if (name == NULL) {
+        //fprintf(cmd->out, "Commands:\n\n");
+        fprintf(cmd->out, "\n");
+        for (int i=0; cmd_groups[i]->name != NULL; i++) {
+            fprintf(cmd->out, "%s commands:\n", cmd_groups[i]->name);
+            for (int j=0; cmd_groups[i]->commands[j]->name != NULL; j++) {
+                const struct command_def *def = cmd_groups[i]->commands[j];
+                fprintf(cmd->out, "  %-10s - %s\n", def->name, def->synopsis);
+            }
+            fprintf(cmd->out, "\n");
+        }
+        fprintf(cmd->out,
+           "Type 'help <command>' for more information on a command\n\n");
+    } else {
+        const struct command_def *def = lookup_cmd_def(name);
+        const struct command_opt_def *odef = NULL;
+
+        ERR_THROW(def == NULL, cmd->aug, AUG_ECMDRUN,
+                  "unknown command %s\n", name);
+        fprintf(cmd->out, "  COMMAND\n");
+        fprintf(cmd->out, "    %s - %s\n\n", name, def->synopsis);
+        fprintf(cmd->out, "  SYNOPSIS\n");
+        fprintf(cmd->out, "    %s", name);
+
+        for (odef = def->opts; odef->name != NULL; odef++) {
+            format_defname(buf, odef, true);
+            fprintf(cmd->out, "%s", buf);
+        }
+        fprintf(cmd->out, "\n\n");
+        fprintf(cmd->out, "  DESCRIPTION\n");
+        format_desc(def->help);
+        if (def->opts->name != NULL) {
+            fprintf(cmd->out, "  OPTIONS\n");
+            for (odef = def->opts; odef->name != NULL; odef++) {
+                const char *help = odef->help;
+                if (help == NULL)
+                    help = "";
+                format_defname(buf, odef, false);
+                fprintf(cmd->out, "    %-10s %s\n", buf, help);
+            }
+        }
+        fprintf(cmd->out, "\n");
+    }
+ error:
+    return;
+}
 
 int aug_srun(augeas *aug, FILE *out, const char *text) {
     char *line = NULL;
