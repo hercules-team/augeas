@@ -90,6 +90,17 @@ struct frame {
 /* Used by recursive lenses in get_rec and parse_rec */
 enum mode_t { M_GET, M_PARSE };
 
+/* Abstract Syntax Tree for recursive parse */
+struct ast {
+    struct ast         *parent;
+    struct ast        **children;
+    uint                nchildren;
+    uint                capacity;
+    struct lens        *lens;
+    uint                start;
+    uint                end;
+};
+
 struct rec_state {
     enum mode_t          mode;
     struct state        *state;
@@ -98,6 +109,7 @@ struct rec_state {
     struct frame        *frames;
     size_t               start;
     uint                 lvl;  /* Debug only */
+    struct ast          *ast;
 };
 
 #define REG_START(state) ((state)->regs->start[(state)->nreg])
@@ -108,6 +120,101 @@ struct rec_state {
                           (state)->nreg < (state)->regs->num_regs)
 #define REG_MATCHED(state) (REG_VALID(state)                            \
                             && (state)->regs->start[(state)->nreg] >= 0)
+
+/*
+ * AST utils
+ */
+static struct ast *make_ast(struct lens *lens) {
+    struct ast *ast = NULL;
+
+    if (ALLOC(ast) < 0)
+        return NULL;
+    ast->lens = lens;
+    ast->capacity = 4;
+    if (ALLOC_N(ast->children, ast->capacity) < 0) {
+        FREE(ast);
+        return NULL;
+    }
+    return ast;
+}
+
+/* recursively free the node and all it's descendants */
+static void free_ast(struct ast *ast) {
+    int i;
+    if (ast == NULL)
+        return;
+    for (i = 0; i < ast->nchildren; i++) {
+        free_ast(ast->children[i]);
+    }
+    if (ast->children != NULL)
+        FREE(ast->children);
+    FREE(ast);
+}
+
+static struct ast *ast_root(struct ast *ast) {
+    struct ast *root = ast;
+    while(root != NULL && root->parent != NULL)
+        root = root->parent;
+    return root;
+}
+
+static void ast_set(struct ast *ast, uint start, uint end) {
+    if (ast == NULL)
+        return;
+    ast->start = start;
+    ast->end = end;
+}
+
+/* append a child to the parent ast */
+static struct ast *ast_append(struct rec_state *rec_state, struct lens *lens,
+                           uint start, uint end) {
+    int ret;
+    struct ast *child, *parent;
+    struct state *state = rec_state->state;
+
+    parent = rec_state->ast;
+    if (parent == NULL)
+       return NULL;
+
+    child = make_ast(lens);
+    ERR_NOMEM(child == NULL, state->info);
+
+    ast_set(child, start, end);
+    if (parent->nchildren >= parent->capacity) {
+       ret = REALLOC_N(parent->children, parent->capacity * 2);
+       ERR_NOMEM(ret < 0, state->info);
+       parent->capacity = parent->capacity * 2;
+    }
+    parent->children[parent->nchildren++] = child;
+    child->parent = parent;
+
+    return child;
+ error:
+    free_ast(child);
+    return NULL;
+}
+
+/* pop the ast from one level, fail the parent is NULL */
+static void ast_pop(struct rec_state *rec_state) {
+    ensure(rec_state->ast != NULL && rec_state->ast->parent != NULL, rec_state->state->info);
+    rec_state->ast = rec_state->ast->parent;
+ error:
+    return;
+}
+
+static void print_ast(const struct ast *ast, int lvl) {
+    int i;
+    char *lns;
+    if (ast == NULL)
+        return;
+    for (i = 0; i < lvl; i++) fputs(" ", stdout);
+    lns = format_lens(ast->lens);
+    printf("%d..%d %s\n", ast->start, ast->end, lns);
+    free(lns);
+    for (i = 0; i < ast->nchildren; i++) {
+        print_ast(ast->children[i], lvl + 1);
+    }
+}
 
 static void get_error(struct state *state, struct lens *lens,
                       const char *format, ...)
@@ -858,6 +965,7 @@ static void visit_terminal(struct lens *lens, size_t start, size_t end,
     struct rec_state *rec_state = data;
     struct state *state = rec_state->state;
     struct re_registers *old_regs = state->regs;
+    struct ast *child;
     uint old_nreg = state->nreg;
 
     if (state->error != NULL)
@@ -871,6 +979,9 @@ static void visit_terminal(struct lens *lens, size_t start, size_t end,
         get_terminal(top, lens, state);
     else
         parse_terminal(top, lens, state);
+    child = ast_append(rec_state, lens, start, end);
+    ERR_NOMEM(child == NULL, state->info);
+ error:
     free_regs(state);
     state->regs = old_regs;
     state->nreg = old_nreg;
@@ -882,6 +993,7 @@ static void visit_enter(struct lens *lens,
                         void *data) {
     struct rec_state *rec_state = data;
     struct state *state = rec_state->state;
+    struct ast *child;
 
     if (state->error != NULL)
         return;
@@ -904,6 +1016,9 @@ static void visit_enter(struct lens *lens,
             ERR_NOMEM(state->span == NULL, state->info);
         }
     }
+    child = ast_append(rec_state, lens, start, end);
+    if (child != NULL)
+        rec_state->ast = child;
  error:
     return;
 }
@@ -1082,6 +1197,7 @@ static void visit_exit(struct lens *lens,
     } else {
         top_frame(rec_state)->lens = lens;
     }
+    ast_pop(rec_state);
  error:
     return;
 }
@@ -1126,6 +1242,8 @@ static struct frame *rec_process(enum mode_t mode, struct lens *lens,
     rec_state.fused = 0;
     rec_state.lvl   = 0;
     rec_state.start = start;
+    rec_state.ast = make_ast(lens);
+    ERR_NOMEM(rec_state.ast == NULL, state->info);
 
     visitor.parse = jmt_parse(lens->jmt, state->text + start, end - start);
     ERR_BAIL(lens->info);
@@ -1150,10 +1268,15 @@ static struct frame *rec_process(enum mode_t mode, struct lens *lens,
         goto error;
     }
 
+    rec_state.ast = ast_root(rec_state.ast);
+    ensure(rec_state.ast->parent == NULL, state->info);
  done:
+    if (debugging("cf.get.ast"))
+        print_ast(ast_root(rec_state.ast), 0);
     state->regs = old_regs;
     state->nreg = old_nreg;
     jmt_free_parse(visitor.parse);
+    free_ast(ast_root(rec_state.ast));
     return rec_state.frames;
  error:
 
