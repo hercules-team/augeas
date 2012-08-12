@@ -198,6 +198,7 @@ module Shellvars =
       sc_excl "SuSEfirewall2.d/services/TEMPLATE"
 
   let filter_default = incl "/etc/default/*"
+                     . excl "/etc/default/grub_installdevice*"
                      . excl "/etc/default/whoopsie"
   let filter_misc    = incl "/etc/arno-iptables-firewall/debconf.cfg"
                      . incl "/etc/cron-apt/config"
