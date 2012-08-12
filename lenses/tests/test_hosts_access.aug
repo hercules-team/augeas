@@ -9,9 +9,27 @@ test Hosts_Access.lns get multi_daemon =
     { "client" = "10.234." }
   }
 
+let multi_daemon_spc = "sshd sendmail : 10.234.\n"
+
+test Hosts_Access.lns get multi_daemon_spc =
+  { "1"
+    { "process" = "sshd" }
+    { "process" = "sendmail" }
+    { "client" = "10.234." }
+  }
+
 let multi_client = "sshd: 10.234. , 192.168.\n"
 
 test Hosts_Access.lns get multi_client =
+  { "1"
+    { "process" = "sshd" }
+    { "client" = "10.234." }
+    { "client" = "192.168." }
+  }
+
+let multi_client_spc = "sshd: 10.234. 192.168.\n"
+
+test Hosts_Access.lns get multi_client_spc =
   { "1"
     { "process" = "sshd" }
     { "client" = "10.234." }
@@ -67,6 +85,51 @@ test Hosts_Access.lns get shell_command =
     { "process" = "sshd" }
     { "client" = "192.168." }
     { "shell_command" = "/usr/bin/my_cmd -t -f some_arg" }
+  }
+
+let client_netgroup = "sshd: @hostgroup\n"
+test Hosts_Access.lns get client_netgroup =
+  { "1"
+    { "process" = "sshd" }
+    { "client" = "@hostgroup" }
+  }
+
+let client_netmask = "sshd: 192.168.0.0/255.255.0.0\n"
+test Hosts_Access.lns get client_netmask =
+  { "1"
+    { "process" = "sshd" }
+    { "client" = "192.168.0.0"
+      { "netmask" = "255.255.0.0" } }
+  }
+
+let client_cidr_v4 = "sshd: 192.168.0.0/24\n"
+test Hosts_Access.lns get client_cidr_v4 =
+  { "1"
+    { "process" = "sshd" }
+    { "client" = "192.168.0.0"
+      { "netmask" = "24" } }
+  }
+
+let client_cidr_v6 = "sshd: [fe80::%fxp0]/64\n"
+test Hosts_Access.lns get client_cidr_v6 =
+  { "1"
+    { "process" = "sshd" }
+    { "client" = "[fe80::%fxp0]"
+      { "netmask" = "64" } }
+  }
+
+let client_file = "sshd: /etc/external_file\n"
+test Hosts_Access.lns get client_file =
+  { "1"
+    { "process" = "sshd" }
+    { "file" = "/etc/external_file" }
+  }
+
+let client_wildcard = "sshd: 192.168.?.*\n"
+test Hosts_Access.lns get client_wildcard =
+  { "1"
+    { "process" = "sshd" }
+    { "client" = "192.168.?.*" }
   }
 
 let sample_hosts_allow = "# hosts.allow	This file describes the names of the hosts which are
