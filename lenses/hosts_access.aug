@@ -5,7 +5,7 @@ Module: Hosts_Access
 Author: Raphael Pinson <raphink@gmail.com>
 
 About: Reference
-  This lens tries to keep as close as possible to `man 5 hosts_access` where possible.
+  This lens tries to keep as close as possible to `man 5 hosts_access` and `man 5 hosts_options` where possible.
 
 About: License
    This file is licenced under the LGPL v2+, like the rest of Augeas.
@@ -26,7 +26,7 @@ autoload xfm
  *************************************************************************)
 
 (* View: colon *)
-let colon = del /[ \t]*:[ \t]*/ ": "
+let colon = del /[ \t]*(\\\\[ \t]*\n[ \t]+)?:[ \t]*(\\\\[ \t]*\n[ \t]+)?/ ": "
 
 (* Variable: comma_sep *)
 let comma_sep = /([ \t]|(\\\\\n))*,([ \t]|(\\\\\n))*/
@@ -54,8 +54,30 @@ let client_file_item =
   let client_file_rx = /\/[^ \t\n,:]+/ in
     store ( client_file_rx - /EXCEPT/i )
 
-(* View: sto_to_eol *)
-let sto_to_eol = store /[^ \t\n:][^\n]*[^ \t\n]|[^ \t\n:]/
+(* Variable: option_kw
+   Since either an option or a shell command can be given, use an explicit list
+   of known options to avoid misinterpreting a command as an option *)
+let option_kw = "severity"
+              | "spawn"
+              | "twist"
+              | "keepalive"
+              | "linger"
+              | "rfc931"
+              | "banners"
+              | "nice"
+              | "setenv"
+              | "umask"
+              | "user"
+              | /allow/i
+              | /deny/i
+
+(* Variable: shell_command_rx *)
+let shell_command_rx = /[^ \t\n:][^\n]*[^ \t\n]|[^ \t\n:\\\\]/
+                         - ( option_kw . /.*/ )
+
+(* View: sto_to_colon
+   Allows escaped colon sequences *)
+let sto_to_colon = store /[^ \t\n:=][^\n:]*((\\\\:|\\\\[ \t]*\n[ \t]+)[^\n:]*)*[^ \\\t\n:]|[^ \t\n:\\\\]/
 
 (* View: except
  * The except operator makes it possible to write very compact rules.
@@ -97,9 +119,14 @@ let client_file = [ label "file" . client_file_item ]
     A list of <client>s *)
 let client_list = Build.opt_list ( client | client_file ) list_sep
 
+(* View: option
+   Optional extensions defined in hosts_options(5) *)
+let option = [ key option_kw
+             . ( del /([ \t]*=[ \t]*|[ \t]+)/ " " . sto_to_colon )? ]
+
 (* View: shell_command *)
 let shell_command = [ label "shell_command"
-                    . sto_to_eol ]
+                    . store shell_command_rx ]
 
 (* View: entry *)
 let entry = [ seq "line"
@@ -108,7 +135,7 @@ let entry = [ seq "line"
             . colon
             . client_list
             . (except client_list)?
-            . (colon . shell_command)?
+            . ( (colon . option)+ | (colon . shell_command)? )
             . Util.eol ]
 
 (************************************************************************

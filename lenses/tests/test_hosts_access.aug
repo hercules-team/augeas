@@ -199,3 +199,55 @@ test Hosts_Access.lns get ip_mask =
   { "1"
     { "process" = "sshd" }
     { "client" = "61." { "netmask" = "255.255.255.255" } } }
+
+(* Support options from hosts_options(5) *)
+test Hosts_Access.lns get "sshd: all: keepalive\n" =
+  { "1"
+    { "process" = "sshd" }
+    { "client" = "all" }
+    { "keepalive" } }
+
+test Hosts_Access.lns get "sshd: all: severity mail.info\n" =
+  { "1"
+    { "process" = "sshd" }
+    { "client" = "all" }
+    { "severity" = "mail.info" } }
+
+test Hosts_Access.lns get "sshd: all: severity mail.info : rfc931 5 : DENY\n" =
+  { "1"
+    { "process" = "sshd" }
+    { "client" = "all" }
+    { "severity" = "mail.info" }
+    { "rfc931" = "5" }
+    { "DENY" } }
+
+(* Ticket #255, from FreeBSD *)
+let host_options_cmds = "# You need to be clever with finger; do _not_ backfinger!! You can easily
+# start a \"finger war\".
+fingerd : ALL \
+        : spawn (echo Finger. | \
+         /usr/bin/mail -s \"tcpd\: %u@%h[%a] fingered me!\" root) & \
+        : deny
+
+# The rest of the daemons are protected.
+ALL : ALL : \
+          severity auth.info \
+        : twist /bin/echo \"You are not welcome to use %d from %h.\"
+"
+
+test Hosts_Access.lns get host_options_cmds = 
+  { "#comment" = "You need to be clever with finger; do _not_ backfinger!! You can easily" }
+  { "#comment" = "start a \"finger war\"." }
+  { "1"
+    { "process" = "fingerd" }
+    { "client" = "ALL" }
+    { "spawn" = "(echo Finger. | \
+         /usr/bin/mail -s \"tcpd\\: %u@%h[%a] fingered me!\" root) &" }
+    { "deny" } }
+  {  }
+  { "#comment" = "The rest of the daemons are protected." }
+  { "2"
+    { "process" = "ALL" }
+    { "client" = "ALL" }
+    { "severity" = "auth.info" }
+    { "twist" = "/bin/echo \"You are not welcome to use %d from %h.\"" } }
