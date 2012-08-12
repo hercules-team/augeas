@@ -51,3 +51,4 @@ man/*.1
 doc/naturaldocs/output
 doc/naturaldocs/conf/*/Data/*.nd
 examples/fadot
+.settings
