@@ -825,11 +825,13 @@ static struct frame *pop_frame(struct rec_state *state) {
 
 static void dbg_visit(struct lens *lens, char action, size_t start, size_t end,
                       int fused, int lvl) {
-
+    char *lns;
     for (int i=0; i < lvl; i++)
         fputc(' ', stderr);
+    lns = format_lens(lens);
     fprintf(stderr, "%c %zd..%zd %d %s\n", action, start, end,
-            fused, format_lens(lens));
+            fused, lns);
+    free(lns);
 }
 
 static void get_terminal(struct frame *top, struct lens *lens,
