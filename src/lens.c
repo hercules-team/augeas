@@ -50,6 +50,8 @@ static struct value * typecheck_union(struct info *,
                                       struct lens *l1, struct lens *l2);
 static struct value *typecheck_concat(struct info *,
                                       struct lens *l1, struct lens *l2);
+static struct value *typecheck_square(struct info *,
+                                      struct lens *l1, struct lens *l2);
 static struct value *typecheck_iter(struct info *info, struct lens *l);
 static struct value *typecheck_maybe(struct info *info, struct lens *l);
 
@@ -399,34 +401,29 @@ struct value *lns_make_maybe(struct info *info, struct lens *l, int check) {
 }
 
 /* Build a square lens as
- *   key REG . lns . del REG MATCHED
- * where MATCHED is whatever the key lens matched (the inability to express
- * this with other lenses makes the square primitve necessary
+ *    left . body . right
+ * where left and right accepts the same language and
+ * captured strings must match. The inability to express this with other
+ * lenses makes the square primitive necessary.
  */
-struct value *lns_make_square(struct info *info,
-                              struct regexp *reg,
-                              struct lens *lns, int check) {
-    struct value *key = NULL, *del = NULL;
+struct value * lns_make_square(struct info *info, struct lens *l1,
+                               struct lens *l2, struct lens *l3, int check) {
     struct value *cnt1 = NULL, *cnt2 = NULL, *res = NULL;
     struct lens *sqr = NULL;
 
-    res = lns_make_prim(L_KEY, ref(info), ref(reg), NULL);
-    if (EXN(res))
-        goto error;
-    key = res;
+    /* supported types: L_KEY . body . L_DEL or L_DEL . body . L_DEL */
+    if (l3->tag != L_DEL || (l1->tag != L_DEL && l1->tag != L_KEY))
+        return make_exn_value(info, "Supported types: (key lns del) or (del lns del)");
 
-    res = lns_make_prim(L_DEL, ref(info), ref(reg), NULL);
-    if (EXN(res))
+    res = typecheck_square(info, l1, l3);
+    if (res != NULL)
         goto error;
-    del = res;
 
-    // typechecking is handled when concatenating lenses
-    res = lns_make_concat(ref(info), ref(key->lens), ref(lns), check);
+    res = lns_make_concat(ref(info), ref(l1), ref(l2), check);
     if (EXN(res))
         goto error;
     cnt1 = res;
-
-    res = lns_make_concat(ref(info), ref(cnt1->lens), ref(del->lens), check);
+    res = lns_make_concat(ref(info), ref(cnt1->lens), ref(l3), check);
     if (EXN(res))
         goto error;
     cnt2 = res;
@@ -446,11 +443,9 @@ struct value *lns_make_square(struct info *info,
 
  error:
     unref(info, info);
-    unref(reg, regexp);
-    unref(lns, lens);
-
-    unref(key, value);
-    unref(del, value);
+    unref(l1, lens);
+    unref(l2, lens);
+    unref(l3, lens);
     unref(cnt1, value);
     unref(cnt2, value);
     unref(sqr, lens);
@@ -788,6 +783,74 @@ static struct value *typecheck_concat(struct info *info,
     return result;
 }
 
+static struct value *make_exn_square(struct info *info, struct lens *l1,
+                                     struct lens *l2, const char *msg) {
+
+    char *fi;
+    struct value *exn = make_exn_value(ref(info), "%s",
+            "Inconsistency in lens square");
+    exn_printf_line(exn, "%s", msg);
+    fi = format_info(l1->info);
+    exn_printf_line(exn, "Left lens: %s", fi);
+    free(fi);
+    fi = format_info(l2->info);
+    exn_printf_line(exn, "Right lens: %s", fi);
+    free(fi);
+    return exn;
+}
+
+static struct value *typecheck_square(struct info *info, struct lens *l1,
+                                      struct lens *l2) {
+    int r;
+    struct value *exn = NULL;
+    struct fa *fa1 = NULL, *fa2 = NULL;
+    struct regexp *r1 = ltype(l1, CTYPE);
+    struct regexp *r2 = ltype(l2, CTYPE);
+
+    if (r1 == NULL || r2 == NULL)
+        return NULL;
+
+    exn = regexp_to_fa(r1, &fa1);
+    if (exn != NULL)
+        goto done;
+
+    exn = regexp_to_fa(r2, &fa2);
+    if (exn != NULL)
+        goto done;
+
+    r = fa_equals(fa1, fa2);
+
+    if (r < 0) {
+        exn = make_exn_value(ref(info), "not enough memory");
+        if (exn != NULL) {
+            return exn;
+        } else {
+            ERR_REPORT(info, AUG_ENOMEM, NULL);
+            return info->error->exn;;
+        }
+    }
+
+    if (r == 0) {
+        exn = make_exn_square(info, l1, l2,
+                "Left and right lenses must accept the same language");
+        goto done;
+    }
+
+    /* check del create consistency */
+    if (l1->tag == L_DEL && l2->tag == L_DEL) {
+        if (!STREQ(l1->string->str, l2->string->str)) {
+            exn = make_exn_square(info, l1, l2,
+                    "Left and right lenses must have the same default value");
+            goto done;
+        }
+    }
+
+ done:
+    fa_free(fa1);
+    fa_free(fa2);
+    return exn;
+}
+
 static struct value *
 ambig_iter_check(struct info *info, const char *msg,
                  enum lens_type typ, struct lens *l) {
@@ -917,7 +980,7 @@ void lens_release(struct lens *lens) {
         regexp_release(lens->regexp);
 
     if (lens->tag == L_SUBTREE || lens->tag == L_STAR
-        || lens->tag == L_MAYBE) {
+        || lens->tag == L_MAYBE || lens->tag == L_SQUARE) {
         lens_release(lens->child);
     }
 
@@ -1534,6 +1597,10 @@ static void rtn_rules(struct rtn *rtn, struct lens *l) {
         add_trans(rtn, start, prod->end, l->body);
         RTN_BAIL(rtn);
         rtn_rules(rtn, l->body);
+        RTN_BAIL(rtn);
+        break;
+    case L_SQUARE:
+        add_trans(rtn, start, prod->end, l->child);
         RTN_BAIL(rtn);
         break;
     default:

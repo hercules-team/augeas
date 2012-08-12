@@ -86,14 +86,15 @@ static struct value *lns_counter(struct info *info, struct value *str) {
     return lns_make_prim(L_COUNTER, ref(info), NULL, ref(str->string));
 }
 
-/* V_REGEXP -> V_LENS -> V_LENS */
-static struct value *lns_square(struct info *info, struct value *rxp,
-                                struct value *lns) {
-    assert(rxp->tag == V_REGEXP);
-    assert(lns->tag == V_LENS);
+/* V_LENS -> V_LENS -> V_LENS -> V_LENS */
+static struct value *lns_square(struct info *info, struct value *l1,
+                                struct value *l2, struct value *l3) {
+    assert(l1->tag == V_LENS);
+    assert(l2->tag == V_LENS);
+    assert(l3->tag == V_LENS);
     int check = info->error->aug->flags & AUG_TYPE_CHECK;
 
-    return lns_make_square(ref(info), ref(rxp->regexp), ref(lns->lens), check);
+    return lns_make_square(ref(info), ref(l1->lens), ref(l2->lens), ref(l3->lens), check);
 }
 
 static struct value *make_exn_lns_error(struct info *info,
@@ -589,7 +590,7 @@ struct module *builtin_init(struct error *error) {
     DEFINE_NATIVE(modl, "label",   1, lns_label, T_STRING, T_LENS);
     DEFINE_NATIVE(modl, "seq",     1, lns_seq, T_STRING, T_LENS);
     DEFINE_NATIVE(modl, "counter", 1, lns_counter, T_STRING, T_LENS);
-    DEFINE_NATIVE(modl, "square",  2, lns_square, T_REGEXP, T_LENS, T_LENS);
+    DEFINE_NATIVE(modl, "square",  3, lns_square, T_LENS, T_LENS, T_LENS, T_LENS);
     /* Applying lenses (mostly for tests) */
     DEFINE_NATIVE(modl, "get",     2, lens_get, T_LENS, T_STRING, T_TREE);
     DEFINE_NATIVE(modl, "put",     3, lens_put, T_LENS, T_TREE, T_STRING,

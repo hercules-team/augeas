@@ -90,9 +90,6 @@ struct lens {
     union {
         /* Primitive lenses */
         struct {                   /* L_DEL uses both */
-            /* L_DEL string set to NULL means it belongs to parent L_SQUARE lens
-             * and the put and create copy the current key
-             */
             struct regexp *regexp; /* L_STORE, L_KEY */
             struct string *string; /* L_VALUE, L_LABEL, L_SEQ, L_COUNTER */
         };
@@ -143,8 +140,9 @@ struct value *lns_make_plus(struct info *, struct lens *,
                             int check);
 struct value *lns_make_maybe(struct info *, struct lens *,
                              int check);
-struct value *lns_make_square(struct info *, struct regexp *, struct lens *,
-                              int check);
+struct value *lns_make_square(struct info *, struct lens *, struct lens *,
+                              struct lens *lens, int check);
+
 
 /* Pretty-print a lens */
 char *format_lens(struct lens *l);
@@ -240,6 +238,10 @@ void free_lens(struct lens *lens);
 /* The length of the string S encoded */
 #define ENCLEN(s) ((s) == NULL ? strlen(ENC_NULL) : strlen(s))
 #define ENCSTR(s) ((s) == NULL ? ENC_NULL : s)
+
+/* helper to access first and last child */
+#define child_first(l) (l)->children[0]
+#define child_last(l) (l)->children[(l)->nchildren - 1]
 
 /* Format an encoded level as
  *    { key1 = value1 } { key2 = value2 } .. { keyN = valueN }

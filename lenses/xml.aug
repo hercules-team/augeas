@@ -109,11 +109,15 @@ let text      = [ label "#text" . store text_re ]
 let cdata     = [ label "#CDATA" . dels "<![CDATA[" .
                   store (char* - (char* . "]]>" . char*)) . dels "]]>" ]
 
+(* the value of nmtoken_del is always the nmtoken_key string *)
+let nmtoken_key = key nmtoken
+let nmtoken_del = del nmtoken "a"
+
 let element (body:lens) =
     let h = attributes? . sep_osp . dels ">" . body* . dels "</" in
-        [ dels "<" . square nmtoken h . sep_osp . del_end ]
+        [ dels "<" . square nmtoken_key h nmtoken_del . sep_osp . del_end ]
 
-let empty_element = [ dels "<" . key nmtoken . value "#empty" .
+let empty_element = [ dels "<" . nmtoken_key . value "#empty" .
                       attributes? . sep_osp . del /\/>[\r?\n]?/ "/>\n" ]
 
 let pi_instruction = [ dels "<?" . label "#pi" .

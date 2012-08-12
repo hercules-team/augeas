@@ -50,7 +50,6 @@ struct state {
     struct seq       *seqs;
     char             *key;
     char             *value;     /* GET_STORE leaves a value here */
-    char             *square;    /* last L_DEL from L_SQUARE */
     struct lns_error *error;
     /* We use the registers from a regular expression match to keep track
      * of the substring we are currently looking at. REGS are the registers
@@ -73,7 +72,6 @@ struct state {
 struct frame {
     struct lens     *lens;
     char            *key;
-    char            *square;
     struct span     *span;
     union {
         struct { /* MGET */
@@ -364,6 +362,10 @@ static char *token(struct state *state) {
     return strndup(REG_POS(state), REG_SIZE(state));
 }
 
+static char *token_range(const char *text, uint start, uint end) {
+    return strndup(text + start, end - start);
+}
+
 static void regexp_match_error(struct state *state, struct lens *lens,
                                int count, struct regexp *r) {
     char *text = NULL;
@@ -499,9 +501,6 @@ static struct tree *get_del(struct lens *lens, struct state *state) {
         char *pat = regexp_escape(lens->ctype);
         get_error(state, lens, "no match for del /%s/", pat);
         free(pat);
-    }
-    if (lens->string == NULL) {
-        state->square = token(state);
     }
     update_span(state->span, REG_START(state), REG_END(state));
     return NULL;
@@ -830,28 +829,83 @@ static struct skel *parse_subtree(struct lens *lens, struct state *state,
     return make_skel(lens);
 }
 
+/* Check if left and right strings matches according to the square lens
+ * definition.
+ *
+ * Returns 1 if strings matches, 0 otherwise
+ */
+static int square_match(struct lens *lens, char *left, char *right) {
+    int cmp = 0;
+    struct lens *concat = NULL;
+
+    // if one of the argument is NULL, returns no match
+    if (left == NULL || right == NULL || lens == NULL)
+        return cmp;
+
+    concat = lens->child;
+    /* If either right or left lens is nocase, then ignore case */
+    if (child_first(concat)->ctype->nocase ||
+            child_last(concat)->ctype->nocase) {
+        cmp = STRCASEEQ(left, right);
+    } else {
+        cmp = STREQ(left, right);
+    }
+    return cmp;
+}
+
+/*
+ * This function applies only for non-recursive lens, handling of recursive
+ * square is done in visit_exit().
+ */
 static struct tree *get_square(struct lens *lens, struct state *state) {
     ensure0(lens->tag == L_SQUARE, state->info);
 
+    struct lens *concat = lens->child;
     struct tree *tree = NULL;
-    char *key = NULL, *square = NULL;
+    struct lens *curr;
+    uint old_nreg = state->nreg;
+    uint nreg = state->nreg;
+    uint nsub, i;
+    char *rsqr = NULL, *lsqr = NULL;
+    uint start, end;
 
-    // get the child lens
-    tree = get_concat(lens->child, state);
+    tree = get_lens(lens->child, state);
 
-    key = state->key;
-    square = state->square;
-    ensure0(key != NULL, state->info);
-    ensure0(square != NULL, state->info);
+    /* retrieve left component */
+    nreg = old_nreg + 1;
+    start = state->regs->start[nreg];
+    end = state->regs->end[nreg];
+    lsqr = token_range(state->text, start, end);
 
-    if (STRCASENEQ(key, square)) {
+    /* retrieve right component */
+    /* compute nreg for the last children */
+    nreg = old_nreg + 1;
+    for (i = 0; i < concat->nchildren - 1; i++) {
+        curr = concat->children[i];
+        nsub = regexp_nsub(curr->ctype);
+        nreg += 1 + nsub;
+    }
+    start = state->regs->start[nreg];
+    end = state->regs->end[nreg];
+    rsqr = token_range(state->text, start, end);
+
+    if (!square_match(lens, lsqr, rsqr)) {
         get_error(state, lens, "%s \"%s\" %s \"%s\"",
-                "Parse error: mismatched key in square lens, expecting", key,
-                "but got", square);
+            "Parse error: mismatched in square lens, expecting", lsqr,
+            "but got", rsqr);
+        goto error;
     }
 
-    FREE(state->square);
+ done:
+    state->nreg = old_nreg;
+    FREE(lsqr);
+    FREE(rsqr);
     return tree;
+
+ error:
+    free_tree(tree);
+    tree = NULL;
+    goto done;
 }
 
 static struct skel *parse_square(struct lens *lens, struct state *state,
@@ -860,6 +914,8 @@ static struct skel *parse_square(struct lens *lens, struct state *state,
     struct skel *skel, *sk;
 
     skel = parse_concat(lens->child, state, dict);
+    if (skel == NULL)
+        return NULL;
     sk = make_skel(lens);
     sk->skels = skel;
 
@@ -875,7 +931,7 @@ static void print_frames(struct rec_state *state) {
     for (int j = state->fused - 1; j >=0; j--) {
         struct frame *f = state->frames + j;
         for (int i=0; i < state->lvl; i++) fputc(' ', stderr);
-        fprintf(stderr, "%2d %s %s %s", j, f->key, f->value, f->square);
+        fprintf(stderr, "%2d %s %s", j, f->key, f->value);
         if (f->tree == NULL) {
             fprintf(stderr, " - ");
         } else {
@@ -946,10 +1002,8 @@ static void get_terminal(struct frame *top, struct lens *lens,
     top->tree = get_lens(lens, state);
     top->key = state->key;
     top->value = state->value;
-    top->square = state->square;
     state->key = NULL;
     state->value = NULL;
-    state->square = NULL;
 }
 
 static void parse_terminal(struct frame *top, struct lens *lens,
@@ -1026,7 +1080,7 @@ static void visit_enter(struct lens *lens,
 static void get_combine(struct rec_state *rec_state,
                         struct lens *lens, uint n) {
     struct tree *tree = NULL, *tail = NULL;
-    char *key = NULL, *value = NULL, *square = NULL;
+    char *key = NULL, *value = NULL;
     struct frame *top = NULL;
 
     if (n > 0)
@@ -1046,16 +1100,11 @@ static void get_combine(struct rec_state *rec_state,
             ensure(value == NULL, rec_state->state->info);
             value = top->value;
         }
-        if (top->square != NULL) {
-            ensure(square == NULL, rec_state->state->info);
-            square = top->square;
-        }
     }
     top = push_frame(rec_state, lens);
     top->tree = tree;
     top->key = key;
     top->value = value;
-    top->square = square;
  error:
     return;
 }
@@ -1172,24 +1221,26 @@ static void visit_exit(struct lens *lens,
             parse_combine(rec_state, lens, n);
     } else if (lens->tag == L_SQUARE) {
         if (rec_state->mode == M_GET) {
-            char *key, *square;
+            struct ast *square, *concat, *right, *left;
+            char *rsqr, *lsqr;
+            int ret;
 
-            key = top_frame(rec_state)->key;
-            square = top_frame(rec_state)->square;
-
-            ensure(key != NULL, state->info);
-            ensure(square != NULL, state->info);
-
-            // raise syntax error if they are not equals
-            if (STRCASENEQ(key, square)){
+            square = rec_state->ast;
+            concat = child_first(square);
+            right = child_first(concat);
+            left = child_last(concat);
+            lsqr = token_range(state->text, left->start, left->end);
+            rsqr = token_range(state->text, right->start, right->end);
+            ret = square_match(lens, lsqr, rsqr);
+            if (! ret) {
                 get_error(state, lens, "%s \"%s\" %s \"%s\"",
-                        "Parse error: mismatched key in square lens, expecting",
-                        key, "but got", square);
-                state->error->pos = end - strlen(square);
-                goto error;
+                        "Parse error: mismatched in square lens, expecting", lsqr,
+                        "but got", rsqr);
             }
-
-            FREE(square);
+            FREE(lsqr);
+            FREE(rsqr);
+            if (! ret)
+                goto error;
             get_combine(rec_state, lens, 1);
         } else {
             parse_combine(rec_state, lens, 1);
@@ -1283,7 +1334,6 @@ static struct frame *rec_process(enum mode_t mode, struct lens *lens,
     for(i = 0; i < rec_state.fused; i++) {
         f = nth_frame(&rec_state, i);
         FREE(f->key);
-        FREE(f->square);
         if (mode == M_GET) {
             FREE(f->value);
             free_tree(f->tree);
@@ -1442,10 +1492,6 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
     if (state.value != NULL) {
         get_error(&state, lens, "get left unused value %s", state.value);
         free(state.value);
-    }
-    if (state.square != NULL) {
-        get_error(&state, lens, "get left unused square %s", state.square);
-        free(state.square);
     }
     if (partial && state.error == NULL) {
         get_error(&state, lens, "Get did not match entire input");
