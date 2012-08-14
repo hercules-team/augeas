@@ -1,6 +1,6 @@
 module Test_krb5 =
 
-  (* Krb5.conf from Fermi labs *)
+  (* Krb5.conf from Fermilab *)
   let fermi_str = "###
 ### This krb5.conf template is intended for use with Fermi
 ### Kerberos v1_2 and later.  Earlier versions may choke on the
@@ -15,6 +15,7 @@ module Test_krb5 =
 	ccache_type = 4
 	default_tgs_enCtypes = des-cbc-crc
 	default_tkt_enctypes = des-cbc-crc
+	permitted_enctypes = des-cbc-crc des3-cbc-sha1
 	default_lifetime = 7d
 	renew_lifetime = 7d
 	autologin = true
@@ -22,6 +23,11 @@ module Test_krb5 =
 	forwardable = true
 	renewable = true
 	encrypt = true
+        v4_name_convert = {
+                host = {
+                        rcmd = host
+                        }
+                }
 
 [realms]
 	FNAL.GOV = {
@@ -80,6 +86,11 @@ module Test_krb5 =
 		default_domain = cern.ch
 		kpasswd_server = afskrb5m.cern.ch
 		admin_server = afskrb5m.cern.ch
+		v4_name_convert = {
+                        host = {
+                                rcmd = host
+                        }
+                }
 	}
 
 [instancemapping]
@@ -271,8 +282,13 @@ test Krb5.lns get fermi_str =
     { "ticket_lifetime" = "1560m" }
     { "default_realm" = "FNAL.GOV" }
     { "ccache_type" = "4" }
-    { "default_tgs_enCtypes" = "des-cbc-crc" }
+    { "default_tgs_enctypes" = "des-cbc-crc" }
+    { "#eol" }
     { "default_tkt_enctypes" = "des-cbc-crc" }
+    { "#eol" }
+    { "permitted_enctypes" = "des-cbc-crc" }
+    { "permitted_enctypes" = "des3-cbc-sha1" }
+    { "#eol" }
     { "default_lifetime" = "7d" }
     { "renew_lifetime" = "7d" }
     { "autologin" = "true" }
@@ -280,6 +296,11 @@ test Krb5.lns get fermi_str =
     { "forwardable" = "true" }
     { "renewable" = "true" }
     { "encrypt" = "true" }
+    { "v4_name_convert"
+      { "host"
+        { "rcmd" = "host" }
+      }
+    }
     {  } }
   { "realms"
     { "realm" = "FNAL.GOV"
@@ -330,7 +351,13 @@ test Krb5.lns get fermi_str =
       { "kdc" = "afsdb1.cern.ch" }
       { "default_domain" = "cern.ch" }
       { "kpasswd_server" = "afskrb5m.cern.ch" }
-      { "admin_server" = "afskrb5m.cern.ch" } }
+      { "admin_server" = "afskrb5m.cern.ch" }
+      { "v4_name_convert"
+        { "host"
+          { "rcmd" = "host" }
+        }
+      }
+    }
     { } }
   { "instancemapping"
     { "afs"
@@ -907,3 +934,56 @@ test Krb5.lns get pam_str =
       { "renew_lifetime" = "36000" }
       { "forwardable" = "true" }
       { "krb4_convert" = "false" } }
+
+(* Ticket #274 - multiple *enctypes values *)
+let multiple_enctypes = "[libdefaults]
+permitted_enctypes = arcfour-hmac-md5 arcfour-hmac des3-cbc-sha1 des-cbc-md5 des-cbc-crc aes128-cts
+default_tgs_enctypes = des3-cbc-sha1 des-cbc-md5
+default_tkt_enctypes = des-cbc-md5
+"
+
+test Krb5.lns get multiple_enctypes =
+  { "libdefaults"
+    { "permitted_enctypes" = "arcfour-hmac-md5" }
+    { "permitted_enctypes" = "arcfour-hmac" }
+    { "permitted_enctypes" = "des3-cbc-sha1" }
+    { "permitted_enctypes" = "des-cbc-md5" }
+    { "permitted_enctypes" = "des-cbc-crc" }
+    { "permitted_enctypes" = "aes128-cts" }
+    { "#eol" }
+    { "default_tgs_enctypes" = "des3-cbc-sha1" }
+    { "default_tgs_enctypes" = "des-cbc-md5" }
+    { "#eol" }
+    { "default_tkt_enctypes" = "des-cbc-md5" }
+    { "#eol" }
+  }
+
+(* Ticket #274 - v4_name_convert subsection *)
+let v4_name_convert = "[realms]
+ EXAMPLE.COM = {
+  kdc = kerberos.example.com:88
+  admin_server = kerberos.example.com:749
+  default_domain = example.com
+  ticket_lifetime = 12h
+  v4_name_convert = {
+     host = {
+       rcmd = host
+     }
+  }
+ }
+"
+
+test Krb5.lns get v4_name_convert =
+  { "realms"
+    { "realm" = "EXAMPLE.COM"
+      { "kdc" = "kerberos.example.com:88" }
+      { "admin_server" = "kerberos.example.com:749" }
+      { "default_domain" = "example.com" }
+      { "ticket_lifetime" = "12h" }
+      { "v4_name_convert"
+        { "host"
+          { "rcmd" = "host" }
+        }
+      }
+    }
+  }

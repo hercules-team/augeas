@@ -8,6 +8,7 @@ let eol = Inifile.eol
 let dels = Util.del_str
 
 let indent = del /[ \t]*/ ""
+let comma_or_space_sep = del /[ \t,]{1,}/ " "
 let eq = del /[ \t]*=[ \t]*/ " = "
 let eq_openbr = del /[ \t]*=[ \t\n]*\{([ \t]*\n)*/ " = {"
 let closebr = del /[ \t]*\}/ "}"
@@ -37,13 +38,31 @@ let record (t:string) (e:lens) =
   let title = Inifile.indented_title t in
     Inifile.record title e
 
+let v4_name_convert (subsec:lens) = [ indent . key "v4_name_convert" .
+                        eq_openbr .  subsec* . closebr . eol ]
+
+(*
+  For the enctypes this appears to be a list of the valid entries:
+       c4-hmac arcfour-hmac aes128-cts rc4-hmac
+       arcfour-hmac-md5 des3-cbc-sha1 des-cbc-md5 des-cbc-crc
+*)
+let enctype_re = /[a-zA-Z0-9-]{3,}/
+let enctypes = /permitted_enctypes|default_tgs_enctypes|default_tkt_enctypes/i
+
+(* An #eol label prevents ambiguity between "k = v1 v2" and "k = v1\n k = v2" *)
+let enctype_list (nr:regexp) (ns:string) =
+  indent . del nr ns . eq
+    . Build.opt_list [ label ns . store enctype_re ] comma_or_space_sep
+    . (comment|eol) . [ label "#eol" ]
+
 let libdefaults =
-  let option = entry (name_re - "v4_name_convert") eq comment in
+  let option = entry (name_re - "v4_name_convert" - enctypes) eq comment in
+  let enctype_lists = enctype_list /permitted_enctypes/i "permitted_enctypes"
+                      | enctype_list /default_tgs_enctypes/i "default_tgs_enctypes"
+                      | enctype_list /default_tkt_enctypes/i "default_tkt_enctypes" in
   let subsec = [ indent . key /host|plain/ . eq_openbr .
                    (entry name_re eq comment)* . closebr . eol ] in
-  let v4_name_convert = [ indent . key "v4_name_convert" . eq_openbr .
-                          subsec* . closebr . eol ] in
-  record "libdefaults" (option|v4_name_convert)
+  record "libdefaults" (option|enctype_lists|v4_name_convert subsec)
 
 let login =
   let keys = /krb[45]_get_tickets|krb4_convert|krb_run_aklog/
@@ -61,13 +80,16 @@ let appdefaults =
 let realms =
   let simple_option = /kdc|admin_server|database_module|default_domain/
       |/v4_realm|auth_to_local(_names)?|master_kdc|kpasswd_server/
-      |/admin_server/ in
+      |/admin_server|ticket_lifetime/ in
   let subsec_option = /v4_instance_convert/ in
   let option = entry simple_option eq comment in
   let subsec = [ indent . key subsec_option . eq_openbr .
                    (entry name_re eq comment)* . closebr . eol ] in
+  let v4subsec = [ indent . key /host|plain/ . eq_openbr .
+                   (entry name_re eq comment)* . closebr . eol ] in
   let realm = [ indent . label "realm" . store realm_re .
-                  eq_openbr . (option|subsec)* . closebr . eol ] in
+                  eq_openbr . (option|subsec|(v4_name_convert v4subsec))* .
+                  closebr . eol ] in
     record "realms" (realm|comment)
 
 let domain_realm =
