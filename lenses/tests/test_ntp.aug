@@ -151,3 +151,8 @@ test Ntp.tinker get "tinker panic 0 huffpuff 3.14\n" =
   { "tinker"
     { "panic" = "0" }
     { "huffpuff" = "3.14" } }
+
+(* Bug #297: tos directive *)
+test Ntp.tos get "tos maxdist 16\n" =
+  { "tos"
+    { "maxdist" = "16" } }
