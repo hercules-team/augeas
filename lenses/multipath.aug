@@ -46,31 +46,35 @@ let common_setting =
  |kv "no_path_retry" (Rx.integer | /fail|queue/)
  |kv "rr_min_io" Rx.integer
 
+let default_setting =
+  kv "polling_interval" Rx.integer
+  |kv "udev_dir" Rx.fspath
+  |qstr "selector"
+  |kv "user_friendly_names" /yes|no/
+  |kv "dev_loss_tmo" Rx.integer
+  |kv "fast_io_fail_tmo" Rx.integer
+  |kv "verbosity" /[0-6]/
+  |kv "reassign_maps" /yes|no/
+  (* These are not in the manpage but in the example multipath.conf *)
+  |kv "prio" Rx.word
+  |kv "max_fds" Rx.integer
+  (* SUSE extensions *)
+  |kv "async_timeout" Rx.integer
+  |kv "max_polling_interval" Rx.integer
+
 (* A device subsection *)
 let device =
   let setting =
     qstr /vendor|product|product_blacklist|hardware_handler/
-   |common_setting in
+   |common_setting
+   |default_setting in
   section "device" setting
 
 (* The defaults section *)
 let defaults =
   let setting =
     common_setting
-   |kv "polling_interval" Rx.integer
-   |kv "udev_dir" Rx.fspath
-   |qstr "selector"
-   |kv "user_friendly_names" /yes|no/
-   |kv "dev_loss_tmo" Rx.integer
-   |kv "fast_io_fail_tmo" Rx.integer
-   |kv "verbosity" /[0-6]/
-   |kv "reassign_maps" /yes|no/
-   (* These are not in the manpage but in the example multipath.conf *)
-   |kv "prio" Rx.word
-   |kv "max_fds" Rx.integer
-   (* SUSE extensions *)
-   |kv "async_timeout" Rx.integer
-   |kv "max_polling_interval" Rx.integer
+   |default_setting
   in section "defaults" setting
 
 (* The blacklist and blacklist_exceptions sections *)

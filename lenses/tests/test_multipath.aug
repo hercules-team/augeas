@@ -84,6 +84,7 @@ devices {
 		vendor			\"COMPAQ  \"
 		product			\"MSA1000         \"
 		path_grouping_policy	multibus
+		polling_interval	9
 	}
 }\n"
 
@@ -162,4 +163,5 @@ test Multipath.lns get conf =
     { "device"
       { "vendor" = "COMPAQ  " }
       { "product" = "MSA1000         " }
-      { "path_grouping_policy" = "multibus" } } }
+      { "path_grouping_policy" = "multibus" }
+      { "polling_interval" = "9" } } }
