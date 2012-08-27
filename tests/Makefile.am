@@ -30,6 +30,7 @@ lens_tests =			\
   lens-backuppchosts.sh		\
   lens-bbhosts.sh		\
   lens-build.sh		\
+  lens-cachefilesd.sh		\
   lens-cgconfig.sh		\
   lens-cgrules.sh  		\
   lens-channels.sh  		\
