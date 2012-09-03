@@ -75,6 +75,7 @@ Group: Specific Modules  {
    File: Fonts  (fonts.aug)
    File: Fuse  (fuse.aug)
    File: Grub  (grub.aug)
+   File: GtkBookmarks  (gtkbookmarks.aug)
    File: Hostname  (hostname.aug)
    File: Hosts_Access  (hosts_access.aug)
    File: Host_Conf  (host_conf.aug)
@@ -129,6 +130,7 @@ Group: Specific Modules  {
    File: Qpid  (qpid.aug)
    File: Systemd  (systemd.aug)
    File: Vfstab  (vfstab.aug)
+   File: Ldif  (ldif.aug)
    }  # Group: Specific Modules
 
 Group: Generic Modules  {
@@ -149,6 +151,7 @@ Group: Tests and Examples  {
    File: Test_Channels  (tests/test_channels.aug)
    File: Test_Cups  (tests/test_cups.aug)
    File: Test_Fuse  (tests/test_fuse.aug)
+   File: Test_GtkBookmarks  (tests/test_gtkbookmarks.aug)
    File: Test_IniFile  (tests/test_inifile.aug)
    File: Test_Inputrc  (tests/test_inputrc.aug)
    File: Test_Keepalived  (tests/test_keepalived.aug)

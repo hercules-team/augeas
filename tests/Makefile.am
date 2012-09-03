@@ -57,6 +57,7 @@ lens_tests =			\
   lens-fuse.sh			\
   lens-gdm.sh			\
   lens-group.sh			\
+  lens-gtkbookmarks.sh			\
   lens-json.sh          \
   lens-hostname.sh			\
   lens-hosts.sh			\
