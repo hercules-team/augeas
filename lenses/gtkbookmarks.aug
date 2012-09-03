@@ -21,7 +21,7 @@ module GtkBookmarks =
 autoload xfm
 
 (* View: entry *)
-let entry = [ seq "entry" . store Rx.no_spaces
+let entry = [ label "bookmark" . store Rx.no_spaces
             . (Sep.space . [ label "label" . store Rx.space_in ])?
             . Util.eol ]
 

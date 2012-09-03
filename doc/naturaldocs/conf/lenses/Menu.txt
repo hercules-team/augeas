@@ -131,6 +131,7 @@ Group: Specific Modules  {
    File: Systemd  (systemd.aug)
    File: Vfstab  (vfstab.aug)
    File: Ldif  (ldif.aug)
+   File: Cachefilesd  (cachefilesd.aug)
    }  # Group: Specific Modules
 
 Group: Generic Modules  {
