@@ -146,6 +146,7 @@ lens_tests =			\
   lens-up2date.sh		\
   lens-util.sh		\
   lens-vfstab.sh		\
+  lens-vmware_config.sh		\
   lens-vsftpd.sh		\
   lens-webmin.sh		\
   lens-wine.sh			\

@@ -59,7 +59,10 @@ Group: Specific Modules  {
    File: Approx  (approx.aug)
    File: AptConf  (aptconf.aug)
    File: Authorized_Keys  (authorized_keys.aug)
+   File: Automaster  (automaster.aug)
+   File: Automounter  (automounter.aug)
    File: BackupPCHosts  (backuppchosts.aug)
+   File: Cachefilesd  (cachefilesd.aug)
    File: Cgconfig  (no auto-title, cgconfig.aug)
    File: Cgrules  (no auto-title, cgrules.aug)
    File: Channels  (channels.aug)
@@ -83,6 +86,7 @@ Group: Specific Modules  {
    File: Iptables  (iptables.aug)
    File: Kdump  (kdump.aug)
    File: Keepalived  (keepalived.aug)
+   File: Ldif  (ldif.aug)
    File: Ldso  (no auto-title, ldso.aug)
    File: Login_defs  (login_defs.aug)
    File: Lokkit  (lokkit.aug)
@@ -111,6 +115,7 @@ Group: Specific Modules  {
    File: Simplevars  (simplevars.aug)
    File: SmbUsers  (smbusers.aug)
    File: Solaris_System  (solaris_system.aug)
+   File: Shellvars  (shellvars.aug)
    File: Ssh  (ssh.aug)
    File: Sshd  (sshd.aug)
    File: Sssd  (no auto-title, sssd.aug)
@@ -121,17 +126,13 @@ Group: Specific Modules  {
    File: Up2date  (up2date.aug)
    File: Xinetd  (xinetd.aug)
    File: Xorg  (xorg.aug)
-   File: Shellvars  (shellvars.aug)
-   File: Automaster  (automaster.aug)
-   File: Automounter  (automounter.aug)
    File: Netmasks  (netmasks.aug)
    File: Pam  (pam.aug)
    File: PamConf  (pamconf.aug)
    File: Qpid  (qpid.aug)
    File: Systemd  (systemd.aug)
    File: Vfstab  (vfstab.aug)
-   File: Ldif  (ldif.aug)
-   File: Cachefilesd  (cachefilesd.aug)
+   File: VMware_Config  (vmware_config.aug)
    }  # Group: Specific Modules
 
 Group: Generic Modules  {
@@ -178,6 +179,7 @@ Group: Tests and Examples  {
    File: Test_sssd  (tests/test_sssd.aug)
    File: Test_Systemd  (tests/test_systemd.aug)
    File: test_user  (tests/test_sudoers.aug)
+   File: Test_VMware_Config  (tests/test_vmware_config.aug)
    File: Yum.lns  (tests/test_yum.aug)
    }  # Group: Tests and Examples
 
