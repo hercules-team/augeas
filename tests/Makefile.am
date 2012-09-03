@@ -21,6 +21,7 @@ lens_tests =			\
   lens-aliases.sh		\
   lens-anacron.sh		\
   lens-approx.sh		\
+  lens-apt_update_manager.sh		\
   lens-aptpreferences.sh	\
   lens-aptconf.sh	\
   lens-aptsource.sh		\
