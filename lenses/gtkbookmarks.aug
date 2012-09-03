@@ -20,13 +20,17 @@ module GtkBookmarks =
 
 autoload xfm
 
+(* View: empty
+   Comment are not allowed, even empty comments *)
+let empty = Util.empty_generic Rx.opt_space
+
 (* View: entry *)
 let entry = [ label "bookmark" . store Rx.no_spaces
             . (Sep.space . [ label "label" . store Rx.space_in ])?
             . Util.eol ]
 
 (* View: lns *)
-let lns = entry*
+let lns = (empty | entry)*
 
 (* View: xfm *)
 let xfm = transform lns (incl (Sys.getenv("HOME") . "/.gtk-bookmarks"))

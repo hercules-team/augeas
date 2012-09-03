@@ -15,3 +15,11 @@ test GtkBookmarks.lns get "ftp://user@myftp.com/somedir\n" =
 test GtkBookmarks.lns get "file:///home/rpinson/Ubuntu%20One Ubuntu One\n" =
  { "bookmark" = "file:///home/rpinson/Ubuntu%20One"
    { "label" = "Ubuntu One" } }
+
+(* Test: GtkBookmarks.lns
+     Empty lines are allowed, not comments *)
+test GtkBookmarks.lns get "ftp://user@myftp.com/somedir\n\nfile:///home/rpinson/Ubuntu%20One Ubuntu One\n" =
+ { "bookmark" = "ftp://user@myftp.com/somedir" }
+ { }
+ { "bookmark" = "file:///home/rpinson/Ubuntu%20One"
+   { "label" = "Ubuntu One" } }
