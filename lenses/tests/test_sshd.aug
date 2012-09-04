@@ -37,6 +37,10 @@ HostKey /etc/ssh/ssh_host_dsa_key\n" =
     { "Subsystem"
 	{ "sftp" = "/usr/lib/openssh/sftp-server" } }
 
+  test Sshd.lns get "Subsystem sftp-test /usr/lib/openssh/sftp-server\n" =
+    { "Subsystem"
+	{ "sftp-test" = "/usr/lib/openssh/sftp-server" } }
+
 
 
   let match_blocks = "X11Forwarding yes

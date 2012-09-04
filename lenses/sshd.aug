@@ -93,7 +93,7 @@ module Sshd =
 
    let subsystemvalue =
      let value = store (/[^ \t\n](.*[^ \t\n])?/) in
-     [ key /[A-Za-z0-9]+/ . sep . value . eol ]
+     [ key /[A-Za-z0-9\-]+/ . sep . value . eol ]
 
    let subsystem =
      [ key "Subsystem" .  sep .  subsystemvalue ]
