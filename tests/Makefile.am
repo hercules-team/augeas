@@ -83,6 +83,7 @@ lens_tests =			\
   lens-limits.sh		\
   lens-login_defs.sh 	\
   lens-logrotate.sh		\
+  lens-logwatch.sh		\
   lens-lokkit.sh		\
   lens-mcollective.sh 	\
   lens-mdadm_conf.sh	\
