@@ -17,7 +17,7 @@ About: Configuration files
    This lens applies to /etc/postfix/transport. See <filter>.
 
 About: Examples
-   The <Test_Transport> file contains various examples and tests.
+   The <Test_Postfix_Transport> file contains various examples and tests.
 *)
 
 module Postfix_Transport =
@@ -47,6 +47,5 @@ let lns = (Util.empty | Util.comment | record)*
 
 (* Variable: filter *)
 let filter = incl "/etc/postfix/transport"
-           . incl "/etc/postfix/virtual"
 
 let xfm = transform lns filter
