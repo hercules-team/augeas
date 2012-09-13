@@ -301,7 +301,7 @@ daemon.info                                     /var/log/cvsupd.log
 	  = "-foo.foo.away\n"
 
         (* tokens can contain capital letters *)
-        test Syslog.lns get "LOCAL5.*    -/var/log/foo.log\n" = ?
+        test Syslog.lns get "LOCAL5.*    -/var/log/foo.log\n" =
           { "entry"
             { "selector"
               { "facility" = "LOCAL5" }
