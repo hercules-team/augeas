@@ -67,6 +67,7 @@ Group: Specific Modules  {
    File: Cgconfig  (no auto-title, cgconfig.aug)
    File: Cgrules  (no auto-title, cgrules.aug)
    File: Channels  (channels.aug)
+   File: Collectd  (collectd.aug)
    File: Cron  (cron.aug)
    File: crypttab.aug  (crypttab.aug)
    File: Cups  (cups.aug)
@@ -134,7 +135,7 @@ Group: Specific Modules  {
    File: Qpid  (qpid.aug)
    File: Systemd  (systemd.aug)
    File: Vfstab  (vfstab.aug)
-   File: VMware_Config  (vmware_config.aug)
+   File: VWware_Config  (vmware_config.aug)
    }  # Group: Specific Modules
 
 Group: Generic Modules  {
@@ -154,6 +155,7 @@ Group: Tests and Examples  {
    File: Test_Apt_Update_Manager  (tests/test_apt_update_manager.aug)
    File: Test_Aliases  (tests/test_aliases.aug)
    File: Test_Channels  (tests/test_channels.aug)
+   File: Test_Collectd  (tests/test_collectd.aug)
    File: Test_Cups  (tests/test_cups.aug)
    File: Test_Fuse  (tests/test_fuse.aug)
    File: Test_GtkBookmarks  (tests/test_gtkbookmarks.aug)

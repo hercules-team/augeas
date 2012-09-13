@@ -37,6 +37,7 @@ lens_tests =			\
   lens-channels.sh  		\
   lens-cobblersettings.sh	\
   lens-cobblermodules.sh	\
+  lens-collectd.sh	\
   lens-cron.sh			\
   lens-crypttab.sh		\
   lens-cyrus_imapd.sh		\
