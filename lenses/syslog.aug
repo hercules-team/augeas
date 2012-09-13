@@ -104,7 +104,7 @@ module Syslog =
 	(* Variable: token
 	  alphanum or "*"
 	  *)
-        let token      = /([a-z0-9]+|\*)/
+        let token      = /([A-Za-z0-9]+|\*)/
 
 	(* Variable: file_r
 	 a file begins with a / and get almost anything else after

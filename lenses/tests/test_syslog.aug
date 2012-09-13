@@ -299,3 +299,17 @@ daemon.info                                     /var/log/cvsupd.log
 	  set "/hostname/reverse" "" ;
 	  set "/hostname/hostname" "foo.foo.away"
 	  = "-foo.foo.away\n"
+
+        (* tokens can contain capital letters *)
+        test Syslog.lns get "LOCAL5.*    -/var/log/foo.log\n" = ?
+          { "entry"
+            { "selector"
+              { "facility" = "LOCAL5" }
+              { "level" = "*" }
+            }
+            { "action"
+              { "no_sync" }
+              { "file" = "/var/log/foo.log" }
+            }
+          }
+
