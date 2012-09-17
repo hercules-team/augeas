@@ -13,8 +13,8 @@ AcceptEnv LC_IDENTIFICATION LC_ALL\n"
         { "4" = "LC_TELEPHONE" }
         { "5" = "LC_MEASUREMENT" } }
     { "AcceptEnv"
-        { "6" = "LC_IDENTIFICATION" }
-        { "7" = "LC_ALL" } }
+        { "1" = "LC_IDENTIFICATION" }
+        { "2" = "LC_ALL" } }
 
 
   test Sshd.lns get "HostKey /etc/ssh/ssh_host_rsa_key
