@@ -129,3 +129,19 @@ test Modprobe.entry get options_space_quote =
 test Modprobe.entry get "options ipv6 disable = 1\n" =
   { "options" = "ipv6"
     { "disable" = "1" } }
+
+(* Support multiline split commands, Ubuntu bug #1054306 *)
+test Modprobe.lns get "# /etc/modprobe.d/iwlwifi.conf
+# iwlwifi will dyamically load either iwldvm or iwlmvm depending on the
+# microcode file installed on the system. When removing iwlwifi, first
+# remove the iwl?vm module and then iwlwifi.
+remove iwlwifi \
+(/sbin/lsmod | grep -o -e ^iwlmvm -e ^iwldvm -e ^iwlwifi | xargs /sbin/rmmod) \
+&& /sbin/modprobe -r mac80211\n" =
+  { "#comment" = "/etc/modprobe.d/iwlwifi.conf" }
+  { "#comment" = "iwlwifi will dyamically load either iwldvm or iwlmvm depending on the" }
+  { "#comment" = "microcode file installed on the system. When removing iwlwifi, first" }
+  { "#comment" = "remove the iwl?vm module and then iwlwifi." }
+  { "remove" = "iwlwifi"
+    { "command" = "(/sbin/lsmod | grep -o -e ^iwlmvm -e ^iwldvm -e ^iwlwifi | xargs /sbin/rmmod) \\\n&& /sbin/modprobe -r mac80211" }
+  }
