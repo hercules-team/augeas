@@ -78,7 +78,7 @@ module Sshd =
 
    let array_entry (k:string) =
      let value = store /[^ \t\n]+/ in
-     [ key k . counter k . [ sep . seq k . value]* . eol ]
+     [ key k . [ sep . seq k . value]* . eol ]
 
    let other_entry =
      let value = store /[^ \t\n]+([ \t]+[^ \t\n]+)*/ in
@@ -100,7 +100,7 @@ module Sshd =
 
    let macs =
      let mac_value = store /[^, \t\n]+/ in
-     [ key "MACs" . sep . counter "macs" .
+     [ key "MACs" . sep .
          [ seq "macs" . mac_value ] .
          ([ seq "macs" . Util.del_str "," . mac_value])* .
          eol ]
