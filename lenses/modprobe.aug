@@ -41,8 +41,8 @@ let sto_no_spaces = store /[^# \t\n\\\\]+/
 (* View: sto_no_colons *)
 let sto_no_colons = store /[^:# \t\n\\\\]+/
 
-(* View: sto_multiline *)
-let sto_multiline = store /(([^# \t\n\\\\][^#\n\\\\]*[ \t]*\\\\[ \t]*\n[ \t]*)*([^# \t\n\\\\][^#\n\\\\]*[^# \t\n\\\\]|[^# \t\n\\\\])|[^# \t\n\\\\])/
+(* View: sto_to_eol *)
+let sto_to_eol = store /(([^# \t\n\\\\][^#\n\\\\]*[ \t]*\\\\[ \t]*\n[ \t]*)*([^# \t\n\\\\][^#\n\\\\]*[^# \t\n\\\\]|[^# \t\n\\\\])|[^# \t\n\\\\])/
 
 (* View: alias *)
 let alias =
@@ -64,7 +64,7 @@ let options =
 
 (* View: install_remove *)
 let kv_line_command (kw:regexp) =
-  let command = [ label "command" . sto_multiline ] in
+  let command = [ label "command" . sto_to_eol ] in
   [ key kw . sep_space . sto_no_spaces
                          . sep_space . command . Util.comment_or_eol ]
 

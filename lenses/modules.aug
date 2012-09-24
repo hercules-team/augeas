@@ -20,8 +20,11 @@ autoload xfm
 (* View: word *)
 let word = /[^#, \n\t\/]+/
 
+(* View: sto_line *)
+let sto_line = store /[^# \t\n].*[^ \t\n]|[^# \t\n]/
+
 (* View: record *)
-let record = [ key word . (Util.del_ws_tab . Modprobe.sto_to_eol)? . Util.eol ]
+let record = [ key word . (Util.del_ws_tab . sto_line)? . Util.eol ]
 
 (* View: lns *)
 let lns = ( Util.empty | Util.comment | record ) *
