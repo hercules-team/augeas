@@ -32,6 +32,7 @@ lens_tests =			\
   lens-bbhosts.sh		\
   lens-build.sh		\
   lens-cachefilesd.sh		\
+  lens-carbon.sh	\
   lens-cgconfig.sh		\
   lens-cgrules.sh  		\
   lens-channels.sh  		\
