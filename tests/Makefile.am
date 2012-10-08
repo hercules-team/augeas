@@ -85,6 +85,7 @@ lens_tests =			\
   lens-lokkit.sh		\
   lens-mcollective.sh 	\
   lens-mdadm_conf.sh	\
+  lens-memcached.sh		\
   lens-mke2fs.sh		\
   lens-modprobe.sh		\
   lens-modules.sh		\
