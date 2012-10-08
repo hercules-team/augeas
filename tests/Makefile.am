@@ -148,6 +148,7 @@ lens_tests =			\
   lens-syslog.sh		\
   lens-sysctl.sh		\
   lens-systemd.sh		\
+  lens-thttpd.sh		\
   lens-up2date.sh		\
   lens-util.sh		\
   lens-vfstab.sh		\
