@@ -82,6 +82,7 @@ lens_tests =			\
   lens-login_defs.sh 	\
   lens-logrotate.sh		\
   lens-lokkit.sh		\
+  lens-mcollective.sh 	\
   lens-mdadm_conf.sh	\
   lens-mke2fs.sh		\
   lens-modprobe.sh		\
