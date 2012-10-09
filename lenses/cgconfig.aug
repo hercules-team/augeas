@@ -87,7 +87,7 @@ module Cgconfig =
 
 (* group { ... } *)
    let group_data  =
-     let lnsa = key "group" . indent . store id in
+     let lnsa = key "group" . Util.del_ws_spc . store id in
      let lnsb = ( perm_info | controller_info | comment | empty )* in
      brack_entry_base lnsa lnsb
 

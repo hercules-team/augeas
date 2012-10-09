@@ -253,3 +253,7 @@ test Cgconfig.lns get group4 =
     {  } }
   {  }
   {  }
+
+test Cgconfig.lns put "group tst {memory {}}" after
+  set "/group" "tst2"
+= "group tst2 {memory {}}"
