@@ -184,6 +184,21 @@ test Xml.attributes get " refs=\"A1\nA2  A3\"" =
 test Xml.attributes put attr1 after rm "/#attribute[1]";
                                     set "/#attribute/attr2" "foo" = attr2
 
+(* test quoting *)
+(* well formed values *)
+test Xml.attributes get " attr1=\"value1\"" = { "#attribute" { "attr1" = "value1" } }
+test Xml.attributes get " attr1='value1'" = { "#attribute" { "attr1" = "value1" } }
+test Xml.attributes get " attr1='va\"lue1'" = { "#attribute" { "attr1" = "va\"lue1" } }
+test Xml.attributes get " attr1=\"va'lue1\"" = { "#attribute" { "attr1" = "va'lue1" } }
+
+(* illegal as per the XML standard *)
+test Xml.attributes get " attr1=\"va\"lue1\"" = *
+test Xml.attributes get " attr1='va'lue1'" = *
+
+(* malformed values *)
+test Xml.attributes get " attr1=\"value1'" = *
+test Xml.attributes get " attr1='value1\"" = *
+
 (* Group: empty *)
 
 (* Variable: empty1 *)
@@ -622,7 +637,14 @@ test Xml.lns get p10pass1_1 =
     }
   }
 
-test Xml.lns get p10pass1_2 = *
+test Xml.lns get p10pass1_2 =
+  { "doc"
+    { "A" = "#empty"
+      { "#attribute"
+        { "a" = "\"\">&#39;&#34;" }
+      }
+    }
+  }
 
 (* here again, test exclude single quote *)
 let p11pass1 = "<!--Inability to resolve a notation should not be reported as an error-->
@@ -696,9 +718,9 @@ test Xml.lns get p22pass3 =
 
 let p25pass2 = "<?xml version
 
-     
+
 =
-  
+
 
 \"1.0\"?>
 <doc></doc>"
@@ -712,7 +734,7 @@ test Xml.lns get p25pass2 =
   { "doc" }
 
 
-test Xml.lns get "<!DOCTYPE 
+test Xml.lns get "<!DOCTYPE
 
 doc
 
@@ -787,4 +809,3 @@ test Xml.lns get "<!DOCTYPE doc [
 %eldecl;
 ]>
 <doc></doc>" = *
-

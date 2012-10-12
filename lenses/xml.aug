@@ -24,7 +24,7 @@ let word                = /[a-zA-Z][a-zA-Z0-9._-]*/
 let char                = /.|(\r?\n)/
 (* if we hide the quotes, then we can only accept single or double quotes *)
 (* otherwise a put ambiguity is raised *)
-let sto_dquote          = dels "\"" . store /[^"]*/ . dels "\""
+let sto_dquote          = dels "\"" . store /[^"]*/ . dels "\"" (* " *)
 let sto_squote          = dels "'" . store /[^']*/ . dels "'"
 
 let comment             = [ label "#comment" .
@@ -89,8 +89,24 @@ let decl_outer    = sep_osp . del /\[[ \n\t\r]*/ "[\n" .
 
 let doctype       = decl_def /!DOCTYPE/ (decl_outer|id_def)
 
-let attributes    = [ label "#attribute" .
-                      [ sep_spc . key nmtoken . sep_eq . sto_dquote ]+ ]
+(* General shape of an attribute
+ * q   is the regexp matching the quote character for the value
+ * qd  is the default quote character
+ * brx is what the actual attribute value must match *)
+let attval (q:regexp) (qd:string) (brx:regexp) =
+  let quote = del q qd in
+  let body = store brx in
+  [ sep_spc . key nmtoken . sep_eq . square quote body quote ]
+
+(* We treat attributes according to one of the following three patterns:
+   attval1 : values that must be quoted with single quotes
+   attval2 : values that must be quoted with double quotes
+   attval3 : values that can be quoted with either *)
+let attributes    =
+  let attval1 = attval "'" "'" /[^']*"[^']*/ in (* " *)
+  let attval2 = attval "\"" "\"" /[^"]*'[^"]*/ in
+  let attval3 = attval /['"]/ "\"" /[^'\"]*/ in (* " *)
+  [ label "#attribute" . (attval1|attval2|attval3)+ ]
 
 let prolog        = [ label "#declaration" .
                       dels "<?xml" .
