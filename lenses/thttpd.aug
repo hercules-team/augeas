@@ -4,6 +4,20 @@ Module: Thttpd
 
 Author: Marc Fournier <marc.fournier@camptocamp.com>
 
+About: Reference
+    This lens is based on Thttpd's default thttpd.conf file.
+
+About: Usage Example
+(start code)
+    augtool> get /files/etc/thttpd/thttpd.conf/port
+    /files/etc/thttpd/thttpd.conf/port = 80
+
+    augtool> set /files/etc/thttpd/thttpd.conf/port 8080
+    augtool> save
+    Saved 1 file(s)
+(end code)
+   The <Test_Thttpd> file also contains various examples.
+
 About: License
   This file is licensed under the LGPL v2+, like the rest of Augeas.
 *)

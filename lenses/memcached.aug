@@ -4,6 +4,20 @@ Module: Memcached
 
 Author: Marc Fournier <marc.fournier@camptocamp.com>
 
+About: Reference
+    This lens is based on Memcached's default memcached.conf file.
+
+About: Usage Example
+(start code)
+    augtool> get /files/etc/memcached.conf/u
+    /files/etc/memcached.conf/u = nobody
+
+    augtool> set /files/etc/memcached.conf/m 128
+    augtool> save
+    Saved 1 file(s)
+(end code)
+   The <Test_Memcached> file also contains various examples.
+
 About: License
   This file is licensed under the LGPL v2+, like the rest of Augeas.
 *)

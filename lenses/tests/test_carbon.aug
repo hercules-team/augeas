@@ -1,6 +1,6 @@
 (*
 Module: Test_Carbon
-  Provides unit tests for the <Carbon> lens.
+  Provides unit tests and examples for the <Carbon> lens.
 *)
 
 module Test_Carbon =

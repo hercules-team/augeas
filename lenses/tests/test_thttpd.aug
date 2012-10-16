@@ -1,6 +1,6 @@
 (*
 Module: Test_Thttpd
-  Provides unit tests for the <Thttpd> lens.
+  Provides unit tests and examples for the <Thttpd> lens.
 *)
 
 module Test_Thttpd =

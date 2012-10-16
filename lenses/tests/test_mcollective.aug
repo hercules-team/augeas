@@ -1,6 +1,6 @@
 (*
 Module: Test_MCollective
-  Provides unit tests for the <MCollective> lens.
+  Provides unit tests and examples for the <MCollective> lens.
 *)
 
 module Test_MCollective =

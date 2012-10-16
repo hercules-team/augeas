@@ -1,6 +1,6 @@
 (*
 Module: Test_Memcached
-  Provides unit tests for the <Memcached> lens.
+  Provides unit tests and examples for the <Memcached> lens.
 *)
 
 module Test_Memcached =

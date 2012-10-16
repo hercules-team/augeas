@@ -1,10 +1,34 @@
 (*
 Module: Carbon
-  Parses Carbon's configuration files
-  NB: whitelist.conf and blacklist.conf use a different syntax. This lens
-  doesn't support them.
+    Parses Carbon's configuration files
 
 Author: Marc Fournier <marc.fournier@camptocamp.com>
+
+About: Reference
+    This lens is based on the conf/*.conf.example files from the Carbon
+    package.
+
+About: Configuration files
+    This lens applies to most files in /etc/carbon/. See <filter>.
+    NB: whitelist.conf and blacklist.conf use a different syntax. This lens
+    doesn't support them.
+
+About: Usage Example
+(start code)
+    $ augtool
+    augtool> ls /files/etc/carbon/carbon.conf/
+    cache/ = (none)
+    relay/ = (none)
+    aggregator/ = (none)
+
+    augtool> get /files/etc/carbon/carbon.conf/cache/ENABLE_UDP_LISTENER
+    /files/etc/carbon/carbon.conf/cache/ENABLE_UDP_LISTENER = False
+
+    augtool> set /files/etc/carbon/carbon.conf/cache/ENABLE_UDP_LISTENER True
+    augtool> save
+    Saved 1 file(s)
+(end code)
+   The <Test_Carbon> file also contains various examples.
 
 About: License
   This file is licensed under the LGPL v2+, like the rest of Augeas.
