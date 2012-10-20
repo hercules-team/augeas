@@ -23,7 +23,11 @@ define ('MYVAR', ROOT . 'some value'); # end-of line comment
 include_once( ROOT . \"/path/to/conf\"	 );
 include( ROOT . \"/path/to/conf\"	 );
 @include SM_PATH . 'config/config_local.php';
- ?>
+class config {
+  var $tmppath = \"/tmp\";
+  var $offline = 1;
+}
+?>
 "
 
 test Phpvars.lns get conf =
@@ -60,3 +64,9 @@ test Phpvars.lns get conf =
   { "include_once" = "ROOT . \"/path/to/conf\"" }
   { "include" = "ROOT . \"/path/to/conf\"" }
   { "@include" = "SM_PATH . 'config/config_local.php'" }
+  { "config"
+    { }
+    {"$tmppath" = "\"/tmp\""}
+    {"$offline" = "1"}
+  }
+  { }

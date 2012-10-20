@@ -31,8 +31,9 @@ let chr_star   = /\*/
 let chr_nstar  = /[^* \t\n]/
 let chr_slash  = /\//
 let chr_nslash = /[^\/ \t\n]/
+let chr_variable = /\$[A-Za-z0-9'"_:-]+/
 
-let sto_to_scl = store (/([^ \t\n].*[^ \t\n;]|[^ \t\n;])/ - /.*;[ \t]*(\/\/|#).*/)
+let sto_to_scl = store (/([^ \t\n].*[^ \t\n;]|[^ \t\n;])/ - /.*;[ \t]*(\/\/|#).*/) (* " *)
 let sto_to_eol = store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
 
 (************************************************************************
@@ -49,6 +50,7 @@ let comment      = Util.comment_multiline | comment_one_line
 
 let eol_or_comment = eol | comment_eol
 
+
 (************************************************************************
  *                               ENTRIES
  *************************************************************************)
@@ -60,11 +62,16 @@ let simple_line (kw:regexp) (lns:lens) = [ key kw
 
 let global     = simple_line "global" (sep_opt_spc . sep_dollar . sto_to_scl)
 
-let variable   =
-     let arraykey = [ label "@arraykey" . store /\[[][A-Za-z0-9'"_:-]+\]/ ]
-  in simple_line /\$[A-Za-z0-9'"_:-]+/ (arraykey? . (sep_eq . sto_to_scl))
+let assignment =
+  let arraykey = [ label "@arraykey" . store /\[[][A-Za-z0-9'"_:-]+\]/ ] in (* " *)
+  simple_line chr_variable (arraykey? . (sep_eq . sto_to_scl))
 
-let include    = simple_line "@include" (sep_opt_spc . sto_to_scl)
+let variable = Util.indent . assignment
+
+let classvariable =
+  Util.indent . del /(public|var)/ "public" . Util.del_ws_spc . assignment
+
+let include = simple_line "@include" (sep_opt_spc . sto_to_scl)
 
 let generic_function (kw:regexp) (lns:lens) =
   let lbracket = del /[ \t]*\([ \t]*/ "(" in
@@ -87,18 +94,25 @@ let simple_function (kw:regexp) =
 
 let entry      = Util.indent
                . ( global
-                 | variable
                  | include
                  | define
                  | simple_function "include"
                  | simple_function "include_once"
                  | simple_function "echo" )
 
+
+let class =
+  let classname = key /[A-Za-z0-9'"_:-]+/ in (* " *)
+  del /class[ \t]+/ "class " .
+  [ classname . Util.del_ws_spc . del "{" "{" .
+    (empty|comment|entry|classvariable)*
+  ] . del "}" "}"
+
 (************************************************************************
  *                                LENS
  *************************************************************************)
 
-let lns        = open_php . (empty|comment|entry)* . close_php
+let lns        = open_php . (empty|comment|entry|class|variable)* . close_php
 
 let filter     = incl "/etc/squirrelmail/config.php"
                . Util.stdexcl
