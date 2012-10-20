@@ -42,7 +42,7 @@ let record_anon = [ label ".anon" . ( entry | empty )+ ]
 let lns    = record_anon? . record*
 
 let filter = (incl "/etc/gdm/gdm.conf*")
-             . Util.stdexcl
+           . (incl "/etc/gdm/custom.conf")
+           . Util.stdexcl
 
 let xfm = transform lns filter
-
