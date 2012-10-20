@@ -79,6 +79,7 @@ lens_tests =			\
   lens-ldap.sh			\
   lens-ldif.sh			\
   lens-ldso.sh			\
+  lens-lightdm.sh		\
   lens-limits.sh		\
   lens-login_defs.sh 	\
   lens-logrotate.sh		\
