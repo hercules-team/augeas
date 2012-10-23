@@ -1704,6 +1704,7 @@ static int compile_test(struct term *term, struct ctx *ctx) {
 
     if (term->tr_tag == TR_EXN) {
         if (!EXN(actual)) {
+            print_info(stdout, term->info);
             printf("Test run should have produced exception, but produced\n");
             print_value(stdout, actual);
             printf("\n");
