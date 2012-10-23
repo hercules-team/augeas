@@ -81,6 +81,7 @@ struct state {
     unsigned int  accept : 1;
     unsigned int  live : 1;
     unsigned int  reachable : 1;
+    unsigned int  visited : 1;   /* Used in various places to track progress */
     /* Array of transitions. The TUSED first entries are used, the array
        has allocated room for TSIZE */
     size_t        tused;
@@ -2657,6 +2658,80 @@ int fa_example(struct fa *fa, char **example, size_t *example_len) {
     free_re_str(word);
     free_re_str(str);
     return -1;
+}
+
+struct enum_intl {
+    int       limit;
+    int       nwords;
+    char    **words;
+    char     *buf;
+    size_t    bsize;
+};
+
+static int fa_enumerate_intl(struct state *s, struct enum_intl *ei, int pos) {
+    int result = -1;
+
+    if (ei->bsize <= pos + 1) {
+        ei->bsize *= 2;
+        F(REALLOC_N(ei->buf, ei->bsize));
+    }
+
+    ei->buf[pos] = '\0';
+    for_each_trans(t, s) {
+        if (t->to->visited)
+            return -2;
+        t->to->visited = 1;
+        for (int i=t->min; i <= t->max; i++) {
+            ei->buf[pos] = i;
+            if (t->to->accept) {
+                if (ei->nwords >= ei->limit)
+                    return -2;
+                ei->words[ei->nwords] = strdup(ei->buf);
+                E(ei->words[ei->nwords] == NULL);
+                ei->nwords += 1;
+            }
+            result = fa_enumerate_intl(t->to, ei, pos+1);
+            E(result < 0);
+        }
+        t->to->visited = 0;
+    }
+    ei->buf[pos] = '\0';
+    result = 0;
+ error:
+    return result;
+}
+
+int fa_enumerate(struct fa *fa, int limit, char ***words) {
+    struct enum_intl ei;
+    int result = -1;
+
+    *words = NULL;
+    MEMZERO(&ei, 1);
+    ei.bsize = 8;                    /* Arbitrary initial size */
+    ei.limit = limit;
+    F(ALLOC_N(ei.words, limit));
+    F(ALLOC_N(ei.buf, ei.bsize));
+
+    /* We use the visited bit to track which states we already visited
+     * during the construction of a word to detect loops */
+    list_for_each(s, fa->initial)
+        s->visited = 0;
+    fa->initial->visited = 1;
+    result = fa_enumerate_intl(fa->initial, &ei, 0);
+    E(result < 0);
+
+    result = ei.nwords;
+    *words = ei.words;
+    ei.words = NULL;
+ done:
+    free(ei.buf);
+    return result;
+
+ error:
+    for (int i=0; i < ei.nwords; i++)
+        free(ei.words[i]);
+    free(ei.words);
+    goto done;
 }
 
 /* Expand the automaton FA by replacing every transition s(c) -> p from

@@ -29,3 +29,7 @@ FA_1.2.0 {
       fa_is_nocase;
       fa_expand_nocase;
 } FA_1.0.0;
+
+FA_1.4.0 {
+      fa_enumerate;
+} FA_1.2.0;
