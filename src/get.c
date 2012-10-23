@@ -862,31 +862,31 @@ static struct tree *get_square(struct lens *lens, struct state *state) {
 
     struct lens *concat = lens->child;
     struct tree *tree = NULL;
-    struct lens *curr;
+    struct re_registers *old_regs = state->regs;
     uint old_nreg = state->nreg;
-    uint nreg = state->nreg;
-    uint nsub, i;
+    uint end = REG_END(state);
+    uint start = REG_START(state);
     char *rsqr = NULL, *lsqr = NULL;
-    uint start, end;
+    int r;
+
+    r = match(state, lens->child, lens->child->ctype, end, start);
+    ERR_NOMEM(r < 0, state->info);
 
     tree = get_lens(lens->child, state);
 
     /* retrieve left component */
-    nreg = old_nreg + 1;
-    start = state->regs->start[nreg];
-    end = state->regs->end[nreg];
+    state->nreg = 1;
+    start = REG_START(state);
+    end = REG_END(state);
     lsqr = token_range(state->text, start, end);
 
     /* retrieve right component */
     /* compute nreg for the last children */
-    nreg = old_nreg + 1;
-    for (i = 0; i < concat->nchildren - 1; i++) {
-        curr = concat->children[i];
-        nsub = regexp_nsub(curr->ctype);
-        nreg += 1 + nsub;
-    }
-    start = state->regs->start[nreg];
-    end = state->regs->end[nreg];
+    for (int i = 0; i < concat->nchildren - 1; i++)
+        state->nreg += 1 + regexp_nsub(concat->children[i]->ctype);
+
+    start = REG_START(state);
+    end = REG_END(state);
     rsqr = token_range(state->text, start, end);
 
     if (!square_match(lens, lsqr, rsqr)) {
@@ -897,7 +897,9 @@ static struct tree *get_square(struct lens *lens, struct state *state) {
     }
 
  done:
+    free_regs(state);
     state->nreg = old_nreg;
+    state->regs = old_regs;
     FREE(lsqr);
     FREE(rsqr);
     return tree;
@@ -911,14 +913,26 @@ static struct tree *get_square(struct lens *lens, struct state *state) {
 static struct skel *parse_square(struct lens *lens, struct state *state,
                                  struct dict **dict) {
     ensure0(lens->tag == L_SQUARE, state->info);
-    struct skel *skel, *sk;
+    struct re_registers *old_regs = state->regs;
+    uint old_nreg = state->nreg;
+    uint end = REG_END(state);
+    uint start = REG_START(state);
+    struct skel *skel = NULL, *sk = NULL;
+    int r;
 
-    skel = parse_concat(lens->child, state, dict);
+    r = match(state, lens->child, lens->child->ctype, end, start);
+    ERR_NOMEM(r < 0, state->info);
+
+    skel = parse_lens(lens->child, state, dict);
     if (skel == NULL)
         return NULL;
     sk = make_skel(lens);
     sk->skels = skel;
 
+ error:
+    free_regs(state);
+    state->regs = old_regs;
+    state->nreg = old_nreg;
     return sk;
 }
 

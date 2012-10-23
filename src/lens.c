@@ -400,6 +400,66 @@ struct value *lns_make_maybe(struct info *info, struct lens *l, int check) {
     return make_lens_value(lens);
 }
 
+/* The ctype of SQR is a regular approximation of the true ctype of SQR
+ * at this point. In some situations, for example in processing quoted
+ * strings this leads to false typecheck errors; to lower the chances
+ * of these, we try to construct the precise ctype of SQR if the
+ * language of L1 is finite (and has a small number of words)
+ */
+static void square_precise_type(struct info *info,
+                                struct regexp **sqr,
+                                struct regexp *left,
+                                struct regexp *body) {
+
+    char **words = NULL;
+    int nwords = 0, r;
+    struct fa *fa = NULL;
+    struct value *exn = NULL;
+    struct regexp **u = NULL, *c[3], *w = NULL;
+
+    exn = str_to_fa(info, left->pattern->str, &fa, left->nocase);
+    if (exn != NULL)
+        goto error;
+
+    nwords = fa_enumerate(fa, 10, &words); /* The limit of 10 is arbitrary */
+    if (nwords < 0)
+        goto error;
+
+    r = ALLOC_N(u, nwords);
+    ERR_NOMEM(r < 0, info);
+
+    c[1] = body;
+    for (int i=0; i < nwords; i++) {
+        w = make_regexp_literal(left->info, words[i]);
+        ERR_NOMEM(w == NULL, info);
+        w->nocase = left->nocase;
+
+        c[0] = c[2] = w;
+        u[i] = regexp_concat_n(info, 3, c);
+
+        unref(w, regexp);
+        ERR_NOMEM(u[i] == NULL, info);
+    }
+    w = regexp_union_n(info, nwords, u);
+    if (w != NULL) {
+        unref(*sqr, regexp);
+        *sqr = w;
+        w = NULL;
+    }
+
+ error:
+    unref(w, regexp);
+    for (int i=0; i < nwords; i++) {
+        free(words[i]);
+        if (u != NULL)
+            unref(u[i], regexp);
+    }
+    free(words);
+    free(u);
+    fa_free(fa);
+    unref(exn, value);
+}
+
 /* Build a square lens as
  *    left . body . right
  * where left and right accepts the same language and
@@ -433,6 +493,9 @@ struct value * lns_make_square(struct info *info, struct lens *l1,
 
     for (int t=0; t < ntypes; t++)
         ltype(sqr, t) = ref(ltype(cnt2->lens, t));
+
+    square_precise_type(info, &(sqr->ctype), l1->ctype, l2->ctype);
+
     sqr->recursive = cnt2->lens->recursive;
     sqr->rec_internal = cnt2->lens->rec_internal;
     sqr->consumes_value = cnt2->lens->consumes_value;
