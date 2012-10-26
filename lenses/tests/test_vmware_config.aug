@@ -24,7 +24,7 @@ autoStart.enabled = \"True\"
 autoStart.defaultStopDelay = \"60\"
 "
 
-(* Test: VWware_Config.lns *)
+(* Test: VMware_Config.lns *)
 test VMware_Config.lns get conf =
   { "libdir" = "/usr/lib/vmware" }
   { "dhcpd.fullpath" = "/usr/bin/vmnet-dhcpd" }
@@ -42,3 +42,8 @@ test VMware_Config.lns get conf =
   { "autoStart.defaultStartDelay" = "60" }
   { "autoStart.enabled" = "True" }
   { "autoStart.defaultStopDelay" = "60" }
+
+(* Test: VMware_Config.lns
+   Quotes are not mandatory *)
+test VMware_Config.lns get "xkeymap.nokeycodeMap = true\n" =
+  { "xkeymap.nokeycodeMap" = "true" }

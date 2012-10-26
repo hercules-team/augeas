@@ -22,7 +22,7 @@ autoload xfm
 
 (* View: entry *)
 let entry =
-  let sto = Util.del_str "\"" . store /[^\n"]*/ . Util.del_str "\""
+  let sto = del /"?/ "\"" . store /[^\n\t "]([^\n"]*[^\n\t "])?/ . del /"?/ "\""
   in Build.key_value_line Rx.word Sep.space_equal sto
 
 (* View: lns *)
