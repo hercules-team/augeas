@@ -22,7 +22,9 @@ autoload xfm
 
 (* View: entry *)
 let entry =
-  let sto = del /"?/ "\"" . store /[^\n\t "]([^\n"]*[^\n\t "])?/ . del /"?/ "\""
+     let quote = del /"?/ "\""
+  in let body = store /[^\n\t "]([^\n"]*[^\n\t "])?/
+  in let sto = square quote body quote
   in Build.key_value_line Rx.word Sep.space_equal sto
 
 (* View: lns *)
