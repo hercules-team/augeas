@@ -604,6 +604,8 @@ static void testEnumerate(CuTest *tc) {
     static const char *const fa1_expected[] =
         { "acc", "add", "bcc", "bdd" };
     struct fa *fa_inf = make_good_fa(tc, "a(b*|d)c");
+    struct fa *fa_empty = make_good_fa(tc, "a?");
+
     char **words;
     int r;
 
@@ -631,6 +633,12 @@ static void testEnumerate(CuTest *tc) {
     r = fa_enumerate(fa_inf, 100, &words);
     CuAssertIntEquals(tc, -2, r);
     CuAssertPtrEquals(tc, NULL, words);
+
+    r = fa_enumerate(fa_empty, 10, &words);
+    CuAssertIntEquals(tc, 2, r);
+    CuAssertPtrNotNull(tc, words);
+    CuAssertStrEquals(tc, "", words[0]);
+    CuAssertStrEquals(tc, "a", words[1]);
 }
 
 int main(int argc, char **argv) {

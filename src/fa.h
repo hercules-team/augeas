@@ -259,6 +259,9 @@ int fa_expand_nocase(const char *regexp, size_t regexp_len,
  * be finite. The words are returned in WORDS, which is allocated by this
  * function and must be freed by the caller.
  *
+ * If FA accepts the empty word, the empty string will be included in
+ * WORDS.
+ *
  * Return the number of generated words on success, -1 if we run out of
  * memory, and -2 if FA has more than LIMIT words.
  */

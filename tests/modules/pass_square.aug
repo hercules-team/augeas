@@ -85,3 +85,21 @@ let create_square =
 	[ key "x" . square d d d ]*
 
 test create_square put "" after clear "/x" = "xaaa"
+
+(* test optional quotes *)
+let word = /[A-Za-z0-9_.-]+/
+let entry =
+  let k = key word in
+  let quote = del /"?/ "\"" (* " *) in
+  let body = store /[a-z]+/ in
+  let v = square quote body quote in
+  [ k . dels "=" . v ]
+
+test entry get "key=\"value\"" = { "key" = "value" }
+test entry get "key=value" = { "key" = "value" }
+
+test entry put "key=value" after
+  set "/key" "other" = "key=other"
+
+test entry put "key=\"value\"" after
+  set "/key" "other" = "key=\"other\""

@@ -2717,6 +2717,13 @@ int fa_enumerate(struct fa *fa, int limit, char ***words) {
     list_for_each(s, fa->initial)
         s->visited = 0;
     fa->initial->visited = 1;
+    if (fa->initial->accept) {
+        if (ei.nwords >= limit)
+            return -2;
+        ei.words[0] = strdup("");
+        E(ei.words[0] == NULL);
+        ei.nwords = 1;
+    }
     result = fa_enumerate_intl(fa->initial, &ei, 0);
     E(result < 0);
 
