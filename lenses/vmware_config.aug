@@ -22,10 +22,7 @@ autoload xfm
 
 (* View: entry *)
 let entry =
-     let quote = del /"?/ "\""
-  in let body = store /[^\n\t "]([^\n"]*[^\n\t "])?/
-  in let sto = square quote body quote
-  in Build.key_value_line Rx.word Sep.space_equal sto
+  Build.key_value_line Rx.word Sep.space_equal Quote.double_opt
 
 (* View: lns *)
 let lns = (Util.empty | Util.comment | entry)*
