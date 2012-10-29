@@ -17,7 +17,6 @@ let indent = Util.indent
 
 (* Define separators *)
 let sep    = Util.del_ws_spc
-let sep_dquote = Util.del_str "\""
 
 (* Define value regexps *)
 let ip_re  = Rx.ipv4
@@ -154,9 +153,7 @@ let server_bridge = [ key "server-bridge" . sep
 		    ]
 
 let push          = [ key "push" . sep
-                    . sep_dquote
-		    . sto_to_dquote
-		    . sep_dquote
+                    . Quote.do_dquote sto_to_dquote
 		    . comment_or_eol
                     ]
 
