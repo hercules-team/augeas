@@ -80,6 +80,17 @@ unset ONBOOT    #   We do not want this var
     { "var" = "ab"
       { "#comment" = "c" } }
 
+  test lns get "var=ab; #c\n" =
+    { "var" = "ab" }
+    { "#comment" = "c" }
+
+  test lns put "var=ab; #c\n" after
+    set "/#comment" "d" =
+    "var=ab; #d\n"
+
+  test lns get "var=ab;\n" =
+    { "var" = "ab" }
+
   test lns get "var='ab#c'\n" =
     { "var" = "'ab#c'" }
 
