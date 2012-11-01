@@ -421,7 +421,8 @@ static int skel_instance_of(struct lens *lens, struct skel *skel) {
     case L_REC:
         return skel_instance_of(lens->body, skel);
     case L_SQUARE:
-        return skel->tag == L_SQUARE;
+        return skel->tag == L_SQUARE
+            && skel_instance_of(lens->child, skel->skels);
     default:
         BUG_ON(true, lens->info, "illegal lens tag %d", lens->tag);
         break;

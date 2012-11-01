@@ -103,3 +103,20 @@ test entry put "key=value" after
 
 test entry put "key=\"value\"" after
   set "/key" "other" = "key=\"other\""
+
+(* create with square *)
+(* Passing this test successfully requires that the skeleton from the get *)
+(* is correctly detected as not matching the skeleton for the second lens *)
+(* in hte union - the reason for the mismatch is that the quote is        *)
+(* optional in the first branch of the union, and the skeleton therefore  *)
+(* does not have "@" in the right places, triggering a create             *)
+let sq_create =
+  let word = store /[a-z]+/ in
+  let number = store /[0-9]+/ in
+  let quot = dels "@" in
+  let quot_opt = del /@?/ "@" in
+    [ label "t" . square quot_opt word quot_opt ]
+  | [ label "t" . square quot number quot ]
+
+test sq_create put "abc" after
+  set "/t" "42" = "@42@"
