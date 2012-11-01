@@ -4,51 +4,62 @@
 (* around values that need them                                        *)
 (* To keep things simple, we also do not support shell variable arrays *)
 module Sysconfig =
-  let eol = Util.eol
 
-  let key_re = /[A-Za-z0-9_]+(\[[0-9]+\])?/ - "unset" - "export"
+  let eol = Shellvars.eol
+  let semicol_eol = Shellvars.semicol_eol
+
+  let key_re = Shellvars.key_re
   let eq = Util.del_str "="
+
   let comment = Util.comment
+  let comment_or_eol = Shellvars.comment_or_eol
+
   let empty   = Util.empty
-  let xchgs   = Build.xchgs
-  let dels    = Util.del_str
 
-  let nothing = del /(""|'')?/ "" . value ""
-
-  (* Chars allowed in a bare string *)
-  let bchar = /[^ \t\n"'\\]|\\\\./
-  let qchar = /["']/  (* " *)
+  let bchar = /[^; \t\n"'\\]|\\\\./ (* " Emacs, relax *)
+  let qchar = /["']/  (* " Emacs, relax *)
 
   (* We split the handling of right hand sides into a few cases:
    *   bare  - strings that contain no spaces, optionally enclosed in
    *           single or double quotes
+   *   quot  - strings that must be enclosed in single or double quotes
    *   dquot - strings that contain at least one space or apostrophe,
    *           which must be enclosed in double quotes
    *   squot - strings that contain an unescaped double quote
    *)
-  let bare = del qchar? "" . store (bchar+) . del qchar? ""
+  let bare = Quote.do_quote_opt (store bchar+)
+
+  let quot =
+    let word = bchar* . /[; \t]/ . bchar* in
+    Quote.do_quote (store word+)
+
   let dquot =
-    del qchar "\"" . store (bchar* . /[ \t']/ . bchar*)+ . del qchar "\""
+    let char = /[^"\\]|\\\\./ in             (* " *)
+    let word = char* . "'" . char* in
+    Quote.do_dquote (store word+)
+
   let squot =
-    dels "'" . store ((bchar|/[ \t]/)* . "\"" . (bchar|/[ \t]/)*)+ . dels "'"
+    (* We do not allow escaped double quotes in single quoted strings, as  *)
+    (* that leads to a put ambiguity with bare, e.g. for the string '\"'.  *)
+    let char = /[^'\\]|\\\\[^"]/ in           (* " *)
+    let word = char* . "\"" . char* in
+    Quote.do_squote (store word+)
 
-  let export = [ key "export" . Util.del_ws_spc ]
-  let kv (value:lens) = [ export? . key key_re . eq . value . eol ]
-  let assign = kv nothing | kv bare | kv dquot | kv squot
+  let export = Shellvars.export
+  let kv (value:lens) = [ export? . key key_re . eq . value . comment_or_eol ]
 
-  let var_action (name:string) =
-    [ xchgs name ("@" . name) . Util.del_ws_spc . store key_re . eol ]
+  let assign =
+    let nothing = del /(""|'')?/ "" . value "" in
+    kv nothing | kv bare | kv quot | kv dquot | kv squot
+
+  let var_action = Shellvars.var_action
 
   let unset = var_action "unset"
   let bare_export = var_action "export"
 
-  let source =
-    [
-      del /\.|source/ "." . label ".source" .
-      Util.del_ws_spc . store /[^= \t\n]+/ . eol
-    ]
+  let source = Shellvars.source
 
-  let lns = (comment | empty | source | assign | unset | bare_export) *
+  let lns = empty* . (comment | source | assign | unset | bare_export)*
 
 (*
   Examples:

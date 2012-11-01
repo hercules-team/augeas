@@ -8,11 +8,11 @@ DEVICE=eth0
 BOOTPROTO=static
 BROADCAST=172.31.0.255
 HWADDR=ab:cd:ef:12:34:56
-export IPADDR=172.31.0.31
+export IPADDR=172.31.0.31 # this is our IP
 #DHCP_HOSTNAME=host.example.com
 NETMASK=255.255.255.0
 NETWORK=172.31.0.0
-unset ONBOOT
+unset ONBOOT    #   We do not want this var
 "
   let empty_val = "EMPTY=\nDEVICE=eth0\n"
 
@@ -25,11 +25,13 @@ unset ONBOOT
     { "BROADCAST" = "172.31.0.255" }
     { "HWADDR" = "ab:cd:ef:12:34:56" }
     { "IPADDR" = "172.31.0.31"
-        { "export" } }
+        { "export" }
+        { "#comment" = "this is our IP" } }
     { "#comment" = "DHCP_HOSTNAME=host.example.com" }
     { "NETMASK" = "255.255.255.0" }
     { "NETWORK" = "172.31.0.0" }
-    { "@unset"   = "ONBOOT" }
+    { "@unset"   = "ONBOOT"
+        { "#comment" = "We do not want this var" } }
 
   test lns put eth_static after
       set "BOOTPROTO" "dhcp" ;
@@ -42,7 +44,7 @@ DEVICE=eth0
 BOOTPROTO=dhcp
 HWADDR=ab:cd:ef:12:34:56
 #DHCP_HOSTNAME=host.example.com
-unset ONBOOT
+unset ONBOOT    #   We do not want this var
 "
   test lns get empty_val =
     { "EMPTY" = "" } { "DEVICE" = "eth0" }
@@ -80,12 +82,45 @@ unset ONBOOT
   test lns get "var=ab#c\n" =
     { "var" = "ab#c" }
 
+  test lns get "var='ab#c'\n" =
+    { "var" = "ab#c" }
+
+  test lns get "var=\"ab#c\"\n" =
+    { "var" = "ab#c" }
+
+  test lns get "var=\"ab#c\"\n" =
+    { "var" = "ab#c" }
+
   (* We don't handle backticks *)
   test lns get
       "var=`grep nameserver /etc/resolv.conf | head -1`\n" = *
 
-  (* We don't handle comments at the end of a line yet *)
-  test lns get "var=ab #c\n" = *
+  test lns get "var=ab #c\n" =
+    { "var" = "ab"
+        { "#comment" = "c" } }
+
+  test lns put "var=ab #c\n"
+    after rm "/var/#comment" = "var=ab\n"
+
+  test lns put "var=ab\n"
+    after set "/var/#comment" "this is a var" =
+       "var=ab # this is a var\n"
+
+  (* Test semicolons *)
+  test lns get "VAR1=\"this;is;a;test\"\nVAR2=this;\n" =
+  { "VAR1" = "this;is;a;test" }
+  { "VAR2" = "this" }
+
+  (* BZ 761246 *)
+  test lns get "DEVICE=\"eth0\";\n" =
+    { "DEVICE" = "eth0" }
+
+  test lns put "DEVICE=\"eth0\";\n" after
+    set "/DEVICE" "em1" = "DEVICE=\"em1\";\n"
+
+  test lns get "DEVICE=\"eth0\"; # remark\n" =
+    { "DEVICE" = "eth0" }
+    { "#comment" = "remark" }
 
   (* Bug 109: allow a bare export *)
   test lns get "export FOO\n" =
