@@ -842,6 +842,37 @@ static const struct command_def cmd_get_def = {
     .help = "Get and print the value associated with PATH"
 };
 
+static void cmd_label(struct command *cmd) {
+    const char *path = arg_value(cmd, "path");
+    const char *lbl;
+    int r;
+
+    r = aug_label(cmd->aug, path, &lbl);
+    ERR_RET(cmd);
+    fprintf(cmd->out, "%s", path);
+    if (r == 0) {
+        fprintf(cmd->out, " (o)\n");
+    } else if (lbl == NULL) {
+        fprintf(cmd->out, " (none)\n");
+    } else {
+        fprintf(cmd->out, " = %s\n", lbl);
+    }
+}
+
+static const struct command_opt_def cmd_label_opts[] = {
+    { .type = CMD_PATH, .name = "path", .optional = false,
+      .help = "get the label of this node" },
+    CMD_OPT_DEF_LAST
+};
+
+static const struct command_def cmd_label_def = {
+    .name = "label",
+    .opts = cmd_label_opts,
+    .handler = cmd_label,
+    .synopsis = "get the label of a node",
+    .help = "Get and print the label associated with PATH"
+};
+
 static void cmd_print(struct command *cmd) {
     const char *path = arg_value(cmd, "path");
 
@@ -1129,6 +1160,7 @@ static const struct command_grp_def cmd_grp_read_def = {
     .commands = {
         &cmd_dump_xml_def,
         &cmd_get_def,
+        &cmd_label_def,
         &cmd_ls_def,
         &cmd_match_def,
         &cmd_print_def,

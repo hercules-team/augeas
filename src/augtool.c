@@ -168,7 +168,7 @@ static char *readline_command_generator(const char *text, int state) {
     // FIXME: expose somewhere under /augeas
     static const char *const commands[] = {
         "quit", "clear", "defnode", "defvar",
-        "get", "ins", "load", "ls", "match",
+        "get", "label", "ins", "load", "ls", "match",
         "mv", "rename", "print", "dump-xml", "rm", "save", "set", "setm",
         "clearm", "span", "store", "retrieve", "transform",
         "help", NULL };

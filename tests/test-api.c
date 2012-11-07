@@ -44,6 +44,7 @@ static char *loadpath;
 static void testGet(CuTest *tc) {
     int r;
     const char *value;
+    const char *label;
     struct augeas *aug;
 
     aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
@@ -71,6 +72,24 @@ static void testGet(CuTest *tc) {
     r = aug_get(aug, "/augeas/version/save/*", &value);
     CuAssertIntEquals(tc, -1, r);
     CuAssertPtrEquals(tc, NULL, value);
+    CuAssertIntEquals(tc, AUG_EMMATCH, aug_error(aug));
+
+    /* aug_label returns 1 and the label if exactly one node matches */
+    r = aug_label(aug, "/augeas/version/save/*[1]", &label);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertPtrNotNull(tc, label);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    /* aug_label returns 0 and no label when no node matches */
+    r = aug_label(aug, "/augeas/version/save/*[ last() + 1 ]", &label);
+    CuAssertIntEquals(tc, 0, r);
+    CuAssertPtrEquals(tc, NULL, label);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    /* aug_label should return an error when multiple nodes match */
+    r = aug_label(aug, "/augeas/version/save/*", &label);
+    CuAssertIntEquals(tc, -1, r);
+    CuAssertPtrEquals(tc, NULL, label);
     CuAssertIntEquals(tc, AUG_EMMATCH, aug_error(aug));
 
     /* augeas should prepend context if relative path given */

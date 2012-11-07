@@ -142,6 +142,23 @@ int aug_defnode(augeas *aug, const char *name, const char *expr,
  */
 int aug_get(const augeas *aug, const char *path, const char **value);
 
+/* Function: aug_label
+ *
+ * Lookup the label associated with PATH. LABEL can be NULL, in which case
+ * it is ignored. If LABEL is not NULL, it is used to return a pointer to
+ * the value associated with PATH if PATH matches exactly one node. If PATH
+ * matches no nodes or more than one node, *LABEL is set to NULL.
+ *
+ * The string *LABEL must not be freed by the caller, and is valid as long
+ * as its node remains unchanged.
+ *
+ * Returns:
+ * 1 if there is exactly one node matching PATH, 0 if there is none,
+ * and a negative value if there is more than one node matching PATH, or if
+ * PATH is not a legal path expression.
+ */
+int aug_label(const augeas *aug, const char *path, const char **label);
+
 /* Function: aug_set
  *
  * Set the value associated with PATH to VALUE. VALUE is copied into the
