@@ -123,6 +123,7 @@ lens_tests =			\
   lens-puppetfileserver.sh		\
   lens-pythonpaste.sh	\
   lens-qpid.sh		\
+  lens-quote.sh		\
   lens-reprepro_uploaders.sh		\
   lens-resolv.sh		\
   lens-rsyncd.sh		\
