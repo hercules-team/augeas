@@ -1574,7 +1574,7 @@ static void push_new_binary_op(enum binary_op op, struct state *state) {
  * Name ::= NameNoWS NameWS* NameNoWS | NameNoWS
  */
 static char *parse_name(struct state *state) {
-    static const char const follow[] = "][|/=()!";
+    static const char const follow[] = "][|/=()!,";
     const char *s = state->pos;
     char *result;
 
