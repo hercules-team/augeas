@@ -52,6 +52,7 @@ lens_tests =			\
   lens-dnsmasq.sh		\
   lens-dpkg.sh			\
   lens-dput.sh			\
+  lens-erlang.sh		\
   lens-ethers.sh		\
   lens-exports.sh		\
   lens-fai_diskconfig.sh	\
