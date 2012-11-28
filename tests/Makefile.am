@@ -127,6 +127,7 @@ lens_tests =			\
   lens-pythonpaste.sh	\
   lens-qpid.sh		\
   lens-quote.sh		\
+  lens-rabbitmq.sh		\
   lens-reprepro_uploaders.sh		\
   lens-resolv.sh		\
   lens-rsyncd.sh		\
