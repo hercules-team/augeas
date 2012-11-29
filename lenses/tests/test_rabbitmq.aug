@@ -4,10 +4,6 @@ Module: Test_Rabbitmq
 *)
 module Test_Rabbitmq =
 
-(* Test: Rabbitmq.comment *)
-test Rabbitmq.comment get "% This is a comment\n" =
-  { "#comment" = "This is a comment" }
-
 (* Test: Rabbitmq.listeners *)
 test Rabbitmq.listeners get "{ssl_listeners, [5671, {\"127.0.0.1\", 5672}]}" =
   { "ssl_listeners"
