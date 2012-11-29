@@ -4,6 +4,10 @@ Module: Test_Erlang
 *)
 module Test_Erlang =
 
+(* Group: comments *)
+test Erlang.comment get "% This is a comment\n" =
+  { "#comment" = "This is a comment" }
+
 (* Group: simple values *)
 
 let value_bare = Erlang.value Rx.word Erlang.bare

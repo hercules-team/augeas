@@ -147,11 +147,15 @@ let value_list (kw:regexp) (sto:lens) =
 let application (name:regexp) (parameter:lens) =
   list name parameter
 
+(* View: comment *)
+let comment = Util.comment_generic /%[ \t]*/ "% "
+
 (* View: config
      A top-level config *)
 let config (app:lens) =
-    lrspace lbrack
+    (Util.empty | comment)*
+  . rspace lbrack
   . Build.opt_list app (lrspace comma)
   . lrspace rbrack
   . Util.del_str "." . Util.eol
-
+  . (Util.empty | comment)*

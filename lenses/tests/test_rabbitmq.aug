@@ -4,6 +4,10 @@ Module: Test_Rabbitmq
 *)
 module Test_Rabbitmq =
 
+(* Test: Rabbitmq.comment *)
+test Rabbitmq.comment get "% This is a comment\n" =
+  { "#comment" = "This is a comment" }
+
 (* Test: Rabbitmq.listeners *)
 test Rabbitmq.listeners get "{ssl_listeners, [5671, {\"127.0.0.1\", 5672}]}" =
   { "ssl_listeners"
@@ -64,7 +68,9 @@ test Rabbitmq.cluster_nodes get "{cluster_nodes, ['rabbit@rabbit1', 'rabbit@rabb
 
 (* Test: Rabbitmq.lns
      Top-level test *)
-test Rabbitmq.lns get "[
+test Rabbitmq.lns get "
+% A standard configuration
+[
   {rabbit, [
      {ssl_listeners, [5671]},
      {ssl_options, [{cacertfile,\"/path/to/testca/cacert.pem\"},
@@ -73,7 +79,10 @@ test Rabbitmq.lns get "[
                     {verify,verify_peer},
                     {fail_if_no_peer_cert,false}]}
    ]}
-].\n" =
+].
+% EOF\n" =
+  { }
+  { "#comment" = "A standard configuration" }
   { "rabbit"
     { "ssl_listeners"
       { "value" = "5671" } }
@@ -83,4 +92,5 @@ test Rabbitmq.lns get "[
       { "keyfile" = "/path/to/server/key.pem" }
       { "verify" = "verify_peer" }
       { "fail_if_no_peer_cert" = "false" } } }
+  { "#comment" = "EOF" }
 

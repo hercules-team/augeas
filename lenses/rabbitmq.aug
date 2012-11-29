@@ -23,6 +23,9 @@ module Rabbitmq =
 
 autoload xfm
 
+(* View: comment *)
+let comment = Erlang.comment
+
 (* View: listeners
      A tcp/ssl listener *)
 let listeners =
