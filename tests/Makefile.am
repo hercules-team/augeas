@@ -131,6 +131,7 @@ lens_tests =			\
   lens-reprepro_uploaders.sh		\
   lens-resolv.sh		\
   lens-rsyncd.sh		\
+  lens-rsyslog.sh		\
   lens-rx.sh			\
   lens-samba.sh			\
   lens-securetty.sh     \
