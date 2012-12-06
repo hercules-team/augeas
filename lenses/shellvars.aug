@@ -216,6 +216,8 @@ module Shellvars =
                      . incl "/etc/rc.conf"
                      . incl "/etc/selinux/config"
                      . incl "/etc/ucf.conf"
+                     . incl "/etc/locale.conf"
+                     . incl "/etc/vconsole.conf"
 
   let filter = filter_sysconfig
              . filter_default
