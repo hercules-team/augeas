@@ -26,6 +26,10 @@ module Pg_Hba =
     (* Variable: ipaddr
        CIDR or ip+netmask *)
     let ipaddr   = /[0-9a-fA-F:.]+(\/[0-9]+|[ \t]+[0-9.]+)/
+    (* Variable: hostname
+       Hostname, FQDN or part of an FQDN possibly 
+       starting with a dot. Taken from the syslog lens. *)
+    let hostname = /\.?[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*/
 
     let comma_sep_list (l:string) =
         let lns = [ label l . store word ] in
@@ -33,6 +37,8 @@ module Pg_Hba =
 
     (* Group: Columns definitions *)
 
+    (* View: ipaddr_or_hostname *)
+    let ipaddr_or_hostname = ipaddr | hostname
     (* View: database
        TODO: support for quoted strings *)
     let database = comma_sep_list "database"
@@ -40,7 +46,7 @@ module Pg_Hba =
        TODO: support for quoted strings *)
     let user = comma_sep_list "user"
     (* View: address *)
-    let address = [ label "address" . store ipaddr ]
+    let address = [ label "address" . store ipaddr_or_hostname ]
     (* View: option
        part of <method> *)
     let option = [ label "option" . store word ]
