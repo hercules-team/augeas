@@ -408,6 +408,24 @@ esac\n" =
   test Shellvars.lns get "foo=bar\n# \n\n" =
   { "foo" = "bar" }
 
+  (* Whitespace between lines *)
+  test Shellvars.lns get "DEVICE=eth0\n\nBOOTPROTO=static\n" =
+    { "DEVICE" = "eth0" }
+    { "BOOTPROTO" = "static" }
+
+  (* Whitespace after line *)
+  test Shellvars.lns get "DEVICE=eth0\n\n" =
+    { "DEVICE" = "eth0" }
+
+  (* Fails adding variable assignment between comment and blank line *)
+  let ins_after_comment = "# foo
+
+"
+  test lns put ins_after_comment after
+      insa "foo" "#comment" ;
+      set "foo" "yes"
+  = "# foo\n\nfoo=yes\n"
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

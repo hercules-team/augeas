@@ -72,14 +72,23 @@ Variable: indent
      It allows indentation for comments, removes the leading and trailing spaces
      of comments and stores them in nodes, except for empty comments which are
      ignored together with empty lines
+*)
 
-View: comment_generic
+
+(* View: comment_generic_seteol
+  Map comments and set default comment sign
+*)
+
+  let comment_generic_seteol (r:regexp) (d:string) (eol:lens) =
+    [ label "#comment" . del r d
+        . store /([^ \t\r\n].*[^ \t\r\n]|[^ \t\r\n])/ . eol ]
+
+(* View: comment_generic
   Map comments and set default comment sign
 *)
 
   let comment_generic (r:regexp) (d:string) =
-    [ label "#comment" . del r d
-        . store /([^ \t\r\n].*[^ \t\r\n]|[^ \t\r\n])/ . doseol ]
+    comment_generic_seteol r d doseol
 
 (* View: comment
   Map comments into "#comment" nodes

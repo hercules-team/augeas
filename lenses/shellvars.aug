@@ -22,9 +22,10 @@ module Shellvars =
   let matching_re = "${!" . key_re . /[\*@]\}/
   let eq = Util.del_str "="
 
-  let comment = Util.comment . empty*
+  let eol_for_comment = del /[ \t]*\n+/ "\n"
+  let comment = Util.comment_generic_seteol /[ \t]*#[ \t]*/ " # " eol_for_comment
   (* comment_eol in shell MUST begin with a space *)
-  let comment_eol = Util.comment_generic /[ \t]+#[ \t]*/ " # "
+  let comment_eol = Util.comment_generic_seteol /[ \t]+#[ \t]*/ " # " eol_for_comment
   let comment_or_eol = comment_eol | semicol_eol
 
   let xchgs   = Build.xchgs
