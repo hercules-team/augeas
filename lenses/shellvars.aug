@@ -22,7 +22,7 @@ module Shellvars =
   let matching_re = "${!" . key_re . /[\*@]\}/
   let eq = Util.del_str "="
 
-  let eol_for_comment = del /[ \t]*\n+/ "\n"
+  let eol_for_comment = del /([ \t]*\n)([ \t]*(#[ \t]*)?\n)*/ "\n"
   let comment = Util.comment_generic_seteol /[ \t]*#[ \t]*/ " # " eol_for_comment
   (* comment_eol in shell MUST begin with a space *)
   let comment_eol = Util.comment_generic_seteol /[ \t]+#[ \t]*/ " # " eol_for_comment

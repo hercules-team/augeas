@@ -426,6 +426,15 @@ esac\n" =
       set "foo" "yes"
   = "# foo\n\nfoo=yes\n"
 
+  (* Make sure to support empty comments *)
+  test lns get "# foo
+  # 
+  #
+  foo=bar
+  #\n" =
+    { "#comment" = "foo" }
+    { "foo" = "bar" }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
