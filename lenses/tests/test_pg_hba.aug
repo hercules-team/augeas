@@ -142,6 +142,33 @@ host    all         all         ::1/128               md5
        column separator ("method" is missing here) *)
     test Pg_Hba.lns get "host all all 192.168.1.1 255.255.0.0\n" = *
 
+    (* Ticket #313: support authentication method options *)
+    test Pg_Hba.lns get "host all all .dev.example.com gss include_realm=0 krb_realm=EXAMPLE.COM map=somemap
+host all all .dev.example.com ldap ldapserver=auth.example.com ldaptls=1 ldapprefix=\"uid=\" ldapsuffix=\",ou=people,dc=example,dc=com\"\n" =
+        { "1"
+            { "type" = "host" }
+            { "database" = "all" }
+            { "user" = "all" }
+            { "address" = ".dev.example.com" }
+            { "method" = "gss"
+              { "options"
+                { "include_realm" = "0" }
+                { "krb_realm" = "EXAMPLE.COM" }
+                { "map" = "somemap" } } } }
+        { "2"
+            { "type" = "host" }
+            { "database" = "all" }
+            { "user" = "all" }
+            { "address" = ".dev.example.com" }
+            { "method" = "ldap"
+              { "options"
+                { "ldapserver" = "auth.example.com" }
+                { "ldaptls" = "1" }
+                { "ldapprefix" = "uid=" }
+                { "ldapsuffix" = ",ou=people,dc=example,dc=com" } } } }
+
+    test Pg_Hba.lns get "host all all .dev.example.com ldap ldapserver=auth.example.com ldaptls=1 ldapprefix=\"uid=\" ldapsuffix=\",ou=people,dc=example,dc=com\"\n" = ?
+
     (* Unsupported yet *)
     (* test Pg_Hba.lns get "host \"db with spaces\" \"user with spaces\" 127.0.0.1/32 trust\n" =? *)
     (* test Pg_Hba.lns get "host \"db,with,commas\" \"user,with,commas\" 127.0.0.1/32 trust\n" =? *)
