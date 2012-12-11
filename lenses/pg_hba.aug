@@ -52,7 +52,7 @@ module Pg_Hba =
     let option = [ label "option" . store word ]
     (* View: method
        can contain an <option> *)
-    let method = [ label "method" . store Rx.word . ( Sep.tab . option )? ]
+    let method = [ label "method" . store /[A-Za-z][A-Za-z0-9]+/ . ( Sep.tab . option )? ]
 
     (* Group: Records definitions *)
 
