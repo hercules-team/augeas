@@ -3,7 +3,6 @@ Module: Pg_Hba
   Parses PostgreSQL's pg_hba.conf
 
 Author: Aurelien Bompard <aurelien@bompard.org>
-
 About: Reference
   The file format is described in PostgreSQL's documentation:
   http://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
@@ -49,10 +48,15 @@ module Pg_Hba =
     let address = [ label "address" . store ipaddr_or_hostname ]
     (* View: option
        part of <method> *)
-    let option = [ label "option" . store word ]
+    let option =
+         let dquot = /"[^"\\]*"/
+      in let squot = /'[^'\\]*'/
+      in [ label "option" . store Rx.word
+         . [ label "value" . Sep.equal . store (Rx.word|squot|dquot) ]? ]
     (* View: method
        can contain an <option> *)
-    let method = [ label "method" . store /[A-Za-z][A-Za-z0-9]+/ . ( Sep.tab . option )? ]
+    let method = [ label "method" . store /[A-Za-z][A-Za-z0-9]+/
+                                  . ( Sep.tab . option )* ]
 
     (* Group: Records definitions *)
 

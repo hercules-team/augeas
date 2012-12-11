@@ -151,23 +151,26 @@ host all all .dev.example.com ldap ldapserver=auth.example.com ldaptls=1 ldappre
             { "user" = "all" }
             { "address" = ".dev.example.com" }
             { "method" = "gss"
-              { "options"
-                { "include_realm" = "0" }
-                { "krb_realm" = "EXAMPLE.COM" }
-                { "map" = "somemap" } } } }
+              { "option" = "include_realm"
+                { "value" = "0" } }
+              { "option" = "krb_realm"
+                { "value" = "EXAMPLE.COM" } }
+              { "option" = "map"
+                { "value" = "somemap" } } } }
         { "2"
             { "type" = "host" }
             { "database" = "all" }
             { "user" = "all" }
             { "address" = ".dev.example.com" }
             { "method" = "ldap"
-              { "options"
-                { "ldapserver" = "auth.example.com" }
-                { "ldaptls" = "1" }
-                { "ldapprefix" = "uid=" }
-                { "ldapsuffix" = ",ou=people,dc=example,dc=com" } } } }
-
-    test Pg_Hba.lns get "host all all .dev.example.com ldap ldapserver=auth.example.com ldaptls=1 ldapprefix=\"uid=\" ldapsuffix=\",ou=people,dc=example,dc=com\"\n" = ?
+              { "option" = "ldapserver"
+                { "value" = "auth.example.com" } }
+              { "option" = "ldaptls"
+                { "value" = "1" } }
+              { "option" = "ldapprefix"
+                { "value" = "\"uid=\"" } }
+              { "option" = "ldapsuffix"
+                { "value" = "\",ou=people,dc=example,dc=com\"" } } } }
 
     (* Unsupported yet *)
     (* test Pg_Hba.lns get "host \"db with spaces\" \"user with spaces\" 127.0.0.1/32 trust\n" =? *)
