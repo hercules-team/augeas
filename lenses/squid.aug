@@ -433,5 +433,6 @@ let extension_methods = indent . [ key "extension_methods" . spc
 let lns         = (comment|empty|entry|auth|acl|http_access|refresh_pattern|extension_methods)*
 
 let filter      = incl "/etc/squid/squid.conf"
+                . incl "/etc/squid3/squid.conf"
 
 let xfm         = transform lns filter
