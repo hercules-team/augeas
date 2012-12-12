@@ -122,7 +122,7 @@
     * Gdm: include /etc/gdm/custom.conf
     * Grub: parse "password --encrypted" properly, bug #250;
             optimize typechecking;
-            add /boot/grub/grub.conf to transform (Josh)
+            add /boot/grub/grub.conf to transform (Josh Kayse)
     * GtkBookmarks: new lens for $HOME/.gtk-bookmarks
     * Hosts_Access: add netmask;
                     permit more client list formats
