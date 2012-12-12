@@ -168,9 +168,9 @@ host all all .dev.example.com ldap ldapserver=auth.example.com ldaptls=1 ldappre
               { "option" = "ldaptls"
                 { "value" = "1" } }
               { "option" = "ldapprefix"
-                { "value" = "\"uid=\"" } }
+                { "value" = "uid=" } }
               { "option" = "ldapsuffix"
-                { "value" = "\",ou=people,dc=example,dc=com\"" } } } }
+                { "value" = ",ou=people,dc=example,dc=com" } } } }
 
     (* Unsupported yet *)
     (* test Pg_Hba.lns get "host \"db with spaces\" \"user with spaces\" 127.0.0.1/32 trust\n" =? *)
