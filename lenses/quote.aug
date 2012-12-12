@@ -113,3 +113,14 @@ let any =
 let any_opt =
      let body = store /[^\n\t "']([^\n"']*[^\n\t "'])?/
   in do_quote_opt body
+
+(* View: quote_spaces
+     Make quotes mandatory if value contains spaces,
+     and optional if value doesn't contain spaces. *)
+let quote_spaces (lns:lens) =
+     (* bare has no spaces, and is optionally quoted *)
+     let bare = Quote.do_quote_opt (store /[^"' \t\n]+/)
+     (* quoted has at least one space, and must be quoted *)
+  in let quoted = Quote.do_quote (store /[^"' \t\n]*[ \t][^"' \t\n]*/)
+  in [ lns . bare ] | [ lns . quoted ]
+

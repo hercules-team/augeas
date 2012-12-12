@@ -87,3 +87,68 @@ let double_opt_allow_spc =
 (* Test: double_opt_allow_spc *)
 test double_opt_allow_spc get " test with spaces " =
   { "double" = " test with spaces " }
+
+(* Group: quote_spaces *)
+
+(* View: quote_spaces *)
+let quote_spaces =
+  Quote.quote_spaces (label "spc")
+
+(* Test: quote_spaces
+     Unquoted value *)
+test quote_spaces get "this" =
+  { "spc" = "this" }
+
+(* Test: quote_spaces
+     double quoted value *)
+test quote_spaces get "\"this\"" =
+  { "spc" = "this" }
+
+(* Test: quote_spaces
+     single quoted value *)
+test quote_spaces get "'this'" =
+  { "spc" = "this" }
+
+(* Test: quote_spaces
+     unquoted value with spaces *)
+test quote_spaces get "this that" = *
+
+(* Test: quote_spaces
+     double quoted value with spaces *)
+test quote_spaces get "\"this that\"" =
+  { "spc" = "this that" }
+
+(* Test: quote_spaces
+     single quoted value with spaces *)
+test quote_spaces get "'this that'" =
+  { "spc" = "this that" }
+
+(* Test: quote_spaces
+     remove spaces from double-quoted value *)
+test quote_spaces put "\"this that\""
+  after set "spc" "thisthat" =
+  "\"thisthat\""
+
+(* Test: quote_spaces
+     remove spaces from single-quoted value *)
+test quote_spaces put "'this that'"
+  after set "spc" "thisthat" =
+  "'thisthat'"
+
+(* Test: quote_spaces
+     add spaces to unquoted value *)
+test quote_spaces put "this"
+  after set "spc" "this that" =
+  "\"this that\""
+
+(* Test: quote_spaces
+     add spaces to double-quoted value *)
+test quote_spaces put "\"this\""
+  after set "spc" "this that" =
+  "\"this that\""
+
+(* Test: quote_spaces
+     add spaces to single-quoted value *)
+test quote_spaces put "'this'"
+  after set "spc" "this that" =
+  "'this that'"
