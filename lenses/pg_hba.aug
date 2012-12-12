@@ -49,14 +49,10 @@ module Pg_Hba =
     (* View: option
        part of <method> *)
     let option =
-         (* bare has no spaces, and is optionally quoted *)
-         let bare = Quote.do_quote_opt (store /[^"' \t\n]+/)
-         (* quoted has at least one space, and must be quoted *)
-      in let quoted = Quote.do_quote (store /[^"' \t\n]*[ \t][^"' \t\n]*/)
+         let value_start = label "value" . Sep.equal
       in [ label "option" . store Rx.word
-         . ( [ label "value" . Sep.equal . bare ]
-           | [ label "value" . Sep.equal . quoted ])?
-         ]
+         . (Quote.quote_spaces value_start)? ]
+
     (* View: method
        can contain an <option> *)
     let method = [ label "method" . store /[A-Za-z][A-Za-z0-9]+/
