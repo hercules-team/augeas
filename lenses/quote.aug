@@ -124,3 +124,22 @@ let quote_spaces (lns:lens) =
   in let quoted = Quote.do_quote (store /[^"' \t\n]*[ \t][^"' \t\n]*/)
   in [ lns . bare ] | [ lns . quoted ]
 
+(* View: dquote_spaces
+     Make double quotes mandatory if value contains spaces,
+     and optional if value doesn't contain spaces. *)
+let dquote_spaces (lns:lens) =
+     (* bare has no spaces, and is optionally quoted *)
+     let bare = Quote.do_dquote_opt (store /[^" \t\n]+/)
+     (* quoted has at least one space, and must be quoted *)
+  in let quoted = Quote.do_dquote (store /[^" \t\n]*[ \t][^" \t\n]*/)
+  in [ lns . bare ] | [ lns . quoted ]
+
+(* View: squote_spaces
+     Make single quotes mandatory if value contains spaces,
+     and optional if value doesn't contain spaces. *)
+let squote_spaces (lns:lens) =
+     (* bare has no spaces, and is optionally quoted *)
+     let bare = Quote.do_squote_opt (store /[^' \t\n]+/)
+     (* quoted has at least one space, and must be quoted *)
+  in let quoted = Quote.do_squote (store /[^' \t\n]*[ \t][^' \t\n]*/)
+  in [ lns . bare ] | [ lns . quoted ]

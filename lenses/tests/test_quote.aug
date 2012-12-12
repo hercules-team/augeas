@@ -152,3 +152,119 @@ test quote_spaces put "\"this\""
 test quote_spaces put "'this'"
   after set "spc" "this that" =
   "'this that'"
+
+(* Group: dquote_spaces *)
+
+(* View: dquote_spaces *)
+let dquote_spaces =
+  Quote.dquote_spaces (label "spc")
+
+(* Test: dquote_spaces
+     Unquoted value *)
+test dquote_spaces get "this" =
+  { "spc" = "this" }
+
+(* Test: dquote_spaces
+     double quoted value *)
+test dquote_spaces get "\"this\"" =
+  { "spc" = "this" }
+
+(* Test: dquote_spaces
+     single quoted value *)
+test dquote_spaces get "'this'" =
+  { "spc" = "'this'" }
+
+(* Test: dquote_spaces
+     unquoted value with spaces *)
+test dquote_spaces get "this that" = *
+
+(* Test: dquote_spaces
+     double quoted value with spaces *)
+test dquote_spaces get "\"this that\"" =
+  { "spc" = "this that" }
+
+(* Test: dquote_spaces
+     single quoted value with spaces *)
+test dquote_spaces get "'this that'" = *
+
+(* Test: dquote_spaces
+     remove spaces from double-quoted value *)
+test dquote_spaces put "\"this that\""
+  after set "spc" "thisthat" =
+  "\"thisthat\""
+
+(* Test: dquote_spaces
+     add spaces to unquoted value *)
+test dquote_spaces put "this"
+  after set "spc" "this that" =
+  "\"this that\""
+
+(* Test: dquote_spaces
+     add spaces to double-quoted value *)
+test dquote_spaces put "\"this\""
+  after set "spc" "this that" =
+  "\"this that\""
+
+(* Test: dquote_spaces
+     add spaces to single-quoted value *)
+test dquote_spaces put "'this'"
+  after set "spc" "this that" =
+  "\"this that\""
+
+(* Group: squote_spaces *)
+
+(* View: squote_spaces *)
+let squote_spaces =
+  Quote.squote_spaces (label "spc")
+
+(* Test: squote_spaces
+     Unquoted value *)
+test squote_spaces get "this" =
+  { "spc" = "this" }
+
+(* Test: squote_spaces
+     double quoted value *)
+test squote_spaces get "\"this\"" =
+  { "spc" = "\"this\"" }
+
+(* Test: squote_spaces
+     single quoted value *)
+test squote_spaces get "'this'" =
+  { "spc" = "this" }
+
+(* Test: squote_spaces
+     unquoted value with spaces *)
+test squote_spaces get "this that" = *
+
+(* Test: squote_spaces
+     double quoted value with spaces *)
+test squote_spaces get "\"this that\"" = *
+
+(* Test: squote_spaces
+     single quoted value with spaces *)
+test squote_spaces get "'this that'" =
+  { "spc" = "this that" }
+
+(* Test: squote_spaces
+     remove spaces from single-quoted value *)
+test squote_spaces put "'this that'"
+  after set "spc" "thisthat" =
+  "'thisthat'"
+
+(* Test: squote_spaces
+     add spaces to unquoted value *)
+test squote_spaces put "this"
+  after set "spc" "this that" =
+  "'this that'"
+
+(* Test: squote_spaces
+     add spaces to double-quoted value *)
+test squote_spaces put "\"this\""
+  after set "spc" "this that" =
+  "'this that'"
+
+(* Test: squote_spaces
+     add spaces to single-quoted value *)
+test squote_spaces put "'this'"
+  after set "spc" "this that" =
+  "'this that'"
