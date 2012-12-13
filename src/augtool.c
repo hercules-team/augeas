@@ -541,9 +541,13 @@ static int run_args(int argc, char **argv) {
         strcat(line, argv[i]);
         strcat(line, " ");
     }
+    if (echo_commands)
+        printf("%s%s\n", AUGTOOL_PROMPT, line);
     code = run_command(line);
     free(line);
     if (code >= 0 && auto_save)
+        if (echo_commands)
+            printf("%ssave\n", AUGTOOL_PROMPT);
         code = run_command("save");
 
     if (code < 0) {
