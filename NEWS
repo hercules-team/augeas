@@ -33,7 +33,6 @@
     * src/try: don't overwrite gdbcmds.txt if it exists
     * fix behavior of set with empty strings
     * allow running individual tests with test-run
-    * man/augtool.pod: update mentions of default load path
     * test-augtool.sh: escape all possible regular expressions before
       they are sent to sed (Micah Anderson)
     * add new print_tree primitive
@@ -84,6 +83,10 @@
     * add "transform" command and "-t|--transform" option
     * add "label" command
     * arrange commands in groups for better help
+    * man/augtool.pod: update mentions of default load path
+    * fix exit code when using autosave
+    * output errors when sending a command as argument
+    * honor --echo when sending a command as argument
   - XPath changes/additions
     * add support for an 'i' flag in regexp builtin function
   - Lens changes/additions
