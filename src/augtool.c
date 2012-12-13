@@ -545,7 +545,7 @@ static int run_args(int argc, char **argv) {
     free(line);
     if (code >= 0 && auto_save)
         code = run_command("save");
-    return (code == 0 || code == -2) ? 0 : -1;
+    return (code >= 0 || code == -2) ? 0 : -1;
 }
 
 static void add_transforms(char *ts, size_t tslen) {
