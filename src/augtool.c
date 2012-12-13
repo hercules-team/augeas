@@ -545,6 +545,11 @@ static int run_args(int argc, char **argv) {
     free(line);
     if (code >= 0 && auto_save)
         code = run_command("save");
+
+    if (code < 0) {
+        code = -1;
+        print_aug_error();
+    }
     return (code >= 0 || code == -2) ? 0 : -1;
 }
 
