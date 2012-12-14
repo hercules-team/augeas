@@ -18,7 +18,7 @@ enable-wide-area=yes
       { "wide-area"
          { "enable-wide-area" = "yes" } }
 
-    test Puppet.lns put conf after
+    test Avahi.lns put conf after
        set "server/use-ipv4" "yes";
        set "server/clients-max" "4096"
     = "
