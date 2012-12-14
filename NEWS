@@ -133,6 +133,7 @@
                     IPv6 hosts, inc. zone indices,
                     paths to lists of clients, wildcards,
                     hosts_options), bug #256
+    * Htpasswd: new lens for htpasswd/rsyncd.secret files (Marc Fournier)
     * Httpd: support DOS eol
     * IniFile: allow # and ; in quoted values, bug #243;
                add entry_list and entry_list_nocomment

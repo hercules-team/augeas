@@ -67,6 +67,7 @@ lens_tests =			\
   lens-hosts.sh			\
   lens-hosts_access.sh			\
   lens-host_conf.sh			\
+  lens-htpasswd.sh         \
   lens-httpd.sh         \
   lens-inetd.sh         \
   lens-inifile.sh		\

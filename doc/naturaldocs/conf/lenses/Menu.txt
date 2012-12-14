@@ -146,6 +146,7 @@ Group: Specific Modules  {
    File: Memcached  (memcached.aug)
    File: Thttpd  (thttpd.aug)
    File: Quote  (quote.aug)
+   File: Htpasswd  (htpasswd.aug)
    }  # Group: Specific Modules
 
 Group: Generic Modules  {
@@ -207,6 +208,7 @@ Group: Tests and Examples  {
    File: Test_Memcached  (tests/test_memcached.aug)
    File: Test_Thttpd  (tests/test_thttpd.aug)
    File: Test_Quote  (tests/test_quote.aug)
+   File: Test_Htpasswd  (tests/test_htpasswd.aug)
    }  # Group: Tests and Examples
 
 Group: Index  {
