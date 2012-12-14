@@ -58,6 +58,10 @@ let relinteger = /[-+]?[0-9]+/
    A decimal value (using ',' or '.' as a separator) *)
 let decimal    = /[0-9]+([.,][0-9]+)?/
 
+(* Variable: reldecimal
+   A relative <decimal> *)
+let reldecimal    = /[+-]?[0-9]+([.,][0-9]+)?/
+
 (* Variable: fspath
    A filesystem path *)
 let fspath    = /[^ \t\n]+/
