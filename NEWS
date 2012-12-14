@@ -97,6 +97,7 @@
     * AuthorizedKeys: new lens for SSH's authorized_keys
     * AutoMaster: new lens for auto.master files
     * AutoMounter: new lens for automounter maps (/etc/auto.*)
+    * Avahi: new lens for /etc/avahi/avahi-daemon.conf (Athir Nuaimi)
     * Build: add blocks
     * Cachefilesd: new lens for /etc/cachefilesd.conf (Pat Riehecky)
     * Carbon: new lens for /etc/carbon files (Marc Fournier)
@@ -177,7 +178,8 @@
            exclude /etc/pam.d/README, bug #255
     * PamConf: new lens for /etc/pam.conf
     * Passwd: allow asterisk in password field, bug #255
-    * Pg_Hba: support multiple options, bug #313
+    * Pg_Hba: support multiple options, bug #313;
+              add a path to pg_hba.aug, bug #281 (Marc Fournier)
     * Php: support include() statements
     * Phpvars: map arrays with @arraykey subnodes to make working paths;
                support classes and public/var values, bug #299 (aheahe)
