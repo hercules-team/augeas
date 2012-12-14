@@ -62,6 +62,7 @@ Group: Specific Modules  {
    File: Authorized_Keys  (authorized_keys.aug)
    File: Automaster  (automaster.aug)
    File: Automounter  (automounter.aug)
+   File: Avahi  (avahi.aug)
    File: BackupPCHosts  (backuppchosts.aug)
    File: Cachefilesd  (cachefilesd.aug)
    File: Cgconfig  (no auto-title, cgconfig.aug)

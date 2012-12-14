@@ -28,6 +28,7 @@ lens_tests =			\
   lens-authorized_keys.sh	\
   lens-automaster.sh	\
   lens-automounter.sh	\
+  lens-avahi.sh	\
   lens-backuppchosts.sh		\
   lens-bbhosts.sh		\
   lens-build.sh		\
