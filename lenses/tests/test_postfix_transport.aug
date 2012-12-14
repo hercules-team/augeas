@@ -46,3 +46,9 @@ test Postfix_Transport.lns get conf =
     { "transport" = "error" }
     { "nexthop" = "mail for *.example.com is not deliverable" } }
 
+(* Test: Postfix_Transport.lns
+     Bug #303 *)
+test Postfix_Transport.lns get "user@example.com [12.34.56.78]:587\n" =
+  { "pattern" = "user@example.com"
+    { "host" = "[12.34.56.78]" }
+    { "port" = "587" } }

@@ -30,16 +30,25 @@ let space_or_eol = del /([ \t]*\n)?[ \t]+/ " "
 (* View: colon *)
 let colon = Sep.colon
 
+(* View: nexthop *)
+let nexthop =
+     let host_re = "[" . Rx.word . "]" | /[A-Za-z]([^\n]*[^ \t\n])?/
+  in [ label "nexthop" . (store host_re)? ]
+
 (* View: transport *)
 let transport = [ label "transport" . (store Rx.word)? ]
+                . colon . nexthop
 
-(* View: nexthop *)
-let nexthop = [ label "nexthop" . (store Rx.space_in)? ]
+(* View: nexthop_smtp *)
+let nexthop_smtp =
+     let host_re = "[" . Rx.word . "]" | Rx.word
+  in [ label "host" . store host_re ]
+     . colon
+     . [ label "port" . store Rx.integer ]
 
 (* View: record *)
 let record = [ label "pattern" . store /[A-Za-z0-9@\*.-]+/
-             . space_or_eol . transport
-             . colon . nexthop
+             . space_or_eol . (transport | nexthop_smtp)
              . Util.eol ]
 
 (* View: lns *)
