@@ -23,24 +23,36 @@ module Quote =
 let dquote = Util.del_str "\""
 
 (* Variable: dquote_opt
-     An optional double quote *)
+     An optional double quote, default to double *)
 let dquote_opt = del /"?/ "\""
+
+(* Variable: dquote_opt_nil
+     An optional double quote, default to nothing *)
+let dquote_opt_nil = del /"?/ ""
 
 (* Variable: squote
      A single quote *)
 let squote = Util.del_str "'"
 
 (* Variable: squote_opt
-     An optional single quote *)
+     An optional single quote, default to single *)
 let squote_opt = del /'?/ "'"
 
-(* Variable: quote
-     A quote, whether double or single *)
-let quote = del /["']/ "\""
+(* Variable: squote_opt_nil
+     An optional single quote, default to nothing *)
+let squote_opt_nil = del /'?/ ""
 
 (* Variable: quote
-     An optional quote, whether double or single *)
+     A quote, either double or single, default to double *)
+let quote = del /["']/ "\""
+
+(* Variable: quote_opt
+     An optional quote, either double or single, default to double *)
 let quote_opt = del /["']?/ "\""
+
+(* Variable: quote_opt_nil
+     An optional quote, either double or single, default to nothing *)
+let quote_opt_nil = del /["']?/ ""
 
 
 (* Group: QUOTING FUNCTIONS *)
@@ -53,6 +65,10 @@ let do_dquote (body:lens) =
 let do_dquote_opt (body:lens) =
   square dquote_opt body dquote_opt
 
+(* View: do_dquote_opt *)
+let do_dquote_opt_nil (body:lens) =
+  square dquote_opt_nil body dquote_opt_nil
+
 (* View: do_squote *)
 let do_squote (body:lens) =
   square squote body squote
@@ -61,6 +77,10 @@ let do_squote (body:lens) =
 let do_squote_opt (body:lens) =
   square squote_opt body squote_opt
 
+(* View: do_squote_opt_nil *)
+let do_squote_opt_nil (body:lens) =
+  square squote_opt_nil body squote_opt_nil
+
 (* View: do_quote *)
 let do_quote (body:lens) =
   square quote body quote
@@ -68,6 +88,10 @@ let do_quote (body:lens) =
 (* View: do_quote_opt *)
 let do_quote_opt (body:lens) =
   square quote_opt body quote_opt
+
+(* View: do_quote_opt_nil *)
+let do_quote_opt_nil (body:lens) =
+  square quote_opt_nil body quote_opt_nil
 
 
 (* Group: QUOTED VALUES *)
