@@ -196,6 +196,7 @@
     * Qpid: new lens to read Apache Qpid daemon/client configs (Andrew Replogle)
     * Quote: new generic lens to manage quoted values using square lenses
     * Rabbitmq: new lens for /etc/rabbitmq/rabbitmq.config
+    * Redis: new lens for /etc/redis/redis.conf (Marc Fournier)
     * Resolv: add in single-request-reopen (Erinn Looney-Triggs)
     * Rsyslog: new lens for rsyslog files
     * Rx: add continous lines (cl, cl_or_space, cl_or_opt_space)

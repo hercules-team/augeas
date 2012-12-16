@@ -148,6 +148,7 @@ Group: Specific Modules  {
    File: Thttpd  (thttpd.aug)
    File: Quote  (quote.aug)
    File: Htpasswd  (htpasswd.aug)
+   File: Redis  (redis.aug)
    }  # Group: Specific Modules
 
 Group: Generic Modules  {
@@ -210,6 +211,7 @@ Group: Tests and Examples  {
    File: Test_Thttpd  (tests/test_thttpd.aug)
    File: Test_Quote  (tests/test_quote.aug)
    File: Test_Htpasswd  (tests/test_htpasswd.aug)
+   File: Test_Redis  (tests/test_redis.aug)
    }  # Group: Tests and Examples
 
 Group: Index  {

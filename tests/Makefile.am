@@ -130,6 +130,7 @@ lens_tests =			\
   lens-qpid.sh		\
   lens-quote.sh		\
   lens-rabbitmq.sh		\
+  lens-redis.sh		\
   lens-reprepro_uploaders.sh		\
   lens-resolv.sh		\
   lens-rsyncd.sh		\
