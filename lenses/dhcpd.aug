@@ -93,6 +93,7 @@ let ip                = Rx.ipv4
    *)
   let bare = del qchar? "" . store (bchar+) . del qchar? ""
   let quote = Quote.do_quote (store (bchar* . /[ \t'\/]/ . bchar*)+)
+  let dquote = Quote.do_dquote (store (bchar+))
 
 let sto_to_spc        = store /[^\\#,;\{\}" \t\n]+|"[^\\#"\n]+"/
 let sto_to_scl        = store /[^ \t;][^;\n=]+[^ \t;]|[^ \t;=]+/
@@ -156,7 +157,6 @@ let stmt_string_re    = "ddns-update-style"
                       | "ddns-domainname"
                       | "ddns-rev-domainname"
                       | "log-facility"
-                      | "filename"
                       | "server-name"
                       | "fixed-address"
                       | /failover[ ]+peer/
@@ -193,14 +193,16 @@ let stmt_string_re    = "ddns-update-style"
                       | "vendor-option-space"
                       | "primary"
 
-let stmt_string_tpl (l:lens) = [ indent
-                        . key stmt_string_re
+let stmt_string_tpl (kw:regexp) (l:lens) = [ indent
+                        . key kw
                         . sep_spc
                         . l
                         . sep_scl
                         . eos ]
 
-let stmt_string  = stmt_string_tpl bare |stmt_string_tpl quote
+let stmt_string  = stmt_string_tpl stmt_string_re bare
+                 | stmt_string_tpl stmt_string_re quote
+                 | stmt_string_tpl "filename" dquote
 
 (************************************************************************
  *                         RANGE STATEMENTS
