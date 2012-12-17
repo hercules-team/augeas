@@ -44,8 +44,8 @@ syn region augeasComment	start="(\*"  end="\*)" contains=augeasTodo,augeasSpaceE
 
 if !exists("augeas_no_functions")
   " functions
-  syn keyword augeasLabel	del key store label value
-  syn keyword augeasFunction	Util Build Rx Sep
+  syn keyword augeasLabel	del key store label value square
+  syn keyword augeasFunction	Util Build Rx Sep Quote
 endif
 
 syn region  augeasRegexp  start="/"  end="[^\\]/"
