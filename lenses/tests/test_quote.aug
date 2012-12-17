@@ -268,3 +268,102 @@ test squote_spaces put "\"this\""
 test squote_spaces put "'this'"
   after set "spc" "this that" =
   "'this that'"
+
+(* Group: nil cases *)
+
+(* View: dquote_opt_nil *)
+let dquote_opt_nil =
+     let body = store Quote.double_opt_re
+  in [ label "dquote_opt_nil" . Quote.do_dquote_opt_nil body ]?
+
+(* Test: dquote_opt_nil *)
+test dquote_opt_nil get "this" =
+  { "dquote_opt_nil" = "this" }
+
+(* Test: dquote_opt_nil *)
+test dquote_opt_nil get "'this'" =
+  { "dquote_opt_nil" = "'this'" }
+
+(* Test: dquote_opt_nil *)
+test dquote_opt_nil get "\"this\"" =
+  { "dquote_opt_nil" = "this" }
+
+(* Test: dquote_opt_nil *)
+test dquote_opt_nil put ""
+  after set "dquote_opt_nil" "this" =
+  "this"
+
+(* Test: dquote_opt_nil *)
+test dquote_opt_nil put "\"this\""
+  after set "dquote_opt_nil" "this" =
+  "\"this\""
+
+(* Test: dquote_opt_nil *)
+test dquote_opt_nil put "'this'"
+  after set "dquote_opt_nil" "this" =
+  "this"
+
+(* View: squote_opt_nil *)
+let squote_opt_nil =
+     let body = store Quote.single_opt_re
+  in [ label "squote_opt_nil" . Quote.do_squote_opt_nil body ]?
+
+(* Test: squote_opt_nil *)
+test squote_opt_nil get "this" =
+  { "squote_opt_nil" = "this" }
+
+(* Test: squote_opt_nil *)
+test squote_opt_nil get "'this'" =
+  { "squote_opt_nil" = "this" }
+
+(* Test: squote_opt_nil *)
+test squote_opt_nil get "\"this\"" =
+  { "squote_opt_nil" = "\"this\"" }
+
+(* Test: squote_opt_nil *)
+test squote_opt_nil put ""
+  after set "squote_opt_nil" "this" =
+  "this"
+
+(* Test: squote_opt_nil *)
+test squote_opt_nil put "\"this\""
+  after set "squote_opt_nil" "this" =
+  "this"
+
+(* Test: squote_opt_nil *)
+test squote_opt_nil put "\"this\""
+  after set "squote_opt_nil" "this" =
+  "this"
+
+(* View: quote_opt_nil *)
+let quote_opt_nil =
+     let body = store Quote.any_opt_re
+  in [ label "quote_opt_nil" . Quote.do_quote_opt_nil body ]?
+
+(* Test: quote_opt_nil *)
+test quote_opt_nil get "this" =
+  { "quote_opt_nil" = "this" }
+
+(* Test: quote_opt_nil *)
+test quote_opt_nil get "'this'" =
+  { "quote_opt_nil" = "this" }
+
+(* Test: quote_opt_nil *)
+test quote_opt_nil get "\"this\"" =
+  { "quote_opt_nil" = "this" }
+
+(* Test: quote_opt_nil *)
+test quote_opt_nil put ""
+  after set "quote_opt_nil" "this" =
+  "this"
+
+(* Test: quote_opt_nil *)
+test quote_opt_nil put "\"this\""
+  after set "quote_opt_nil" "this" =
+  "\"this\""
+
+(* Test: quote_opt_nil *)
+test quote_opt_nil put "'this'"
+  after set "quote_opt_nil" "this" =
+  "'this'"
+

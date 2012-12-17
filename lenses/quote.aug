@@ -102,12 +102,17 @@ let double =
      let body = store /[^\n]*/
   in do_dquote body
 
+(* Variable: double_opt_re
+     The regexp to store when value
+     is optionally double-quoted *)
+let double_opt_re = /[^\n\t "]([^\n"]*[^\n\t "])?/
+
 (* View: double_opt
      An optionaly double-quoted value
      Double quotes are not allowed in value
      Value cannot begin or end with spaces *)
 let double_opt =
-     let body = store /[^\n\t "]([^\n"]*[^\n\t "])?/
+     let body = store double_opt_re
   in do_dquote_opt body
 
 (* View: single
@@ -116,12 +121,17 @@ let single =
      let body = store /[^\n]*/
   in do_squote body
 
+(* Variable: single_opt_re
+     The regexp to store when value
+     is optionally single-quoted *)
+let single_opt_re = /[^\n\t ']([^\n']*[^\n\t '])?/
+
 (* View: single_opt
      An optionaly single-quoted value
      Single quotes are not allowed in value
      Value cannot begin or end with spaces *)
 let single_opt =
-     let body = store /[^\n\t ']([^\n']*[^\n\t '])?/
+     let body = store single_opt_re
   in do_squote_opt body
 
 (* View: any
@@ -130,12 +140,17 @@ let any =
      let body = store /[^\n]*/
   in do_quote body
 
+(* Variable: any_opt_re
+     The regexp to store when value
+     is optionally single- or double-quoted *)
+let any_opt_re = /[^\n\t "']([^\n"']*[^\n\t "'])?/
+
 (* View: any_opt
      An optionaly quoted value
      Double or single quotes are not allowed in value
      Value cannot begin or end with spaces *)
 let any_opt =
-     let body = store /[^\n\t "']([^\n"']*[^\n\t "'])?/
+     let body = store any_opt_re
   in do_quote_opt body
 
 (* View: quote_spaces
