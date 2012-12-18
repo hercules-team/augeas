@@ -39,6 +39,7 @@ let record  = IniFile.record title entry
 let lns     = IniFile.lns record comment
 
 let filter = (incl "/etc/puppet/puppet.conf"
-             .incl "/usr/local/etc/puppet/puppet.conf")
+             .incl "/usr/local/etc/puppet/puppet.conf"
+             .incl "/etc/puppetlabs/puppet/puppet.conf")
 
 let xfm = transform lns filter

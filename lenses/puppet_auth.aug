@@ -64,6 +64,8 @@ let record =
 let lns = (Util.empty | Util.comment | record)*
 
 (* Variable: filter *)
-let filter = incl "/etc/puppet/auth.conf"
+let filter = (incl "/etc/puppet/auth.conf"
+             .incl "/usr/local/etc/puppet/auth.conf"
+             .incl "/etc/puppetlabs/puppet/auth.conf")
 
 let xfm = transform lns filter
