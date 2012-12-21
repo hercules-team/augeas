@@ -167,6 +167,7 @@
     * NetworkManager: new lens for NetworkManager files
     * Networks: handle multiple missing network octets,
                 fix sequencing of aliases
+    * Nginx: new lens for /etc/nginx/nginx.conf (Ian Berry)
     * Nsswitch: add passwd_compat, group_compat and shadow_compat
                 GNU extensions (Travis Groth);
                 remove long list of databases, match by regexp
