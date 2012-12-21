@@ -781,6 +781,8 @@ let realms_str = "[realms]
         admin_server = KERBEROS.MIT.EDU
         default_domain = MIT.EDU
         database_module = ldapconf
+
+        # test
         v4_instance_convert = {
              mit = mit.edu
              lithium = lithium.lcs.mit.edu
@@ -794,6 +796,8 @@ test Krb5.lns get realms_str =
       { "admin_server" = "KERBEROS.MIT.EDU" }
       { "default_domain" = "MIT.EDU" }
       { "database_module" = "ldapconf" }
+      { }
+      { "#comment" = "test" }
       { "v4_instance_convert"
         { "mit" = "mit.edu" }
         { "lithium" = "lithium.lcs.mit.edu" } }
@@ -987,3 +991,7 @@ test Krb5.lns get v4_name_convert =
       }
     }
   }
+
+(* Ticket #288: semicolons for comments *)
+test Krb5.lns get "; AD  : This Kerberos configuration is for CERN's Active Directory realm.\n" =
+    { "#comment" = "AD  : This Kerberos configuration is for CERN's Active Directory realm." }

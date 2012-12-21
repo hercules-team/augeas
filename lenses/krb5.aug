@@ -2,7 +2,7 @@ module Krb5 =
 
 autoload xfm
 
-let comment = Inifile.comment "#" "#"
+let comment = Inifile.comment IniFile.comment_re "#"
 let empty = Inifile.empty
 let eol = Inifile.eol
 let dels = Util.del_str
@@ -10,7 +10,7 @@ let dels = Util.del_str
 let indent = del /[ \t]*/ ""
 let comma_or_space_sep = del /[ \t,]{1,}/ " "
 let eq = del /[ \t]*=[ \t]*/ " = "
-let eq_openbr = del /[ \t]*=[ \t\n]*\{([ \t]*\n)*/ " = {"
+let eq_openbr = del /[ \t]*=[ \t\n]*\{[ \t]*\n/ " = {\n"
 let closebr = del /[ \t]*\}/ "}"
 
 (* These two regexps for realms and apps are not entirely true
@@ -28,6 +28,9 @@ let name_re = /[.a-zA-Z0-9_-]+/
 let value = store /[^;# \t\n{}]+/
 let entry (kw:regexp) (sep:lens) (comment:lens)
     = [ indent . key kw . sep . value . (comment|eol) ] | comment
+
+let subsec_entry (kw:regexp) (sep:lens) (comment:lens)
+    = ( entry kw sep comment ) | empty
 
 let simple_section (n:string) (k:regexp) =
   let title = Inifile.indented_title n in
@@ -61,7 +64,7 @@ let libdefaults =
                       | enctype_list /default_tgs_enctypes/i "default_tgs_enctypes"
                       | enctype_list /default_tkt_enctypes/i "default_tkt_enctypes" in
   let subsec = [ indent . key /host|plain/ . eq_openbr .
-                   (entry name_re eq comment)* . closebr . eol ] in
+                   (subsec_entry name_re eq comment)* . closebr . eol ] in
   record "libdefaults" (option|enctype_lists|v4_name_convert subsec)
 
 let login =
@@ -72,9 +75,9 @@ let login =
 let appdefaults =
   let option = entry (name_re - "realm" - "application") eq comment in
   let realm = [ indent . label "realm" . store realm_re .
-                  eq_openbr . option* . closebr . eol ] in
+                  eq_openbr . (option|empty)* . closebr . eol ] in
   let app = [ indent . label "application" . store app_re .
-                eq_openbr . (realm|option)* . closebr . eol] in
+                eq_openbr . (realm|option|empty)* . closebr . eol] in
     record "appdefaults" (option|realm|app)
 
 let realms =
@@ -82,11 +85,11 @@ let realms =
       |/v4_realm|auth_to_local(_names)?|master_kdc|kpasswd_server/
       |/admin_server|ticket_lifetime/ in
   let subsec_option = /v4_instance_convert/ in
-  let option = entry simple_option eq comment in
+  let option = subsec_entry simple_option eq comment in
   let subsec = [ indent . key subsec_option . eq_openbr .
-                   (entry name_re eq comment)* . closebr . eol ] in
+                   (subsec_entry name_re eq comment)* . closebr . eol ] in
   let v4subsec = [ indent . key /host|plain/ . eq_openbr .
-                   (entry name_re eq comment)* . closebr . eol ] in
+                   (subsec_entry name_re eq comment)* . closebr . eol ] in
   let realm = [ indent . label "realm" . store realm_re .
                   eq_openbr . (option|subsec|(v4_name_convert v4subsec))* .
                   closebr . eol ] in
