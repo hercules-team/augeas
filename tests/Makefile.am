@@ -103,6 +103,7 @@ lens_tests =			\
   lens-netmasks.sh     \
   lens-networkmanager.sh     \
   lens-networks.sh     \
+  lens-nginx.sh     \
   lens-ntp.sh			\
   lens-nrpe.sh          \
   lens-nsswitch.sh		\
