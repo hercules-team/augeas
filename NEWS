@@ -1,4 +1,4 @@
-1.0.0 - 2012-12-XX
+1.0.0 - 2012-12-21
   - General changes/additions
     * fix missing requirement on libxml2 in pkg-config
     * do not replace pathin with '/*' unless the length is 0
@@ -115,7 +115,8 @@
                allow DM-Upload-Allowed keyword, Debian bug #650887;
                allow control extensions for Python packages, bug #267
     * Dhcpd: fix primary statement arguments, bug #293;
-             use the Quote module to manage quoted values
+             use the Quote module to manage quoted values;
+             force double quotes for filename attribute, bug #311
     * Dput: use Sys.getenv("HOME")
     * Erlang: new generic lens to build Erlang config lenses
     * Fonts: new lens for /etc/fonts files
@@ -184,9 +185,11 @@
     * Php: support include() statements
     * Phpvars: map arrays with @arraykey subnodes to make working paths;
                support classes and public/var values, bug #299 (aheahe)
-    * Postfix_Transport: new lens for Postfix transport files
+    * Postfix_Transport: new lens for Postfix transport files;
+               allow host:port and [host]:port syntaxes, bug #303
     * Postfix_Virtual: new lens for Postfix virtual files
-    * Postgresql: new lens for postgresql.conf
+    * Postgresql: new lens for postgresql.conf;
+                  properly support quotes, bug #317
     * Properties: improve handling of whitespace, empty props, and underscores
                   in keys (Brett Porter, Carlos Sanchez)
     * Protocols: new lens for /etc/protocols
