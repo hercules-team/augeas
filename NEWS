@@ -144,6 +144,10 @@
     * Json: allow JSON number literals to be followed by whitespace;
             correctly parse empty object and arrays (Lubomir Rintel)
     * Keepalived: various improvements, optimize typechecking
+    * Krb5: handle host{} sections in v4_name_convert;
+            support ticket_lifetime;
+            handle multiple arguments to *_enctypes (Pat Riehecky);
+            better whitespace and semicolon comment support
     * Ldif: new lens to read LDIF files per RFC2849
     * Ldso: new lens for ld.so.conf files
     * Lightdm: new lens for /etc/lightdm/*.conf, bug #302 (David Salmen)
