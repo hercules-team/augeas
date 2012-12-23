@@ -17,9 +17,13 @@
 module Xinetd =
   autoload xfm
 
-  let op = ([ label "add" . Util.delim "+=" ]
-           |[ label "del" . Util.delim "-=" ]
-           | Sep.space_equal)
+  let opt_spc = Util.del_opt_ws " "
+
+  let spc_equal = opt_spc . Sep.equal
+
+  let op = ([ label "add" . opt_spc . Util.del_str "+=" ]
+           |[ label "del" . opt_spc . Util.del_str "-=" ]
+           | spc_equal)
 
   let value = store Rx.no_spaces
 
@@ -30,9 +34,9 @@ module Xinetd =
 
   let attr_lst (n:regexp) (op_eq: lens) =
     let value_entry =  [ label "value" . value ] in
-    Build.key_value n op_eq (Build.opt_list value_entry Sep.space)
+    Build.key_value n op_eq (opt_spc . Build.opt_list value_entry Sep.space)?
 
-  let attr_lst_eq (n:regexp) = attr_lst n Sep.space_equal
+  let attr_lst_eq (n:regexp) = attr_lst n spc_equal
 
   let attr_lst_op (n:regexp) = attr_lst n op
 

@@ -78,6 +78,13 @@ test Xinetd.lns put "" after
 }
 "
 
+(* Support missing values in lists *)
+test Xinetd.lns get "service check_mk\n{\n  log_on_success =\n  server_args=\n}\n" =
+  { "service" = "check_mk"
+    { "log_on_success" }
+    { "server_args" }
+  }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
