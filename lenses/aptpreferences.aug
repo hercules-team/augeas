@@ -24,6 +24,7 @@ module AptPreferences =
    let pin_keys = key_value "a"
                 | key_value "c"
                 | key_value "l"
+                | key_value "n"
                 | key_value "o"
                 | key_value "v"
 
