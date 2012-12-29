@@ -752,7 +752,7 @@ static const struct command_def cmd_defnode_def = {
     .opts = cmd_defnode_opts,
     .handler = cmd_defnode,
     .synopsis = "set a variable, possibly creating a new node",
-    .help = "Define the variable NAME to the result of evalutating EXPR, "
+    .help = "Define the variable NAME to the result of evaluating EXPR, "
     " which must\n be a nodeset.  If no node matching EXPR exists yet,  one "
     "is created and\n NAME will refer to it.   When a node is created and "
     "VALUE is given, the\n new node's value is set to VALUE."
