@@ -71,6 +71,26 @@ let sortlist = Build.key_value_line_comment
                            Sep.space) 
                     comment_eol
 
+(* View: lookup *)
+let lookup =
+  let lookup_entry = Build.flag("bind"|"file"|"yp")
+    in Build.key_value_line_comment
+             "lookup" Sep.space
+             (Build.opt_list
+                    lookup_entry
+                    Sep.space)
+             comment_eol
+
+(* View: family *)
+let family =
+  let family_entry = Build.flag("inet4"|"inet6")
+    in Build.key_value_line_comment
+             "family" Sep.space
+             (Build.opt_list
+                    family_entry
+                    Sep.space)
+             comment_eol
+
 (************************************************************************
  * Group:                 SPECIAL OPTIONS
  *************************************************************************)
@@ -104,6 +124,8 @@ let entry = nameserver
           | search
           | sortlist
           | options
+          | lookup
+          | family
 
 (* View: lns *)
 let lns = ( empty | comment | entry )*
