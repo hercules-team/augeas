@@ -28,6 +28,7 @@
 
 #include <config.h>
 
+#include <sys/wait.h>
 #include <assert.h>
 #include <setjmp.h>
 #include <stdlib.h>
