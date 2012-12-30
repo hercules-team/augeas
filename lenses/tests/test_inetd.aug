@@ -13,6 +13,7 @@ arguserve	dgram	udp	wait	mary	/usr/bin/usenet		foo bar wombat
 faff.fred.com:
 127.0.0.1,faff.fred.com:
 *:
+[::1]:addrsrv	stream	tcp	nowait	fred	/usr/bin/addrsrv
 
 sndbufsrv	stream	tcp,sndbuf=12k	nowait	fred	/usr/bin/sndbufsrv
 rcvbufsrv	stream	tcp,rcvbuf=24k	nowait	fred	/usr/bin/rcvbufsrv
@@ -87,6 +88,16 @@ dummy/1       tli     rpc/circuit_v,udp       wait    root    /tmp/test_svc   te
 		}
 		{ "address"
 			{ "1" = "*" }
+		}
+		{ "service" = "addrsrv"
+			{ "address"
+				{ "1" = "[::1]" }
+			}
+			{ "socket" = "stream" }
+			{ "protocol" = "tcp" }
+			{ "wait" = "nowait" }
+			{ "user" = "fred" }
+			{ "command" = "/usr/bin/addrsrv" }
 		}
 		{}
 		{ "service" = "sndbufsrv"
