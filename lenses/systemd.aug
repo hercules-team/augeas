@@ -118,8 +118,8 @@ let entry_command_flags =
 let entry_command =
      let cmd  = [ label "command" . store value_cmd_re ]
   in let arg  = [ seq "args" . sto_value ]
-  in let args = [ counter "args" . label "arguments" . value_sep
-                  . ( arg . value_sep )* . arg ]
+  in let args = [ counter "args" . label "arguments"
+                . (value_sep . arg)+ ]
   in entry_fn entry_command_kw ( entry_command_flags . cmd . args? )?
 
 (* View: entry_env
