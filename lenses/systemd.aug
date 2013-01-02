@@ -47,10 +47,9 @@ let entry_command_kw = /Exec[A-Za-z][A-Za-z0-9._-]+/
 let entry_env_kw     = "Environment"
 
 (* Variable: entry_multi_kw *)
-let entry_multi_kw   = /[A-Za-z][A-Za-z0-9._-]+/
-                       - entry_single_kw
-                       - entry_command_kw
-                       - entry_env_kw
+let entry_multi_kw   =
+     let forbidden = entry_single_kw | entry_command_kw | entry_env_kw
+  in /[A-Za-z][A-Za-z0-9._-]+/ - forbidden
 
 (* Variable: value_single_re *)
 let value_single_re  = /[^;# \t\n\\][^;#\n\\]*[^;# \t\n\\]|[^;# \t\n\\]/
