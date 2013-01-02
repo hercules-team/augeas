@@ -7,6 +7,7 @@ mynet           128.253.154   # Modify for your own network address
 
 loopback        127
 arpanet         10      arpa    # Historical
+localnet        192.168.25.192
 "
 
 test Networks.lns get conf =
@@ -42,4 +43,8 @@ test Networks.lns get conf =
       { "1" = "arpa" }
     }
     { "#comment" = "Historical" }
+  }
+  { "6"
+    { "name" = "localnet" }
+    { "number" = "192.168.25.192" }
   }

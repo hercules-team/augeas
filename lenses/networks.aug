@@ -26,7 +26,7 @@ autoload xfm
 let ipv4 =
   let dot     = "." in
   let digits  = /(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/ in
-    digits . (dot . digits . (dot . digits . (dot . "0")?)?)?
+    digits . (dot . digits . (dot . digits . (dot . digits)?)?)?
 
 (*View: entry *)
 let entry =
