@@ -286,3 +286,20 @@ test Systemd.lns get unit =
     { "CapabilityBoundingSet" }
     {  }
   }
+
+(* Test: Systemd.lns
+     Values can contain backslashes *)
+test Systemd.entry_command get "ExecStart=/usr/bin/find /var/lib/sudo -exec /usr/bin/touch -t 198501010000 '{}' \073\n" =
+  { "ExecStart"
+    { "command" = "/usr/bin/find" }
+    { "arguments"
+      { "1" = "/var/lib/sudo" }
+      { "2" = "-exec" }
+      { "3" = "/usr/bin/touch" }
+      { "4" = "-t" }
+      { "5" = "198501010000" }
+      { "6" = "'{}'" }
+      { "7" = "\073" }
+    }
+  }
+

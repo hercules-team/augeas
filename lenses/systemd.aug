@@ -61,7 +61,7 @@ let sto_value_single = Util.del_opt_ws ""
                                 . (/\\\\\n/ . value_single_re)*)
 
 (* View: sto_value *)
-let sto_value = store /[^;# \t\n\\]+/
+let sto_value = store /[^;# \t\n]*[^;# \t\n\\]/
 
 (* Variable: value_sep
    Multi-value entries separated by whitespace or backslash and newline *)
