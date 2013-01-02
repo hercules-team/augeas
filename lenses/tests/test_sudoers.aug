@@ -264,3 +264,12 @@ test Sudoers.lns get defaults_spaces =
     { "passprompt" = "\"Your SecurID Passcode: \"" }
   }
 
+
+(* Test: Sudoers.spec
+     Spec users can be aliases *)
+test Sudoers.spec get "APACHE_ADMIN ALL= ALL\n" =
+  { "spec"
+    { "user" = "APACHE_ADMIN" }
+    { "host_group"
+      { "host" = "ALL" }
+      { "command" = "ALL" } } }
