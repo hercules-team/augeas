@@ -31,6 +31,7 @@ lens_tests =			\
   lens-avahi.sh	\
   lens-backuppchosts.sh		\
   lens-bbhosts.sh		\
+  lens-bootconf.sh		\
   lens-build.sh		\
   lens-cachefilesd.sh		\
   lens-carbon.sh	\
