@@ -26,6 +26,7 @@ autoload xfm
 let filter = incl "/etc/sysctl.conf"
            . incl "/etc/sysctl.d/*"
            . excl "/etc/sysctl.d/README"
+           . excl "/etc/sysctl.d/README.sysctl"
            . Util.stdexcl
 
 (* View: comment *)
