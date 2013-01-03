@@ -290,7 +290,7 @@ let lns = ( empty | comment | section )*
 
 
 (* Variable: filter *)
-let filter = (incl "/etc/X11/xorg.conf") .
-  (incl "/etc/X11/xorg.conf.d/*.conf") .
+let filter = incl "/etc/X11/xorg.conf"
+           . incl "/etc/X11/xorg.conf.d/*.conf"
 
 let xfm = transform lns filter
