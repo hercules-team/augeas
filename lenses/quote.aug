@@ -2,13 +2,15 @@
 Module: Quote
   Generic module providing useful primitives for quoting
 
-Author: Raphael Pinson <raphink@gmail.com>
+Author: Raphael Pinson <raphael.pinson@camptocamp.com>
 
 About: License
    This file is licenced under the LGPL v2+, like the rest of Augeas.
 
 About: Lens Usage
-   To be documented
+   This is a generic module which doesn't apply to files directly.
+   You can use its definitions to build lenses that requires quoted values.
+   It provides several levels of definitions, allowing to define more or less fine-grained quoted values.
 
 About: Examples
    The <Test_Quote> file contains various examples and tests.
