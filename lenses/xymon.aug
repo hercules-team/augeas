@@ -50,7 +50,6 @@ let ospage = [ key "ospage" . del_ws_spc . store word . del_ws_spc . [ label "os
 let lns = (empty | comment | include | host | title | ospage )* . (group | group_compress | group_only)* . (page | subparent)*
 
 let filter = incl "/etc/xymon/hosts.cfg" . incl "/etc/xymon/pages.cfg"
-           . Util.stdexcl
 
 let xfm = transform lns filter
 

@@ -63,8 +63,6 @@ let nisdefault =
 
 let lns        = (comment|empty|entry|nisentry|nisdefault) *
 
-let filter
-               = incl "/etc/passwd"
-               . Util.stdexcl
+let filter     = incl "/etc/passwd"
 
 let xfm        = transform lns filter

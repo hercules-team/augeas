@@ -33,6 +33,5 @@ let lns = ( empty | comment | shell )*
 
 (* Variable: filter *)
 let filter = incl "/etc/shells"
-    . Util.stdexcl
 
 let xfm = transform lns filter

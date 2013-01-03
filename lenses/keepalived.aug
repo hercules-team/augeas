@@ -263,7 +263,6 @@ let lns = ( empty | comment | global_conf | vrrpd_conf | lvs_conf )*
 
 (* Variable: filter *)
 let filter = incl "/etc/keepalived/keepalived.conf"
-    . Util.stdexcl
 
 let xfm = transform lns filter
 

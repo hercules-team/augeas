@@ -76,6 +76,5 @@ module Stunnel =
     let lns     = rc_anon? . record*
 
     let filter  = (incl "/etc/stunnel/stunnel.conf")
-                . Util.stdexcl
 
     let xfm     = transform lns filter

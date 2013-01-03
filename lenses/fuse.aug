@@ -40,7 +40,6 @@ let lns = ( Util.empty | Util.comment | mount_max | user_allow_other )*
 
 (* Variable: filter *)
 let filter = incl "/etc/fuse.conf"
-    . Util.stdexcl
 
 let xfm = transform lns filter
 

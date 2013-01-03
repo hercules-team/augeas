@@ -43,8 +43,6 @@ let entry     = Build.key_value_line word colon params
 
 let lns        = (comment|empty|entry) *
 
-let filter
-               = incl "/etc/group"
-               . Util.stdexcl
+let filter     = incl "/etc/group"
 
 let xfm        = transform lns filter

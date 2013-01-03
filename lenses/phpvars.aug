@@ -115,6 +115,5 @@ let class =
 let lns        = open_php . (empty|comment|entry|class|variable)* . close_php
 
 let filter     = incl "/etc/squirrelmail/config.php"
-               . Util.stdexcl
 
 let xfm        = transform lns filter

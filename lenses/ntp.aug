@@ -129,6 +129,5 @@ module Ntp =
               | auth_command | tinker | tos)*
 
     let filter = (incl "/etc/ntp.conf")
-        . Util.stdexcl
 
     let xfm = transform lns filter

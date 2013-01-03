@@ -101,6 +101,5 @@ let stanza_multi  = iface|mapping
    let lns = (comment|empty)* . (stanza_multi | stanza_single)*
 
    let filter = incl "/etc/network/interfaces"
-              . Util.stdexcl
 
    let xfm = transform lns filter

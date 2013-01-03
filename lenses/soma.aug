@@ -38,8 +38,6 @@ let entry     = [ key word
 
 let lns        = (comment|empty|entry) *
 
-let filter
-               = incl "/etc/somad/soma.cfg"
-               . Util.stdexcl
+let filter     = incl "/etc/somad/soma.cfg"
 
 let xfm        = transform lns filter

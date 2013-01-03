@@ -82,8 +82,6 @@ let lns = ( Util.empty | Util.comment | shellvar | entry )*
 
 
 (* Variable: filter *)
-let filter =
-  incl "/etc/anacrontab" .
-  Util.stdexcl
+let filter = incl "/etc/anacrontab"
 
 let xfm = transform lns filter

@@ -132,7 +132,6 @@ let lns = ( empty | comment | entry )*
 
 (* Variable: filter *)
 let filter = (incl "/etc/resolv.conf")
-    . Util.stdexcl
 
 let xfm = transform lns filter
 

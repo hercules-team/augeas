@@ -40,7 +40,6 @@ let entry      = [ key entry_re . sep_eq . sto_to_eol . eol ]
 let lns = (comment|empty|entry) *
 
 let filter            = incl "/etc/logwatch/conf/logwatch.conf"
-                      . excl "#*#"
                       . excl ".*"
                       . Util.stdexcl
 

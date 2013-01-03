@@ -88,8 +88,7 @@ let lns = ( command | item | include | include_dir | comment | empty ) *
 
 (* View: filter
     File filter *)
-let filter = Util.stdexcl .
-             incl "/etc/nrpe.cfg" .
+let filter = incl "/etc/nrpe.cfg" .
              incl "/etc/nagios/nrpe.cfg"
 
 let xfm = transform lns (filter)

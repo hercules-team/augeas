@@ -65,6 +65,5 @@ let lns    = IniFile.lns record comment
 
 (* View: filter *)
 let filter = (incl "/etc/schroot/schroot.conf")
-             . Util.stdexcl
 
 let xfm = transform lns filter

@@ -52,7 +52,6 @@ module NagiosObjects =
     let lns = ( empty | comment | object_def )*
 
     let filter = incl "/etc/nagios3/objects/*.cfg"
-               . Util.stdexcl
 
     let xfm = transform lns filter
 

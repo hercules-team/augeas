@@ -24,6 +24,6 @@ let record =
 let lns = (record | Util.comment | Util.empty) *
 
 (* View: filter *)
-let filter = incl "/etc/login.defs" . Util.stdexcl
+let filter = incl "/etc/login.defs"
 
 let xfm = transform lns filter

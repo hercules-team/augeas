@@ -40,7 +40,6 @@ let lns = (comment|empty|entry) *
 
 let filter            = incl "/etc/dnsmasq.conf"
                       . incl "/etc/dnsmasq.d/*"
-                      . excl "#*#"
                       . excl ".*"
                       . Util.stdexcl
 

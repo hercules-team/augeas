@@ -52,6 +52,5 @@ let record   = IniFile.record title entry
 let lns      = IniFile.lns record comment
 
 let filter   = (incl "/etc/samba/smb.conf")
-             . Util.stdexcl
 
 let xfm = transform lns filter

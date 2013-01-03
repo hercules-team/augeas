@@ -61,6 +61,5 @@ let lns = ( empty
 (* Variable: filter *)
 let filter = (incl "/etc/netmasks"
             . incl "/etc/inet/netmasks")
-    . Util.stdexcl
 
 let xfm = transform lns filter

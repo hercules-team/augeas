@@ -136,7 +136,6 @@ let lns = (empty|comment)* . (defaults|fs_types)*
 
 (* Variable: filter *)
 let filter = incl "/etc/mke2fs.conf"
-    . Util.stdexcl
 
 let xfm = transform lns filter
 

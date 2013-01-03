@@ -292,6 +292,5 @@ let lns = ( empty | comment | section )*
 (* Variable: filter *)
 let filter = (incl "/etc/X11/xorg.conf") .
   (incl "/etc/X11/xorg.conf.d/*.conf") .
-  Util.stdexcl
 
 let xfm = transform lns filter

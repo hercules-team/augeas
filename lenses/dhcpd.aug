@@ -396,6 +396,5 @@ let lns = (lns_staging)*
 let filter = incl "/etc/dhcp3/dhcpd.conf"
            . incl "/etc/dhcp/dhcpd.conf"
            . incl "/etc/dhcpd.conf"
-           . Util.stdexcl
 
 let xfm = transform lns filter

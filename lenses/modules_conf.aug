@@ -37,7 +37,6 @@ let entry =
 let lns = (comment|empty|entry)*
 
 let filter = (incl "/etc/modules.conf") .
-  (incl "/etc/conf.modules").
-  Util.stdexcl
+  (incl "/etc/conf.modules")
 
 let xfm = transform lns filter

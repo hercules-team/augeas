@@ -33,5 +33,5 @@ let sexpr = [ lbrack . var_name . ws . no_ws_comment? . thing . ws_and_comment? 
 
 let lns = ( empty_line | standalone_comment | sexpr ) *
 
-let filter = incl "xend-config.sxp" . Util.stdexcl
+let filter = incl "xend-config.sxp"
 let xfm = transform lns filter

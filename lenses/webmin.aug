@@ -40,9 +40,7 @@ let lns        = (comment|empty|entry) *
 
 let wm_incl (n:string)
                = (incl ("/etc/webmin/" . n))
-let filter
-               = wm_incl "miniserv.conf"
+let filter     = wm_incl "miniserv.conf"
                . wm_incl "ldap-useradmin/config"
-               . Util.stdexcl
 
 let xfm        = transform lns filter

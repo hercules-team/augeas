@@ -105,6 +105,5 @@ let lns = ( empty
 
 (* Variable: filter *)
 let filter = (incl "/etc/system")
-    . Util.stdexcl
 
 let xfm = transform lns filter

@@ -59,7 +59,6 @@ module Vfstab =
 
   let lns = ( empty | comment | record ) *
   let filter = incl "/etc/vfstab"
-             . Util.stdexcl
 
   let xfm = transform lns filter
 

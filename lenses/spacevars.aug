@@ -33,8 +33,7 @@ let lns = (comment|empty|entry)*
 let simple_lns = lns    (* An alias for compatibility reasons *)
 
 (* configuration files that can be parsed without customizing the lens *)
-let filter = Util.stdexcl
-           . incl "/etc/havp/havp.config"
+let filter = incl "/etc/havp/havp.config"
            . incl "/etc/ldap.conf"
            . incl "/etc/ldap/ldap.conf"
            . incl "/etc/libnss-ldap.conf"

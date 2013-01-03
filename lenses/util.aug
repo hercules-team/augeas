@@ -177,4 +177,5 @@ Variable: stdexcl
     (excl "*.augsave") .
     (excl "*.augnew") .
     (excl "*.bak") .
-    (excl "*.old")
+    (excl "*.old") .
+    (excl "#*#")

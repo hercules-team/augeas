@@ -45,7 +45,6 @@ let record  = [ seq "record" . indent .
 let lns = ( empty | comment | include | record ) *
 
 let filter = incl "/etc/pam.conf"
-           . Util.stdexcl
 
 let xfm = transform lns filter
 

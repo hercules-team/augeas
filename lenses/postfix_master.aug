@@ -49,6 +49,5 @@ let entry     = [ key word . ws
 let lns        = (comment|empty|entry) *
 
 let filter     = incl "/etc/postfix/master.cf"
-               . Util.stdexcl
 
 let xfm        = transform lns filter

@@ -23,6 +23,5 @@ let lns = Httpd.lns
 
 (* Variable: filter *)
 let filter = incl "/etc/cups/*.conf"
-           . Util.stdexcl
 
 let xfm = transform lns filter

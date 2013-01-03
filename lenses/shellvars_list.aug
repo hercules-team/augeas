@@ -39,13 +39,8 @@ module Shellvars_list =
 
   let lns = ( comment | empty | kv )*
 
-  let sc_incl (n:string) = (incl ("/etc/sysconfig/" . n))
-  let filter_sysconfig =
-      sc_incl "bootloader" .
-      sc_incl "kernel"
-
-  let filter = filter_sysconfig
-             . Util.stdexcl
+  let filter = incl "/etc/sysconfig/bootloader"
+             . incl "/etc/sysconfig/kernel"
 
   let xfm = transform lns filter
 

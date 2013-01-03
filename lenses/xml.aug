@@ -158,6 +158,5 @@ let lns = doc
 
 let filter = (incl "/etc/xml/*.xml")
     . (incl "/etc/xml/catalog")
-    . Util.stdexcl
 
 let xfm = transform lns filter

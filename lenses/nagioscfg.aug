@@ -41,7 +41,6 @@ module NagiosCfg =
     let filter = incl "/etc/nagios3/*.cfg"
                . excl "/etc/nagios3/commands.cfg"
                . excl "/etc/nagios3/resource.cfg"
-               . Util.stdexcl
 
     let xfm = transform lns filter
 

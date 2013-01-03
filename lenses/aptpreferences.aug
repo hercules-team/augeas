@@ -46,6 +46,5 @@ module AptPreferences =
    let lns = (eol* . ( record . eol+ )* . record . eol* ) | eol
 
    let filter = incl "/etc/apt/preferences"
-              . Util.stdexcl
 
    let xfm = transform lns filter

@@ -96,7 +96,6 @@ module BBhosts =
     let lns = (comment | empty)* . page*
 
     let filter = incl "/etc/bb/bb-hosts"
-               . Util.stdexcl
 
     let xfm = transform lns filter
 
