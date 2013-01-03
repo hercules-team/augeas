@@ -50,9 +50,13 @@ let word       = /[A-Za-z0-9_.-]+/
    One or more digits *)
 let integer    = /[0-9]+/
 
-(* Variable: integer
+(* Variable: relinteger
    A relative <integer> *)
 let relinteger = /[-+]?[0-9]+/
+
+(* Variable: relinteger_noplus
+   A relative <integer>, without explicit plus sign *)
+let relinteger_noplus = /[-]?[0-9]+/
 
 (* Variable: decimal
    A decimal value (using ',' or '.' as a separator) *)
@@ -62,6 +66,10 @@ let decimal    = /[0-9]+([.,][0-9]+)?/
    A relative <decimal> *)
 let reldecimal    = /[+-]?[0-9]+([.,][0-9]+)?/
 
+(* Variable: byte
+  A byte (0 - 255) *)
+let byte = /25[0-5]?|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]/
+
 (* Variable: fspath
    A filesystem path *)
 let fspath    = /[^ \t\n]+/
@@ -70,7 +78,6 @@ let fspath    = /[^ \t\n]+/
 (* Variable: neg1
    Anything but a space, a comma or a comment sign *)
 let neg1      = /[^,# \n\t]+/
-
 
 (*
  * Group: IPs
@@ -114,6 +121,11 @@ let ipv6 =
    An <ipv4> or <ipv6> *)
 let ip        = ipv4 | ipv6
 
+
+(* Variable: hostname
+   A valid RFC 1123 hostname *)
+let hostname = /(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*(
+                  [A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])/
 
 (*
  * Variable: device_name

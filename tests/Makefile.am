@@ -106,6 +106,7 @@ lens_tests =			\
   lens-networks.sh     \
   lens-nginx.sh     \
   lens-ntp.sh			\
+  lens-ntpd.sh			\
   lens-nrpe.sh          \
   lens-nsswitch.sh		\
   lens-odbc.sh          \
