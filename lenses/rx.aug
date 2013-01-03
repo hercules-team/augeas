@@ -70,6 +70,14 @@ let reldecimal    = /[+-]?[0-9]+([.,][0-9]+)?/
   A byte (0 - 255) *)
 let byte = /25[0-5]?|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]/
 
+(* Variable: hex
+   A hex value *)
+let hex = /0x[0-9a-fA-F]+/
+
+(* Variable: octal
+   An octal value *)
+let octal = /0[0-7]+/
+
 (* Variable: fspath
    A filesystem path *)
 let fspath    = /[^ \t\n]+/
@@ -87,8 +95,7 @@ let neg1      = /[^,# \n\t]+/
 (* Variable: ipv4 *)
 let ipv4 =
   let dot     = "." in
-  let digits  = /(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/ in
-    digits . dot . digits . dot . digits . dot . digits
+    byte . dot . byte . dot . byte . dot . byte
 
 (* Variable: ipv6 *)
 let ipv6 =
