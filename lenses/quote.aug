@@ -57,39 +57,98 @@ let quote_opt_nil = del /["']?/ ""
 
 (* Group: QUOTING FUNCTIONS *)
 
-(* View: do_dquote *)
+(*
+View: do_dquote
+  Enclose a lens in <dquote>s
+
+  Parameters:
+    body:lens - the lens to be enclosed
+*)
 let do_dquote (body:lens) =
   square dquote body dquote
 
-(* View: do_dquote_opt *)
+(*
+View: do_dquote_opt
+  Enclose a lens in optional <dquote>s,
+  use <dquote>s by default.
+
+  Parameters:
+    body:lens - the lens to be enclosed
+*)
 let do_dquote_opt (body:lens) =
   square dquote_opt body dquote_opt
 
-(* View: do_dquote_opt *)
+(*
+View: do_dquote_opt_nil
+  Enclose a lens in optional <dquote>s,
+  default to no quotes.
+
+  Parameters:
+    body:lens - the lens to be enclosed
+*)
 let do_dquote_opt_nil (body:lens) =
   square dquote_opt_nil body dquote_opt_nil
 
-(* View: do_squote *)
+(*
+View: do_squote
+  Enclose a lens in <squote>s
+
+  Parameters:
+    body:lens - the lens to be enclosed
+*)
 let do_squote (body:lens) =
   square squote body squote
 
-(* View: do_squote_opt *)
+(*
+View: do_squote_opt
+  Enclose a lens in optional <squote>s,
+  use <squote>s by default.
+
+  Parameters:
+    body:lens - the lens to be enclosed
+*)
 let do_squote_opt (body:lens) =
   square squote_opt body squote_opt
 
-(* View: do_squote_opt_nil *)
+(*
+View: do_squote_opt_nil
+  Enclose a lens in optional <squote>s,
+  default to no quotes.
+
+  Parameters:
+    body:lens - the lens to be enclosed
+*)
 let do_squote_opt_nil (body:lens) =
   square squote_opt_nil body squote_opt_nil
 
-(* View: do_quote *)
+(*
+View: do_quote
+  Enclose a lens in <quote>s.
+
+  Parameters:
+    body:lens - the lens to be enclosed
+*)
 let do_quote (body:lens) =
   square quote body quote
 
-(* View: do_quote_opt *)
+(*
+View: do_quote
+  Enclose a lens in options <quote>s.
+
+  Parameters:
+    body:lens - the lens to be enclosed
+*)
 let do_quote_opt (body:lens) =
   square quote_opt body quote_opt
 
-(* View: do_quote_opt_nil *)
+(*
+View: do_quote
+  Enclose a lens in options <quote>s,
+  default to no quotes.
+
+  Parameters:
+    body:lens - the lens to be enclosed
+*)
 let do_quote_opt_nil (body:lens) =
   square quote_opt_nil body quote_opt_nil
 
@@ -153,9 +212,14 @@ let any_opt =
      let body = store any_opt_re
   in do_quote_opt body
 
-(* View: quote_spaces
-     Make quotes mandatory if value contains spaces,
-     and optional if value doesn't contain spaces. *)
+(*
+View: quote_spaces
+  Make quotes mandatory if value contains spaces,
+  and optional if value doesn't contain spaces.
+
+Parameters:
+  lns:lens - the lens to be enclosed
+*)
 let quote_spaces (lns:lens) =
      (* bare has no spaces, and is optionally quoted *)
      let bare = Quote.do_quote_opt (store /[^"' \t\n]+/)
@@ -163,9 +227,14 @@ let quote_spaces (lns:lens) =
   in let quoted = Quote.do_quote (store /[^"' \t\n]*[ \t][^"' \t\n]*/)
   in [ lns . bare ] | [ lns . quoted ]
 
-(* View: dquote_spaces
-     Make double quotes mandatory if value contains spaces,
-     and optional if value doesn't contain spaces. *)
+(*
+View: dquote_spaces
+  Make double quotes mandatory if value contains spaces,
+  and optional if value doesn't contain spaces.
+
+Parameters:
+  lns:lens - the lens to be enclosed
+*)
 let dquote_spaces (lns:lens) =
      (* bare has no spaces, and is optionally quoted *)
      let bare = Quote.do_dquote_opt (store /[^" \t\n]+/)
@@ -173,9 +242,14 @@ let dquote_spaces (lns:lens) =
   in let quoted = Quote.do_dquote (store /[^" \t\n]*[ \t][^" \t\n]*/)
   in [ lns . bare ] | [ lns . quoted ]
 
-(* View: squote_spaces
-     Make single quotes mandatory if value contains spaces,
-     and optional if value doesn't contain spaces. *)
+(*
+View: squote_spaces
+  Make single quotes mandatory if value contains spaces,
+  and optional if value doesn't contain spaces.
+
+Parameters:
+  lns:lens - the lens to be enclosed
+*)
 let squote_spaces (lns:lens) =
      (* bare has no spaces, and is optionally quoted *)
      let bare = Quote.do_squote_opt (store /[^' \t\n]+/)
