@@ -9,8 +9,12 @@ About: License
 
 About: Lens Usage
    This is a generic module which doesn't apply to files directly.
-   You can use its definitions to build lenses that requires quoted values.
-   It provides several levels of definitions, allowing to define more or less fine-grained quoted values.
+   You can use its definitions to build lenses that require quoted values.
+   It provides several levels of definitions, allowing to define more or less fine-grained quoted values:
+
+     - the quote separators are separators that are useful to define quoted values;
+     - the quoting functions are useful wrappers to easily enclose a lens in various kinds of quotes (single, double, any, optional or not);
+     - the quoted values definitions are common quoted patterns. They use the quoting functions in order to provide useful shortcuts for commonly met needs. In particular, the <quote_spaces> (and similar) function force values that contain spaces to be quoted, but allow values without spaces to be unquoted.
 
 About: Examples
    The <Test_Quote> file contains various examples and tests.
