@@ -109,7 +109,7 @@ let sto_to_com_user =
    in let alias_re = /[A-Z_]+/
    in store ((nis_re? . user_re) | alias_re)
 
-(* Variable: to_com_dquot *)
+(* Variable: to_com_chars *)
 let to_com_chars        = /[^",=#() \t\n\\]+/ (* " relax emacs *)
 
 (* Variable: to_com_dquot *)
