@@ -31,7 +31,7 @@ module Cachefilesd =
 
    (* View: eol *)
    let eol   = Util.eol
-   (* View: comment_or_eol *)
+   (* View: comment *)
    let comment = Util.comment
    (* View: empty *)
    let empty = Util.empty
