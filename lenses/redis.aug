@@ -84,10 +84,32 @@ standard_entry apply for quoting, comments and whitespaces.
 *)
 let renamecmd_entry = [ indent . key renamecmd . del_ws_spc . from . del_ws_spc . to . eol ]
 
+let cobl_cmd = /client-output-buffer-limit/
+let class = [ label "class" . Quote.do_quote_opt_nil (store Rx.word) ]
+let hard_limit = [ label "hard_limit" . Quote.do_quote_opt_nil (store Rx.word) ]
+let soft_limit = [ label "soft_limit" . Quote.do_quote_opt_nil (store Rx.word) ]
+let soft_seconds = [ label "soft_seconds" . Quote.do_quote_opt_nil (store Rx.integer) ]
+(* View: client_output_buffer_limit_entry
+Entries identified by the "client-output-buffer-limit" keyword can be found
+more than once. They have four mandatory paramters, of which the first is a
+string, the last one is an integer and the others are either integers or words,
+although redis is very liberal and takes "4242yadayadabytes" as a valid limit.
+The same rules as standard_entry apply for quoting, comments and whitespaces.
+*)
+let client_output_buffer_limit_entry =
+  [ indent . key cobl_cmd . del_ws_spc . class . del_ws_spc . hard_limit .
+    del_ws_spc . soft_limit . del_ws_spc . soft_seconds . eol ]
+
+let entry = standard_entry
+          | save_entry
+	  | renamecmd_entry
+	  | slaveof_entry
+	  | client_output_buffer_limit_entry
+
 (* View: lns
 The Redis lens
 *)
-let lns = (comment | empty | standard_entry | save_entry | renamecmd_entry | slaveof_entry )*
+let lns = (comment | empty | entry )*
 
 let filter = incl "/etc/redis/redis.conf"
 

@@ -45,6 +45,24 @@ test Redis.lns get rename_command_entry =
   { "to" = "CONFIG2" }
 }
 
+let client_output_buffer_limit_entry_1 = "client-output-buffer-limit normal 0 0 0\n"
+test Redis.lns get client_output_buffer_limit_entry_1 =
+{ "client-output-buffer-limit"
+  { "class" = "normal" }
+  { "hard_limit" = "0" }
+  { "soft_limit" = "0" }
+  { "soft_seconds" = "0" }
+}
+
+let client_output_buffer_limit_entry_2 = "client-output-buffer-limit slave 256mb 64mb 60\n"
+test Redis.lns get client_output_buffer_limit_entry_2 =
+{ "client-output-buffer-limit"
+  { "class" = "slave" }
+  { "hard_limit" = "256mb" }
+  { "soft_limit" = "64mb" }
+  { "soft_seconds" = "60" }
+}
+
 let include_entry = "include /foo/redis.conf\ninclude /bar/redis.conf\n"
 test Redis.lns get include_entry =
 { "include" = "/foo/redis.conf" }
