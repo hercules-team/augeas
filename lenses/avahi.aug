@@ -11,32 +11,35 @@ module Avahi =
   autoload xfm
 
 (************************************************************************
- * INI File settings
- *
+ * Group: INI File settings
  * avahi-daemon.conf only supports "# as commentary and "=" as separator
  *************************************************************************)
+(* View: comment *)
 let comment    = IniFile.comment "#" "#"
+(* View: sep *)
 let sep        = IniFile.sep "=" "="
 
 (************************************************************************
- *                        ENTRY
- * avahi-daemon.conf uses standard INI File entries
+ * Group: Entry
  *************************************************************************)
+(* View: entry *)
 let entry   = IniFile.indented_entry IniFile.entry_re sep comment
 
 (************************************************************************
- *                        RECORD
- * avahi-daemon.conf uses standard INI File records
+ * Group: Record
  *************************************************************************)
+(* View: title *)
 let title   = IniFile.indented_title IniFile.record_re
+(* View: record *)
 let record  = IniFile.record title entry
 
 (************************************************************************
- *                        LENS & FILTER
- * avahi-daemon.conf uses standard INI File records
+ * Group: Lens and filter
  *************************************************************************)
+(* View: lns *)
 let lns     = IniFile.lns record comment
 
+(* View: filter *)
 let filter = (incl "/etc/avahi/avahi-daemon.conf")
 
 let xfm = transform lns filter
