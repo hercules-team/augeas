@@ -1,5 +1,6 @@
 (* 
-Module: Test_Lightdm module to test Lightdm module for Augeas
+Module: Test_Lightdm
+   Module to test Lightdm module for Augeas
 
 Author: David Salmen <dsalmen@dsalmen.com>
 
@@ -15,14 +16,14 @@ greeter-session=unity-greeter
 user-session=ubuntu
 "
 
-   test Puppet.lns get conf_lightdm =
+   test Lightdm.lns get conf_lightdm =
       {}
       { "SeatDefaults"
          { "greeter-session" = "unity-greeter" }
          { "user-session" = "ubuntu" }
       }
 
-    test Puppet.lns put conf_lightdm after
+    test Lightdm.lns put conf_lightdm after
        set "SeatDefaults/allow-guest" "false"
     = "
 [SeatDefaults]
@@ -31,7 +32,7 @@ user-session=ubuntu
 allow-guest=false
 "
 
-    test Puppet.lns put conf_lightdm after
+    test Lightdm.lns put conf_lightdm after
        set "SeatDefaults/allow-guest" "true"
     = "
 [SeatDefaults]
@@ -63,7 +64,7 @@ xft-hintstyle=hintslight
 xft-rgba=rgb
 " 
 
-    test Puppet.lns get conf_unity_greeter =
+    test Lightdm.lns get conf_unity_greeter =
         {}
         { "#comment" }
         { "#comment" = "background = Background file to use, either an image path or a color (e.g. #772953)" }
@@ -104,7 +105,7 @@ hidden-users=nobody nobody4 noaccess
 hidden-shells=/bin/false /usr/sbin/nologin
 "
 
-    test Puppet.lns get conf_users =
+    test Lightdm.lns get conf_users =
         {}
         { "#comment" }
         { "#comment" = "User accounts configuration" }
