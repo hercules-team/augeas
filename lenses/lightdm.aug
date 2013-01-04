@@ -1,6 +1,7 @@
 (* 
-Module: Lightdm module for Augeas
-    Parses /etc/lightdm/*.conf files which are standard INI file format.
+Module: Lightdm
+  Lightdm module for Augeas for which parses /etc/lightdm/*.conf files which
+  are standard INI file format.
 
 Author: David Salmen <dsalmen@dsalmen.com>
 

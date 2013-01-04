@@ -1,4 +1,7 @@
-(* Avahi module for Augeas
+(*
+Module: Avahi
+ Avahi module for Augeas
+
  Author: Athir Nuaimi <athir@nuaimi.com>
 
  avahi-daemon.conf is a standard INI File.
