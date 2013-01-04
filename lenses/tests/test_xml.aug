@@ -262,7 +262,7 @@ test Xml.lns get "<oor:component-data xmlns:oor=\"http://openoffice.org/2001/reg
 
 (* Variable: input1 *)
 let input1 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
-<html>
+<html>\r
     <head>
         <title>Wiki</title>
     </head>
@@ -288,7 +288,7 @@ test Xml.doc get input1 =
     }
   }
   { "html"
-    { "#text" = "\n    " }
+    { "#text" = "\r\n    " }
     { "head"
       { "#text" = "\n        " }
       { "title"
@@ -337,7 +337,7 @@ test Xml.doc get input1 =
    Modify <input1> with <Xml.doc> *)
 test Xml.doc put input1 after rm "/html/body" =
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
-<html>
+<html>\r
     <head>
         <title>Wiki</title>
     </head>
