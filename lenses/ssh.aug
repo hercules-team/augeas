@@ -13,10 +13,12 @@ About: License
 About: Lens Usage
   Sample usage of this lens in augtool
 
+(start code)
 augtool> set /files/etc/ssh/ssh_config/Host example.com
 augtool> set /files/etc/ssh/ssh_config/Host[.='example.com']/RemoteForward/machine1:1234 machine2:5678
 augtool> set /files/etc/ssh/ssh_config/Host[.='example.com']/Ciphers/1 aes128-ctr
 augtool> set /files/etc/ssh/ssh_config/Host[.='example.com']/Ciphers/2 aes192-ctr
+(end code)
 
 *)
 
