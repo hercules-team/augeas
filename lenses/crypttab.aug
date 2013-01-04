@@ -1,4 +1,4 @@
-(* -*- coding: utf-8 -*-
+(*
 Module: Crypttab
   Parses /etc/crypttab from the cryptsetup package.
 
@@ -101,3 +101,5 @@ module Crypttab =
   let filter = (incl "/etc/crypttab")
 
   let xfm = transform lns filter
+
+(* coding: utf-8 *)
