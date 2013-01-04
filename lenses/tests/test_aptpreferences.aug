@@ -53,7 +53,8 @@ Pin-Priority: 700
        set "/1/Pin" "version";
        set "/1/Pin/version" "1.2.3-4";
        set "/1/Pin-Priority" "2000"
-    = "Package: something-funny
+    = "
+Package: something-funny
 Pin: version 1.2.3-4
 Pin-Priority: 2000
 "

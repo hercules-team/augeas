@@ -13,7 +13,7 @@ autoload xfm
  ************************************************************************)
 
 (* View: colon *)
-let colon        = Util.delim ":"
+let colon        = del /:[ \t]*/ ": "
 
 (* View: pin_gen
      A generic pin
@@ -57,7 +57,7 @@ let record = [ seq "record" . entries+ ]
  ************************************************************************)
 
 (* View: lns *)
-let lns = Util.empty* . (Build.opt_list record Util.eol+)?
+let lns = Util.empty* . (Build.opt_list record Util.eol+ . Util.empty*)?
 
 (* View: filter *)
 let filter = incl "/etc/apt/preferences"
