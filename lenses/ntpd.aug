@@ -151,7 +151,7 @@ let keyword = listen | server | servers | sensor
 (* View: lns *)
 let lns = ( empty | comment | keyword )*
 
-(* Variable: filter *)
+(* View: filter *)
 let filter = (incl "/etc/ntpd.conf")
 
 let xfm = transform lns filter

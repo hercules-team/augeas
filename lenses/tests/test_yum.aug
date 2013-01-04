@@ -1,3 +1,8 @@
+(*
+Module: Test_Yum
+  Provides unit tests and examples for the <Yum> lens.
+*)
+
 module Test_yum =
 
   let yum_simple = "[sec1]

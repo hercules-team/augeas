@@ -1,4 +1,5 @@
-(* Nginx module for Augeas
+(* Module: Nginx
+   Nginx module for Augeas
 
 Authors: Ian Berry <iberry@barracuda.com>
          Raphael Pinson <raphael.pinson@camptocamp.com>
