@@ -12,35 +12,60 @@ About: Lens Usage
   To be documented
 
 About: Configuration files
-  This lens applies to /etc/nagios3/*.cfg. See <filter>.
+  This lens applies to /etc/nagios{3,}/*.cfg. See <filter>.
 *)
 
 module NagiosCfg =
-    autoload xfm
+autoload xfm
 
-    (* View: param_def
-        define a field *)
-    let param_def =
-         let space_in  = /[^ \t\n][^\n=]*[^ \t\n]|[^ \t\n]/
-      in key /[A-Za-z0-9_]+/
-       . Sep.space_equal
-       . store space_in
+(************************************************************************
+ * Group: Utility variables/functions
+ ************************************************************************)
+(* View: param_def
+    define a field *)
+let param_def =
+     let space_in  = /[^ \t\n][^\n=]*[^ \t\n]|[^ \t\n]/
+  in key /[A-Za-z0-9_]+/
+   . Sep.space_equal
+   . store space_in
 
-    (* View: param
-        Params can have sub params *)
-    let param =
-         [ Util.indent . param_def
-         . [ Sep.space . param_def ]*
-         . Util.eol ]
+(* View: macro_def
+    Macro line, as used in resource.cfg *)
+let macro_def =
+     let macro = /\$[A-Za-z0-9]+\$/
+       in let macro_decl = Rx.word | Rx.fspath
+     in key macro . Sep.space_equal . store macro_decl
 
-    (* View: lns
-        main structure *)
-    let lns = ( Util.empty | Util.comment | param )*
+(************************************************************************
+ * Group: Entries
+ ************************************************************************)
+(* View: param
+    Params can have sub params *)
+let param =
+     [ Util.indent . param_def
+     . [ Sep.space . param_def ]*
+     . Util.eol ]
 
-    (* View: filter *)
-    let filter = incl "/etc/nagios3/*.cfg"
-               . excl "/etc/nagios3/commands.cfg"
-               . excl "/etc/nagios3/resource.cfg"
+(* View: macro *)
+let macro = [ Util.indent . macro_def . Util.eol ]
 
-    let xfm = transform lns filter
+(************************************************************************
+ * Group: Lens
+ ************************************************************************)
+(* View: entry
+    Define the accepted entries, such as param for regular configuration
+    files, and macro for resources.cfg .*)
+let entry = param
+	  | macro
 
+(* View: lns
+    main structure *)
+let lns = ( Util.empty | Util.comment | entry )*
+
+(* View: filter *)
+let filter = incl "/etc/nagios3/*.cfg"
+	   . excl "/etc/nagios3/commands.cfg"
+           . incl "/etc/nagios/*.cfg"
+	   . excl "/etc/nagios/commands.cfg"
+
+let xfm = transform lns filter

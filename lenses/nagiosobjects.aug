@@ -1,6 +1,6 @@
 (*
 Module: NagiosObjects
-  Parses /etc/nagios3/objects/*.cfg
+  Parses /etc/nagios{3,}/objects/*.cfg
 
 Authors: Sebastien Aperghis-Tramoni <sebastien@aperghis.net>
          Raphaël Pinson <raphink@gmail.com>
@@ -52,6 +52,7 @@ module NagiosObjects =
     let lns = ( empty | comment | object_def )*
 
     let filter = incl "/etc/nagios3/objects/*.cfg"
+               . incl "/etc/nagios/objects/*.cfg"
 
     let xfm = transform lns filter
 

@@ -1,3 +1,8 @@
+(*
+Module: Test_NagiosCfg
+  Provides unit tests and examples for the <NagiosCfg> lens.
+*)
+
 module Test_NagiosCfg =
     let conf="
 # LOG FILE
@@ -76,3 +81,9 @@ let space_in = "nagios_check_command=/usr/lib/nagios/plugins/check_nagios /var/c
 
 test NagiosCfg.lns get space_in =
   { "nagios_check_command" = "/usr/lib/nagios/plugins/check_nagios /var/cache/nagios3/status.dat 5 '/usr/sbin/nagios3'" }
+
+test NagiosCfg.lns get "$USER1$=/usr/local/libexec/nagios\n" =
+  { "$USER1$" = "/usr/local/libexec/nagios" }
+
+test NagiosCfg.lns get "$USER3$=somepassword\n" =
+  { "$USER3$" = "somepassword" }
