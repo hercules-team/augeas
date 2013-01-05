@@ -1,6 +1,6 @@
 (*
 Module: NagiosObjects
-  Parses /etc/nagios{3,}/objects/*.cfg
+  Parses /etc/{nagios{3,},icinga/objects/*.cfg
 
 Authors: Sebastien Aperghis-Tramoni <sebastien@aperghis.net>
          Raphaël Pinson <raphink@gmail.com>
@@ -13,7 +13,7 @@ About: Lens Usage
 
 About: Configuration files
 
-  This lens applies to /etc/nagios3/objects/*.cfg. See <filter>.
+  This lens applies to /etc/{nagios{3,},icinga/objects/*.cfg. See <filter>.
 *)
 
 module NagiosObjects =
@@ -53,6 +53,7 @@ module NagiosObjects =
 
     let filter = incl "/etc/nagios3/objects/*.cfg"
                . incl "/etc/nagios/objects/*.cfg"
+	       . incl "/etc/icinga/objects/*.cfg"
 
     let xfm = transform lns filter
 

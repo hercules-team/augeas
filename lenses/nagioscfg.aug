@@ -1,6 +1,6 @@
 (*
 Module: NagiosConfig
-  Parses /etc/nagios3/*.cfg
+  Parses /etc/{nagios{3,},icinga/*.cfg
 
 Authors: Sebastien Aperghis-Tramoni <sebastien@aperghis.net>
          Raphaël Pinson <raphink@gmail.com>
@@ -12,7 +12,7 @@ About: Lens Usage
   To be documented
 
 About: Configuration files
-  This lens applies to /etc/nagios{3,}/*.cfg. See <filter>.
+  This lens applies to /etc/{nagios{3,},icinga/*.cfg. See <filter>.
 *)
 
 module NagiosCfg =
@@ -64,8 +64,10 @@ let lns = ( Util.empty | Util.comment | entry )*
 
 (* View: filter *)
 let filter = incl "/etc/nagios3/*.cfg"
-	   . excl "/etc/nagios3/commands.cfg"
            . incl "/etc/nagios/*.cfg"
+	   . incl "/etc/icinga/*.cfg"
+	   . excl "/etc/nagios3/commands.cfg"
 	   . excl "/etc/nagios/commands.cfg"
+	   . incl "/etc/icinga/commands.cfg"
 
 let xfm = transform lns filter
