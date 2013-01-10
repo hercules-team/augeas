@@ -176,6 +176,31 @@ let comment_default    = ";"
 (* Group: entry includes comments *)
 
 (*
+View: entry_generic
+  A very generic INI File entry
+  It allows to set the key lens (to set indentation
+  or subnodes linked to the key) as well as the comment
+  separator regexp, used to tune the store regexps.
+
+  Parameters:
+    kw:lens           - lens to match the key, including optional indentation
+    sep:lens          - lens to use as key/value separator
+    comment_re:regexp - comment separator regexp
+    comment:lens      - lens to use as comment
+
+  Sample Usage:
+     > let entry = IniFile.entry_generic (key "setting") sep IniFile.comment_re comment
+*)
+let entry_generic (kw:lens) (sep:lens) (comment_re:regexp) (comment:lens) =
+     let bare_re = (/[^" \t\n]/ - comment_re)+
+  in let no_quot = /[^"\n]*/
+  in let bare = Quote.do_dquote_opt_nil (store (bare_re . (Rx.space . bare_re)*))
+  in let quoted = Quote.do_dquote (store (no_quot . comment_re+ . no_quot))
+  in [ kw . sep . (Sep.opt_space . bare)? . (comment|eol) ]
+   | [ kw . sep . Sep.opt_space . quoted . (comment|eol) ]
+   | comment
+
+(*
 View: entry
   Generic INI File entry
 
@@ -188,11 +213,7 @@ View: entry
      > let entry = IniFile.entry setting sep comment
 *)
 let entry (kw:regexp) (sep:lens) (comment:lens) =
-     let bare = Quote.do_dquote_opt_nil (store /[^#;" \t\n]+([ \t]+[^#;" \t\n]+)*/)
-  in let quoted = Quote.do_dquote (store /[^"\n]*[#;]+[^"\n]*/)
-  in [ key kw . sep . (Sep.opt_space . bare)? . (comment|eol) ]
-   | [ key kw . sep . Sep.opt_space . quoted . (comment|eol) ]
-   | comment
+     entry_generic (key kw) sep comment_re comment
 
 (*
 View: indented_entry
@@ -208,11 +229,40 @@ View: indented_entry
      > let entry = IniFile.indented_entry setting sep comment
 *)
 let indented_entry (kw:regexp) (sep:lens) (comment:lens) =
-     let bare = Quote.do_dquote_opt_nil (store /[^#;" \t\n]+([ \t]+[^#;" \t\n]+)*/)
-  in let quoted = Quote.do_dquote (store /[^"\n]*[#;]+[^"\n]*/)
-  in [ Util.indent . key kw . sep . (Sep.opt_space . bare)? . (comment|eol) ]
-   | [ Util.indent . key kw . sep . Sep.opt_space . quoted . (comment|eol) ]
+     entry_generic (Util.indent . key kw) sep comment_re comment
+
+(*
+View: entry_multiline_generic
+  A very generic multiline INI File entry
+  It allows to set the key lens (to set indentation
+  or subnodes linked to the key) as well as the comment
+  separator regexp, used to tune the store regexps.
+
+  Parameters:
+    kw:lens           - lens to match the key, including optional indentation
+    sep:lens          - lens to use as key/value separator
+    comment_re:regexp - comment separator regexp
+    comment:lens      - lens to use as comment
+    eol:lens          - lens for end of line
+
+  Sample Usage:
+     > let entry = IniFile.entry_generic (key "setting") sep IniFile.comment_re comment comment_or_eol
+*)
+let entry_multiline_generic (kw:lens) (sep:lens) (comment_re:regexp)
+                            (comment:lens) (eol:lens) =
+     let newline = /\n[ \t]+/
+  in let bare =
+          let word_re = (/[^" \t\n]/ - comment_re)+
+       in let base_re = (word_re . (Rx.space . word_re)*)
+       in Quote.do_dquote_opt_nil (store (base_re . (newline . base_re)*))
+  in let quoted =
+          let no_quot = /[^"\n]*/
+       in let base_re = (no_quot . comment_re+ . no_quot)
+       in Quote.do_dquote (store (base_re . (newline . base_re)*))
+  in [ kw . sep . (Sep.opt_space . bare)? . eol ]
+   | [ kw . sep . Sep.opt_space . quoted . eol ]
    | comment
+  
 
 (*
 View: entry_multiline
@@ -224,16 +274,7 @@ View: entry_multiline
     comment:lens - lens to use as comment
 *)
 let entry_multiline (kw:regexp) (sep:lens) (comment:lens) =
-     let newline = /\n[ \t]+/
-  in let bare =
-          let base_re = /[^#;" \t\n]+([ \t]+[^#;" \t\n]+)*/
-       in Quote.do_dquote_opt_nil (store (base_re . (newline . base_re)*))
-  in let quoted =
-          let base_re = /[^"\n]*[#;]+[^"\n]*/
-       in Quote.do_dquote (store (base_re . (newline . base_re)*))
-  in [ key kw . sep . (Sep.opt_space . bare)? . (comment|eol) ]
-   | [ key kw . sep . Sep.opt_space . quoted . (comment|eol) ]
-   | comment
+  entry_multiline_generic (key kw) sep comment_re comment (comment|eol)
 
 (*
 View: entry_multiline_nocomment
@@ -245,16 +286,7 @@ View: entry_multiline_nocomment
     comment:lens - lens to use as comment
 *)
 let entry_multiline_nocomment (kw:regexp) (sep:lens) (comment:lens) =
-     let newline = /\n[ \t]+/
-  in let bare =
-          let base_re = /[^#;" \t\n]+([ \t]+[^#;" \t\n]+)*/
-       in Quote.do_dquote_opt_nil (store (base_re . (newline . base_re)*))
-  in let quoted =
-          let base_re = /[^"\n]*[#;]+[^"\n]*/
-       in Quote.do_dquote (store (base_re . (newline . base_re)*))
-  in [ key kw . sep . (Sep.opt_space . bare)? . eol ]
-   | [ key kw . sep . Sep.opt_space . quoted . eol ]
-   | comment
+  entry_multiline_generic (key kw) sep comment_re comment eol
 
 (*
 View: entry_list

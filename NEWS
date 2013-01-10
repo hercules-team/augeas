@@ -10,6 +10,7 @@
       Warning: Existing lens tests must be adapted to use standard
                comments and empty lines
                Allow spaces in entry_multiline* values
+               Add entry_generic and entry_multiline_generic
     * Krb5: Use standard comments and empty lines
     * Lightdm: Use standard comments and empty lines
     * MySQL: Use standard comments and empty lines
@@ -20,6 +21,7 @@
     * Schroot: Support smart quotes
     * Subversion: Support smart quotes
                   Use standard comments and empty lines
+                  Use IniFile.entry_multiline_generic
     * Systemd: Support smart quotes
 
 1.0.0 - 2012-12-21

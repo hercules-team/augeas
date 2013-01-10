@@ -55,16 +55,7 @@ let std_re = /[^ \t\n\/=#]+/ - (comma_list_re | space_list_re)
     Similar to a <IniFile.entry_multiline_nocomment> entry,
     but allows ';' *)
 let entry_std =
-     let newline = /\n[ \t]+/
-  in let bare =
-          let base_re = /[^#" \t\n]+([ \t]+[^#" \t\n]+)*/
-       in Quote.do_dquote_opt_nil (store (base_re . (newline . base_re)*))
-  in let quoted =
-          let base_re = /[^"\n]*[#]+[^"\n]*/
-       in Quote.do_dquote (store (base_re . (newline . base_re)*))
-  in [ key std_re . sep . (Sep.opt_space . bare)? . IniFile.eol ]
-   | [ key std_re . sep . Sep.opt_space . quoted . IniFile.eol ]
-   | comment
+  IniFile.entry_multiline_generic (key std_re) sep "#" comment IniFile.eol
 
 (* View: entry *)
 let entry    =
