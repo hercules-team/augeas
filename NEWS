@@ -9,6 +9,7 @@
                Use standard Util.comment_generic and Util.empty_generic
       Warning: Existing lens tests must be adapted to use standard
                comments and empty lines
+               Allow spaces in entry_multiline* values
     * Krb5: Use standard comments and empty lines
     * Lightdm: Use standard comments and empty lines
     * MySQL: Use standard comments and empty lines

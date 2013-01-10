@@ -226,10 +226,10 @@ View: entry_multiline
 let entry_multiline (kw:regexp) (sep:lens) (comment:lens) =
      let newline = /\n[ \t]+/
   in let bare =
-          let base_re = /[^#;" \t\n]+/
+          let base_re = /[^#;" \t\n]+([ \t]+[^#;" \t\n]+)*/
        in Quote.do_dquote_opt_nil (store (base_re . (newline . base_re)*))
   in let quoted =
-          let base_re = /[^"\n]*[#; \t]+[^"\n]*/
+          let base_re = /[^"\n]*[#;]+[^"\n]*/
        in Quote.do_dquote (store (base_re . (newline . base_re)*))
   in [ key kw . sep . (Sep.opt_space . bare)? . (comment|eol) ]
    | [ key kw . sep . Sep.opt_space . quoted . (comment|eol) ]
@@ -247,10 +247,10 @@ View: entry_multiline_nocomment
 let entry_multiline_nocomment (kw:regexp) (sep:lens) (comment:lens) =
      let newline = /\n[ \t]+/
   in let bare =
-          let base_re = /[^" \t\n]+/
+          let base_re = /[^#;" \t\n]+([ \t]+[^#;" \t\n]+)*/
        in Quote.do_dquote_opt_nil (store (base_re . (newline . base_re)*))
   in let quoted =
-          let base_re = /[^"\n]*[ \t]+[^"\n]*/
+          let base_re = /[^"\n]*[#;]+[^"\n]*/
        in Quote.do_dquote (store (base_re . (newline . base_re)*))
   in [ key kw . sep . (Sep.opt_space . bare)? . eol ]
    | [ key kw . sep . Sep.opt_space . quoted . eol ]
