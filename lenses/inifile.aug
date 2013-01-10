@@ -271,11 +271,15 @@ let entry_multiline_generic (kw:lens) (sep:lens) (comment_re:regexp)
   in let bare =
           let word_re = (/[^" \t\n]/ - comment_re)+
        in let base_re = (word_re . (Rx.space . word_re)*)
-       in Quote.do_dquote_opt_nil (store (base_re . (newline . base_re)*))
+       in let sto_re = base_re . (newline . base_re)*
+                     | (newline . base_re)+
+       in Quote.do_dquote_opt_nil (store sto_re)
   in let quoted =
           let no_quot = /[^"\n]*/
        in let base_re = (no_quot . comment_re+ . no_quot)
-       in Quote.do_dquote (store (base_re . (newline . base_re)*))
+       in let sto_re = base_re . (newline . base_re)*
+                     | (newline . base_re)+
+       in Quote.do_dquote (store sto_re)
   in [ kw . sep . (Sep.opt_space . bare)? . eol ]
    | [ kw . sep . Sep.opt_space . quoted . eol ]
    | comment

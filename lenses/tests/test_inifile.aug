@@ -302,12 +302,18 @@ test_bdf =
   (* Group: TEST multiline values *)
   (* Variable: multiline_test *)
   let multiline_test = "test_ace = val1\n  val2\n   val3\n"
+  (* Variable: multiline_nl *)
+  let multiline_nl = "test_ace =\n  val2\n   val3\n"
   (* Variable: multiline_ace *)
   let multiline_ace = IniFile.entry_multiline IniFile.entry_re sep_ace comment_ace
   (* Test: multiline_ace
        Testing the a/c/e combination with a multiline entry *)
   test multiline_ace get multiline_test =
       { "test_ace" = "val1\n  val2\n   val3" }
+  (* Test: multiline_nl
+       Multiline values can begin with a single newline *)
+  test multiline_ace get multiline_nl =
+      { "test_ace" = "\n  val2\n   val3" }
 
   (* Test: lns_ace
        Ticket #243 *)
