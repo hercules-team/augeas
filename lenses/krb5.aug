@@ -25,7 +25,7 @@ let realm_re = /[A-Z][.a-zA-Z0-9-]*/
 let app_re = /[a-z][a-zA-Z0-9_]*/
 let name_re = /[.a-zA-Z0-9_-]+/
 
-let value = store /[^;# \t\n{}]+/
+let value = store /[^;# \t\r\n{}]+/
 let entry (kw:regexp) (sep:lens) (comment:lens)
     = [ indent . key kw . sep . value . (comment|eol) ] | comment
 
@@ -135,7 +135,7 @@ let dbmodules =
 (* This section is not documented in the krb5.conf manpage,
    but the Fermi example uses it. *)
 let instance_mapping =
-  let value = dels "\"" . store /[^;# \t\n{}]*/ . dels "\"" in
+  let value = dels "\"" . store /[^;# \t\r\n{}]*/ . dels "\"" in
   let map_node = label "mapping" . store /[a-zA-Z0-9\/*]+/ in
   let mapping = [ indent . map_node . eq .
                     [ label "value" . value ] . (comment|eol) ] in

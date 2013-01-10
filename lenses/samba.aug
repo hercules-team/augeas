@@ -22,7 +22,7 @@ let eol      = IniFile.eol
 let empty    = IniFile.empty
 let sto_to_comment
              = Util.del_opt_ws " "
-             . store /[^;# \t\n][^;#\n]*[^;# \t\n]|[^;# \t\n]/
+             . store /[^;# \t\r\n][^;#\r\n]*[^;# \t\r\n]|[^;# \t\r\n]/
 
 (************************************************************************
  *                        ENTRY

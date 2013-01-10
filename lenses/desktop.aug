@@ -38,7 +38,7 @@ let setting = Rx.word
 
 (* Variable: sto_to_comment
 Store until comment *)
-let sto_to_comment = Sep.opt_space . store /[^# \t\n][^#\n]*[^# \t\n]|[^# \t\n]/
+let sto_to_comment = Sep.opt_space . store /[^# \t\r\n][^#\r\n]*[^# \t\r\n]|[^# \t\r\n]/
 
 (* Entries can have comments at their end and so they are modified to represent as such *)
 let entry = [ key setting . sep . sto_to_comment? . (comment|IniFile.eol) ] | comment

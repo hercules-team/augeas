@@ -48,7 +48,7 @@ let comma_list_re = "password-stores"
 let space_list_re = "global-ignores" | "preserved-conflict-file-exts"
 
 (* Variable: std_re *)
-let std_re = /[^ \t\n\/=#]+/ - (comma_list_re | space_list_re)
+let std_re = /[^ \t\r\n\/=#]+/ - (comma_list_re | space_list_re)
 
 (* View: entry_std
     A standard entry
@@ -61,10 +61,10 @@ let entry_std =
 let entry    =
      let comma_list_re = "password-stores"
   in let space_list_re = "global-ignores" | "preserved-conflict-file-exts"
-  in let std_re = /[^ \t\n\/=#]+/ - (comma_list_re | space_list_re)
+  in let std_re = /[^ \t\r\n\/=#]+/ - (comma_list_re | space_list_re)
   in entry_std
    | IniFile.entry_list_nocomment comma_list_re sep Rx.word Sep.comma
-   | IniFile.entry_list_nocomment space_list_re sep /[^ \t\n]+/ (del /\n?[ \t]+/ " ")
+   | IniFile.entry_list_nocomment space_list_re sep Rx.no_spaces (del /(\r?\n)?[ \t]+/ " ")
 
 
 

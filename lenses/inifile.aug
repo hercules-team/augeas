@@ -32,7 +32,7 @@ module IniFile  =
 Variable: eol
   End of line, inherited from <Util.eol>
 *)
-let eol = Util.eol
+let eol = Util.doseol
 
 
 (* Group: Separators *)
@@ -129,8 +129,8 @@ View: comment_noindent
     let comment  = IniFile.comment_noindent IniFile.comment_re IniFile.comment_default
   (end code)
 *)
-let comment_noindent (pat:regexp) (default:string)
-                       = Util.comment_generic (pat . Rx.opt_space) default
+let comment_noindent (pat:regexp) (default:string) =
+  Util.comment_generic_seteol (pat . Rx.opt_space) default eol
 
 (*
 View: comment
@@ -146,8 +146,8 @@ View: comment
     let comment  = IniFile.comment IniFile.comment_re IniFile.comment_default
   (end code)
 *)
-let comment (pat:regexp) (default:string)
-                       = Util.comment_generic (Rx.opt_space . pat . Rx.opt_space) default
+let comment (pat:regexp) (default:string) =
+  Util.comment_generic_seteol (Rx.opt_space . pat . Rx.opt_space) default eol
 
 (*
 Variable: comment_re
@@ -171,7 +171,7 @@ View: empty_generic
     comment_re:regexp - the comment separator regexp
 *)
 let empty_generic (indent:regexp) (comment_re:regexp) =
-  Util.empty_generic (indent . comment_re? . Rx.opt_space)
+  Util.empty_generic_dos (indent . comment_re? . Rx.opt_space)
 
 (*
 View: empty
@@ -193,6 +193,32 @@ let empty_noindent = empty_generic "" comment_re
 (* Group: entry includes comments *)
 
 (*
+View: entry_generic_nocomment
+  A very generic INI File entry, not including comments
+  It allows to set the key lens (to set indentation
+  or subnodes linked to the key) as well as the comment
+  separator regexp, used to tune the store regexps.
+
+  Parameters:
+    kw:lens           - lens to match the key, including optional indentation
+    sep:lens          - lens to use as key/value separator
+    comment_re:regexp - comment separator regexp
+    comment:lens      - lens to use as comment
+
+  Sample Usage:
+     > let entry = IniFile.entry_generic (key "setting") sep IniFile.comment_re comment
+*)
+let entry_generic_nocomment (kw:lens) (sep:lens)
+                            (comment_re:regexp) (comment:lens) =
+     let bare_re_noquot = (/[^" \t\r\n]/ - comment_re)
+  in let bare_re = (/[^\r\n]/ - comment_re)+
+  in let no_quot = /[^"\r\n]*/
+  in let bare = Quote.do_dquote_opt_nil (store (bare_re_noquot . (bare_re* . bare_re_noquot)?))
+  in let quoted = Quote.do_dquote (store (no_quot . comment_re+ . no_quot))
+  in [ kw . sep . (Sep.opt_space . bare)? . (comment|eol) ]
+   | [ kw . sep . Sep.opt_space . quoted . (comment|eol) ]
+
+(*
 View: entry_generic
   A very generic INI File entry
   It allows to set the key lens (to set indentation
@@ -209,14 +235,7 @@ View: entry_generic
      > let entry = IniFile.entry_generic (key "setting") sep IniFile.comment_re comment
 *)
 let entry_generic (kw:lens) (sep:lens) (comment_re:regexp) (comment:lens) =
-     let bare_re_noquot = (/[^" \t\n]/ - comment_re)
-  in let bare_re = (/[^\n]/ - comment_re)+
-  in let no_quot = /[^"\n]*/
-  in let bare = Quote.do_dquote_opt_nil (store (bare_re_noquot . (bare_re* . bare_re_noquot)?))
-  in let quoted = Quote.do_dquote (store (no_quot . comment_re+ . no_quot))
-  in [ kw . sep . (Sep.opt_space . bare)? . (comment|eol) ]
-   | [ kw . sep . Sep.opt_space . quoted . (comment|eol) ]
-   | comment
+  entry_generic_nocomment kw sep comment_re comment | comment
 
 (*
 View: entry
@@ -268,16 +287,16 @@ View: entry_multiline_generic
 *)
 let entry_multiline_generic (kw:lens) (sep:lens) (comment_re:regexp)
                             (comment:lens) (eol:lens) =
-     let newline = /\n[ \t]+/
+     let newline = /\r?\n[ \t]+/
   in let bare =
-          let word_re_noquot = (/[^" \t\n]/ - comment_re)+
-       in let word_re = (/[^\n]/ - comment_re)+
+          let word_re_noquot = (/[^" \t\r\n]/ - comment_re)+
+       in let word_re = (/[^\r\n]/ - comment_re)+
        in let base_re = (word_re_noquot . (word_re* . word_re_noquot)?)
        in let sto_re = base_re . (newline . base_re)*
                      | (newline . base_re)+
        in Quote.do_dquote_opt_nil (store sto_re)
   in let quoted =
-          let no_quot = /[^"\n]*/
+          let no_quot = /[^"\r\n]*/
        in let base_re = (no_quot . comment_re+ . no_quot)
        in let sto_re = base_re . (newline . base_re)*
                      | (newline . base_re)+
@@ -417,13 +436,13 @@ let indented_title_label (name:string) (kw:regexp)
 Variable: record_re
   Default regexp for <title> keyword pattern
 *)
-let record_re          = ( /[^]\n\/]+/ - /#comment/ )
+let record_re          = ( /[^]\r\n\/]+/ - /#comment/ )
 
 (*
 Variable: record_label_re
   Default regexp for <title_label> keyword pattern
 *)
-let record_label_re    = /[^]\n]+/
+let record_label_re    = /[^]\r\n]+/
 
 
 (* Group: Record definition *)

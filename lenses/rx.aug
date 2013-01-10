@@ -40,7 +40,7 @@ let space_in  = /[^ \t\n].*[^ \t\n]|[^ \t\n]/
 
 (* Variable: no_spaces
    A string with no spaces *)
-let no_spaces = /[^ \t\n]+/
+let no_spaces = /[^ \t\r\n]+/
 
 (* Variable: word
    An alphanumeric string *)

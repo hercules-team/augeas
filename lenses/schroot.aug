@@ -44,10 +44,7 @@ let sep        = IniFile.sep "=" "="
 let description =
      let lang = [ Util.del_str "[" . label "lang"
                 . store IniFile.entry_re . Util.del_str "]" ]
-  in let bare = Quote.do_dquote_opt_nil (store /[^#;" \t\n]+([ \t]+[^#;" \t\n]+)*/)
-  in let quoted = Quote.do_dquote (store /[^"\n]*[#;]+[^"\n]*/)
-  in [ key "description" . lang? . sep . (Sep.opt_space . bare)? . (comment|IniFile.eol) ]
-   | [ key "description" . lang? . sep . Sep.opt_space . quoted . (comment|IniFile.eol) ]
+  in IniFile.entry_generic_nocomment (key "description" . lang?) sep "#" comment
 
 (* View: entry
    An <IniFile.entry>, or <description> *)
