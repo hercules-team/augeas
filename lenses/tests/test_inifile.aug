@@ -54,6 +54,17 @@ test_ace = \"value with spaces\"
 	  { "#comment"  = "comment with colon" }
 	  {} }
 
+  test lns_ace put conf_ace after
+    set "section1/foo" "yes" = "# comment with sharp
+
+[section1]
+test_ace = value # end of line comment
+test_ace =
+test_ace = \"value with spaces\"
+; comment with colon
+
+foo=yes
+"
 
   (* Group: TEST a/c/f *)
   (* Variable: comment_acf *)

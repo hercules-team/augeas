@@ -8,7 +8,7 @@ module Yum =
 
 let comment  = IniFile.comment "#" "#"
 let sep      = IniFile.sep "=" "="
-let empty    = IniFile.empty
+let empty    = Util.empty
 let eol      = IniFile.eol
 
 

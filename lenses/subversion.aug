@@ -27,6 +27,10 @@ autoload xfm
 (* View: comment *)
 let comment  = IniFile.comment_noindent "#" "#"
 
+(* View: empty
+     An empty line or a non-indented empty comment *)
+let empty = Util.empty_generic /[;#]?[ \t]*/
+
 (* View: sep *)
 let sep      = IniFile.sep IniFile.sep_default IniFile.sep_default
 
@@ -69,7 +73,7 @@ let entry    =
   in let std_re = /[^ \t\n\/=#]+/ - (comma_list_re | space_list_re)
   in entry_std
    | IniFile.entry_list_nocomment comma_list_re sep Rx.word Sep.comma
-   | IniFile.entry_list_nocomment space_list_re sep Rx.no_spaces (del /\n?[ \t]+/ " ")
+   | IniFile.entry_list_nocomment space_list_re sep /[^ \t\n]+/ (del /\n?[ \t]+/ " ")
 
 
 
@@ -83,8 +87,9 @@ let entry    =
 (* View: title *)
 let title    = IniFile.title IniFile.entry_re
 
-(* View: record *)
-let record   = IniFile.record title entry
+(* View: record
+     Use the non-indented <empty> *)
+let record   = IniFile.record_noempty title (entry|empty)
 
 (************************************************************************
  * Group:                   LENS & FILTER

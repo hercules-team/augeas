@@ -24,8 +24,8 @@ FileUsage  = 1
 test Odbc.lns get conf =
     {  }
     { "#comment" = "Example driver definitinions" }
-    { "#comment" }
-    { "#comment" }
+    {}
+    {}
     {  }
     { "#comment" = "Included in the unixODBC package" }
 

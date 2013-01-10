@@ -38,7 +38,7 @@ let eol                = Util.eol
 View: empty
   Empty line, an <eol> subnode
 *)
-let empty              = [ eol ]
+let empty              = Util.empty_generic /[ \t]*[;#]?[ \t]*/
 
 
 (* Group: Separators *)
@@ -121,6 +121,24 @@ let sto_multiline_nocomment = Sep.opt_space
 (* Group: Define comment and defaults *)
 
 (*
+View: comment_noindent
+  Map comments into "#comment" nodes,
+  no indentation allowed
+
+  Parameters:
+    pat:regexp - pattern to delete before commented data
+    default:string - default pattern before commented data
+
+  Sample Usage:
+  (start code)
+    let comment  = IniFile.comment_noindent "#" "#"
+    let comment  = IniFile.comment_noindent IniFile.comment_re IniFile.comment_default
+  (end code)
+*)
+let comment_noindent (pat:regexp) (default:string)
+                       = Util.comment_generic (pat . Rx.opt_space) default
+
+(*
 View: comment
   Map comments into "#comment" nodes
 
@@ -135,12 +153,8 @@ View: comment
   (end code)
 *)
 let comment (pat:regexp) (default:string)
-                       = [ label "#comment" . sep pat default
-		         . sto_to_eol? . eol ]
+                       = Util.comment_generic (Rx.opt_space . pat . Rx.opt_space) default
 
-let comment_noindent (pat:regexp) (default:string)
-                       = [ label "#comment" . sep_noindent pat default
-		         . sto_to_eol? . eol ]
 (*
 Variable: comment_re
   Default regexp for <comment> pattern

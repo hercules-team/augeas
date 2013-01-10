@@ -6,9 +6,20 @@
   - Lens changes/additions
     * IniFile: Add lns_loose and lns_loose_multiline definitions
                Support smart quotes
+               Use standard Util.comment_generic and Util.empty_generic
+      Warning: Existing lens tests must be adapted to use standard
+               comments and empty lines
+    * Krb5: Use standard comments and empty lines
+    * Lightdm: Use standard comments and empty lines
+    * MySQL: Use standard comments and empty lines
+    * Odbc: Use standard comments and empty lines
     * PHP: Support smart quotes
+           Use standard comments and empty lines
+    * Samba: Use standard comments and empty lines
     * Schroot: Support smart quotes
     * Subversion: Support smart quotes
+                  Use standard comments and empty lines
+    * Systemd: Support smart quotes
 
 1.0.0 - 2012-12-21
   - General changes/additions

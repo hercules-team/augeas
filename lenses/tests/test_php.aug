@@ -35,7 +35,7 @@ test PHP.lns get conf =
 test PHP.lns put conf after rm "noop" = conf
 
 
-test PHP.lns get ";\n" = { ".anon" { "#comment" } }
+test PHP.lns get ";\n" = { ".anon" {} }
 
 (* Section titles can have spaces *)
 test PHP.lns get "[mail function]\n" =  { "mail function" }

@@ -66,7 +66,7 @@ xft-rgba=rgb
 
     test Lightdm.lns get conf_unity_greeter =
         {}
-        { "#comment" }
+        {}
         { "#comment" = "background = Background file to use, either an image path or a color (e.g. #772953)" }
         { "#comment" = "logo = Logo file to use" }
         { "#comment" = "theme-name = GTK+ theme to use" }
@@ -75,7 +75,7 @@ xft-rgba=rgb
         { "#comment" = "xft-dpi = Resolution for Xft in dots per inch (e.g. 96)" }
         { "#comment" = "xft-hintstyle = What degree of hinting to use (hintnone, hintslight, hintmedium, or hintfull)" }
         { "#comment" = "xft-rgba = Type of subpixel antialiasing (none, rgb, bgr, vrgb or vbgr)" }
-        { "#comment" }
+        {}
         { "greeter"
             { "background" = "/usr/share/backgrounds/warty-final-ubuntu.png" }
             { "logo" = "/usr/share/unity-greeter/logo.png" }
@@ -107,16 +107,16 @@ hidden-shells=/bin/false /usr/sbin/nologin
 
     test Lightdm.lns get conf_users =
         {}
-        { "#comment" }
+        {}
         { "#comment" = "User accounts configuration" }
-        { "#comment" }
+        {}
         { "#comment" = "NOTE: If you have AccountsService installed on your system, then LightDM will" }
         { "#comment" = "use this instead and these settings will be ignored" }
-        { "#comment" }
+        {}
         { "#comment" = "minimum-uid = Minimum UID required to be shown in greeter" }
         { "#comment" = "hidden-users = Users that are not shown to the user" }
         { "#comment" = "hidden-shells = Shells that indicate a user cannot login" }
-        { "#comment" }
+        {}
         { "UserAccounts"
             { "minimum-uid" = "500" }
             { "hidden-users" = "nobody nobody4 noaccess" }
