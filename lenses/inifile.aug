@@ -32,13 +32,7 @@ module IniFile  =
 Variable: eol
   End of line, inherited from <Util.eol>
 *)
-let eol                = Util.eol
-
-(*
-View: empty
-  Empty line, an <eol> subnode
-*)
-let empty              = Util.empty_generic /[ \t]*[;#]?[ \t]*/
+let eol = Util.eol
 
 
 (* Group: Separators *)
@@ -167,6 +161,29 @@ Variable: comment_default
   Default value for <comment> pattern
 *)
 let comment_default    = ";"
+
+(*
+View: empty_generic
+  Empty line, including empty comments
+
+  Parameters:
+    indent:regexp     - the indentation regexp
+    comment_re:regexp - the comment separator regexp
+*)
+let empty_generic (indent:regexp) (comment_re:regexp) =
+  Util.empty_generic (indent . comment_re? . Rx.opt_space)
+
+(*
+View: empty
+  Empty line
+*)
+let empty = empty_generic Rx.opt_space comment_re
+
+(*
+View: empty_noindent
+  Empty line, without indentation
+*)
+let empty_noindent = empty_generic "" comment_re
 
 
 (************************************************************************

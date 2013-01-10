@@ -29,7 +29,7 @@ let comment  = IniFile.comment_noindent "#" "#"
 
 (* View: empty
      An empty line or a non-indented empty comment *)
-let empty = Util.empty_generic /[;#]?[ \t]*/
+let empty = IniFile.empty_noindent
 
 (* View: sep *)
 let sep      = IniFile.sep IniFile.sep_default IniFile.sep_default
