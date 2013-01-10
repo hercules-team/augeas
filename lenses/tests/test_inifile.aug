@@ -335,3 +335,36 @@ ticket_243 = \"value1;value2#value3\" # end of line comment
     { "3" = "val3" }
   }
 
+  (* Test: IniFile.lns_loose *)
+  test IniFile.lns_loose get conf_ace =
+  { "section" = ".anon"
+    { "#comment" = "comment with sharp" }
+    {  }
+  }
+  { "section" = "section1"
+    { "test_ace" = "value"
+      { "#comment" = "end of line comment" }
+    }
+    { "test_ace" }
+    { "#comment" = "comment with colon" }
+    {  }
+  }
+
+  (* Test: IniFile.lns_loose_multiline *)
+  test IniFile.lns_loose_multiline get conf_ace =
+  { "section" = ".anon"
+    { "#comment" = "comment with sharp" }
+    {  }
+  }
+  { "section" = "section1"
+    { "test_ace" = "value"
+      { "#comment" = "end of line comment" }
+    }
+    { "test_ace" }
+    { "#comment" = "comment with colon" }
+    {  }
+  }
+  
+  test IniFile.lns_loose_multiline get multiline_test =
+      { "section" = ".anon" { "test_ace" = "val1\n  val2\n   val3" } }
+

@@ -369,7 +369,7 @@ let record (title:lens) (entry:lens)
 
 
 (************************************************************************
- * Group:                      LENS
+ * Group:                      GENERIC LENSES
  *************************************************************************)
 
 
@@ -404,4 +404,46 @@ View: lns
 let lns (record:lens) (comment:lens)
                        = lns_noempty record (comment|empty)
 
+
+(************************************************************************
+ * Group:                   READY-TO-USE LENSES
+ *************************************************************************)
+
+let record_anon (entry:lens) = [ label "section" . value ".anon" . ( entry | empty )+ ]
+
+(*
+View: lns_loose
+  A loose, ready-to-use lens, featuring:
+    - sections as values (to allow '/' in names)
+    - support empty lines and comments
+    - support for [#;] as comment, defaulting to ";"
+    - .anon sections
+    - don't allow multiline values
+    - allow indented titles
+    - allow indented entries
+*)
+let lns_loose = 
+     let l_comment = comment comment_re comment_default
+  in let l_sep = sep sep_re sep_default
+  in let l_entry = indented_entry entry_re l_sep l_comment
+  in let l_title = indented_title_label "section" (record_label_re - ".anon")
+  in let l_record = record l_title l_entry
+  in (record_anon l_entry)? . l_record*
+
+(*
+View: lns_loose_multiline
+  A loose, ready-to-use lens, featuring:
+    - sections as values (to allow '/' in names)
+    - support empty lines and comments
+    - support for [#;] as comment, defaulting to ";"
+    - .anon sections
+    - allow multiline values
+*)
+let lns_loose_multiline = 
+     let l_comment = comment comment_re comment_default
+  in let l_sep = sep sep_re sep_default
+  in let l_entry = entry_multiline entry_re l_sep l_comment
+  in let l_title = title_label "section" (record_label_re - ".anon")
+  in let l_record = record l_title l_entry
+  in (record_anon l_entry)? . l_record*
 
