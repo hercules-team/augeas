@@ -209,9 +209,10 @@ View: entry_generic
      > let entry = IniFile.entry_generic (key "setting") sep IniFile.comment_re comment
 *)
 let entry_generic (kw:lens) (sep:lens) (comment_re:regexp) (comment:lens) =
-     let bare_re = (/[^" \t\n]/ - comment_re)+
+     let bare_re_noquot = (/[^" \t\n]/ - comment_re)
+  in let bare_re = (/[^\n]/ - comment_re)+
   in let no_quot = /[^"\n]*/
-  in let bare = Quote.do_dquote_opt_nil (store (bare_re . (Rx.space . bare_re)*))
+  in let bare = Quote.do_dquote_opt_nil (store (bare_re_noquot . (bare_re* . bare_re_noquot)?))
   in let quoted = Quote.do_dquote (store (no_quot . comment_re+ . no_quot))
   in [ kw . sep . (Sep.opt_space . bare)? . (comment|eol) ]
    | [ kw . sep . Sep.opt_space . quoted . (comment|eol) ]
@@ -269,8 +270,9 @@ let entry_multiline_generic (kw:lens) (sep:lens) (comment_re:regexp)
                             (comment:lens) (eol:lens) =
      let newline = /\n[ \t]+/
   in let bare =
-          let word_re = (/[^" \t\n]/ - comment_re)+
-       in let base_re = (word_re . (Rx.space . word_re)*)
+          let word_re_noquot = (/[^" \t\n]/ - comment_re)+
+       in let word_re = (/[^\n]/ - comment_re)+
+       in let base_re = (word_re_noquot . (word_re* . word_re_noquot)?)
        in let sto_re = base_re . (newline . base_re)*
                      | (newline . base_re)+
        in Quote.do_dquote_opt_nil (store sto_re)

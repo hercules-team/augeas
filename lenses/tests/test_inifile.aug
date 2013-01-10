@@ -66,6 +66,11 @@ test_ace = \"value with spaces\"
 foo=yes
 "
 
+  (* Test: lns_ace
+       Quotes can appear within bare values *)
+  test lns_ace get "[section]\ntest_ace = value \"with quotes\" inside\n" =
+  { "section" { "test_ace" = "value \"with quotes\" inside" } }
+
   (* Group: TEST a/c/f *)
   (* Variable: comment_acf *)
   let comment_acf = IniFile.comment IniFile.comment_re IniFile.comment_default
