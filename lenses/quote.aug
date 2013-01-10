@@ -230,7 +230,7 @@ let quote_spaces (lns:lens) =
      (* bare has no spaces, and is optionally quoted *)
      let bare = Quote.do_quote_opt (store /[^"' \t\n]+/)
      (* quoted has at least one space, and must be quoted *)
-  in let quoted = Quote.do_quote (store /[^"' \t\n]*[ \t][^"' \t\n]*/)
+  in let quoted = Quote.do_quote (store /[^"'\n]*[ \t]+[^"'\n]*/)
   in [ lns . bare ] | [ lns . quoted ]
 
 (*
@@ -245,7 +245,7 @@ let dquote_spaces (lns:lens) =
      (* bare has no spaces, and is optionally quoted *)
      let bare = Quote.do_dquote_opt (store /[^" \t\n]+/)
      (* quoted has at least one space, and must be quoted *)
-  in let quoted = Quote.do_dquote (store /[^" \t\n]*[ \t][^" \t\n]*/)
+  in let quoted = Quote.do_dquote (store /[^"\n]*[ \t]+[^"\n]*/)
   in [ lns . bare ] | [ lns . quoted ]
 
 (*
@@ -260,5 +260,5 @@ let squote_spaces (lns:lens) =
      (* bare has no spaces, and is optionally quoted *)
      let bare = Quote.do_squote_opt (store /[^' \t\n]+/)
      (* quoted has at least one space, and must be quoted *)
-  in let quoted = Quote.do_squote (store /[^' \t\n]*[ \t][^' \t\n]*/)
+  in let quoted = Quote.do_squote (store /[^'\n]*[ \t]+[^'\n]*/)
   in [ lns . bare ] | [ lns . quoted ]
