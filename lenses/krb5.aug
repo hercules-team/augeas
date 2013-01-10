@@ -59,7 +59,7 @@ let enctype_list (nr:regexp) (ns:string) =
     . (comment|eol) . [ label "#eol" ]
 
 let libdefaults =
-  let option = entry (name_re - "v4_name_convert" - enctypes) eq comment in
+  let option = entry (name_re - ("v4_name_convert" |enctypes)) eq comment in
   let enctype_lists = enctype_list /permitted_enctypes/i "permitted_enctypes"
                       | enctype_list /default_tgs_enctypes/i "default_tgs_enctypes"
                       | enctype_list /default_tkt_enctypes/i "default_tkt_enctypes" in
@@ -73,7 +73,7 @@ let login =
     simple_section "login" keys
 
 let appdefaults =
-  let option = entry (name_re - "realm" - "application") eq comment in
+  let option = entry (name_re - ("realm" | "application")) eq comment in
   let realm = [ indent . label "realm" . store realm_re .
                   eq_openbr . (option|empty)* . closebr . eol ] in
   let app = [ indent . label "application" . store app_re .

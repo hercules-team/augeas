@@ -7,6 +7,9 @@
     * Desktop: Support dos eol
     * IniFile: Add lns_loose and lns_loose_multiline definitions
                Support smart quotes
+      Warning: Smart quotes support means users should not add
+               escaped double quotes themselves. Tests need to be fixed
+               also.
                Use standard Util.comment_generic and Util.empty_generic
       Warning: Existing lens tests must be adapted to use standard
                comments and empty lines
@@ -19,6 +22,7 @@
                need to be adapted to exclude \r as well as \n.
     * Krb5: Use standard comments and empty lines
             Support dos eol
+            Improve performances
     * Lightdm: Use standard comments and empty lines
     * MySQL: Use standard comments and empty lines
              Support dos eol
