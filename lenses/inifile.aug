@@ -95,7 +95,6 @@ Variable: to_comment_re
   Regex until comment
 *)
 let to_comment_re = /[^";# \t\n][^";#\n]*[^";# \t\n]|[^";# \t\n]/
-                  | /"[^\n"]*"/
 
 (*
 Variable: sto_to_comment
@@ -174,36 +173,12 @@ View: entry
   Sample Usage:
      > let entry = IniFile.entry setting sep comment
 *)
-let entry (kw:regexp) (sep:lens) (comment:lens)
-                       = [ key kw . sep . sto_to_comment? . (comment|eol) ] | comment
-
-
-(*
-View: entry_multiline
-  Generic multiline INI File entry
-
-  Parameters:
-    kw:regexp    - keyword regexp for the label
-    sep:lens     - lens to use as key/value separator
-    comment:lens - lens to use as comment
-*)
-let entry_multiline (kw:regexp) (sep:lens) (comment:lens)
-                       = [ key kw . sep . sto_multiline? . (comment|eol) ]
-                         | comment
-
-(*
-View: entry_multiline_nocomment
-  Generic multiline INI File entry without an end-of-line comment
-
-  Parameters:
-    kw:regexp    - keyword regexp for the label
-    sep:lens     - lens to use as key/value separator
-    comment:lens - lens to use as comment
-*)
-let entry_multiline_nocomment (kw:regexp) (sep:lens) (comment:lens)
-                       = [ key kw . sep . sto_multiline_nocomment? . eol ]
-                         | comment
-
+let entry (kw:regexp) (sep:lens) (comment:lens) =
+     let bare = Quote.do_dquote_opt_nil (store /[^#;" \t\n]+([ \t]+[^#;" \t\n]+)*/)
+  in let quoted = Quote.do_dquote (store /[^"\n]*[#;]+[^"\n]*/)
+  in [ key kw . sep . (Sep.opt_space . bare)? . (comment|eol) ]
+   | [ key kw . sep . Sep.opt_space . quoted . (comment|eol) ]
+   | comment
 
 (*
 View: indented_entry
@@ -218,12 +193,55 @@ View: indented_entry
   Sample Usage:
      > let entry = IniFile.indented_entry setting sep comment
 *)
-let indented_entry (kw:regexp) (sep:lens) (comment:lens)
-                       = [ Util.del_opt_ws "" .
-                           key kw . sep . sto_to_comment? .
-                           (comment|eol)
-                         ]
-                         | comment
+let indented_entry (kw:regexp) (sep:lens) (comment:lens) =
+     let bare = Quote.do_dquote_opt_nil (store /[^#;" \t\n]+([ \t]+[^#;" \t\n]+)*/)
+  in let quoted = Quote.do_dquote (store /[^"\n]*[#;]+[^"\n]*/)
+  in [ Util.indent . key kw . sep . (Sep.opt_space . bare)? . (comment|eol) ]
+   | [ Util.indent . key kw . sep . Sep.opt_space . quoted . (comment|eol) ]
+   | comment
+
+(*
+View: entry_multiline
+  Generic multiline INI File entry
+
+  Parameters:
+    kw:regexp    - keyword regexp for the label
+    sep:lens     - lens to use as key/value separator
+    comment:lens - lens to use as comment
+*)
+let entry_multiline (kw:regexp) (sep:lens) (comment:lens) =
+     let newline = /\n[ \t]+/
+  in let bare =
+          let base_re = /[^#;" \t\n]+/
+       in Quote.do_dquote_opt_nil (store (base_re . (newline . base_re)*))
+  in let quoted =
+          let base_re = /[^"\n]*[#; \t]+[^"\n]*/
+       in Quote.do_dquote (store (base_re . (newline . base_re)*))
+  in [ key kw . sep . (Sep.opt_space . bare)? . (comment|eol) ]
+   | [ key kw . sep . Sep.opt_space . quoted . (comment|eol) ]
+   | comment
+
+(*
+View: entry_multiline_nocomment
+  Generic multiline INI File entry without an end-of-line comment
+
+  Parameters:
+    kw:regexp    - keyword regexp for the label
+    sep:lens     - lens to use as key/value separator
+    comment:lens - lens to use as comment
+*)
+let entry_multiline_nocomment (kw:regexp) (sep:lens) (comment:lens) =
+     let newline = /\n[ \t]+/
+  in let bare =
+          let base_re = /[^" \t\n]+/
+       in Quote.do_dquote_opt_nil (store (base_re . (newline . base_re)*))
+  in let quoted =
+          let base_re = /[^"\n]*[ \t]+[^"\n]*/
+       in Quote.do_dquote (store (base_re . (newline . base_re)*))
+  in [ key kw . sep . (Sep.opt_space . bare)? . eol ]
+   | [ key kw . sep . Sep.opt_space . quoted . eol ]
+   | comment
+
 (*
 View: entry_list
   Generic INI File list entry

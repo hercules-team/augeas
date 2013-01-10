@@ -37,12 +37,37 @@ let sep      = IniFile.sep IniFile.sep_default IniFile.sep_default
  *
  *************************************************************************)
 
+(* Variable: comma_list_re *)
+let comma_list_re = "password-stores"
+
+(* Variable: space_list_re *)
+let space_list_re = "global-ignores" | "preserved-conflict-file-exts"
+
+(* Variable: std_re *)
+let std_re = /[^ \t\n\/=#]+/ - (comma_list_re | space_list_re)
+
+(* View: entry_std
+    A standard entry
+    Similar to a <IniFile.entry_multiline_nocomment> entry,
+    but allows ';' *)
+let entry_std =
+     let newline = /\n[ \t]+/
+  in let bare =
+          let base_re = /[^#" \t\n]+([ \t]+[^#" \t\n]+)*/
+       in Quote.do_dquote_opt_nil (store (base_re . (newline . base_re)*))
+  in let quoted =
+          let base_re = /[^"\n]*[#]+[^"\n]*/
+       in Quote.do_dquote (store (base_re . (newline . base_re)*))
+  in [ key std_re . sep . (Sep.opt_space . bare)? . IniFile.eol ]
+   | [ key std_re . sep . Sep.opt_space . quoted . IniFile.eol ]
+   | comment
+
 (* View: entry *)
 let entry    =
      let comma_list_re = "password-stores"
   in let space_list_re = "global-ignores" | "preserved-conflict-file-exts"
-  in let std_re = /[^ \t\n\/=#]+/ - comma_list_re - space_list_re
-  in IniFile.entry_multiline_nocomment std_re sep comment
+  in let std_re = /[^ \t\n\/=#]+/ - (comma_list_re | space_list_re)
+  in entry_std
    | IniFile.entry_list_nocomment comma_list_re sep Rx.word Sep.comma
    | IniFile.entry_list_nocomment space_list_re sep Rx.no_spaces (del /\n?[ \t]+/ " ")
 

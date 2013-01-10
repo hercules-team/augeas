@@ -5,6 +5,10 @@
   - XPath changes/additions
   - Lens changes/additions
     * IniFile: Add lns_loose and lns_loose_multiline definitions
+               Support smart quotes
+    * PHP: Support smart quotes
+    * Schroot: Support smart quotes
+    * Subversion: Support smart quotes
 
 1.0.0 - 2012-12-21
   - General changes/additions

@@ -37,6 +37,7 @@ module Test_IniFile =
 [section1]
 test_ace = value # end of line comment
 test_ace =
+test_ace = \"value with spaces\"
 ; comment with colon
 
 "
@@ -49,6 +50,7 @@ test_ace =
           { "test_ace" = "value"
 	     { "#comment" = "end of line comment" } }
 	  { "test_ace" }
+          { "test_ace" = "value with spaces" }
 	  { "#comment"  = "comment with colon" }
 	  {} }
 
@@ -302,7 +304,7 @@ test_bdf =
 ticket_243 = \"value1;value2#value3\" # end of line comment
 " =
   { "section1"
-    { "ticket_243" = "\"value1;value2#value3\""
+    { "ticket_243" = "value1;value2#value3"
       { "#comment" = "end of line comment" }
     }
   }
@@ -346,6 +348,7 @@ ticket_243 = \"value1;value2#value3\" # end of line comment
       { "#comment" = "end of line comment" }
     }
     { "test_ace" }
+    { "test_ace" = "value with spaces" }
     { "#comment" = "comment with colon" }
     {  }
   }
@@ -361,6 +364,7 @@ ticket_243 = \"value1;value2#value3\" # end of line comment
       { "#comment" = "end of line comment" }
     }
     { "test_ace" }
+    { "test_ace" = "value with spaces" }
     { "#comment" = "comment with colon" }
     {  }
   }

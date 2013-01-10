@@ -52,4 +52,4 @@ mixed_KEY = 25
 (* Ticket #243 *)
 test PHP.lns get "session.save_path = \"3;/var/lib/php5\"\n" =
    { ".anon"
-      { "session.save_path" = "\"3;/var/lib/php5\"" } }
+      { "session.save_path" = "3;/var/lib/php5" } }
