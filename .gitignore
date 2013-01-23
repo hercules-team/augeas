@@ -43,6 +43,7 @@ tests/test-xpath
 tests/test-load
 tests/test-run
 tests/test-save
+tests/*.trs
 *.aux
 *.dvi
 *.log
