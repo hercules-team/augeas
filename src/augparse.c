@@ -38,6 +38,7 @@ static void usage(void) {
     fprintf(stderr, "Evaluate MODULE. Generally, MODULE should contain unit tests.\n");
     fprintf(stderr, "\nOptions:\n\n");
     fprintf(stderr, "  -I, --include DIR  search DIR for modules; can be given mutiple times\n");
+    fprintf(stderr, "  -t, --trace        trace module loading\n");
     fprintf(stderr, "  --nostdinc         do not search the builtin default directories for modules\n");
     fprintf(stderr, "  --notypecheck      do not typecheck lenses\n");
     fprintf(stderr, "  --version          print version information and exit\n");
@@ -78,6 +79,7 @@ int main(int argc, char **argv) {
     struct option options[] = {
         { "help",      0, 0, 'h' },
         { "include",   1, 0, 'I' },
+        { "trace",     0, 0, 't' },
         { "nostdinc",  0, 0, VAL_NO_STDINC },
         { "notypecheck",  0, 0, VAL_NO_TYPECHECK },
         { "version",  0, 0, VAL_VERSION },
@@ -88,10 +90,13 @@ int main(int argc, char **argv) {
     progname = argv[0];
 
     setlocale(LC_ALL, "");
-    while ((opt = getopt_long(argc, argv, "hI:", options, &idx)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hI:t", options, &idx)) != -1) {
         switch(opt) {
         case 'I':
             argz_add(&loadpath, &loadpathlen, optarg);
+            break;
+        case 't':
+            flags |= AUG_TRACE_MODULE_LOADING;
             break;
         case 'h':
             usage();

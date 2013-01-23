@@ -50,8 +50,9 @@ enum aug_flags {
     AUG_NO_LOAD      = (1 << 5),  /* Do not load the tree from AUG_INIT */
     AUG_NO_MODL_AUTOLOAD = (1 << 6),
     AUG_ENABLE_SPAN  = (1 << 7),  /* Track the span in the input of nodes */
-    AUG_NO_ERR_CLOSE = (1 << 8)   /* Do not close automatically when
+    AUG_NO_ERR_CLOSE = (1 << 8),  /* Do not close automatically when
                                      encountering error during aug_init */
+    AUG_TRACE_MODULE_LOADING = (1 << 9) /* For use by augparse -t */
 };
 
 #ifdef __cplusplus

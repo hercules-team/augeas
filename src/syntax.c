@@ -1965,7 +1965,11 @@ int load_module_file(struct augeas *aug, const char *filename) {
     struct term *term = NULL;
     int result = -1;
 
+    if (aug->flags & AUG_TRACE_MODULE_LOADING)
+        printf("Module %s", filename);
     augl_parse_file(aug, filename, &term);
+    if (aug->flags & AUG_TRACE_MODULE_LOADING)
+        printf(HAS_ERR(aug) ? " failed\n" : " loaded\n");
     ERR_BAIL(aug);
 
     if (! typecheck(term, aug))

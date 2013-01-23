@@ -14,12 +14,16 @@ Execute an Augeas module, most commonly to evaluate the tests it contains.
 
 =over 4
 
-=item B<-I> I<DIR>
+=item B<-I>, B<--include>=I<DIR>
 
 Add DIR to the module loadpath. Can be given multiple times. The
 directories set here are searched before any directories specified in the
 AUGEAS_LENS_LIB environment variable, and before the default directory
 F</usr/share/augeas/lenses>.
+
+=item B<-t>, B<--trace>
+
+Print a trace of the modules that are being loaded.
 
 =item B<--nostdinc>
 
