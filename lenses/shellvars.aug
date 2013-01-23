@@ -192,6 +192,9 @@ module Shellvars =
          been patched upstream. We need to ignore these files, because
          their name causes trouble during aug_init *)
       sc_excl "network-scripts/ifcfg-*!*" .
+      (* Ditto, brackets conflict with paths and cause aug_init failures *)
+      sc_excl "network-scripts/ifcfg-*(*" .
+      sc_excl "network-scripts/ifcfg-*)*" .
       sc_excl "rhn" .
       sc_incl "rhn/allowed-actions/*" .
       sc_excl "rhn/allowed-actions/script" .
