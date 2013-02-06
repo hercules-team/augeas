@@ -94,13 +94,16 @@ AC_SUBST(AUGEAS_CFLAGS)
 AUGEAS_CHECK_READLINE
 AC_CHECK_FUNCS([open_memstream uselocale])
 
-VERSION_SCRIPT_FLAGS=
-$(/usr/bin/ld --help 2>&1 | grep -- --version-script >/dev/null) && \
+AC_MSG_CHECKING([how to pass version script to the linker ($LD)])
+VERSION_SCRIPT_FLAGS=none
+if $LD --help 2>&1 | grep "version-script" >/dev/null 2>/dev/null; then
     VERSION_SCRIPT_FLAGS=-Wl,--version-script=
-test "`uname`" == "SunOS" && \
+elif $LD --help 2>&1 | grep "M mapfile" >/dev/null 2>/dev/null; then
     VERSION_SCRIPT_FLAGS="-Wl,-M -Wl,"
+fi
+AC_MSG_RESULT([$VERSION_SCRIPT_FLAGS])
 AC_SUBST(VERSION_SCRIPT_FLAGS)
-AM_CONDITIONAL([USE_VERSION_SCRIPT], [test -n "$VERSION_SCRIPT_FLAGS"])
+AM_CONDITIONAL([USE_VERSION_SCRIPT], [test "$VERSION_SCRIPT_FLAGS" != none])
 
 gl_INIT
 
