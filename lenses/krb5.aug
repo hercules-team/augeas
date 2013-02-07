@@ -83,7 +83,7 @@ let appdefaults =
 let realms =
   let simple_option = /kdc|admin_server|database_module|default_domain/
       |/v4_realm|auth_to_local(_names)?|master_kdc|kpasswd_server/
-      |/admin_server|ticket_lifetime/ in
+      |/admin_server|ticket_lifetime|pkinit_anchors/ in
   let subsec_option = /v4_instance_convert/ in
   let option = subsec_entry simple_option eq comment in
   let subsec = [ indent . key subsec_option . eq_openbr .
