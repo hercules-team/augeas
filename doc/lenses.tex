@@ -78,7 +78,7 @@ in a number of ways:
     ordered. In addition, several subtrees in such a list may use the same
     label. This makes it possible to accomodate concrete files where
     entries that are logically connected are stored scattered between
-    unrelated entries like hte {\tt AcceptEnv} entries in {\tt
+    unrelated entries like the {\tt AcceptEnv} entries in {\tt
       sshd\_config}.
 \end{itemize}
 
@@ -217,7 +217,7 @@ $C$ and transforms them to trees in $T$. Generally,
 
 \subsection{const}
 
-The $\lens{const} E\,t\,v$ maps words mathcing $E$ in the \nget direction
+The $\lens{const} E\,t\,v$ maps words matching $E$ in the \nget direction
 to a fixed tree $t$ and maps that fixed tree $t$ back in the \nput
 direction. When text needs to be created from $t$, it produces the default
 word $v$.
@@ -402,11 +402,11 @@ $\lput{(\conc{t_2}{t_1})}{\conc{c_1}{c_2}} =
 \conc{l.\lput{t_2}{c_2}}{l.\lput{t_1}{c_1}}$ This can only happen if the
 information to be reordered is in subtrees. In particular, comment lines
 need to become their own subtree, with some support from the language to
-create 'hidden' entries. Simplest: allow {\tt NULL} as the key for a
+create `hidden' entries. Simplest: allow {\tt NULL} as the key for a
 subtree and ignore such tree entries in the public API.
 
 Need to split a tree $t\in T$ into subtrees according to ?? Keeping a fake
-'slot' $\rhd$ around for text that didn't produce a tree should help with
+`slot' $\rhd$ around for text that didn't produce a tree should help with
 that.
 
 For $K^*$ to make any sense, must have $\rhd\in K$ and the application of
@@ -417,7 +417,7 @@ $(l^*).\nparse$ must return $\rhd$ for all except at most one application.
 For type checking, we need to compute the following properties of regular
 languages $R, R_1, R_2$
 \begin{itemize}
-\item decide unamibuguous concatenation $\uaconc{R_1}{R_2}$ and compute
+\item decide unambiguous concatenation $\uaconc{R_1}{R_2}$ and compute
   $\conc{R_1}{R_2}$
 \item decide unambiguous iteration $\uastar{R}$ and compute $R^*$
 \item disjointness $R_1 \cap R_2 = \emptyset$ (we don't need general
