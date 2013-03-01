@@ -275,7 +275,7 @@ static void usage(void) {
     fprintf(stderr, "  -n, --new            save changes in files with extension '.augnew',\n"
                     "                       leave original unchanged\n");
     fprintf(stderr, "  -r, --root ROOT      use ROOT as the root of the filesystem\n");
-    fprintf(stderr, "  -I, --include DIR    search DIR for modules; can be given mutiple times\n");
+    fprintf(stderr, "  -I, --include DIR    search DIR for modules; can be given multiple times\n");
     fprintf(stderr, "  -t, --transform XFM  add a file transform; uses the 'transform' command\n"
                     "                       syntax, e.g. -t 'Fstab incl /etc/fstab.bak'\n");
     fprintf(stderr, "  -e, --echo           echo commands when reading from a file\n");
