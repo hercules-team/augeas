@@ -4,6 +4,7 @@
   - Augtool/aug_srun changes/additions
   - XPath changes/additions
   - Lens changes/additions
+    * AptCacherNGSecurity: new lens for /etc/apt-cacher-ng/security.conf
     * Desktop: Support dos eol
     * Dovecot: New lens for dovecot configurations
     * IniFile: Add lns_loose and lns_loose_multiline definitions
