@@ -37,22 +37,22 @@ module Dovecot =
  *                           USEFUL PRIMITIVES
  *************************************************************************)
 
-let eol       = del /\n/ "\n"
+let eol       = Util.eol
 let comment   = Util.comment
 let empty     = Util.empty
 let word      = Rx.word
 let indent    = Util.indent
-let eq        = del /[ \t]*=[ \t]*/ " = "
+let eq        = del /[ \t]*=/ " ="
 
 let block_open        = del /[ \t]*\{/ "{"
 let block_close       = del /\}/ "}"
-let command_start     = del /^!/ "!"
+let command_start     = Util.del_str "!"
 
 (************************************************************************
  *                               ENTRIES
  *************************************************************************)
 
-let any = /[^ \t\n]+/
+let any = Rx.no_spaces
 let value = any . (Rx.space . any)* 
 
 let keys = 
@@ -288,7 +288,7 @@ let commands  = ("include" | "include_try")
 let block_names = ("dict" | "userdb" | "passdb" | "protocol" | "service" | "plugin" | "namespace" | "map" )
 let nested_block_names =  ( "fields" | "unix_listener" | "fifo_listener" | "inet_listener" )
 
-let entry = [ indent . key keys. eq . (store value)? . eol ]
+let entry = [ indent . key keys. eq . (Sep.opt_space . store value)? . eol ]
 let command = [ command_start . key commands . Sep.space . store Rx.fspath . eol ]
 
 let block_args   = Sep.space . store any
