@@ -39,12 +39,9 @@ module Dovecot =
 let eol       = Util.eol
 let comment   = Util.comment
 let empty     = Util.empty
-let word      = Rx.word
 let indent    = Util.indent
 let eq        = del /[ \t]*=/ " ="
 
-let block_open        = del /[ \t]*\{/ "{"
-let block_close       = del /\}/ "}"
 let command_start     = Util.del_str "!"
 
 (************************************************************************
@@ -54,25 +51,15 @@ let command_start     = Util.del_str "!"
 let any = Rx.no_spaces
 let value = any . (Rx.space . any)* 
 let commands  = /include|include_try/
-let block_names = /dict|userdb|passdb|protocol|service|plugin|namespace|map/
-let nested_block_names =  /fields|unix_listener|fifo_listener|inet_listener/
-let keys = Rx.word - commands - block_names - nested_block_names
+let block_names = /dict|userdb|passdb|protocol|service|plugin|namespace|map|fields|unix_listener|fifo_listener|inet_listener/
+let keys = Rx.word - (commands | block_names)
 
 let entry = [ indent . key keys. eq . (Sep.opt_space . store value)? . eol ]
 let command = [ command_start . key commands . Sep.space . store Rx.fspath . eol ]
 
-let block_args   = Sep.space . store any
+let block_args = Sep.space . store /[A-Za-z0-9\/\\_-]+/
 
-let nested_block =
-    [ indent . key nested_block_names . block_args? . block_open . eol
-    . (entry | empty | comment)*
-    . indent . block_close . eol ]
-
-let block = 
-    [ indent . key block_names . block_args? . block_open . eol
-    . (entry | empty | comment | nested_block )*
-    . indent . block_close . eol ]
-
+let rec block = [ indent . key block_names . block_args? . Build.block_newlines (entry|block) comment . eol ]
 
 (************************************************************************
  *                                LENS
