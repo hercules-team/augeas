@@ -36,39 +36,36 @@ module Dovecot =
  *                           USEFUL PRIMITIVES
  *************************************************************************)
 
-let eol       = Util.eol
-let comment   = Util.comment
-let empty     = Util.empty
-let indent    = Util.indent
-let eq        = del /[ \t]*=/ " ="
-
-let command_start     = Util.del_str "!"
+let eol           = Util.eol
+let comment       = Util.comment
+let empty         = Util.empty
+let indent        = Util.indent
+let eq            = del /[ \t]*=/ " ="
+let any           = Rx.no_spaces
 
 (************************************************************************
  *                               ENTRIES
  *************************************************************************)
 
-let any = Rx.no_spaces
-let value = any . (Rx.space . any)* 
-let commands  = /include|include_try/
-let block_names = /dict|userdb|passdb|protocol|service|plugin|namespace|map|fields|unix_listener|fifo_listener|inet_listener/
-let keys = Rx.word - (commands | block_names)
+let value         = any . (Rx.space . any)* 
+let command_start = Util.del_str "!"
+let commands      = /include|include_try/
+let block_names   = /dict|userdb|passdb|protocol|service|plugin|namespace|map|fields|unix_listener|fifo_listener|inet_listener/
+let keys          = Rx.word - (commands | block_names)
+let block_args    = Sep.space . store /[A-Za-z0-9\/\\_-]+/
 
-let entry = [ indent . key keys. eq . (Sep.opt_space . store value)? . eol ]
-let command = [ command_start . key commands . Sep.space . store Rx.fspath . eol ]
-
-let block_args = Sep.space . store /[A-Za-z0-9\/\\_-]+/
-
-let rec block = [ indent . key block_names . block_args? . Build.block_newlines (entry|block) comment . eol ]
+let entry         = [ indent . key keys. eq . (Sep.opt_space . store value)? . eol ]
+let command       = [ command_start . key commands . Sep.space . store Rx.fspath . eol ]
+let rec block     = [ indent . key block_names . block_args? . Build.block_newlines (entry|block) comment . eol ]
 
 (************************************************************************
  *                                LENS
  *************************************************************************)
 
-let lns = (comment|empty|entry|command|block)*
+let lns          = (comment|empty|entry|command|block)*
 
-let filter     = incl "/etc/dovecot/dovecot.conf"
-               . (incl "/etc/dovecot/conf.d/*.conf")
-               . Util.stdexcl
+let filter       = incl "/etc/dovecot/dovecot.conf"
+                 . (incl "/etc/dovecot/conf.d/*.conf")
+                 . Util.stdexcl
 
-let xfm        = transform lns filter
+let xfm          = transform lns filter
