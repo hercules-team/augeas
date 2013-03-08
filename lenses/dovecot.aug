@@ -1,71 +1,104 @@
 (*
- * Module: Dovecot
- *     Parses dovecot configuration files
- *
- *  Copyright (c) 2013 Pluron, Inc.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining
- *  a copy of this software and associated documentation files (the
- *  "Software"), to deal in the Software without restriction, including
- *  without limitation the rights to use, copy, modify, merge, publish,
- *  distribute, sublicense, and/or sell copies of the Software, and to
- *  permit persons to whom the Software is furnished to do so, subject to
- *  the following conditions:
- *
- *  The above copyright notice and this permission notice shall be
- *  included in all copies or substantial portions of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- *  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- *  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- *  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- *
- * TODO: Support for multiline queries like in dict-sql.conf
- *
- *)
+Module: Dovecot
+  Parses dovecot configuration files.
+
+Author: Serge Smetana <serge.smetana@gmail.com>
+  Acunote http://www.acunote.com
+  Pluron, Inc. http://pluron.com
+
+About: License
+  This file is licensed under the LGPL v2+.
+
+About: Configuration files
+  This lens applies to /etc/dovecot/dovecot.conf and files in 
+  /etc/dovecot/conf.d/. See <filter>.
+
+About: Examples
+  The <Test_Dovecot> file contains various examples and tests.
+
+About: TODO
+  Support for multiline values like queries in dict-sql.conf 
+*)
 
 module Dovecot =
+   
+  autoload xfm
 
-   autoload xfm
+(******************************************************************
+ * Group:                 USEFUL PRIMITIVES
+ ******************************************************************)
 
-(************************************************************************
- *                           USEFUL PRIMITIVES
- *************************************************************************)
+(* View: indent *)
+let indent = Util.indent
 
-let eol           = Util.eol
-let comment       = Util.comment
-let empty         = Util.empty
-let indent        = Util.indent
-let eq            = del /[ \t]*=/ " ="
-let any           = Rx.no_spaces
+(* View: eol *)
+let eol = Util.eol
 
-(************************************************************************
- *                               ENTRIES
- *************************************************************************)
+(* View: empty
+Map empty lines. *)
+let empty = Util.empty
 
-let value         = any . (Rx.space . any)* 
+(* View: comment
+Map comments in "#comment" nodes. *)
+let comment = Util.comment
+
+(* View: eq *)
+let eq = del /[ \t]*=/ " ="
+
+(* Variable: any *)
+let any = Rx.no_spaces
+
+(* Variable: value 
+Match any value after " =".
+Should not start and end with spaces. May contain spaces inside *)
+let value = any . (Rx.space . any)* 
+
+(* View: command_start *)
 let command_start = Util.del_str "!"
-let commands      = /include|include_try/
-let block_names   = /dict|userdb|passdb|protocol|service|plugin|namespace|map|fields|unix_listener|fifo_listener|inet_listener/
-let keys          = Rx.word - (commands | block_names)
-let block_args    = Sep.space . store /[A-Za-z0-9\/\\_-]+/
 
-let entry         = [ indent . key keys. eq . (Sep.opt_space . store value)? . eol ]
-let command       = [ command_start . key commands . Sep.space . store Rx.fspath . eol ]
-let rec block     = [ indent . key block_names . block_args? . Build.block_newlines (entry|block) comment . eol ]
+(* View: block_args 
+Map block arguments after block name and before "{" *)
+let block_args = Sep.space . store /[A-Za-z0-9\/\\_-]+/
 
-(************************************************************************
- *                                LENS
- *************************************************************************)
+(******************************************************************
+ * Group:                        ENTRIES
+ ******************************************************************)
 
-let lns          = (comment|empty|entry|command|block)*
+(* Variable: commands *)
+let commands = /include|include_try/
 
-let filter       = incl "/etc/dovecot/dovecot.conf"
-                 . (incl "/etc/dovecot/conf.d/*.conf")
-                 . Util.stdexcl
+(* Variable: block_names *)
+let block_names = /dict|userdb|passdb|protocol|service|plugin|namespace|map|fields|unix_listener|fifo_listener|inet_listener/
 
-let xfm          = transform lns filter
+(* Variable: keys 
+Match any possible key except commands and block names. *)
+let keys = Rx.word - (commands | block_names)
+
+(* View: entry
+Map simple "key = value" entries including "key =" entries with empty value. *)
+let entry = [ indent . key keys. eq . (Sep.opt_space . store value)? . eol ]
+
+(* View: command
+Map commands started with "!". *)
+let command = [ command_start . key commands . Sep.space . store Rx.fspath . eol ]
+
+(* View: block
+Map block enclosed in brackets recursively. 
+Block may be indented and have optional argument.
+Block body may have entries, comments, empty lines, and nested blocks recursively. *)
+let rec block = [ indent . key block_names . block_args? . Build.block_newlines (entry|block) comment . eol ]
+
+(******************************************************************
+ * Group:                   LENS AND FILTER
+ ******************************************************************)
+
+(* View: lns
+The Dovecot lens *)
+let lns = (comment|empty|entry|command|block)*
+
+(* Variable: filter *)
+let filter = incl "/etc/dovecot/dovecot.conf"
+           . (incl "/etc/dovecot/conf.d/*.conf")
+           . Util.stdexcl
+
+let xfm = transform lns filter
