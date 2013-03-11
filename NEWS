@@ -5,6 +5,7 @@
   - XPath changes/additions
   - Lens changes/additions
     * Desktop: Support dos eol
+    * Dovecot: New lens for dovecot configurations
     * IniFile: Add lns_loose and lns_loose_multiline definitions
                Support smart quotes
       Warning: Smart quotes support means users should not add
