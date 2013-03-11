@@ -52,6 +52,7 @@ lens_tests =			\
   lens-dhclient.sh		\
   lens-dhcpd.sh		\
   lens-dnsmasq.sh		\
+  lens-dovecot.sh		\
   lens-dpkg.sh			\
   lens-dput.sh			\
   lens-erlang.sh		\
