@@ -145,9 +145,15 @@ Variable: indent
   let empty_c_style =
     empty_generic /[ \t]*((\/\/)|(\/\*[ \t]*\*\/))?[ \t]*/
 
+(* View: empty_generic_dos
+  A generic definition of <empty> with dos newlines
+  Map empty lines, including empty comments *)
+  let empty_generic_dos (r:regexp) =
+    [ del r "" . del /\r?\n/ "\n" ]
+
 (* View: empty_dos *)
   let empty_dos =
-    [ del /[ \t]*#?[ \t]*/ "" . del /\r?\n/ "\n" ]
+    empty_generic_dos /[ \t]*#?[ \t]*/
 
 
 (* View: Split *)

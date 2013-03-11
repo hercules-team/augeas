@@ -25,7 +25,7 @@ let realm_re = /[A-Z][.a-zA-Z0-9-]*/
 let app_re = /[a-z][a-zA-Z0-9_]*/
 let name_re = /[.a-zA-Z0-9_-]+/
 
-let value = store /[^;# \t\n{}]+/
+let value = store /[^;# \t\r\n{}]+/
 let entry (kw:regexp) (sep:lens) (comment:lens)
     = [ indent . key kw . sep . value . (comment|eol) ] | comment
 
@@ -59,7 +59,7 @@ let enctype_list (nr:regexp) (ns:string) =
     . (comment|eol) . [ label "#eol" ]
 
 let libdefaults =
-  let option = entry (name_re - "v4_name_convert" - enctypes) eq comment in
+  let option = entry (name_re - ("v4_name_convert" |enctypes)) eq comment in
   let enctype_lists = enctype_list /permitted_enctypes/i "permitted_enctypes"
                       | enctype_list /default_tgs_enctypes/i "default_tgs_enctypes"
                       | enctype_list /default_tkt_enctypes/i "default_tkt_enctypes" in
@@ -73,7 +73,7 @@ let login =
     simple_section "login" keys
 
 let appdefaults =
-  let option = entry (name_re - "realm" - "application") eq comment in
+  let option = entry (name_re - ("realm" | "application")) eq comment in
   let realm = [ indent . label "realm" . store realm_re .
                   eq_openbr . (option|empty)* . closebr . eol ] in
   let app = [ indent . label "application" . store app_re .
@@ -135,7 +135,7 @@ let dbmodules =
 (* This section is not documented in the krb5.conf manpage,
    but the Fermi example uses it. *)
 let instance_mapping =
-  let value = dels "\"" . store /[^;# \t\n{}]*/ . dels "\"" in
+  let value = dels "\"" . store /[^;# \t\r\n{}]*/ . dels "\"" in
   let map_node = label "mapping" . store /[a-zA-Z0-9\/*]+/ in
   let mapping = [ indent . map_node . eq .
                     [ label "value" . value ] . (comment|eol) ] in

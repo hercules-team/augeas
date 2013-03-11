@@ -139,13 +139,13 @@ key_buffer		= 16M
 
 
    test MySQL.lns get conf =   { "#comment" = "The MySQL database server configuration file." }
-  { "#comment" }
+  {}
   { "#comment" = "You can copy this to one of:" }
-  { "#comment" }
+  {}
   { "#comment" = "One can use all long options that the program supports." }
   { "#comment" = "Run program with --help to get a list of available options and with" }
   { "#comment" = "--print-defaults to see which it would actually understand and use." }
-  { "#comment" }
+  {}
   { "#comment" = "For explanations see" }
   { "#comment" = "http://dev.mysql.com/doc/mysql/en/server-system-variables.html" }
   {  }
@@ -167,9 +167,9 @@ key_buffer		= 16M
     {  }
   }
   { "target" = "mysqld"
-    { "#comment" }
+    {}
     { "#comment" = "* Basic Settings" }
-    { "#comment" }
+    {}
     { "user" = "mysql" }
     { "pid-file" = "/var/run/mysqld/mysqld.pid" }
     { "socket" = "/var/run/mysqld/mysqld.sock" }
@@ -179,13 +179,13 @@ key_buffer		= 16M
     { "tmpdir" = "/tmp" }
     { "language" = "/usr/share/mysql/english" }
     { "skip-external-locking" = "" }
-    { "#comment" }
+    {}
     { "#comment" = "Instead of skip-networking the default is now to listen only on" }
     { "#comment" = "localhost which is more compatible and is not less secure." }
     { "bind-address" = "127.0.0.1" }
-    { "#comment" }
+    {}
     { "#comment" = "* Fine Tuning" }
-    { "#comment" }
+    {}
     { "key_buffer" = "16M" }
     { "max_allowed_packet" = "16M" }
     { "thread_stack" = "128K" }
@@ -193,25 +193,25 @@ key_buffer		= 16M
     { "#comment" = "max_connections        = 100" }
     { "#comment" = "table_cache            = 64" }
     { "#comment" = "thread_concurrency     = 10" }
-    { "#comment" }
+    {}
     { "#comment" = "* Query Cache Configuration" }
-    { "#comment" }
+    {}
     { "query_cache_limit" = "1M" }
     { "query_cache_size" = "16M" }
-    { "#comment" }
+    {}
     { "#comment" = "* Logging and Replication" }
-    { "#comment" }
+    {}
     { "#comment" = "Both location gets rotated by the cronjob." }
     { "#comment" = "Be aware that this log type is a performance killer." }
     { "#comment" = "log		= /var/log/mysql/mysql.log" }
-    { "#comment" }
+    {}
     { "#comment" = "Error logging goes to syslog. This is a Debian improvement :)" }
-    { "#comment" }
+    {}
     { "#comment" = "Here you can see queries with especially long duration" }
     { "#comment" = "log_slow_queries	= /var/log/mysql/mysql-slow.log" }
     { "#comment" = "long_query_time = 2" }
     { "#comment" = "log-queries-not-using-indexes" }
-    { "#comment" }
+    {}
     { "#comment" = "The following can be used as easy to replay backup logs or for replication." }
     { "#comment" = "server-id		= 1" }
     { "#comment" = "log_bin		= /var/log/mysql/mysql-bin.log" }
@@ -220,25 +220,25 @@ key_buffer		= 16M
     { "#comment" = "max_binlog_size	= 100M" }
     { "#comment" = "binlog_do_db		= include_database_name" }
     { "#comment" = "binlog_ignore_db	= include_database_name" }
-    { "#comment" }
+    {}
     { "#comment" = "* BerkeleyDB" }
-    { "#comment" }
+    {}
     { "#comment" = "Using BerkeleyDB is now discouraged as its support will cease in 5.1.12." }
     { "skip-bdb" = "" }
-    { "#comment" }
+    {}
     { "#comment" = "* InnoDB" }
-    { "#comment" }
+    {}
     { "#comment" = "InnoDB is enabled by default with a 10MB datafile in /var/lib/mysql/." }
     { "#comment" = "Read the manual for more InnoDB related options. There are many!" }
     { "#comment" = "You might want to disable InnoDB to shrink the mysqld process by circa 100MB." }
     { "#comment" = "skip-innodb" }
-    { "#comment" }
+    {}
     { "#comment" = "* Security Features" }
-    { "#comment" }
+    {}
     { "#comment" = "Read the manual, too, if you want chroot!" }
     { "#comment" = "chroot = /var/lib/mysql/" }
-    { "#comment" }
-    { "#comment" }
+    {}
+    {}
     { "#comment" = "ssl-ca=/etc/mysql/cacert.pem" }
     { "#comment" = "ssl-cert=/etc/mysql/server-cert.pem" }
     { "#comment" = "ssl-key=/etc/mysql/server-key.pem" }
@@ -259,21 +259,21 @@ key_buffer		= 16M
   { "target" = "isamchk"
     { "key_buffer" = "16M" }
     {  }
-    { "#comment" }
+    {}
     { "#comment" = "* NDB Cluster" }
-    { "#comment" }
+    {}
     { "#comment" = "See /usr/share/doc/mysql-server-*/README.Debian for more information." }
-    { "#comment" }
+    {}
     { "#comment" = "The following configuration is read by the NDB Data Nodes (ndbd processes)" }
     { "#comment" = "not from the NDB Management Nodes (ndb_mgmd processes)." }
-    { "#comment" }
+    {}
     { "#comment" = "[MYSQL_CLUSTER]" }
     { "#comment" = "ndb-connectstring=127.0.0.1" }
     {  }
     {  }
-    { "#comment" }
+    {}
     { "#comment" = "* IMPORTANT: Additional settings that can override those from this file!" }
-    { "#comment" }
+    {}
   }
   { "!includedir" = "/etc/mysql/conf.d/" }
   { "!include" = "/etc/mysql/other_conf.d/someconf.cnf" }

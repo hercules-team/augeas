@@ -14,10 +14,13 @@ let comment  = IniFile.comment IniFile.comment_re "#"
 
 let sep      = IniFile.sep IniFile.sep_re IniFile.sep_default
 
-let entry    = Util.indent
-             . ([ key IniFile.entry_re . sep . IniFile.sto_to_comment . (comment|IniFile.eol) ] |
-               [ key IniFile.entry_re . store // .  (comment|IniFile.eol) ]) |
-               comment
+let entry    =
+     let bare = Quote.do_dquote_opt_nil (store /[^#;" \t\r\n]+([ \t]+[^#;" \t\r\n]+)*/)
+  in let quoted = Quote.do_dquote (store /[^"\r\n]*[#;]+[^"\r\n]*/)
+  in [ Util.indent . key IniFile.entry_re . sep . Sep.opt_space . bare . (comment|IniFile.eol) ]
+   | [ Util.indent . key IniFile.entry_re . sep . Sep.opt_space . quoted . (comment|IniFile.eol) ]
+   | [ Util.indent . key IniFile.entry_re . store // .  (comment|IniFile.eol) ]
+   | comment
 
 (************************************************************************
  * sections, led by a "[section]" header

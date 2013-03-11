@@ -42,15 +42,15 @@ module Test_samba =
 "
 
    test Samba.lns get conf =
-      { "#comment" }
+      {}
       { "#comment" = "Sample configuration file for the Samba suite for Debian GNU/Linux." }
-      { "#comment" }
-      { "#comment" }
+      {}
+      {}
       { "#comment" = "This is the main Samba configuration file. You should read the" }
       { "#comment" = "smb.conf(5) manual page in order to understand the options listed" }
       { "#comment" = "here. Samba has a huge number of configurable options most of which" }
       { "#comment" = "are not shown in this example" }
-      { "#comment" }
+      {}
       {}
       { "#comment" = "======================= Global Settings =======================" }
       {}

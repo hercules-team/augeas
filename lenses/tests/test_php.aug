@@ -35,7 +35,7 @@ test PHP.lns get conf =
 test PHP.lns put conf after rm "noop" = conf
 
 
-test PHP.lns get ";\n" = { ".anon" { "#comment" } }
+test PHP.lns get ";\n" = { ".anon" {} }
 
 (* Section titles can have spaces *)
 test PHP.lns get "[mail function]\n" =  { "mail function" }
@@ -52,4 +52,4 @@ mixed_KEY = 25
 (* Ticket #243 *)
 test PHP.lns get "session.save_path = \"3;/var/lib/php5\"\n" =
    { ".anon"
-      { "session.save_path" = "\"3;/var/lib/php5\"" } }
+      { "session.save_path" = "3;/var/lib/php5" } }

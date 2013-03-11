@@ -1,3 +1,45 @@
+1.X.X - 2013-XX-XX
+  - General changes/additions
+  - API changes/additions
+  - Augtool/aug_srun changes/additions
+  - XPath changes/additions
+  - Lens changes/additions
+    * Desktop: Support dos eol
+    * IniFile: Add lns_loose and lns_loose_multiline definitions
+               Support smart quotes
+      Warning: Smart quotes support means users should not add
+               escaped double quotes themselves. Tests need to be fixed
+               also.
+               Use standard Util.comment_generic and Util.empty_generic
+      Warning: Existing lens tests must be adapted to use standard
+               comments and empty lines
+               Allow spaces in entry_multiline* values
+               Add entry_generic and entry_multiline_generic
+               Add empty_generic and empty_noindent
+               Let multiline values begin with a single newline
+               Support dos eol
+      Warning: Support for dos eol means existing lenses usually
+               need to be adapted to exclude \r as well as \n.
+    * Krb5: Use standard comments and empty lines
+            Support dos eol
+            Improve performances
+    * Lightdm: Use standard comments and empty lines
+    * MySQL: Use standard comments and empty lines
+             Support dos eol
+    * Odbc: Use standard comments and empty lines
+    * PHP: Support smart quotes
+           Use standard comments and empty lines
+    * Samba: Use standard comments and empty lines
+             Support dos eol
+    * Schroot: Support smart quotes
+    * Subversion: Support smart quotes
+                  Use standard comments and empty lines
+                  Use IniFile.entry_multiline_generic
+                  Use IniFile.empty_noindent
+                  Support dos eol
+    * Systemd: Support smart quotes
+    * Yum: Support dos eol
+
 1.0.0 - 2012-12-21
   - General changes/additions
     * fix missing requirement on libxml2 in pkg-config

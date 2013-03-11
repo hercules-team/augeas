@@ -259,7 +259,7 @@ CapabilityBoundingSet=
 (* Test: Systemd.lns *)
 test Systemd.lns get unit =
   { "#comment" = "This file is part of systemd." }
-  { "#comment" }
+  {}
   {  }
   { "#comment" = "See systemd.special(7) for details" }
   {  }

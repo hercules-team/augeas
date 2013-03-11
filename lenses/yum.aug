@@ -8,7 +8,7 @@ module Yum =
 
 let comment  = IniFile.comment "#" "#"
 let sep      = IniFile.sep "=" "="
-let empty    = IniFile.empty
+let empty    = Util.empty
 let eol      = IniFile.eol
 
 
@@ -17,8 +17,8 @@ let eol      = IniFile.eol
  *************************************************************************)
 
 let list_entry (list_key:string)  =
-  let list_value = store /[^# \t\n,][^ \t\n,]*[^# \t\n,]|[^# \t\n,]/ in
-  let list_sep = del /([ \t]*(,[ \t]*|\n[ \t]+))|[ \t]+/ "\n\t" in
+  let list_value = store /[^# \t\r\n,][^ \t\r\n,]*[^# \t\r\n,]|[^# \t\r\n,]/ in
+  let list_sep = del /([ \t]*(,[ \t]*|\r?\n[ \t]+))|[ \t]+/ "\n\t" in
   [ key list_key . sep . list_value ]
   . (list_sep . Build.opt_list [ label list_key . list_value ] list_sep)?
   . eol

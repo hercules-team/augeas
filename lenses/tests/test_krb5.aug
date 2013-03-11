@@ -375,7 +375,7 @@ test Krb5.lns get fermi_str =
     { "#comment" = "reside.  The WINBETA and FERMIBETA domains are the equivalent" }
     { "#comment" = "testing realms for the FERMIBETA domain.  The 2-way transitive" }
     { "#comment" = "trust structure of this complex is as follows:" }
-    { "#comment" }
+    {}
     { "#comment" = "FNAL.GOV <=> PILOT.FNAL.GOV" }
     { "#comment" = "FNAL.GOV <=> WIN.FERMI.GOV <=> FERMI.WIN.FERMI.GOV" }
     { "#comment" = "PILOT.FNAL.GOV <=> WINBETA.FNAL.GOV <=> FERMIBETA.WINBETA.FNAL.GOV" }

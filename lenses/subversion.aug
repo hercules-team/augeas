@@ -27,6 +27,10 @@ autoload xfm
 (* View: comment *)
 let comment  = IniFile.comment_noindent "#" "#"
 
+(* View: empty
+     An empty line or a non-indented empty comment *)
+let empty = IniFile.empty_noindent
+
 (* View: sep *)
 let sep      = IniFile.sep IniFile.sep_default IniFile.sep_default
 
@@ -37,14 +41,30 @@ let sep      = IniFile.sep IniFile.sep_default IniFile.sep_default
  *
  *************************************************************************)
 
+(* Variable: comma_list_re *)
+let comma_list_re = "password-stores"
+
+(* Variable: space_list_re *)
+let space_list_re = "global-ignores" | "preserved-conflict-file-exts"
+
+(* Variable: std_re *)
+let std_re = /[^ \t\r\n\/=#]+/ - (comma_list_re | space_list_re)
+
+(* View: entry_std
+    A standard entry
+    Similar to a <IniFile.entry_multiline_nocomment> entry,
+    but allows ';' *)
+let entry_std =
+  IniFile.entry_multiline_generic (key std_re) sep "#" comment IniFile.eol
+
 (* View: entry *)
 let entry    =
      let comma_list_re = "password-stores"
   in let space_list_re = "global-ignores" | "preserved-conflict-file-exts"
-  in let std_re = /[^ \t\n\/=#]+/ - comma_list_re - space_list_re
-  in IniFile.entry_multiline_nocomment std_re sep comment
+  in let std_re = /[^ \t\r\n\/=#]+/ - (comma_list_re | space_list_re)
+  in entry_std
    | IniFile.entry_list_nocomment comma_list_re sep Rx.word Sep.comma
-   | IniFile.entry_list_nocomment space_list_re sep Rx.no_spaces (del /\n?[ \t]+/ " ")
+   | IniFile.entry_list_nocomment space_list_re sep Rx.no_spaces (del /(\r?\n)?[ \t]+/ " ")
 
 
 
@@ -58,8 +78,9 @@ let entry    =
 (* View: title *)
 let title    = IniFile.title IniFile.entry_re
 
-(* View: record *)
-let record   = IniFile.record title entry
+(* View: record
+     Use the non-indented <empty> *)
+let record   = IniFile.record_noempty title (entry|empty)
 
 (************************************************************************
  * Group:                   LENS & FILTER
