@@ -90,6 +90,7 @@ lens_tests =			\
   lens-logrotate.sh		\
   lens-logwatch.sh		\
   lens-lokkit.sh		\
+  lens-lvm.sh			\
   lens-mcollective.sh 	\
   lens-mdadm_conf.sh	\
   lens-memcached.sh		\

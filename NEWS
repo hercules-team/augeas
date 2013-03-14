@@ -25,6 +25,7 @@
             Support dos eol
             Improve performances
     * Lightdm: Use standard comments and empty lines
+    * LVM: New lens for LVM metadata
     * MySQL: Use standard comments and empty lines
              Support dos eol
     * Odbc: Use standard comments and empty lines
