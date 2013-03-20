@@ -80,6 +80,7 @@ lens_tests =			\
   lens-kdump.sh			\
   lens-keepalived.sh	\
   lens-krb5.sh			\
+  lens-jaas.sh          \
   lens-ldap.sh			\
   lens-ldif.sh			\
   lens-ldso.sh			\
