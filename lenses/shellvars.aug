@@ -176,7 +176,6 @@ module Shellvars =
       sc_excl "sysstat.ioconf" .
       sc_excl "system-config-firewall" .
       sc_excl "system-config-securitylevel" .
-      sc_excl "network" .
       sc_incl "network/config" .
       sc_incl "network/dhcp" .
       sc_incl "network/dhcp6r" .
