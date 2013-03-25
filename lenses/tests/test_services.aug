@@ -72,3 +72,10 @@ z39.50		210/tcp		z3950 wais	# NISO Z39.50 database \n"
   test Services.lns put "tcpmux          1/tcp # some comment\n"
     after rm "/service-name/#comment" = "tcpmux          1/tcp\n"
 
+  (* On AIX, port ranges are valid *)
+  test Services.lns get "x11                      6000-6063/tcp  # X Window System\n" =
+    { "service-name" = "x11"
+      { "start" = "6000" }
+      { "end" = "6063" }
+      { "protocol" = "tcp" }
+      { "#comment" = "X Window System" } }
