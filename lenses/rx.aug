@@ -36,7 +36,7 @@ let cl_or_opt_space = cl | opt_space
 
 (* Variable: space_in
    A string which not starting or ending with a space *)
-let space_in  = /[^ \t\n].*[^ \t\n]|[^ \t\n]/
+let space_in  = /[^ \r\t\n].*[^ \r\t\n]|[^ \t\n\r]/
 
 (* Variable: no_spaces
    A string with no spaces *)
