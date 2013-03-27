@@ -165,6 +165,7 @@ lens_tests =			\
   lens-solaris_system.sh		\
   lens-soma.sh			\
   lens-spacevars.sh		\
+  lens-splunk.sh		\
   lens-squid.sh			\
   lens-ssh.sh			\
   lens-sshd.sh			\
