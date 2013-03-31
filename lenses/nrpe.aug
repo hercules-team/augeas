@@ -18,6 +18,8 @@ let eq = Sep.equal
 (* View: word *)
 let word = /[^=\n\t ]+/
 
+(* View: item_re *)
+let item_re = /[^#=\n\t\/ ]+/ - /command\[[^]\/\n]+\]/ - "include" - "include_dir"
 
 (* View: command
     nrpe.cfg usually has many entries defining commands to run
@@ -34,26 +36,12 @@ let command =
     ]
 
 
-(* View: item_re
-     regular entries re *)
-let item_re = "server_port"
-            | "command_prefix"
-            | "server_address"
-            | "allowed_hosts"
-            | "debug"
-            | "nrpe_user"
-            | "nrpe_group"
-            | "dont_blame_nrpe"
-            | "command_timeout"
-            | "connection_timeout"
-            | "allow_weak_random_seed"
-            | "pid_file"
-            | "log_facility"
-
 (* View: item
-     regular entries *)
-let item = [ key item_re . eq . store word . eol ]
+     regular entries
 
+     > allow_bash_command_substitution=0
+*)
+let item = [ key item_re . eq . store word . eol ]
 
 (* View: include
     An include entry.
@@ -84,7 +72,7 @@ let empty = Util.empty
 
 (* View: lns
     The Nrpe lens *)
-let lns = ( command | item | include | include_dir | comment | empty ) *
+let lns = ( command | include | include_dir | item | comment | empty ) *
 
 (* View: filter
     File filter *)
