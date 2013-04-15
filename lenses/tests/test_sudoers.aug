@@ -273,3 +273,14 @@ test Sudoers.spec get "APACHE_ADMIN ALL= ALL\n" =
     { "host_group"
       { "host" = "ALL" }
       { "command" = "ALL" } } }
+
+(* Test: Sudoers.spec
+     Ticket #337: allow period in user names *)
+test Sudoers.spec get "user.one somehost = ALL\n" =
+  { "spec"
+    { "user" = "user.one" }
+    { "host_group"
+      { "host" = "somehost" }
+      { "command" = "ALL" }
+    }
+  }
