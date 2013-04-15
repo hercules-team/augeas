@@ -51,3 +51,9 @@ test Passwd.lns get "+::::::/sbin/nologin\n" =
     { "name" }
     { "home" }
     { "shell" = "/sbin/nologin" } }
+
+(* NIS entries with overrides, ticket #339 *)
+test Passwd.lns get "+@bob:::::/home/bob:/bin/bash\n" =
+ { "@nis" = "bob"
+   { "home" = "/home/bob" }
+   { "shell" = "/bin/bash" } }

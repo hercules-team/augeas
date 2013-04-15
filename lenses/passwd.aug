@@ -42,9 +42,15 @@ let entry     = [ key word
 
 (* A NIS entry has nothing bar the +@:::::: bits. *)
 let nisentry =
-  let nisuser = /\+\@[A-Za-z0-9_.-]+/ in
-  let colons = "::::::" in
-  [ dels "+@" . label "@nis" . store word . dels colons . eol ]
+  let overrides =
+        colon
+      . [ label "password" . sto_to_col ]?   . colon
+      . [ label "uid"      . store integer ]? . colon
+      . [ label "gid"      . store integer ]? . colon
+      . [ label "name"     . sto_to_col ]?   . colon
+      . [ label "home"     . sto_to_col ]?  . colon
+      . [ label "shell"    . sto_to_eol ]? in
+  [ dels "+@" . label "@nis" . store word . overrides . eol ]
 
 let nisdefault =
   let overrides =
