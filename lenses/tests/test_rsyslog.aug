@@ -20,6 +20,8 @@ $IncludeConfig /etc/rsyslog.d/*.conf
 authpriv.*                                              /var/log/secure
 *.emerg                                                 *
 *.*    @2.7.4.1
+*.emerg :omusrmsg:*
+*.emerg :omusrmsg:foo,bar
 "
 
 (* Test: Rsyslog.lns *)
@@ -86,4 +88,21 @@ test Rsyslog.lns get conf =
       { "hostname" = "2.7.4.1" }
     }
   }
-
+  { "entry"
+    { "selector"
+      { "facility" = "*" }
+      { "level" = "emerg" }
+    }
+    { "action"
+      { "omusrmsg" = "*" }
+    }
+  }
+  { "entry"
+    { "selector"
+      { "facility" = "*" }
+      { "level" = "emerg" }
+    }
+    { "action"
+      { "omusrmsg" = "foo" }
+      { "omusrmsg" = "bar" } }
+  }
