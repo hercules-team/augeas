@@ -25,6 +25,7 @@ group-compress My test
 
 group-compress DownTime
 0.0.0.0	myhost3 # DOWNTIME=fping,http:*:1800:1015:\"Frontal 01 Redirect Amazon eteint entre 18h et 10h\"
+0.0.0.0	myhost4 # ftps imaps imap4 pop-3 pop2s pop smtp smtps ssh ssh1 ssh2 telnet telnets
 "
 
    test BBhosts.lns get conf =
@@ -108,5 +109,23 @@ group-compress DownTime
 		      { "starttime" = "1800" }
 		      { "endtime" = "1015" }
 		      { "cause" = "Frontal 01 Redirect Amazon eteint entre 18h et 10h" }
-		      } } } } }
+		      } } }
+             { "host"
+                { "ip" = "0.0.0.0" }
+                { "fqdn" = "myhost4" }
+                { "probes"
+                   { "ftps" = "" } 
+                   { "imaps" = "" } 
+                   { "imap4" = "" } 
+                   { "pop-3" = "" } 
+                   { "pop2s" = "" } 
+                   { "pop" = "" } 
+                   { "smtp" = "" } 
+                   { "smtps" = "" } 
+                   { "ssh" = "" } 
+                   { "ssh1" = "" } 
+                   { "ssh2" = "" } 
+                   { "telnet" = "" } 
+                   { "telnets" = "" } 
+                } } } }
 
