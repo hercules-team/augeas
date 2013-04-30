@@ -38,6 +38,22 @@ module BBhosts =
 			     )?
 			     ]
 
+    (* DOWNTIME=[columns:]day:starttime:endtime:cause[,day:starttime:endtime:cause] *)
+    let host_test_downtime =
+          let probe = [ label "probe" . store (Rx.word | "*") ]
+      in let probes = Build.opt_list probe Sep.comma
+      in let day = [ label "day" . store (Rx.word | "*") ]
+      in let starttime = [ label "starttime" . store Rx.integer ]
+      in let endtime = [ label "endtime" . store Rx.integer ]
+      in let cause = [ label "cause" . Util.del_str "\"" . store /[^"]*/ . Util.del_str "\"" ]
+      in [ key "DOWNTIME" . Sep.equal
+          . (probes . Sep.colon)?
+          . day . Sep.colon
+          . starttime . Sep.colon
+          . endtime . Sep.colon
+          . cause
+          ]
+
     let host_test_flag_value = [ label "value" . Util.del_str ":"
                               . store Rx.word ]
 
@@ -64,6 +80,7 @@ module BBhosts =
 		  | host_test_flag "BBPAGER"
 		  | host_test_flag "XYMON"
                   | host_test_url
+                  | host_test_downtime
 
 
     let host_test_list = Build.opt_list host_test sep_spc
