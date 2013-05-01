@@ -103,6 +103,7 @@ lens_tests =			\
   lens-modprobe.sh		\
   lens-modules.sh		\
   lens-modules_conf.sh	\
+  lens-mongodbserver.sh		\
   lens-monit.sh			\
   lens-multipath.sh     \
   lens-mysql.sh			\
