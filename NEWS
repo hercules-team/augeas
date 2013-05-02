@@ -21,7 +21,9 @@
                Support dos eol
       Warning: Support for dos eol means existing lenses usually
                need to be adapted to exclude \r as well as \n.
+    * IPRoute2: Support for iproute2 files (Davide Guerri)
     * JaaS: lens for the Java Authentication and Authorization Service
+            (Simon Vocella)
     * Krb5: Use standard comments and empty lines
             Support dos eol
             Improve performances
