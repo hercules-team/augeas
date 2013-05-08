@@ -54,6 +54,8 @@ Group: Main Site  {
 Group: Specific Modules  {
 
    File: Access  (access.aug)
+   File: ActiveMQ_Conf  (activemq_conf.aug)
+   File: ActiveMQ_XML  (activemq_xml.aug)
    File: Aliases  (aliases.aug)
    File: Anacron  (anacron.aug)
    File: Approx  (approx.aug)
@@ -92,6 +94,9 @@ Group: Specific Modules  {
    File: Hosts_Access  (hosts_access.aug)
    File: Htpasswd  (htpasswd.aug)
    File: Inputrc  (inputrc.aug)
+   File: JettyRealm  (jettyrealm.aug)
+   File: JMXAccess  (jmxaccess.aug)
+   File: JMXPassword  (jmxpassword.aug)
    File: Iptables  (iptables.aug)
    File: Kdump  (kdump.aug)
    File: Keepalived  (keepalived.aug)
@@ -170,6 +175,8 @@ Group: Generic Modules  {
 Group: Tests and Examples  {
 
    File: Test_Access  (tests/test_access.aug)
+   File: Test_ActiveMQ_Conf  (tests/test_activemq_conf.aug)
+   File: Test_ActiveMQ_XML  (tests/test_activemq_xml.aug)
    File: Test_Aliases  (tests/test_aliases.aug)
    File: Test_Anacron  (tests/test_anacron.aug)
    File: Test_Approx  (tests/test_approx.aug)
@@ -190,6 +197,9 @@ Group: Tests and Examples  {
    File: Test_Htpasswd  (tests/test_htpasswd.aug)
    File: Test_IniFile  (tests/test_inifile.aug)
    File: Test_Inputrc  (tests/test_inputrc.aug)
+   File: Test_JettyRealm  (tests/test_jettyrealm.aug)
+   File: Test_JMXAccess  (tests/test_jmxaccess.aug)
+   File: Test_JMXPassword  (tests/test_jmxpassword.aug)
    File: Test_Keepalived  (tests/test_keepalived.aug)
    File: Test_Ldso  (tests/test_ldso.aug)
    File: Test_Lightdm  (tests/test_lightdm.aug)

@@ -18,6 +18,8 @@ valgrind-leak: leak
 lens_tests =			\
   lens-sudoers.sh		\
   lens-access.sh		\
+  lens-activemq_conf.sh		\
+  lens-activemq_xml.sh		\
   lens-aliases.sh		\
   lens-anacron.sh		\
   lens-approx.sh		\
@@ -78,6 +80,9 @@ lens_tests =			\
   lens-inputrc.sh		\
   lens-interfaces.sh		\
   lens-iptables.sh		\
+  lens-jettyrealm.sh		\
+  lens-jmxaccess.sh		\
+  lens-jmxpassword.sh		\
   lens-kdump.sh			\
   lens-keepalived.sh	\
   lens-krb5.sh			\
