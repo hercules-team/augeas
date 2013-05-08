@@ -118,6 +118,9 @@ lens_tests =			\
   lens-nrpe.sh          \
   lens-nsswitch.sh		\
   lens-odbc.sh          \
+  lens-openshift_config.sh	\
+  lens-openshift_http.sh	\
+  lens-openshift_quickstarts.sh	\
   lens-openvpn.sh		\
   lens-pam.sh			\
   lens-pamconf.sh		\
