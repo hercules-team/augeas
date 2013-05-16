@@ -1465,18 +1465,19 @@ static struct value *compile_compose(struct term *exp, struct ctx *ctx) {
 
         /* Build lambda x: exp->right (exp->left x) as a closure */
         char *var = strdup("@0");
-        struct term *param = make_param(var, ref(exp->left->type->dom),
-                                        ref(info));
-        param->type = ref(exp->left->type);
+        struct term *func = make_param(var, ref(exp->left->type->dom),
+                                       ref(info));
+        func->type = make_arrow_type(exp->left->type->dom,
+                                     exp->right->type->img);
         struct term *ident = make_term(A_IDENT, ref(info));
-        ident->ident = ref(param->param->name);
-        ident->type = ref(param->type);
+        ident->ident = ref(func->param->name);
+        ident->type = ref(func->param->type);
         struct term *app = make_app_term(ref(exp->left), ident, ref(info));
         app->type = ref(app->left->type->img);
         app = make_app_term(ref(exp->right), app, ref(info));
-        app->type = ref(app->left->type->img);
+        app->type = ref(app->right->type->img);
 
-        struct term *func = build_func(param, app);
+        build_func(func, app);
 
         if (!type_equal(func->type, exp->type)) {
             char *f = type_string(func->type);

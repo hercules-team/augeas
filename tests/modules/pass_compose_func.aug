@@ -1,8 +1,12 @@
 module Pass_Compose_Func =
 
-  let g (x:string) = ()
+  (* string -> regexp *)
+  let f (x:string) = x . /[a-z]/
 
-  (* Should yield a function string -> unit *)
-  let f = () ; g
+  (* regexp -> lens *)
+  let g (x:regexp) = key x
 
-  let _ = g "a"
+  (* string -> lens *)
+  let h = f ; g
+
+  let _ = h "a"
