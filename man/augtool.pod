@@ -49,6 +49,11 @@ directories set here are searched before any directories specified in the
 AUGEAS_LENS_LIB environment variable, and before the default directories
 F</usr/share/augeas/lenses> and F</usr/share/augeas/lenses/dist>.
 
+=item B<-t>, B<--transform>=I<XFM>
+
+Add a file transform; uses the 'transform' command syntax,
+e.g. C<-t 'Fstab incl /etc/fstab.bak'>.
+
 =item B<-f>, B<--file>=I<FILE>
 
 Read commands from FILE.
