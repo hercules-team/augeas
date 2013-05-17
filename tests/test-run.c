@@ -183,19 +183,23 @@ static struct test *read_tests(void) {
     }
 
 static int load_module(struct augeas *aug, struct test *test) {
-    char *fname;
+    char *fname, *fpath;
     int r;
 
     if (test->module == NULL)
         return 0;
 
-    if (asprintf(&fname, "%s/%s.aug", lensdir, test->module) == -1)
-        fail(true, "asprintf test->module");
+    if (asprintf(&fname, "%s.aug", test->module) == -1)
+       fail(true, "asprintf test->module");
+
     for (int i=0; i < strlen(fname); i++)
         fname[i] = tolower(fname[i]);
 
-    r = __aug_load_module_file(aug, fname);
-    fail(r < 0, "Could not load %s", fname);
+    if (asprintf(&fpath, "%s/%s", lensdir, fname) == -1)
+        fail(true, "asprintf lensdir");
+
+    r = __aug_load_module_file(aug, fpath);
+    fail(r < 0, "Could not load %s", fpath);
 
     return 0;
  error:
