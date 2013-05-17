@@ -34,41 +34,42 @@ Introduction
 Non-goals
 ---------
 
-  Augeas is as much defined by the things it does _not_ try to accomplish
-  as by its goals:
+Augeas is as much defined by the things it does _not_ try to accomplish
+as by its goals:
 
-    * No abstraction from native config format, i.e. the organization of
-      the tree mirrors closely how the native config files are organized
-    * No cross-platform abstraction - what is logically the same value may
-      live in different places in the tree on different
-      distributions. Dealing with that should be left to a higher-level
-      tool
-    * No remote management support. Augeas is a local API, other ways of
-      access to Augeas should be built on top of it
-    * No (or very little) modelling. Augeas is focused on syntax
-      transformation, not on any higher-level understanding of
-      configuration.
+* No abstraction from native config format, i.e. the organization of
+  the tree mirrors closely how the native config files are organized
+* No cross-platform abstraction - what is logically the same value may
+  live in different places in the tree on different
+  distributions. Dealing with that should be left to a higher-level
+  tool
+* No remote management support. Augeas is a local API, other ways of
+  access to Augeas should be built on top of it
+* No (or very little) modelling. Augeas is focused on syntax
+  transformation, not on any higher-level understanding of
+  configuration.
 
-  The above non-goals are of course important concerns in
-  practice. Historically though, too many config mgmt projects have failed
-  because they set their sights too high and tried to address syntax
-  transformation, modelling, remote support, and scalable management all in
-  one. That leads to a lack of focus, and to addressing each of those goals
-  unsatisfactorily.
+The above non-goals are of course important concerns in
+practice. Historically though, too many config mgmt projects have failed
+because they set their sights too high and tried to address syntax
+transformation, modelling, remote support, and scalable management all in
+one. That leads to a lack of focus, and to addressing each of those goals
+unsatisfactorily.
 
 Building
 --------
 
-  These instructions apply to building a released tarball. If you want to
-  build from a git checkout, see the file HACKING.
+These instructions apply to building a released tarball. If you want to
+build from a git checkout, see the file HACKING.
 
-  See the generic instructions in INSTALL. Generally,
-    ./configure
-    make && make install
-  should be all that is needed.
+See the generic instructions in INSTALL. Generally,
 
-  You need to have readline-devel installed. On systems that support
-  SELinux, you should also install libselinux-devel.
+      ./configure
+      make && make install
+should be all that is needed.
+
+You need to have readline-devel installed. On systems that support
+SELinux, you should also install libselinux-devel.
 
 Documentation
 -------------
@@ -76,3 +77,9 @@ Documentation
 Documentation can be found on Augeas' website http://augeas.net/ The site
 also contains information on how to get in touch, what you can do to help
 etc.
+
+License
+-------
+
+Augeas is released under the [Lesser General Public License, Version 2.1](http://www.gnu.org/licenses/lgpl-2.1.html)
+See the file COPYING for details.
