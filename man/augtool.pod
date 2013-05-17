@@ -64,7 +64,7 @@ Read commands from the terminal. When combined with B<-f> or redirection of
 stdin, drop into an interactive session after executing the commands from
 the file.
 
-=item B<-e>
+=item B<-e>, B<--echo>
 
 When reading commands from a file via stdin, echo the commands before
 printing their output.
