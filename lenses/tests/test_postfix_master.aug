@@ -108,3 +108,20 @@ test Postfix_Master.lns get conf6 =
     { "command" = "pipe
 	flags=R user=sympa argv=/home/sympa/bin/familyqueue ${user}@domain.net pfs" }
   }
+
+(* Ticket #345 *)
+let conf7 = "# master.cf
+submission inet n       -       n       -       -       smtpd
+  -o mynetworks=127.0.0.1/8,[::1]
+"
+
+test Postfix_Master.lns get conf7 =
+   { "#comment" = "master.cf" }
+   { "submission"
+     { "type" = "inet" }
+     { "private" = "n" }
+     { "unprivileged" = "-" }
+     { "chroot" = "n" }
+     { "wakeup" = "-" }
+     { "limit" = "-" }
+     { "command" = "smtpd\n  -o mynetworks=127.0.0.1/8,[::1]" } }
