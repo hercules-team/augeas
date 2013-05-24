@@ -37,6 +37,7 @@
     * Samba: Use standard comments and empty lines
              Support dos eol
     * Schroot: Support smart quotes
+    * Sip_Conf: New lens for sip.conf configurations (Rob Tucker)
     * Subversion: Support smart quotes
                   Use standard comments and empty lines
                   Use IniFile.entry_multiline_generic
