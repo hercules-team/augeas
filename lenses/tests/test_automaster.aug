@@ -11,6 +11,7 @@ module Test_automaster =
 /home     ldap:example.com:ou=auto.home,dc=example,dc=com 
 /mnt      yp:mnt.map -strict,-Dfoo=bar,uid=1000
 /mnt      yp,sun:mnt.map
+/auto   /etc/auto.HD --timeout=15 --ghost
 
 +dir:/etc/auto.master.d
 + auto.master
@@ -46,11 +47,16 @@ module Test_automaster =
         { "type" = "yp" }
         { "format" = "sun" }
         { "map" = "mnt.map" } }
+    { "8" = "/auto"
+        { "map" = "/etc/auto.HD" }
+        { "opt" = "--timeout"
+            { "value" = "15" } }
+        { "opt" = "--ghost" } }
     { }
-    { "8" = "+"
+    { "9" = "+"
         { "type" = "dir" }
         { "map" = "/etc/auto.master.d" } }
-    { "9" = "+"
+    { "10" = "+"
         { "map" = "auto.master" } }
 
 (* Local Variables: *)

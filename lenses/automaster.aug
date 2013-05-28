@@ -61,6 +61,9 @@ let dn = /[^:# \n\t]+/
 let optlabel = /[^,#= \n\t]+/
 let spec    = /[^,# \n\t][^ \n\t]*/
 
+(* View: optsep *)
+let optsep = del /[ \t,]+/ ","
+
 (************************************************************************
  * Group:                 ENTRIES
  *************************************************************************)
@@ -89,25 +92,25 @@ let map_ldap      = [ label "type" . store "ldap" ]
                       . ( Sep.comma . map_format )? . Sep.colon
                       . map_ldap_name
 
-(* View: comma_sep_list
+(* View: comma_spc_sep_list
    Parses options either for filesystems or autofs *)
-let comma_sep_list (l:string) =
+let comma_spc_sep_list (l:string) =
   let value = [ label "value" . Util.del_str "=" . store Rx.neg1 ] in
     let lns = [ label l . store optlabel . value? ] in
-       Build.opt_list lns Sep.comma
+       Build.opt_list lns optsep
 
 (* View: map_mount 
    Mountpoint and whitespace, followed by the map info *)
 let map_mount  = [ seq "map" . store mount . Util.del_ws_tab
                    . ( map_generic | map_ldap )
-                   . ( Util.del_ws_spc . comma_sep_list "opt" )?
+                   . ( Util.del_ws_spc . comma_spc_sep_list "opt" )?
                    . Util.eol ]
 
 (* map_master
    "+" to include more master entries and optional whitespace *)
 let map_master = [ seq "map" . store "+" . Util.del_opt_ws ""
                    . ( map_generic | map_ldap )
-                   . ( Util.del_ws_spc . comma_sep_list "opt" )?
+                   . ( Util.del_ws_spc . comma_spc_sep_list "opt" )?
                    . Util.eol ]
 
 (* View: lns *)
