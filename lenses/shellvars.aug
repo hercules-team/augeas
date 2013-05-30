@@ -18,7 +18,7 @@ module Shellvars =
   let eol = del (/[ \t]+|[ \t]*[;\n]/ . empty_part_re*) "\n"
   let semicol_eol = del (/[ \t]*[;\n]/ . empty_part_re*) "\n"
 
-  let key_re = /[A-Za-z0-9_]+(\[[0-9]+\])?/ - "unset" - "export"
+  let key_re = /[A-Za-z0-9_]+(\[[0-9]+\])?/ - ("unset" | "export")
   let matching_re = "${!" . key_re . /[\*@]\}/
   let eq = Util.del_str "="
 
