@@ -23,7 +23,7 @@ let list_entry (list_key:string)  =
   . (list_sep . Build.opt_list [ label list_key . list_value ] list_sep)?
   . eol
 
-let entry_re = IniFile.entry_re - "baseurl" - "gpgkey"
+let entry_re = IniFile.entry_re - ("baseurl" | "gpgkey")
 
 let entry       = IniFile.entry entry_re sep comment
                 | empty
