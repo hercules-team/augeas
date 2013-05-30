@@ -19,7 +19,7 @@ let eq = Sep.equal
 let word = /[^=\n\t ]+/
 
 (* View: item_re *)
-let item_re = /[^#=\n\t\/ ]+/ - /command\[[^]\/\n]+\]/ - "include" - "include_dir"
+let item_re = /[^#=\n\t\/ ]+/ - (/command\[[^]\/\n]+\]/ | "include" | "include_dir")
 
 (* View: command
     nrpe.cfg usually has many entries defining commands to run
