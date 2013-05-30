@@ -92,7 +92,7 @@ let size = [ label "size" . store size_kw . resize? ]
 let filesystem_kw = "-"
          | "swap"
          (* NOTE: Restraining this regexp would improve perfs *)
-         | (Rx.no_spaces - "-" - "swap") (* mkfs.xxx must exist *)
+         | (Rx.no_spaces - ("-" | "swap")) (* mkfs.xxx must exist *)
 
 (* Variable: filesystem *)
 let filesystem = [ label "filesystem" . store filesystem_kw ]
@@ -267,8 +267,9 @@ let cryptoption =
 
 (* Variable: disk_config *)
 let disk_config =
-    let other_label = Rx.fspath - "lvm" - "raid" - "end" - /disk[0-9]+/
-                                - "cryptsetup" - "tmpfs" in
+    let excludes = "lvm" | "raid" | "end" | /disk[0-9]+/
+                 | "cryptsetup" | "tmpfs" in
+    let other_label = Rx.fspath - excludes in
                   disk_config_entry "lvm" lvmoption volume_lvm
                 | disk_config_entry "raid" raidoption volume_raid
                 | disk_config_entry "tmpfs" option volume_tmpfs
