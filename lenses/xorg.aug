@@ -136,7 +136,7 @@ let option = [ indent . del /[oO]ption/ "Option" . label "Option" . sep_spc
  * The Screen entry of ServerLayout
  *)
 let screen = [ indent . del /[sS]creen/ "Screen" . label "Screen" . sep_spc
-               . [ label "num" . store int . sep_spc ]?
+               . [ sep_spc . label "num" . store int ]?
                . quoted_string_val
                . [ sep_spc . label "position" . store to_eol ]?
                . eol ]
@@ -209,6 +209,19 @@ let display = [ indent . del "SubSection" "SubSection" . sep_spc
                        . display_entry*
                        . indent . del "EndSubSection" "EndSubSection" . eol ]
 
+(************************************************************************
+ * Group:                          EXTMOD SUBSECTION
+ *************************************************************************)
+
+let extmod_entry =  entry_str "Option"  /[oO]ption/ |
+                    empty |
+                    comment
+
+let extmod = [ indent . del "SubSection" "SubSection" . sep_spc
+                       . sep_dquote . key "extmod" . sep_dquote
+                       . eol
+                       . extmod_entry*
+                       . indent . del "EndSubSection" "EndSubSection" . eol ]
 
 (************************************************************************
  * Group:                       SECTIONS
@@ -256,6 +269,7 @@ let section_re_obsolete = /(Keyboard|Pointer)/
 let section_entry = option |
                     screen |
                     display |
+                    extmod |
                     input_device |
                     driver |
                     identifier |
