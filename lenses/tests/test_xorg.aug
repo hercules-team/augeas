@@ -23,6 +23,7 @@ Section \"Device\"
 	Option 		\"MonitorLayout\" \"LVDS,VGA\"
 	VideoRam	229376
         Option          \"NoAccel\"
+        Screen          0
 EndSection
 
 Section \"Screen\"
@@ -67,7 +68,9 @@ EndSection
         { "Option"     = "MonitorLayout"
              { "value"  = "LVDS,VGA" } }
         { "VideoRam"   = "229376" }
-        { "Option"     = "NoAccel" } }
+        { "Option"     = "NoAccel" } 
+        { "Screen"
+          { "num" = "0" } } }
      { }
      { "Screen"
         { "Identifier" = "Screen0" }

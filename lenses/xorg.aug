@@ -135,10 +135,10 @@ let option = [ indent . del /[oO]ption/ "Option" . label "Option" . sep_spc
 (* View: screen
  * The Screen entry of ServerLayout
  *)
-let screen = [ indent . del /[sS]creen/ "Screen" . label "Screen" . sep_spc
+let screen = [ indent . del /[sS]creen/ "Screen" . label "Screen"
                . [ sep_spc . label "num" . store int ]?
-               . quoted_string_val
-               . [ sep_spc . label "position" . store to_eol ]?
+               . ( sep_spc . quoted_string_val
+               . [ sep_spc . label "position" . store to_eol ]? )?
                . eol ]
 
 (* View: input_device *)
@@ -306,5 +306,6 @@ let lns = ( empty | comment | section )*
 (* Variable: filter *)
 let filter = incl "/etc/X11/xorg.conf"
            . incl "/etc/X11/xorg.conf.d/*.conf"
+           . Util.stdexcl
 
 let xfm = transform lns filter
