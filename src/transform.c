@@ -170,7 +170,7 @@ static bool file_current(struct augeas *aug, const char *fname,
     if (path == NULL)
         return false;
 
-    file = tree_find(aug, path->value);
+    file = tree_fpath(aug, path->value);
     return (file != NULL && ! file->dirty);
 }
 
@@ -345,7 +345,7 @@ static int store_error(struct augeas *aug,
     }
     ERR_NOMEM(r < 0, aug);
 
-    finfo = tree_find_cr(aug, fip);
+    finfo = tree_fpath_cr(aug, fip);
     ERR_BAIL(aug);
 
     if (status != NULL) {
@@ -422,7 +422,7 @@ static int add_file_info(struct augeas *aug, const char *node,
     r = pathjoin(&path, 2, AUGEAS_META_TREE, node);
     ERR_NOMEM(r < 0, aug);
 
-    file = tree_find_cr(aug, path);
+    file = tree_fpath_cr(aug, path);
     ERR_BAIL(aug);
 
     /* Set 'path' */
@@ -488,6 +488,21 @@ static char *file_name_path(struct augeas *aug, const char *fname) {
     return path;
 }
 
+/* Replace the subtree for FPATH with SUB */
+static void tree_freplace(struct augeas *aug, const char *fpath,
+                         struct tree *sub) {
+    struct tree *parent;
+
+    parent = tree_fpath_cr(aug, fpath);
+    ERR_RET(aug);
+
+    tree_unlink_children(aug, parent);
+    list_append(parent->children, sub);
+    list_for_each(s, sub) {
+        s->parent = parent;
+    }
+}
+
 static int load_file(struct augeas *aug, struct lens *lens,
                      const char *lens_name, char *filename) {
     char *text = NULL;
@@ -535,7 +550,8 @@ static int load_file(struct augeas *aug, struct lens *lens,
         goto done;
     }
 
-    tree_replace(aug, path, tree);
+    tree_freplace(aug, path, tree);
+    ERR_BAIL(aug);
 
     /* top level node span entire file length */
     if (span != NULL && tree != NULL) {
@@ -597,9 +613,7 @@ int text_store(struct augeas *aug, const char *lens_path,
     struct lens *lens = NULL;
 
     lens = lens_from_name(aug, lens_path);
-    if (lens == NULL) {
-        goto done;
-    }
+    ERR_BAIL(aug);
 
     make_ref(info);
     info->first_line = 1;
@@ -610,12 +624,13 @@ int text_store(struct augeas *aug, const char *lens_path,
     tree = lns_get(info, lens, text, &err);
     if (err != NULL) {
         err_status = "parse_failed";
-        goto done;
+        goto error;
     }
 
     unref(info, info);
 
-    tree_replace(aug, path, tree);
+    tree_freplace(aug, path, tree);
+    ERR_BAIL(aug);
 
     /* top level node span entire file length */
     if (span != NULL && tree != NULL) {
@@ -627,7 +642,7 @@ int text_store(struct augeas *aug, const char *lens_path,
     tree = NULL;
 
     result = 0;
-done:
+ error:
     store_error(aug, NULL, path, err_status, errno, err, text);
     free_tree(tree);
     free_lns_error(err);
@@ -718,7 +733,7 @@ void transform_file_error(struct augeas *aug, const char *status,
     va_list ap;
     int r;
 
-    err = tree_find_cr(aug, ep);
+    err = tree_fpath_cr(aug, ep);
     if (err == NULL)
         return;
 
@@ -746,7 +761,7 @@ static struct tree *file_info(struct augeas *aug, const char *fname) {
     r = pathjoin(&path, 2, AUGEAS_META_FILES, fname);
     ERR_NOMEM(r < 0, aug);
 
-    result = tree_find(aug, path);
+    result = tree_fpath(aug, path);
     ERR_BAIL(aug);
  error:
     free(path);

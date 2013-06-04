@@ -140,6 +140,44 @@ struct tree *tree_path_cr(struct tree *tree, int n, ...) {
     return tree;
 }
 
+static struct tree *tree_fpath_int(struct augeas *aug, const char *fpath,
+                                   bool create) {
+    int r;
+    char *steps = NULL, *step = NULL;
+    size_t nsteps = 0;
+    struct tree *result = NULL;
+
+    r = argz_create_sep(fpath, '/', &steps, &nsteps);
+    ERR_NOMEM(r < 0, aug);
+    result = aug->origin;
+    while ((step = argz_next(steps, nsteps, step))) {
+        if (create) {
+            result = tree_child_cr(result, step);
+            ERR_THROW(result == NULL, aug, AUG_ENOMEM,
+                      "while searching %s: can not create %s", fpath, step);
+        } else {
+            /* Lookup only */
+            result = tree_child(result, step);
+            if (result == NULL)
+                goto done;
+        }
+    }
+ done:
+    free(steps);
+    return result;
+ error:
+    result = NULL;
+    goto done;
+}
+
+struct tree *tree_fpath(struct augeas *aug, const char *fpath) {
+    return tree_fpath_int(aug, fpath, false);
+}
+
+struct tree *tree_fpath_cr(struct augeas *aug, const char *fpath) {
+    return tree_fpath_int(aug, fpath, true);
+}
+
 struct tree *tree_find(struct augeas *aug, const char *path) {
     struct pathx *p = NULL;
     struct tree *result = NULL;
@@ -619,13 +657,15 @@ static void tree_mark_files(struct tree *tree) {
 }
 
 static void tree_rm_dirty_files(struct augeas *aug, struct tree *tree) {
-    struct tree *p;
+    struct tree *p, *file;
 
     if (!tree->dirty)
         return;
 
     if ((p = tree_child(tree, "path")) != NULL) {
-        aug_rm(aug, p->value);
+        if ((file = tree_fpath(aug, p->value))) {
+            tree_unlink(file);
+        }
         tree_unlink(tree);
     } else {
         struct tree *c = tree->children;
@@ -1197,33 +1237,6 @@ int aug_span(struct augeas *aug, const char *path, char **filename,
     free_pathx(p);
     api_exit(aug);
     return result;
-}
-
-int tree_replace(struct augeas *aug, const char *path, struct tree *sub) {
-    struct tree *parent;
-    struct pathx *p = NULL;
-    int r;
-
-    p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), path, true);
-    ERR_BAIL(aug);
-
-    r = tree_rm(p);
-    if (r == -1)
-        goto error;
-
-    parent = tree_set(p, NULL);
-    if (parent == NULL)
-        goto error;
-
-    list_append(parent->children, sub);
-    list_for_each(s, sub) {
-        s->parent = parent;
-    }
-    free_pathx(p);
-    return 0;
- error:
-    free_pathx(p);
-    return -1;
 }
 
 int aug_mv(struct augeas *aug, const char *src, const char *dst) {
