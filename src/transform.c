@@ -660,7 +660,7 @@ static struct lens *xfm_lens(struct augeas *aug,
 }
 
 static void xfm_error(struct tree *xfm, const char *msg) {
-    char *v = strdup(msg);
+    char *v = msg ? strdup(msg) : NULL;
     char *l = strdup("error");
 
     if (l == NULL || v == NULL)
