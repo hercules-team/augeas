@@ -1,0 +1,4 @@
+# This file is only here to make sure augeas handles truly bizarre
+# file names gracefully. Looking this file up in the tree will require
+# escaping all the special chars in the file name
+DEVICE=weird

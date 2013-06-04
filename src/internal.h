@@ -400,7 +400,6 @@ struct tree *make_tree(char *label, char *value,
  */
 struct tree  *make_tree_origin(struct tree *root);
 
-int tree_replace(struct augeas *aug, const char *path, struct tree *sub);
 /* Make a new tree node and append it to parent's children */
 struct tree *tree_append(struct tree *parent, char *label, char *value);
 
@@ -430,6 +429,15 @@ void tree_store_value(struct tree *tree, char **value);
 int tree_set_value(struct tree *tree, const char *value);
 /* Cleanly remove all children of TREE, but leave TREE itself unchanged */
 void tree_unlink_children(struct augeas *aug, struct tree *tree);
+/* Find a node in the tree at path FPATH; FPATH is a file path, i.e.
+ * not interpreted as a path expression. If no such node exists, return NULL
+ */
+struct tree *tree_fpath(struct augeas *aug, const char *fpath);
+/* Find a node in the tree at path FPATH; FPATH is a file path, i.e.
+ * not interpreted as a path expression. If no such node exists, create
+ * it and all its missing ancestors.
+ */
+struct tree *tree_fpath_cr(struct augeas *aug, const char *fpath);
 /* Find the node matching PATH.
  * Returns the node or NULL on error
  * Errors: EMMATCH - more than one node matches PATH
