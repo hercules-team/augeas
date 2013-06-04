@@ -404,7 +404,7 @@ struct tree  *make_tree_origin(struct tree *root);
 struct tree *tree_append(struct tree *parent, char *label, char *value);
 
 int tree_rm(struct pathx *p);
-int tree_unlink(struct tree *tree);
+int tree_unlink(struct augeas *aug, struct tree *tree);
 struct tree *tree_set(struct pathx *p, const char *value);
 int tree_insert(struct pathx *p, const char *label, int before);
 int free_tree(struct tree *tree);
