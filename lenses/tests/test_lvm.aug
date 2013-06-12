@@ -243,3 +243,7 @@ test LVM.lns get conf =
 		}
 	}
 
+(* Parse description from RHEL 6 *)
+let descr="\"Created *before* executing '/sbin/vgs --noheadings -o name --config 'log{command_names=0 prefix=\\\"  \\\"}''\""
+test LVM.str get descr =
+  { "str" = "Created *before* executing '/sbin/vgs --noheadings -o name --config 'log{command_names=0 prefix=\\\"  \\\"}''" }

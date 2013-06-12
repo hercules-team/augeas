@@ -25,7 +25,7 @@ module LVM =
 
 	(* strings can contain backslash-escaped dquotes, but I don't know
 	 * how to get the message across to augeas *)
-	let str = [label "str". Quote.do_dquote (store /[^"]*/)]
+	let str = [label "str". Quote.do_dquote (store /([^\"]|\\\\.)*/)]
 	let int = [label "int". store Rx.integer]
 	(* View: flat_literal
 	 * A literal without structure *)
@@ -72,4 +72,3 @@ module LVM =
 		. Util.stdexcl
 
 	let xfm = transform lns filter
-
