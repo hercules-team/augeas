@@ -140,6 +140,44 @@ struct tree *tree_path_cr(struct tree *tree, int n, ...) {
     return tree;
 }
 
+static struct tree *tree_fpath_int(struct augeas *aug, const char *fpath,
+                                   bool create) {
+    int r;
+    char *steps = NULL, *step = NULL;
+    size_t nsteps = 0;
+    struct tree *result = NULL;
+
+    r = argz_create_sep(fpath, '/', &steps, &nsteps);
+    ERR_NOMEM(r < 0, aug);
+    result = aug->origin;
+    while ((step = argz_next(steps, nsteps, step))) {
+        if (create) {
+            result = tree_child_cr(result, step);
+            ERR_THROW(result == NULL, aug, AUG_ENOMEM,
+                      "while searching %s: can not create %s", fpath, step);
+        } else {
+            /* Lookup only */
+            result = tree_child(result, step);
+            if (result == NULL)
+                goto done;
+        }
+    }
+ done:
+    free(steps);
+    return result;
+ error:
+    result = NULL;
+    goto done;
+}
+
+struct tree *tree_fpath(struct augeas *aug, const char *fpath) {
+    return tree_fpath_int(aug, fpath, false);
+}
+
+struct tree *tree_fpath_cr(struct augeas *aug, const char *fpath) {
+    return tree_fpath_int(aug, fpath, true);
+}
+
 struct tree *tree_find(struct augeas *aug, const char *path) {
     struct pathx *p = NULL;
     struct tree *result = NULL;
@@ -359,7 +397,7 @@ static struct tree *tree_from_transform(struct augeas *aug,
     return txfm;
  error:
     free(v);
-    tree_unlink(txfm);
+    tree_unlink(aug, txfm);
     return NULL;
 }
 
@@ -598,6 +636,37 @@ struct augeas *aug_init(const char *root, const char *loadpath,
     return result;
 }
 
+/* Free one tree node */
+static void free_tree_node(struct tree *tree) {
+    if (tree == NULL)
+        return;
+
+    if (tree->span != NULL)
+        free_span(tree->span);
+    free(tree->label);
+    free(tree->value);
+    free(tree);
+}
+
+/* Only unlink; assume we know TREE is not in the symtab */
+static int tree_unlink_raw(struct tree *tree) {
+    int result = 0;
+
+    assert (tree->parent != NULL);
+    list_remove(tree, tree->parent->children);
+    tree_mark_dirty(tree->parent);
+    result = free_tree(tree->children) + 1;
+    free_tree_node(tree);
+    return result;
+}
+
+int tree_unlink(struct augeas *aug, struct tree *tree) {
+    if (tree == NULL)
+        return 0;
+    pathx_symtab_remove_descendants(aug->symtab, tree);
+    return tree_unlink_raw(tree);
+}
+
 void tree_unlink_children(struct augeas *aug, struct tree *tree) {
     if (tree == NULL)
         return;
@@ -605,7 +674,7 @@ void tree_unlink_children(struct augeas *aug, struct tree *tree) {
     pathx_symtab_remove_descendants(aug->symtab, tree);
 
     while (tree->children != NULL)
-        tree_unlink(tree->children);
+        tree_unlink_raw(tree->children);
 }
 
 static void tree_mark_files(struct tree *tree) {
@@ -625,8 +694,8 @@ static void tree_rm_dirty_files(struct augeas *aug, struct tree *tree) {
         return;
 
     if ((p = tree_child(tree, "path")) != NULL) {
-        aug_rm(aug, p->value);
-        tree_unlink(tree);
+        tree_unlink(aug, tree_fpath(aug, p->value));
+        tree_unlink(aug, tree);
     } else {
         struct tree *c = tree->children;
         while (c != NULL) {
@@ -650,7 +719,7 @@ static void tree_rm_dirty_leaves(struct augeas *aug, struct tree *tree,
     }
 
     if (tree != protect && tree->children == NULL)
-        tree_unlink(tree);
+        tree_unlink(aug, tree);
 }
 
 int aug_load(struct augeas *aug) {
@@ -802,9 +871,7 @@ static void record_var_meta(struct augeas *aug, const char *name,
     struct tree *tree = tree_path_cr(aug->origin, 2, s_augeas, s_vars);
     ERR_NOMEM(tree == NULL, aug);
     if (expr == NULL) {
-        tree = tree_child(tree, name);
-        if (tree != NULL)
-            tree_unlink(tree);
+        tree_unlink(aug, tree_child(tree, name));
     } else {
         tree = tree_child_cr(tree, name);
         ERR_NOMEM(tree == NULL, aug);
@@ -1052,18 +1119,6 @@ struct tree *make_tree_origin(struct tree *root) {
     return origin;
 }
 
-/* Free one tree node */
-static void free_tree_node(struct tree *tree) {
-    if (tree == NULL)
-        return;
-
-    if (tree->span != NULL)
-        free_span(tree->span);
-    free(tree->label);
-    free(tree->value);
-    free(tree);
-}
-
 /* Recursively free the whole tree TREE and all its siblings */
 int free_tree(struct tree *tree) {
     int cnt = 0;
@@ -1077,17 +1132,6 @@ int free_tree(struct tree *tree) {
     }
 
     return cnt;
-}
-
-int tree_unlink(struct tree *tree) {
-    int result = 0;
-
-    assert (tree->parent != NULL);
-    list_remove(tree, tree->parent->children);
-    tree_mark_dirty(tree->parent);
-    result = free_tree(tree->children) + 1;
-    free_tree_node(tree);
-    return result;
 }
 
 int tree_rm(struct pathx *p) {
@@ -1116,7 +1160,7 @@ int tree_rm(struct pathx *p) {
     }
 
     for (i = 0; i < ndel; i++)
-        cnt += tree_unlink(del[i]);
+        cnt += tree_unlink_raw(del[i]);
     free(del);
 
     return cnt;
@@ -1199,33 +1243,6 @@ int aug_span(struct augeas *aug, const char *path, char **filename,
     return result;
 }
 
-int tree_replace(struct augeas *aug, const char *path, struct tree *sub) {
-    struct tree *parent;
-    struct pathx *p = NULL;
-    int r;
-
-    p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), path, true);
-    ERR_BAIL(aug);
-
-    r = tree_rm(p);
-    if (r == -1)
-        goto error;
-
-    parent = tree_set(p, NULL);
-    if (parent == NULL)
-        goto error;
-
-    list_append(parent->children, sub);
-    list_for_each(s, sub) {
-        s->parent = parent;
-    }
-    free_pathx(p);
-    return 0;
- error:
-    free_pathx(p);
-    return -1;
-}
-
 int aug_mv(struct augeas *aug, const char *src, const char *dst) {
     struct pathx *s = NULL, *d = NULL;
     struct tree *ts, *td, *t;
@@ -1268,7 +1285,7 @@ int aug_mv(struct augeas *aug, const char *src, const char *dst) {
     ts->value = NULL;
     ts->children = NULL;
 
-    tree_unlink(ts);
+    tree_unlink(aug, ts);
     tree_mark_dirty(td);
 
     ret = 0;
