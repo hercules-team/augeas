@@ -13,12 +13,12 @@
       (Erik Anderson)
     * Automaster: accept spaces between options
     * BBHosts: support more flags and downtime feature (Mathieu Alorent)
-    * Bootconf: new lens for OpenBSD's /etc/boot.conf (Jasper Adriaanse)
+    * Bootconf: new lens for OpenBSD's /etc/boot.conf (Jasper Lievisse Adriaanse)
     * Desktop: Support dos eol
-    * Dhclient: read /etc/dhclient.conf used in OpenBSD (Jasper Adriaanse)
+    * Dhclient: read /etc/dhclient.conf used in OpenBSD (Jasper Lievisse Adriaanse)
     * Dovecot: New lens for dovecot configurations (Serge Smetana)
     * Fai_Diskconfig: Optimize some regexps
-    * Fonts: exclude all README files (Jasper Adriaanse)
+    * Fonts: exclude all README files (Jasper Lievisse Adriaanse)
     * Inetd: support IPv6 addresses, bug #320
     * IniFile: Add lns_loose and lns_loose_multiline definitions
                Support smart quotes
@@ -49,13 +49,13 @@
     * LVM: New lens for LVM metadata (Gabriel)
     * Mdadm_conf: optimize some regexps
     * MongoDBServer: new lens (Brian Harrington)
-    * Monit: also load /etc/monitrc (Jasper Adriaanse)
+    * Monit: also load /etc/monitrc (Jasper Lievisse Adriaanse)
     * MySQL: Use standard comments and empty lines
              Support dos eol
-    * NagiosCfg: handle Icinga and resources.cfg (Jasper Adriaanse)
+    * NagiosCfg: handle Icinga and resources.cfg (Jasper Lievisse Adriaanse)
     * Nrpe: accept any config option rather than predefined list (Gonzalo
             Servat); optimize some regexps
-    * Ntpd: new lense for OpenNTPD config (Jasper Adriaanse)
+    * Ntpd: new lense for OpenNTPD config (Jasper Lievisse Adriaanse)
     * Odbc: Use standard comments and empty lines
     * Openshift_*: new lenses for Openshift support (Brian Harrington)
     * Quote: allow multiple spaces in quote_spaces; improve docs
@@ -66,7 +66,7 @@
            Load /etc/php*/fpm/pool.d/*.conf (Enrico Stahn)
     * Postfix_master: allow [] in words, bug #345
     * Resolv: support 'lookup' and 'family' key words, bug #320
-              (Jasper Adriaanse))
+              (Jasper Lievisse Adriaanse))
     * Rsyslog: support :omusrmsg: list of users in actions
     * RX: add CR to RX.space_in
     * Samba: Use standard comments and empty lines
