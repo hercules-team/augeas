@@ -25,6 +25,8 @@ server    -rw,hard,intr       / -ro myserver.me.org:/ \
                               /usr myserver.me.org:/usr \
                               /home myserver.me.org:/home
 
+server    -rw,hard,intr       / -ro my-with-dash-server.me.org:/
+
 # included maps
 +auto_home
 "
@@ -148,8 +150,20 @@ server    -rw,hard,intr       / -ro myserver.me.org:/ \
                         { "host" = "myserver.me.org" }
                         { "path" = "/home" } } } } } }
     { }
+    { "11" = "server"
+        { "opt" = "rw" }
+        { "opt" = "hard" }
+        { "opt" = "intr" }
+        { "mount"
+            { "1" = "/"
+                { "opt" = "ro" }
+                { "location"
+                    { "1"
+                        { "host" = "my-with-dash-server.me.org" }
+                        { "path" = "/" } } } } } }
+    { }
     { "#comment" = "included maps" }
-    { "11" = "+"
+    { "12" = "+"
         { "map" = "auto_home" } }
 
 (* Local Variables: *)
