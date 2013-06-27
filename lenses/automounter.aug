@@ -40,7 +40,7 @@ let comment = Util.comment
 let path = /[^-+#: \t\n][^#: \t\n]*/
 
 (* View: hostname *)
-let hostname = /[^-:#\(\), \n\t]+/
+let hostname = /[^-:#\(\), \n\t][^:#\(\), \n\t]*/
 
 (* An option label can't contain comma, comment, equals, or space *)
 let optlabel = /[^,#:\(\)= \n\t]+/
