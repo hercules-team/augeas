@@ -1,6 +1,6 @@
 (* Roundcube Configuration
 
-   Davide Guerri <d.guerri@unidata.it>
+   Davide Guerri <davide.guerri@gmail.com>
 
    Heavily based on Phpvars module for Augeas (by Free Ekanayaka <free@64studio.com>)
 
