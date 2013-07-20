@@ -4,6 +4,8 @@ module Test_interfaces =
 # and how to activate them. For more information, see interfaces(5).
 # The loopback network interface
 
+source /etc/network/interfaces.d/*.conf
+
 auto lo eth0 #foo
 allow-hotplug eth1
 
@@ -35,12 +37,16 @@ mapping eth1
 
 	script\
  /usr/local/sbin/map-scheme
+
+source /etc/network.d/*.net.conf
 "
 
     test Interfaces.lns get conf =
         { "#comment" = "This file describes the network interfaces available on your system"}
         { "#comment" = "and how to activate them. For more information, see interfaces(5)." }
         { "#comment" = "The loopback network interface" }
+        {}
+        {"source" = "/etc/network/interfaces.d/*.conf"}
         {}
         { "auto"
             { "1" = "lo" }
@@ -80,10 +86,16 @@ mapping eth1
             { "#comment" = "I like mapping ..." }
             { "#comment" = "... and I like comments" }
             {}
-            { "script" = "/usr/local/sbin/map-scheme"} }
+            { "script" = "/usr/local/sbin/map-scheme"}
+        {} }
+        {"source" = "/etc/network.d/*.net.conf"}
 
 test Interfaces.lns put "" after
 	set "/iface[1]" "eth0";
 	set "/iface[1]/family" "inet";
 	set "/iface[1]/method" "dhcp"
 = "iface eth0 inet dhcp\n"
+
+test Interfaces.lns put "" after
+    set "/source[0]" "/etc/network/conf.d/*.conf"
+= "source /etc/network/conf.d/*.conf\n"
