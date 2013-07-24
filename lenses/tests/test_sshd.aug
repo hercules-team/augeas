@@ -74,6 +74,19 @@ Match User sarko Group pres.*
 Match User bush Group pres.* Host white.house.*
 Banner /etc/welcome.txt\n"
 
+(* Test: Sshd.lns
+   Indent when adding to a Match group *)
+  test Sshd.lns put match_blocks after
+    set "Match[1]/Settings/PermitRootLogin" "yes" =
+"X11Forwarding yes
+Match User sarko Group pres.*
+  Banner /etc/bienvenue.txt
+  X11Forwarding no
+  PermitRootLogin yes
+Match User bush Group pres.* Host white.house.*
+Banner /etc/welcome.txt\n"
+
+
 
 (* Local Variables: *)
 (* mode: caml       *)
