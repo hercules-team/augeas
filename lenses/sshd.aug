@@ -76,6 +76,7 @@ module Sshd =
          - /MACs|Match|AcceptEnv|Subsystem|(Allow|Deny)(Groups|Users)/
 
    let comment = Util.comment
+   let comment_noindent = Util.comment_noindent
    let empty = Util.empty
 
    let array_entry (k:string) =
@@ -115,7 +116,7 @@ module Sshd =
      [ label "Condition" . condition_entry+ . eol ]
 
    let match_entry =
-     ( comment | empty | (indent . other_entry) )
+     ( (indent . comment_noindent) | empty | (indent . other_entry) )
 
    let match =
      [ key "Match" . match_cond
