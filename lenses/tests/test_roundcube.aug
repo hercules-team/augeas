@@ -1,4 +1,9 @@
-module Test_roundcube =
+(*
+Module: Test_Roundcube
+  Provides unit test (that is also an example) for the <Roundcube> lens.
+*)
+
+module Test_Roundcube =
 
 let conf = "<?phP
 
@@ -49,4 +54,4 @@ test Roundcube.lns get conf =
    { "default_imap_folders" = "array('INBOX', 'Drafts', 'Sent', 'Junk', 'Trash')"
       { "#comment" = "Jumps over the lazy dog" }
    }
-   
+
