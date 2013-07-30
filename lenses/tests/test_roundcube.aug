@@ -49,3 +49,4 @@ test Roundcube.lns get conf =
    { "default_imap_folders" = "array('INBOX', 'Drafts', 'Sent', 'Junk', 'Trash')"
       { "#comment" = "Jumps over the lazy dog" }
    }
+   
