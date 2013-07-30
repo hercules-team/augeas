@@ -47,8 +47,8 @@ SubTitle: C API
 
 Group: Main Links  {
 
-   Link: Main  (http://augeas.net)
-   Link: Documentation  (http://augeas.net/doc)
+   Link: Main  (/index.html)
+   Link: Documentation  (/docs/index.html)
    }  # Group: Main Links
 
 File: Public API  (no auto-title, augeas.h)
