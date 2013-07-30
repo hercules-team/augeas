@@ -5,7 +5,7 @@ Module: Roundcube
 Author: Davide Guerri <davide.guerri@gmail.com>
 
 About: Reference
-  This lens tries to keep as close as possible to `man 5 keepalived.conf` where possible.
+  http://roundcube.net/about
 
 About: License
    This file is licenced under the LGPL v2+, like the rest of Augeas.
