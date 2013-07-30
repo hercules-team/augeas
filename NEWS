@@ -4,7 +4,7 @@
     * Fix documentation link in c_api NaturalDocs menu
   - Lens changes/additions
     * Automounter: Handle hostnames with dashes in them, GH issue #27
-    * Shellvars: Add /etc/selinux/semanage.conf
+    * Simplevars: Add /etc/selinux/semanage.conf
     * Sshd: Indent Match entries by 2 spaces by default
 
 1.1.0 - 2013-06-14
