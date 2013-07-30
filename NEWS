@@ -4,6 +4,7 @@
     * Fix documentation link in c_api NaturalDocs menu
   - Lens changes/additions
     * Automounter: Handle hostnames with dashes in them, GH issue #27
+    * Roundcube: Support for roundcube web-MUA configuration (Davide Guerri)
     * Sshd: Indent Match entries by 2 spaces by default
 
 1.1.0 - 2013-06-14
@@ -75,7 +76,6 @@
     * Postfix_master: allow [] in words, bug #345
     * Resolv: support 'lookup' and 'family' key words, bug #320
               (Jasper Lievisse Adriaanse))
-    * Roundcube: Support for roundcube web-MUA configuration (Davide Guerri)
     * Rsyslog: support :omusrmsg: list of users in actions
     * RX: add CR to RX.space_in
     * Samba: Use standard comments and empty lines
