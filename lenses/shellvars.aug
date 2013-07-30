@@ -216,6 +216,7 @@ module Shellvars =
                      . incl "/etc/rc.conf"
                      . incl "/etc/rc.conf.local"
                      . incl "/etc/selinux/config"
+                     . incl "/etc/selinux/semanage.conf"
                      . incl "/etc/ucf.conf"
                      . incl "/etc/locale.conf"
                      . incl "/etc/vconsole.conf"
