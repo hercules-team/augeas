@@ -1,3 +1,11 @@
+1.2.0 - 2013-XX-XX
+
+  - General changes/additions
+    * Fix documentation link in c_api NaturalDocs menu
+  - Lens changes/additions
+    * Automounter: Handle hostnames with dashes in them, GH issue #27
+    * Sshd: Indent Match entries by 2 spaces by default
+
 1.1.0 - 2013-06-14
   - General changes/additions
     * Handle files with special characters in their name, bug #343
