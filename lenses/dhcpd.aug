@@ -384,11 +384,37 @@ let stmt_block_subnet (body:lens)
                         . body*
                         . sep_cbr ]
 
+let conditional (body:lens) =
+     let condition         = /[^{ \r\t\n][^{\n]*[^{ \r\t\n]|[^{ \t\n\r]/
+  in let elsif = [ indent
+                 . Build.xchgs "elsif" "@elsif"
+                 . sep_spc
+                 . store condition
+                 . sep_obr
+                 . body*
+                 . sep_cbr ]
+  in let else = [  indent
+                 . Build.xchgs "else" "@else"
+                 . sep_obr
+                 . body*
+                 . sep_cbr ]
+  in [ indent
+     . Build.xchgs "if" "@if"
+     . sep_spc
+     . store condition
+     . sep_obr
+     . body*
+     . sep_cbr
+     . elsif*
+     . else? ]
+
+
 let all_block (body:lens) =
     let lns1 = stmt_block_subnet body in
     let lns2 = stmt_block_arg body in
     let lns3 = stmt_block_noarg body in
-    (lns1 | lns2 | lns3 | stmt_entry)
+    let lns4 = conditional body in
+    (lns1 | lns2 | lns3 | lns4 | stmt_entry)
 
 let rec lns_staging = stmt_entry|all_block lns_staging
 let lns = (lns_staging)*
