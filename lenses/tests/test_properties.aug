@@ -145,3 +145,16 @@ escaped\=equals=value
 escaped\ space=value
 tomcat.application.host=foo.network.com
 "
+
+(* GH issue #19: value on new line *)
+test lns get "k=\
+b\
+c\n" =
+    { "k" = " < multi > "
+      { } { = "b" } { = "c" } }
+
+test lns get "tomcat.util.scan.DefaultJarScanner.jarsToSkip=\
+bootstrap.jar,commons-daemon.jar,tomcat-juli.jar\n" =
+    { "tomcat.util.scan.DefaultJarScanner.jarsToSkip" = " < multi > "
+      { } { = "bootstrap.jar,commons-daemon.jar,tomcat-juli.jar" } }
+
