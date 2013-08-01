@@ -37,3 +37,6 @@ iface adsl0 inet dhcp
   pre-up /usr/sbin/adictrl -f
   pre-up /usr/sbin/adictrl -d
   pre-up /usr/sbin/adictrl -s
+
+
+source /etc/network/interfaces.d/*.conf
