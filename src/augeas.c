@@ -82,7 +82,8 @@ static const char *const errcodes[] = {
     "Cannot move node into its descendant",             /* AUG_EMVDESC */
     "Failed to execute command",                        /* AUG_ECMDRUN */
     "Invalid argument in function call",                /* AUG_EBADARG */
-    "Invalid label"                                     /* AUG_ELABEL */
+    "Invalid label",                                    /* AUG_ELABEL */
+    "Cannot copy node into its descendant"              /* AUG_ECPDESC */
 };
 
 static void tree_mark_dirty(struct tree *tree) {
@@ -351,10 +352,13 @@ struct tree *tree_append(struct tree *parent,
 static struct tree *tree_append_s(struct tree *parent,
                                   const char *l0, char *v) {
     struct tree *result;
-    char *l = strdup(l0);
+    char *l;
 
-    if (l == NULL)
+    if (l0 == NULL) {
         return NULL;
+    } else {
+      l = strdup(l0);
+    }
     result = tree_append(parent, l, v);
     if (result == NULL)
         free(l);
@@ -1286,6 +1290,61 @@ int aug_mv(struct augeas *aug, const char *src, const char *dst) {
     ts->children = NULL;
 
     tree_unlink(aug, ts);
+    tree_mark_dirty(td);
+
+    ret = 0;
+ error:
+    free_pathx(s);
+    free_pathx(d);
+    api_exit(aug);
+    return ret;
+}
+
+static void tree_copy_rec(struct tree *src, struct tree *dst) {
+  struct tree *n;
+  char *value;
+
+  list_for_each(c, src->children) {
+    value = c->value == NULL ? NULL : strdup(c->value);
+    n = tree_append_s(dst, c->label, value);
+    tree_copy_rec(c, n);
+  }
+}
+
+int aug_cp(struct augeas *aug, const char *src, const char *dst) {
+    struct pathx *s = NULL, *d = NULL;
+    struct tree *ts, *td, *t;
+    int r, ret;
+
+    api_entry(aug);
+
+    ret = -1;
+    s = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), src, true);
+    ERR_BAIL(aug);
+
+    d = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), dst, true);
+    ERR_BAIL(aug);
+
+    r = find_one_node(s, &ts);
+    if (r < 0)
+        goto error;
+
+    r = pathx_expand_tree(d, &td);
+    if (r == -1)
+        goto error;
+
+    /* Don't copy SRC into its own descendent */
+    t = td;
+    do {
+        ERR_THROW(t == ts, aug, AUG_ECPDESC,
+                  "destination %s is a descendant of %s", dst, src);
+        t = t->parent;
+    } while (t != aug->origin);
+
+    tree_set_value(td, ts->value);
+    free_tree(td->children);
+    td->children = NULL;
+    tree_copy_rec(ts, td);
     tree_mark_dirty(td);
 
     ret = 0;

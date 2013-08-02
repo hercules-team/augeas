@@ -537,6 +537,48 @@ static const struct command_def cmd_move_def = {
     .help = cmd_mv_help
 };
 
+static void cmd_cp(struct command *cmd) {
+    const char *src = arg_value(cmd, "src");
+    const char *dst = arg_value(cmd, "dst");
+    int r;
+
+    r = aug_cp(cmd->aug, src, dst);
+    if (r < 0)
+        ERR_REPORT(cmd, AUG_ECMDRUN,
+                   "Copying %s to %s failed", src, dst);
+}
+
+static const struct command_opt_def cmd_cp_opts[] = {
+    { .type = CMD_PATH, .name = "src", .optional = false,
+      .help = "the tree to copy" },
+    { .type = CMD_PATH, .name = "dst", .optional = false,
+      .help = "where to copy the source tree" },
+    CMD_OPT_DEF_LAST
+};
+
+static const char const cmd_cp_help[] =
+    "Copy node  SRC to DST.  SRC must match  exactly one node in  "
+    "the tree.\n DST  must either  match  exactly one  node  in the  tree,  "
+    "or may  not\n exist  yet. If  DST exists  already, it  and all  its  "
+    "descendants are\n deleted.  If  DST  does  not   exist  yet,  it  and  "
+    "all  its  missing\n ancestors are created.";
+
+static const struct command_def cmd_cp_def = {
+    .name = "cp",
+    .opts = cmd_cp_opts,
+    .handler = cmd_cp,
+    .synopsis = "copy a subtree",
+    .help = cmd_cp_help
+};
+
+static const struct command_def cmd_copy_def = {
+    .name = "copy",
+    .opts = cmd_cp_opts,
+    .handler = cmd_cp,
+    .synopsis = "copy a subtree (alias of 'cp')",
+    .help = cmd_cp_help
+};
+
 static void cmd_rename(struct command *cmd) {
     const char *src = arg_value(cmd, "src");
     const char *lbl = arg_value(cmd, "lbl");
@@ -1178,6 +1220,8 @@ static const struct command_grp_def cmd_grp_write_def = {
         &cmd_insert_def,
         &cmd_mv_def,
         &cmd_move_def,
+        &cmd_cp_def,
+        &cmd_copy_def,
         &cmd_rename_def,
         &cmd_rm_def,
         &cmd_set_def,
