@@ -243,6 +243,19 @@ int aug_rm(augeas *aug, const char *path);
  */
 int aug_mv(augeas *aug, const char *src, const char *dst);
 
+/* Function: aug_cp
+ *
+ * Copy the node SRC to DST. SRC must match exactly one node in the
+ * tree. DST must either match exactly one node in the tree, or may not
+ * exist yet. If DST exists already, it and all its descendants are
+ * deleted. If DST does not exist yet, it and all its missing ancestors are
+ * created.
+ *
+ * Returns:
+ * 0 on success and -1 on failure.
+ */
+int aug_cp(augeas *aug, const char *src, const char *dst);
+
 /* Function: aug_rename
  *
  * Rename the label of all nodes matching SRC to LBL.
@@ -433,7 +446,8 @@ typedef enum {
     AUG_EMVDESC,        /* Cannot move node into its descendant */
     AUG_ECMDRUN,        /* Failed to execute command */
     AUG_EBADARG,        /* Invalid argument in funcion call */
-    AUG_ELABEL          /* Invalid label */
+    AUG_ELABEL,         /* Invalid label */
+    AUG_ECPDESC         /* Cannot copy node into its descendant */
 } aug_errcode_t;
 
 /* Return the error code from the last API call */
