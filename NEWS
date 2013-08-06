@@ -2,6 +2,7 @@
 
   - General changes/additions
     * Fix documentation link in c_api NaturalDocs menu
+    * Fix NaturalDocs documentation for various lenses
   - Lens changes/additions
     * Automounter: Handle hostnames with dashes in them, GH issue #27
     * Dhcpd: support conditionals, GH issue #34
