@@ -1,5 +1,6 @@
 (*
-JMXAccess  module for Augeas
+Module: JMXAccess
+  JMXAccess module for Augeas
 
 Author: Brian Redbeard <redbeard@dead-city.org>
 

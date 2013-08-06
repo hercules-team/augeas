@@ -1,5 +1,6 @@
 (*
-JettyRealm Properties for Augeas
+Module: JettyRealm
+  JettyRealm Properties for Augeas
 
 Author: Brian Redbeard <redbeard@dead-city.org>
 

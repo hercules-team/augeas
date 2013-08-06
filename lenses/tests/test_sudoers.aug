@@ -1,3 +1,4 @@
+(* Module: Test_sudoers *)
 module Test_sudoers =
 
 let test_user = [ label "user" . Sudoers.sto_to_com_user . Util.eol ]*

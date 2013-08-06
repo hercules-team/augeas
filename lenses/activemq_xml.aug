@@ -1,5 +1,6 @@
 (*
-ActiveMQ / FuseMQ XML module for Augeas
+Module: ActiveMQ_XML
+  ActiveMQ / FuseMQ XML module for Augeas
 
 Author: Brian Redbeard <redbeard@dead-city.org>
 
