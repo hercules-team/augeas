@@ -7,6 +7,7 @@
     * Dhcpd: support conditionals, GH issue #34
     * PHP: allow php-fpm syntax in keys, GH issue #35
     * Properties: support multiline starting with an empty string, GH issue #19
+    * Sysconfig_Route: New lens for RedHat's route configs
     * Simplevars: Add /etc/selinux/semanage.conf
     * Sshd: Indent Match entries by 2 spaces by default
 

@@ -1,0 +1,153 @@
+Format: 1.4
+
+
+Title: Augeas Documentation
+SubTitle: Modules
+
+# You can add a footer to your documentation like this:
+# Footer: [text]
+# If you want to add a copyright notice, this would be the place to do it.
+
+# You can add a timestamp to your documentation like one of these:
+# Timestamp: Generated on month day, year
+# Timestamp: Updated mm/dd/yyyy
+# Timestamp: Last updated mon day
+#
+#   m     - One or two digit month.  January is "1"
+#   mm    - Always two digit month.  January is "01"
+#   mon   - Short month word.  January is "Jan"
+#   month - Long month word.  January is "January"
+#   d     - One or two digit day.  1 is "1"
+#   dd    - Always two digit day.  1 is "01"
+#   day   - Day with letter extension.  1 is "1st"
+#   yy    - Two digit year.  2006 is "06"
+#   yyyy  - Four digit year.  2006 is "2006"
+#   year  - Four digit year.  2006 is "2006"
+
+
+# --------------------------------------------------------------------------
+# 
+# Cut and paste the lines below to change the order in which your files
+# appear on the menu.  Don't worry about adding or removing files, Natural
+# Docs will take care of that.
+# 
+# You can further organize the menu by grouping the entries.  Add a
+# "Group: [name] {" line to start a group, and add a "}" to end it.
+# 
+# You can add text and web links to the menu by adding "Text: [text]" and
+# "Link: [name] ([URL])" lines, respectively.
+# 
+# The formatting and comments are auto-generated, so don't worry about
+# neatness when editing the file.  Natural Docs will clean it up the next
+# time it is run.  When working with groups, just deal with the braces and
+# forget about the indentation and comments.
+# 
+# --------------------------------------------------------------------------
+
+
+Group: Main Site  {
+
+   Link: Main  (/index.html)
+   Link: Documentation  (/docs/index.html)
+   }  # Group: Main Site
+
+Group: Specific Modules  {
+
+   File: Aliases (aliases.aug)
+   File: Approx (approx.aug)
+   File: AptPreferences (aptpreferences.aug)
+   File: Aptsources (aptsources.aug)
+   File: BBhosts (bbhosts.aug)
+   File: Cgconfig  (cgconfig.aug)
+   File: Cgrules  (cgrules.aug)
+   File: CobblerModules (cobblermodules.aug)
+   File: CobblerSettings (cobblersettings.aug)
+   File: Cron  (cron.aug)
+   File: Darkice (darkice.aug)
+   File: Debctrl  (debctrl.aug)
+   File: Device_map (device_map.aug)
+   File: Dhclient (dhclient.aug)
+   File: Dnsmasq (dnsmasq.aug)
+   File: Dpkg  (dpkg.aug)
+   File: Dput (dput.aug)
+   File: Ethers (ethers.aug)
+   File: Exports  (exports.aug)
+   File: Fstab (fstab.aug)
+   File: Gdm (gdm.aug)
+   File: Group (group.aug)
+   File: Grub (grub.aug)
+   File: Inetd (inetd.aug)
+   File: Inittab (inittab.aug)
+   File: Interfaces (interfaces.aug)
+   File: Iptables  (iptables.aug)
+   File: Json (json.aug)
+   File: Keepalived (keepalived.aug)
+   File: Krb5 (krb5.aug)
+   File: Limits (limits.aug)
+   File: Login_defs (login_defs.aug)
+   File: Logrotate (logrotate.aug)
+   File: Lokkit  (lokkit.aug)
+   File: Mke2fs (mke2fs.aug)
+   File: Modprobe  (modprobe.aug)
+   File: Modules_conf  (modules_conf.aug)
+   File: Monit (monit.aug)
+   File: Multipath (multipath.aug)
+   File: MySQL (mysql.aug)
+   File: NagiosCfg (nagioscfg.aug)
+   File: Nrpe  (nrpe.aug)
+   File: Nsswitch (nsswitch.aug)
+   File: Ntp (ntp.aug)
+   File: Odbc (odbc.aug)
+   File: OpenVPN (openvpn.aug)
+   File: Pam (pam.aug)
+   File: Passwd (passwd.aug)
+   File: Pbuilder  (pbuilder.aug)
+   File: Pg_Hba  (pg_hba.aug)
+   File: PHP (php.aug)
+   File: Phpvars (phpvars.aug)
+   File: Postfix_Access (postfix_access.aug)
+   File: Postfix_Main (postfix_main.aug)
+   File: Postfix_Master (postfix_master.aug)
+   File: Puppet (puppet.aug)
+   File: Resolv (resolv.aug)
+   File: Rsyncd (rsyncd.aug)
+   File: Samba (samba.aug)
+   File: Securetty (securetty.aug)
+   File: Services  (services.aug)
+   File: Shells (shells.aug)
+   File: Shellvars_list (shellvars_list.aug)
+   File: Shellvars (shellvars.aug)
+   File: Slapd (slapd.aug)
+   File: Soma (soma.aug)
+   File: Spacevars (spacevars.aug)
+   File: Squid (squid.aug)
+   File: Sshd  (sshd.aug)
+   File: Sudoers  (sudoers.aug)
+   File: Sysconfig (sysconfig.aug)
+   File: Sysctl (sysctl.aug)
+   File: Syslog (syslog.aug)
+   File: Vsftpd (vsftpd.aug)
+   File: Webmin (webmin.aug)
+   File: Wine (wine.aug)
+   File: Xinetd  (xinetd.aug)
+   File: Xorg  (xorg.aug)
+   File: Yum (yum.aug)
+   }  # Group: Specific Modules
+
+Group: Generic Modules  {
+
+   File: Build  (build.aug)
+   File: IniFile  (inifile.aug)
+   File: Rx  (rx.aug)
+   File: Sep  (sep.aug)
+   File: Util  (util.aug)
+   }  # Group: Generic Modules
+
+Group: Index  {
+
+   Augeas Lens Index: Lenses
+   Augeas Module Index: Modules
+   Augeas Variable Index: Variables
+   Index: Everything
+   }  # Group: Index
+
