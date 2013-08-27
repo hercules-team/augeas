@@ -102,8 +102,8 @@ module Grub =
      *  This is a shell-only directive in upstream grub; the grub versions
      *  in at least Fedora/RHEL use this to find devices for UEFI boot *)
     let device =
-	  [ command "device" "" . Sep.space . store /\([A-Za-z0-9_.-]+\)/ . spc .
-		  [ label "file" . value_to_eol ] . Util.eol ]
+      [ command "device" "" . Sep.space . store /\([A-Za-z0-9_.-]+\)/ . spc .
+        [ label "file" . value_to_eol ] . Util.eol ]
 
     (* View: color *)
     let color =
@@ -150,7 +150,7 @@ module Grub =
                      | terminal
                      | password_arg
                      | color
-		     | device
+                     | device
                      | setkey
 
     (* View: title *)
