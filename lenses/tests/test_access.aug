@@ -103,3 +103,18 @@ test Access.lns get "+ : @group@@domain : ALL \n" =
 test Access.lns put "+ : @group : ALL \n" after
   set "/access/netgroup[. = 'group']/nisdomain" "domain" =
 "+ : @group@@domain : ALL \n"
+
+(* Check DOMAIN\user style entry *)
+test Access.lns get "+ : root : foo1.bar.org foo3.bar.org
++ : (DOMAIN\linux_users) : ALL
++ : DOMAIN\linux_user : ALL\n" =
+  { "access" = "+"
+    { "user" = "root" }
+    { "origin" = "foo1.bar.org" }
+    { "origin" = "foo3.bar.org" } }
+  { "access" = "+"
+    { "group" = "DOMAIN\linux_users" }
+    { "origin" = "ALL" } }
+  { "access" = "+"
+    { "user" = "DOMAIN\linux_user" }
+    { "origin" = "ALL" } }
