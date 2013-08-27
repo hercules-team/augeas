@@ -32,7 +32,7 @@ let space_or_eol (sep:regexp) (default:string) =
   del (space_or_eol_re? . sep . space_or_eol_re?) default 
 
 (* View: word *)
-let word = store /[A-Za-z0-9@\*.-]+/
+let word = store /[A-Za-z0-9@\*\.\+=-]+/
 
 (* View: comma *)
 let comma = space_or_eol "," ", "

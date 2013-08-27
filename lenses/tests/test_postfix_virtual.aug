@@ -15,6 +15,7 @@ user2@virtual-alias.domain
     address3
 root    robert.oot@domain.com
 @example.net  root,postmaster
+postmaster  mtaadmin+root=mta1
 "
 
 (* Test: Postfix_Virtual.lns *)
@@ -39,4 +40,7 @@ test Postfix_Virtual.lns get conf =
   { "pattern" = "@example.net"
     { "destination" = "root" }
     { "destination" = "postmaster" }
+  }
+  { "pattern" = "postmaster"
+    { "destination" = "mtaadmin+root=mta1" }
   }
