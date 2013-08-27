@@ -38,6 +38,7 @@ title Fedora (2.6.24.3-34.fc8)
         initrd /initrd-2.6.24.3-34.fc8.img
         map (hd0) (hd1)
 title othermenu
+        lock
         configfile /boot/grub/othergrub.conf
 "
 
@@ -88,6 +89,7 @@ title othermenu
         { "initrd" = "/initrd-2.6.24.3-34.fc8.img" }
         { "map" { "from" = "(hd0)" } { "to" = "(hd1)" } } }
     { "title" = "othermenu"
+        { "lock" }
         { "configfile" = "/boot/grub/othergrub.conf" } }
 
 

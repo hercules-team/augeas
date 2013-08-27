@@ -216,6 +216,7 @@ module Grub =
         | configfile
         | module_line
         | map_line
+        | kw_pres "lock"
 
     (* View: boot *)
     let boot =
