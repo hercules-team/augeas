@@ -12,6 +12,8 @@ module Test_grub =
 device (hd0) HD(1,800,64000,9895c137-d4b2-4e3b-a93b-dc9ac4)
 password --md5 $1$M9NLj$p2gs87vwNv48BUu.wAfVw0
 default=0
+setkey
+setkey less backquote
 background 103332
 timeout=5
 splashimage=(hd0,0)/grub/splash.xpm.gz
@@ -54,6 +56,10 @@ title othermenu
     { "password" = "$1$M9NLj$p2gs87vwNv48BUu.wAfVw0"
         { "md5" } }
     { "default" = "0" }
+    { "setkey" }
+    { "setkey"
+        { "to" = "less" }
+        { "from" = "backquote" } }
     { "background" = "103332" }
     { "timeout" = "5" }
     { "splashimage" = "(hd0,0)/grub/splash.xpm.gz" }

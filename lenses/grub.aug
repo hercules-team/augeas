@@ -132,6 +132,12 @@ module Grub =
           |[ spc . switch_arg /timeout|lines/ ])* .
           [ spc . key /console|serial|hercules/ ]* . eol ]
 
+    (* View: setkey *)
+    let setkey = [ command "setkey" "" .
+      ( spc . [ label "to" . store Rx.no_spaces ] .
+        spc . [ label "from" . store Rx.no_spaces ] )? .
+      eol ]
+
     (* View: menu_setting *)
     let menu_setting = kw_menu_arg "default"
                      | kw_menu_arg "fallback"
@@ -145,6 +151,7 @@ module Grub =
                      | password_arg
                      | color
 		     | device
+                     | setkey
 
     (* View: title *)
     let title = del /title[ \t=]+/ "title " . value_to_eol . eol
