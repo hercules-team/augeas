@@ -31,6 +31,9 @@ address 192.168.1.1
 allow-auto eth1
 iface eth1 inet dhcp
 
+iface tap0 inet static
+  vde2-switch -
+
 mapping eth1
 	# I like mapping ...
         # ... and I like comments
@@ -82,6 +85,11 @@ source /etc/network.d/*.net.conf
             { "family" = "inet"}
             { "method" = "dhcp"}
 	    {} }
+        { "iface" = "tap0"
+          { "family" = "inet" }
+          { "method" = "static" }
+          { "vde2-switch" = "-" }
+        {} }
         { "mapping" = "eth1"
             { "#comment" = "I like mapping ..." }
             { "#comment" = "... and I like comments" }

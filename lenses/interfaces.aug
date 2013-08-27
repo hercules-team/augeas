@@ -41,7 +41,7 @@ let stanza_word = /(source|iface|auto|allow-[a-z-]+|mapping)/
 
 (* Define additional lines for multi-line stanzas *)
 let stanza_option = [  del /[ \t]*/ "   "
-                     . key  ( /[a-z_-]+/ - stanza_word )
+                     . key  ( /[a-z0-9_-]+/ - stanza_word )
                      . sep_spc
                      . sto_to_eol ]
 
