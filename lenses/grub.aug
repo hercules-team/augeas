@@ -217,6 +217,7 @@ module Grub =
         | module_line
         | map_line
         | kw_pres "lock"
+        | kw_pres "makeactive"
 
     (* View: boot *)
     let boot =

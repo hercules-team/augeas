@@ -39,6 +39,7 @@ title Fedora (2.6.24.3-34.fc8)
         map (hd0) (hd1)
 title othermenu
         lock
+        makeactive
         configfile /boot/grub/othergrub.conf
 "
 
@@ -90,6 +91,7 @@ title othermenu
         { "map" { "from" = "(hd0)" } { "to" = "(hd1)" } } }
     { "title" = "othermenu"
         { "lock" }
+        { "makeactive" }
         { "configfile" = "/boot/grub/othergrub.conf" } }
 
 
