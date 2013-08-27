@@ -203,6 +203,7 @@ module Shellvars =
   let filter_misc    = incl "/etc/arno-iptables-firewall/debconf.cfg"
                      . incl "/etc/cron-apt/config"
                      . incl "/etc/environment"
+                     . incl "/etc/firewalld/firewalld.conf"
                      . incl "/etc/blkid.conf"
                      . incl "/etc/adduser.conf"
                      . incl "/etc/cowpoke.conf"
