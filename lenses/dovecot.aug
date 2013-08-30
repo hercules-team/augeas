@@ -82,7 +82,7 @@ let entry = [ indent . key keys. eq . (Sep.opt_space . store value)? . eol ]
 Map commands started with "!". *)
 let command = [ command_start . key commands . Sep.space . store Rx.fspath . eol ]
 
-let rec mailbox = [ indent . key /mailbox/ . block_args? . Build.block_newlines (entry) comment . eol ]
+let mailbox = [ indent . key /mailbox/ . block_args? . Build.block_newlines (entry) comment . eol ]
 
 let block_newlines (entry:lens) (comment:lens) =
       let indent = del Rx.opt_space "\t"
