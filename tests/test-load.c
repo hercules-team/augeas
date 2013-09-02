@@ -21,6 +21,8 @@
  */
 
 #include <config.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "augeas.h"
 
@@ -529,6 +531,11 @@ static void testParseErrorReported(CuTest *tc) {
 
 /* Test failed file opening is reported, e.g. EACCES */
 static void testPermsErrorReported(CuTest *tc) {
+    if (getuid() == 0) {
+        puts("pending (testPermsErrorReported): can't test permissions under root account");
+        return;
+    }
+
     augeas *aug = NULL;
     int r;
     const char *s;
