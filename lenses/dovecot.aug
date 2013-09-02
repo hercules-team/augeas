@@ -84,9 +84,11 @@ let command = [ command_start . key commands . Sep.space . store Rx.fspath . eol
 
 let mailbox = [ indent . key /mailbox/ . block_args? . Build.block_newlines (entry) comment . eol ]
 
+let block_ldelim_newlines_re = /[ \t]+\{([ \t\n]*\n)?/
+
 let block_newlines (entry:lens) (comment:lens) =
       let indent = del Rx.opt_space "\t"
-   in del Build.block_ldelim_newlines_re Build.block_ldelim_default
+   in del block_ldelim_newlines_re Build.block_ldelim_default
  . ((entry | comment) . (Util.empty | entry | comment)*)?
  . del Build.block_rdelim_newlines_re Build.block_rdelim_newlines_default
 
