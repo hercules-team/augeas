@@ -68,6 +68,7 @@ let filter = incl "/etc/nagios3/*.cfg"
 	   . incl "/etc/icinga/*.cfg"
 	   . excl "/etc/nagios3/commands.cfg"
 	   . excl "/etc/nagios/commands.cfg"
+	   . excl "/etc/nagios/nrpe.cfg"
 	   . incl "/etc/icinga/commands.cfg"
 
 let xfm = transform lns filter
