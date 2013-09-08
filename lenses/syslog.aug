@@ -101,6 +101,12 @@ module Syslog =
 	  *)
         let comparison = /(!|[<=>]+|![<=>]+)/
 
+	(* Variable: protocol
+	  @ means UDP
+    @@ means TCP
+	  *)
+        let protocol      = /@{1,2}/
+
 	(* Variable: token
 	  alphanum or "*"
 	  *)
@@ -175,7 +181,7 @@ module Syslog =
 	(* View: loghost
 	 a loghost is an @  sign followed by the hostname and a possible port
 	 *)
-	let loghost = at . [ label "hostname" . store loghost_r ] .
+	let loghost = [label "protocol" . store protocol] . [ label "hostname" . store loghost_r ] .
 	    (colon . [ label "port" . store /[0-9]+/ ] )?
 
 	(* View: users
