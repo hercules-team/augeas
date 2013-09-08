@@ -59,10 +59,10 @@ module Syslog =
 	 Deletes a semicolon and default to it
 	 *)
 	let semicolon  = sep_tab_opt . Util.del_str ";" . sep_tab_opt
-	(* Variable: at
-	 Deletes a at and default to it
-	 *)
-	let at         = Util.del_str "@"
+  (* Variable: at
+   Deletes a at and default to it
+   *)
+  let at         = Util.del_str "@"
 	(* Variable: dot
 	 Deletes a dot and default to it
 	 *)
@@ -100,6 +100,12 @@ module Syslog =
 	  a comparison is an optional ! with optionaly some of [<=>]
 	  *)
         let comparison = /(!|[<=>]+|![<=>]+)/
+
+	(* Variable: protocol
+	  @ means UDP (removed, no protocol node is used in this backport)
+    @@ means TCP
+	  *)
+        let protocol      = /@@/
 
 	(* Variable: token
 	  alphanum or "*"
@@ -175,7 +181,7 @@ module Syslog =
 	(* View: loghost
 	 a loghost is an @  sign followed by the hostname and a possible port
 	 *)
-	let loghost = at . [ label "hostname" . store loghost_r ] .
+	let loghost = ([label "protocol" . store protocol] | at) . [ label "hostname" . store loghost_r ] .
 	    (colon . [ label "port" . store /[0-9]+/ ] )?
 
 	(* View: users

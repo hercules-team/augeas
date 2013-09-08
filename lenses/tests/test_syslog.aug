@@ -13,6 +13,8 @@ daemon.<=info					/var/log/foo
 daemon.!<=info					/var/log/foo
 *.*						@syslog.far.away
 *.*						@syslog.far.away:123
+*.*						@@syslog.far.away
+*.*						@@syslog.far.away:123
 *.*						foo,bar
 *.*						|\"/usr/bin/soft arg\"
 !startslip
@@ -92,6 +94,14 @@ daemon.info                                     /var/log/cvsupd.log
 	  { "entry"
 	    { "selector" { "facility" = "*" } { "level" = "*" } }
 	    { "action" { "hostname" = "syslog.far.away" } { "port" = "123" } }
+	  }
+	  { "entry"
+	    { "selector" { "facility" = "*" } { "level" = "*" } }
+	    { "action" { "protocol" = "@@" } { "hostname" = "syslog.far.away" } }
+	  }
+	  { "entry"
+	    { "selector" { "facility" = "*" } { "level" = "*" } }
+	    { "action" { "protocol" = "@@" } { "hostname" = "syslog.far.away" } { "port" = "123" } }
 	  }
 	  { "entry"
 	    { "selector" { "facility" = "*" } { "level" = "*" } }
@@ -245,6 +255,13 @@ daemon.info                                     /var/log/cvsupd.log
 	  rm "/entry/action/file" ;
 	  set "/entry/action/hostname" "far.far.away"
 	  = "*.* @far.far.away\n"
+
+	(* changing file to remote host *)
+	test Syslog.lns put "*.* /var/lib\n" after
+	  rm "/entry/action/file" ;
+	  set "/entry/action/protocol"  "@@" ;
+	  set "/entry/action/hostname" "far.far.away"
+	  = "*.* @@far.far.away\n"
 
 	(* changing file to * *)
 	test Syslog.lns put "*.* /var\n" after
