@@ -58,7 +58,7 @@ let command_start = Util.del_str "!"
 
 (* View: block_args 
 Map block arguments after block name and before "{" *)
-let block_args = Sep.space . store /([A-Za-z0-9\/\\_-]+|\"[A-Za-z0-9 ]*\")/
+let block_args = Sep.space . Quote.dquote_spaces store /[A-Za-z0-9\/\\_-]+/
 
 (******************************************************************
  * Group:                        ENTRIES
