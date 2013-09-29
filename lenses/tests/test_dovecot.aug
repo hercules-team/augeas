@@ -536,7 +536,7 @@ test Dovecot.lns get mail_conf =
     { "hidden" = "no" }
     { "list" = "yes" }
     { "subscriptions" = "yes" }
-    { "mailbox" = "\"Sent Messages\"" 
+    { "mailbox" = "Sent Messages" 
       { "special_use" = "\Sent" }
     }
   }
