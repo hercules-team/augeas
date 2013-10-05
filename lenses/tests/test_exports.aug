@@ -8,6 +8,7 @@ let s = "/local 172.31.0.0/16(rw,sync) \t
 /local2 somehost(rw,sync)
 /local3 some-host(rw,sync)
 /local3 an-other-host(rw,sync)
+/local4 2000:123:456::/64(rw)
 "
 
 test Exports.lns get s =
@@ -43,3 +44,6 @@ test Exports.lns get s =
       { "client" = "an-other-host"
           { "option" = "rw" }
           { "option" = "sync" } } }
+  { "dir" = "/local4"
+      { "client" = "2000:123:456::/64"
+          { "option" = "rw" } } }
