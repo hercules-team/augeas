@@ -11,6 +11,9 @@
     * Sysconfig_Route: New lens for RedHat's route configs
     * Simplevars: Add /etc/selinux/semanage.conf
     * Sshd: Indent Match entries by 2 spaces by default
+    * Syslog: Accept UDP(@) and TCP(@@) protocol, bug #364
+    * NagiosCfg: Do not try to parse /etc/nagios/nrpe.cfg anymore, GH issue
+      #43
 
 1.1.0 - 2013-06-14
   - General changes/additions
