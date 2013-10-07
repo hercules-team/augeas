@@ -16,7 +16,7 @@ let eol        = Util.eol
 let indent     = del /[ \t]*(\n[ \t]+)?/ " "
 let comment    = Util.comment
 let empty      = Util.empty
-let eq         = del /[ \t]*:/ " :"
+let eq         = del /[ \t]*:/ ":"
 let word       = /[A-Za-z0-9_.-]+/
 
 (* The value of a parameter, after the '=' sign. Postfix allows that
