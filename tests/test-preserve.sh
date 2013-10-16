@@ -26,6 +26,7 @@ group=$(groups | tr ' ' '\n' | tail -1)
 chgrp $group $hosts
 
 [ -x /usr/bin/chcon ] && selinux=yes || selinux=no
+[ x$SKIP_TEST_PRESERVE_SELINUX = x1 ] && selinux=no
 if [ $selinux = yes ] ; then
   /usr/bin/chcon -t etc_t $hosts > /dev/null 2>/dev/null || selinux=no
 fi
