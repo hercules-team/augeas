@@ -283,9 +283,17 @@ let stmt_subclass = [ indent . key "subclass" . sep_spc .
   to avoid ambiguity in the put direction *)
 
 let allow_deny_re     = "unknown-clients"
+                      | "known-clients"
+                      | /all[ ]+clients/
                       | /dynamic[ ]+bootp[ ]+clients/
                       | /authenticated[ ]+clients/
                       | /unauthenticated[ ]+clients/
+                      | "bootp"
+                      | "booting"
+                      | "duplicates"
+                      | "declines"
+                      | "client-updates"
+                      | "leasequery"
 
 let stmt_secu_re      = "allow"
                       | "deny"

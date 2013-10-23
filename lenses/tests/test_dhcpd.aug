@@ -28,6 +28,9 @@ max-lease-time 7200;
 # network, the authoritative directive should be uncommented.
 authoritative;
 
+allow booting;
+allow bootp;
+
 # Use this to send dhcp log messages to a different log file (you also
 # have to hack syslog.conf to complete the redirection).
 log-facility local7;
@@ -180,6 +183,8 @@ fixed-address 10.1.1.1;}}" =
   }
 
 test Dhcpd.stmt_secu get "allow members of \"foo\";" =  { "allow-members-of" = "foo" }
+test Dhcpd.stmt_secu get "allow booting;" =  { "allow" = "booting" }
+test Dhcpd.stmt_secu get "allow bootp;" =  { "allow" = "bootp" }
 test Dhcpd.stmt_option get "option voip-boot-server code 66 = string;" =
   { "rfc-code"
     { "label" = "voip-boot-server" }
