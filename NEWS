@@ -6,6 +6,8 @@
   - Lens changes/additions
     * Automounter: Handle hostnames with dashes in them, GH issue #27
     * Dhcpd: support conditionals, GH issue #34
+    * Dhcpd: support a wider variety of allow/deny statement, including
+      booting and bootp (Yanis Guenane)
     * PHP: allow php-fpm syntax in keys, GH issue #35
     * Properties: support multiline starting with an empty string, GH issue #19
     * Sysconfig_Route: New lens for RedHat's route configs
