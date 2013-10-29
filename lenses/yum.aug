@@ -49,7 +49,7 @@ let record      = [ title . entries ]
 let lns    = (empty | comment)* . record*
 
   let filter = (incl "/etc/yum.conf")
-      . (incl "/etc/yum.repos.d/*")
+      . (incl "/etc/yum.repos.d/*.repo")
       . (incl "/etc/yum/yum-cron*.conf") 
       . (incl "/etc/yum/pluginconf.d/*")
       . (excl "/etc/yum/pluginconf.d/versionlock.list")
