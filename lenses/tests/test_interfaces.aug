@@ -41,6 +41,14 @@ mapping eth1
 	script\
  /usr/local/sbin/map-scheme
 
+iface bond0 inet dhcp
+  bridge-ports eth2 eth3 eth4
+
+iface br0 inet static
+  bond-slaves eth5 eth6
+  address 10.0.0.1
+  netmask 255.0.0.0
+
 source /etc/network.d/*.net.conf
 "
 
@@ -95,6 +103,25 @@ source /etc/network.d/*.net.conf
             { "#comment" = "... and I like comments" }
             {}
             { "script" = "/usr/local/sbin/map-scheme"}
+        {} }
+        { "iface" = "bond0"
+            { "family" = "inet" }
+            { "method" = "dhcp" }
+            { "bridge-ports"
+                { "1" = "eth2" }
+                { "2" = "eth3" }
+                { "3" = "eth4" }
+            }
+        {} }
+        { "iface" = "br0"
+            { "family" = "inet" }
+            { "method" = "static" }
+            { "bond-slaves"
+                { "1" = "eth5" }
+                { "2" = "eth6" }
+            }
+            { "address" = "10.0.0.1" }
+            { "netmask" = "255.0.0.0" }
         {} }
         {"source" = "/etc/network.d/*.net.conf"}
 

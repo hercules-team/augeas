@@ -8,6 +8,8 @@
     * Dhcpd: support conditionals, GH issue #34
     * Dhcpd: support a wider variety of allow/deny statement, including
       booting and bootp (Yanis Guenane)
+    * Interfaces: map bond-slaves and bridge-ports to arrays (incompatible
+      change) (Kaarle Ritvanen)
     * OpenVPN: support daemon, client-config-dir, route, and management
       directives (Freakin https://github.com/Freakin)
     * PHP: allow php-fpm syntax in keys, GH issue #35
