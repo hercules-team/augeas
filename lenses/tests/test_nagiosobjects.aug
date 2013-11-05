@@ -19,6 +19,14 @@ define service {
     check_command           nopassivecheckreceived
     contact_groups          admins
 }
+
+; This is a semicolon comment
+
+define service{
+    service_description     gen2
+    use                     generic_template_passive
+    host_name               plonk
+    }
 "
 
     test NagiosObjects.lns get conf =
@@ -41,5 +49,13 @@ define service {
             { "host_name"               = "plonk" }
             { "check_command"           = "nopassivecheckreceived" }
             { "contact_groups"          = "admins" }
+        }
+        {}
+        { "#comment" = "This is a semicolon comment" }
+        {}
+        { "service"
+            { "service_description"     = "gen2" }
+            { "use"                     = "generic_template_passive" }
+            { "host_name"               = "plonk" }
         }
 

@@ -25,11 +25,14 @@ module NagiosObjects =
 
     let keyword      = key /[A-Za-z0-9_]+/
 
+    (* optional, but preferred, whitespace *)
+    let opt_ws = del Rx.opt_space " "
+
     (* define an empty line *)
     let empty = Util.empty
 
     (* define a comment *)
-    let comment = Util.comment
+    let comment = Util.comment_generic /[ \t]*[#;][ \t]*/ "# "
 
     (* define a field *)
     let object_field    =
@@ -43,10 +46,10 @@ module NagiosObjects =
        let object_type = keyword in
           [ Util.indent
           . Util.del_str "define" . ws
-          . object_type . ws
+          . object_type . opt_ws
           . Util.del_str "{" . eol
           . ( empty | comment | object_field )*
-          . Util.del_str "}" . eol ]
+          . Util.indent . Util.del_str "}" . eol ]
 
     (* main structure *)
     let lns = ( empty | comment | object_def )*
