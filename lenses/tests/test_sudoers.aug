@@ -285,3 +285,15 @@ test Sudoers.spec get "user.one somehost = ALL\n" =
       { "command" = "ALL" }
     }
   }
+
+(* Test: Sudoers.spec
+     Ticket #370: allow underscore in group names *)
+test Sudoers.spec get "%sudo_users ALL=(ALL) ALL\n" =
+  { "spec"
+    { "user" = "%sudo_users" }
+    { "host_group"
+      { "host" = "ALL" }
+      { "command" = "ALL"
+        { "runas_user" = "ALL" } }
+    }
+  }
