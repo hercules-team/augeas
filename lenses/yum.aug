@@ -19,7 +19,7 @@ let eol      = IniFile.eol
 let list_entry (list_key:string)  =
   let list_value = store /[^# \t\r\n,][^ \t\r\n,]*[^# \t\r\n,]|[^# \t\r\n,]/ in
   let list_sep = del /([ \t]*(,[ \t]*|\r?\n[ \t]+))|[ \t]+/ "\n\t" in
-  [ key list_key . sep . list_value ]
+  [ key list_key . sep . Sep.opt_space . list_value ]
   . (list_sep . Build.opt_list [ label list_key . list_value ] list_sep)?
   . eol
 
