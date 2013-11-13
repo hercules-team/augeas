@@ -41,7 +41,7 @@ autoload xfm
 
 (* View: entry *)
 let entry =
-  Build.key_value_line Rx.word Sep.space_equal Quote.double_opt
+  Build.key_value_line Rx.word Sep.space_equal (store Rx.space_in)
 
 (* View: lns *)
 let lns = (Util.empty | Util.comment | entry)*

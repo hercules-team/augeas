@@ -26,6 +26,6 @@ test MongoDBServer.lns get conf =
   { "nohttpinterface" = "true" }
 
 (* Test: MongoDBServer.lns
-   Quotes are not mandatory *)
-test MongoDBServer.lns get "port = \"27017\"\n" =
+   Values have to be without quotes *)
+test MongoDBServer.lns get "port = 27017\n" =
   { "port" = "27017" }
