@@ -183,6 +183,44 @@ static void testRelPath(CuTest *tc) {
     CuAssertIntEquals(tc, 1, r);
 }
 
+/* Check that loading and saving a file with // in the incl pattern works.
+ * RHBZ#1031084
+ */
+static void testDoubleSlashPath(CuTest *tc) {
+    int r;
+
+    r = aug_rm(aug, "/augeas/load/*");
+    CuAssertPositive(tc, r);
+
+    r = aug_set(aug, "/augeas/load/Hosts/lens", "Hosts.lns");
+    CuAssertRetSuccess(tc, r);
+    r = aug_set(aug, "/augeas/load/Hosts/incl", "/etc//hosts");
+    CuAssertRetSuccess(tc, r);
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_match(aug, "/files/etc/hosts/1/alias[ . = 'new']", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_set(aug, "/files/etc/hosts/1/alias[last() + 1]", "new");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_save(aug);
+    CuAssertRetSuccess(tc, r);
+    r = aug_match(aug, "/augeas//error", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    /* Force reloading the file */
+    r = aug_rm(aug, "/augeas/files//mtime");
+    CuAssertPositive(tc, r);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_match(aug, "/files/etc/hosts/1/alias[. = 'new']", NULL);
+    CuAssertIntEquals(tc, 1, r);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -206,6 +244,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testMultipleXfm);
     SUITE_ADD_TEST(suite, testMtime);
     SUITE_ADD_TEST(suite, testRelPath);
+    SUITE_ADD_TEST(suite, testDoubleSlashPath);
 
     CuSuiteRun(suite);
     CuSuiteSummary(suite, &output);
