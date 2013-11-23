@@ -30,8 +30,9 @@ unset ONBOOT    #   We do not want this var
     { "#comment" = "DHCP_HOSTNAME=host.example.com" }
     { "NETMASK" = "255.255.255.0" }
     { "NETWORK" = "172.31.0.0" }
-    { "@unset"   = "ONBOOT"
-        { "#comment" = "We do not want this var" } }
+    { "@unset"
+      { "1" = "ONBOOT" }
+      { "#comment" = "We do not want this var" } }
 
   test lns put eth_static after
       set "BOOTPROTO" "dhcp" ;
@@ -124,7 +125,8 @@ unset ONBOOT    #   We do not want this var
 
   (* Bug 109: allow a bare export *)
   test lns get "export FOO\n" =
-  { "@export" = "FOO" }
+  { "@export"
+    { "1" = "FOO" } }
 
   (* Check we put quotes in when changes require them *)
   test lns put "var=\"v\"\n" after rm "/foo" =
