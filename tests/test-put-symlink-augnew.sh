@@ -28,7 +28,7 @@ set /files/etc/hosts/1/alias myhost
 save
 EOF
 
-if [ ! -f $HOSTS ] ; then
+if [ ! -f $HOSTS  -o  -h $HOSTS ] ; then
     echo "/etc/hosts is no longer a regular file"
     exit 1
 fi
@@ -37,7 +37,7 @@ if [ ! "x${HOSTS_SUM}" = "x$(sum $HOSTS)" ]; then
     exit 1
 fi
 
-if [ ! -f $HOSTS_AUGNEW ] ; then
+if [ -h $HOSTS_AUGNEW ] ; then
     echo "/etc/hosts.augnew is still a symlink, should be unlinked"
     exit 1
 fi
