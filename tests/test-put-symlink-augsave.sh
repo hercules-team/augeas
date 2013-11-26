@@ -28,11 +28,11 @@ set /files/etc/hosts/1/alias myhost
 save
 EOF
 
-if [ ! -f $HOSTS ] ; then
+if [ ! -f $HOSTS  -o  -h $HOSTS ] ; then
     echo "/etc/hosts is no longer a regular file"
     exit 1
 fi
-if [ ! -f $HOSTS_AUGNEW ] ; then
+if [ -h $HOSTS_AUGSAVE ] ; then
     echo "/etc/hosts.augsave is still a symlink, should be unlinked"
     exit 1
 fi
