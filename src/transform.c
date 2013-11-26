@@ -1034,8 +1034,8 @@ static int file_saved_event(struct augeas *aug, const char *path) {
  * The table below shows the locations for each permutation.
  *
  * PATH       save flag    temp file           dest file      backup?
- * regular    -            PATH.augnew.XXXX    PATH           -
- * regular    BACKUP       PATH.augnew.XXXX    PATH           PATH.augsave
+ * regular    -            PATH.XXXX           PATH           -
+ * regular    BACKUP       PATH.XXXX           PATH           PATH.augsave
  * regular    NEWFILE      PATH.augnew.XXXX    PATH.augnew    -
  * symlink    -            PATH_canon.XXXX     PATH_canon     -
  * symlink    BACKUP       PATH_canon.XXXX     PATH_canon     PATH.augsave
