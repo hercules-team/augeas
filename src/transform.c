@@ -1144,7 +1144,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
         mode_t curumsk = umask(022);
         umask(curumsk);
 
-        if (fchmod(fileno(fp), 0666 - curumsk) < 0) {
+        if (fchmod(fileno(fp), 0666 & ~curumsk) < 0) {
             err_status = "create_chmod";
             return -1;
         }
