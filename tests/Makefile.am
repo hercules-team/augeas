@@ -192,6 +192,7 @@ lens_tests =			\
   lens-xml.sh			\
   lens-xorg.sh			\
   lens-xymon.sh			\
+  lens-xymonalerting.sh \
   lens-grub.sh			\
   lens-schroot.sh			\
   lens-xendconfsxp.sh	\
