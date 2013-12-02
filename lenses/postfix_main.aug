@@ -29,7 +29,7 @@ let value =
   let chr = /[^# \t\n]/ in
   let any = /.*/ in
   let line = (chr . any* . chr | chr) in
-  let lines = line . (/\n[ \t]+/ . line)* in
+  let lines = line . (/[ \t]*\n[ \t]+/ . line)* in
     store lines
 
 (************************************************************************

@@ -19,7 +19,7 @@ let eol      = IniFile.eol
 let list_entry (list_key:string)  =
   let list_value = store /[^# \t\r\n,][^ \t\r\n,]*[^# \t\r\n,]|[^# \t\r\n,]/ in
   let list_sep = del /([ \t]*(,[ \t]*|\r?\n[ \t]+))|[ \t]+/ "\n\t" in
-  [ key list_key . sep . list_value ]
+  [ key list_key . sep . Sep.opt_space . list_value ]
   . (list_sep . Build.opt_list [ label list_key . list_value ] list_sep)?
   . eol
 
@@ -49,7 +49,8 @@ let record      = [ title . entries ]
 let lns    = (empty | comment)* . record*
 
   let filter = (incl "/etc/yum.conf")
-      . (incl "/etc/yum.repos.d/*")
+      . (incl "/etc/yum.repos.d/*.repo")
+      . (incl "/etc/yum/yum-cron*.conf") 
       . (incl "/etc/yum/pluginconf.d/*")
       . (excl "/etc/yum/pluginconf.d/versionlock.list")
       . Util.stdexcl

@@ -70,10 +70,13 @@ module Sshd =
 
    let sep = Util.del_ws_spc
 
+   let indent = del /[ \t]*/ "  "
+
    let key_re = /[A-Za-z0-9]+/
          - /MACs|Match|AcceptEnv|Subsystem|(Allow|Deny)(Groups|Users)/
 
    let comment = Util.comment
+   let comment_noindent = Util.comment_noindent
    let empty = Util.empty
 
    let array_entry (k:string) =
@@ -113,7 +116,7 @@ module Sshd =
      [ label "Condition" . condition_entry+ . eol ]
 
    let match_entry =
-     ( comment | empty | (Util.indent . other_entry) )
+     ( (indent . comment_noindent) | empty | (indent . other_entry) )
 
    let match =
      [ key "Match" . match_cond

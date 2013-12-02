@@ -28,6 +28,9 @@ max-lease-time 7200;
 # network, the authoritative directive should be uncommented.
 authoritative;
 
+allow booting;
+allow bootp;
+
 # Use this to send dhcp log messages to a different log file (you also
 # have to hack syslog.conf to complete the redirection).
 log-facility local7;
@@ -180,6 +183,8 @@ fixed-address 10.1.1.1;}}" =
   }
 
 test Dhcpd.stmt_secu get "allow members of \"foo\";" =  { "allow-members-of" = "foo" }
+test Dhcpd.stmt_secu get "allow booting;" =  { "allow" = "booting" }
+test Dhcpd.stmt_secu get "allow bootp;" =  { "allow" = "bootp" }
 test Dhcpd.stmt_option get "option voip-boot-server code 66 = string;" =
   { "rfc-code"
     { "label" = "voip-boot-server" }
@@ -392,3 +397,39 @@ filename \"pxelinux.0\";
 test Dhcpd.lns put "subnet 172.16.0.0 netmask 255.255.255.0 {
 }" after
   set "subnet/filename" "pxelinux.0" = input311
+
+(* GH issue #34: support conditional structures *)
+let gh34_empty = "if exists dhcp-parameter-request-list {
+}\n"
+
+test Dhcpd.lns get gh34_empty =
+  { "@if" = "exists dhcp-parameter-request-list" }
+
+let gh34_empty_multi = "subnet 192.168.100.0 netmask 255.255.255.0 {
+ if true {
+ } elsif false {
+ } else {
+ }
+}\n"
+
+test Dhcpd.lns get gh34_empty_multi =
+  { "subnet"
+    { "network" = "192.168.100.0" }
+    { "netmask" = "255.255.255.0" }
+    { "@if" = "true"
+      { "@elsif" = "false" }
+      { "@else" } }
+  }
+
+let gh34_simple = "if exists dhcp-parameter-request-list {
+  default-lease-time 600;
+  } else {
+default-lease-time 200;
+}\n"
+
+test Dhcpd.lns get gh34_simple =
+  { "@if" = "exists dhcp-parameter-request-list"
+    { "default-lease-time" = "600" }
+    { "@else"
+      { "default-lease-time" = "200" } } }
+

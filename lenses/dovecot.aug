@@ -56,9 +56,6 @@ let value = any . (Rx.space . any)*
 (* View: command_start *)
 let command_start = Util.del_str "!"
 
-(* View: block_args 
-Map block arguments after block name and before "{" *)
-let block_args = Sep.space . store /[A-Za-z0-9\/\\_-]+/
 
 (******************************************************************
  * Group:                        ENTRIES
@@ -82,11 +79,43 @@ let entry = [ indent . key keys. eq . (Sep.opt_space . store value)? . eol ]
 Map commands started with "!". *)
 let command = [ command_start . key commands . Sep.space . store Rx.fspath . eol ]
 
+(*
+View: dquote_spaces
+  Make double quotes mandatory if value contains spaces,
+  and optional if value doesn't contain spaces.
+
+Based off Quote.dquote_spaces
+
+Parameters:
+  lns1:lens - the lens before
+  lns2:lens - the lens after
+*)
+let dquote_spaces (lns1:lens) (lns2:lens) =
+     (* bare has no spaces, and is optionally quoted *)
+     let bare = Quote.do_dquote_opt (store /[^" \t\n]+/)
+     (* quoted has at least one space, and must be quoted *)
+  in let quoted = Quote.do_dquote (store /[^"\n]*[ \t]+[^"\n]*/)
+  in [ lns1 . bare . lns2 ] | [ lns1 . quoted . lns2 ]
+
+let mailbox = indent
+            . dquote_spaces
+               (key /mailbox/ . Sep.space)
+               (Build.block_newlines (entry) comment . eol)
+
+let block_ldelim_newlines_re = /[ \t]+\{([ \t\n]*\n)?/
+
+let block_newlines (entry:lens) (comment:lens) =
+      let indent = del Rx.opt_space "\t"
+   in del block_ldelim_newlines_re Build.block_ldelim_default
+ . ((entry | comment) . (Util.empty | entry | comment)*)?
+ . del Build.block_rdelim_newlines_re Build.block_rdelim_newlines_default
+
 (* View: block
 Map block enclosed in brackets recursively. 
 Block may be indented and have optional argument.
 Block body may have entries, comments, empty lines, and nested blocks recursively. *)
-let rec block = [ indent . key block_names . block_args? . Build.block_newlines (entry|block) comment . eol ]
+let rec block = [ indent . key block_names . (Sep.space . Quote.do_dquote_opt (store /[\/A-Za-z0-9_-]+/))? . block_newlines (entry|block|mailbox) comment . eol ]
+
 
 (******************************************************************
  * Group:                   LENS AND FILTER

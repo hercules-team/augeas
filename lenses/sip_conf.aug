@@ -1,21 +1,20 @@
 (*
-Module: Sip_conf
-Parses /etc/asterisk/sip.conf
+Module: Sip_Conf
+  Parses /etc/asterisk/sip.conf
 
 Author: Rob Tucker <rtucker@mozilla.com>
 
 About: Reference
-Lens parses the sip.conf with support for template structure
+  Lens parses the sip.conf with support for template structure
 
 About: License
-This file is licenced under the LGPL v2+, like the rest of Augeas.
+  This file is licenced under the LGPL v2+, like the rest of Augeas.
 
 About: Lens Usage
-To be documented
+  To be documented
 
 About: Configuration files
-This lens applies to /etc/asterisk/sip.conf
-See <filter>.
+  This lens applies to /etc/asterisk/sip.conf. See <filter>.
 *)
 
 module Sip_Conf =

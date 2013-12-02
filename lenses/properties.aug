@@ -25,13 +25,16 @@ module Properties =
   let value_to_bs      = store /([^ \t\n:=][^\n]*[^\\\n]|[^ \t\n\\:=])/
   let indent           = Util.indent
   let backslash        = del /[\\][ \t]*\n/ "\\\n"
+  let opt_backslash    = del /([\\][ \t]*\n)?/ ""
   let entry            = /([^ \t\n:=\/!#\\]|[\\]:|[\\]=|[\\][\t ]|[\\][^\/\n])+/
 
   let multi_line_entry =
-      [ indent . value_to_bs . backslash ] + .
+      [ indent . value_to_bs? . backslash ] .
+      [ indent . value_to_bs . backslash ] * .
       [ indent . value_to_eol . eol ] . value " < multi > "
 
   let multi_line_entry_ws =
+      opt_backslash .
       [ indent . value_to_bs_ws . backslash ] + .
       [ indent . value_to_eol . eol ] . value " < multi_ws > "
 

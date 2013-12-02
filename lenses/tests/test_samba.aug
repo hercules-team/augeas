@@ -85,3 +85,19 @@ module Test_samba =
     test Samba.lns get "[test]\ncrazy:entry = foo\n" =
          { "target" = "test"
             {"crazy:entry" = "foo"}}
+
+    (* Test complex idmap commands with asterisk in key name, ticket #354 *)
+    test Samba.lns get "[test]
+  idmap backend = tdb
+  idmap uid = 1000000-1999999
+  idmap gid = 1000000-1999999
+
+  idmap config CORP : backend  = ad
+  idmap config * : range = 1000-999999\n" =
+      { "target" = "test"
+        { "idmap backend" = "tdb" }
+        { "idmap uid" = "1000000-1999999" }
+        { "idmap gid" = "1000000-1999999" }
+        {  }
+        { "idmap config CORP : backend" = "ad" }
+        { "idmap config * : range" = "1000-999999" } }

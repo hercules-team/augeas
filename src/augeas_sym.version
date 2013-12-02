@@ -60,3 +60,8 @@ AUGEAS_0.16.0 {
       aug_transform;
       aug_label;
 } AUGEAS_0.15.0;
+
+AUGEAS_0.17.0 {
+    global:
+      aug_cp;
+} AUGEAS_0.16.0;

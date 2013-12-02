@@ -32,3 +32,6 @@ test Cyrus_Imapd.lns get conf =
 test Cyrus_Imapd.lns get "admins: cyrus-admin\n"
      =
   { "admins" = "cyrus-admin" }
+
+test Cyrus_Imapd.lns put "" after set "munge8bit" "false" =
+  "munge8bit: false\n"

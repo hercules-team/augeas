@@ -142,6 +142,33 @@ static char *mtime_as_string(struct augeas *aug, const char *fname) {
     return NULL;
 }
 
+/* fnmatch(3) which will match // in a pattern to a path, like glob(3) does */
+static int fnmatch_normalize(const char *pattern, const char *string, int flags) {
+    int i, j, r;
+    char *pattern_norm = NULL;
+
+    r = ALLOC_N(pattern_norm, strlen(pattern) + 1);
+    if (r < 0)
+        goto error;
+
+    for (i = 0, j = 0; i < strlen(pattern); i++) {
+        if (pattern[i] != '/' || pattern[i+1] != '/') {
+            pattern_norm[j] = pattern[i];
+            j++;
+        }
+    }
+    pattern_norm[j] = 0;
+
+    r = fnmatch(pattern_norm, string, flags);
+    FREE(pattern_norm);
+    return r;
+
+ error:
+    if (pattern_norm != NULL)
+        FREE(pattern_norm);
+    return -1;
+}
+
 static bool file_current(struct augeas *aug, const char *fname,
                          struct tree *finfo) {
     struct tree *mtime = tree_child(finfo, s_mtime);
@@ -217,9 +244,12 @@ static int filter_generate(struct tree *xfm, const char *root,
 
             if (strchr(e->value, SEP) == NULL)
                 path = pathbase(path);
-            if ((r = fnmatch(e->value, path, fnm_flags)) == 0) {
+
+            r = fnmatch_normalize(e->value, path, fnm_flags);
+            if (r < 0)
+                goto error;
+            else if (r == 0)
                 include = false;
-            }
         }
 
         if (include)
@@ -254,7 +284,7 @@ static int filter_generate(struct tree *xfm, const char *root,
 static int filter_matches(struct tree *xfm, const char *path) {
     int found = 0;
     list_for_each(f, xfm->children) {
-        if (is_incl(f) && fnmatch(f->value, path, fnm_flags) == 0) {
+        if (is_incl(f) && fnmatch_normalize(f->value, path, fnm_flags) == 0) {
             found = 1;
             break;
         }
@@ -262,7 +292,7 @@ static int filter_matches(struct tree *xfm, const char *path) {
     if (! found)
         return 0;
     list_for_each(f, xfm->children) {
-        if (is_excl(f) && (fnmatch(f->value, path, fnm_flags) == 0))
+        if (is_excl(f) && (fnmatch_normalize(f->value, path, fnm_flags) == 0))
             return 0;
     }
     return 1;

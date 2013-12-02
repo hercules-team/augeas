@@ -201,6 +201,16 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-remi
       Check that we can parse an empty line, to fix test-save *)
   test Yum.lns get "\n" = { }
 
+  (* Test: Yum.lns
+       Issue #45: allow spaces around equals sign *)
+  test Yum.lns get "[rpmforge]
+name = RHEL $releasever - RPMforge.net - dag
+baseurl = http://apt.sw.be/redhat/el6/en/$basearch/rpmforge\n" =
+    { "rpmforge"
+      { "name" = "RHEL $releasever - RPMforge.net - dag" }
+      { "baseurl" = "http://apt.sw.be/redhat/el6/en/$basearch/rpmforge" }
+    }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

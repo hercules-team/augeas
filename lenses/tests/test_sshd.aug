@@ -1,3 +1,4 @@
+(* Module: Test_sshd *)
 module Test_sshd =
 
   let accept_env = "Protocol 2
@@ -73,6 +74,21 @@ Match User sarko Group pres.*
   X11Forwarding no
 Match User bush Group pres.* Host white.house.*
 Banner /etc/welcome.txt\n"
+
+(* Test: Sshd.lns
+   Indent when adding to a Match group *)
+  test Sshd.lns put match_blocks after
+    set "Match[1]/Settings/PermitRootLogin" "yes";
+    set "Match[1]/Settings/#comment" "a comment" =
+"X11Forwarding yes
+Match User sarko Group pres.*
+  Banner /etc/bienvenue.txt
+  X11Forwarding no
+  PermitRootLogin yes
+  # a comment
+Match User bush Group pres.* Host white.house.*
+Banner /etc/welcome.txt\n"
+
 
 
 (* Local Variables: *)

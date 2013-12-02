@@ -37,11 +37,11 @@ let stanza_id    (t:string) = key t . sep_spc . sto_to_spc
 let stanza_param (l:string) = [ sep_spc . label l . sto_to_spc ]
 
 (* Define reseverved words *)
-let stanza_word = /(iface|auto|allow-[a-z-]+|mapping)/
+let stanza_word = /(source|iface|auto|allow-[a-z-]+|mapping)/
 
 (* Define additional lines for multi-line stanzas *)
 let stanza_option = [  del /[ \t]*/ "   "
-                     . key  ( /[a-z_-]+/ - stanza_word )
+                     . key  ( /[a-z0-9_-]+/ - stanza_word )
                      . sep_spc
                      . sto_to_eol ]
 
@@ -82,6 +82,12 @@ let iface   = [ Util.indent
               . (stanza_option|comment|empty)* ]
 
 (************************************************************************
+ *                              SOURCE
+ *************************************************************************)
+
+let source = [ key "source" . sep_spc . sto_to_eol ]
+
+(************************************************************************
  *                              STANZAS
  *************************************************************************)
 
@@ -91,7 +97,7 @@ let iface   = [ Util.indent
    come after an auto or hotplug stanza, otherwise they are considered part
    of a iface or mapping block *)
 
-let stanza_single = (auto|allow) . (comment|empty)*
+let stanza_single = (auto|allow|source) . (comment|empty)*
 let stanza_multi  = iface|mapping
 
 (************************************************************************
@@ -100,6 +106,8 @@ let stanza_multi  = iface|mapping
 
    let lns = (comment|empty)* . (stanza_multi | stanza_single)*
 
-   let filter = incl "/etc/network/interfaces"
+   let filter = (incl "/etc/network/interfaces")
+                . (incl "/etc/network/interfaces.d/*")
+                . Util.stdexcl
 
    let xfm = transform lns filter

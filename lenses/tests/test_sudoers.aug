@@ -1,3 +1,4 @@
+(* Module: Test_sudoers *)
 module Test_sudoers =
 
 let test_user = [ label "user" . Sudoers.sto_to_com_user . Util.eol ]*
@@ -282,5 +283,17 @@ test Sudoers.spec get "user.one somehost = ALL\n" =
     { "host_group"
       { "host" = "somehost" }
       { "command" = "ALL" }
+    }
+  }
+
+(* Test: Sudoers.spec
+     Ticket #370: allow underscore in group names *)
+test Sudoers.spec get "%sudo_users ALL=(ALL) ALL\n" =
+  { "spec"
+    { "user" = "%sudo_users" }
+    { "host_group"
+      { "host" = "ALL" }
+      { "command" = "ALL"
+        { "runas_user" = "ALL" } }
     }
   }

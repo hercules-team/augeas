@@ -87,6 +87,7 @@ lens_tests =			\
   lens-jmxpassword.sh		\
   lens-kdump.sh			\
   lens-keepalived.sh	\
+  lens-koji.sh			\
   lens-krb5.sh			\
   lens-jaas.sh          \
   lens-ldap.sh			\
@@ -175,6 +176,7 @@ lens_tests =			\
   lens-stunnel.sh			\
   lens-subversion.sh		\
   lens-sysconfig.sh		\
+  lens-sysconfig_route.sh		\
   lens-syslog.sh		\
   lens-sysctl.sh		\
   lens-systemd.sh		\

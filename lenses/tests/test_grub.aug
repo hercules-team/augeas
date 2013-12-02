@@ -12,6 +12,8 @@ module Test_grub =
 device (hd0) HD(1,800,64000,9895c137-d4b2-4e3b-a93b-dc9ac4)
 password --md5 $1$M9NLj$p2gs87vwNv48BUu.wAfVw0
 default=0
+setkey
+setkey less backquote
 background 103332
 timeout=5
 splashimage=(hd0,0)/grub/splash.xpm.gz
@@ -36,6 +38,8 @@ title Fedora (2.6.24.3-34.fc8)
         initrd /initrd-2.6.24.3-34.fc8.img
         map (hd0) (hd1)
 title othermenu
+        lock
+        makeactive
         configfile /boot/grub/othergrub.conf
 "
 
@@ -50,10 +54,14 @@ title othermenu
     { "#comment" = "initrd /initrd-version.img" }
     { "#comment" = "boot=/dev/sda" }
     { "device"   = "(hd0)"
-	    { "file" = "HD(1,800,64000,9895c137-d4b2-4e3b-a93b-dc9ac4)" } }
+        { "file" = "HD(1,800,64000,9895c137-d4b2-4e3b-a93b-dc9ac4)" } }
     { "password" = "$1$M9NLj$p2gs87vwNv48BUu.wAfVw0"
         { "md5" } }
     { "default" = "0" }
+    { "setkey" }
+    { "setkey"
+        { "to" = "less" }
+        { "from" = "backquote" } }
     { "background" = "103332" }
     { "timeout" = "5" }
     { "splashimage" = "(hd0,0)/grub/splash.xpm.gz" }
@@ -82,6 +90,8 @@ title othermenu
         { "initrd" = "/initrd-2.6.24.3-34.fc8.img" }
         { "map" { "from" = "(hd0)" } { "to" = "(hd1)" } } }
     { "title" = "othermenu"
+        { "lock" }
+        { "makeactive" }
         { "configfile" = "/boot/grub/othergrub.conf" } }
 
 

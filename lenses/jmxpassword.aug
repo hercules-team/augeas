@@ -1,5 +1,6 @@
 (*
-JMXPassword for Augeas
+Module: JMXPassword
+  JMXPassword for Augeas
 
 Author: Brian Redbeard <redbeard@dead-city.org>
 

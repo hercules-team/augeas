@@ -1,5 +1,6 @@
 (*
-ActiveMQ / FuseMQ conf module for Augeas
+Module: ActiveMQ_Conf
+  ActiveMQ / FuseMQ conf module for Augeas
 
 Author: Brian Redbeard <redbeard@dead-city.org>
 

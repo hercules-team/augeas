@@ -45,7 +45,7 @@ module Shellvars =
   (* arrays here because of typechecking headaches. Instead, they are    *)
   (* treated as a simple value                                           *)
   let array =
-    let array_value = store (char+ | dquot) in
+    let array_value = store (char+ | (dquot | squot)+ | bquot | dbquot | dollar_assign) in
     del /\([ \t]*/ "(" . counter "values" .
       [ seq "values" . array_value ] .
       [ del /[ \t\n]+/ " " . seq "values" . array_value ] *
@@ -203,6 +203,7 @@ module Shellvars =
   let filter_misc    = incl "/etc/arno-iptables-firewall/debconf.cfg"
                      . incl "/etc/cron-apt/config"
                      . incl "/etc/environment"
+                     . incl "/etc/firewalld/firewalld.conf"
                      . incl "/etc/blkid.conf"
                      . incl "/etc/adduser.conf"
                      . incl "/etc/cowpoke.conf"

@@ -53,3 +53,9 @@ mixed_KEY = 25
 test PHP.lns get "session.save_path = \"3;/var/lib/php5\"\n" =
    { ".anon"
       { "session.save_path" = "3;/var/lib/php5" } }
+
+(* GH issue #35
+   php-fpm syntax *)
+test PHP.lns get "php_admin_flag[log_errors] = on\n" =
+   { ".anon"
+     { "php_admin_flag[log_errors]" = "on" } }

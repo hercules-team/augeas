@@ -435,6 +435,13 @@ esac\n" =
     { "#comment" = "foo" }
     { "foo" = "bar" }
 
+  (* Single quotes in arrays, ticket #357 *)
+  test lns get "DLAGENTS=('ftp::/usr/bin/curl -fC - --ftp-pasv --retry 3 --retry-delay 3 -o %o %u'
+          'scp::/usr/bin/scp -C %u %o')\n" =
+    { "DLAGENTS"
+      { "1" = "'ftp::/usr/bin/curl -fC - --ftp-pasv --retry 3 --retry-delay 3 -o %o %u'" }
+      { "2" = "'scp::/usr/bin/scp -C %u %o'" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

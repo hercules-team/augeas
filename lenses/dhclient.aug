@@ -164,6 +164,7 @@ let lns               = ( empty
                         | statement )*
 
 let filter            = incl "/etc/dhcp3/dhclient.conf"
+                      . incl "/etc/dhcp/dhclient.conf"
                       . incl "/etc/dhclient.conf"
 
 let xfm                = transform lns filter

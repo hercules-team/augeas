@@ -114,6 +114,12 @@ FAILSAVE_APPEND=\"console=ttyS0\"
     set "VAR/value[1]" "test"
     = "VAR=test\n"
 
+  (* Ticket #368 - backticks *)
+  test Shellvars_list.lns get "GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`\n" =
+    { "GRUB_DISTRIBUTOR"
+      { "quote" = "" }
+      { "value" = "`lsb_release -i -s 2> /dev/null || echo Debian`" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

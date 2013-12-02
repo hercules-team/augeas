@@ -169,7 +169,7 @@ static char *readline_command_generator(const char *text, int state) {
     static const char *const commands[] = {
         "quit", "clear", "defnode", "defvar",
         "get", "label", "ins", "load", "ls", "match",
-        "mv", "rename", "print", "dump-xml", "rm", "save", "set", "setm",
+        "mv", "cp", "rename", "print", "dump-xml", "rm", "save", "set", "setm",
         "clearm", "span", "store", "retrieve", "transform",
         "help", NULL };
 

@@ -14,7 +14,8 @@ module Shellvars_list =
 
   let sqword = /[^ '\t\n]+/
   let dqword = /([^ "\\\t\n]|\\\\.)+/
-  let uqword = /([^ "'\\\t\n]|\\\\.)+/
+  let uqword = /([^ `"'\\\t\n]|\\\\.)+/
+  let bqword = /`[^`\n]*`/
 
   (* lists values of the form ...  val1 val2 val3  ... *)
   let list(word:regexp) =
@@ -31,7 +32,7 @@ module Shellvars_list =
   let dquote_arr = [ label "quote" . store /"/ ] . (list dqword)? . del /"/ "\""
 
   (* handle unquoted single value *)
-  let unquot_val = [ label "quote" . store "" ] . [label "value"  . store uqword+]?
+  let unquot_val = [ label "quote" . store "" ] . [label "value"  . store (uqword+ | bqword)]?
 
 
   (* lens for key value pairs *)

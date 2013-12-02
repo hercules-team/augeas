@@ -465,6 +465,9 @@ namespace {
   hidden = no
   list = yes
   subscriptions = yes
+  mailbox \"Sent Messages\" {
+    special_use = \Sent
+  }
 }
 
 # Example shared namespace configuration
@@ -533,6 +536,9 @@ test Dovecot.lns get mail_conf =
     { "hidden" = "no" }
     { "list" = "yes" }
     { "subscriptions" = "yes" }
+    { "mailbox" = "Sent Messages" 
+      { "special_use" = "\Sent" }
+    }
   }
   {  }
   { "#comment" = "Example shared namespace configuration" }
