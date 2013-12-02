@@ -31,3 +31,10 @@ test Desktop.lns get conf =
       { "X-KDE-Library" = "libfooview" }
       { "X-KDE-FactoryName" = "fooviewfactory" }
       { "X-KDE-ServiceType" = "FooService" } }
+
+(* Entries with square brackets *)
+test Desktop.lns get "[Desktop Entry]
+X-GNOME-FullName[ca]=En canadien
+" =
+    { "Desktop Entry"
+      { "X-GNOME-FullName[ca]" = "En canadien" } }
