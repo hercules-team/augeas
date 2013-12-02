@@ -26,6 +26,7 @@
 #include "cutest.h"
 
 #include <stdio.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -51,6 +52,7 @@ static void setup(CuTest *tc) {
     if (asprintf(&lensdir, "%s/lenses", abs_top_srcdir) < 0)
         CuFail(tc, "asprintf lensdir failed");
 
+    umask(0022);
     run(tc, "test -d %s && chmod -R u+w %s || :", root, root);
     run(tc, "rm -rf %s", root);
     run(tc, "mkdir -p %s", root);
@@ -221,6 +223,49 @@ static void testDoubleSlashPath(CuTest *tc) {
     CuAssertIntEquals(tc, 1, r);
 }
 
+/* Check the umask is followed when creating files
+ */
+static void testUmask(CuTest *tc, int tumask, mode_t expected_mode) {
+    int r;
+    struct stat buf;
+    char* fpath = NULL;
+
+    if (asprintf(&fpath, "%s/etc/test", root) < 0) {
+        CuFail(tc, "failed to set root");
+    }
+
+    umask(tumask);
+
+    r = aug_rm(aug, "/augeas/load/*");
+    CuAssertPositive(tc, r);
+
+    r = aug_set(aug, "/augeas/load/Test/lens", "Simplelines.lns");
+    CuAssertRetSuccess(tc, r);
+    r = aug_set(aug, "/augeas/load/Test/incl", "/etc/test");
+    CuAssertRetSuccess(tc, r);
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+    r = aug_set(aug, "/files/etc/test/1", "test");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_save(aug);
+    CuAssertRetSuccess(tc, r);
+    r = aug_match(aug, "/augeas//error", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    CuAssertIntEquals(tc, 0, stat(fpath, &buf));
+    CuAssertIntEquals(tc, expected_mode, buf.st_mode & 0777);
+}
+static void testUmask077(CuTest *tc) {
+    testUmask(tc, 0077, 0600);
+}
+static void testUmask027(CuTest *tc) {
+    testUmask(tc, 0027, 0640);
+}
+static void testUmask022(CuTest *tc) {
+    testUmask(tc, 0022, 0644);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -245,6 +290,9 @@ int main(void) {
     SUITE_ADD_TEST(suite, testMtime);
     SUITE_ADD_TEST(suite, testRelPath);
     SUITE_ADD_TEST(suite, testDoubleSlashPath);
+    SUITE_ADD_TEST(suite, testUmask077);
+    SUITE_ADD_TEST(suite, testUmask027);
+    SUITE_ADD_TEST(suite, testUmask022);
 
     CuSuiteRun(suite);
     CuSuiteSummary(suite, &output);
