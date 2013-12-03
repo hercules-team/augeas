@@ -304,6 +304,27 @@ let named_block (kw:regexp) (entry:lens) = [ key kw . block entry . eol ]
  ************************************************************************)
 
 (************************************************************************
+ * View: combine_two_ord
+ *   Combine two lenses, ensuring first lens is first
+ *
+ *   Parameters:
+ *     a:lens - the first lens
+ *     b:lens - the second lens
+ ************************************************************************)
+let combine_two_ord (a:lens) (b:lens) = a . b
+
+(************************************************************************
+ * View: combine_two
+ *   Combine two lenses
+ *
+ *   Parameters:
+ *     a:lens - the first lens
+ *     b:lens - the second lens
+ ************************************************************************)
+let combine_two (a:lens) (b:lens) =
+  combine_two_ord a b | combine_two_ord b a
+
+(************************************************************************
  * View: combine_two_opt_ord
  *   Combine two lenses optionally, ensuring first lens is first
  *   (a, and optionally b)

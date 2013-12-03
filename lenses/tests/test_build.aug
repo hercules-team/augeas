@@ -179,6 +179,37 @@ test logrotate_block get "/var/log/wtmp\n/var/log/wtmp2\n{
  * Group:               COMBINATORICS
  ************************************************************************)
 
+(* View: combine_two
+    A minimalistic combination lens *)
+let combine_two =
+     let entry (k:string) = [ key k ]
+  in Build.combine_two (entry "a") (entry "b")
+
+(* Test: combine_two 
+     Should parse ab *)
+test combine_two get "ab" = { "a" } { "b" }
+
+(* Test: combine_two 
+     Should parse ba *)
+test combine_two get "ba" = { "b" } { "a" }
+
+(* Test: combine_two 
+     Should not parse a *)
+test combine_two get "a" = *
+
+(* Test: combine_two 
+     Should not parse b *)
+test combine_two get "b" = *
+
+(* Test: combine_two 
+     Should not parse aa *)
+test combine_two get "aa" = *
+
+(* Test: combine_two 
+     Should not parse bb *)
+test combine_two get "bb" = *
+ 
+
 (* View: combine_two_opt
     A minimalistic optional combination lens *)
 let combine_two_opt =
