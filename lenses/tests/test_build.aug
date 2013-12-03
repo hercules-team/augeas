@@ -174,3 +174,76 @@ test logrotate_block get "/var/log/wtmp\n/var/log/wtmp2\n{
     { "monthly" }
   }
 
+
+(************************************************************************
+ * Group:               COMBINATORICS
+ ************************************************************************)
+
+(* View: combine_two_opt
+    A minimalistic optional combination lens *)
+let combine_two_opt =
+     let entry (k:string) = [ key k ]
+  in Build.combine_two_opt (entry "a") (entry "b")
+
+(* Test: combine_two_opt 
+     Should parse ab *)
+test combine_two_opt get "ab" = { "a" } { "b" }
+
+(* Test: combine_two_opt 
+     Should parse ba *)
+test combine_two_opt get "ba" = { "b" } { "a" }
+
+(* Test: combine_two_opt 
+     Should parse a *)
+test combine_two_opt get "a" = { "a" }
+
+(* Test: combine_two_opt 
+     Should parse b *)
+test combine_two_opt get "b" = { "b" }
+
+(* Test: combine_two_opt 
+     Should not parse aa *)
+test combine_two_opt get "aa" = *
+
+(* Test: combine_two_opt 
+     Should not parse bb *)
+test combine_two_opt get "bb" = *
+
+
+(* View: combine_three_opt
+    A minimalistic optional combination lens *)
+let combine_three_opt =
+     let entry (k:string) = [ key k ]
+  in Build.combine_three_opt (entry "a") (entry "b") (entry "c")
+
+(* Test: combine_three_opt 
+     Should parse ab *)
+test combine_three_opt get "ab" = { "a" } { "b" }
+
+(* Test: combine_three_opt 
+     Should parse ba *)
+test combine_three_opt get "ba" = { "b" } { "a" }
+
+(* Test: combine_three_opt 
+     Should parse a *)
+test combine_three_opt get "a" = { "a" }
+
+(* Test: combine_three_opt 
+     Should parse b *)
+test combine_three_opt get "b" = { "b" }
+
+(* Test: combine_three_opt 
+     Should not parse aa *)
+test combine_three_opt get "aa" = *
+
+(* Test: combine_three_opt 
+     Should not parse bbc *)
+test combine_three_opt get "bbc" = *
+
+(* Test: combine_three_opt 
+     Should parse abc *)
+test combine_three_opt get "abc" = { "a" } { "b" } { "c" }
+
+(* Test: combine_three_opt 
+     Should parse cab *)
+test combine_three_opt get "cab" = { "c" } { "a" } { "b" }
