@@ -241,6 +241,45 @@ test combine_two_opt get "aa" = *
 test combine_two_opt get "bb" = *
 
 
+(* View: combine_three
+    A minimalistic optional combination lens *)
+let combine_three =
+     let entry (k:string) = [ key k ]
+  in Build.combine_three (entry "a") (entry "b") (entry "c")
+
+(* Test: combine_three 
+     Should not parse ab *)
+test combine_three get "ab" = *
+
+(* Test: combine_three 
+     Should not parse ba *)
+test combine_three get "ba" = *
+
+(* Test: combine_three 
+     Should not parse a *)
+test combine_three get "a" = *
+
+(* Test: combine_three 
+     Should not parse b *)
+test combine_three get "b" = *
+
+(* Test: combine_three 
+     Should not parse aa *)
+test combine_three get "aa" = *
+
+(* Test: combine_three 
+     Should not parse bbc *)
+test combine_three get "bbc" = *
+
+(* Test: combine_three 
+     Should parse abc *)
+test combine_three get "abc" = { "a" } { "b" } { "c" }
+
+(* Test: combine_three 
+     Should parse cab *)
+test combine_three get "cab" = { "c" } { "a" } { "b" }
+
+
 (* View: combine_three_opt
     A minimalistic optional combination lens *)
 let combine_three_opt =

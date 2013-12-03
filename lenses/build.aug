@@ -347,6 +347,33 @@ let combine_two_opt_ord (a:lens) (b:lens) = a . b?
 let combine_two_opt (a:lens) (b:lens) =
   combine_two_opt_ord a b | combine_two_opt_ord b a
 
+(************************************************************************
+ * View: combine_three_ord
+ *   Combine three lenses, ensuring first lens is first
+ *   (a followed by either b, c, in any order)
+ *
+ *   Parameters:
+ *     a:lens - the first lens
+ *     b:lens - the second lens
+ *     c:lens - the third lens
+ ************************************************************************)
+let combine_three_ord (a:lens) (b:lens) (c:lens) =
+  combine_two_ord a (combine_two b c)
+
+(************************************************************************
+ * View: combine_three
+ *   Combine three lenses
+ *
+ *   Parameters:
+ *     a:lens - the first lens
+ *     b:lens - the second lens
+ *     c:lens - the third lens
+ ************************************************************************)
+let combine_three (a:lens) (b:lens) (c:lens) =
+    combine_three_ord a b c
+  | combine_three_ord b a c
+  | combine_three_ord c b a
+
 
 (************************************************************************
  * View: combine_three_opt_ord
