@@ -211,6 +211,17 @@ baseurl = http://apt.sw.be/redhat/el6/en/$basearch/rpmforge\n" =
       { "baseurl" = "http://apt.sw.be/redhat/el6/en/$basearch/rpmforge" }
     }
 
+  (* Test: Yum.lns
+       Issue #275: parse excludes as a list *)
+  test Yum.lns get "[epel]
+name=Extra Packages for Enterprise Linux 6 - $basearch
+exclude=ocs* clamav*
+" =
+    { "epel"
+      { "name" = "Extra Packages for Enterprise Linux 6 - $basearch" }
+      { "exclude" = "ocs*" }
+      { "exclude" = "clamav*" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
