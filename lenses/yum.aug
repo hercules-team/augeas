@@ -11,7 +11,6 @@ let sep      = IniFile.sep "=" "="
 let empty    = Util.empty
 let eol      = IniFile.eol
 
-
 (************************************************************************
  *                        ENTRY
  *************************************************************************)
@@ -23,17 +22,18 @@ let list_entry (list_key:string)  =
   . (list_sep . Build.opt_list [ label list_key . list_value ] list_sep)?
   . eol
 
-let entry_re = IniFile.entry_re - ("baseurl" | "gpgkey")
+let entry_re = IniFile.entry_re - ("baseurl" | "gpgkey" | "exclude")
 
 let entry       = IniFile.entry entry_re sep comment
                 | empty
 
-let entries = entry*
-            | entry* . list_entry "baseurl" . entry*
-            | entry* . list_entry "gpgkey" . entry*
-            | entry* . list_entry "baseurl" . entry* . list_entry "gpgkey" . entry*
-            | entry* . list_entry "gpgkey" . entry* . list_entry "baseurl" . entry*
-
+let entries =
+     let list_entry_elem (k:string) = list_entry k . entry*
+  in entry*
+   | entry* . Build.combine_three_opt
+                (list_entry_elem "baseurl")
+                (list_entry_elem "gpgkey")
+                (list_entry_elem "exclude")
 
 
 (***********************************************************************a
