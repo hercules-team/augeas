@@ -1,3 +1,8 @@
+(*
+Module: Test_XymonAlerting
+  Provides unit tests and examples for the <XymonAlerting> lens.
+*)
+
 module Test_XymonAlerting =
     let macro_definition = "$NOTIF_LOCAL=SCRIPT /foo/xymonqpage.sh $PAGER SCRIPT /foo/xymonsms.sh $SMS FORMAT=SMS COLOR=!yellow\n"
     test XymonAlerting.lns get macro_definition = 
