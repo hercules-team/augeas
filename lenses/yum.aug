@@ -29,10 +29,8 @@ let entry       = IniFile.entry entry_re sep comment
                 | empty
 
 let entries = entry*
-            | entry* . list_entry "baseurl" . entry*
-            | entry* . list_entry "gpgkey" . entry*
-            | entry* . list_entry "baseurl" . entry* . list_entry "gpgkey" . entry*
-            | entry* . list_entry "gpgkey" . entry* . list_entry "baseurl" . entry*
+            | entry* . list_entry "baseurl" . entry* . (list_entry "gpgkey" . entry*)?
+            | entry* . list_entry "gpgkey" . entry* . (list_entry "baseurl" . entry*)?
 
 
 
