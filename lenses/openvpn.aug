@@ -58,6 +58,7 @@ let empty   = Util.empty
  *   - status => filename
  *   - log   => filename
  *   - log-append => filename
+ *   - client-config-dir => filename
  *   - verb => num
  *   - mute => num
  *   - ns-cert-type => "server"
@@ -78,6 +79,7 @@ let single_fn  = "ca"
 	       | "status"
 	       | "log"
 	       | "log-append"
+	       | "client-config-dir"
 let single_an  = "user"
                | "group"
 
@@ -110,6 +112,8 @@ let single     = single_entry single_num num_re
  *   - nobind
  *   - mute-replay-warnings
  *   - http-proxy-retry
+ *   - daemon
+ *
  *************************************************************************)
 
 let flag_words = "client-to-client"
@@ -122,6 +126,7 @@ let flag_words = "client-to-client"
 	       | "nobind"
 	       | "mute-replay-warnings"
 	       | "http-proxy-retry"
+	       | "daemon"
 
 let flag_entry (kw:regexp)
                = [ key kw . comment_or_eol ]
@@ -134,10 +139,13 @@ let flag       = flag_entry flag_words
  *
  *   - server        => IP IP
  *   - server-bridge => IP IP IP IP
+ *   - route	     => IP IP
  *   - push          => "string"
  *   - keepalive     => num num
  *   - tls-auth      => filename [01]
  *   - remote        => hostname/IP num
+ *   - management    => IP num filename
+ *
  *************************************************************************)
 
 let server        = [ key "server" . sep
@@ -151,6 +159,11 @@ let server_bridge = [ key "server-bridge" . sep
 		    . [ label "start"   . ip ] . sep
 		    . [ label "end"     . ip ] . comment_or_eol
 		    ]
+
+let route         = [ key "route" . sep
+                    . [ label "address" . ip ] . sep
+                    . [ label "netmask" . ip ] . comment_or_eol
+                    ]
 
 let push          = [ key "push" . sep
                     . Quote.do_dquote sto_to_dquote
@@ -178,13 +191,22 @@ let http_proxy    = [ key "http-proxy" .
 		    . comment_or_eol
 		    ]
 
+let management    = [ key "management" . sep
+                    . [ label "server" . ip             ] . sep
+                    . [ label "port"   . num            ] . sep
+                    . [ label "pwfile" . filename       ] . comment_or_eol
+                    ]
+
+
 let other         = server
                   | server_bridge
+		  | route
                   | push
 		  | keepalive
 		  | tls_auth
 		  | remote
 		  | http_proxy
+		  | management
 
 
 (************************************************************************
