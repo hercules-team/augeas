@@ -297,3 +297,15 @@ test Sudoers.spec get "%sudo_users ALL=(ALL) ALL\n" =
         { "runas_user" = "ALL" } }
     }
   }
+
+(* Test: Sudoers.spec
+     Ticket #376: allow uppercase characters in user names *)
+test Sudoers.spec get "%GrOup ALL = (ALL) ALL\n" =
+  { "spec"
+    { "user" = "%GrOup" }
+    { "host_group"
+      { "host" = "ALL" }
+      { "command" = "ALL"
+        { "runas_user" = "ALL" } }
+    }
+  }
