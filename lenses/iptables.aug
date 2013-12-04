@@ -83,4 +83,5 @@ let table = [ del /\*/ "*" . label "table" . store /[a-z]+/ . eol .
 
 let lns = (comment|empty|table)*
 let xfm = transform lns (incl "/etc/sysconfig/iptables"
+                       . incl "/etc/sysconfig/iptables.save"
                        . incl "/etc/iptables-save")

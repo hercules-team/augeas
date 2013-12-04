@@ -189,6 +189,7 @@ module Shellvars =
       sc_excl "hw-uuid" .
       sc_excl "hwconf" .
       sc_excl "ip*tables" .
+      sc_excl "ip*tables.save" .
       sc_excl "kernel" .
       sc_excl "*.pub" .
       sc_excl "sysstat.ioconf" .
