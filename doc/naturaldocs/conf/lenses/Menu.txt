@@ -68,6 +68,7 @@ Group: Specific Modules  {
    File: Automaster  (automaster.aug)
    File: Automounter  (automounter.aug)
    File: Avahi  (avahi.aug)
+   File: Bacula  (bacula.aug)
    File: BackupPCHosts  (backuppchosts.aug)
    File: BootConf  (bootconf.aug)
    File: Cachefilesd  (cachefilesd.aug)
