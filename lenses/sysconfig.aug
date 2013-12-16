@@ -11,7 +11,8 @@ module Sysconfig =
   let key_re = Shellvars.key_re
   let eq = Util.del_str "="
 
-  let comment = Util.comment
+  let eol_for_comment = del /([ \t]*\n)([ \t]*(#[ \t]*)?\n)*/ "\n"
+  let comment = Util.comment_generic_seteol /[ \t]*#[ \t]*/ "# " eol_for_comment
   let comment_or_eol = Shellvars.comment_or_eol
 
   let empty   = Util.empty
