@@ -142,6 +142,10 @@ unset ONBOOT    #   We do not want this var
   test lns put "var=v\n" after set "/var" "v\"w"=
     "var='v\"w'\n"
 
+  (* RHBZ#1043636: empty comment lines after comments *)
+  test lns get "#MOUNTD_NFS_V3\n#\n" =
+    { "#comment" = "MOUNTD_NFS_V3" }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
