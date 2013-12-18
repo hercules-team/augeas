@@ -10,6 +10,8 @@
       booting and bootp (Yanis Guenane)
     * PHP: allow php-fpm syntax in keys, GH issue #35
     * Properties: support multiline starting with an empty string, GH issue #19
+    * Shellvars, Sysconfig: map "bare" export and unset lines to seq numbered
+      nodes to handle multiple variables (incompatible change), RHBZ#1033795
     * Sysconfig_Route: New lens for RedHat's route configs
     * Simplevars: Add /etc/selinux/semanage.conf
     * Sshd: Indent Match entries by 2 spaces by default

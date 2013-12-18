@@ -65,8 +65,10 @@ module Shellvars =
            . eq . (simple_value | array) . comment_or_eol ]
 
   let var_action (name:string) =
-    [ Util.indent . xchgs name ("@" . name) . Util.del_ws_spc
-    . store (key_re | matching_re) . comment_or_eol ]
+    Util.indent . del name name . Util.del_ws_spc .
+      [ label ("@" . name) . counter "var_action"
+        . Build.opt_list [ seq "var_action" . store (key_re | matching_re) ] Util.del_ws_spc
+        . comment_or_eol ]
 
   let unset = var_action "unset"
   let bare_export = var_action "export"
