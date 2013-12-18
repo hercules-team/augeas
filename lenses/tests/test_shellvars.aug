@@ -442,6 +442,12 @@ esac\n" =
       { "1" = "'ftp::/usr/bin/curl -fC - --ftp-pasv --retry 3 --retry-delay 3 -o %o %u'" }
       { "2" = "'scp::/usr/bin/scp -C %u %o'" } }
 
+  (* Accept continued lines in quoted values *)
+  test lns get "BLAH=\" \\\\
+test \\\\
+test2\"\n" =
+  { "BLAH" = "\" \\\\\ntest \\\\\ntest2\"" }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
