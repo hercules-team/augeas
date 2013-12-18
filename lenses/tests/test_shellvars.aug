@@ -443,10 +443,10 @@ esac\n" =
       { "2" = "'scp::/usr/bin/scp -C %u %o'" } }
 
   (* Accept continued lines in quoted values *)
-  test lns get "BLAH=\" \\\\
-test \\\\
+  test lns get "BLAH=\" \
+test \
 test2\"\n" =
-  { "BLAH" = "\" \\\\\ntest \\\\\ntest2\"" }
+  { "BLAH" = "\" \\\ntest \\\ntest2\"" }
 
 (* Local Variables: *)
 (* mode: caml       *)

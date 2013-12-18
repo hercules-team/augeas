@@ -32,7 +32,9 @@ module Shellvars =
   let semicol = del /;?/ ""
 
   let char  = /[^`;() '"\t\n]|\\\\"/
-  let dquot = /"([^"\\]|\\\\.)*"/                    (* " Emacs, relax *)
+  let dquot = 
+       let char = /[^"\\]|\\\\./ | Rx.cl
+    in "\"" . char* . "\""                    (* " Emacs, relax *)
   let squot = /'[^']*'/
   let bquot = /`[^`\n]*`/
   (* dbquot don't take spaces or semi-colons *)
