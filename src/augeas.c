@@ -1697,8 +1697,52 @@ static int to_xml_one(xmlNodePtr elem, const struct tree *tree,
         goto error;
 
     if (tree->span) {
+        struct span *span = tree->span;
+        char label_start[10];
+        char label_end[10];
+        char value_start[10];
+        char value_end[10];
+        char span_start[10];
+        char span_end[10];
+
         prop = xmlSetProp(elem, BAD_CAST "file",
-                          BAD_CAST tree->span->filename->str);
+                          BAD_CAST span->filename->str);
+        if (prop == NULL)
+            goto error;
+
+        sprintf(label_start, "%d", span->label_start);
+        prop = xmlSetProp(elem, BAD_CAST "span_label_start",
+                          BAD_CAST label_start);
+        if (prop == NULL)
+            goto error;
+
+        sprintf(label_end, "%d", span->label_end);
+        prop = xmlSetProp(elem, BAD_CAST "span_label_end",
+                          BAD_CAST label_end);
+        if (prop == NULL)
+            goto error;
+
+        sprintf(value_start, "%d", span->value_start);
+        prop = xmlSetProp(elem, BAD_CAST "span_value_start",
+                          BAD_CAST value_start);
+        if (prop == NULL)
+            goto error;
+
+        sprintf(value_end, "%d", span->value_end);
+        prop = xmlSetProp(elem, BAD_CAST "span_value_end",
+                          BAD_CAST value_end);
+        if (prop == NULL)
+            goto error;
+
+        sprintf(span_start, "%d", span->span_start);
+        prop = xmlSetProp(elem, BAD_CAST "span_span_start",
+                          BAD_CAST span_start);
+        if (prop == NULL)
+            goto error;
+
+        sprintf(span_end, "%d", span->span_end);
+        prop = xmlSetProp(elem, BAD_CAST "span_span_end",
+                          BAD_CAST span_end);
         if (prop == NULL)
             goto error;
     }
