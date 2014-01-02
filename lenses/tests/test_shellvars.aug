@@ -30,7 +30,8 @@ unset ONBOOT    #   We do not want this var
     { "#comment" = "DHCP_HOSTNAME=host.example.com" }
     { "NETMASK" = "255.255.255.0" }
     { "NETWORK" = "172.31.0.0" }
-    { "@unset"   = "ONBOOT"
+    { "@unset"
+        { "1" = "ONBOOT" }
         { "#comment" = "We do not want this var" } }
 
   test lns put eth_static after
@@ -147,7 +148,8 @@ unset ONBOOT    #   We do not want this var
 
   (* Bug 109: allow a bare export *)
   test lns get "export FOO\n" =
-  { "@export" = "FOO" }
+  { "@export"
+    { "1" = "FOO" } }
 
   (* Bug 73: allow ulimit builtin *)
   test lns get "ulimit -c unlimited\n" =
@@ -259,7 +261,8 @@ esac\n" =
     { "@case_entry" = "/tmp/file2"
       { ".source" = "/tmp/file2" } }
     { "@case_entry" = "*"
-      { "@unset" = "f" } } }
+      { "@unset"
+        { "1" = "f" } } } }
 
   (* Select *)
   test lns get "select i in a b c; do . /tmp/file$i
@@ -346,7 +349,8 @@ esac\n" =
     { "#comment" = "comment before 2" }
     { "@case_entry" = "*"
       { "#comment" = "comment in 2" }
-      { "@unset" = "f" } }
+      { "@unset"
+        { "1" = "f" } } }
     { "#comment" = "comment after" } }
 
   (* Empty case *)
@@ -397,7 +401,8 @@ esac\n" =
 
   (* unset can be used on wildcard variables *)
   test Shellvars.lns get "unset ${!LC_*}\n" =
-  { "@unset" = "${!LC_*}" }
+  { "@unset"
+    { "1" = "${!LC_*}" } }
 
   (* Empty comment before entries *)
   test Shellvars.lns get "# \nfoo=bar\n" =
@@ -434,6 +439,12 @@ esac\n" =
   #\n" =
     { "#comment" = "foo" }
     { "foo" = "bar" }
+
+  (* Export of multiple variables, RHBZ#1033795 *)
+  test lns get "export TestVar1 TestVar2\n" =
+    { "@export"
+      { "1" = "TestVar1" }
+      { "2" = "TestVar2" } }
 
 (* Local Variables: *)
 (* mode: caml       *)
