@@ -63,3 +63,12 @@ test Slapd.lns get conf =
         { "by"
            { "who" = "*" }
            { "what" = "none" } } } }
+
+test Slapd.lns get "access to dn.subtree=\"dc=example,dc=com\"
+  by self write stop\n" =
+  { "access to" = "dn.subtree=\"dc=example,dc=com\""
+    { "by"
+      { "who" = "self" }
+      { "what" = "write" }
+      { "control" = "stop" } } }
+
