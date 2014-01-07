@@ -53,22 +53,22 @@ test Slapd.lns get conf =
      { "access to" = "attrs=userPassword,shadowLastChange"
         { "by"
            { "who" = "dn=\"cn=admin,dc=nodomain\"" }
-           { "what" = "write" } }
+           { "access" = "write" } }
         { "by"
            { "who" = "anonymous" }
-           { "what" = "auth" } }
+           { "access" = "auth" } }
         { "by"
            { "who" = "self" }
-           { "what" = "write" } }
+           { "access" = "write" } }
         { "by"
            { "who" = "*" }
-           { "what" = "none" } } } }
+           { "access" = "none" } } } }
 
 test Slapd.lns get "access to dn.subtree=\"dc=example,dc=com\"
   by self write stop\n" =
   { "access to" = "dn.subtree=\"dc=example,dc=com\""
     { "by"
       { "who" = "self" }
-      { "what" = "write" }
+      { "access" = "write" }
       { "control" = "stop" } } }
 
