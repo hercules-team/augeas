@@ -139,11 +139,15 @@ let database_re = "suffix"
                 | "updateref"
                 | database_hdb
 
+let database_entry =
+     let val = Quote.double_opt
+  in Build.key_value_line database_re Sep.space val
+
 let database    = [ key "database"
                   . spc
                   . sto_to_eol
                   . eol
-                  . (comment|empty|Build.key_ws_value database_re|access)* ]
+                  . (comment|empty|database_entry|access)* ]
 
 (************************************************************************
  *                              LENS

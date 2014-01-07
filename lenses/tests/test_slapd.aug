@@ -48,7 +48,7 @@ test Slapd.lns get conf =
   { "database" = "hdb"
      {}
      { "#comment" = "The base of your directory in database #1" }
-     { "suffix"   = "\"dc=nodomain\"" }
+     { "suffix"   = "dc=nodomain" }
      {}
      { "access to" = "attrs=userPassword,shadowLastChange"
         { "by"
