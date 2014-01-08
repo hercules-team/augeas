@@ -28,13 +28,13 @@ let empty       = Util.empty
 
 let access_re   = "access to"
 let control_re  = "stop" | "continue" | "break"
-let who         = [ spc . label "who"     . sto_to_spc ]
 let what        = [ spc . label "access"
                   . store (/[^\\# \t\n]+/ - ("by" | control_re)) ]
 
 (* TODO: parse the control field, see man slapd.access (5) *)
 let control     = [ spc . label "control" . store control_re ]
-let by          = [ sep . key "by". who . what? . control? ]
+let by          = [ sep . key "by" . spc . sto_to_spc
+                  . what? . control? ]
 
 let access      = [ key access_re . spc. sto_to_spc . by+ . eol ]
 
