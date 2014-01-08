@@ -64,11 +64,39 @@ test Slapd.lns get conf =
            { "who" = "*" }
            { "access" = "none" } } } }
 
+(* Test: Slapd.lns
+     Full access test with who/access/control *)
 test Slapd.lns get "access to dn.subtree=\"dc=example,dc=com\"
   by self write stop\n" =
   { "access to" = "dn.subtree=\"dc=example,dc=com\""
     { "by"
       { "who" = "self" }
       { "access" = "write" }
+      { "control" = "stop" } } }
+
+(* Test: Slapd.lns
+     access test with who *)
+test Slapd.lns get "access to dn.subtree=\"dc=example,dc=com\"
+  by self\n" =
+  { "access to" = "dn.subtree=\"dc=example,dc=com\""
+    { "by"
+      { "who" = "self" } } }
+
+(* Test: Slapd.lns
+     access test with who/access *)
+test Slapd.lns get "access to dn.subtree=\"dc=example,dc=com\"
+  by self write\n" =
+  { "access to" = "dn.subtree=\"dc=example,dc=com\""
+    { "by"
+      { "who" = "self" }
+      { "access" = "write" } } }
+
+(* Test: Slapd.lns
+     access test with who/control *)
+test Slapd.lns get "access to dn.subtree=\"dc=example,dc=com\"
+  by self stop\n" =
+  { "access to" = "dn.subtree=\"dc=example,dc=com\""
+    { "by"
+      { "who" = "self" }
       { "control" = "stop" } } }
 
