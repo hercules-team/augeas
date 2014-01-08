@@ -51,17 +51,13 @@ test Slapd.lns get conf =
      { "suffix"   = "dc=nodomain" }
      {}
      { "access to" = "attrs=userPassword,shadowLastChange"
-        { "by"
-           { "who" = "dn=\"cn=admin,dc=nodomain\"" }
+        { "by" = "dn=\"cn=admin,dc=nodomain\""
            { "access" = "write" } }
-        { "by"
-           { "who" = "anonymous" }
+        { "by" = "anonymous"
            { "access" = "auth" } }
-        { "by"
-           { "who" = "self" }
+        { "by" = "self"
            { "access" = "write" } }
-        { "by"
-           { "who" = "*" }
+        { "by" = "*"
            { "access" = "none" } } } }
 
 (* Test: Slapd.lns
@@ -69,8 +65,7 @@ test Slapd.lns get conf =
 test Slapd.lns get "access to dn.subtree=\"dc=example,dc=com\"
   by self write stop\n" =
   { "access to" = "dn.subtree=\"dc=example,dc=com\""
-    { "by"
-      { "who" = "self" }
+    { "by" = "self"
       { "access" = "write" }
       { "control" = "stop" } } }
 
@@ -79,16 +74,14 @@ test Slapd.lns get "access to dn.subtree=\"dc=example,dc=com\"
 test Slapd.lns get "access to dn.subtree=\"dc=example,dc=com\"
   by self\n" =
   { "access to" = "dn.subtree=\"dc=example,dc=com\""
-    { "by"
-      { "who" = "self" } } }
+    { "by" = "self" } }
 
 (* Test: Slapd.lns
      access test with who/access *)
 test Slapd.lns get "access to dn.subtree=\"dc=example,dc=com\"
   by self write\n" =
   { "access to" = "dn.subtree=\"dc=example,dc=com\""
-    { "by"
-      { "who" = "self" }
+    { "by" = "self"
       { "access" = "write" } } }
 
 (* Test: Slapd.lns
@@ -96,7 +89,6 @@ test Slapd.lns get "access to dn.subtree=\"dc=example,dc=com\"
 test Slapd.lns get "access to dn.subtree=\"dc=example,dc=com\"
   by self stop\n" =
   { "access to" = "dn.subtree=\"dc=example,dc=com\""
-    { "by"
-      { "who" = "self" }
+    { "by" = "self"
       { "control" = "stop" } } }
 
