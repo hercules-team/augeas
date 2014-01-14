@@ -12,6 +12,8 @@
     * Properties: support multiline starting with an empty string, GH issue #19
     * Shellvars, Sysconfig: map "bare" export and unset lines to seq numbered
       nodes to handle multiple variables (incompatible change), RHBZ#1033795
+    * Slapd: use smart quotes for database entries; rename by/what to by/access;
+      allow access to be absent as per official docs (incompatible change)
     * Sysconfig_Route: New lens for RedHat's route configs
     * Simplevars: Add /etc/selinux/semanage.conf
     * Sshd: Indent Match entries by 2 spaces by default
