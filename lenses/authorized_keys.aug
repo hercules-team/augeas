@@ -43,7 +43,7 @@ let key_options = [ label "options" . Build.opt_list option Sep.comma ]
 
 (* View: key_type *)
 let key_type =
-  let key_type_re = /ecdsa-sha2-nistp[0-9]+/ | /ssh-[a-z]+/
+  let key_type_re = /ecdsa-sha2-nistp[0-9]+/ | /ssh-[a-z0-9]+/
   in [ label "type" . store key_type_re ]
 
 (* View: key_comment *)
