@@ -61,7 +61,8 @@ module XymonAlerting =
      * Group:                 MACRO DEFINITION
      *************************************************************************)
 
-    (* View: macrodefinition A string that starts with $ and that is assigned something *)
+    (* View: macrodefinition
+         A string that starts with $ and that is assigned something *)
     let macrodefinition = [ key /\$[^ =\t\n#\/]+/ . equal . store /.*/ . eol ]
 
 
@@ -69,34 +70,48 @@ module XymonAlerting =
      * Group:                 FILTERS 
      *************************************************************************)
 
-    (* View: page The page filter definition *)
+    (* View: page
+         The page filter definition *)
     let page      = [ ws . key "PAGE" . equal . store_word . ws ]
-    (* View: expage The expage filter definition *)
+    (* View: expage
+         The expage filter definition *)
     let expage    = [ ws . key "EXPAGE" . equal . store_word . ws ]
-    (* View: group The group filter definition *)
+    (* View: group
+         The group filter definition *)
     let group     = [ ws . key "GROUP" . equal . store_word . ws ]
-    (* View: exgroup The exgroup filter definition *)
+    (* View: exgroup
+         The exgroup filter definition *)
     let exgroup   = [ ws . key "EXGROUP" . equal . store_word . ws ]
-    (* View: host The host filter definition *)
+    (* View: host
+         The host filter definition *)
     let host      = [ ws . key "HOST" . equal . store_word . ws ]
-    (* View: exhost The exhost filter definition *)
+    (* View: exhost
+         The exhost filter definition *)
     let exhost    = [ ws . key "EXHOST" . equal . store_word . ws ]
-    (* View: service The service filter definition *)
+    (* View: service
+         The service filter definition *)
     let service   = [ ws . key "SERVICE" . equal . store_word . ws ]
-    (* View: exservice The exservice filter definition *)
+    (* View: exservice
+         The exservice filter definition *)
     let exservice = [ ws . key "EXSERVICE" . equal . store_word . ws ]
-    (* View: color The color filter definition *)
+    (* View: color
+         The color filter definition *)
     let color     = [ ws . key "COLOR" . equal . store_word . ws ]
-    (* View: time The time filter definition *)
+    (* View: time
+         The time filter definition *)
     let time      = [ ws . key "TIME" . equal . store_word . ws ]
-    (* View: duration The duration filter definition *)
+    (* View: duration
+         The duration filter definition *)
     let duration  = [ ws . key "DURATION" . [ label "operator" . comparison ] . [ label "value" . store_word ] . ws ]
-    (* View: recover The recover filter definition *)
+    (* View: recover
+         The recover filter definition *)
     let recover   = [ ws . key "RECOVER" . ws ]
-    (* View: notice The notice filter definition *)
+    (* View: notice
+         The notice filter definition *)
     let notice    = [ ws . key "NOTICE" . ws ]
 
-    (* View: filters Filters are made out of any of the above filter definitions *)
+    (* View: filters
+         Filters are made out of any of the above filter definitions *)
     let filters = 
         page |
         expage |
@@ -117,24 +132,33 @@ module XymonAlerting =
      * Group:                 RECIPIENTS
      *************************************************************************)
 
-    (* View: mail The mail recipient definition *)
+    (* View: mail
+         The mail recipient definition *)
     let mail      = [ key "MAIL" . ws . store_word . ws . [ label "filters" . filters* ] . ws_or_eol ]
-    (* View: script The script recipient definition *)
+    (* View: script
+         The script recipient definition *)
     let script    = [ key "SCRIPT" . ws . [ label "script" . store_word ] . ws . [ label "recipient" . store_word ] . ws . [ label "filters" . filters* ] . ws_or_eol ]
-    (* View: ignore The ignore recipient definition *)
+    (* View: ignore
+         The ignore recipient definition *)
     let ignore    = [ key "IGNORE" . ws . [ label "filters" . filters* ] . ws_or_eol ]
-    (* View: format The format recipient definition *)
+    (* View: format
+         The format recipient definition *)
     let format    = [ key "FORMAT" . equal . store_word . ws . [ label "filters" . filters* ] . ws_or_eol ]
-    (* View: repeat The repeat recipient definition *)
+    (* View: repeat
+         The repeat recipient definition *)
     let repeat    = [ key "REPEAT" . equal . store_word . ws . [ label "filters" . filters* ] . ws_or_eol ]
-    (* View: unmatched The unmatched recipient definition *)
+    (* View: unmatched
+         The unmatched recipient definition *)
     let unmatched = [ key "UNMATCHED" . ws . [ label "filters" . filters* ] . ws_or_eol ]
-    (* View: stop The stop recipient definition *)
+    (* View: stop
+         The stop recipient definition *)
     let stop      = [ key "STOP" . ws . [ label "filters" . filters* ] . ws_or_eol ]
-    (* View: macro The macro recipient definition *)
+    (* View: macro
+         The macro recipient definition *)
     let macro     = [ key /\$[^ =\t\n#\/]+/ . ws . [ label "filters" . filters* ] . ws_or_eol ]
 
-    (* View: recipients Recipients are made out of any of the above recipient definitions *)
+    (* View: recipients
+         Recipients are made out of any of the above recipient definitions *)
     let recipients =
         mail |
         script |
@@ -150,10 +174,12 @@ module XymonAlerting =
      * Group:                 RULES
      *************************************************************************)
 
-    (* View: rule Rules are made of filters and then recipients sperarated by a whitespace *)
+    (* View: rule
+         Rules are made of filters and then recipients sperarated by a whitespace *)
     let rule = [ seq "rules" . [ label "filters" . filters+ ] . ws_or_eol . [ label "recipients" . ( recipients )+ ] . eol ] 
 
-    (* View: lens The XymonAlerting lens *)
+    (* View: lns
+         The XymonAlerting lens *)
     let lns = ( rule | macrodefinition | include | empty | comment )*
 
     (* Variable: filter *)
