@@ -11,6 +11,8 @@
     * Fix umask handling when creating new files, RHBZ#1034261
   - Lens changes/additions
     * Access: support DOMAIN\user syntax for users and groups, bug #353
+    * Authorized_Keys: Allow 'ssh-ed25519' as a valid authorized_key
+      type (Jasper Lievisse Adriaanse)
     * Automounter: Handle hostnames with dashes in them, GH issue #27
     * Build: Add combinatorics group
     * Cyrus_Imapd: Create new entries without space before separator,
