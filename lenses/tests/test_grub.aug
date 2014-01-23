@@ -18,6 +18,7 @@ background 103332
 timeout=5
 splashimage=(hd0,0)/grub/splash.xpm.gz
 gfxmenu=(hd0,0)/boot/message
+verbose = 0
 hiddenmenu
 title Fedora (2.6.24.4-64.fc8)
         root (hd0,0)
@@ -66,6 +67,7 @@ title othermenu
     { "timeout" = "5" }
     { "splashimage" = "(hd0,0)/grub/splash.xpm.gz" }
     { "gfxmenu" = "(hd0,0)/boot/message" }
+    { "verbose" = "0" }
     { "hiddenmenu" }
     { "title" = "Fedora (2.6.24.4-64.fc8)"
         { "root" = "(hd0,0)" }
