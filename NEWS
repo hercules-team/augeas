@@ -61,6 +61,7 @@
     * Shellvars, Sysconfig: map "bare" export and unset lines to seq numbered
       nodes to handle multiple variables (incompatible change), RHBZ#1033795
     * Shellvars_list: Handle backtick variable assignments, bug #368
+                      Allow end-of-line comments, bug #342
     * Simplevars: Add /etc/selinux/semanage.conf
     * Slapd: use smart quotes for database entries; rename by/what to by/access;
       allow access to be absent as per official docs (incompatible change)
