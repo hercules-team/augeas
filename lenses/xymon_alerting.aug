@@ -1,5 +1,5 @@
 (*
-Module: XymonAlerting
+Module: Xymon_Alerting
   Parses xymon alerting files 
 
 Author: Francois Maillard <fmaillard@gmail.com>
@@ -20,10 +20,10 @@ About: Configuration files
    This lens applies to /etc/xymon/alerts.d/*.cfg and /etc/xymon/alerts.cfg. See <filter>.
 
 About: Examples
-   The <Test_XymonAlerting> file contains various examples and tests.
+   The <Test_Xymon_Alerting> file contains various examples and tests.
 *)
 
-module XymonAlerting =
+module Xymon_Alerting =
     autoload xfm
 
     (************************************************************************
@@ -179,7 +179,7 @@ module XymonAlerting =
     let rule = [ seq "rules" . [ label "filters" . filters+ ] . ws_or_eol . [ label "recipients" . ( recipients )+ ] . eol ] 
 
     (* View: lns
-         The XymonAlerting lens *)
+         The Xymon_Alerting lens *)
     let lns = ( rule | macrodefinition | include | empty | comment )*
 
     (* Variable: filter *)

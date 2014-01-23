@@ -1,15 +1,15 @@
 (*
-Module: Test_XymonAlerting
-  Provides unit tests and examples for the <XymonAlerting> lens.
+Module: Test_Xymon_Alerting
+  Provides unit tests and examples for the <Xymon_Alerting> lens.
 *)
 
-module Test_XymonAlerting =
+module Test_Xymon_Alerting =
     let macro_definition = "$NOTIF_LOCAL=SCRIPT /foo/xymonqpage.sh $PAGER SCRIPT /foo/xymonsms.sh $SMS FORMAT=SMS COLOR=!yellow\n"
-    test XymonAlerting.lns get macro_definition = 
+    test Xymon_Alerting.lns get macro_definition = 
     { "$NOTIF_LOCAL" = "SCRIPT /foo/xymonqpage.sh $PAGER SCRIPT /foo/xymonsms.sh $SMS FORMAT=SMS COLOR=!yellow" }
 
     let basic_syntax = "HOST=hostname IGNORE\n"
-    test XymonAlerting.lns get basic_syntax = 
+    test Xymon_Alerting.lns get basic_syntax = 
       { "1"
         { "filters"
           { "HOST" = "hostname" }
@@ -20,7 +20,7 @@ module Test_XymonAlerting =
       }
 
     let two_filters = "HOST=hostname SERVICE=service IGNORE\n"
-    test XymonAlerting.lns get two_filters =
+    test Xymon_Alerting.lns get two_filters =
       { "1"
         { "filters"
           { "HOST"    = "hostname" }
@@ -32,7 +32,7 @@ module Test_XymonAlerting =
       }
 
     let two_recipients = "HOST=hostname IGNORE STOP\n"
-    test XymonAlerting.lns get two_recipients =
+    test Xymon_Alerting.lns get two_recipients =
       { "1"
         { "filters"
           { "HOST"    = "hostname" }
@@ -44,7 +44,7 @@ module Test_XymonAlerting =
       }
 
     let two_lines = "HOST=hostname SERVICE=service\n    IGNORE\n"
-    test XymonAlerting.lns get two_lines =
+    test Xymon_Alerting.lns get two_lines =
       { "1"
         { "filters"
           { "HOST"    = "hostname" }
@@ -56,7 +56,7 @@ module Test_XymonAlerting =
       }
 
     let two_lines_for_recipients = "HOST=hostname SERVICE=service\n    IGNORE\nSTOP\n"
-    test XymonAlerting.lns get two_lines_for_recipients =
+    test Xymon_Alerting.lns get two_lines_for_recipients =
       { "1"
         { "filters"
           { "HOST"    = "hostname" }
@@ -69,7 +69,7 @@ module Test_XymonAlerting =
       }
 
     let with_blanks_at_eol = "HOST=hostname SERVICE=service  \n    IGNORE  \n"
-    test XymonAlerting.lns get with_blanks_at_eol =
+    test Xymon_Alerting.lns get with_blanks_at_eol =
       { "1"
         { "filters"
           { "HOST"    = "hostname" }
@@ -81,7 +81,7 @@ module Test_XymonAlerting =
       }
 
     let several_rules = "HOST=hostname SERVICE=service\nIGNORE\nHOST=hostname2 SERVICE=svc\nIGNORE\nSTOP\n"
-    test XymonAlerting.lns get several_rules =
+    test Xymon_Alerting.lns get several_rules =
       { "1"
         { "filters"
           { "HOST" = "hostname" }
@@ -104,7 +104,7 @@ module Test_XymonAlerting =
 
 
     let duration = "HOST=hostname DURATION>20 SERVICE=service\nIGNORE\n"
-    test XymonAlerting.lns get duration =
+    test Xymon_Alerting.lns get duration =
       { "1"
         { "filters"
           { "HOST" = "hostname" }
@@ -120,7 +120,7 @@ module Test_XymonAlerting =
       }
 
     let notice = "HOST=hostname NOTICE SERVICE=service\nIGNORE\n"
-    test XymonAlerting.lns get notice =
+    test Xymon_Alerting.lns get notice =
       { "1"
         { "filters"
           { "HOST" = "hostname" }
@@ -133,7 +133,7 @@ module Test_XymonAlerting =
       }
 
     let mail = "HOST=hostname MAIL astreinteMail\n"
-    test XymonAlerting.lns get mail =
+    test Xymon_Alerting.lns get mail =
       { "1"
         { "filters"
           { "HOST" = "hostname" }
@@ -146,7 +146,7 @@ module Test_XymonAlerting =
       }
 
     let script = "HOST=hostname SCRIPT /foo/email.sh astreinteMail\n"
-    test XymonAlerting.lns get script =
+    test Xymon_Alerting.lns get script =
       { "1"
         { "filters"
           { "HOST" = "hostname" }
@@ -161,7 +161,7 @@ module Test_XymonAlerting =
       }
 
     let repeat = "HOST=hostname REPEAT=15\n"
-    test XymonAlerting.lns get repeat =
+    test Xymon_Alerting.lns get repeat =
       { "1"
         { "filters"
           { "HOST" = "hostname" }
@@ -174,7 +174,7 @@ module Test_XymonAlerting =
       }
 
     let mail_with_filters = "HOST=hostname MAIL astreinteMail EXSERVICE=service\n"
-    test XymonAlerting.lns get mail_with_filters =
+    test Xymon_Alerting.lns get mail_with_filters =
       { "1"
         { "filters"
           { "HOST" = "hostname" }
@@ -189,7 +189,7 @@ module Test_XymonAlerting =
       }
 
     let mail_with_several_filters = "HOST=hostname MAIL astreinteMail EXSERVICE=service DURATION>20\n"
-    test XymonAlerting.lns get mail_with_several_filters =
+    test Xymon_Alerting.lns get mail_with_several_filters =
       { "1"
         { "filters"
           { "HOST" = "hostname" }
@@ -208,7 +208,7 @@ module Test_XymonAlerting =
       }
 
     let script_with_several_filters = "HOST=hostname SCRIPT /foo/email.sh astreinteMail EXSERVICE=service DURATION>20\n"
-    test XymonAlerting.lns get script_with_several_filters =
+    test Xymon_Alerting.lns get script_with_several_filters =
       { "1"
         { "filters"
           { "HOST" = "hostname" }
@@ -229,7 +229,7 @@ module Test_XymonAlerting =
       }
 
     let repeat_with_several_filters = "HOST=hostname REPEAT=15 EXSERVICE=service DURATION>20\n"
-    test XymonAlerting.lns get repeat_with_several_filters =
+    test Xymon_Alerting.lns get repeat_with_several_filters =
       { "1"
         { "filters"
           { "HOST" = "hostname" }
@@ -248,7 +248,7 @@ module Test_XymonAlerting =
       }
 
     let recipients_with_several_filters = "HOST=hostname\nREPEAT=15 EXSERVICE=service DURATION>20\nMAIL astreinteMail TIME=weirdtimeformat\n"
-    test XymonAlerting.lns get recipients_with_several_filters =
+    test Xymon_Alerting.lns get recipients_with_several_filters =
       { "1"
         { "filters"
           { "HOST" = "hostname" }
@@ -272,7 +272,7 @@ module Test_XymonAlerting =
       }
 
     let recipient_macro = "HOST=hostname\n    $NOTIF_LOCAL\n    STOP\n"
-    test XymonAlerting.lns get recipient_macro =
+    test Xymon_Alerting.lns get recipient_macro =
       { "1"
         { "filters"
           { "HOST" = "hostname" }
