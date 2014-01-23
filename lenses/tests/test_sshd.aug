@@ -106,6 +106,24 @@ KexAlgorithms diffie-hellman-group-exchange-sha256,diffie-hellman-group14-sha1,d
     { "3" = "diffie-hellman-group-exchange-sha1" }
   }
 
+(* Test: Sshd.lns
+     Keys are case-insensitive *)
+test Sshd.lns get "ciPheRs aes256-gcm@openssh.com,aes128-ctr
+maTcH User foo
+  x11forwarding no\n" =
+  { "ciPheRs"
+    { "1" = "aes256-gcm@openssh.com" }
+    { "2" = "aes128-ctr" }
+  }
+  { "maTcH"
+    { "Condition"
+      { "User" = "foo" }
+    }
+    { "Settings"
+      { "x11forwarding" = "no" }
+    }
+  }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

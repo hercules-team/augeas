@@ -73,46 +73,46 @@ module Sshd =
    let indent = del /[ \t]*/ "  "
 
    let key_re = /[A-Za-z0-9]+/
-         - /MACs|Match|AcceptEnv|Subsystem|Ciphers|KexAlgorithms|(Allow|Deny)(Groups|Users)/
+         - /MACs|Match|AcceptEnv|Subsystem|Ciphers|KexAlgorithms|(Allow|Deny)(Groups|Users)/i
 
    let comment = Util.comment
    let comment_noindent = Util.comment_noindent
    let empty = Util.empty
 
-   let array_entry (k:string) =
+   let array_entry (kw:regexp) (sq:string) =
      let value = store /[^ \t\n]+/ in
-     [ key k . [ sep . seq k . value]* . eol ]
+     [ key kw . [ sep . seq sq . value]* . eol ]
 
    let other_entry =
      let value = store /[^ \t\n]+([ \t]+[^ \t\n]+)*/ in
      [ key key_re . sep . value . eol ]
 
-   let accept_env = array_entry "AcceptEnv"
+   let accept_env = array_entry /AcceptEnv/i "AcceptEnv"
 
-   let allow_groups = array_entry "AllowGroups"
-   let allow_users = array_entry "AllowUsers"
-   let deny_groups = array_entry "DenyGroups"
-   let deny_users = array_entry "DenyUsers"
+   let allow_groups = array_entry /AllowGroups/i "AllowGroups"
+   let allow_users = array_entry /AllowUsers/i "AllowUsers"
+   let deny_groups = array_entry /DenyGroups/i "DenyGroups"
+   let deny_users = array_entry /DenyUsers/i "DenyUsers"
 
    let subsystemvalue =
      let value = store (/[^ \t\n](.*[^ \t\n])?/) in
      [ key /[A-Za-z0-9\-]+/ . sep . value . eol ]
 
    let subsystem =
-     [ key "Subsystem" .  sep .  subsystemvalue ]
+     [ key /Subsystem/i .  sep .  subsystemvalue ]
 
-   let list (kw:string) =
+   let list (kw:regexp) (sq:string) =
      let value = store /[^, \t\n]+/ in
      [ key kw . sep .
-         [ seq kw . value ] .
-         ([ seq kw . Util.del_str "," . value])* .
+         [ seq sq . value ] .
+         ([ seq sq . Util.del_str "," . value])* .
          eol ]
 
-   let macs = list "MACs"
+   let macs = list /MACs/i "MACs"
 
-   let ciphers = list "Ciphers"
+   let ciphers = list /Ciphers/i "Ciphers"
 
-   let kexalgorithms = list "KexAlgorithms"
+   let kexalgorithms = list /KexAlgorithms/i "KexAlgorithms"
 
    let condition_entry =
     let value = store  /[^ \t\n]+/ in
@@ -125,7 +125,7 @@ module Sshd =
      ( (indent . comment_noindent) | empty | (indent . other_entry) )
 
    let match =
-     [ key "Match" . match_cond
+     [ key /Match/i . match_cond
         . [ label "Settings" .  match_entry+ ]
      ]
 
