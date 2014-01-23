@@ -67,6 +67,7 @@
     * Slapd: use smart quotes for database entries; rename by/what to by/access;
       allow access to be absent as per official docs (incompatible change)
     * Sshd: Indent Match entries by 2 spaces by default
+            Support Ciphers and KexAlgorithms groups, GH issue #69
     * Sudoers: Permit underscores in group names, bug #370 (Matteo Cerutti)
                Allow uppercase characters in user names, bug #376
     * Sysconfig: Permit empty comments after comment lines, RHBZ#1043636
