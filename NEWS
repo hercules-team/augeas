@@ -70,6 +70,7 @@
     * Sysconfig: Permit empty comments after comment lines, RHBZ#1043636
     * Sysconfig_Route: New lens for RedHat's route configs
     * Syslog: Accept UDP(@) and TCP(@@) protocol, bug #364 (Yanis Guenane)
+    * Xymon_Alerting: New lens for Xymon alerting files (François Maillard)
     * Yum: Add yum-cron*.conf files (Pat Riehecky)
            Include only *.repo files from yum.repos.d (Andrew N Golovkov)
            Permit spaces after equals sign in list options, GH issue #45
