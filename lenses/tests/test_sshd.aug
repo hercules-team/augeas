@@ -90,6 +90,21 @@ Match User bush Group pres.* Host white.house.*
 Banner /etc/welcome.txt\n"
 
 
+(* Test: Sshd.lns
+     Parse Ciphers and KexAlgorithms as lists (GH issue #69) *)
+test Sshd.lns get "Ciphers aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes128-ctr
+KexAlgorithms diffie-hellman-group-exchange-sha256,diffie-hellman-group14-sha1,diffie-hellman-group-exchange-sha1\n" =
+  { "Ciphers"
+    { "1" = "aes256-gcm@openssh.com" }
+    { "2" = "aes128-gcm@openssh.com" }
+    { "3" = "aes256-ctr" }
+    { "4" = "aes128-ctr" }
+  }
+  { "KexAlgorithms"
+    { "1" = "diffie-hellman-group-exchange-sha256" }
+    { "2" = "diffie-hellman-group14-sha1" }
+    { "3" = "diffie-hellman-group-exchange-sha1" }
+  }
 
 (* Local Variables: *)
 (* mode: caml       *)

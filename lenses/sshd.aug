@@ -73,7 +73,7 @@ module Sshd =
    let indent = del /[ \t]*/ "  "
 
    let key_re = /[A-Za-z0-9]+/
-         - /MACs|Match|AcceptEnv|Subsystem|(Allow|Deny)(Groups|Users)/
+         - /MACs|Match|AcceptEnv|Subsystem|Ciphers|KexAlgorithms|(Allow|Deny)(Groups|Users)/
 
    let comment = Util.comment
    let comment_noindent = Util.comment_noindent
@@ -101,12 +101,18 @@ module Sshd =
    let subsystem =
      [ key "Subsystem" .  sep .  subsystemvalue ]
 
-   let macs =
-     let mac_value = store /[^, \t\n]+/ in
-     [ key "MACs" . sep .
-         [ seq "macs" . mac_value ] .
-         ([ seq "macs" . Util.del_str "," . mac_value])* .
+   let list (kw:string) =
+     let value = store /[^, \t\n]+/ in
+     [ key kw . sep .
+         [ seq kw . value ] .
+         ([ seq kw . Util.del_str "," . value])* .
          eol ]
+
+   let macs = list "MACs"
+
+   let ciphers = list "Ciphers"
+
+   let kexalgorithms = list "KexAlgorithms"
 
    let condition_entry =
     let value = store  /[^ \t\n]+/ in
@@ -124,7 +130,8 @@ module Sshd =
      ]
 
   let lns = (comment | empty | accept_env | allow_groups | allow_users
-          | deny_groups | subsystem | deny_users | macs
+          | deny_groups | subsystem | deny_users
+          | macs | ciphers | kexalgorithms
           | other_entry ) * . match*
 
   let xfm = transform lns (incl "/etc/ssh/sshd_config")
