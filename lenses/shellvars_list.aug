@@ -9,6 +9,7 @@ module Shellvars_list =
   let key_re = /[A-Za-z0-9_]+/
   let eq      = Util.del_str "="
   let comment = Util.comment
+  let comment_or_eol = Util.comment_or_eol
   let empty   = Util.empty
   let indent  = Util.indent
 
@@ -26,17 +27,23 @@ module Shellvars_list =
 
 
   (* handle single quoted lists *)
-  let squote_arr = [ label "quote" . store /'/ ] . (list sqword)? . del /'/ "'"
+  let squote_arr = [ label "quote" . store /'/ ]
+                   . (list sqword)? . del /'/ "'"
 
   (* similarly handle double qouted lists *)
-  let dquote_arr = [ label "quote" . store /"/ ] . (list dqword)? . del /"/ "\""
+  let dquote_arr = [ label "quote" . store /"/ ]
+                   . (list dqword)? . del /"/ "\""
 
   (* handle unquoted single value *)
-  let unquot_val = [ label "quote" . store "" ] . [label "value"  . store (uqword+ | bqword)]?
+  let unquot_val = [ label "quote" . store "" ]
+                 . [ label "value"  . store (uqword+ | bqword)]?
 
 
   (* lens for key value pairs *)
-  let kv = [ key key_re . eq . ( squote_arr | dquote_arr | unquot_val ) .  eol ]
+  let kv = [ key key_re . eq .
+             ( (squote_arr | dquote_arr) . comment_or_eol
+             | unquot_val . eol )
+           ]
 
   let lns = ( comment | empty | kv )*
 

@@ -120,6 +120,14 @@ FAILSAVE_APPEND=\"console=ttyS0\"
       { "quote" = "" }
       { "value" = "`lsb_release -i -s 2> /dev/null || echo Debian`" } }
 
+  (* Test: Shellvars_list.lns
+       Ticket #342: end-of-line comments *)
+  test Shellvars_list.lns get "service_ping=\"ping/icmp\" #ping\n" =
+    { "service_ping"
+      { "quote" = "\"" }
+      { "value" = "ping/icmp" }
+      { "#comment" = "ping" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
