@@ -36,6 +36,7 @@
     * Grub: Support the 'setkey' and 'lock' directives
             NFC fix whitespace errors
             Handle makeactive menu command, bug #340
+            Add 'verbose' option, GH issue #73
     * Interfaces: Add in support for the source stanza in
                   /etc/network/interfaces files
                   Map bond-slaves and bridge-ports to arrays (incompatible
