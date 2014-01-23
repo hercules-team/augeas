@@ -3,27 +3,75 @@
   - General changes/additions
     * Fix documentation link in c_api NaturalDocs menu
     * Fix NaturalDocs documentation for various lenses
+    * Add aug_cp and the cp and copy commands
+    * src/transform.c (filter_matches): wrap fnmatch to ensure that an incl
+      pattern containing "//" matches file paths, RHBZ#1031084
+    * Correct locations table for transform_save() (Tomas Hoger)
+    * Corrections for CVE-2012-0786 tests (Tomas Hoger)
+    * Fix umask handling when creating new files, RHBZ#1034261
   - Lens changes/additions
+    * Access: support DOMAIN\user syntax for users and groups, bug #353
     * Automounter: Handle hostnames with dashes in them, GH issue #27
-    * Dhcpd: support conditionals, GH issue #34
-    * Dhcpd: support a wider variety of allow/deny statement, including
-      booting and bootp (Yanis Guenane)
-    * Interfaces: map bond-slaves and bridge-ports to arrays (incompatible
-      change) (Kaarle Ritvanen)
-    * OpenVPN: support daemon, client-config-dir, route, and management
-      directives (Freakin https://github.com/Freakin)
+    * Build: Add combinatorics group
+    * Cyrus_Imapd: Create new entries without space before separator,
+      RHBZ#1014974 (Dietmar Kling)
+    * Desktop: Support square brackets in keys
+    * Dhclient: Add dhclient.conf path for Debian/Ubuntu (Esteve Fernandez)
+    * Dhcpd: Support conditionals, GH issue #34
+             Support a wider variety of allow/deny statement, including
+             booting and bootp (Yanis Guenane)
+             Support a wider variety of DHCP allow/deny/ignore statements
+             (Yanis Guenane)
+    * Dovecot: Various enhancements and bug fixes (Michael Haslgrübler):
+               add mailbox to block_names, fix for block_args in quotes,
+               fix for block's brackets upon write,
+               fixes broken tests for mailbox,
+               fixes indention,
+               test case for block_args with ",
+               fixes broken indention
+               Use Quote module
+    * Exports: Permit colons for IPv6 client addresses, bug #366
+    * Grub: Support the 'setkey' and 'lock' directives
+            NFC fix whitespace errors
+            Handle makeactive menu command, bug #340
+    * Interfaces: Add in support for the source stanza in
+                  /etc/network/interfaces files
+                  Map bond-slaves and bridge-ports to arrays (incompatible
+                  change) (Kaarle Ritvanen)
+                  Add /etc/network/interfaces.d/* support
+                  Allow numeric characters in stanza options (Pascal Lalonde)
+    * Koji: New lens to parse Koji configs (Pat Riehecky)
+    * MongoDBServer: Accept quoted values (Tomas Klouda)
+    * NagiosCfg: Do not try to parse /etc/nagios/nrpe.cfg anymore, GH issue #43
+                 /etc/nagios/nrpe.cfg is parsed by Nrpe (Yanis Guenane)
+    * Nagiosobjects: Add support for optional spaces and indents
+                     and whole-line comments (Sean Millichamp)
+    * OpenVPN: Support daemon, client-config-dir, route, and management
+               directives (Freakin https://github.com/Freakin)
     * PHP: allow php-fpm syntax in keys, GH issue #35
+    * Postfix_Main: Handle stray whitespace at end of multiline lines, bug #348
+    * Postfix_virtual: allow '+' and '=' in email addresses (Tom Hendrikx)
     * Properties: support multiline starting with an empty string, GH issue #19
+    * Samba: Permit asterisk in key name, bug #354
+    * Shellvars: Read /etc/firewalld/firewalld.conf, bug #363
+                 Support all types of quoted strings in arrays, bug #357 
+                 Exclude /etc/sysconfig/ip*tables.save files
     * Shellvars, Sysconfig: map "bare" export and unset lines to seq numbered
       nodes to handle multiple variables (incompatible change), RHBZ#1033795
+    * Shellvars_list: Handle backtick variable assignments, bug #368
+    * Simplevars: Add /etc/selinux/semanage.conf
     * Slapd: use smart quotes for database entries; rename by/what to by/access;
       allow access to be absent as per official docs (incompatible change)
-    * Sysconfig_Route: New lens for RedHat's route configs
-    * Simplevars: Add /etc/selinux/semanage.conf
     * Sshd: Indent Match entries by 2 spaces by default
-    * Syslog: Accept UDP(@) and TCP(@@) protocol, bug #364
-    * NagiosCfg: Do not try to parse /etc/nagios/nrpe.cfg anymore, GH issue
-      #43
+    * Sudoers: Permit underscores in group names, bug #370 (Matteo Cerutti)
+               Allow uppercase characters in user names, bug #376
+    * Sysconfig: Permit empty comments after comment lines, RHBZ#1043636
+    * Sysconfig_Route: New lens for RedHat's route configs
+    * Syslog: Accept UDP(@) and TCP(@@) protocol, bug #364 (Yanis Guenane)
+    * Yum: Add yum-cron*.conf files (Pat Riehecky)
+           Include only *.repo files from yum.repos.d (Andrew N Golovkov)
+           Permit spaces after equals sign in list options, GH issue #45
+           Split excludes as lists, bug #275
 
 1.1.0 - 2013-06-14
   - General changes/additions
