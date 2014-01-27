@@ -1,15 +1,15 @@
-1.2.0 - 2013-XX-XX
-
+1.2.0 - 2013-01-27
+  - API changes
+    * Add aug_cp and the cp and copy commands
+    * aug_to_xml now includes span information in the XML dump
   - General changes/additions
     * Fix documentation link in c_api NaturalDocs menu
     * Fix NaturalDocs documentation for various lenses
-    * Add aug_cp and the cp and copy commands
     * src/transform.c (filter_matches): wrap fnmatch to ensure that an incl
       pattern containing "//" matches file paths, RHBZ#1031084
     * Correct locations table for transform_save() (Tomas Hoger)
     * Corrections for CVE-2012-0786 tests (Tomas Hoger)
     * Fix umask handling when creating new files, RHBZ#1034261
-    * Add span info to XML dump when span is activated
   - Lens changes/additions
     * Access: support DOMAIN\user syntax for users and groups, bug #353
     * Authorized_Keys: Allow 'ssh-ed25519' as a valid authorized_key
@@ -58,7 +58,7 @@
     * Properties: support multiline starting with an empty string, GH issue #19
     * Samba: Permit asterisk in key name, bug #354
     * Shellvars: Read /etc/firewalld/firewalld.conf, bug #363
-                 Support all types of quoted strings in arrays, bug #357 
+                 Support all types of quoted strings in arrays, bug #357
                  Exclude /etc/sysconfig/ip*tables.save files
     * Shellvars, Sysconfig: map "bare" export and unset lines to seq numbered
       nodes to handle multiple variables (incompatible change), RHBZ#1033795
