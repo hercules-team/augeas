@@ -9,6 +9,7 @@
     * Correct locations table for transform_save() (Tomas Hoger)
     * Corrections for CVE-2012-0786 tests (Tomas Hoger)
     * Fix umask handling when creating new files, RHBZ#1034261
+    * Add span info to XML dump when span is activated
   - Lens changes/additions
     * Access: support DOMAIN\user syntax for users and groups, bug #353
     * Authorized_Keys: Allow 'ssh-ed25519' as a valid authorized_key
