@@ -1691,14 +1691,89 @@ static int to_xml_one(xmlNodePtr elem, const struct tree *tree,
                       const char *pathin) {
     xmlNodePtr value;
     xmlAttrPtr prop;
+    xmlNodePtr span_elem;
 
     prop = xmlSetProp(elem, BAD_CAST "label", BAD_CAST tree->label);
     if (prop == NULL)
         goto error;
 
     if (tree->span) {
+        struct span *span = tree->span;
+        char label_start[10];
+        char label_end[10];
+        char value_start[10];
+        char value_end[10];
+        char span_start[10];
+        char span_end[10];
+
         prop = xmlSetProp(elem, BAD_CAST "file",
-                          BAD_CAST tree->span->filename->str);
+                          BAD_CAST span->filename->str);
+        if (prop == NULL)
+            goto error;
+
+        // Add a span element for label
+        span_elem = xmlNewChild(elem, NULL, BAD_CAST "span", NULL);
+        if (span_elem == NULL)
+          goto error;
+
+        prop = xmlSetProp(span_elem, BAD_CAST "for",
+                          BAD_CAST "label");
+        if (prop == NULL)
+            goto error;
+
+        sprintf(label_start, "%d", span->label_start);
+        prop = xmlSetProp(span_elem, BAD_CAST "start",
+                          BAD_CAST label_start);
+        if (prop == NULL)
+            goto error;
+
+        sprintf(label_end, "%d", span->label_end);
+        prop = xmlSetProp(span_elem, BAD_CAST "end",
+                          BAD_CAST label_end);
+        if (prop == NULL)
+            goto error;
+
+        // Add a span element for value
+        span_elem = xmlNewChild(elem, NULL, BAD_CAST "span", NULL);
+        if (span_elem == NULL)
+          goto error;
+        
+        prop = xmlSetProp(span_elem, BAD_CAST "for",
+                          BAD_CAST "value");
+        if (prop == NULL)
+            goto error;
+
+        sprintf(value_start, "%d", span->value_start);
+        prop = xmlSetProp(span_elem, BAD_CAST "start",
+                          BAD_CAST value_start);
+        if (prop == NULL)
+            goto error;
+
+        sprintf(value_end, "%d", span->value_end);
+        prop = xmlSetProp(span_elem, BAD_CAST "end",
+                          BAD_CAST value_end);
+        if (prop == NULL)
+            goto error;
+
+        // Add a span element for node
+        span_elem = xmlNewChild(elem, NULL, BAD_CAST "span", NULL);
+        if (span_elem == NULL)
+          goto error;
+        
+        prop = xmlSetProp(span_elem, BAD_CAST "for",
+                          BAD_CAST "node");
+        if (prop == NULL)
+            goto error;
+
+        sprintf(span_start, "%d", span->span_start);
+        prop = xmlSetProp(span_elem, BAD_CAST "start",
+                          BAD_CAST span_start);
+        if (prop == NULL)
+            goto error;
+
+        sprintf(span_end, "%d", span->span_end);
+        prop = xmlSetProp(span_elem, BAD_CAST "end",
+                          BAD_CAST span_end);
         if (prop == NULL)
             goto error;
     }
