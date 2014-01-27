@@ -95,7 +95,7 @@ $gnulib_tool                    \
   --m4-base=gnulib/m4           \
   --source-base=gnulib/lib      \
   --tests-base=gnulib/tests     \
-  --aux-dir=build/aux           \
+  --aux-dir=build/ac-aux        \
   --libtool                     \
   --quiet                       \
   --import $modules

@@ -20,7 +20,7 @@ Running without arguments will suffice in most cases.
 "
 }
 
-BUILD_AUX=build/aux
+BUILD_AUX=build/ac-aux
 GNULIB_DIR=gnulib
 
 set -e
