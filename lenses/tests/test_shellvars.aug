@@ -446,6 +446,17 @@ esac\n" =
       { "1" = "TestVar1" }
       { "2" = "TestVar2" } }
 
+  (* Support ;; on same line as a case statement entry, RHBZ#1033799 *)
+  test lns get "case $ARG in
+        0) TestVar=\"test0\" ;;
+        1) TestVar=\"test1\" ;;
+esac\n" =
+    { "@case" = "$ARG"
+      { "@case_entry" = "0"
+        { "TestVar" = "\"test0\"" } }
+      { "@case_entry" = "1"
+        { "TestVar" = "\"test1\"" } } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
