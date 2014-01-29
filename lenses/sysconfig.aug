@@ -55,10 +55,10 @@ module Sysconfig =
 
   let var_action = Shellvars.var_action
 
-  let unset = var_action "unset"
-  let bare_export = var_action "export"
+  let unset = [ var_action "unset" . comment_or_eol ]
+  let bare_export = [ var_action "export" . comment_or_eol ]
 
-  let source = Shellvars.source
+  let source = [ Shellvars.source . comment_or_eol ]
 
   let lns = empty* . (comment | source | assign | unset | bare_export)*
 

@@ -32,7 +32,7 @@ module Shellvars =
   let semicol = del /;?/ ""
 
   let char  = /[^`;() '"\t\n]|\\\\"/
-  let dquot = 
+  let dquot =
        let char = /[^"\\]|\\\\./ | Rx.cl
     in "\"" . char* . "\""                    (* " Emacs, relax *)
   let squot = /'[^']*'/
@@ -61,40 +61,37 @@ module Shellvars =
             | bquot | dbquot | dollar_assign | empty_array)
 
   let export = [ key "export" . Util.del_ws_spc ]
-  let kv = [ Util.indent . export? . key key_re
-           . eq . (simple_value | array) . comment_or_eol ]
+  let kv = Util.indent . export? . key key_re
+           . eq . (simple_value | array)
 
   let var_action (name:string) =
-    Util.indent . del name name . Util.del_ws_spc .
-      [ label ("@" . name) . counter "var_action"
-        . Build.opt_list [ seq "var_action" . store (key_re | matching_re) ] Util.del_ws_spc
-        . comment_or_eol ]
+    Util.indent . del name name . Util.del_ws_spc
+    . label ("@" . name) . counter "var_action"
+    . Build.opt_list [ seq "var_action" . store (key_re | matching_re) ] Util.del_ws_spc
 
   let unset = var_action "unset"
   let bare_export = var_action "export"
 
   let source =
-    [ Util.indent
-      . del /\.|source/ "." . label ".source"
-      . Util.del_ws_spc . store /[^;=# \t\n]+/ . comment_or_eol ]
+    Util.indent
+    . del /\.|source/ "." . label ".source"
+    . Util.del_ws_spc . store /[^;=# \t\n]+/
 
   let shell_builtin_cmds = "ulimit" | "shift" | "exit"
 
   let builtin =
-    [ Util.indent . label "@builtin"
-      . store shell_builtin_cmds
-      . (Util.del_ws_spc
-      . [ label "args" . sto_to_semicol ])?
-      . comment_or_eol ]
+    Util.indent . label "@builtin"
+    . store shell_builtin_cmds
+    . (Util.del_ws_spc
+    . [ label "args" . sto_to_semicol ])?
 
   let keyword (kw:string) = Util.indent . Util.del_str kw
   let keyword_label (kw:string) (lbl:string) = keyword kw . label lbl
 
   let return =
-    [ Util.indent . label "@return"
-      . Util.del_str "return"
-      . ( Util.del_ws_spc . store Rx.integer )?
-      . comment_or_eol ]
+    Util.indent . label "@return"
+    . Util.del_str "return"
+    . ( Util.del_ws_spc . store Rx.integer )?
 
 
 (************************************************************************
@@ -130,11 +127,11 @@ module Shellvars =
   let loop_select (entry:lens) =
     generic_cond "select" "@select" "do" entry+ "done"
 
-  let case (entry:lens) =
+  let case (entry:lens) (entry_noeol:lens) =
     let case_entry = [ label "@case_entry"
                        . Util.indent . store /[^ \t\n\)]+/
                        . Util.del_str ")" . eol
-                       . entry*
+                       . ( entry+ | entry_noeol )?
                        . Util.indent . Util.del_str ";;" . eol ] in
       [ keyword_label "case" "@case" . Sep.space
         . store (char+ | ("\"" . char+ . "\""))
@@ -151,20 +148,38 @@ module Shellvars =
       . entry+
       . Util.indent . Util.del_str "}" . eol ]
 
+  let entry_eol =
+    let entry_eol_item (item:lens) =
+      [ item . comment_or_eol ] in
+      entry_eol_item source
+        | entry_eol_item kv
+        | entry_eol_item unset
+        | entry_eol_item bare_export
+        | entry_eol_item builtin
+        | entry_eol_item return
+
+  let entry_noeol =
+    let entry_item (item:lens) = [ item ] in
+      entry_item source
+        | entry_item kv
+        | entry_item unset
+        | entry_item bare_export
+        | entry_item builtin
+        | entry_item return
+
   let rec rec_entry =
-    let entry = comment | source | kv
-              | unset | bare_export | builtin | return | rec_entry in
+    let entry = comment | entry_eol | rec_entry in
         cond_if entry
       | loop_for entry
       | loop_select entry
       | loop_while entry
       | loop_until entry
-      | case entry
+      | case entry entry_noeol
       | function entry
 
-  let lns_norec = empty* . (comment | source | kv | unset | bare_export | builtin | return) *
+  let lns_norec = empty* . (comment | entry_eol) *
 
-  let lns = empty* . (comment | source | kv | unset | bare_export | builtin | return | rec_entry) *
+  let lns = empty* . (comment | entry_eol | rec_entry) *
 
   let sc_incl (n:string) = (incl ("/etc/sysconfig/" . n))
   let sc_excl (n:string) = (excl ("/etc/sysconfig/" . n))
