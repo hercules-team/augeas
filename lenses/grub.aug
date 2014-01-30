@@ -145,6 +145,7 @@ module Grub =
                      | kw_menu_arg "timeout"
                      | kw_menu_arg "splashimage"
                      | kw_menu_arg "gfxmenu"
+                     | kw_menu_arg "foreground"
                      | kw_menu_arg "background"
                      | kw_menu_arg "verbose"
                      | serial
