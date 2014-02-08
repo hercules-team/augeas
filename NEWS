@@ -3,7 +3,7 @@
   - Lens changes/additions
     * Known_Hosts: New lens for SSH known hosts files
 
-1.2.0 - 2013-01-27
+1.2.0 - 2014-01-27
   - API changes
     * Add aug_cp and the cp and copy commands
     * aug_to_xml now includes span information in the XML dump
