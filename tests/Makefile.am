@@ -87,6 +87,7 @@ lens_tests =			\
   lens-jmxpassword.sh		\
   lens-kdump.sh			\
   lens-keepalived.sh	\
+  lens-known_hosts.sh	\
   lens-koji.sh			\
   lens-krb5.sh			\
   lens-jaas.sh          \
