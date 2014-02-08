@@ -2,6 +2,7 @@
   - General changes/additions
   - Lens changes/additions
     * Known_Hosts: New lens for SSH known hosts files
+    * Grub: handle "foreground" option, RHBZ#1059383
 
 1.2.0 - 2014-01-27
   - API changes
