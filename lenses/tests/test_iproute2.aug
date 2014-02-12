@@ -19,6 +19,11 @@ let conf = "
 203	adsl3
 204	adsl4
 205	wifi0
+#
+# From rt_dsfield
+#
+0x00  default
+0x80  flash-override
 "
 
 test IPRoute2.lns get conf =
@@ -41,3 +46,8 @@ test IPRoute2.lns get conf =
   { "adsl3" = "203" }
   { "adsl4" = "204" }
   { "wifi0" = "205" }
+  { }
+  { "#comment" = "From rt_dsfield" }
+  { }
+  { "default" = "0x00" }
+  { "flash-override" = "0x80" }
