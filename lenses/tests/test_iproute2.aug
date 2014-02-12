@@ -24,6 +24,11 @@ let conf = "
 #
 0x00  default
 0x80  flash-override
+
+# From rt_protos
+#
+254 gated/aggr
+253 gated/bgp
 "
 
 test IPRoute2.lns get conf =
@@ -32,22 +37,27 @@ test IPRoute2.lns get conf =
   { }
   { "#comment" = "reserved values" }
   { }
-  { "local" = "255" }
-  { "main" = "254" }
-  { "default" = "253" }
-  { "unspec" = "0" }
+  { "255" = "local" }
+  { "254" = "main" }
+  { "253" = "default" }
+  { "0" = "unspec" }
   { }
   { "#comment" = "local" }
   { }
   { "#comment" = "1	inr.ruhep" }
-  { "h3g0" = "200" }
-  { "adsl1" = "201" }
-  { "adsl2" = "202" }
-  { "adsl3" = "203" }
-  { "adsl4" = "204" }
-  { "wifi0" = "205" }
+  { "200" = "h3g0" }
+  { "201" = "adsl1" }
+  { "202" = "adsl2" }
+  { "203" = "adsl3" }
+  { "204" = "adsl4" }
+  { "205" = "wifi0" }
   { }
   { "#comment" = "From rt_dsfield" }
   { }
-  { "default" = "0x00" }
-  { "flash-override" = "0x80" }
+  { "0x00" = "default" }
+  { "0x80" = "flash-override" }
+  { }
+  { "#comment" = "From rt_protos" }
+  { }
+  { "254" = "gated/aggr" }
+  { "253" = "gated/bgp" }

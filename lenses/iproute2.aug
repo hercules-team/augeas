@@ -3,7 +3,7 @@ module IPRoute2 =
 
   let empty   = [ del /[ \t]*#?[ \t]*\n/ "\n" ]
   let id = Rx.hex | Rx.integer
-  let record = [ store id . del /[ \t]+/ "\t" . key /[a-zA-Z0-9-]+/ . Util.comment_or_eol ]
+  let record = [ key id . del /[ \t]+/ "\t" . store /[a-zA-Z0-9\/-]+/ . Util.comment_or_eol ]
 
   let lns = ( empty | Util.comment | record ) *
 
