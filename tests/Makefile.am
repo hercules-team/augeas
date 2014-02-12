@@ -41,6 +41,7 @@ lens_tests =			\
   lens-cgconfig.sh		\
   lens-cgrules.sh  		\
   lens-channels.sh  		\
+  lens-chrony.sh  		\
   lens-cobblersettings.sh	\
   lens-cobblermodules.sh	\
   lens-collectd.sh	\
