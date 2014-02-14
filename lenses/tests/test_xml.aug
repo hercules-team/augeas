@@ -764,6 +764,10 @@ test Xml.lns get "<a><doc att=\"val\" \natt2=\"val2\" att3=\"val3\"/></a>" =
 
 test Xml.lns get "<doc/>" = { "doc" = "#empty" }
 
+test Xml.lns get "<a><![CDATA[Thu, 13 Feb 2014 12:22:35 +0000]]></a>" =
+  { "a"
+    { "#CDATA" = "Thu, 13 Feb 2014 12:22:35 +0000" } }
+
 (* failure tests *)
 (* only one document element *)
 test Xml.lns get "<doc></doc><bad/>" = *
@@ -786,12 +790,17 @@ test Xml.lns get "<doc><![ CDATA[a]]></doc>" = *
 (* no space after "CDATA" *)
 test Xml.lns get "<doc><![CDATA [a]]></doc>" = *
 
-(* CDSect's can't nest *)
+(* FIXME: CDSect's can't nest *)
 test Xml.lns get "<doc>
 <![CDATA[
 <![CDATA[XML doesn't allow CDATA sections to nest]]>
 ]]>
-</doc>" = *
+</doc>" =
+  { "doc"
+    { "#text" = "\n" }
+    { "#CDATA" = "\n<![CDATA[XML doesn't allow CDATA sections to nest" }
+    { "#text" = "\n]]" }
+    { "#text" = ">\n" } }
 
 (* Comment is illegal in VersionInfo *)
 test Xml.lns get "<?xml version <!--bad comment--> =\"1.0\"?>

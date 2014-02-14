@@ -147,7 +147,7 @@ let content1 = element text
 let rec content2 = element (content1|text|comment)
 *)
 
-let rec content = element (text|comment|content|empty_element|pi_instruction)
+let rec content = element (text|comment|content|empty_element|pi_instruction|cdata)
 
 (* Constraints are weaker here, but it's better than being too strict *)
 let doc = (sep_osp . (prolog  | comment | doctype | pi_instruction))* .
