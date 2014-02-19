@@ -195,6 +195,30 @@ test Dhcpd.stmt_option get "option voip-boot-server code 66 = string;" =
     { "type" = "string" }
   }
 
+test Dhcpd.stmt_option get "option special-option code 25 = array of string;" =
+  { "rfc-code"
+    { "label" = "special-option" }
+    { "code" = "25" }
+    { "type" = "array of string" }
+  }
+
+test Dhcpd.stmt_option get "option special-option code 25 = integer 32;" =
+  { "rfc-code"
+    { "label" = "special-option" }
+    { "code" = "25" }
+    { "type" = "integer 32" }
+  }
+
+
+test Dhcpd.stmt_option get "option special-option code 25 = array of integer 32;" =
+  { "rfc-code"
+    { "label" = "special-option" }
+    { "code" = "25" }
+    { "type" = "array of integer 32" }
+  }
+
+
+
 test Dhcpd.lns get "authoritative;
 log-facility local7;
 ddns-update-style none;
@@ -266,6 +290,21 @@ failover peer \"redondance01\" {
     }
     { "load balance max seconds" = "3" }
   }
+
+test Dhcpd.lns get "option test_records code 123 = { string, ip-address, integer 32, ip6-address, domain-list };" =
+ { "rfc-code" 
+   { "label" = "test_records" }
+   { "code" = "123" }
+   { "type"
+     { "record"
+        { "1" = "string" }
+        { "2" = "ip-address" }
+        { "3" = "integer 32" }
+        { "4" = "ip6-address" }
+        { "5" = "domain-list" }
+     }
+   }
+ }
 
 test Dhcpd.lns get "
 option CallManager code 150 = ip-address;
