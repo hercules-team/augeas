@@ -236,14 +236,26 @@ let stmt_hardware     = [ indent
  *************************************************************************)
 (* The general case is considering options as a list *)
 
-let stmt_option_code  = [ label "label" . store word . sep_spc ]
-                        . [ key "code" . sep_spc . store word ]
-                        . sep_eq
-                        . [ label "type" . store word ]
 
+let stmt_option_value = /((array of[ \t]+)?(((un)?signed[ \t]+)?integer (8|16|32)|string|ip6?-address|boolean|domain-list|text)|encapsulate [A-Za-z0-9_.-]+)/
 
 let stmt_option_list  = ([ label "arg" . bare ] | [ label "arg" . quote ])
                         . ( sep_com . ([ label "arg" . bare ] | [ label "arg" . quote ]))*
+
+let del_trail_spc = del /[ \t\n]*/ ""
+
+let stmt_record = [ label "record" . counter "record" . Util.del_str "{"
+                . sep_spc 
+                . ([seq "record" . store stmt_option_value . sep_com]*
+                .  [seq "record" . store stmt_option_value . del_trail_spc])?
+                . Util.del_str "}" ]
+
+let stmt_types = store stmt_option_value|stmt_record
+
+let stmt_option_code  = [ label "label" . store word . sep_spc ]
+                        . [ key "code" . sep_spc . store word ]
+                        . sep_eq
+                        . [ label "type" . stmt_types ]
 
 let stmt_option_basic = [ key word . sep_spc . stmt_option_list ]
 let stmt_option_extra = [ key word . sep_spc . store /true|false/ . sep_spc . stmt_option_list ]
@@ -263,7 +275,6 @@ let stmt_option2  = [ indent
                         . stmt_option_code
                         . sep_scl
                         . eos ]
-
 
 let stmt_option = stmt_option1 | stmt_option2
 
