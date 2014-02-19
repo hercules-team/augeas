@@ -182,6 +182,9 @@ fixed-address 10.1.1.1;}}" =
     }
   }
 
+test lns get "group fan-tas_tic { }" =
+  { "group" = "fan-tas_tic" }
+
 test Dhcpd.stmt_secu get "allow members of \"foo\";" =  { "allow-members-of" = "foo" }
 test Dhcpd.stmt_secu get "allow booting;" =  { "allow" = "booting" }
 test Dhcpd.stmt_secu get "allow bootp;" =  { "allow" = "bootp" }
