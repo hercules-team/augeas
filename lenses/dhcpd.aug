@@ -192,6 +192,7 @@ let stmt_string_re    = "ddns-update-style"
                       | "use-lease-addr-for-default-route"
                       | "vendor-option-space"
                       | "primary"
+                      | "omapi-key"
 
 let stmt_string_tpl (kw:regexp) (l:lens) = [ indent
                         . key kw
