@@ -263,6 +263,7 @@ let stmt_option2  = [ indent
                         . sep_scl
                         . eos ]
 
+
 let stmt_option = stmt_option1 | stmt_option2
 
 (************************************************************************
@@ -370,6 +371,7 @@ let stmt_block_arg_re = "host"
                       | "shared-network"
                       | /failover[ ]+peer/
                       | "zone"
+                      | "group"
                       | "key"
 
 let stmt_block_arg (body:lens)
