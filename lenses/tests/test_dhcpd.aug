@@ -267,6 +267,17 @@ failover peer \"redondance01\" {
     { "load balance max seconds" = "3" }
   }
 
+test Dhcpd.lns get "option test.arrays code 123 = { string, ip-address, jabberwockys };" =
+ { "rfc-code" 
+   { "label" = "test.arrays" }
+   { "code" = "123" }
+   { "multi"
+     { "arg" = "string" }
+     { "arg" = "ip-address" }
+     { "arg" = "jabberwockys" }
+   }
+ }
+
 test Dhcpd.lns get "
 option CallManager code 150 = ip-address;
 option slp-directory-agent true 10.1.1.1, 10.2.2.2;

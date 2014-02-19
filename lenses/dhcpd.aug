@@ -236,14 +236,25 @@ let stmt_hardware     = [ indent
  *************************************************************************)
 (* The general case is considering options as a list *)
 
+
+let stmt_option_list  = ([ label "arg" . bare ] | [ label "arg" . quote ])
+                        . ( sep_com . ([ label "arg" . bare ] | [ label "arg" . quote ]))*
+
+let stmt_opt_multi = ([ label "arg" . bare ] | [ label "arg" .  quote ])
+                        . ( sep_com . ([ label "arg" . bare ] | [ label "arg" . quote ]))*
+
 let stmt_option_code  = [ label "label" . store word . sep_spc ]
                         . [ key "code" . sep_spc . store word ]
                         . sep_eq
                         . [ label "type" . store word ]
 
-
-let stmt_option_list  = ([ label "arg" . bare ] | [ label "arg" . quote ])
-                        . ( sep_com . ([ label "arg" . bare ] | [ label "arg" . quote ]))*
+let stmt_option_code_multi = [ label "label" . store word . sep_spc ]
+                        . [ key "code" . sep_spc . store word ]
+                        . sep_eq
+                        . del /\{/ "{"   (* needed because sep_eq handles blank space up to the brace *)
+                        . sep_spc
+                        . [ label "multi" . stmt_opt_multi ]
+                        . sep_cbr
 
 let stmt_option_basic = [ key word . sep_spc . stmt_option_list ]
 let stmt_option_extra = [ key word . sep_spc . store /true|false/ . sep_spc . stmt_option_list ]
@@ -260,10 +271,9 @@ let stmt_option1  = [ indent
 let stmt_option2  = [ indent
                         . dels "option" . label "rfc-code"
                         . sep_spc
-                        . stmt_option_code
+                        . (stmt_option_code|stmt_option_code_multi)
                         . sep_scl
                         . eos ]
-
 
 let stmt_option = stmt_option1 | stmt_option2
 
