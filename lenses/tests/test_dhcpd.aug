@@ -436,3 +436,6 @@ test Dhcpd.lns get gh34_simple =
     { "@else"
       { "default-lease-time" = "200" } } }
 
+test Dhcpd.lns get "omapi-key fookey;" =
+  { "omapi-key" = "fookey" }
+
