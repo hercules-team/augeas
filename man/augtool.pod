@@ -137,6 +137,13 @@ must either match exactly one node in the tree, or may not exist yet. If
 DST exists already, it and all its descendants are deleted. If DST does not
 exist yet, it and all its missing ancestors are created.
 
+=item B<cp> E<lt>SRCE<gt> E<lt>DSTE<gt>
+
+Copy node SRC to DST. SRC must match exactly one node in the tree.  DST
+must either match exactly one node in the tree, or may not exist yet. If
+DST exists already, it and all its descendants are deleted. If DST does not
+exist yet, it and all its missing ancestors are created.
+
 =item B<set> E<lt>PATHE<gt> E<lt>VALUEE<gt>
 
 Associate VALUE with PATH. If PATH is not in the tree yet,

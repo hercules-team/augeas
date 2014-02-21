@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "AUGTOOL 1"
-.TH AUGTOOL 1 "2013-05-17" "Augeas 1.0.0" "Augeas"
+.TH AUGTOOL 1 "2014-02-21" "Augeas 1.2.0" "Augeas"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -235,6 +235,12 @@ Delete \s-1PATH\s0 and all its children from the tree
 .IP "\fBmv\fR <\s-1SRC\s0> <\s-1DST\s0>" 4
 .IX Item "mv <SRC> <DST>"
 Move node \s-1SRC\s0 to \s-1DST\s0. \s-1SRC\s0 must match exactly one node in the tree.  \s-1DST\s0
+must either match exactly one node in the tree, or may not exist yet. If
+\&\s-1DST\s0 exists already, it and all its descendants are deleted. If \s-1DST\s0 does not
+exist yet, it and all its missing ancestors are created.
+.IP "\fBcp\fR <\s-1SRC\s0> <\s-1DST\s0>" 4
+.IX Item "cp <SRC> <DST>"
+Copy node \s-1SRC\s0 to \s-1DST\s0. \s-1SRC\s0 must match exactly one node in the tree.  \s-1DST\s0
 must either match exactly one node in the tree, or may not exist yet. If
 \&\s-1DST\s0 exists already, it and all its descendants are deleted. If \s-1DST\s0 does not
 exist yet, it and all its missing ancestors are created.
