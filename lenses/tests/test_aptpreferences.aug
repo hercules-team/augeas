@@ -58,3 +58,9 @@ Package: something-funny
 Pin: version 1.2.3-4
 Pin-Priority: 2000
 "
+
+(* Test: AptPreferences.pin
+     Spaces in origins are valid *)
+test AptPreferences.pin get "Pin: release o=Quantum GIS project\n" =
+  { "Pin" = "release"
+    { "o" = "Quantum GIS project" } }

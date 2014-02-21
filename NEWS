@@ -2,6 +2,7 @@
   - General changes/additions
     * Add missing cp entry in manpage (GH issue #78)
   - Lens changes/additions
+    * AptPreferences: Support spaces in origin fields
     * Known_Hosts: New lens for SSH known hosts files
     * Grub: handle "foreground" option, RHBZ#1059383
     * IPRoute2: handle "/" in protocol name, swap ID and name fields

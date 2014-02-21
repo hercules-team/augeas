@@ -24,7 +24,9 @@ let pin_gen (lbl:string) = store lbl
                         . [ label lbl . Sep.space . store Rx.no_spaces ]
 
 (* View: pin_keys *)
-let pin_keys = Build.key_value /[aclnov]/ Sep.equal (store /[^, \t\n]+/)
+let pin_keys =
+     let space_in = store /[^, \r\t\n][^,\n]*[^, \r\t\n]|[^, \t\n\r]/
+  in Build.key_value /[aclnov]/ Sep.equal space_in
 
 (* View: pin_options *)
 let pin_options =
