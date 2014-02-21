@@ -36,17 +36,12 @@ let eol        = Util.eol
  * brackets
  *************************************************************************)
 (* Variable: entry_re *)
-let entry_re   = /[A-Za-z][A-Za-z0-9._\(\) \t-]+/
+let entry_re   = /[A-Za-z][A-Za-z0-9:._\(\) \t-]+/
 
-(*
-Variable: to_comment_re
-  Regex until comment allowing semicolons
-*)
-let to_comment_re = /[^"# \t\n][^"#\n]*[^"# \t\n]|[^"# \t\n]/
-                  | /"[^\n"]*"/
-
+(* Lens: entry *)
 let entry   = [ key entry_re . sep
-                . (store to_comment_re)? . (comment|eol) ] | comment
+                . Quote.double_opt? . eol ]
+              | comment
 
 (************************************************************************
  *                        RECORD
