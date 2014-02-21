@@ -83,6 +83,10 @@ let field (kw:regexp) (sto:lens) = indent . Build.key_value_line_comment kw sep_
 A single word *)
 let flag (kw:regexp) = [ indent . key kw . comment_or_eol ]
 
+(* View: ip_port
+   An IP <space> port pair *)
+let ip_port = [ label "ip" . sto_word ] . sep_spc . [ label "port" . sto_num ]
+
 (* View: lens_block 
 A generic block with a title lens.
 The definition is very similar to Build.block_newlines
@@ -220,22 +224,87 @@ let vrrpd_conf = vrrp_sync_group | vrrp_instance | vrrp_script
 
 
 (************************************************************************
- * Group:                 LVS CONFIGURATION
+ * Group:                 REAL SERVER CHECKS CONFIGURATION
  *************************************************************************)
 
 (* View: tcp_check_field *)
-let tcp_check_field = field /connect_(timeout|port)/ sto_num
+let tcp_check_field =
+      let word_re = "bindto"
+   in let num_re = /connect_(timeout|port)/
+   in field word_re sto_word
+    | field num_re sto_num
+
+(* View: misc_check_field *)
+let misc_check_field =
+      let flag_re = "misc_dynamic"
+   in let num_re = "misc_timeout"
+   in let to_eol_re = "misc_path"
+   in field num_re sto_num
+    | flag flag_re
+    | field to_eol_re sto_to_eol
+
+(* View: smtp_host_check_field *)
+let smtp_host_check_field =
+      let word_re = "connect_ip" | "bindto"
+   in let num_re = "connect_port"
+   in field word_re sto_word
+    | field num_re sto_num
+
+(* View: smtp_check_field *)
+let smtp_check_field =
+      let word_re = "connect_ip" | "bindto"
+   in let num_re = "connect_timeout" | "retry" | "delay_before_retry"
+   in let to_eol_re = "helo_name"
+   in field word_re sto_word
+    | field num_re sto_num
+    | field to_eol_re sto_to_eol
+    | block "host" smtp_host_check_field
+
+(* View: http_url_check_field *)
+let http_url_check_field =
+      let word_re = "digest"
+   in let num_re = "status_code"
+   in let to_eol_re = "path"
+   in field word_re sto_word
+    | field num_re sto_num
+    | field to_eol_re sto_to_eol
+
+(* View: http_check_field *)
+let http_check_field =
+      let num_re = /connect_(timeout|port)/ | "nb_get_retry" | "delay_before_retry"
+   in field num_re sto_num
+    | block "url" http_url_check_field
 
 (* View: real_server_field *)
-let real_server_field = field "weight" sto_num
-                      | block "TCP_CHECK" tcp_check_field
+let real_server_field =
+      let num_re = "weight"
+   in let flag_re = "inhibit_on_failure"
+   in let to_eol_re = /notify_(up|down)/
+   in field num_re sto_num
+    | flag flag_re
+    | field to_eol_re sto_to_eol
+    | block "TCP_CHECK" tcp_check_field
+    | block "MISC_CHECK" misc_check_field
+    | block "SMTP_CHECK" smtp_check_field
+    | block /(HTTP|SSL)_GET/ http_check_field
+
+(************************************************************************
+ * Group:                 LVS CONFIGURATION
+ *************************************************************************)
 
 (* View: virtual_server_field *)
 let virtual_server_field =
-      let num_re = "delay_loop"
-   in let word_re = /lb_(algo|kind)/ | "nat_mask" | "protocol"
+      let num_re = "delay_loop" | "persistence_timeout" | "quorum" | "hysteresis"
+   in let word_re = /lb_(algo|kind)/ | "nat_mask" | "protocol" | "persistence_granularity"
+                      | "virtualhost"
+   in let flag_re = "ops" | "ha_suspend" | "alpha" | "omega"
+   in let to_eol_re = /quorum_(up|down)/
+   in let ip_port_re = "sorry_server"
    in field num_re sto_num
     | field word_re sto_word
+    | flag flag_re
+    | field to_eol_re sto_to_eol
+    | field ip_port_re ip_port
     | named_block_arg "real_server" "ip" "port" real_server_field
 
 (* View: virtual_server *)
