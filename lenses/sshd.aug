@@ -114,6 +114,11 @@ module Sshd =
 
    let kexalgorithms = list /KexAlgorithms/i "KexAlgorithms"
 
+   let entry = accept_env | allow_groups | allow_users
+             | deny_groups | subsystem | deny_users
+             | macs | ciphers | kexalgorithms
+             | other_entry
+
    let condition_entry =
     let value = store  /[^ \t\n]+/ in
     [ sep . key /[A-Za-z0-9]+/ . sep . value ]
@@ -121,18 +126,15 @@ module Sshd =
    let match_cond =
      [ label "Condition" . condition_entry+ . eol ]
 
-   let match_entry =
-     ( (indent . comment_noindent) | empty | (indent . other_entry) )
+   let match_entry = indent . (entry | comment_noindent)
+                   | empty 
 
    let match =
      [ key /Match/i . match_cond
         . [ label "Settings" .  match_entry+ ]
      ]
 
-  let lns = (comment | empty | accept_env | allow_groups | allow_users
-          | deny_groups | subsystem | deny_users
-          | macs | ciphers | kexalgorithms
-          | other_entry ) * . match*
+  let lns = (entry | comment | empty)* . match* 
 
   let xfm = transform lns (incl "/etc/ssh/sshd_config")
 

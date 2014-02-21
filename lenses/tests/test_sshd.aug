@@ -124,6 +124,13 @@ maTcH User foo
     }
   }
 
+(* Test: Sshd.lns
+     Allow AllowGroups in Match groups (GH issue #75) *)
+test Sshd.lns get "Match User foo
+AllowGroups users\n" =
+  { "Match" { "Condition" { "User" = "foo" } }
+    { "Settings" { "AllowGroups" { "1" = "users" } } } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
