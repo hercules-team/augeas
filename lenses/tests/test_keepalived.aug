@@ -118,6 +118,8 @@ virtual_server 192.168.1.11 22 {
 
     protocol TCP 
 
+    sorry_server 10.20.40.30 22
+
     ! there can be as many real_server blocks as you need 
 
     real_server 10.20.40.10 22 { 
@@ -269,6 +271,10 @@ weight 2                        # add 2 points of prio if OK
          { }
          { "protocol" = "TCP" }
          { }
+         { "sorry_server"
+           { "ip" = "10.20.40.30" }
+           { "port" = "22" } }
+         { }
          { "#comment" = "there can be as many real_server blocks as you need" }
          { }
          { "real_server"
@@ -312,3 +318,125 @@ weight 2                        # add 2 points of prio if OK
        { }
        { "#comment" = "that's all" }
 
+(* Variable: tcp_check
+   An example of a TCP health checker *)
+let tcp_check = "virtual_server 192.168.1.11 22 {
+    real_server 10.20.40.10 22 {
+        TCP_CHECK {
+            connect_timeout 3
+            connect_port 22
+            bindto 192.168.1.1
+        }
+    }
+}
+"
+test Keepalived.lns get tcp_check =
+  { "virtual_server"
+    { "ip" = "192.168.1.11" }
+    { "port" = "22" }
+    { "real_server"
+      { "ip" = "10.20.40.10" }
+      { "port" = "22" }
+      { "TCP_CHECK"
+        { "connect_timeout" = "3" }
+        { "connect_port" = "22" }
+        { "bindto" = "192.168.1.1" } } } }
+
+(* Variable: misc_check
+   An example of a MISC health checker *)
+let misc_check = "virtual_server 192.168.1.11 22 {
+    real_server 10.20.40.10 22 {
+        MISC_CHECK {
+            misc_path /usr/local/bin/server_test
+            misc_timeout 3
+            misc_dynamic
+        }
+    }
+}
+"
+test Keepalived.lns get misc_check =
+  { "virtual_server"
+    { "ip" = "192.168.1.11" }
+    { "port" = "22" }
+    { "real_server"
+      { "ip" = "10.20.40.10" }
+      { "port" = "22" }
+      { "MISC_CHECK"
+        { "misc_path" = "/usr/local/bin/server_test" }
+        { "misc_timeout" = "3" }
+        { "misc_dynamic" } } } }
+
+(* Variable: smtp_check
+   An example of an SMTP health checker *)
+let smtp_check = "virtual_server 192.168.1.11 22 {
+    real_server 10.20.40.10 22 {
+        SMTP_CHECK {
+            host {
+              connect_ip 10.20.40.11
+              connect_port 587
+              bindto 192.168.1.1
+            }
+            connect_timeout 3
+            retry 5
+            delay_before_retry 10
+            helo_name \"Testing Augeas\"
+        }
+    }
+}
+"
+test Keepalived.lns get smtp_check =
+  { "virtual_server"
+    { "ip" = "192.168.1.11" }
+    { "port" = "22" }
+    { "real_server"
+      { "ip" = "10.20.40.10" }
+      { "port" = "22" }
+      { "SMTP_CHECK"
+        { "host"
+          { "connect_ip" = "10.20.40.11" }
+          { "connect_port" = "587" }
+          { "bindto" = "192.168.1.1" } }
+        { "connect_timeout" = "3" }
+        { "retry" = "5" }
+        { "delay_before_retry" = "10" }
+        { "helo_name" = "\"Testing Augeas\"" } } } }
+
+(* Variable: http_check
+   An example of an HTTP health checker *)
+let http_check = "virtual_server 192.168.1.11 22 {
+    real_server 10.20.40.10 22 {
+        HTTP_GET {
+            url {
+              path /mrtg2/
+              digest 9b3a0c85a887a256d6939da88aabd8cd
+              status_code 200
+            }
+            connect_timeout 3
+            connect_port 8080
+            nb_get_retry 5
+            delay_before_retry 10
+        }
+        SSL_GET {
+            connect_port 8443
+        }
+    }
+}
+"
+test Keepalived.lns get http_check =
+  { "virtual_server"
+    { "ip" = "192.168.1.11" }
+    { "port" = "22" }
+    { "real_server"
+      { "ip" = "10.20.40.10" }
+      { "port" = "22" }
+      { "HTTP_GET"
+        { "url"
+          { "path" = "/mrtg2/" }
+          { "digest" = "9b3a0c85a887a256d6939da88aabd8cd" }
+          { "status_code" = "200" } }
+        { "connect_timeout" = "3" }
+        { "connect_port" = "8080" }
+        { "nb_get_retry" = "5" }
+        { "delay_before_retry" = "10" } }
+      { "SSL_GET"
+        { "connect_port" = "8443" } } } }
