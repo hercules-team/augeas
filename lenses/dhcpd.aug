@@ -458,6 +458,7 @@ let stmt_block_arg_re = "host"
                       | "zone"
                       | "group"
                       | "key"
+                      | "on"
 
 let stmt_block_arg (body:lens)
                       = [ indent
