@@ -544,4 +544,10 @@ test Dhcpd.lns get "set myvariable = foo;" =
     { "value" = "foo" }
   }
 
+test Dhcpd.stmt_hardware get "hardware fddi 00:01:02:03:04:05;" = 
+  { "hardware"
+    { "type" = "fddi" }
+    { "address" = "00:01:02:03:04:05" }
+  }
+
 

@@ -231,7 +231,7 @@ let stmt_range        = [ indent
 let stmt_hardware     = [ indent
                         . key "hardware"
                         . sep_spc
-                        . [ label "type" . store /ethernet|tokenring/ ]
+                        . [ label "type" . store /ethernet|tokenring|fddi/ ]
                         . sep_spc
                         . [ label "address" . store /[a-fA-F0-9:-]+/ ]
                         . sep_scl
