@@ -493,4 +493,6 @@ test Dhcpd.lns get "option test_records code 123 =
    { "type" = "string" }
  }
 
+test Dhcpd.lns get "deny members of \"Are things like () allowed?\";" =
+  { "deny-members-of" = "Are things like () allowed?" }
 
