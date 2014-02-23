@@ -315,9 +315,17 @@ let stmt_secu_re      = "allow"
 let del_allow = del /allow[ ]+members[ ]+of/ "allow members of"
 let del_deny  = del /deny[ \t]+members[ \t]+of/ "deny members of"
 
+(* bare is anything but whitespace, quote marks or semicolon.
+ * technically this should be locked down to mostly alphanumerics, but the
+ * idea right now is just to make things work.  Also ideally I would use
+ * dquote_space but I had a whale of a time with it.  It doesn't like
+ * semicolon termination and my attempts to fix that led me to 3 hours of
+ * frustration and back to this :)
+ *)
 let stmt_secu_tpl (l:lens) (s:string) =
-                  [ indent . l . sep_spc . label s . bare . sep_scl . eos ] |
-                  [ indent . l . sep_spc . label s . quote . sep_scl . eos ]
+                  [ indent . l . sep_spc . label s . Quote.do_dquote_opt(store /[^" \t\n;]+/) . sep_scl . eos ] |
+                  [ indent . l . sep_spc . label s . Quote.do_dquote(store /[^"\n]*[ \t]+[^"\n]*/) . sep_scl . eos ]
+
 
 let stmt_secu         = [ indent . key stmt_secu_re . sep_spc .
                           store allow_deny_re . sep_scl . eos ] |
