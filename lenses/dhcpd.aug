@@ -296,8 +296,8 @@ let stmt_subclass = [ indent . key "subclass" . sep_spc .
 (* We have to use special key for allow/deny members of
   to avoid ambiguity in the put direction *)
 
-let allow_deny_re     = "unknown-clients"
-                      | "known-clients"
+let allow_deny_re     = /unknown(-|[ ]+)clients/
+                      | /known(-|[ ]+)clients/
                       | /all[ ]+clients/
                       | /dynamic[ ]+bootp[ ]+clients/
                       | /authenticated[ ]+clients/

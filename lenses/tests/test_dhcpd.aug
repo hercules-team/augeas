@@ -496,3 +496,8 @@ test Dhcpd.lns get "option test_records code 123 =
 test Dhcpd.lns get "deny members of \"Are things like () allowed?\";" =
   { "deny-members-of" = "Are things like () allowed?" }
 
+test Dhcpd.lns get "deny unknown clients;" =
+  { "deny" = "unknown clients" }
+test Dhcpd.lns get "deny known-clients;" =
+  { "deny" = "known-clients" }
+
