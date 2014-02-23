@@ -238,6 +238,20 @@ let stmt_hardware     = [ indent
                         . eos ]
 
 (************************************************************************
+ *                         SET STATEMENTS
+ *************************************************************************)
+let stmt_set          = [ indent
+                        . key "set"
+                        . sep_spc
+                        . store word 
+                        . sep_spc
+                        . Sep.equal
+                        . sep_spc
+                        . [ label "value" . sto_to_scl ]
+                        . sep_scl
+                        . eos ]
+
+(************************************************************************
  *                         OPTION STATEMENTS
  *************************************************************************)
 (* The general case is considering options as a list *)
@@ -290,9 +304,9 @@ let stmt_option = stmt_option1 | stmt_option2
 (* this statement is not well documented in the manual dhcpd.conf
    we support basic use case *)
 
-
 let stmt_subclass = [ indent . key "subclass" . sep_spc . ([ label "name" .  bare_to_scl ]|[ label "name" .  dquote_any ]) 
                       . sep_spc . ([ label "value" . bare_to_scl ]|[ label "value" . dquote_any ]) . sep_scl . eos ]
+
 
 (************************************************************************
  *                         ALLOW/DENY STATEMENTS
@@ -340,7 +354,6 @@ let stmt_secu         = [ indent . key stmt_secu_re . sep_spc .
  *                         MATCH STATEMENTS
  *************************************************************************)
 
-let sto_fct = store (word . /[ \t]*\([^)]*\)/)
 let sto_com = /[^ \t\n,\(\)][^,\(\)]*[^ \t\n,\(\)]|[^ \t\n,\(\)]+/ | word . /[ \t]*\([^)]*\)/
 (* this is already the most complicated part of this module and it's about to
  * get worse.  match statements can be way more complicated than this
@@ -354,7 +367,39 @@ let sto_com = /[^ \t\n,\(\)][^,\(\)]*[^ \t\n,\(\)]|[^ \t\n,\(\)]+/ | word . /[ \
  *      and of course the fact that the above two rules used one of infinately
  *      many potential options instead of a builtin function.
  *) 
-let fct_re = "substring" | "binary-to-ascii" | "suffix"
+(* sto_com doesn't support quoted strings as arguments.  It also doesn't
+   support single arguments (needs to match a comma) It will need to be
+   updated for lcase, ucase and log to be workable.
+
+   it also doesn't support no arguments, so gethostbyname() doesn't work.
+
+   option and config-option are considered operators.  They should be matched
+   in stmt_entry but also available under "match if" and "if" conditionals 
+   leased-address, host-decl-name, both take no args and return a value.  We
+   might need to treat them as variable names in the parser.
+
+   things like this may be near-impossible to parse even with recursion
+   because we have no way of knowing when or if a subfunction takes arguments
+   set ClientMac = binary-to-ascii(16, 8, ":", substring(hardware, 1, 6));
+
+   even if we could parse it, they could get arbitrarily complicated like:
+   binary-to-ascii(16, 8, ":", substring(hardware, 1, 6) and substring(hardware, 2, 3));
+
+   so at some point we may need to programmatically knock it off and tell
+   people to put weird stuff in an include file that augeas doesn't parse.
+
+   the other option is to change the API to not parse the if statement at all,
+   just pull in the conditional as a string.  
+ *)
+
+let fct_re = "substring" | "binary-to-ascii" | "suffix" | "lcase" | "ucase" 
+             | "gethostbyname" | "packet"
+             | "concat" | "reverse" | "encode-int"
+             | "extract-int" | "lease-time" | "client-state" | "exists" | "known" | "static"
+             | "pick-first-value" | "log" | "execute"
+
+(* not needs to be different because it's a negation of whatever happens next *)
+let op_re = "~="|"="|"~~"|"and"|"or"
 
 let fct_args = [ label "args" . dels "(" . sep_osp .
                  ([ label "arg" . store sto_com ] . [ label "arg" . sep_com . store sto_com ]+) .
@@ -363,7 +408,7 @@ let fct_args = [ label "args" . dels "(" . sep_osp .
 let stmt_match_ifopt = [ dels "if" . sep_spc . key "option" . sep_spc . store(word) .
                       sep_eq . ([ label "value" . bare_to_scl ]|[ label "value" . dquote_any ]) ]
 
-let stmt_match_if = [ dels "if" . sep_spc . store fct_re . sep_osp . label "function" . fct_args ] .
+let stmt_match_func = [ store fct_re . sep_osp . label "function" . fct_args ] .
                       sep_eq . ([ label "value" . bare_to_scl ]|[ label "value" . dquote_any ])
 
 let stmt_match_pfv = [ label "function" . store "pick-first-value" . sep_spc .
@@ -375,7 +420,7 @@ let stmt_match_pfv = [ label "function" . store "pick-first-value" . sep_spc .
 
 let stmt_match_tpl (l:lens) = [ indent . key "match" . sep_spc . l . sep_scl . eos ]
 
-let stmt_match = stmt_match_tpl (stmt_match_if | stmt_match_pfv | stmt_match_ifopt)
+let stmt_match = stmt_match_tpl (dels "if" . sep_spc . stmt_match_func | stmt_match_pfv | stmt_match_ifopt)
 
 (************************************************************************
  *                         BLOCK STATEMENTS
@@ -391,6 +436,7 @@ let stmt_entry        =   stmt_secu
                         | stmt_noarg
                         | stmt_match
                         | stmt_subclass
+                        | stmt_set
                         | empty
                         | comment
 

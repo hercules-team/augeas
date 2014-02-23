@@ -534,3 +534,14 @@ test Dhcpd.lns get "deny unknown clients;" =
 test Dhcpd.lns get "deny known-clients;" =
   { "deny" = "known-clients" }
 
+test Dhcpd.lns get "set ClientMac = binary-to-ascii(16, 8, \":\" , substring(hardware, 1, 6));" =
+  { "set" = "ClientMac"
+    { "value" = "binary-to-ascii(16, 8, \":\" , substring(hardware, 1, 6))" }
+  }
+
+test Dhcpd.lns get "set myvariable = foo;" =
+  { "set" = "myvariable"
+    { "value" = "foo" }
+  }
+
+
