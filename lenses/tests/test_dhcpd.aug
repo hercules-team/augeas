@@ -478,3 +478,19 @@ test Dhcpd.lns get gh34_simple =
 test Dhcpd.lns get "omapi-key fookey;" =
   { "omapi-key" = "fookey" }
 
+(* almost all DHCP groups should support braces starting on the next line *)
+test Dhcpd.lns get "class introduction
+{
+}" = 
+  { "class" = "introduction" }
+
+(* equals should work the same *)
+test Dhcpd.lns get "option test_records code 123 = 
+                             string;" =
+ { "rfc-code" 
+   { "label" = "test_records" }
+   { "code" = "123" }
+   { "type" = "string" }
+ }
+
+
