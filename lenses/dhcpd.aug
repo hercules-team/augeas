@@ -95,6 +95,11 @@ let ip                = Rx.ipv4
   let bare = del qchar? "" . store (bchar+) . del qchar? ""
   let quote = Quote.do_quote (store (bchar* . /[ \t'\/]/ . bchar*)+)
   let dquote = Quote.do_dquote (store (bchar+))
+  (* these two are for special cases.  bare_to_scl is for any bareword that is
+   * space or semicolon terminated.  dquote_any allows almost any character in
+   * between the quotes. *)
+  let bare_to_scl = Quote.do_dquote_opt(store /[^" \t\n;]+/)
+  let dquote_any = Quote.do_dquote(store /[^"\n]*[ \t]+[^"\n]*/)
 
 let sto_to_spc        = store /[^\\#,;\{\}" \t\n]+|"[^\\#"\n]+"/
 let sto_to_scl        = store /[^ \t;][^;\n=]+[^ \t;]|[^ \t;=]+/
@@ -285,10 +290,9 @@ let stmt_option = stmt_option1 | stmt_option2
 (* this statement is not well documented in the manual dhcpd.conf
    we support basic use case *)
 
-let stmt_subclass = [ indent . key "subclass" . sep_spc .
-                      ([ label "name" . quote ]|
-                       [ label "name" . bare ]) . sep_spc .
-                       [ label "value" . bare ] . sep_scl . eos ]
+
+let stmt_subclass = [ indent . key "subclass" . sep_spc . ([ label "name" .  bare_to_scl ]|[ label "name" .  dquote_any ]) 
+                      . sep_spc . ([ label "value" . bare_to_scl ]|[ label "value" . dquote_any ]) . sep_scl . eos ]
 
 (************************************************************************
  *                         ALLOW/DENY STATEMENTS
@@ -323,8 +327,8 @@ let del_deny  = del /deny[ \t]+members[ \t]+of/ "deny members of"
  * frustration and back to this :)
  *)
 let stmt_secu_tpl (l:lens) (s:string) =
-                  [ indent . l . sep_spc . label s . Quote.do_dquote_opt(store /[^" \t\n;]+/) . sep_scl . eos ] |
-                  [ indent . l . sep_spc . label s . Quote.do_dquote(store /[^"\n]*[ \t]+[^"\n]*/) . sep_scl . eos ]
+                  [ indent . l . sep_spc . label s . bare_to_scl . sep_scl . eos ] |
+                  [ indent . l . sep_spc . label s . dquote_any . sep_scl . eos ]
 
 
 let stmt_secu         = [ indent . key stmt_secu_re . sep_spc .

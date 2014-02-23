@@ -412,11 +412,25 @@ test Dhcpd.stmt_match get "match if binary-to-ascii(16, 32, \"\", substring(hard
     { "value" = "1525400" }
   }
 
+test Dhcpd.lns get "subclass allocation-class-1 1:8:0:2b:4c:39:ad;" =
+  { "subclass"
+    { "name" = "allocation-class-1" }
+    { "value" = "1:8:0:2b:4c:39:ad" }
+  }
+
+
 test Dhcpd.lns get "subclass \"allocation-class-1\" 1:8:0:2b:4c:39:ad;" =
   { "subclass"
     { "name" = "allocation-class-1" }
     { "value" = "1:8:0:2b:4c:39:ad" }
   }
+
+test Dhcpd.lns get "subclass \"quoted class\" \"quoted value\";" =
+  { "subclass"
+    { "name" = "quoted class" }
+    { "value" = "quoted value" }
+  }
+
 
 (* overall test *)
 test Dhcpd.lns put conf after rm "/x" = conf
