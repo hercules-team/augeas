@@ -381,6 +381,25 @@ test Dhcpd.stmt_match get "match if substring (option dhcp-client-identifier, 1,
     { "value" = "RAS" }
   }
 
+test Dhcpd.stmt_match get "match if suffix (option dhcp-client-identifier, 4) = \"RAS\";" =
+  { "match"
+    { "function" = "suffix"
+      { "args"
+        { "arg" = "option dhcp-client-identifier" }
+        { "arg" = "4" }
+      }
+    }
+    { "value" = "RAS" }
+  }
+
+test Dhcpd.stmt_match get "match if option vendor-class-identifier=\"RAS\";" =
+  { "match"
+    { "option" = "vendor-class-identifier"
+      { "value" = "RAS" }
+    }
+  }
+
+
 test Dhcpd.lns get "match pick-first-value (option dhcp-client-identifier, hardware);" =
   { "match"
     { "function" = "pick-first-value"

@@ -341,16 +341,30 @@ let stmt_secu         = [ indent . key stmt_secu_re . sep_spc .
  *************************************************************************)
 
 let sto_fct = store (word . /[ \t]*\([^)]*\)/)
-let sto_option = store (/option[ ]+/ . word)
 let sto_com = /[^ \t\n,\(\)][^,\(\)]*[^ \t\n,\(\)]|[^ \t\n,\(\)]+/ | word . /[ \t]*\([^)]*\)/
-let fct_re = "substring" | "binary-to-ascii"
+(* this is already the most complicated part of this module and it's about to
+ * get worse.  match statements can be way more complicated than this
+ * 
+ * examples: 
+ *      using or:
+ *      match if ((option vendor-class-identifier="Banana Bready") or (option vendor-class-identifier="Cherry Sunfire"));
+ *      unneeded parenthesis: 
+ *      match if (option vendor-class-identifier="Hello");
+ * 
+ *      and of course the fact that the above two rules used one of infinately
+ *      many potential options instead of a builtin function.
+ *) 
+let fct_re = "substring" | "binary-to-ascii" | "suffix"
 
 let fct_args = [ label "args" . dels "(" . sep_osp .
                  ([ label "arg" . store sto_com ] . [ label "arg" . sep_com . store sto_com ]+) .
                         sep_osp . dels ")" ]
 
+let stmt_match_ifopt = [ dels "if" . sep_spc . key "option" . sep_spc . store(word) .
+                      sep_eq . ([ label "value" . bare_to_scl ]|[ label "value" . dquote_any ]) ]
+
 let stmt_match_if = [ dels "if" . sep_spc . store fct_re . sep_osp . label "function" . fct_args ] .
-                      sep_eq . ([ label "value" . bare ]|[ label "value" . quote ])
+                      sep_eq . ([ label "value" . bare_to_scl ]|[ label "value" . dquote_any ])
 
 let stmt_match_pfv = [ label "function" . store "pick-first-value" . sep_spc .
                        dels "(" . sep_osp .
@@ -361,7 +375,7 @@ let stmt_match_pfv = [ label "function" . store "pick-first-value" . sep_spc .
 
 let stmt_match_tpl (l:lens) = [ indent . key "match" . sep_spc . l . sep_scl . eos ]
 
-let stmt_match = stmt_match_tpl (stmt_match_if | stmt_match_pfv )
+let stmt_match = stmt_match_tpl (stmt_match_if | stmt_match_pfv | stmt_match_ifopt)
 
 (************************************************************************
  *                         BLOCK STATEMENTS
