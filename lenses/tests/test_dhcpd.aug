@@ -550,4 +550,13 @@ test Dhcpd.stmt_hardware get "hardware fddi 00:01:02:03:04:05;" =
     { "address" = "00:01:02:03:04:05" }
   }
 
+test Dhcpd.lns get "on commit 
+{
+  set test = thing;
+}" = 
+  { "on" = "commit"
+    { "set" = "test"
+      { "value" = "thing" }
+    }
+  }
 
