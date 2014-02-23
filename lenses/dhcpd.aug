@@ -64,13 +64,14 @@ let eos               = comment?
 (* Define separators *)
 let sep_spc           = del /[ \t]+/ " "
 let sep_osp           = del /[ \t]*/ ""
+let sep_osp_or_nl     = del /[ \t\n]*/ ""
 let sep_scl           = del /[ \t]*;([ \t]*\n)*/ ";\n"
-let sep_obr           = del /[ \t]*\{([ \t]*\n)*/ " {\n"
+let sep_obr           = del /[ \t\n]*\{([ \t]*\n)*/ " {\n"
 let sep_cbr           = del /[ \t]*\}([ \t]*\n)*/ "}\n"
 let sep_com           = del /[ \t\n]*,[ \t\n]*/ ", "
 let sep_slh           = del "\/" "/"
 let sep_col           = del ":" ":"
-let sep_eq            = del /[ \t]*=[ \t]*/ "="
+let sep_eq            = del /[ \t\n]*=[ \t\n]*/ "="
 let scl               = del ";" ";"
 
 (* Define basic types *)
