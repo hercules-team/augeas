@@ -182,6 +182,9 @@ fixed-address 10.1.1.1;}}" =
     }
   }
 
+test lns get "group fan-tas_tic { }" =
+  { "group" = "fan-tas_tic" }
+
 test Dhcpd.stmt_secu get "allow members of \"foo\";" =  { "allow-members-of" = "foo" }
 test Dhcpd.stmt_secu get "allow booting;" =  { "allow" = "booting" }
 test Dhcpd.stmt_secu get "allow bootp;" =  { "allow" = "bootp" }
@@ -263,6 +266,17 @@ failover peer \"redondance01\" {
     }
     { "load balance max seconds" = "3" }
   }
+
+test Dhcpd.lns get "option test.arrays code 123 = { string, ip-address, jabberwockys };" =
+ { "rfc-code" 
+   { "label" = "test.arrays" }
+   { "code" = "123" }
+   { "multi"
+     { "arg" = "string" }
+     { "arg" = "ip-address" }
+     { "arg" = "jabberwockys" }
+   }
+ }
 
 test Dhcpd.lns get "
 option CallManager code 150 = ip-address;
@@ -432,4 +446,7 @@ test Dhcpd.lns get gh34_simple =
     { "default-lease-time" = "600" }
     { "@else"
       { "default-lease-time" = "200" } } }
+
+test Dhcpd.lns get "omapi-key fookey;" =
+  { "omapi-key" = "fookey" }
 
