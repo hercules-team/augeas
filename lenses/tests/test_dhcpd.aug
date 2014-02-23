@@ -274,7 +274,7 @@ failover peer \"redondance01\" {
     }
   }
   { "next-server" = "10.1.1.1" }
-  { "failover peer" = "\"redondance01\""
+  { "failover peer" = "redondance01"
     { "primary" }
     { "address" = "10.1.1.1" }
     { "port" = "647" }
@@ -292,7 +292,7 @@ failover peer \"redondance01\" {
   }
 
 test Dhcpd.lns get "option test_records code 123 = { string, ip-address, integer 32, ip6-address, domain-list };" =
- { "rfc-code" 
+ { "rfc-code"
    { "label" = "test_records" }
    { "code" = "123" }
    { "type"
@@ -514,13 +514,13 @@ test Dhcpd.lns get "omapi-key fookey;" =
 (* almost all DHCP groups should support braces starting on the next line *)
 test Dhcpd.lns get "class introduction
 {
-}" = 
+}" =
   { "class" = "introduction" }
 
 (* equals should work the same *)
-test Dhcpd.lns get "option test_records code 123 = 
+test Dhcpd.lns get "option test_records code 123 =
                              string;" =
- { "rfc-code" 
+ { "rfc-code"
    { "label" = "test_records" }
    { "code" = "123" }
    { "type" = "string" }
@@ -544,19 +544,46 @@ test Dhcpd.lns get "set myvariable = foo;" =
     { "value" = "foo" }
   }
 
-test Dhcpd.stmt_hardware get "hardware fddi 00:01:02:03:04:05;" = 
+test Dhcpd.stmt_hardware get "hardware fddi 00:01:02:03:04:05;" =
   { "hardware"
     { "type" = "fddi" }
     { "address" = "00:01:02:03:04:05" }
   }
 
-test Dhcpd.lns get "on commit 
+test Dhcpd.lns get "on commit
 {
   set test = thing;
-}" = 
+}" =
   { "on" = "commit"
     { "set" = "test"
       { "value" = "thing" }
     }
   }
 
+test Dhcpd.lns get "key sample
+{
+    algorithm hmac-md5;
+    secret \"secret==\";
+};
+
+key \"interesting\" {};
+
+
+
+key \"second key\" {
+    secret \"two==\";
+}" =
+  { "key" = "sample"
+    { "algorithm"  = "hmac-md5" }
+    { "secret" = "secret==" }
+  }
+  { "key" = "interesting" }
+  { "key" = "second key"
+    { "secret" = "two==" }
+  }
+
+test Dhcpd.lns get "group \"hello\" { }" =
+  { "group" = "hello" }
+
+test Dhcpd.lns get "class \"testing class with spaces and quotes and ()\" {}" =
+  { "class" = "testing class with spaces and quotes and ()" }

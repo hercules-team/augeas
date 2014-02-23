@@ -243,7 +243,7 @@ let stmt_hardware     = [ indent
 let stmt_set          = [ indent
                         . key "set"
                         . sep_spc
-                        . store word 
+                        . store word
                         . sep_spc
                         . Sep.equal
                         . sep_spc
@@ -265,7 +265,7 @@ let stmt_option_list  = ([ label "arg" . bare ] | [ label "arg" . quote ])
 let del_trail_spc = del /[ \t\n]*/ ""
 
 let stmt_record = [ label "record" . counter "record" . Util.del_str "{"
-                . sep_spc 
+                . sep_spc
                 . ([seq "record" . store stmt_option_value . sep_com]*
                 .  [seq "record" . store stmt_option_value . del_trail_spc])?
                 . Util.del_str "}" ]
@@ -304,7 +304,7 @@ let stmt_option = stmt_option1 | stmt_option2
 (* this statement is not well documented in the manual dhcpd.conf
    we support basic use case *)
 
-let stmt_subclass = [ indent . key "subclass" . sep_spc . ([ label "name" .  bare_to_scl ]|[ label "name" .  dquote_any ]) 
+let stmt_subclass = [ indent . key "subclass" . sep_spc . ([ label "name" .  bare_to_scl ]|[ label "name" .  dquote_any ])
                       . sep_spc . ([ label "value" . bare_to_scl ]|[ label "value" . dquote_any ]) . sep_scl . eos ]
 
 
@@ -357,16 +357,16 @@ let stmt_secu         = [ indent . key stmt_secu_re . sep_spc .
 let sto_com = /[^ \t\n,\(\)][^,\(\)]*[^ \t\n,\(\)]|[^ \t\n,\(\)]+/ | word . /[ \t]*\([^)]*\)/
 (* this is already the most complicated part of this module and it's about to
  * get worse.  match statements can be way more complicated than this
- * 
- * examples: 
+ *
+ * examples:
  *      using or:
  *      match if ((option vendor-class-identifier="Banana Bready") or (option vendor-class-identifier="Cherry Sunfire"));
- *      unneeded parenthesis: 
+ *      unneeded parenthesis:
  *      match if (option vendor-class-identifier="Hello");
- * 
+ *
  *      and of course the fact that the above two rules used one of infinately
  *      many potential options instead of a builtin function.
- *) 
+ *)
 (* sto_com doesn't support quoted strings as arguments.  It also doesn't
    support single arguments (needs to match a comma) It will need to be
    updated for lcase, ucase and log to be workable.
@@ -374,7 +374,7 @@ let sto_com = /[^ \t\n,\(\)][^,\(\)]*[^ \t\n,\(\)]|[^ \t\n,\(\)]+/ | word . /[ \
    it also doesn't support no arguments, so gethostbyname() doesn't work.
 
    option and config-option are considered operators.  They should be matched
-   in stmt_entry but also available under "match if" and "if" conditionals 
+   in stmt_entry but also available under "match if" and "if" conditionals
    leased-address, host-decl-name, both take no args and return a value.  We
    might need to treat them as variable names in the parser.
 
@@ -389,10 +389,10 @@ let sto_com = /[^ \t\n,\(\)][^,\(\)]*[^ \t\n,\(\)]|[^ \t\n,\(\)]+/ | word . /[ \
    people to put weird stuff in an include file that augeas doesn't parse.
 
    the other option is to change the API to not parse the if statement at all,
-   just pull in the conditional as a string.  
+   just pull in the conditional as a string.
  *)
 
-let fct_re = "substring" | "binary-to-ascii" | "suffix" | "lcase" | "ucase" 
+let fct_re = "substring" | "binary-to-ascii" | "suffix" | "lcase" | "ucase"
              | "gethostbyname" | "packet"
              | "concat" | "reverse" | "encode-int"
              | "extract-int" | "lease-time" | "client-state" | "exists" | "known" | "static"
@@ -457,17 +457,13 @@ let stmt_block_arg_re = "host"
                       | /failover[ ]+peer/
                       | "zone"
                       | "group"
-                      | "key"
                       | "on"
 
 let stmt_block_arg (body:lens)
-                      = [ indent
-                        . key stmt_block_arg_re
-                        . sep_spc
-                        . sto_to_spc
-                        . sep_obr
-                        . body*
-                        . sep_cbr ]
+                      = ([ indent . key stmt_block_arg_re . sep_spc . dquote_any . sep_obr . body* . sep_cbr ]
+                         |[ indent . key stmt_block_arg_re . sep_spc . bare_to_scl . sep_obr . body* . sep_cbr ]
+                         |[ indent . key "key" . sep_spc . dquote_any . sep_obr . body* . sep_cbr . del /(;([ \t]*\n)*)?/ ""  ]
+                         |[ indent . key "key" .  sep_spc . bare_to_scl . sep_obr . body* . sep_cbr . del /(;([ \t]*\n)*)?/ "" ])
 
 let stmt_block_subnet (body:lens)
                       = [ indent
