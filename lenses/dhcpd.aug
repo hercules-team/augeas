@@ -64,7 +64,6 @@ let eos               = comment?
 (* Define separators *)
 let sep_spc           = del /[ \t]+/ " "
 let sep_osp           = del /[ \t]*/ ""
-let sep_osp_or_nl     = del /[ \t\n]*/ ""
 let sep_scl           = del /[ \t]*;([ \t]*\n)*/ ";\n"
 let sep_obr           = del /[ \t\n]*\{([ \t]*\n)*/ " {\n"
 let sep_cbr           = del /[ \t]*\}([ \t]*\n)*/ "}\n"
@@ -304,8 +303,12 @@ let stmt_option = stmt_option1 | stmt_option2
 (* this statement is not well documented in the manual dhcpd.conf
    we support basic use case *)
 
-let stmt_subclass = [ indent . key "subclass" . sep_spc . ([ label "name" .  bare_to_scl ]|[ label "name" .  dquote_any ])
-                      . sep_spc . ([ label "value" . bare_to_scl ]|[ label "value" . dquote_any ]) . sep_scl . eos ]
+let stmt_subclass = [ indent . key "subclass" . sep_spc 
+                      . ( [ label "name" .  bare_to_scl ]|[ label "name" .  dquote_any ] )
+                      . sep_spc 
+                      . ( [ label "value" . bare_to_scl ]|[ label "value" . dquote_any ] ) 
+                      . sep_scl 
+                      . eos ]
 
 
 (************************************************************************
