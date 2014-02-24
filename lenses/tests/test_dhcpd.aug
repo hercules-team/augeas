@@ -560,6 +560,8 @@ test Dhcpd.lns get "on commit
     }
   }
 
+
+(* key_block simple get test *)
 test Dhcpd.lns get "key sample
 {
     algorithm hmac-md5;
@@ -573,14 +575,48 @@ key \"interesting\" {};
 key \"second key\" {
     secret \"two==\";
 }" =
-  { "key" = "sample"
+  { "key_block" = "sample"
     { "algorithm"  = "hmac-md5" }
     { "secret" = "secret==" }
   }
-  { "key" = "interesting" }
-  { "key" = "second key"
+  { "key_block" = "interesting" }
+  { "key_block" = "second key"
     { "secret" = "two==" }
   }
+
+(* key block get/put/set test *)
+let key_tests = "key sample {
+    algorithm hmac-md5;
+    secret \"secret==\";
+}
+
+key \"interesting\" { };
+
+key \"third key\" {
+    secret \"two==\";
+}"
+
+test Dhcpd.lns get key_tests =
+  { "key_block" = "sample"
+    { "algorithm"  = "hmac-md5" }
+    { "secret" = "secret==" }
+  }
+  { "key_block" = "interesting" }
+  { "key_block" = "third key"
+    { "secret" = "two==" }
+  }
+
+test Dhcpd.lns put key_tests after set "/key_block[1]" "sample2" =
+  "key sample2 {
+    algorithm hmac-md5;
+    secret \"secret==\";
+}
+
+key \"interesting\" { };
+
+key \"third key\" {
+    secret \"two==\";
+}"
 
 test Dhcpd.lns get "group \"hello\" { }" =
   { "group" = "hello" }
