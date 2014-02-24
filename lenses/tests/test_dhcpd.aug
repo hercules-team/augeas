@@ -291,11 +291,14 @@ failover peer \"redondance01\" {
     { "load balance max seconds" = "3" }
   }
 
-test Dhcpd.lns get "option test_records code 123 = { string, ip-address, integer 32, ip6-address, domain-list };" =
+
+(* test get and put for record types *)
+let record_test = "option test_records code 123 = { string, ip-address, integer 32, ip6-address, domain-list };"
+
+test Dhcpd.lns get record_test =
  { "rfc-code"
    { "label" = "test_records" }
    { "code" = "123" }
-   { "type"
      { "record"
         { "1" = "string" }
         { "2" = "ip-address" }
@@ -303,8 +306,10 @@ test Dhcpd.lns get "option test_records code 123 = { string, ip-address, integer
         { "4" = "ip6-address" }
         { "5" = "domain-list" }
      }
-   }
  }
+
+test Dhcpd.lns put record_test after set "/rfc-code[1]/code" "124" = 
+  "option test_records code 124 = { string, ip-address, integer 32, ip6-address, domain-list };"
 
 test Dhcpd.lns get "
 option CallManager code 150 = ip-address;

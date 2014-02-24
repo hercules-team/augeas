@@ -263,18 +263,17 @@ let stmt_option_list  = ([ label "arg" . bare ] | [ label "arg" . quote ])
 
 let del_trail_spc = del /[ \t\n]*/ ""
 
-let stmt_record = [ label "record" . counter "record" . Util.del_str "{"
+let stmt_record = counter "record" . Util.del_str "{"
                 . sep_spc
                 . ([seq "record" . store stmt_option_value . sep_com]*
                 .  [seq "record" . store stmt_option_value . del_trail_spc])?
-                . Util.del_str "}" ]
-
-let stmt_types = store stmt_option_value|stmt_record
+                . Util.del_str "}"
 
 let stmt_option_code  = [ label "label" . store word . sep_spc ]
                         . [ key "code" . sep_spc . store word ]
                         . sep_eq
-                        . [ label "type" . stmt_types ]
+                        . ([ label "type" . store stmt_option_value ]
+                          |[ label "record" . stmt_record ]) 
 
 let stmt_option_basic = [ key word . sep_spc . stmt_option_list ]
 let stmt_option_extra = [ key word . sep_spc . store /true|false/ . sep_spc . stmt_option_list ]
