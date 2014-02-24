@@ -443,9 +443,7 @@ let stmt_entry        =   stmt_secu
                         | empty
                         | comment
 
-let stmt_block_noarg_re = "pool"
-                        | "group"
-                        | "allow-update"
+let stmt_block_noarg_re = "pool" | "group"
 
 let stmt_block_noarg (body:lens)
                         = [ indent
@@ -465,8 +463,8 @@ let stmt_block_arg_re = "host"
 let stmt_block_arg (body:lens)
                       = ([ indent . key stmt_block_arg_re . sep_spc . dquote_any . sep_obr . body* . sep_cbr ]
                          |[ indent . key stmt_block_arg_re . sep_spc . bare_to_scl . sep_obr . body* . sep_cbr ]
-                         |[ indent . key "key" . sep_spc . dquote_any . sep_obr . body* . sep_cbr . del /(;([ \t]*\n)*)?/ ""  ]
-                         |[ indent . key "key" .  sep_spc . bare_to_scl . sep_obr . body* . sep_cbr . del /(;([ \t]*\n)*)?/ "" ])
+                         |[ indent . del /key/ "key" . label "key_block" . sep_spc . dquote_any . sep_obr . body* . sep_cbr . del /(;([ \t]*\n)*)?/ ""  ]
+                         |[ indent . del /key/ "key" . label "key_block" . sep_spc . bare_to_scl . sep_obr . body* . sep_cbr . del /(;([ \t]*\n)*)?/ "" ])
 
 let stmt_block_subnet (body:lens)
                       = [ indent
