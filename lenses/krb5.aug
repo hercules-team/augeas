@@ -25,16 +25,17 @@ let realm_re = /[A-Z][.a-zA-Z0-9-]*/
 let app_re = /[a-z][a-zA-Z0-9_]*/
 let name_re = /[.a-zA-Z0-9_-]+/
 
-let value = store /[^;# \t\r\n{}]+/
-let entry (kw:regexp) (sep:lens) (comment:lens)
+let value_br = store /[^;# \t\r\n{}]+/
+let value = store /[^;# \t\r\n]+/
+let entry (kw:regexp) (sep:lens) (value:lens) (comment:lens)
     = [ indent . key kw . sep . value . (comment|eol) ] | comment
 
 let subsec_entry (kw:regexp) (sep:lens) (comment:lens)
-    = ( entry kw sep comment ) | empty
+    = ( entry kw sep value_br comment ) | empty
 
 let simple_section (n:string) (k:regexp) =
   let title = Inifile.indented_title n in
-  let entry = entry k eq comment in
+  let entry = entry k eq value comment in
     Inifile.record title entry
 
 let record (t:string) (e:lens) =
@@ -59,7 +60,7 @@ let enctype_list (nr:regexp) (ns:string) =
     . (comment|eol) . [ label "#eol" ]
 
 let libdefaults =
-  let option = entry (name_re - ("v4_name_convert" |enctypes)) eq comment in
+  let option = entry (name_re - ("v4_name_convert" |enctypes)) eq value comment in
   let enctype_lists = enctype_list /permitted_enctypes/i "permitted_enctypes"
                       | enctype_list /default_tgs_enctypes/i "default_tgs_enctypes"
                       | enctype_list /default_tkt_enctypes/i "default_tkt_enctypes" in
@@ -73,7 +74,7 @@ let login =
     simple_section "login" keys
 
 let appdefaults =
-  let option = entry (name_re - ("realm" | "application")) eq comment in
+  let option = entry (name_re - ("realm" | "application")) eq value_br comment in
   let realm = [ indent . label "realm" . store realm_re .
                   eq_openbr . (option|empty)* . closebr . eol ] in
   let app = [ indent . label "application" . store app_re .
@@ -117,7 +118,7 @@ let logging =
 let capaths =
   let realm = [ indent . key realm_re .
                   eq_openbr .
-                  (entry realm_re eq comment)* . closebr . eol ] in
+                  (entry realm_re eq value_br comment)* . closebr . eol ] in
     record "capaths" (realm|comment)
 
 let dbdefaults =
