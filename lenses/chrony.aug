@@ -34,37 +34,37 @@ module Chrony =
 (************************************************************************
  * Group: Import provided expressions
  ************************************************************************)
-    (* Variable: empty *)
+    (* View: empty *)
     let empty   = Util.empty
-    (* Variable: eol *)
+    (* View: eol *)
     let eol     = Util.eol
 
-    (* Variable: space *)
+    (* View: space *)
     let space   = Sep.space
 
-    (* Variable: email_addr *)
+    (* View: email_addr *)
     let email_addr = Rx.email_addr
-    (* Variable: word *)
+    (* View: word *)
     let word       = Rx.word
-    (* Variable: integer *)
+    (* View: integer *)
     let integer    = Rx.integer
-    (* Variable: decimal *)
+    (* View: decimal *)
     let decimal    = Rx.decimal
 
-    (* Variable: ip *)
+    (* View: ip *)
     let ip         = Rx.ip
 
 (************************************************************************
  * Group: Create required expressions
  ************************************************************************)
-    (* Variable: number *)
+    (* View: number *)
     let number = integer | decimal
 
-    (* Variable: address_re *)
+    (* View: address_re *)
     let address_re = Rx.ip | Rx.hostname
 
     (*
-       Variable: comment
+       View: comment
             from 4.2.1 of the upstream doc
             Chrony comments start with: ! ; # or % and must be on their own line
     *)
@@ -244,7 +244,8 @@ module Chrony =
 (* View: settings
  *   All supported chrony settings
  *)
-let settings = ( host_list | log_list | bcast | fdrift | istepslew | local | email | makestep | maxchange | kv | all_flags )
+let settings = host_list | log_list | bcast | fdrift | istepslew
+             | local | email | makestep | maxchange | kv | all_flags
 
 (*
  * View: lns
