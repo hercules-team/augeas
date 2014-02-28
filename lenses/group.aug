@@ -42,7 +42,7 @@ let entry     = Build.key_value_line word colon params
 
 (* A NIS entry has nothing bar the +@::: bits. *)
 let nisentry =
-  let nisuser = /\+\@[A-Za-z0-9_.-]+/ in
+  let nisgroup = /\+\@[A-Za-z0-9_.-]+/ in
   let colons = ":::" in
   [ dels "+@" . label "@nis" . store word . dels colons . eol ]
 
