@@ -38,3 +38,12 @@ test Group.lns get "testgrp:*:0:testusr\n" =
     { "password" = "*" }
     { "gid" = "0" }
     { "user" = "testusr" } }
+
+(* NIS defaults *)
+test Group.lns get "+\n" =
+  { "@nisdefault" }
+
+test Group.lns get "+:::\n" =
+  { "@nisdefault"
+    { "password" = "" }
+    { "gid" = "" } }
