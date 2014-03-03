@@ -40,12 +40,6 @@ let params    = [ label "password" . store password  . colon ]
                 . user_list?
 let entry     = Build.key_value_line word colon params
 
-(* A NIS entry has nothing bar the +@::: bits. *)
-let nisentry =
-  let nisgroup = /\+\@[A-Za-z0-9_.-]+/ in
-  let colons = ":::" in
-  [ dels "+@" . label "@nis" . store word . dels colons . eol ]
-
 let nisdefault =
   let overrides =
         colon
@@ -59,7 +53,7 @@ let nisdefault =
  *                                LENS
  *************************************************************************)
 
-let lns        = (comment|empty|entry|nisentry|nisdefault) *
+let lns        = (comment|empty|entry|nisdefault) *
 
 let filter     = incl "/etc/group"
 
