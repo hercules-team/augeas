@@ -34,7 +34,7 @@ let title = IniFile.title IniFile.record_re
 
 let sep = IniFile.sep "=" "="
 
-let setting = /[A-Za-z0-9_.-]+([][A-Za-z0-9_.-]+)?/
+let setting = /[A-Za-z0-9_.-]+([][@A-Za-z0-9_.-]+)?/
 
 (* Variable: sto_to_comment
 Store until comment *)

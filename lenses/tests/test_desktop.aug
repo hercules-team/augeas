@@ -38,3 +38,10 @@ X-GNOME-FullName[ca]=En canadien
 " =
     { "Desktop Entry"
       { "X-GNOME-FullName[ca]" = "En canadien" } }
+
+(* Test: Desktop.lns
+     Allow @ in setting (GH issue #92) *)
+test Desktop.lns get "[Desktop Entry]
+Name[sr@latin] = foobar\n" =
+    { "Desktop Entry"
+      { "Name[sr@latin]" = "foobar" } }
