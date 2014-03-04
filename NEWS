@@ -4,6 +4,7 @@
   - Lens changes/additions
     * AptPreferences: Support spaces in origin fields
     * Chrony: New lens to parse /etc/chrony.conf
+    * Desktop: Allow @ in keys (GH issue #92)
     * Known_Hosts: New lens for SSH known hosts files
     * Grub: handle "foreground" option, RHBZ#1059383
     * IPRoute2: handle "/" in protocol name, swap ID and name fields
