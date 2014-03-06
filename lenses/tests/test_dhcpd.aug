@@ -565,30 +565,6 @@ test Dhcpd.lns get "on commit
     }
   }
 
-
-(* key_block simple get test *)
-test Dhcpd.lns get "key sample
-{
-    algorithm hmac-md5;
-    secret \"secret==\";
-};
-
-key \"interesting\" {};
-
-
-
-key \"second key\" {
-    secret \"two==\";
-}" =
-  { "key_block" = "sample"
-    { "algorithm"  = "hmac-md5" }
-    { "secret" = "secret==" }
-  }
-  { "key_block" = "interesting" }
-  { "key_block" = "second key"
-    { "secret" = "two==" }
-  }
-
 (* key block get/put/set test *)
 let key_tests = "key sample {
     algorithm hmac-md5;
