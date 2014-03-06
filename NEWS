@@ -13,6 +13,9 @@
     * Shellvars: handle case statements with same-line ';;', RHBZ#1033799
     * Sshd: Allow all types of entries in Match groups (GH issue #75)
     * Squid: Support configuration files for squid 3 (Mykola Nikishov)
+    * Dhcpd: stmt_string quoted blocks no longer store quote marks
+                (incompatible change),
+                many changes to support more record types
 
 1.2.0 - 2014-01-27
   - API changes

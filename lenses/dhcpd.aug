@@ -97,8 +97,8 @@ let ip                = Rx.ipv4
   (* these two are for special cases.  bare_to_scl is for any bareword that is
    * space or semicolon terminated.  dquote_any allows almost any character in
    * between the quotes. *)
-  let bare_to_scl = Quote.do_dquote_opt(store /[^" \t\n;]+/)
-  let dquote_any = Quote.do_dquote(store /[^"\n]*[ \t]+[^"\n]*/)
+  let bare_to_scl = Quote.do_dquote_opt (store /[^" \t\n;]+/)
+  let dquote_any = Quote.do_dquote (store /[^"\n]*[ \t]+[^"\n]*/)
 
 let sto_to_spc        = store /[^\\#,;\{\}" \t\n]+|"[^\\#"\n]+"/
 let sto_to_scl        = store /[^ \t;][^;\n=]+[^ \t;]|[^ \t;=]+/
@@ -407,7 +407,7 @@ let fct_args = [ label "args" . dels "(" . sep_osp .
                  ([ label "arg" . store sto_com ] . [ label "arg" . sep_com . store sto_com ]+) .
                         sep_osp . dels ")" ]
 
-let stmt_match_ifopt = [ dels "if" . sep_spc . key "option" . sep_spc . store(word) .
+let stmt_match_ifopt = [ dels "if" . sep_spc . key "option" . sep_spc . store word .
                       sep_eq . ([ label "value" . bare_to_scl ]|[ label "value" . dquote_any ]) ]
 
 let stmt_match_func = [ store fct_re . sep_osp . label "function" . fct_args ] .
