@@ -146,3 +146,18 @@ let device_name = /[a-zA-Z0-9_?.+:!-]+/
  *    To be refined
  *)
 let email_addr = /[A-Za-z0-9_+.-]+@[A-Za-z0-9_.-]+/
+
+(*
+ * Variable: iso_8601
+ *    ISO 8601 date time format
+ *)
+let year = /[0-9]{4}/
+let relyear = /[-+]?/ . year
+let monthday = /W?[0-9]{2}(-?[0-9]{1,2})?/
+let time =
+     let sep = /[T \t]/
+  in let digits = /[0-9]{2}(:?[0-9]{2}(:?[0-9]{2})?)?/
+  in let precis = /[.,][0-9]+/
+  in let zone = "Z" | /[-+]?[0-9]{2}(:?[0-9]{2})?/
+  in sep . digits . precis? . zone?
+let iso_8601 = year . ("-"? . monthday . time?)?
