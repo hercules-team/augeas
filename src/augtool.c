@@ -404,7 +404,7 @@ static int run_command(const char *line) {
     int result;
 
     result = aug_srun(aug, stdout, line);
-    if (isatty(fileno(stdin)))
+    if (isatty(fileno(rl_instream)))
         add_history(line);
     return result;
 }
