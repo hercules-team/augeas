@@ -41,9 +41,10 @@ module Syslog =
 	(* View: comment
 	  Map comments into "#comment" nodes
 	  Can't use Util.comment as #+ and #! have a special meaning *)
-	let comment =
-	  [ label "#comment" . del /#[ \t]*/ "# "
-	      . store /([^ \t\n+!-].*[^ \t\n]|[^ \t\n+!-])/ . eol ]
+	let comment = ( [ label "#comment" . del /#[ \t]+/ "# "
+                    . store /([!+-].*[^ \t\n]|[!+-])/ . eol ]
+                  | [ label "#comment" . del /#[ \t]*/ "# "
+	      . store /([^ \t\n+!-].*[^ \t\n]|[^ \t\n+!-])/ . eol ] )
 
 	(* Group: single characters macro *)
 
