@@ -44,6 +44,7 @@ daemon.info                                     /var/log/cvsupd.log
 *.=debug;\
         auth,authpriv.none;\
         news.none;mail.none     -/var/log/debug
+# !pppd
 "
 
 	test Syslog.lns get conf =
@@ -198,6 +199,7 @@ daemon.info                                     /var/log/cvsupd.log
               { "selector" { "facility" = "news" } { "level" = "none" } }
               { "selector" { "facility" = "mail" } { "level" = "none" } }
 	      { "action" { "no_sync" } { "file" = "/var/log/debug" } } }
+      { "#comment" = "!pppd" }
 	  }
 
 	(* changing file *)
@@ -331,3 +333,6 @@ daemon.info                                     /var/log/cvsupd.log
             }
           }
 
+    (* test for commented out statements *)
+    test Syslog.lns put "" after
+       set "#comment" "!pppd" = "# !pppd\n"
