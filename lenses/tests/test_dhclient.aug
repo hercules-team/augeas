@@ -131,3 +131,14 @@ lease {
                { "hour"    = "00" }
                { "minute"  = "00" }
                { "second"  = "01" } } }
+
+
+test Dhclient.lns get "append option domain-name-servers 127.0.0.1;\n" =
+    { "append"
+        { "option"
+            { "domain-name-servers" = "127.0.0.1" }
+        }
+    }
+
+test Dhclient.lns put "" after set "/prepend/option/domain-name-servers" "127.0.0.1" = 
+    "prepend option domain-name-servers 127.0.0.1;\n"

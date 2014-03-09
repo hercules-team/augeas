@@ -9,8 +9,6 @@
    configuration files as statements get usually splitted across several
    lines, rather than merged in a single one.
 
-   TODO: support the "default", "supersede", "append" and "prepend"
-   statements
 *)
 
 module Dhclient =
@@ -89,6 +87,7 @@ let stmt_array        = [ key stmt_array_re
  *                          HASH STATEMENTS
  *************************************************************************)
 
+
 let stmt_hash_re      = "send"
                       | "option"
 
@@ -97,6 +96,13 @@ let stmt_hash         = [ key stmt_hash_re
                         . [ key word . sep_spc . (sto_to_spc|rfc_code) ]
                         . sep_scl
                         . comment_or_eol ]
+
+let stmt_opt_mod_re   = "append"
+                      | "prepend"
+                      | "default"
+                      | "supersede"
+
+let stmt_opt_mod      = [ key stmt_opt_mod_re . sep_spc . stmt_hash ]
 
 (************************************************************************
  *                         BLOCK STATEMENTS
@@ -143,6 +149,7 @@ let stmt_block_arg    = sep_spc . sto_to_spc
 let stmt_block_entry  = sep_spc
                       . ( stmt_array
                         | stmt_hash
+                        | stmt_opt_mod
                         | stmt_block_opt
                         | stmt_block_date )
 
@@ -157,7 +164,7 @@ let stmt_block        = [ key stmt_block_re
  *                              LENS & FILTER
  *************************************************************************)
 
-let statement = (stmt_simple|stmt_array|stmt_hash|stmt_block)
+let statement = (stmt_simple|stmt_opt_mod|stmt_array|stmt_hash|stmt_block)
 
 let lns               = ( empty
                         | comment
