@@ -40,11 +40,17 @@ module Syslog =
 
 	(* View: comment
 	  Map comments into "#comment" nodes
-	  Can't use Util.comment as #+ and #! have a special meaning *)
-	let comment = ( [ label "#comment" . del /#[ \t]+/ "# "
-                    . store /([!+-].*[^ \t\n]|[!+-])/ . eol ]
-                  | [ label "#comment" . del /#[ \t]*/ "# "
-	      . store /([^ \t\n+!-].*[^ \t\n]|[^ \t\n+!-])/ . eol ] )
+	  Can't use Util.comment as #+ and #! have a special meaning.
+      However, '# !' and '# +' have no special meaning so they should be allowed.
+     *)
+
+	let comment_gen (space:regexp) (sto:regexp) =
+          [ label "#comment" . del ("#" . space) "# " . store sto . eol ]
+
+	let comment =
+		let comment_withsign = comment_gen Rx.space /([!+-].*[^ \t\n]|[!+-])/
+	 in let comment_nosign = comment_gen Rx.opt_space /([^ \t\n+!-].*[^ \t\n]|[^ \t\n+!-])/
+	 in comment_withsign | comment_nosign
 
 	(* Group: single characters macro *)
 
