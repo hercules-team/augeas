@@ -339,3 +339,10 @@ test Httpd.lns get conf2 =
     {  }
   }
 
+(* Eol comment *)
+test Httpd.lns get "<a> # a comment
+MyDirective Foo
+</a>\n" =
+  { "a"
+    { "#comment" = "a comment" }
+    { "directive" = "MyDirective" { "arg" = "Foo" } } }
