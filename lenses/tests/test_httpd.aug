@@ -346,3 +346,8 @@ MyDirective Foo
   { "a"
     { "#comment" = "a comment" }
     { "directive" = "MyDirective" { "arg" = "Foo" } } }
+
+test Httpd.lns get "<a>
+# a comment
+</a>\n" =
+  { "a" { "#comment" = "a comment" } }
