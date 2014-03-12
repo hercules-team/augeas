@@ -77,8 +77,9 @@ let directive = [ indent . label "directive" . store word .
                   (sep_spc . argv arg_dir)? . eol ]
 
 let section (body:lens) =
+    let eol_comment = Util.comment_generic /[ \t\n]*#[ \t]*/ "# " in
     let inner = (sep_spc . argv arg_sec)? . sep_osp .
-             dels ">" . (eol|comment) . (body . (body|comment)*)? .
+             dels ">" . (eol|eol_comment) . (body . (body|comment)*)? .
              indent . dels "</" in
     let kword = key word in
     let dword = del word "a" in
