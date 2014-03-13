@@ -184,6 +184,7 @@ lens_tests =			\
   lens-systemd.sh		\
   lens-thttpd.sh		\
   lens-up2date.sh		\
+  lens-updatedb.sh		\
   lens-util.sh		\
   lens-vfstab.sh		\
   lens-vmware_config.sh		\
