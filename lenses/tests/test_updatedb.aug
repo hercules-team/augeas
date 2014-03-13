@@ -8,8 +8,8 @@ module Test_UpdateDB =
      Simple get test *)
 test UpdateDB.lns get "# A comment
 PRUNEPATHS=\"/tmp /var/spool /media /home/.ecryptfs\"
-PRUNEFS=\"NFS nfs nfs4 rpc_pipefs\"
-PRUNE_BIND_MOUNTS=\"yes\"\n" =
+PRUNEFS= \"NFS nfs nfs4 rpc_pipefs\"
+PRUNE_BIND_MOUNTS = \"yes\"\n" =
   { "#comment" = "A comment" }
   { "PRUNEPATHS"
     { "entry" = "/tmp" }
