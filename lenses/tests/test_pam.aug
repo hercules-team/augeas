@@ -41,6 +41,14 @@ session    optional     pam_keyinit.so force revoke
       { "module" = "pam_gnome_keyring.so" }
     }
 
+  test Pam.lns get "session    optional    pam_motd.so [motd=/etc/bad example]\n" =
+    { "1"
+      { "type" = "session" }
+      { "control" = "optional" }
+      { "module" = "pam_motd.so" }
+      { "argument" = "[motd=/etc/bad example]" }
+    }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
