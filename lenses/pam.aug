@@ -30,9 +30,9 @@ module Pam =
   (* Allowed types *)
   let types = /(auth|session|account|password)/i
 
-  (* This isn't entirely right: arguments enclosed in [ .. ] are allowed   *)
-  (* and should be parsed as one                                           *)
-  let argument = /[^#\n \t]+/
+  (* This isn't entirely right: arguments enclosed in [ .. ] can contain  *)
+  (* a ']' if escaped with a '\' and can be on multiple lines ('\')       *)
+  let argument = /(\[[^]#\n]+\]|[^[#\n \t][^#\n \t]*)/
 
   let comment = Util.comment
   let comment_or_eol = Util.comment_or_eol
