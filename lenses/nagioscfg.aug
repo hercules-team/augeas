@@ -1,6 +1,6 @@
 (*
 Module: NagiosConfig
-  Parses /etc/{nagios{3,},icinga/*.cfg
+  Parses /etc/{nagios{3,},icinga}/*.cfg
 
 Authors: Sebastien Aperghis-Tramoni <sebastien@aperghis.net>
          Raphaël Pinson <raphink@gmail.com>
@@ -12,7 +12,7 @@ About: Lens Usage
   To be documented
 
 About: Configuration files
-  This lens applies to /etc/{nagios{3,},icinga/*.cfg. See <filter>.
+  This lens applies to /etc/{nagios{3,},icinga}/*.cfg. See <filter>.
 *)
 
 module NagiosCfg =
