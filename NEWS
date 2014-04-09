@@ -17,6 +17,8 @@
     * Dnsmasq: Parse the structure of the 'address' and 'server' options
                (incompatible change) (Kaarle Ritvanen)
     * Iscsid: new lens (Joey Boggs and Pat Riehecky) (Issue #174)
+    * Krb5: support keyword krb524_server; allow relam names starting
+            with lower-case characters (Jurjen Bokma)
     * Logrotate: support 'dateformat' directive (Issue #217)
                  do not require a space before an opening '{' (Issue #123)
     * Pagekite: more fine-grained control of service_on entries; instead of

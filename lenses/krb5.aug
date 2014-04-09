@@ -85,14 +85,14 @@ let appdefaults =
 let realms =
   let simple_option = /kdc|admin_server|database_module|default_domain/
       |/v4_realm|auth_to_local(_names)?|master_kdc|kpasswd_server/
-      |/admin_server|ticket_lifetime|pkinit_anchors/ in
+      |/admin_server|ticket_lifetime|pkinit_anchors|krb524_server/ in
   let subsec_option = /v4_instance_convert/ in
   let option = subsec_entry simple_option eq comment in
   let subsec = [ indent . key subsec_option . eq_openbr .
                    (subsec_entry name_re eq comment)* . closebr . eol ] in
   let v4subsec = [ indent . key /host|plain/ . eq_openbr .
                    (subsec_entry name_re eq comment)* . closebr . eol ] in
-  let realm = [ indent . label "realm" . store (realm_re|realm_anycase_re) .
+  let realm = [ indent . label "realm" . store realm_anycase_re .
                   eq_openbr . (option|subsec|(v4_name_convert v4subsec))* .
                   closebr . eol ] in
     record "realms" (realm|comment)
