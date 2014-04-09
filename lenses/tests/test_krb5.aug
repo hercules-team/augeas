@@ -92,6 +92,13 @@ module Test_krb5 =
                         }
                 }
 	}
+        stanford.edu = {
+                kdc = krb5auth1.stanford.edu
+                kdc = krb5auth2.stanford.edu
+                kdc = krb5auth3.stanford.edu
+                admin_server = krb5-admin.stanford.edu
+                default_domain = stanford.edu
+        }
 
 [instancemapping]
  afs = {
@@ -357,6 +364,13 @@ test Krb5.lns get fermi_str =
           { "rcmd" = "host" }
         }
       }
+    }
+    { "realm" = "stanford.edu"
+      { "kdc" = "krb5auth1.stanford.edu" }
+      { "kdc" = "krb5auth2.stanford.edu" }
+      { "kdc" = "krb5auth3.stanford.edu" }
+      { "admin_server" = "krb5-admin.stanford.edu" }
+      { "default_domain" = "stanford.edu" }
     }
     { } }
   { "instancemapping"
