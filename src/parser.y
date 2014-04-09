@@ -19,6 +19,11 @@
 
 #define YYDEBUG 1
 
+  /*
+    Work around 'undefined reference to YYID' - j.bokma@rug.nl 20140409
+   */
+#define YYID(n) (n)
+
 int augl_parse_file(struct augeas *aug, const char *name, struct term **term);
 
 typedef void *yyscan_t;
