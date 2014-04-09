@@ -22,6 +22,7 @@ let closebr = del /[ \t]*\}/ "}"
 *)
 
 let realm_re = /[A-Z][.a-zA-Z0-9-]*/
+let realm_anycase_re = /[A-Za-z][.a-zA-Z0-9-]*/
 let app_re = /[a-z][a-zA-Z0-9_]*/
 let name_re = /[.a-zA-Z0-9_-]+/
 
@@ -91,7 +92,7 @@ let realms =
                    (subsec_entry name_re eq comment)* . closebr . eol ] in
   let v4subsec = [ indent . key /host|plain/ . eq_openbr .
                    (subsec_entry name_re eq comment)* . closebr . eol ] in
-  let realm = [ indent . label "realm" . store realm_re .
+  let realm = [ indent . label "realm" . store (realm_re|realm_anycase_re) .
                   eq_openbr . (option|subsec|(v4_name_convert v4subsec))* .
                   closebr . eol ] in
     record "realms" (realm|comment)
