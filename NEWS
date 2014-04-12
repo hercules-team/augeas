@@ -1,10 +1,13 @@
 1.3.0 - 2014-XX-XX
   - General changes/additions
     * Add missing cp entry in manpage (GH issue #78)
+    * Add seq to vim syntax highlight (Robert Drake)
   - Lens changes/additions
     * AptPreferences: Support spaces in origin fields
     * Chrony: New lens to parse /etc/chrony.conf
     * Desktop: Allow @ in keys (GH issue #92)
+    * Dhclient: Add support for option modifiers (Robert Drake,
+                GH issue #95)
     * Dhcpd: stmt_string quoted blocks no longer store quote marks
              (incompatible change),
              many changes to support more record types (Robert Drake)
@@ -17,10 +20,13 @@
                 handle hex IDs and hyphens, as present in rt_dsfield, RHBZ#1063961
     * Keepalived: Add more virtual/real server settings and checks, RHBZ#1064388
     * Krb5: permit braces in values when not in sub-section, RHBZ#1066419
+    * NagiosConfig and NagiosObjects: Fix documentation (Simon Sehier)
     * NetworkManager: Use the Quote module, support # in values (no eol comments)
+    * Pam: Add partial support for arguments enclosed in [] (Vincent Brillault)
     * Shellvars: handle case statements with same-line ';;', RHBZ#1033799
     * Sshd: Allow all types of entries in Match groups (GH issue #75)
     * Squid: Support configuration files for squid 3 (Mykola Nikishov)
+    * Syslog: Support "# !" style comments (Robert Drake, GH issue #65)
     * UpdateDB: New lens to parse /etc/updatedb.conf (incompatible change)
 
 1.2.0 - 2014-01-27
