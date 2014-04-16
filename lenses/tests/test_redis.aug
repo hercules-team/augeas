@@ -174,3 +174,8 @@ test Redis.lns get redis_conf =
   { }
   { "include" = "/path/to/local.conf" }
   { "include" = "/path/to/other.conf" }
+
+(* Test: Redis.lns
+     Empty value (GH issue #115) *)
+test Redis.lns get "notify-keyspace-events \"\"\n" =
+  { "notify-keyspace-events" = "" }

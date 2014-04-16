@@ -44,6 +44,7 @@ let empty = Util.empty
 let indent = Util.indent
 let eol = Util.eol
 let del_ws_spc = Util.del_ws_spc
+let dquote = Util.del_str "\""
 
 (* View: standard_entry
 A standard entry is a key-value pair, separated by blank space, with optional
@@ -51,7 +52,14 @@ blank spaces at line beginning & end. The value part can be optionnaly enclosed
 in single or double quotes. Comments at end-of-line ar NOT allowed by
 redis-server.
 *)
-let standard_entry =  [ indent . key k . del_ws_spc . Quote.do_quote_opt_nil (store v) . eol ]
+let standard_entry =
+     let reserved_k = "save" | "rename-command" | "slaveof"
+                    | "client-output-buffer-limit"
+  in let entry_noempty = [ indent . key k . del_ws_spc
+                         . Quote.do_quote_opt_nil (store v) . eol ]
+  in let entry_empty = [ indent . key (k - reserved_k) . del_ws_spc
+                         . dquote . store "" . dquote . eol ]
+  in entry_noempty | entry_empty
 
 let save = /save/
 let seconds = [ label "seconds" . Quote.do_quote_opt_nil (store Rx.integer) ]
