@@ -15,6 +15,7 @@
     * Group: NIS support
     * Grub: handle "foreground" option, RHBZ#1059383
     * Httpd: Allow eol comments after section tags
+             Allow continued lines inside quoted value (GH issue #104)
     * IPRoute2: handle "/" in protocol name, swap ID and name fields
                 (incompatible change), RHBZ#1063968,
                 handle hex IDs and hyphens, as present in rt_dsfield, RHBZ#1063961
