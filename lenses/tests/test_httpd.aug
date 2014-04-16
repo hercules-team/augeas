@@ -339,3 +339,13 @@ test Httpd.lns get conf2 =
     {  }
   }
 
+(* Test: Httpd.lns
+     Newlines inside quoted value (GH issue #104) *)
+test Httpd.lns get "Single 'Foo\\
+bar'
+Double \"Foo\\
+bar\"\n" =
+  { "directive" = "Single"
+    { "arg" = "'Foo\\\nbar'" } }
+  { "directive" = "Double"
+    { "arg" = "\"Foo\\\nbar\"" } }

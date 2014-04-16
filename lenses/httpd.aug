@@ -61,8 +61,14 @@ let indent              = Util.indent
 (* borrowed from shellvars.aug *)
 let char_arg_dir  = /[^ '"\t\r\n]|\\\\"|\\\\'/
 let char_arg_sec  = /[^ '"\t\r\n>]|\\\\"|\\\\'/
-let dquot = /"([^"\\\r\n]|\\\\.)*"/
-let squot = /'([^'\\\r\n]|\\\\.)*'/
+let cdot = /\\\\./
+let cl = /\\\\\n/
+let dquot =
+     let no_dquot = /[^"\\\r\n]/
+  in /"/ . (no_dquot|cdot|cl)* . /"/
+let squot =
+     let no_squot = /[^'\\\r\n]/
+  in /'/ . (no_squot|cdot|cl)* . /'/
 
 (******************************************************************
  *                            Attributes
