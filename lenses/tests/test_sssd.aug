@@ -11,6 +11,7 @@ module Test_sssd =
 
 let conf = "[domain/example.com]
 #Comment here
+; another comment
 cache_credentials = True
 krb5_store_password_if_offline = True
 ipa_server = _srv_, ipa.example.com
@@ -27,6 +28,7 @@ domains = example.com
 test Sssd.lns get conf =
     { "target" = "domain/example.com" 
 	{ "#comment" = "Comment here" }
+	{ "#comment" = "another comment" }
 	{ "cache_credentials" = "True" }
 	{ "krb5_store_password_if_offline" = "True" }
 	{ "ipa_server" = "_srv_, ipa.example.com" }

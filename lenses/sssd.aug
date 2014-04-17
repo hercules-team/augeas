@@ -14,7 +14,7 @@ About: Configuration files
 module Sssd =
   autoload xfm
 
-let comment  = IniFile.comment "#" "#"
+let comment  = IniFile.comment /[#;]/ "#"
 
 let sep      = IniFile.sep "=" "="
 

@@ -27,6 +27,7 @@
     * Redis: Allow empty quoted values (GH issue #115)
     * Shellvars: handle case statements with same-line ';;', RHBZ#1033799
     * Sshd: Allow all types of entries in Match groups (GH issue #75)
+    * Sssd: Allow ; for comments
     * Squid: Support configuration files for squid 3 (Mykola Nikishov)
     * Syslog: Support "# !" style comments (Robert Drake, GH issue #65)
     * UpdateDB: New lens to parse /etc/updatedb.conf (incompatible change)
