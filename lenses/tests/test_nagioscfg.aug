@@ -87,3 +87,14 @@ test NagiosCfg.lns get "$USER1$=/usr/local/libexec/nagios\n" =
 
 test NagiosCfg.lns get "$USER3$=somepassword\n" =
   { "$USER3$" = "somepassword" }
+
+(* Test: NagiosCfg.lns
+     Parse authorized_* values as lists *)
+test NagiosCfg.lns get "authorized_for_system_information=nagiosadmin,theboss
+authorized_for_system_commands=nagiosadmin
+allowed_hosts=127.0.0.1,10.0.0.1\n" =
+  { "authorized_for_system_information" { "1" = "nagiosadmin" }
+                                        { "2" = "theboss" } }
+  { "authorized_for_system_commands" { "1" = "nagiosadmin" } }
+  { "allowed_hosts" { "1" = "127.0.0.1" }
+                    { "2" = "10.0.0.1" } }

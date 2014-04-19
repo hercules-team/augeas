@@ -21,7 +21,9 @@
                 handle hex IDs and hyphens, as present in rt_dsfield, RHBZ#1063961
     * Keepalived: Add more virtual/real server settings and checks, RHBZ#1064388
     * Krb5: permit braces in values when not in sub-section, RHBZ#1066419
-    * NagiosConfig and NagiosObjects: Fix documentation (Simon Sehier)
+    * NagiosCfg: Parse authorized_* and allowed_hosts values
+                 as lists (GH issue #117)
+    * NagiosCfg and NagiosObjects: Fix documentation (Simon Sehier)
     * NetworkManager: Use the Quote module, support # in values (no eol comments)
     * Pam: Add partial support for arguments enclosed in [] (Vincent Brillault)
     * Redis: Allow empty quoted values (GH issue #115)

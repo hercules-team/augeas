@@ -21,13 +21,30 @@ autoload xfm
 (************************************************************************
  * Group: Utility variables/functions
  ************************************************************************)
-(* View: param_def
-    define a field *)
-let param_def =
+
+(* Variable: list_param_re
+    A list of parameters parsed as lists *)
+let list_param_re = /authorized_for_[A-Za-z0-9_]+/
+                  | "allowed_hosts"
+
+(* View: simple_param
+    A simple key/value parameter *)
+let simple_param =
      let space_in  = /[^ \t\n][^\n=]*[^ \t\n]|[^ \t\n]/
-  in key /[A-Za-z0-9_]+/
+  in key (/[A-Za-z][A-Za-z0-9_]*/ - list_param_re)
    . Sep.space_equal
    . store space_in
+
+(* View: list_param
+    A list parameter *)
+let list_param =
+     let elem = [ seq "list" . store Rx.word ]
+  in counter "list" . key list_param_re
+   . Sep.space_equal . Build.opt_list elem Sep.comma
+
+(* View: param_def
+    define a field *)
+let param_def = simple_param | list_param
 
 (* View: macro_def
     Macro line, as used in resource.cfg *)
