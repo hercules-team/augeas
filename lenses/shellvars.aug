@@ -116,6 +116,11 @@ module Shellvars =
                                             . ( action "&&" "@and" | action "||" "@or" )*
     in Util.indent . label "@condition" . (cond "[" "]" | cond "[[" "]]")
 
+  let command =
+       let reserved_key = /exit|shift|return|ulimit|unset|export|source|\.|if|for|select|while|until|then|else|fi|done|case|eval|alias/
+    in let word = /[A-Za-z0-9_.-\/]+/
+    in Util.indent . label "@command" . store (word - reserved_key)
+     . [ Sep.space . label "@arg" . sto_to_semicol]?
 
 (************************************************************************
  * Group:                 CONDITIONALS AND LOOPS
@@ -185,6 +190,7 @@ module Shellvars =
         | entry_eol_item condition
         | entry_eol_item eval
         | entry_eol_item alias
+        | entry_eol_item command
 
   let entry_noeol =
     let entry_item (item:lens) = [ item ] in
@@ -197,6 +203,7 @@ module Shellvars =
         | entry_item condition
         | entry_item eval
         | entry_item alias
+        | entry_item command
 
   let rec rec_entry =
     let entry = comment | entry_eol | rec_entry in

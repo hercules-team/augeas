@@ -609,7 +609,17 @@ esac\n" =
   { "@condition" = "-f $FILENAME"
     { "type" = "[" }
     { "@and" = "do this" }
-    { "@or" = "or that" }
+    { "@or" = "or that" } }
+
+(* Test: Shellvars.lns
+     Parse (almost) any command *)
+test Shellvars.lns get "echo foobar 'and this is baz'
+/usr/local/bin/myscript.sh with args\n" =
+  { "@command" = "echo"
+    { "@arg" = "foobar 'and this is baz'" }
+  }
+  { "@command" = "/usr/local/bin/myscript.sh"
+    { "@arg" = "with args" }
   }
 
 (* Local Variables: *)
