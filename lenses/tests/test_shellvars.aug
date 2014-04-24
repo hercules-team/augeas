@@ -470,6 +470,20 @@ esac\n" =
       { "@case_entry" = "1"
         { "TestVar" = "\"test1\"" } } }
 
+(* Test: Shellvars.lns
+     Support `##` bashism in conditions (GH issue #118) *)
+test Shellvars.lns get "if [ \"${APACHE_CONFDIR##/etc/apache2-}\" != \"${APACHE_CONFDIR}\" ] ; then
+    SUFFIX=\"-${APACHE_CONFDIR##/etc/apache2-}\"
+else
+    SUFFIX=
+fi\n" =
+  { "@if" = "[ \"${APACHE_CONFDIR##/etc/apache2-}\" != \"${APACHE_CONFDIR}\" ]"
+    { "SUFFIX" = "\"-${APACHE_CONFDIR##/etc/apache2-}\"" }
+    { "@else"
+      { "SUFFIX" = "" }
+    }
+  }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
