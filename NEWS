@@ -25,7 +25,9 @@
     * NetworkManager: Use the Quote module, support # in values (no eol comments)
     * Pam: Add partial support for arguments enclosed in [] (Vincent Brillault)
     * Redis: Allow empty quoted values (GH issue #115)
-    * Shellvars: handle case statements with same-line ';;', RHBZ#1033799
+    * Shellvars: Handle case statements with same-line ';;', RHBZ#1033799
+                 Allow any kind of quoted values in block
+                 conditions (GH issue #118)
     * Sshd: Allow all types of entries in Match groups (GH issue #75)
     * Sssd: Allow ; for comments
     * Squid: Support configuration files for squid 3 (Mykola Nikishov)
