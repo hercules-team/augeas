@@ -24,3 +24,8 @@ test Simplevars.lns get conf =
    Quotes are OK in variables that do not begin with a quote *)
 test Simplevars.lns get "UserParameter=custom.vfs.dev.read.ops[*],cat /proc/diskstats | grep $1 | head -1 | awk '{print $$4}'\n" =
      { "UserParameter" = "custom.vfs.dev.read.ops[*],cat /proc/diskstats | grep $1 | head -1 | awk '{print $$4}'" }
+
+(* Test: Simplevars.lns
+    Support flags *)
+test Simplevars.lns get "dnsadminapp\n" =
+  { "dnsadminapp" }

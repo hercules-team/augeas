@@ -27,8 +27,9 @@ let to_comment_re =
   in to_comment_squote | to_comment_dquote | to_comment_noquote
 
 (* View: entry *)
-let entry = Build.key_value Rx.word Sep.space_equal
-            (store to_comment_re . (Util.eol|Util.comment_eol))
+let entry = [ Util.indent . key Rx.word
+            . ( Sep.space_equal . store to_comment_re)?
+            . (Util.eol|Util.comment_eol) ]
 
 (* View: lns *)
 let lns = (Util.empty | Util.comment | entry)*
