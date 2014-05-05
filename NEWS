@@ -7,6 +7,7 @@
     * Chrony: New lens to parse /etc/chrony.conf
     * CPanel: New lens to parse cpanel.config files
     * Desktop: Allow @ in keys (GH issue #92)
+    * Device_map: Parse all device.map files under /boot (Mike Latimer)
     * Dhclient: Add support for option modifiers (Robert Drake,
                 GH issue #95)
     * Dhcpd: stmt_string quoted blocks no longer store quote marks
