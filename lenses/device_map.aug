@@ -21,7 +21,7 @@ module Device_map =
 
   let lns = ( empty | comment | map ) *
 
-  let xfm = transform lns (incl "/boot/grub/device.map")
+  let xfm = transform lns (incl "/boot/*/device.map")
 
 (* Local Variables: *)
 (* mode: caml *)
