@@ -97,6 +97,7 @@ let single     = single_entry single_num num_re
 	       | single_entry "cipher"   /[A-Z][A-Z0-9-]*/
 	       | single_entry "ns-cert-type" "server"
 	       | single_entry "resolv-retry" "infinite"
+	       | single_entry "script-security" /[0-3]( execve| system)?/
 
 
 (************************************************************************
