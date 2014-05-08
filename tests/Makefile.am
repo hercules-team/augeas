@@ -45,6 +45,7 @@ lens_tests =			\
   lens-cobblersettings.sh	\
   lens-cobblermodules.sh	\
   lens-collectd.sh	\
+  lens-cpanel.sh	\
   lens-cron.sh			\
   lens-crypttab.sh		\
   lens-cyrus_imapd.sh		\

@@ -5,6 +5,7 @@
   - Lens changes/additions
     * AptPreferences: Support spaces in origin fields
     * Chrony: New lens to parse /etc/chrony.conf
+    * CPanel: New lens to parse cpanel.config files
     * Desktop: Allow @ in keys (GH issue #92)
     * Dhclient: Add support for option modifiers (Robert Drake,
                 GH issue #95)
