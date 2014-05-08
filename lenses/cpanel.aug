@@ -25,7 +25,7 @@ autoload xfm
 
 (* View: kv
     A key-value pair, supporting flags and empty values *)
-let kv = [ key Rx.word
+let kv = [ key /[A-Za-z0-9:_.-]+/
          . (Sep.equal . store (Rx.space_in?))?
          . Util.eol ]
 

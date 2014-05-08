@@ -22,7 +22,8 @@ allow_server_info_status_from=
 system_diskusage_warn_percent=82.5500
 maxemailsperhour
 email_send_limits_max_defer_fail_percentage
-default_archive-logs=1\n"
+default_archive-logs=1
+SecurityPolicy::xml-api=1\n"
 
 (* Test: CPanel.lns
      Get <config> *)
@@ -44,3 +45,4 @@ test CPanel.lns get config =
   { "maxemailsperhour" }
   { "email_send_limits_max_defer_fail_percentage" }
   { "default_archive-logs" = "1" }
+  { "SecurityPolicy::xml-api" = "1" }
