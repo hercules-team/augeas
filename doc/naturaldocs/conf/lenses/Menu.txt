@@ -145,6 +145,7 @@ Group: Specific Modules  {
    File: Rsyslog  (rsyslog.aug)
    File: Schroot  (schroot.aug)
    File: Services  (services.aug)
+   File: Shadow  (shadow.aug)
    File: Shells  (shells.aug)
    File: Shellvars  (shellvars.aug)
    File: Simplelines  (simplelines.aug)
