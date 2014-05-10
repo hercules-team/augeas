@@ -132,6 +132,7 @@ Group: Specific Modules  {
    File: OpenShift_Quickstarts  (openshift_quickstarts.aug)
    File: Pam  (pam.aug)
    File: PamConf  (pamconf.aug)
+   File: Passwd  (passwd.aug)
    File: Pbuilder  (pbuilder.aug)
    File: Pg_Hba  (pg_hba.aug)
    File: Postfix_Transport  (postfix_transport.aug)
