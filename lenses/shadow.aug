@@ -1,16 +1,23 @@
-(* Shadow module for Augeas
-
- Original Author: Free Ekanayaka <free@64studio.com>
-
-   see passwd.aug
+(*
+ Module: Shadow
+ Parses /etc/shadow
 
  Author: Lorenzo M. Catucci <catucci@ccd.uniroma2.it>
 
+ Original Author: Free Ekanayaka <free@64studio.com>
+
  About: Reference
-   man 5 shadow
+
+   - man 5 shadow
+   - man 3 getspnam
 
  About: License
    This file is licensed under the LGPL v2+, like the rest of Augeas.
+
+ About:
+
+ Each line in the shadow files represents the additional shadow-defined attributes
+ for the corresponding user, as defined in the passwd file.
 
 *)
 
@@ -36,9 +43,10 @@ let sto_to_col = Passwd.sto_to_col
 let sto_to_eol = Passwd.sto_to_eol
 
 (************************************************************************
- *                               ENTRIES
+ * Group:                        ENTRIES
  *************************************************************************)
 
+(* View: entry *)
 let entry   = [ key word
                 . colon
                 . [ label "password"          . sto_to_col?    . colon ]
