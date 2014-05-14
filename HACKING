@@ -5,7 +5,7 @@ Check out the sources
 
 The sources are in a git repo (which you presumably found already)
 
-  git clone git://git.fedorahosted.org/git/augeas.git
+  git clone git://github.com/hercules-team/augeas
 
 Building from git
 -----------------
