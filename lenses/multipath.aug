@@ -44,7 +44,7 @@ let common_setting =
  |kv "failback" (Rx.integer | /immediate|manual/)
  |kv "rr_weight" /priorities|uniform/
  |kv "no_path_retry" (Rx.integer | /fail|queue/)
- |kv "rr_min_io" Rx.integer
+ |kv /rr_min_io(_rq)?/ Rx.integer
 
 let default_setting =
   kv "polling_interval" Rx.integer
