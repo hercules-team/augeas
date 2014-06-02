@@ -16,6 +16,7 @@
     * Known_Hosts: New lens for SSH known hosts files
     * Group: NIS support
     * Grub: handle "foreground" option, RHBZ#1059383
+    * Gshadow: New lens (Lorenzo Catucci)
     * Httpd: Allow eol comments after section tags
              Allow continued lines inside quoted value (GH issue #104)
     * IPRoute2: handle "/" in protocol name, swap ID and name fields
@@ -26,7 +27,9 @@
     * NagiosConfig and NagiosObjects: Fix documentation (Simon Sehier)
     * NetworkManager: Use the Quote module, support # in values (no eol comments)
     * Pam: Add partial support for arguments enclosed in [] (Vincent Brillault)
+    * Passwd: Refactor lens (Lorenzo Catucci)
     * Redis: Allow empty quoted values (GH issue #115)
+    * Shadow: New lens (Lorenzo Catucci)
     * Shellvars: Handle case statements with same-line ';;', RHBZ#1033799
                  Allow any kind of quoted values in block
                  conditions (GH issue #118)
