@@ -69,6 +69,7 @@ lens_tests =			\
   lens-fuse.sh			\
   lens-gdm.sh			\
   lens-group.sh			\
+  lens-gshadow.sh			\
   lens-gtkbookmarks.sh			\
   lens-json.sh          \
   lens-hostname.sh			\
@@ -160,6 +161,7 @@ lens_tests =			\
   lens-samba.sh			\
   lens-securetty.sh     \
   lens-services.sh		\
+  lens-shadow.sh		\
   lens-shells.sh		\
   lens-shellvars.sh		\
   lens-shellvars_list.sh	\
