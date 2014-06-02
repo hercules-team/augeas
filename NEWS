@@ -2,6 +2,7 @@
   - General changes/additions
     * Add missing cp entry in manpage (GH issue #78)
     * Add seq to vim syntax highlight (Robert Drake)
+    * Update augtool.1 man page with new commands, RHBZ#1100077
     * augtool autocomplete includes command aliases, RHBZ#1100184
   - Lens changes/additions
     * AptPreferences: Support spaces in origin fields
