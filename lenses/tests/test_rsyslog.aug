@@ -118,3 +118,25 @@ test Rsyslog.lns get conf =
       { "omusrmsg" = "foo" }
       { "omusrmsg" = "bar" } }
   }
+
+(* Parse complex $template lines, RHBZ#1083016 *)
+test Rsyslog.lns get "$template SpiceTmpl,\"%TIMESTAMP%.%TIMESTAMP:::date-subseconds% %syslogtag% %syslogseverity-text%:%msg:::sp-if-no-1st-sp%%msg:::drop-last-lf%\\n\"\n" =
+  { "$template" = "SpiceTmpl,\"%TIMESTAMP%.%TIMESTAMP:::date-subseconds% %syslogtag% %syslogseverity-text%:%msg:::sp-if-no-1st-sp%%msg:::drop-last-lf%\\n\"" }
+
+(* Parse property-based filters, RHBZ#1083016 *)
+test Rsyslog.lns get ":programname, startswith, \"spice-vdagent\" /var/log/spice-vdagent.log;SpiceTmpl\n" =
+  { "filter"
+    { "property" = "programname" }
+    { "operation" = "startswith" }
+    { "value" = "spice-vdagent" }
+    { "action"
+      { "file" = "/var/log/spice-vdagent.log" }
+      { "template" = "SpiceTmpl" } } }
+
+test Rsyslog.lns get ":msg, !contains, \"error\" /var/log/noterror.log\n" =
+  { "filter"
+    { "property" = "msg" }
+    { "operation" = "!contains" }
+    { "value" = "error" }
+    { "action"
+      { "file" = "/var/log/noterror.log" } } }

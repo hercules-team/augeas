@@ -29,6 +29,8 @@
     * Pam: Add partial support for arguments enclosed in [] (Vincent Brillault)
     * Passwd: Refactor lens (Lorenzo Catucci)
     * Redis: Allow empty quoted values (GH issue #115)
+    * Rsyslog: support complex $template lines, property filters and file
+               actions with templates, RHBZ#1083016
     * Shadow: New lens (Lorenzo Catucci)
     * Shellvars: Handle case statements with same-line ';;', RHBZ#1033799
                  Allow any kind of quoted values in block
