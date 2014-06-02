@@ -115,7 +115,7 @@ module Syslog =
 	(* Variable: file_r
 	 a file begins with a / and get almost anything else after
 	 *)
-	let file_r     = /\/[^ \t\n]+/
+	let file_r     = /\/[^ \t\n;]+/
 
 	(* Variable: loghost_r
 	 Matches a hostname, that is labels speparated by dots, labels can't
