@@ -27,8 +27,14 @@ let path = [ label "path" . store /[^# \t\n][^ \t\n]*/ . Util.eol ]
 (* View: include *)
 let include = Build.key_value_line "include" Sep.space (store Rx.fspath)
 
+(* View: hwcap *)
+let hwcap =
+    let hwcap_val = [ label "bit" . store Rx.integer ] . Sep.space .
+                      [ label "name" . store Rx.word ]
+  in Build.key_value_line "hwcap" Sep.space hwcap_val
+
 (* View: lns *)
-let lns = (Util.empty | Util.comment | path | include)*
+let lns = (Util.empty | Util.comment | path | include | hwcap)*
 
 (* Variable: filter *)
 let filter = incl "/etc/ld.so.conf"

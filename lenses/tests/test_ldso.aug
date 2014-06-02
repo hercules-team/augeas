@@ -10,6 +10,8 @@ let conf = "include /etc/ld.so.conf.d/*.conf
 
 # libc default configuration
 /usr/local/lib
+
+hwcap 1 nosegneg
 "
 
 (* Test: Ldso.lns *)
@@ -18,3 +20,7 @@ test Ldso.lns get conf =
    { }
    { "#comment" = "libc default configuration" }
    { "path" = "/usr/local/lib" }
+   { }
+   { "hwcap"
+     { "bit" = "1" }
+     { "name" = "nosegneg" } }
