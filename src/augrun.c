@@ -895,21 +895,16 @@ static const struct command_def cmd_print_def = {
 
 static void cmd_dump_xml(struct command *cmd) {
     const char *path = arg_value(cmd, "path");
-    const char *filename = arg_value(cmd, "filename");
     xmlNodePtr xmldoc;
     int r;
 
     r = aug_to_xml(cmd->aug, path, &xmldoc, 0);
     if (r < 0)
         ERR_REPORT(cmd, AUG_ECMDRUN,
-                   "XML export of path %s to file %s failed", path, filename);
+                   "XML export of path %s failed", path);
 
     xmlElemDump(stdout, NULL, xmldoc);
     printf("\n");
-
-    if (filename != NULL) {
-        printf("Saving to %s\n", filename);
-    }
 
     xmlFreeNode(xmldoc);
 }
@@ -917,8 +912,6 @@ static void cmd_dump_xml(struct command *cmd) {
 static const struct command_opt_def cmd_dump_xml_opts[] = {
     { .type = CMD_PATH, .name = "path", .optional = true,
       .help = "print this subtree" },
-    { .type = CMD_NONE, .name = "filename", .optional = true,
-      .help = "save to this file" },
     CMD_OPT_DEF_LAST
 };
 
@@ -927,7 +920,7 @@ static const struct command_def cmd_dump_xml_def = {
     .opts = cmd_dump_xml_opts,
     .handler = cmd_dump_xml,
     .synopsis = "print a subtree as XML",
-    .help = "Export entries in the tree as XML. If PATH is given, printing starts there,\n otherwise the whole tree is printed. If FILENAME is given, the XML is saved\n to the given file."
+    .help = "Export entries in the tree as XML. If PATH is given, printing starts there,\n otherwise the whole tree is printed."
 };
 
 static void cmd_transform(struct command *cmd) {
