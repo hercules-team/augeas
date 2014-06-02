@@ -4,6 +4,7 @@
     * Add seq to vim syntax highlight (Robert Drake)
     * Update augtool.1 man page with new commands and --span, RHBZ#1100077
     * augtool autocomplete includes command aliases, RHBZ#1100184
+    * Remove unused "filename" argument from dump-xml command, RHBZ#1100106
   - Lens changes/additions
     * AptPreferences: Support spaces in origin fields
     * Chrony: New lens to parse /etc/chrony.conf

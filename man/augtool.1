@@ -266,11 +266,10 @@ the \s-1FILE\s0 will be excluded from the \s-1LENS. FILE\s0 may contain wildcard
 .SS "\s-1READ COMMANDS\s0"
 .IX Subsection "READ COMMANDS"
 The following commands are used to retrieve data from the Augeas tree.
-.IP "\fBdump-xml\fR \fI[<\s-1PATH\s0>]\fR \fI[<\s-1FILENAME\s0>]\fR" 4
-.IX Item "dump-xml [<PATH>] [<FILENAME>]"
+.IP "\fBdump-xml\fR \fI[<\s-1PATH\s0>]\fR" 4
+.IX Item "dump-xml [<PATH>]"
 Print entries in the tree as \s-1XML.\s0 If \s-1PATH\s0 is given, printing starts there,
-otherwise the whole tree is printed. If \s-1FILENAME\s0 is given, the \s-1XML\s0 is saved
-to the given file.
+otherwise the whole tree is printed.
 .IP "\fBget\fR <\s-1PATH\s0>" 4
 .IX Item "get <PATH>"
 Print the value associated with \s-1PATH\s0

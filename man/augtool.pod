@@ -165,11 +165,10 @@ The following commands are used to retrieve data from the Augeas tree.
 
 =over 4
 
-=item B<dump-xml> I<[E<lt>PATHE<gt>]> I<[E<lt>FILENAMEE<gt>]>
+=item B<dump-xml> I<[E<lt>PATHE<gt>]>
 
 Print entries in the tree as XML. If PATH is given, printing starts there,
-otherwise the whole tree is printed. If FILENAME is given, the XML is saved
-to the given file.
+otherwise the whole tree is printed.
 
 =item B<get> E<lt>PATHE<gt>
 
