@@ -351,15 +351,13 @@ let parameter_string_nobool    = [ key parameter_string_nobool_kw . sep_eq
 
 let parameter_string_bool_kw   = "exempt_group" | "lecture" | "lecture_file"
                                | "listpw" | "logfile" | "mailerflags"
-                               | "mailerpath" | "mailto" | "exempt_group"
-                               | "syslog" | "verifypw" | "logfile"
-                               | "mailerflags" | "mailerpath" | "mailto"
+                               | "mailerpath" | "mailto" | "mailfrom" 
                                | "syslog" | "verifypw"
 
 let parameter_string_bool      =
   negate_or_value
     (key parameter_string_bool_kw)
-    (sep_eq . sto_to_com_col)
+    (sep_eq . sto_to_com_dquot)
 
 let parameter_string           = parameter_string_nobool
                                | parameter_string_bool
