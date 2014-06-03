@@ -265,6 +265,12 @@ test Sudoers.lns get defaults_spaces =
     { "passprompt" = "\"Your SecurID Passcode: \"" }
   }
 
+(* Ticket #263, quoted values in defaults line (string/bool parameters) *)
+let defaults_spaces_strbool = "Defaults       mailfrom=\"root@example.com\""
+test Sudoers.lns get defaults_spaces_strbool =
+  { "Defaults"
+    { "mailfrom" = "\"root@example.com\"" }
+  }
 
 (* Test: Sudoers.spec
      Spec users can be aliases *)
