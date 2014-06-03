@@ -92,6 +92,11 @@ creates no entries under C</augeas/load> whatsoever; to read any files,
 they need to be set up manually and loading must be initiated with a
 C<load> command. Using this option gives the fastest startup.
 
+=item B<--span>
+
+Load span positions for nodes in the tree, as they relate to the original
+file. Enables the use of the B<span> command to retrieve position data.
+
 =item B<--version>
 
 Print version information and exit. The version is also in the tree under

@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "AUGTOOL 1"
-.TH AUGTOOL 1 "2014-06-02" "Augeas 1.2.0" "Augeas"
+.TH AUGTOOL 1 "2014-06-03" "Augeas 1.2.0" "Augeas"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -213,6 +213,10 @@ Do not load any lens modules, and therefore no files, on startup. This
 creates no entries under \f(CW\*(C`/augeas/load\*(C'\fR whatsoever; to read any files,
 they need to be set up manually and loading must be initiated with a
 \&\f(CW\*(C`load\*(C'\fR command. Using this option gives the fastest startup.
+.IP "\fB\-\-span\fR" 4
+.IX Item "--span"
+Load span positions for nodes in the tree, as they relate to the original
+file. Enables the use of the \fBspan\fR command to retrieve position data.
 .IP "\fB\-\-version\fR" 4
 .IX Item "--version"
 Print version information and exit. The version is also in the tree under
