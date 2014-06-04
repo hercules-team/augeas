@@ -238,7 +238,7 @@ exist yet, it and all its missing ancestors are created.
 
 =item B<move> E<lt>SRCE<gt> E<lt>DSTE<gt>
 
-Alias of B<move>.
+Alias of B<mv>.
 
 =item B<cp> E<lt>SRCE<gt> E<lt>DSTE<gt>
 
