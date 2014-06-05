@@ -31,6 +31,7 @@
     * Multipath: add support for rr_min_io_rq (Joel Loudermilk)
     * NagiosConfig and NagiosObjects: Fix documentation (Simon Sehier)
     * NetworkManager: Use the Quote module, support # in values (no eol comments)
+    * OpenVPN: Add support for script-security (Frank Grötzner)
     * Pam: Add partial support for arguments enclosed in [] (Vincent Brillault)
     * Passwd: Refactor lens (Lorenzo Catucci)
     * Redis: Allow empty quoted values (GH issue #115)
