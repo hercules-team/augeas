@@ -63,6 +63,7 @@ let empty   = Util.empty
  *   - mute => num
  *   - ns-cert-type => "server"
  *   - resolv-retry => "infinite"
+ *   - script-security => [0-3] (execve|system)?
  *************************************************************************)
 
 let single_ip  = "local"
