@@ -266,7 +266,7 @@ test Sudoers.lns get defaults_spaces =
   }
 
 (* Ticket #263, quoted values in defaults line (string/bool parameters) *)
-let defaults_spaces_strbool = "Defaults       mailfrom=\"root@example.com\""
+let defaults_spaces_strbool = "Defaults      mailfrom=\"root@example.com\"\n"
 test Sudoers.lns get defaults_spaces_strbool =
   { "Defaults"
     { "mailfrom" = "\"root@example.com\"" }
