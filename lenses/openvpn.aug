@@ -61,6 +61,8 @@ let empty   = Util.empty
  *   - client-config-dir => filename
  *   - verb => num
  *   - mute => num
+ *   - fragment => num
+ *   - mssfix   => num
  *   - ns-cert-type => "server"
  *   - resolv-retry => "infinite"
  *   - script-security => [0-3] (execve|system)?
@@ -71,6 +73,8 @@ let single_num = "port"
                | "max-clients"
                | "verb"
 	       | "mute"
+               | "fragment"
+               | "mssfix"
 let single_fn  = "ca"
                | "cert"
 	       | "key"

@@ -49,6 +49,7 @@ verb 3
 mute 20
 management 10.0.5.20 1193 /etc/openvpn/mpass
 script-security 3 system
+mssfix 1300
 "
 
 test OpenVPN.lns get server_conf =
@@ -118,6 +119,7 @@ test OpenVPN.lns get server_conf =
       { "port"	  = "1193" }
       { "pwfile"  = "/etc/openvpn/mpass" } }
   { "script-security" = "3 system" }
+  { "mssfix" = "1300" }
 
 
 
@@ -134,6 +136,7 @@ http-proxy mytest2
 http-proxy
 mute-replay-warnings
 ns-cert-type server
+mssfix 1350
 "
 
 test OpenVPN.lns get client_conf =
@@ -156,5 +159,6 @@ test OpenVPN.lns get client_conf =
   { "http-proxy" }
   { "mute-replay-warnings" }
   { "ns-cert-type" = "server" }
+  { "mssfix" = "1350" }
 
 
