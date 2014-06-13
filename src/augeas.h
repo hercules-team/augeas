@@ -424,6 +424,21 @@ int aug_to_xml(const augeas *aug, const char *path, xmlNode **xmldoc,
 int aug_transform(augeas *aug, const char *lens, const char *file, int excl);
 
 /*
+ * Function: aug_load_file
+ *
+ * Load a FILE using the lens that would ordinarily be used by aug_load,
+ * i.e. the lens whose autoload statement matches the FILE. Similar to
+ * aug_load, this function returns successfully even if FILE does not exist
+ * or if the FILE can not be processed by the associated lens. It is an
+ * error though if no lens can be found to process FILE. In that case, the
+ * error code in AUG will be set to AUG_ENOLENS.
+ *
+ * Returns:
+ * 0 on success, -1 on failure
+ */
+int aug_load_file(augeas *aug, const char *file);
+
+/*
  * Function: aug_srun
  *
  * Run one or more newline-separated commands. The output of the commands

@@ -1010,6 +1010,33 @@ static const struct command_def cmd_transform_def = {
     .help = cmd_transform_help
 };
 
+static void cmd_load_file(struct command *cmd) {
+    const char *file = arg_value(cmd, "file");
+    int r = 0;
+
+    r = aug_load_file(cmd->aug, file);
+    if (r < 0)
+      ERR_REPORT(cmd, AUG_ECMDRUN,
+          "Failed to load file %s", file);
+}
+
+static const struct command_opt_def cmd_load_file_opts[] = {
+    { .type = CMD_PATH, .name = "file", .optional = false,
+      .help = "the file to load" },
+    CMD_OPT_DEF_LAST
+};
+
+static const char const cmd_load_file_help[] =
+    "Load a specific FILE, using autoload statements.\n";
+
+static const struct command_def cmd_load_file_def = {
+    .name = "load-file",
+    .opts = cmd_load_file_opts,
+    .handler = cmd_load_file,
+    .synopsis = "load a specific file",
+    .help = cmd_load_file_help
+};
+
 static void cmd_save(struct command *cmd) {
     int r;
     r = aug_save(cmd->aug);
@@ -1297,6 +1324,7 @@ static const struct command_grp_def cmd_grp_admin_def = {
         &cmd_save_def,
         &cmd_store_def,
         &cmd_transform_def,
+        &cmd_load_file_def,
         &cmd_def_last
     }
 };

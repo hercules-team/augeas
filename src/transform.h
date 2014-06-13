@@ -65,8 +65,14 @@ int transform_validate(struct augeas *aug, struct tree *xfm);
  * applying the TRANSFORM's lens to their contents and putting the
  * resulting tree under "/files" + filename. Also stores some information
  * about filename underneath "/augeas/files" + filename
+ * If a FILE is passed, only this FILE will be loaded.
  */
-int transform_load(struct augeas *aug, struct tree *xfm);
+int transform_load(struct augeas *aug, struct tree *xfm, const char *file);
+
+/* Return 1 if TRANSFORM applies to PATH, 0 otherwise.
+ * PATH must not include "/files/".
+ */
+int filter_matches(struct tree *xfm, const char *path);
 
 /* Return 1 if TRANSFORM applies to PATH, 0 otherwise. The TRANSFORM
  * applies to PATH if (1) PATH starts with "/files/" and (2) the rest of

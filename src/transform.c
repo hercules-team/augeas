@@ -283,7 +283,7 @@ static int filter_generate(struct tree *xfm, const char *root,
     goto done;
 }
 
-static int filter_matches(struct tree *xfm, const char *path) {
+int filter_matches(struct tree *xfm, const char *path) {
     int found = 0;
     list_for_each(f, xfm->children) {
         if (is_incl(f) && fnmatch_normalize(f->value, path, fnm_flags) == 0) {
@@ -811,7 +811,7 @@ static struct tree *file_info(struct augeas *aug, const char *fname) {
     return result;
 }
 
-int transform_load(struct augeas *aug, struct tree *xfm) {
+int transform_load(struct augeas *aug, struct tree *xfm, const char *file) {
     int nmatches = 0;
     char **matches;
     const char *lens_name;
@@ -822,12 +822,17 @@ int transform_load(struct augeas *aug, struct tree *xfm) {
         // FIXME: Record an error and return 0
         return -1;
     }
+
     r = filter_generate(xfm, aug->root, &nmatches, &matches);
     if (r == -1)
         return -1;
     for (int i=0; i < nmatches; i++) {
         const char *filename = matches[i] + strlen(aug->root) - 1;
         struct tree *finfo = file_info(aug, filename);
+
+        if (file != NULL && STRNEQ(filename, file))
+          continue;
+
         if (finfo != NULL && !finfo->dirty &&
             tree_child(finfo, s_lens) != NULL) {
             const char *s = xfm_lens_name(finfo);

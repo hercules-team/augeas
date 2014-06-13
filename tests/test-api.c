@@ -663,6 +663,39 @@ static void testRm(CuTest *tc) {
     CuAssertIntEquals(tc, 5, r);
 }
 
+static void testLoadFile(CuTest *tc) {
+    struct augeas *aug;
+    const char *value;
+    int r;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    /* augeas should load a single file */
+    r = aug_load_file(aug, "/etc/fstab");
+    CuAssertRetSuccess(tc, r);
+    r = aug_get(aug, "/files/etc/fstab/1/vfstype", &value);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertPtrNotNull(tc, value);
+
+    /* Only one file should be loaded */
+    r = aug_match(aug, "/files/etc/*", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    /* augeas should return an error when no lens can be found for a file */
+    r = aug_load_file(aug, "/etc/unknown.conf");
+    CuAssertIntEquals(tc, -1, r);
+    CuAssertIntEquals(tc, AUG_ENOLENS, aug_error(aug));
+
+    /* augeas should return without an error when trying to load a
+       nonexistant file that would be handled by a lens */
+    r = aug_load_file(aug, "/etc/mtab");
+    CuAssertRetSuccess(tc, r);
+    r = aug_match(aug, "/files/etc/mtab", NULL);
+    CuAssertIntEquals(tc, 0, r);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -683,6 +716,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testTextRetrieve);
     SUITE_ADD_TEST(suite, testAugEscape);
     SUITE_ADD_TEST(suite, testRm);
+    SUITE_ADD_TEST(suite, testLoadFile);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)

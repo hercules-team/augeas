@@ -767,7 +767,7 @@ int aug_load(struct augeas *aug) {
 
     list_for_each(xfm, load->children) {
         if (transform_validate(aug, xfm) == 0)
-            transform_load(aug, xfm);
+            transform_load(aug, xfm, NULL);
     }
 
     /* This makes it possible to spot 'directories' that are now empty
@@ -2017,6 +2017,43 @@ int aug_escape_name(augeas *aug, const char *in, char **out) {
     ERR_NOMEM(result < 0, aug);
  error:
     api_exit(aug);
+    return result;
+}
+
+int aug_load_file(struct augeas *aug, const char *file) {
+    int result = -1;
+    struct tree *meta = tree_child_cr(aug->origin, s_augeas);
+    struct tree *load = tree_child_cr(meta, s_load);
+    char *tree_path = NULL;
+    bool found = false;
+
+    api_entry(aug);
+
+    ERR_NOMEM(load == NULL, aug);
+
+    list_for_each(xfm, load->children)  {
+        if (filter_matches(xfm, file)) {
+            transform_load(aug, xfm, file);
+            found = true;
+            break;
+        }
+    }
+
+    ERR_THROW(!found, aug, AUG_ENOLENS,
+              "can not determine lens to load file %s", file);
+
+    /* Mark the nodes we just loaded as clean so they won't get saved
+       without additional modifications */
+    xasprintf(&tree_path, "/files/%s", file);
+    struct tree *t = tree_fpath(aug, tree_path);
+    if (t != NULL) {
+        tree_clean(t);
+    }
+
+    result = 0;
+error:
+    api_exit(aug);
+    free(tree_path);
     return result;
 }
 
