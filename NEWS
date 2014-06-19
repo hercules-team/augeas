@@ -48,6 +48,7 @@
     * Syslog: Support "# !" style comments (Robert Drake, GH issue #65)
     * Tuned: New lens for /etc/tuned/tuned-main.conf (Pat Riehecky)
     * UpdateDB: New lens to parse /etc/updatedb.conf (incompatible change)
+    * Xymon_Alerting: refactor lens (GH issue #89)
 
 1.2.0 - 2014-01-27
   - API changes
