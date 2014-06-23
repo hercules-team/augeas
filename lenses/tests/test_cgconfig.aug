@@ -257,3 +257,44 @@ test Cgconfig.lns get group4 =
 test Cgconfig.lns put "group tst {memory {}}" after
   set "/group" "tst2"
 = "group tst2 {memory {}}"
+
+let group5="
+group user {
+	cpuacct {}
+        cpu {}
+        cpuset {}
+        devices {}
+        freezer {}
+        memory {}
+        net_cls {}
+        blkio {}
+        hugetlb {}
+        perf_event {}
+}"
+
+test Cgconfig.lns get group5 =
+  {  }
+  { "group" = "user"
+    {  }
+    { "controller" = "cpuacct" }
+    {  }
+    { "controller" = "cpu" }
+    {  }
+    { "controller" = "cpuset" }
+    {  }
+    { "controller" = "devices" }
+    {  }
+    { "controller" = "freezer" }
+    {  }
+    { "controller" = "memory" }
+    {  }
+    { "controller" = "net_cls" }
+    {  }
+    { "controller" = "blkio" }
+    {  }
+    { "controller" = "hugetlb" }
+    {  }
+    { "controller" = "perf_event" }
+    {  }
+  }
+

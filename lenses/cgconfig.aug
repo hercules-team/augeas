@@ -28,7 +28,7 @@ module Cgconfig =
 
    let id        = /[a-zA-Z0-9_\/.-]+/
    let name      = /[^#= \n\t{}\/]+/
-   let cont_name = /(cpuacct|cpu|devices|ns|cpuset|memory|freezer|net_cls)/
+   let cont_name = /(cpuacct|cpu|devices|ns|cpuset|memory|freezer|net_cls|blkio|hugetlb|perf_event)/
    let role_name = /(admin|task)/
    let id_name   = /(uid|gid)/
    let address   = /[^#; \n\t{}]+/
