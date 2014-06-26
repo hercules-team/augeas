@@ -50,9 +50,9 @@ module Ssh =
          . [ spc . seq "array_entry" . value_to_spc]* . eol ]
 
     let commas_entry (k:regexp) =
-	    [ key k . counter "commas_entry" . spc .
-	      [ seq "commas_entry" . value_to_comma]
-        . ([ seq "commas_entry" . comma . value_to_comma])* . eol ]
+         let value = [ seq "commas_entry" . value_to_comma]
+      in [ key k . counter "commas_entry" . spc .
+           Build.opt_list value comma . eol ]
 
     let fw_entry (k:regexp) = [ indent . key k . spc .
 	    [ key /[^ \t\n\/]+/ . spc . value_to_eol . eol ]]
