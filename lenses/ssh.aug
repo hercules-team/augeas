@@ -29,16 +29,16 @@ module Ssh =
  * Group:                 USEFUL PRIMITIVES
  *************************************************************************)
 
-    let eol = del /[ \t]*\n/ "\n"
+    let eol = Util.doseol
     let spc = Util.del_ws_spc
 
     let comment = Util.comment
     let empty = Util.empty
     let comma = Util.del_str ","
     let indent = Util.indent
-    let value_to_eol = store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
-    let value_to_spc = store /[^ \t\n]+/
-    let value_to_comma = store /[^, \t\n]+/
+    let value_to_eol = store Rx.space_in
+    let value_to_spc = store Rx.no_spaces
+    let value_to_comma = store /[^, \t\r\n]+/
 
 
 (************************************************************************
@@ -55,7 +55,7 @@ module Ssh =
            Build.opt_list value comma . eol ]
 
     let fw_entry (k:regexp) = [ indent . key k . spc .
-	    [ key /[^ \t\n\/]+/ . spc . value_to_eol . eol ]]
+	    [ key /[^ \t\r\n\/]+/ . spc . value_to_eol . eol ]]
 
     let send_env = array_entry /SendEnv/i
 
