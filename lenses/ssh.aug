@@ -85,7 +85,7 @@ module Ssh =
               | special_entry
 	            | other_entry
 
-    let host = [ key "Host" . spc . value_to_eol . eol . entry* ]
+    let host = [ key /Host/i . spc . value_to_eol . eol . entry* ]
 
 
 (************************************************************************
