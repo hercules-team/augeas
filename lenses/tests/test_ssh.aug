@@ -62,3 +62,9 @@ MACs hmac-md5,hmac-sha1,umac-64@openssh.com
 	    { "3" = "umac-64@openssh.com" }
 	}
     }
+
+(* Test Ssh.lns
+     Proxycommand is case-insensitive *)
+
+test Ssh.lns get "Proxycommand ssh -q test nc -q0 %h 22\n" =
+  { "Proxycommand" = "ssh -q test nc -q0 %h 22" }
