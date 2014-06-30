@@ -29,3 +29,8 @@ test Simplevars.lns get "UserParameter=custom.vfs.dev.read.ops[*],cat /proc/disk
     Support flags *)
 test Simplevars.lns get "dnsadminapp\n" =
   { "dnsadminapp" }
+
+(* Test: Simplevars.lns
+     Support empty values *)
+test Simplevars.lns get "foo =\n" =
+  { "foo" = "" { } }

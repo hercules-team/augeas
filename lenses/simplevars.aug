@@ -27,9 +27,13 @@ let to_comment_re =
   in to_comment_squote | to_comment_dquote | to_comment_noquote
 
 (* View: entry *)
-let entry = [ Util.indent . key Rx.word
-            . ( Sep.space_equal . store to_comment_re)?
-            . (Util.eol|Util.comment_eol) ]
+let entry =
+     let some_value = Sep.space_equal . store to_comment_re
+     (* Avoid ambiguity in tree by making a subtree here *)
+  in let empty_value = [del /[ \t]*=/ "="] . store ""
+  in [ Util.indent . key Rx.word
+            . (some_value? | empty_value)
+            . (Util.eol | Util.comment_eol) ]
 
 (* View: lns *)
 let lns = (Util.empty | Util.comment | entry)*
