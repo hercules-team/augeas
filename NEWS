@@ -42,6 +42,8 @@
     * Shellvars: Handle case statements with same-line ';;', RHBZ#1033799
                  Allow any kind of quoted values in block
                  conditions (GH issue #118)
+                 Support $(( .. )) arithmetic expansion in variable
+                 assignment, RHBZ#1100550
     * Simplevars: Support flags and empty values
     * Sshd: Allow all types of entries in Match groups (GH issue #75)
     * Sssd: Allow ; for comments

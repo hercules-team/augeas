@@ -484,6 +484,11 @@ fi\n" =
     }
   }
 
+  (* Support $(( .. )) arithmetic expansion in variable assignment, RHBZ#1100550 *)
+  test lns get "export MALLOC_PERTURB_=$(($RANDOM % 255 + 1))\n" =
+    { "MALLOC_PERTURB_" = "$(($RANDOM % 255 + 1))"
+      { "export" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

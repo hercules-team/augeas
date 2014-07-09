@@ -39,9 +39,10 @@ module Shellvars =
   let bquot = /`[^`\n]*`/
   (* dbquot don't take spaces or semi-colons *)
   let dbquot = /``[^` \t\n;]+``/
-  let dollar_assign = /\$\([^\)#\n]*\)/
+  let dollar_assign = /\$\([^\(\)#\n]*\)/
+  let dollar_arithm = /\$\(\([^\)#\n]*\)\)/
 
-  let anyquot = (dquot|squot)+ | bquot | dbquot | dollar_assign
+  let anyquot = (dquot|squot)+ | bquot | dbquot | dollar_assign | dollar_arithm
 
   let to_semicol_re = /[^#; \t\n][^#;\n]+[^#; \t\n]|[^#; \t\n]+/
   let sto_to_semicol = store to_semicol_re
