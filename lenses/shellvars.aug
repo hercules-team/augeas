@@ -229,6 +229,7 @@ module Shellvars =
 
   let filter_default = incl "/etc/default/*"
                      . excl "/etc/default/grub_installdevice*"
+                     . excl "/etc/default/rmt"
                      . excl "/etc/default/whoopsie"
   let filter_misc    = incl "/etc/arno-iptables-firewall/debconf.cfg"
                      . incl "/etc/cron-apt/config"

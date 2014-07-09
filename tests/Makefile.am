@@ -155,6 +155,7 @@ lens_tests =			\
   lens-redis.sh		\
   lens-reprepro_uploaders.sh		\
   lens-resolv.sh		\
+  lens-rmt.sh			\
   lens-rsyncd.sh		\
   lens-rsyslog.sh		\
   lens-rx.sh			\
