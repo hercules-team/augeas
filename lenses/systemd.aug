@@ -125,8 +125,13 @@ let entry_command =
 (* View: entry_env
    Entry that takes a space separated set of ENV=value key/value pairs *)
 let entry_env =
-     let envkv = [ key env_key . Util.del_str "=" . ( sto_value )? ]
-  in entry_fn entry_env_kw ( Build.opt_list envkv value_sep )
+     let envkv (env_val:lens) = key env_key . Util.del_str "=" . env_val
+     (* bare has no spaces, and is optionally quoted *)
+  in let bare = Quote.do_quote_opt (envkv (store /[^;#'" \t\n]*[^;#'" \t\n\\]/)?)
+     (* quoted has at least one space, and must be quoted *)
+  in let quoted = Quote.do_quote (envkv (store /[^;#"'\n]*[ \t]+[^;#"'\n]*/))
+  in let envkv_quoted = [ bare ] | [ quoted ]
+  in entry_fn entry_env_kw ( Build.opt_list envkv_quoted value_sep )
 
 
 (************************************************************************
