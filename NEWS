@@ -50,6 +50,7 @@
     * Squid: Support configuration files for squid 3 (Mykola Nikishov)
     * Syslog: Support "# !" style comments (Robert Drake, GH issue #65)
     * Systemd: Allow quoted Environment key=value pairs, RHBZ#1100547
+               Parse /etc/sysconfig/*.systemd, RHBZ#1083022
     * Tuned: New lens for /etc/tuned/tuned-main.conf (Pat Riehecky)
     * UpdateDB: New lens to parse /etc/updatedb.conf (incompatible change)
     * Xymon_Alerting: refactor lens (GH issue #89)
