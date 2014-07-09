@@ -203,6 +203,7 @@ Environment=LANG=C FOO=BAR
 Environment=LANG= LANGUAGE= LC_CTYPE= LC_NUMERIC= LC_TIME= LC_COLLATE= LC_MONETARY= LC_MESSAGES= LC_PAPER= LC_NAME= LC_ADDRESS= LC_TELEPHONE= LC_MEASUREMENT= LC_IDENTIFICATION=
 Environment=LANG=C\
 FOO=BAR
+Environment=\"LANG=foo bar\" FOO=BAR
 "
 (* Test: Systemd.lns *)
 test Systemd.lns get env =
@@ -232,6 +233,10 @@ test Systemd.lns get env =
     }
     { "Environment"
       { "LANG" = "C" }
+      { "FOO" = "BAR" }
+    }
+    { "Environment"
+      { "LANG" = "foo bar" }
       { "FOO" = "BAR" }
     }
   }
@@ -302,4 +307,3 @@ test Systemd.entry_command get "ExecStart=/usr/bin/find /var/lib/sudo -exec /usr
       { "7" = "\073" }
     }
   }
-
