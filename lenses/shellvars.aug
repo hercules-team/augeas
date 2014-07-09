@@ -212,7 +212,8 @@ module Shellvars =
       sc_excl "SuSEfirewall2.d" .
       sc_incl "SuSEfirewall2.d/cobbler" .
       sc_incl "SuSEfirewall2.d/services/*" .
-      sc_excl "SuSEfirewall2.d/services/TEMPLATE"
+      sc_excl "SuSEfirewall2.d/services/TEMPLATE" .
+      sc_excl "*.systemd"
 
   let filter_default = incl "/etc/default/*"
                      . excl "/etc/default/grub_installdevice*"
