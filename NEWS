@@ -39,6 +39,7 @@
     * Rmt: New lens to parse /etc/default/rmt, RHBZ#1100549
     * Rsyslog: support complex $template lines, property filters and file
                actions with templates, RHBZ#1083016
+    * Services: permit colons in service name, RHBZ#1121263
     * Shadow: New lens (Lorenzo Catucci)
     * Shellvars: Handle case statements with same-line ';;', RHBZ#1033799
                  Allow any kind of quoted values in block
