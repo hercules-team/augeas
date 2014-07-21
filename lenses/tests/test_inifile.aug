@@ -54,7 +54,7 @@ test_ace = value_with_trailing_comment #
           { "test_ace" = "value with spaces" }
 	  { "#comment"  = "comment with colon" }
           { "test_ace" = "value_with_trailing_comment"
-             { "#comment" } }
+             {} }
 	  {} }
 
   test lns_ace put conf_ace after
@@ -377,7 +377,7 @@ ticket_243 = \"value1;value2#value3\" # end of line comment
     { "test_ace" = "value with spaces" }
     { "#comment" = "comment with colon" }
     { "test_ace" = "value_with_trailing_comment"
-      { "#comment" } }
+      {} }
     {  }
   }
 
@@ -395,7 +395,7 @@ ticket_243 = \"value1;value2#value3\" # end of line comment
     { "test_ace" = "value with spaces" }
     { "#comment" = "comment with colon" }
     { "test_ace" = "value_with_trailing_comment"
-      { "#comment" } }
+      {} }
     {  }
   }
   
