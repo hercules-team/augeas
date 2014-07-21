@@ -47,7 +47,7 @@ let comment     = Util.comment
 let comment_or_eol = Util.comment_or_eol
 let empty       = Util.empty
 let protocol_re = /[a-zA-Z]+/
-let word_re     = /[a-zA-Z0-9_.+*\/-]+/
+let word_re     = /[a-zA-Z0-9_.+*\/:-]+/
 let num_re      = /[0-9]+/
 
 (* Group: Separators *)
