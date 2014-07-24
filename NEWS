@@ -55,6 +55,7 @@
                Parse /etc/sysconfig/*.systemd, RHBZ#1083022
     * Tuned: New lens for /etc/tuned/tuned-main.conf (Pat Riehecky)
     * UpdateDB: New lens to parse /etc/updatedb.conf (incompatible change)
+    * Xml: Allow backslash in #attribute values (GH issue #145)
     * Xymon_Alerting: refactor lens (GH issue #89)
 
 1.2.0 - 2014-01-27
