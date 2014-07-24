@@ -809,3 +809,8 @@ test Xml.lns get "<!DOCTYPE doc [
 %eldecl;
 ]>
 <doc></doc>" = *
+
+(* Escape character in attributes *)
+test Xml.lns get "<a password=\"my\!pass\" />" =
+  { "a" = "#empty"
+    { "#attribute" { "password" = "my\!pass" } } }

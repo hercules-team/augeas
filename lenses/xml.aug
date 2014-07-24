@@ -105,7 +105,7 @@ let attval (q:regexp) (qd:string) (brx:regexp) =
 let attributes    =
   let attval1 = attval "'" "'" /[^']*"[^']*/ in (* " *)
   let attval2 = attval "\"" "\"" /[^"]*'[^"]*/ in
-  let attval3 = attval /['"]/ "\"" /[^'\"]*/ in (* " *)
+  let attval3 = attval /['"]/ "\"" /(\\\\|[^'\"])*/ in (* " *)
   [ label "#attribute" . (attval1|attval2|attval3)+ ]
 
 let prolog        = [ label "#declaration" .
