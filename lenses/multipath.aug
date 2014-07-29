@@ -61,6 +61,20 @@ let default_setting =
   (* SUSE extensions *)
   |kv "async_timeout" Rx.integer
   |kv "max_polling_interval" Rx.integer
+  |kv "pg_timeout" Rx.word
+  |kv "bindings_file" Rx.fspath
+  |kv "multipath_dir" Rx.fspath
+  |kv "alias_prefix" Rx.word
+  |kv "queue_without_daemon" /yes|no/
+  |kv "h_on_last_deleassign_maps" /yes|no/
+  |qstr "prio_args"
+  (* SUSE extensions SP3 *)
+  |qstr "uid_attribute"
+  |kv "wwids_file" Rx.fspath
+  |kv "log_checker_err" Rx.word
+  |kv "retain_attached_hw_handler" /yes|no/
+  |kv "detect_prio" /yes|no/
+  |kv "flush_on_last_del" /yes|no/
 
 (* A device subsection *)
 let device =
