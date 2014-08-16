@@ -365,7 +365,7 @@ let entry_list_nocomment (kw:regexp) (sep:lens) (sto:regexp) (list_sep:lens) =
 Variable: entry_re
   Default regexp for <entry> keyword
 *)
-let entry_re           = ( /[A-Za-z][A-Za-z0-9._-]+/ )
+let entry_re           = ( /[A-Za-z][A-Za-z0-9._-]*/ )
 
 
 (************************************************************************
