@@ -130,6 +130,7 @@ lens_tests =			\
   lens-openshift_http.sh	\
   lens-openshift_quickstarts.sh	\
   lens-openvpn.sh		\
+  lens-pagekite.sh		\
   lens-pam.sh			\
   lens-pamconf.sh		\
   lens-passwd.sh		\

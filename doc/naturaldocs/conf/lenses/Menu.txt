@@ -131,6 +131,7 @@ Group: Specific Modules  {
    File: OpenShift_Config  (openshift_config.aug)
    File: OpenShift_Http  (openshift_http.aug)
    File: OpenShift_Quickstarts  (openshift_quickstarts.aug)
+   File: Pagekite (pagekite.aug)
    File: Pam  (pam.aug)
    File: PamConf  (pamconf.aug)
    File: Passwd  (passwd.aug)
