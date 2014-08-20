@@ -12,10 +12,13 @@ module Pagekite =
 autoload xfm
 
 (* View: lns *)
+
+(* Variables *)
 let equals = del /[ \t]*=[ \t]*/ "="
-let comma = del /,[ \t]*/  ","
 let neg2 = /[^# \n\t]+/
 let eol = del /\n/ "\n"
+(* Match everything from here to eol, cropping whitespace at both ends *)
+let to_eol  = /[^ \t\n](.*[^ \t\n])?/
 
 (* A key followed by comma-separated values 
   k: name of the key
@@ -32,8 +35,8 @@ let domain = [ key "domain" . equals . store neg2 . Util.comment_or_eol ]
 let frontend = Build.key_value_line ("frontend" | "frontends") 
                                        equals (store Rx.neg1)
 let host = Build.key_value_line "host" equals (store Rx.ip)
-let ports = key_csv_line "ports" equals comma (store Rx.integer)
-let protos = key_csv_line "protos" equals comma (store Rx.word)
+let ports = key_csv_line "ports" equals Sep.comma (store Rx.integer)
+let protos = key_csv_line "protos" equals Sep.comma (store Rx.word)
 
 (* entries for pagekite.d/20_frontends.rc *)
 let kitesecret = Build.key_value_line "kitesecret" equals (store Rx.space_in)
@@ -49,8 +52,9 @@ let service_on = [ key "service_on" . [ seq "service_on" . equals .
                    [label "destination" . store_domain] . service_colon . (
                      [ label "secret" . store Rx.no_spaces . Util.eol ] | eol
                    ) ] ]
+let service_cfg = [ key "service_cfg" . equals . store to_eol . eol ]
 
-let flags = ( "defaults" | "isfrontend" | "abort_not_configured") 
+let flags = ( "defaults" | "isfrontend" | "abort_not_configured" | "insecure" )
 
 let entries = Build.flag_line flags
 	    | domain
@@ -61,6 +65,7 @@ let entries = Build.flag_line flags
         | kv_frontend
         | kitesecret
         | service_on
+        | service_cfg
 
 let lns = ( entries | Util.empty | Util.comment )*
 

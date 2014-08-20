@@ -95,3 +95,11 @@ test Pagekite.lns get conf_encryption =
   { "fe_certname" = "frontend.your/domain" }
   { "ca_certs" = "/etc/pagekite.d/site-cert.pem" }
   { "tls_endpoint" = "frontend.your.domain:/path/to/frontend.pem" }
+
+
+let conf_service_cfg = "insecure
+service_cfg = KITENAME.pagekite.me/80 : insecure : True
+"
+test Pagekite.lns get conf_service_cfg =
+  { "insecure" }
+  { "service_cfg" = "KITENAME.pagekite.me/80 : insecure : True" }
