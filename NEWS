@@ -34,6 +34,7 @@
     * Keepalived: Add more virtual/real server settings and checks, RHBZ#1064388
     * Krb5: permit braces in values when not in sub-section, RHBZ#1066419
     * Ldso: handle "hwcap" lines (GH issue #100)
+    * Lvm: support negative numbers (Pino Toscano)
     * Multipath: add support for rr_min_io_rq (Joel Loudermilk)
     * NagiosConfig and NagiosObjects: Fix documentation (Simon Sehier)
     * NetworkManager: Use the Quote module, support # in values (no eol comments)
