@@ -69,6 +69,7 @@ module LVM =
 	let filter =
 		  incl "/etc/lvm/archive/*.vg"
 		. incl "/etc/lvm/backup/*"
+		. incl "/etc/lvm/lvm.conf"
 		. Util.stdexcl
 
 	let xfm = transform lns filter
