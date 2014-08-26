@@ -26,7 +26,7 @@ module LVM =
 	(* strings can contain backslash-escaped dquotes, but I don't know
 	 * how to get the message across to augeas *)
 	let str = [label "str". Quote.do_dquote (store /([^\"]|\\\\.)*/)]
-	let int = [label "int". store Rx.integer]
+	let int = [label "int". store Rx.relinteger]
 	(* View: flat_literal
 	 * A literal without structure *)
 	let flat_literal = int|str
@@ -69,6 +69,7 @@ module LVM =
 	let filter =
 		  incl "/etc/lvm/archive/*.vg"
 		. incl "/etc/lvm/backup/*"
+		. incl "/etc/lvm/lvm.conf"
 		. Util.stdexcl
 
 	let xfm = transform lns filter

@@ -24,6 +24,7 @@ VG1 {
 	extent_size = 8192		# 4 Megabytes
 	max_lv = 0
 	max_pv = 0
+	process_priority = -18
 
 	physical_volumes {
 		pv0 {
@@ -149,6 +150,9 @@ test LVM.lns get conf =
 			}
 			{ "max_pv"
 				{ "int" = "0" }
+			}
+			{ "process_priority"
+				{ "int" = "-18" }
 			}
 			{}
 			{ "physical_volumes"
