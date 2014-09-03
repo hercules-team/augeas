@@ -120,7 +120,8 @@ module Syslog =
 	(* Variable: loghost_r
 	 Matches a hostname, that is labels speparated by dots, labels can't
 	 start or end with a "-".  maybe a bit too complicated for what it's worth *)
-	let loghost_r = /[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*/
+	let loghost_r = /[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*/ |
+                    "[" . Rx.ipv6 . "]"
 
 	(* Group: Function *)
 
