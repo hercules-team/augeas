@@ -15,6 +15,7 @@ daemon.!<=info					/var/log/foo
 *.*						@syslog.far.away:123
 *.*						@@syslog.far.away
 *.*						@@syslog.far.away:123
+*.*						@[2001::1]:514
 *.*						foo,bar
 *.*						|\"/usr/bin/soft arg\"
 !startslip
@@ -103,6 +104,10 @@ daemon.info                                     /var/log/cvsupd.log
 	  { "entry"
 	    { "selector" { "facility" = "*" } { "level" = "*" } }
 	    { "action" { "protocol" = "@@" } { "hostname" = "syslog.far.away" } { "port" = "123" } }
+	  }
+	  { "entry"
+	    { "selector" { "facility" = "*" } { "level" = "*" } }
+	    { "action" { "protocol" = "@" } { "hostname" = "[2001::1]" } { "port" = "514" } }
 	  }
 	  { "entry"
 	    { "selector" { "facility" = "*" } { "level" = "*" } }
