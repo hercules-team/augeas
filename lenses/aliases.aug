@@ -53,7 +53,7 @@ module Aliases =
    (* View: colon
     * Separation between the alias and it's destinations
     *)
-   let colon = del /[ \t]*:[ \t]+/ ":\t"
+   let colon = del /[ \t]*:[ \t]*/ ":\t"
    (* View: comma
     * Separation between multiple destinations
     *)

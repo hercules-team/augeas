@@ -99,6 +99,13 @@ bin:		root , ruth,
         { "name" = "somebody" }
         { "value" = "\"|exit 67\"" } }
 
+  (* Test: Aliases.lns
+     Don't have to have whitespace after the colon *)
+  test Aliases.lns get "alias:target\n" =
+    { "1"
+        { "name" = "alias" }
+        { "value" = "target" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

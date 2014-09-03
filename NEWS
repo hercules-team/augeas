@@ -6,6 +6,7 @@
     * augtool autocomplete includes command aliases, RHBZ#1100184
     * Remove unused "filename" argument from dump-xml command, RHBZ#1100106
   - Lens changes/additions
+    * Aliases: permit missing whitespace between colon and recipients
     * AptPreferences: Support spaces in origin fields
     * Cgconfig: handle additional valid controllers (Andy Grimm)
     * Chrony: New lens to parse /etc/chrony.conf
