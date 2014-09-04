@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 const char *abs_top_srcdir;
 const char *abs_top_builddir;
@@ -68,6 +69,30 @@ static void teardown(ATTRIBUTE_UNUSED CuTest *tc) {
     aug = NULL;
     free(root);
     root = NULL;
+}
+
+static void testRemoveNoPermission(CuTest *tc) {
+    if (getuid() == 0) {
+        puts("pending (testRemoveNoPermission): can't test permissions under root account");
+        return;
+    }
+
+    int r;
+    const char *errmsg;
+
+    // Prevent deletion of files
+    run(tc, "chmod 0500 %s/etc", root);
+
+    r = aug_rm(aug, "/files/etc/hosts");
+    CuAssertTrue(tc, r > 0);
+
+    r = aug_save(aug);
+    CuAssertIntEquals(tc, -1, r);
+
+    r = aug_get(aug, "/augeas/files/etc/hosts/error", &errmsg);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertPtrNotNull(tc, errmsg);
+    CuAssertStrEquals(tc, "unlink_orig", errmsg);
 }
 
 static void testSaveNewFile(CuTest *tc) {
@@ -285,6 +310,7 @@ int main(void) {
     CuSuiteSetup(suite, setup, teardown);
 
     SUITE_ADD_TEST(suite, testSaveNewFile);
+    SUITE_ADD_TEST(suite, testRemoveNoPermission);
     SUITE_ADD_TEST(suite, testNonExistentLens);
     SUITE_ADD_TEST(suite, testMultipleXfm);
     SUITE_ADD_TEST(suite, testMtime);

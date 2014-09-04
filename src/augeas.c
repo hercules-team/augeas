@@ -1488,7 +1488,8 @@ static int unlink_removed_files(struct augeas *aug,
             for (struct tree *t = pathx_first(px);
                  t != NULL;
                  t = pathx_next(px)) {
-                remove_file(aug, t);
+                if (remove_file(aug, t) < 0)
+                    result = -1;
             }
             free_pathx(px);
         } else if (tf->dirty && ! tree_child(tm, "path")) {
