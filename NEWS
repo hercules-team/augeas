@@ -5,6 +5,8 @@
     * Update augtool.1 man page with new commands and --span, RHBZ#1100077
     * augtool autocomplete includes command aliases, RHBZ#1100184
     * Remove unused "filename" argument from dump-xml command, RHBZ#1100106
+    * aug_save returns non-zero result when unable to delete files,
+      RHBZ#1091143
   - Lens changes/additions
     * Aliases: permit missing whitespace between colon and recipients
     * AptPreferences: Support spaces in origin fields
