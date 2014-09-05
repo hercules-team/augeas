@@ -204,6 +204,8 @@ Environment=LANG= LANGUAGE= LC_CTYPE= LC_NUMERIC= LC_TIME= LC_COLLATE= LC_MONETA
 Environment=LANG=C\
 FOO=BAR
 Environment=\"LANG=foo bar\" FOO=BAR
+Environment=OPTIONS=\"-LS0-6d\"
+Environment=OPTIONS='-LS0-6d'
 "
 (* Test: Systemd.lns *)
 test Systemd.lns get env =
@@ -238,6 +240,12 @@ test Systemd.lns get env =
     { "Environment"
       { "LANG" = "foo bar" }
       { "FOO" = "BAR" }
+    }
+    { "Environment"
+      { "OPTIONS" = "\"-LS0-6d\"" }
+    }
+    { "Environment"
+      { "OPTIONS" = "'-LS0-6d'" }
     }
   }
 
