@@ -132,9 +132,11 @@ let entry_env =
      let envkv (env_val:lens) = key env_key . Util.del_str "=" . env_val
      (* bare has no spaces, and is optionally quoted *)
   in let bare = Quote.do_quote_opt (envkv (store /[^#'" \t\n]*[^#'" \t\n\\]/)?)
+  in let bare_dqval = envkv (store /"[^#" \t\n]*[^#" \t\n\\]"/)
+  in let bare_sqval = envkv (store /'[^#' \t\n]*[^#' \t\n\\]'/)
      (* quoted has at least one space, and must be quoted *)
   in let quoted = Quote.do_quote (envkv (store /[^#"'\n]*[ \t]+[^#"'\n]*/))
-  in let envkv_quoted = [ bare ] | [ quoted ]
+  in let envkv_quoted = [ bare ] | [ bare_dqval ] | [ bare_sqval ] | [ quoted ]
   in entry_fn entry_env_kw ( Build.opt_list envkv_quoted value_sep )
 
 
