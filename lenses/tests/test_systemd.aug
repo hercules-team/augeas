@@ -307,3 +307,32 @@ test Systemd.entry_command get "ExecStart=/usr/bin/find /var/lib/sudo -exec /usr
       { "7" = "\073" }
     }
   }
+
+let exec_tmux = "ExecStart=/usr/bin/tmux unbind-key -a; \
+                        kill-window -t anaconda:shell; \
+                        bind-key ? list-keys\n"
+
+(* Test: Systemd.lns
+     Semicolons are permitted in entry values, e.g. as part of a command *)
+test Systemd.entry_command get exec_tmux =
+  { "ExecStart"
+    { "command" = "/usr/bin/tmux" }
+    { "arguments"
+      { "1" = "unbind-key" }
+      { "2" = "-a;" }
+      { "3" = "kill-window" }
+      { "4" = "-t" }
+      { "5" = "anaconda:shell;" }
+      { "6" = "bind-key" }
+      { "7" = "?" }
+      { "8" = "list-keys" } } }
+
+(* Test: Systemd.lns
+     # and ; are OK for standalone comments, but # only for EOL comments *)
+test Systemd.lns get "[Service]\n# hash\n; semicolon\nExecStart=/bin/echo # hash\n" =
+  { "Service"
+    { "#comment" = "hash" }
+    { "#comment" = "semicolon" }
+    { "ExecStart"
+      { "command" = "/bin/echo" }
+      { "#comment" = "hash" } } }

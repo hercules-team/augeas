@@ -29,9 +29,13 @@ autoload xfm
 (* View: eol *)
 let eol = Util.eol
 
-(* View: comment
-   An <IniFile.comment> entry *)
-let comment    = IniFile.comment IniFile.comment_re "#"
+(* View: eol_comment
+   An <IniFile.comment> entry for standalone comment lines (; or #) *)
+let comment     = IniFile.comment IniFile.comment_re "#"
+
+(* View: eol_comment
+   An <IniFile.comment> entry for end of line comments (# only) *)
+let eol_comment = IniFile.comment "#" "#"
 
 (* View: sep
    An <IniFile.sep> entry *)
@@ -52,7 +56,7 @@ let entry_multi_kw   =
   in /[A-Za-z][A-Za-z0-9._-]+/ - forbidden
 
 (* Variable: value_single_re *)
-let value_single_re  = /[^;# \t\n\\][^;#\n\\]*[^;# \t\n\\]|[^;# \t\n\\]/
+let value_single_re  = /[^# \t\n\\][^#\n\\]*[^# \t\n\\]|[^# \t\n\\]/
 
 (* View: sto_value_single
    Support multiline values with a backslash *)
@@ -61,7 +65,7 @@ let sto_value_single = Util.del_opt_ws ""
                                 . (/\\\\\n/ . value_single_re)*)
 
 (* View: sto_value *)
-let sto_value = store /[^;# \t\n]*[^;# \t\n\\]/
+let sto_value = store /[^# \t\n]*[^# \t\n\\]/
 
 (* Variable: value_sep
    Multi-value entries separated by whitespace or backslash and newline *)
@@ -69,7 +73,7 @@ let value_sep = del /[ \t]+|[ \t]*\\\\[ \t]*\n[ \t]*/ " "
 
 (* Variable: value_cmd_re
    Don't parse @ and - prefix flags *)
-let value_cmd_re = /[^;#@ \t\n\\-][^;#@ \t\n\\-][^;# \t\n\\]*/
+let value_cmd_re = /[^#@ \t\n\\-][^#@ \t\n\\-][^# \t\n\\]*/
 
 (* Variable: env_key *)
 let env_key = /[A-Za-z0-9_]+(\[[0-9]+\])?/
@@ -89,7 +93,7 @@ Supported entry features, selected by key names:
 (* View: entry_fn
    Prototype for our various key=value lines, with optional comment *)
 let entry_fn (kw:regexp) (val:lens) =
-    [ key kw . sep . val . (comment|eol) ]
+    [ key kw . sep . val . (eol_comment|eol) ]
 
 (* View: entry_value
    Store a value that doesn't contain spaces *)
@@ -127,9 +131,9 @@ let entry_command =
 let entry_env =
      let envkv (env_val:lens) = key env_key . Util.del_str "=" . env_val
      (* bare has no spaces, and is optionally quoted *)
-  in let bare = Quote.do_quote_opt (envkv (store /[^;#'" \t\n]*[^;#'" \t\n\\]/)?)
+  in let bare = Quote.do_quote_opt (envkv (store /[^#'" \t\n]*[^#'" \t\n\\]/)?)
      (* quoted has at least one space, and must be quoted *)
-  in let quoted = Quote.do_quote (envkv (store /[^;#"'\n]*[ \t]+[^;#"'\n]*/))
+  in let quoted = Quote.do_quote (envkv (store /[^#"'\n]*[ \t]+[^#"'\n]*/))
   in let envkv_quoted = [ bare ] | [ quoted ]
   in entry_fn entry_env_kw ( Build.opt_list envkv_quoted value_sep )
 
@@ -145,7 +149,7 @@ let entry   = entry_single | entry_multi | entry_command | entry_env | comment
 (* View: include
    Includes another file at this position *)
 let include = [ key ".include" . Util.del_ws_spc . sto_value
-                . (comment|eol) ]
+                . (eol_comment|eol) ]
 
 (* View: title
    An <IniFile.title> *)
