@@ -29,6 +29,7 @@
     * IPRoute2: handle "/" in protocol name, swap ID and name fields
                 (incompatible change), RHBZ#1063968,
                 handle hex IDs and hyphens, as present in rt_dsfield, RHBZ#1063961
+    * Kdump: parse new options, permit EOL comments, refactor, RHBZ#1139298
     * Keepalived: Add more virtual/real server settings and checks, RHBZ#1064388
     * Krb5: permit braces in values when not in sub-section, RHBZ#1066419
     * Ldso: handle "hwcap" lines (GH issue #100)
