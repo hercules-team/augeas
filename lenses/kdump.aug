@@ -17,16 +17,36 @@ About: Configuration files
 module Kdump =
   autoload xfm
 
+(************************************************************************
+ * Group:                 USEFUL PRIMITIVES
+ *************************************************************************)
+
 let empty = Util.empty
 let comment = Util.comment
-let value_to_eol = store Rx.space_in
+let value_to_eol = store /[^ \t\n#][^\n#]*[^ \t\n#]|[^ \t\n#]/
+let int_to_eol = store Rx.integer
 let delimiter = Util.del_ws_spc
 let eol = Util.eol
-let value_to_spc = store Rx.no_spaces
+let value_to_spc = store Rx.neg1
 let key_to_space = key /[A-Za-z0-9_.\$-]+/
-let eq = Util.del_str "="
+let eq = Sep.equal
 
-let simple_entry (kw:string) = [ key kw . delimiter . value_to_eol . eol ]
+(************************************************************************
+ * Group:                 ENTRY TYPES
+ *************************************************************************)
+
+let list (kw:string) = counter kw
+                     . Build.key_value_line_comment kw delimiter
+                         (Build.opt_list [ seq kw . value_to_spc ] delimiter)
+                         comment
+
+let mdl_key_value = [ delimiter . key_to_space . ( eq . value_to_spc)? ]
+let mdl_options = [ key_to_space . mdl_key_value+ ]
+let mod_options = [ key "options" . delimiter . mdl_options . (comment|eol) ]
+
+(************************************************************************
+ * Group:                 ENTRIES
+ *************************************************************************)
 
 (* Got from mount(8) *)
 let fs_types = "adfs" | "affs" | "autofs" | "cifs" | "coda" | "coherent"
@@ -37,32 +57,20 @@ let fs_types = "adfs" | "affs" | "autofs" | "cifs" | "coda" | "coherent"
              | "smbfs" | "sysv" | "tmpfs" | "ubifs" | "udf" | "ufs" | "umsdos"
              | "usbfs" | "vfat" | "xenix" | "xfs" | "xiafs"
 
-let fs = [ key fs_types . delimiter . value_to_eol . eol ]
+let simple_kws = "raw" | "net" | "path" | "core_collector" | "kdump_post"
+               | "kdump_pre" | "default" | "ssh" | "sshkey" | "dracut_args"
+               | "fence_kdump_args"
 
-let bin = [ seq "bin" . delimiter . value_to_spc ]
-let extra_bins = [ key "extra_bins" . (bin)+ . eol ]
+let int_kws = "force_rebuild" | "override_resettable" | "debug_mem_level"
+            | "link_delay" | "disk_timeout"
 
-let mdl = [ seq "module" . delimiter . value_to_spc ]
-let extra_modules = [ key "extra_modules" . (mdl)+ . eol ]
-
-
-let mdl_key_value = [ delimiter . key_to_space . ( eq . value_to_spc)? ]
-let mdl_options = [ key_to_space . mdl_key_value+ ]
-let mod_options = [ key "options" . delimiter . mdl_options . eol ]
-
-
-let option = simple_entry "raw"
-           | simple_entry "net"
-           | simple_entry "path"
-           | simple_entry "disk_timeout"
-           | simple_entry "core_collector"
-           | simple_entry "link_delay"
-           | simple_entry "kdump_post"
-           | simple_entry "kdump_pre"
-           | simple_entry "default"
-           | fs
-           | extra_bins
-           | extra_modules
+let option = Build.key_value_line_comment ( simple_kws | fs_types )
+                                          delimiter value_to_eol comment
+           | Build.key_value_line_comment int_kws delimiter int_to_eol comment
+           | list "extra_bins"
+           | list "extra_modules"
+           | list "blacklist"
+           | list "fence_kdump_nodes"
            | mod_options
 
 (* View: lns
