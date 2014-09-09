@@ -222,6 +222,7 @@ Group: Tests and Examples  {
    File: Test_JettyRealm  (tests/test_jettyrealm.aug)
    File: Test_JMXAccess  (tests/test_jmxaccess.aug)
    File: Test_JMXPassword  (tests/test_jmxpassword.aug)
+   File: Test_Kdump  (tests/test_kdump.aug)
    File: Test_Keepalived  (tests/test_keepalived.aug)
    File: Test_Known_Hosts  (tests/test_known_hosts.aug)
    File: Test_Koji  (tests/test_koji.aug)
