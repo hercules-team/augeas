@@ -17,6 +17,7 @@
     * Device_map: Parse all device.map files under /boot (Mike Latimer)
     * Dhclient: Add support for option modifiers (Robert Drake,
                 GH issue #95)
+                Parse hash statements with dhcp-eval strings
     * Dhcpd: stmt_string quoted blocks no longer store quote marks
              (incompatible change),
              many changes to support more record types (Robert Drake)

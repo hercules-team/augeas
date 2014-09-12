@@ -142,3 +142,9 @@ test Dhclient.lns get "append option domain-name-servers 127.0.0.1;\n" =
 
 test Dhclient.lns put "" after set "/prepend/option/domain-name-servers" "127.0.0.1" = 
     "prepend option domain-name-servers 127.0.0.1;\n"
+
+(* When = is used before the value, it's an evaluated string, see dhcp-eval *)
+test Dhclient.lns get "send dhcp-client-identifier = hardware;\n" =
+  { "send"
+    { "dhcp-client-identifier"
+      { "#eval" = "hardware" } } }

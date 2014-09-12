@@ -41,10 +41,12 @@ let word              = /[A-Za-z0-9_.-]+(\[[0-9]+\])?/
 
 (* TODO: there could be a " " in the middle of a value ... *)
 let sto_to_spc        = store /[^\\#,;{}" \t\n]+|"[^\\#"\n]+"/
-let sto_to_scl        = store /[^ \t][^;\n]+[^ \t]|[^ \t;\n]+/
+let sto_to_spc_noeval = store /[^=\\#,;{}" \t\n]|[^=\\#,;{}" \t\n][^\\#,;{}" \t\n]*|"[^\\#"\n]+"/
+let sto_to_scl        = store /[^ \t\n][^;\n]+[^ \t]|[^ \t;\n]+/
 let rfc_code          = [ key "code" . sep_spc . store word ]
                       . sep_eq
                       . [ label "value" . sto_to_scl ]
+let eval              = [ label "#eval" . Sep.equal . sep_spc . sto_to_scl ]
 let sto_number        = store /[0-9][0-9]*/
 
 (************************************************************************
@@ -93,7 +95,7 @@ let stmt_hash_re      = "send"
 
 let stmt_hash         = [ key stmt_hash_re
                         . sep_spc
-                        . [ key word . sep_spc . (sto_to_spc|rfc_code) ]
+                        . [ key word . sep_spc . (sto_to_spc_noeval|rfc_code|eval) ]
                         . sep_scl
                         . comment_or_eol ]
 
