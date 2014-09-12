@@ -74,9 +74,9 @@ test Xml.decl_def_item get
    !DOCTYPE tags are mapped in "!DOCTYPE" nodes.
    The associated system attribute is mapped in a "SYSTEM" subnode. *)
 test Xml.doctype get
- "<!DOCTYPE greeting SYSTEM \"hello.dtd\">" =
+ "<!DOCTYPE greeting:foo SYSTEM \"hello.dtd\">" =
 
-  { "!DOCTYPE" = "greeting"
+  { "!DOCTYPE" = "greeting:foo"
     { "SYSTEM" = "hello.dtd" }
   }
 

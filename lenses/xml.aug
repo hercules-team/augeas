@@ -53,7 +53,7 @@ let decl          = [ label "#decl" . sep_spc .
                       store /[^> \t\n\r]|[^> \t\n\r][^>\t\n\r]*[^> \t\n\r]/ ]
 
 let decl_def (r:regexp) (b:lens) = [ dels "<" . key r .
-                                     sep_spc . store word .
+                                     sep_spc . store nmtoken .
                                      b . sep_osp . del_end_simple ]
 
 let elem_def      = decl_def /!ELEMENT/ decl
