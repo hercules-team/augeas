@@ -57,11 +57,11 @@ let service_cfg = [ key "service_cfg" . equals . store to_eol . eol ]
 let flags = ( "defaults" | "isfrontend" | "abort_not_configured" | "insecure" )
 
 let entries = Build.flag_line flags
-	    | domain
-	    | frontend
-	    | host
+        | domain
+        | frontend
+        | host
         | ports
-	    | protos
+        | protos
         | kv_frontend
         | kitesecret
         | service_on
@@ -71,6 +71,6 @@ let lns = ( entries | Util.empty | Util.comment )*
 
 (* View: filter *)
 let filter = incl "/etc/pagekite.d/*.rc"
-		. Util.stdexcl
+        . Util.stdexcl
 
 let xfm = transform lns filter
