@@ -65,7 +65,8 @@ let att_type      = /CDATA|ID|IDREF|IDREFS|ENTITY|ENTITIES|NMTOKEN|NMTOKENS/ |
 
 let id_def        = [ sep_spc . key /PUBLIC/ .
                       [ label "#literal" . sep_spc . sto_dquote ]* ] |
-                    [ sep_spc . key /SYSTEM/ . sep_spc . sto_dquote ]
+                    [ sep_spc . key /SYSTEM/ . sep_spc . sto_dquote ] |
+                    [ sep_spc . label "#decl" . sto_dquote ]*
 
 let notation_def  = decl_def /!NOTATION/ id_def
 
@@ -78,7 +79,7 @@ let att_def       = counter "att_id" .
 
 let att_list_def = decl_def /!ATTLIST/ att_def
 
-let entity_def    = decl_def /!ENTITY/ ([sep_spc . label "#decl" . sto_dquote ])
+let entity_def    = decl_def /!ENTITY/ id_def
 
 let decl_def_item = elem_def | entity_def | att_list_def | notation_def
 
