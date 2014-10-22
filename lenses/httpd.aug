@@ -69,13 +69,14 @@ let dquot =
 let squot =
      let no_squot = /[^'\\\r\n]/
   in /'/ . (no_squot|cdot|cl)* . /'/
+let comp = /[<>=]?=/
 
 (******************************************************************
  *                            Attributes
  *****************************************************************)
 
 let arg_dir = [ label "arg" . store (char_arg_dir+|dquot|squot) ]
-let arg_sec = [ label "arg" . store (char_arg_sec+|dquot|squot) ]
+let arg_sec = [ label "arg" . store (char_arg_sec+|comp|dquot|squot) ]
 
 let argv (l:lens) = l . (sep_spc . l)*
 
