@@ -298,3 +298,23 @@ test Cgconfig.lns get group5 =
     {  }
   }
 
+(* quoted controller parameter whitespace *)
+let group6="
+group blklimit {
+     blkio {
+               blkio.throttle.read_iops_device=\"8:0 50\";
+     }
+}"
+
+test Cgconfig.lns get group6 =
+  {  }
+  { "group" = "blklimit"
+    {  }
+    { "controller" = "blkio"
+      {  }
+      { "blkio.throttle.read_iops_device" = "\"8:0 50\"" }
+      {  }
+    }
+    {  }
+  }
+
