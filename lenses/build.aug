@@ -282,8 +282,7 @@ let block_rdelim_newlines_default = "}"
  *                  should be indented and finish with an eol.
  ************************************************************************)
 let block_newlines (entry:lens) (comment:lens) =
-      let indent = del Rx.opt_space "\t"
-   in del block_ldelim_newlines_re block_ldelim_newlines_default
+   del block_ldelim_newlines_re block_ldelim_newlines_default
  . ((entry | comment) . (Util.empty | entry | comment)*)?
  . del block_rdelim_newlines_re block_rdelim_newlines_default
 
