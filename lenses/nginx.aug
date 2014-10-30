@@ -58,6 +58,7 @@ let lns = ( Util.comment | Util.empty | simple | block )*
 
 (* Variable: filter *)
 let filter = incl "/etc/nginx/nginx.conf"
+           . incl "/etc/nginx/conf.d/*.conf"
            . incl "/usr/portage/www-servers/nginx/files/nginx.conf"
 
 let xfm = transform lns filter
