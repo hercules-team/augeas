@@ -21,6 +21,8 @@
     * Dhcpd: stmt_string quoted blocks no longer store quote marks
              (incompatible change),
              many changes to support more record types (Robert Drake)
+    * Dnsmasq: Parse the structure of the 'address' and 'server' options
+               (incompatible change) (Kaarle Ritvanen)
     * Known_Hosts: New lens for SSH known hosts files
     * Group: NIS support
     * Grub: handle "foreground" option, RHBZ#1059383
