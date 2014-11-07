@@ -65,6 +65,11 @@ static void setup(CuTest *tc) {
 }
 
 static void teardown(ATTRIBUTE_UNUSED CuTest *tc) {
+    /* testRemovePermission makes <root>/etc nonwritable. That leads
+       to an error from 'make distcheck' make sure that directory is
+       writable by the user after the test */
+    run(tc, "chmod u+w %s/etc", root);
+
     aug_close(aug);
     aug = NULL;
     free(root);
