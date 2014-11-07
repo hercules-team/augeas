@@ -1,4 +1,4 @@
-1.3.0 - 2014-XX-XX
+1.3.0 - 2014-11-07
   - General changes/additions
     * Add missing cp entry in manpage (GH issue #78)
     * Add seq to vim syntax highlight (Robert Drake)
@@ -11,7 +11,7 @@
     * Aliases: permit missing whitespace between colon and recipients
     * AptPreferences: Support spaces in origin fields
     * Cgconfig: handle additional valid controllers (Andy Grimm)
-    * Chrony: New lens to parse /etc/chrony.conf
+    * Chrony: New lens to parse /etc/chrony.conf (Pat Riehecky)
     * CPanel: New lens to parse cpanel.config files
     * Desktop: Allow @ in keys (GH issue #92)
     * Device_map: Parse all device.map files under /boot (Mike Latimer)
@@ -21,26 +21,28 @@
     * Dhcpd: stmt_string quoted blocks no longer store quote marks
              (incompatible change),
              many changes to support more record types (Robert Drake)
-    * Known_Hosts: New lens for SSH known hosts files
-    * Group: NIS support
-    * Grub: handle "foreground" option, RHBZ#1059383
+    * Group: NIS support (KaMichael)
+    * Grub: handle "foreground" option, RHBZ#1059383 (Miguel Armas)
     * Gshadow: New lens (Lorenzo Catucci)
     * Httpd: Allow eol comments after section tags
              Allow continued lines inside quoted value (GH issue #104)
              Allow comparison operators in tags (GH issue #154)
     * IPRoute2: handle "/" in protocol name, swap ID and name fields
                 (incompatible change), RHBZ#1063968,
-                handle hex IDs and hyphens, as present in rt_dsfield, RHBZ#1063961
+                handle hex IDs and hyphens, as present in
+                rt_dsfield, RHBZ#1063961
     * Iptables: parse /etc/sysconfig/iptables.save, RHBZ#1144651
     * Kdump: parse new options, permit EOL comments, refactor, RHBZ#1139298
     * Keepalived: Add more virtual/real server settings and checks, RHBZ#1064388
+    * Known_Hosts: New lens for SSH known hosts files
     * Krb5: permit braces in values when not in sub-section, RHBZ#1066419
     * Ldso: handle "hwcap" lines (GH issue #100)
     * Lvm: support negative numbers, parse /etc/lvm/lvm.conf (Pino Toscano)
     * Multipath: add support for rr_min_io_rq (Joel Loudermilk)
     * NagiosConfig and NagiosObjects: Fix documentation (Simon Sehier)
     * NetworkManager: Use the Quote module, support # in values (no eol comments)
-    * OpenVPN: Add support for script-security (Frank Grötzner)
+    * OpenVPN: Add support for fragment, mssfix, and script-security
+               (Frank Grötzner)
     * Pagekite: New lens (Michael Pimmer)
     * Pam: Add partial support for arguments enclosed in [] (Vincent Brillault)
     * Passwd: Refactor lens (Lorenzo Catucci)
@@ -59,13 +61,16 @@
     * Sshd: Allow all types of entries in Match groups (GH issue #75)
     * Sssd: Allow ; for comments
     * Squid: Support configuration files for squid 3 (Mykola Nikishov)
+    * Sudoers: Allow wuoted string in default str/bool params (Nick Piacentine)
     * Syslog: Support "# !" style comments (Robert Drake, GH issue #65)
               Permit IPv6 loghost addresses, RHBZ#1129388
     * Systemd: Allow quoted Environment key=value pairs, RHBZ#1100547
                Parse /etc/sysconfig/*.systemd, RHBZ#1083022
                Parse semicolons inside entry values, RHBZ#1139498
     * Tuned: New lens for /etc/tuned/tuned-main.conf (Pat Riehecky)
-    * UpdateDB: New lens to parse /etc/updatedb.conf (incompatible change)
+    * UpdateDB: New lens to parse /etc/updatedb.conf
+                (incompatible change as this file used to be processed with
+                 Simplevars)
     * Xml: Allow backslash in #attribute values (GH issue #145)
            Parse CDATA elements (GH issue #80)
     * Xymon_Alerting: refactor lens (GH issue #89)
@@ -102,7 +107,7 @@
                fix for block's brackets upon write,
                fixes broken tests for mailbox,
                fixes indention,
-               test case for block_args with ",
+               test case for block_args with ""
                fixes broken indention
                Use Quote module
     * Exports: Permit colons for IPv6 client addresses, bug #366
