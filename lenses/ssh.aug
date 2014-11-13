@@ -51,7 +51,7 @@ module Ssh =
 
     let commas_entry (k:regexp) =
          let value = [ seq "commas_entry" . value_to_comma]
-      in [ key k . counter "commas_entry" . spc .
+      in [ indent . key k . counter "commas_entry" . spc .
            Build.opt_list value comma . eol ]
 
     let fw_entry (k:regexp) = [ indent . key k . spc .
