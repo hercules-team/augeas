@@ -93,6 +93,6 @@ module Exports =
   let entry = [ label "dir" . store /\/[^ \t]*/
                 . sep_spc . Build.opt_list client sep_spc . eol ]
 
-  let lns = (Hosts.empty | Hosts.comment | entry)*
+  let lns = (Util.empty | Util.comment | entry)*
 
   let xfm = transform lns (incl "/etc/exports")
