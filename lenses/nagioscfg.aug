@@ -26,7 +26,7 @@ autoload xfm
 let param_def =
      let space_in  = /[^ \t\n][^\n=]*[^ \t\n]|[^ \t\n]/
   in key /[A-Za-z0-9_]+/
-   . Sep.space_equal
+   . Sep.opt_space . Sep.equal . Sep.opt_space
    . store space_in
 
 (* View: macro_def
