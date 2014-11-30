@@ -250,6 +250,7 @@ Group: Tests and Examples  {
    File: Test_Protocols  (tests/test_protocols.aug)
    File: Test_Puppet_Auth  (tests/test_puppet_auth.aug)
    File: Test_Puppetfile  (tests/test_puppetfile.aug)
+   File: Test_Pylonspaste  (tests/test_pylonspaste.aug)
    File: Test_Qpid  (tests/test_qpid.aug)
    File: Test_Quote  (tests/test_quote.aug)
    File: Test_Rabbitmq  (tests/test_rabbitmq.aug)

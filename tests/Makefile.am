@@ -153,6 +153,7 @@ lens_tests =			\
   lens-puppet_auth.sh		\
   lens-puppetfile.sh		\
   lens-puppetfileserver.sh		\
+  lens-pylonspaste.sh   \
   lens-pythonpaste.sh	\
   lens-qpid.sh		\
   lens-quote.sh		\
