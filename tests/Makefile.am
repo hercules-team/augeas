@@ -105,6 +105,7 @@ lens_tests =			\
   lens-logwatch.sh		\
   lens-lokkit.sh		\
   lens-lvm.sh			\
+  lens-mailscanner.sh   \
   lens-mcollective.sh 	\
   lens-mdadm_conf.sh	\
   lens-memcached.sh		\
