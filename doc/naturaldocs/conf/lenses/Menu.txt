@@ -209,6 +209,7 @@ Group: Tests and Examples  {
    File: Test_Carbon  (tests/test_carbon.aug)
    File: Test_Channels  (tests/test_channels.aug)
    File: Test_Chrony  (tests/test_chrony.aug)
+   File: Test_ClamAV  (tests/test_clamav.aug)
    File: Test_Collectd  (tests/test_collectd.aug)
    File: Test_CPanel  (tests/test_cpanel.aug)
    File: Test_Cups  (tests/test_cups.aug)
