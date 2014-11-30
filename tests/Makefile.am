@@ -138,6 +138,7 @@ lens_tests =			\
   lens-passwd.sh		\
   lens-pbuilder.sh		\
   lens-pg_hba.sh		\
+  lens-pgbouncer.sh     \
   lens-php.sh			\
   lens-phpvars.sh		\
   lens-postfix_access.sh \
