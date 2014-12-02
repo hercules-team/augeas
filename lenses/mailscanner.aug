@@ -49,7 +49,8 @@ let line_value = store (non_space . any .  non_space | non_space)
  * Group: Entries 
  *************************************************************************)
 
-let include_line = [ key include_kw . space . store non_eq . eol ]
+let include_line = Build.key_value_line include_kw space (store non_eq)
+
 let normal_line = [ key keys . eq . (indent . line_value)? . eol ]
 
 (************************************************************************
@@ -58,7 +59,7 @@ let normal_line = [ key keys . eq . (indent . line_value)? . eol ]
 
 let lns = (empty|include_line|normal_line|comment) *
 
-let filter = ((incl "/etc/MailScanner/MailScanner.conf")
-            . (incl "/etc/MailScanner/conf.d/*.conf"))
+let filter = (incl "/etc/MailScanner/MailScanner.conf")
+            . (incl "/etc/MailScanner/conf.d/*.conf")
 
 let xfm = transform lns filter
