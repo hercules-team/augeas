@@ -17,22 +17,24 @@ module Shellvars_list =
   let dqword = /([^ "\\\t\n]|\\\\.)+/
   let uqword = /([^ `"'\\\t\n]|\\\\.)+/
   let bqword = /`[^`\n]*`/
+  let space_or_nl = /[ \t\n]+/
+  let space_or_cl = space_or_nl | Rx.cl
 
   (* lists values of the form ...  val1 val2 val3  ... *)
-  let list(word:regexp) =
+  let list (word:regexp) (sep:regexp) =
     let list_value = store word in
       indent .
       [ label "value" . list_value ] .
-      [ del /[ \t\n]+/ " "  . label "value" . list_value ]* . indent
+      [ del sep " "  . label "value" . list_value ]* . indent
 
 
   (* handle single quoted lists *)
   let squote_arr = [ label "quote" . store /'/ ]
-                   . (list sqword)? . del /'/ "'"
+                   . (list sqword space_or_nl)? . del /'/ "'"
 
   (* similarly handle double qouted lists *)
   let dquote_arr = [ label "quote" . store /"/ ]
-                   . (list dqword)? . del /"/ "\""
+                   . (list dqword space_or_cl)? . del /"/ "\""
 
   (* handle unquoted single value *)
   let unquot_val = [ label "quote" . store "" ]

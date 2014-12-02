@@ -128,6 +128,17 @@ FAILSAVE_APPEND=\"console=ttyS0\"
       { "value" = "ping/icmp" }
       { "#comment" = "ping" } }
 
+  (* Test: Shellvars_list.lns
+        Support double-quoted continued lines *)
+  test Shellvars_list.lns get "DAEMON_OPTS=\"-a :6081 \
+             -T localhost:6082\"\n" =
+    { "DAEMON_OPTS"
+      { "quote" = "\"" }
+      { "value" = "-a" }
+      { "value" = ":6081" }
+      { "value" = "-T" }
+      { "value" = "localhost:6082" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
