@@ -49,7 +49,7 @@ let record  = IniFile.record title entry
 let lns = IniFile.lns record comment
 
 (* Variable: filter *)
-let filter = ((incl "/etc/pgbouncer.ini"))
+let filter = incl "/etc/pgbouncer.ini"
 
 let xfm = transform lns filter
 

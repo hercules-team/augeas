@@ -72,7 +72,7 @@ let record  = IniFile.record title entry
 
 let lns = IniFile.lns record comment
 
-let filter = ((incl "/etc/baruwa/*.ini"))
+let filter = incl "/etc/baruwa/*.ini"
 
 let xfm = transform lns filter
 
