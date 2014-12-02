@@ -30,12 +30,9 @@ let some_value = Sep.space . store Rx.space_in
  * Group: Entry
  ************************************************************************)
  
-let clamd_entry (kw:regexp) (comment:lens) =
-                [ key "Example" . Util.eol ]
-                | [ key kw . some_value . Util.eol ]
-                | comment
+let example_entry = [ key "Example" . Util.eol ]
 
-let entry   = clamd_entry word comment
+let clamd_entry = [ key word . some_value . Util.eol ]
 
 (******************************************************************
  * Group:                   LENS AND FILTER
@@ -45,11 +42,11 @@ let entry   = clamd_entry word comment
  * View: Lns
  ************************************************************************)
 
-let lns = (Util.empty | entry )*
+let lns = (Util.empty | example_entry | clamd_entry | comment )*
 
 (* Variable: filter *)
-let filter = ((incl "/etc/clamd.conf")
+let filter = (incl "/etc/clamd.conf")
             . (incl "/etc/freshclam.conf")
-            . (incl "/etc/clamd.d/*.conf"))
+            . (incl "/etc/clamd.d/*.conf")
 
 let xfm = transform lns filter
