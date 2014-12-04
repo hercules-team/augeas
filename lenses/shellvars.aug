@@ -34,7 +34,7 @@ module Shellvars =
   let xchgs   = Build.xchgs
   let semicol = del /;?/ ""
 
-  let char  = /[^`;() '"\t\n]|\\\\"/
+  let char  = /[^`;() '"\t\n\\]|\\\\./
   let dquot =
        let char = /[^"\\]|\\\\./ | Rx.cl
     in "\"" . char* . "\""                    (* " Emacs, relax *)
@@ -45,7 +45,7 @@ module Shellvars =
   let dollar_assign = /\$\([^\(\)#\n]*\)/
   let dollar_arithm = /\$\(\([^\)#\n]*\)\)/
 
-  let anyquot = (dquot|squot)+ | bquot | dbquot | dollar_assign | dollar_arithm
+  let anyquot = (char|dquot|squot|dollar_assign|dollar_arithm)+ | bquot | dbquot
 
   let to_semicol_re = /[^#; \t\n][^#;\n]+[^#; \t\n]|[^#; \t\n]+/
   let sto_to_semicol = store to_semicol_re
@@ -60,7 +60,7 @@ module Shellvars =
   (* arrays here because of typechecking headaches. Instead, they are    *)
   (* treated as a simple value                                           *)
   let array =
-    let array_value = store (char+ | anyquot) in
+    let array_value = store anyquot in
     del /\([ \t]*/ "(" . counter "values" .
       [ seq "values" . array_value ] .
       [ del /[ \t\n]+/ " " . seq "values" . array_value ] *
@@ -70,7 +70,7 @@ module Shellvars =
   (* but fairly close.                                                *)
   let simple_value =
     let empty_array = /\([ \t]*\)/ in
-      store (char* | anyquot | empty_array)
+      store (anyquot | empty_array)?
 
   let export = [ key "export" . Util.del_ws_spc ]
   let kv = Util.indent . export? . key key_re
