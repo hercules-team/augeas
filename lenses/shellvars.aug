@@ -46,9 +46,7 @@ module Shellvars =
   let dollar_arithm = /\$\(\([^\)#\n]*\)\)/
 
   let anyquot = (char|dquot|squot|dollar_assign|dollar_arithm)+ | bquot | dbquot
-
-  let to_semicol_re = /[^#; \t\n][^#;\n]+[^#; \t\n]|[^#; \t\n]+/
-  let sto_to_semicol = store to_semicol_re
+  let sto_to_semicol = store (anyquot . (Rx.space . anyquot)*)
 
   let sto_to_semicol_quot =
        let no_semicol_re = /[^"'#;\n]/
