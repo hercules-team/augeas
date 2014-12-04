@@ -399,6 +399,10 @@ esac\n" =
   test Shellvars.lns get "FOO=``bar``\n" =
   { "FOO" = "``bar``" }
 
+  (* Partial quoting is allowed *)
+  test Shellvars.lns get "FOO=\"$bar\"/'baz'/$(quux)$((1 + 2))\n" =
+  { "FOO" = "\"$bar\"/'baz'/$(quux)$((1 + 2))" }
+
   (* unset can be used on wildcard variables *)
   test Shellvars.lns get "unset ${!LC_*}\n" =
   { "@unset"
