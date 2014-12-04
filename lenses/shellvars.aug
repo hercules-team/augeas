@@ -44,7 +44,7 @@ module Shellvars =
 
   let anyquot = (dquot|squot)+ | bquot | dbquot | dollar_assign | dollar_arithm
 
-  let to_semicol_re = /[^#; \t\n][^#;\n]+[^#; \t\n]|[^#; \t\n]+/
+  let to_semicol_re = /([^#; \t\n\\]|\\\\.)(([^#;\n\\]|\\\\(.|\n))*([^#; \t\n\\]|\\\\.))?/
   let sto_to_semicol = store to_semicol_re
 
   let sto_to_semicol_quot =

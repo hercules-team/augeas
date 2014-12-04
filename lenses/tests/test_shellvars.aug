@@ -165,6 +165,10 @@ unset ONBOOT    #   We do not want this var
   { "@builtin" = "exit" }
   { "@builtin" = "exit" { "args" = "2" } }
 
+  (* Allow wrapping builtin arguments to multiple lines *)
+  test Shellvars.lns get "ulimit -c \\\nunlimited\n" =
+  { "@builtin" = "ulimit" { "args" = "-c \\\nunlimited" } }
+
   (* Test semicolons *)
   test lns get "VAR1=\"this;is;a;test\"\nVAR2=this;\n" =
   { "VAR1" = "\"this;is;a;test\"" }
