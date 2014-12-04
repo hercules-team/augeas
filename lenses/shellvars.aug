@@ -140,7 +140,7 @@ module Shellvars =
     let case_entry = [ label "@case_entry"
                        . Util.indent . store /[^ \t\n\)]+/
                        . Util.del_str ")" . eol
-                       . ( entry+ | entry_noeol )?
+                       . entry* . entry_noeol?
                        . Util.indent . Util.del_str ";;" . eol ] in
       [ keyword_label "case" "@case" . Sep.space
         . store (char+ | ("\"" . char+ . "\""))
