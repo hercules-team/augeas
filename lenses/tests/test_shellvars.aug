@@ -549,6 +549,10 @@ fi\n" =
     { "@condition" = "-f $FILENAME"
       { "type" = "[[" } }
 
+  (* Allow wrapping loop condition to multiple lines *)
+  test Shellvars.lns get "for x in foo \\\nbar\\\nbaz; do y=$x; done\n" =
+  { "@for" = "x in foo \\\nbar\\\nbaz" { "y" = "$x" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
