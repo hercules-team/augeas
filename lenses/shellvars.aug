@@ -86,7 +86,7 @@ module Shellvars =
     . del /\.|source/ "." . label ".source"
     . Util.del_ws_spc . store /[^;=# \t\n]+/
 
-  let shell_builtin_cmds = "ulimit" | "shift" | "exit"
+  let shell_builtin_cmds = "ulimit" | "shift" | "exit" | "["
 
   let builtin =
     Util.indent . label "@builtin"
