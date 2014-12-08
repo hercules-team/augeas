@@ -34,7 +34,7 @@ module Shellvars =
   let xchgs   = Build.xchgs
   let semicol = del /;?/ ""
 
-  let char  = /[^`;() '"\t\n\\]|\\\\(.|\n)/
+  let char  = /[^`;()'"\n\\# \t]#*|\\\\(.|\n)/
   let dquot =
        let char = /[^"\\]|\\\\./ | Rx.cl
     in "\"" . char* . "\""                    (* " Emacs, relax *)
