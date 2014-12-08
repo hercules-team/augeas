@@ -48,12 +48,6 @@ module Shellvars =
   let anyquot = (char|dquot|squot|dollar_assign|dollar_arithm)+ | bquot | dbquot
   let sto_to_semicol = store (anyquot . (Rx.space . anyquot)*)
 
-  let sto_to_semicol_quot =
-       let no_semicol_re = /[^"'#;\n]/
-    in let no_semicol_spc_re = /[^"'#; \t\n]/
-    in let multi_chars = no_semicol_spc_re . (no_semicol_re|anyquot)+ . no_semicol_spc_re
-    in store (no_semicol_spc_re | multi_chars)
-
   (* Array values of the form '(val1 val2 val3)'. We do not handle empty *)
   (* arrays here because of typechecking headaches. Instead, they are    *)
   (* treated as a simple value                                           *)
@@ -111,7 +105,7 @@ module Shellvars =
   let generic_cond_start (start_kw:string) (lbl:string)
                          (then_kw:string) (contents:lens) =
       keyword_label start_kw lbl . Sep.space
-      . sto_to_semicol_quot . semicol_eol
+      . sto_to_semicol . semicol_eol
       . keyword then_kw . eol
       . contents
 

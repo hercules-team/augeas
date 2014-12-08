@@ -549,6 +549,10 @@ fi\n" =
   test Shellvars.lns get "for x in foo \\\nbar\\\nbaz; do y=$x; done\n" =
   { "@for" = "x in foo \\\nbar\\\nbaz" { "y" = "$x" } }
 
+  (* Allow quotes in loop conditions *)
+  test Shellvars.lns get "for x in \"$@\"; do y=$x; done\n" =
+  { "@for" = "x in \"$@\"" { "y" = "$x" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
