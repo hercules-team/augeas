@@ -133,7 +133,7 @@ module Shellvars =
 
   let case (entry:lens) (entry_noeol:lens) =
     let case_entry = [ label "@case_entry"
-                       . Util.indent . store /[^ \t\n\)]+/
+                       . Util.indent . sto_to_semicol
                        . Util.del_str ")" . eol
                        . entry* . entry_noeol?
                        . Util.indent . Util.del_str ";;" . eol ] in

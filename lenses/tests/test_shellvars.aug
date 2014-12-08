@@ -553,6 +553,24 @@ fi\n" =
   test Shellvars.lns get "for x in \"$@\"; do y=$x; done\n" =
   { "@for" = "x in \"$@\"" { "y" = "$x" } }
 
+  (* case: support quotes and spaces in pattern lists *)
+  test lns get "case $ARG in
+        \"foo bar\")
+           Foo=0
+           ;;
+        baz | quux)
+           Foo=1
+           ;;
+esac\n" =
+    { "@case" = "$ARG"
+      { "@case_entry" = "\"foo bar\""
+        { "Foo" = "0" }
+      }
+      { "@case_entry" = "baz | quux"
+        { "Foo" = "1" }
+      }
+    }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
