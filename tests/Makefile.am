@@ -148,6 +148,7 @@ lens_tests =			\
   lens-protocols.sh    \
   lens-puppet.sh		\
   lens-puppet_auth.sh		\
+  lens-puppetfile.sh		\
   lens-puppetfileserver.sh		\
   lens-pythonpaste.sh	\
   lens-qpid.sh		\
