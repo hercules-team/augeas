@@ -233,6 +233,7 @@ Group: Tests and Examples  {
    File: Test_Lightdm  (tests/test_lightdm.aug)
    File: Test_LVM  (tests/test_lvm.aug)
    File: Test_Mailscanner  (tests/test_mailscanner.aug)
+   File: Test_Mailscanner_Rules  (tests/test_mailscanner_rules.aug)
    File: Test_MCollective  (tests/test_mcollective.aug)
    File: Test_Memcached  (tests/test_memcached.aug)
    File: Test_MongoDBServer  (tests/test_mongodbserver.aug)
