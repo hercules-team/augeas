@@ -28,7 +28,7 @@ let sep = IniFile.sep "=" "="
 
 let eol = Util.eol
 
-let entry_re = ( /[A-Za-z][:#A-Za-z0-9._-]+/)
+let entry_re = ( /[A-Za-z][:#A-Za-z0-9._-]+|\*/)
 
 (************************************************************************
  * Group:                       ENTRY
