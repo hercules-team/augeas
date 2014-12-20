@@ -35,7 +35,7 @@ let plugins_kw = /plugins/
 
 let debug_kw = /debug/
 
-let normal_opts = entry_re - debug_kw
+let normal_opts = entry_re - (debug_kw|plugins_kw)
 
 let del_opt_ws =  del /[\t ]*/ ""
 
@@ -53,7 +53,7 @@ let set_option = Util.del_str "set "
 let no_inline_comment_entry (kw:regexp) (sep:lens) (comment:lens) =
                          [ set_option . key debug_kw . sep . IniFile.sto_to_eol . eol ]
                          | [ key plugins_kw . plugins_multiline . eol]
-                         | [ key kw . sep . IniFile.sto_to_eol . eol ]
+                         | [ key kw . sep . IniFile.sto_to_eol? . eol ]
                          | comment
 
 let entry   = no_inline_comment_entry normal_opts sep comment
