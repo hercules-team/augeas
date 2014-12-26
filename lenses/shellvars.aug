@@ -149,7 +149,8 @@ module Shellvars =
 
   (* Command *)
   let rec command =
-       let reserved_key = /exit|shift|return|ulimit|unset|export|source|\.|if|for|select|while|until|then|else|fi|done|case|eval|alias/
+       let env = [ key key_re . eq . store anyquot . Sep.cl_or_space ]
+    in let reserved_key = /exit|shift|return|ulimit|unset|export|source|\.|if|for|select|while|until|then|else|fi|done|case|eval|alias/
     in let word = /[A-Za-z0-9_.-\/]+/
     in let entry_eol = entry_eol_nocommand | entry_eol_item command
     in let entry_noeol = entry_noeol_nocommand | entry_item command
@@ -157,7 +158,7 @@ module Shellvars =
     in let pipe = action_pipe (entry_eol_item command | entry_item command)
     in let and = action_and entry
     in let or = action_or entry
-    in Util.indent . label "@command" . store (word - reserved_key)
+    in Util.indent . label "@command" . env* . store (word - reserved_key)
      . [ Sep.cl_or_space . label "@arg" . sto_to_semicol]?
      . ( pipe | and | or )?
 
