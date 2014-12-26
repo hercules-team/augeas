@@ -672,6 +672,13 @@ test Shellvars.lns get "cat /etc/issue | grep -q \"Debian\" && echo moo || echo 
               { "@command" = "echo"
                 { "@arg" = "baa" } } } } } } } }
 
+(* Command-specific environment variables *)
+test Shellvars.lns get "abc=def \\\n  ghi=\"jkl mno\" command arg1 arg2\n" =
+  { "@command" = "command"
+    { "abc" = "def" }
+    { "ghi" = "\"jkl mno\"" }
+    { "@arg" = "arg1 arg2" }
+  }
 
 (* Wrapped command sequences *)
 
