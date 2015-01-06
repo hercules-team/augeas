@@ -315,3 +315,14 @@ test Sudoers.spec get "%GrOup ALL = (ALL) ALL\n" =
         { "runas_user" = "ALL" } }
     }
   }
+
+(* Test: Sudoers.spec
+     allow + in user-/groupnames *)
+test Sudoers.spec get "group+user somehost = ALL\n" =
+  { "spec"
+    { "user" = "group+user" }
+    { "host_group"
+      { "host" = "somehost" }
+      { "command" = "ALL" }
+    }
+  }
