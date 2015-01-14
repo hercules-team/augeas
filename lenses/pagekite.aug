@@ -1,5 +1,5 @@
 (*
-Module: Hostname
+Module: Pagekite
   Parses /etc/pagekite.d/
 
 Author: Michael Pimmer <blubb@fonfon.at>
@@ -16,6 +16,7 @@ autoload xfm
 (* Variables *)
 let equals = del /[ \t]*=[ \t]*/ "="
 let neg2 = /[^# \n\t]+/
+let neg3 = /[^# \:\n\t]+/
 let eol = del /\n/ "\n"
 (* Match everything from here to eol, cropping whitespace at both ends *)
 let to_eol  = /[^ \t\n](.*[^ \t\n])?/
@@ -44,14 +45,16 @@ let kv_frontend = Build.key_value_line ( "kitename" | "fe_certname" |
                                          "ca_certs" | "tls_endpoint" ) 
                                        equals (store Rx.neg1)
 
-(* entries for 80_*.rc *)
+(* entries for services like 80_httpd.rc *)
 let service_colon = del /[ \t]*:[ \t]*/ " : "
-let store_domain = store /[^: \t\n]+:[^: \t\n]+/
 let service_on = [ key "service_on" . [ seq "service_on" . equals .
-                   [ label "source" . store_domain ] . service_colon .
-                   [label "destination" . store_domain] . service_colon . (
-                     [ label "secret" . store Rx.no_spaces . Util.eol ] | eol
+                   [ label "protocol" . store neg3 ] . service_colon .
+                   [ label "kitename" . (store neg3) ] . service_colon .
+                   [ label "backend_host" . (store neg3) ] . service_colon .
+                   [ label "backend_port" . (store neg3) ] . service_colon . (
+                     [ label "secret" . (store Rx.no_spaces) . Util.eol ] | eol
                    ) ] ]
+
 let service_cfg = [ key "service_cfg" . equals . store to_eol . eol ]
 
 let flags = ( "defaults" | "isfrontend" | "abort_not_configured" | "insecure" )

@@ -64,21 +64,27 @@ test Pagekite.lns get conf_service =
   {  }
   { "service_on"
     { "1"
-      { "source" = "raw/22:@kitename" }
-      { "destination" = "localhost:22" }
+      { "protocol" = "raw/22" }
+      { "kitename" = "@kitename" }
+      { "backend_host" = "localhost" }
+      { "backend_port" = "22" }
       { "secret" = "@kitesecret" }
     }
   }
   { "service_on"
     { "2"
-      { "source" = "http:192.168.0.1" }
-      { "destination" = "127.0.0.1:80" }
+      { "protocol" = "http" }
+      { "kitename" = "192.168.0.1" }
+      { "backend_host" = "127.0.0.1" }
+      { "backend_port" = "80" }
     }
   }
   { "service_on"
     { "3"
-      { "source" = "https:yourhostname,fqdn" }
-      { "destination" = "127.0.0.1:443" }
+      { "protocol" = "https" }
+      { "kitename" = "yourhostname,fqdn" }
+      { "backend_host" = "127.0.0.1" }
+      { "backend_port" = "443" }
     }
   }
 
