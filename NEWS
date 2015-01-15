@@ -20,6 +20,8 @@
              allow semicolons inside double quoted strings in
              simple directives, and allow simple directives without
              an argument (Issue #566)
+    * Redis: accept the 'bind' statement with multiple IP addresses
+             (yannh) (Issue #194)
     * Rsyslog: support include() directive introduced in rsyslog 8.33
     * Systemd: do not try to treat *.d or *.wants directories as
                configuration files (Issue #548)
