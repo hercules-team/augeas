@@ -150,7 +150,9 @@ test Redis.lns get redis_conf =
   { "#comment" = "If you want you can bind a single interface, if the bind option is not" }
   { "#comment" = "specified all the interfaces will listen for incoming connections." }
   { }
-  { "bind" = "127.0.0.1" }
+  { "bind"
+  { "1" = "127.0.0.1" }
+  }
   { }
   { "#comment" = "Note: you can disable saving at all commenting all the \"save\" lines." }
   { }
@@ -179,3 +181,12 @@ test Redis.lns get redis_conf =
      Empty value (GH issue #115) *)
 test Redis.lns get "notify-keyspace-events \"\"\n" =
   { "notify-keyspace-events" = "" }
+
+(* Test: Redis.lns
+     Multiple bind IP addresses (GH issue #194) *)
+test Redis.lns get "bind 127.0.0.1 \"::1\" 192.168.1.1\n" =
+  { "bind"
+  { "1" = "127.0.0.1" }
+  { "2" = "::1" }
+  { "3" = "192.168.1.1" }
+  }
