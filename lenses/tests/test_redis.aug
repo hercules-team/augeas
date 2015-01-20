@@ -184,7 +184,7 @@ test Redis.lns get "notify-keyspace-events \"\"\n" =
 
 (* Test: Redis.lns
      Multiple bind IP addresses (GH issue #194) *)
-test Redis.lns get "bind 127.0.0.1 ::1 192.168.1.1\n" =
+test Redis.lns get "bind 127.0.0.1 \"::1\" 192.168.1.1\n" =
   { "bind"
   { "1" = "127.0.0.1" }
   { "2" = "::1" }

@@ -86,7 +86,7 @@ let slaveof_entry = [ indent . key slaveof . del_ws_spc . ip . del_ws_spc . port
 The "bind" entry can be passed one or several ip addresses
 *)
 let bind = /bind/
-let bind_entry = [ indent . key bind . [ seq "bind_ip" . del_ws_spc . store Rx.ip ]+ . eol ]
+let bind_entry = [ indent . key bind . [ seq "bind_ip" . del_ws_spc . Quote.do_quote_opt_nil (store Rx.ip) ]+ . eol ]
 
 let renamecmd = /rename-command/
 let from = [ label "from" . Quote.do_quote_opt_nil (store Rx.word) ]
