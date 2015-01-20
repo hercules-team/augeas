@@ -55,7 +55,7 @@ redis-server.
 let standard_entry =
      let reserved_k = "save" | "rename-command" | "slaveof"
                     | "bind" | "client-output-buffer-limit"
-  in let entry_noempty = [ indent . key (k -reserved_k) . del_ws_spc
+  in let entry_noempty = [ indent . key (k - reserved_k) . del_ws_spc
                          . Quote.do_quote_opt_nil (store v) . eol ]
   in let entry_empty = [ indent . key (k - reserved_k) . del_ws_spc
                          . dquote . store "" . dquote . eol ]
