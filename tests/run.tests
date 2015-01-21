@@ -440,13 +440,13 @@ test set-escaped-path-bracket 2
   set /white\ space/\[section value
   print /white\ space/\[section
 prints
-  /white space/[section = "value"
+  /white\ space/\[section = "value"
 
 test set-squote-escaped-bracket 2
   set '/augeas/\[section' value
   print '/augeas/\[section'
 prints
-  /augeas/[section = "value"
+  /augeas/\[section = "value"
 
 test set-squote-escaped-path 2
   set '/white\ space' value
