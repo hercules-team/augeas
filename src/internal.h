@@ -575,6 +575,16 @@ void pathx_symtab_remove_descendants(struct pathx_symtab *symtab,
                                      const struct tree *tree);
 void free_symtab(struct pathx_symtab *symtab);
 
+/* Escape a name so that it is safe to pass to parse_name and have it
+ * interpreted as the literal name of a path component.
+ *
+ * On return, *OUT will be NULL if IN does not need escaping, otherwise it
+ * will contain an escaped copy of IN which the caller must free.
+ *
+ * Returns -1 if it failed to allocate memory for *OUT, 0 on success
+ */
+int pathx_escape_name(const char *in, char **out);
+
 /* Debug helpers, all defined in internal.c. When ENABLE_DEBUG is not
  * set, they compile to nothing.
  */

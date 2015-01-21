@@ -1616,6 +1616,33 @@ static void push_new_binary_op(enum binary_op op, struct state *state) {
     push_expr(expr, state);
 }
 
+int pathx_escape_name(const char *in, char **out) {
+    const char *p;
+    int num_to_escape = 0;
+    char *s;
+
+    *out = NULL;
+
+    for (p = in; *p; p++) {
+        if (strchr(name_follow, *p) || isspace(*p))
+            num_to_escape += 1;
+    }
+
+    if (num_to_escape == 0)
+        return 0;
+
+    if (ALLOC_N(*out, strlen(in) + num_to_escape + 1) < 0)
+        return -1;
+
+    for (p = in, s = *out; *p; p++) {
+        if (strchr(name_follow, *p) || isspace(*p))
+            *s++ = '\\';
+        *s++ = *p;
+    }
+    *s = '\0';
+    return 0;
+}
+
 /*
  * NameNoWS ::= [^][|/\= \t\n] | \\.
  * NameWS   ::= [^][|/\=] | \\.
