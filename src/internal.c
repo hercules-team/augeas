@@ -359,6 +359,9 @@ char *path_expand(struct tree *tree, const char *ppath) {
         label = tree->label;
 
     r = pathx_escape_name(label, &escaped);
+    if (r < 0)
+        return NULL;
+
     if (escaped != NULL)
         label = escaped;
 

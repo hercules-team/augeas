@@ -370,6 +370,23 @@ int aug_text_retrieve(struct augeas *aug, const char *lens,
                       const char *node_in, const char *path,
                       const char *node_out);
 
+/* Function: aug_escape_name
+ *
+ * Escape special characters in a string such that it can be used as part
+ * of a path expressions and only matches a node named exactly
+ * IN. Characters that have special meanings in path expressions, such as
+ * '[' and ']' are prefixed with a '\\'. Note that this function assumes
+ * that it is passed a name, not a path, and will therefore escape '/',
+ * too.
+ *
+ * On return, *OUT is NULL if IN does not need any escaping at all, and
+ * points to an escaped copy of IN otherwise.
+ *
+ * Returns:
+ * 0 on success, or a negative value on failure
+ */
+int aug_escape_name(augeas *aug, const char *in, char **out);
+
 /* Function: aug_print
  *
  * Print each node matching PATH and its descendants to OUT.
