@@ -1330,21 +1330,34 @@ int text_retrieve(struct augeas *aug, const char *lens_name,
 }
 
 int remove_file(struct augeas *aug, struct tree *tree) {
-    char *path = NULL;
-    const char *filename = NULL;
     const char *err_status = NULL;
     char *dyn_err_status = NULL;
     char *augsave = NULL, *augorig = NULL, *augorig_canon = NULL;
+    struct tree *path = NULL;
+    const char *file_path = NULL;
+    char *meta_path = NULL;
     int r;
 
-    path = path_of_tree(tree);
+    path = tree_child(tree, s_path);
     if (path == NULL) {
+        err_status = "no child called 'path' for file entry";
+        goto error;
+    }
+    file_path = path->value + strlen(AUGEAS_FILES_TREE);
+    path = NULL;
+
+    if (file_path == NULL) {
+        err_status = "no path for file";
+        goto error;
+    }
+
+    meta_path = path_of_tree(tree);
+    if (meta_path == NULL) {
         err_status = "path_of_tree";
         goto error;
     }
-    filename = path + strlen(AUGEAS_META_FILES);
 
-    if ((augorig = strappend(aug->root, filename + 1)) == NULL) {
+    if ((augorig = strappend(aug->root, file_path)) == NULL) {
         err_status = "root_file";
         goto error;
     }
@@ -1359,7 +1372,7 @@ int remove_file(struct augeas *aug, struct tree *tree) {
         }
     }
 
-    r = file_saved_event(aug, path + strlen(AUGEAS_META_TREE));
+    r = file_saved_event(aug, meta_path + strlen(AUGEAS_META_TREE));
     if (r < 0) {
         err_status = "saved_event";
         goto error;
@@ -1389,9 +1402,10 @@ int remove_file(struct augeas *aug, struct tree *tree) {
             goto error;
         }
     }
+    path = NULL;
     tree_unlink(aug, tree);
  done:
-    free(path);
+    free(meta_path);
     free(augorig);
     free(augorig_canon);
     free(augsave);
@@ -1400,9 +1414,9 @@ int remove_file(struct augeas *aug, struct tree *tree) {
     {
         const char *emsg =
             dyn_err_status == NULL ? err_status : dyn_err_status;
-        store_error(aug, filename, path, emsg, errno, NULL, NULL);
+        store_error(aug, file_path, meta_path, emsg, errno, NULL, NULL);
     }
-    free(path);
+    free(meta_path);
     free(augorig);
     free(augorig_canon);
     free(augsave);
