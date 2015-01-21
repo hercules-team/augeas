@@ -33,7 +33,7 @@ elif [[ "x$1" == "xvalgrind" ]] ; then
     libtool --mode=execute valgrind --leak-check=full ./augtool --nostdinc < $AUGCMDS
 elif [[ "x$1" == "xcli" ]] ; then
     shift
-    ./augtool --nostdinc "$@"
+    exec ./augtool --nostdinc "$@"
 else
     ./augtool --nostdinc "$@" < $AUGCMDS
     echo
