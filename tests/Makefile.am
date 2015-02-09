@@ -42,6 +42,7 @@ lens_tests =			\
   lens-cgrules.sh  		\
   lens-channels.sh  		\
   lens-chrony.sh  		\
+  lens-clamav.sh        \
   lens-cobblersettings.sh	\
   lens-cobblermodules.sh	\
   lens-collectd.sh	\
@@ -104,6 +105,7 @@ lens_tests =			\
   lens-logwatch.sh		\
   lens-lokkit.sh		\
   lens-lvm.sh			\
+  lens-mailscanner.sh   \
   lens-mcollective.sh 	\
   lens-mdadm_conf.sh	\
   lens-memcached.sh		\
@@ -136,6 +138,7 @@ lens_tests =			\
   lens-passwd.sh		\
   lens-pbuilder.sh		\
   lens-pg_hba.sh		\
+  lens-pgbouncer.sh     \
   lens-php.sh			\
   lens-phpvars.sh		\
   lens-postfix_access.sh \
@@ -150,6 +153,7 @@ lens_tests =			\
   lens-puppet_auth.sh		\
   lens-puppetfile.sh		\
   lens-puppetfileserver.sh		\
+  lens-pylonspaste.sh   \
   lens-pythonpaste.sh	\
   lens-qpid.sh		\
   lens-quote.sh		\
