@@ -1,4 +1,4 @@
-module Test_exports = 
+module Test_exports =
 
 let s = "/local 172.31.0.0/16(rw,sync) \t
 
@@ -9,6 +9,7 @@ let s = "/local 172.31.0.0/16(rw,sync) \t
 /local3 some-host(rw,sync)
 /local3 an-other-host(rw,sync)
 /local4 2000:123:456::/64(rw)
+/local5 somehost-[01](rw)
 "
 
 test Exports.lns get s =
@@ -46,4 +47,7 @@ test Exports.lns get s =
           { "option" = "sync" } } }
   { "dir" = "/local4"
       { "client" = "2000:123:456::/64"
+          { "option" = "rw" } } }
+  { "dir" = "/local5"
+      { "client" = "somehost-[01]"
           { "option" = "rw" } } }

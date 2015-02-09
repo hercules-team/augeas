@@ -470,6 +470,25 @@ esac\n" =
       { "@case_entry" = "1"
         { "TestVar" = "\"test1\"" } } }
 
+  (* case: support ;; on the same line with multiple commands *)
+  test lns get "case $ARG in
+        0) Foo=0; Bar=1;;
+        1)
+	   Foo=2
+	   Bar=3; Baz=4;;
+esac\n" =
+    { "@case" = "$ARG"
+      { "@case_entry" = "0"
+        { "Foo" = "0" }
+        { "Bar" = "1" }
+      }
+      { "@case_entry" = "1"
+        { "Foo" = "2" }
+        { "Bar" = "3" }
+        { "Baz" = "4" }
+      }
+    }
+
 (* Test: Shellvars.lns
      Support `##` bashism in conditions (GH issue #118) *)
 test Shellvars.lns get "if [ \"${APACHE_CONFDIR##/etc/apache2-}\" != \"${APACHE_CONFDIR}\" ] ; then

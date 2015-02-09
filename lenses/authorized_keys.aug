@@ -33,7 +33,9 @@ let option =
   in let flag_re = "cert-authority" | "no-agent-forwarding"
                  | "no-port-forwarding" | "no-pty" | "no-user-rc"
                  | "no-X11-forwarding"
-  in let option_value = Util.del_str "\"" . store /[^\n"]+/ . Util.del_str "\""
+  in let option_value = Util.del_str "\""
+                      . store /((\\\\")?[^\\\n"]*)+/
+                      . Util.del_str "\""
   in Build.key_value kv_re Sep.equal option_value
    | Build.flag flag_re
 

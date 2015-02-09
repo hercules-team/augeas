@@ -115,3 +115,14 @@ test Authorized_Keys.lns get options =
     }
     { "type" = "ssh-dsa" }
   }
+
+(* Test: Authorized_keys.lns
+     GH 165 *)
+test Authorized_keys.lns get "command=\"echo 'Please login as the user \\\"blaauser\\\" rather than the user \\\"root\\\".';echo;sleep 10\" ssh-rsa DEADBEEF== username1\n" =
+  { "key" = "DEADBEEF=="
+    { "options"
+      { "command" = "echo 'Please login as the user \\\"blaauser\\\" rather than the user \\\"root\\\".';echo;sleep 10" }
+    }
+    { "type" = "ssh-rsa" }
+    { "comment" = "username1" }
+  }

@@ -20,8 +20,10 @@ let eol     = Util.eol
 
 let url_entry    = /\/[\/A-Za-z0-9.-_]* ?[:|=] [A-Za-z0-9.-_]+/
 
+let set_kw = [ Util.del_str "set" . Util.del_ws_spc . label "@set" ]
+
 let no_inline_comment_entry (kw:regexp) (sep:lens) (comment:lens)
-                       = [ key kw . sep . IniFile.sto_to_eol? . eol ]
+                       = [ set_kw? . key kw . sep . IniFile.sto_to_eol? . eol ]
                          | comment
                          | [ seq "urls" . store url_entry . eol ]
 

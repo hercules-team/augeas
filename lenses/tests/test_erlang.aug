@@ -51,13 +51,33 @@ test tuple_bare get "{foo, bar}" =
 
 (* Group: application *)
 
-let list_bare_app = Erlang.application Rx.word list_bare
+let list_bare_app = Erlang.application (Rx.word - "kernel") list_bare
 
 test list_bare_app get "{foo, [{bar, [baz, bat]}]}" =
   { "foo"
     { "bar"
       { "value" = "baz" }
       { "value" = "bat" } } }
+
+(* no settings *)
+test list_bare_app get "{foo, []}" =
+  { "foo" }
+
+(* Group: kernel *)
+
+test Erlang.kernel get "{kernel, [
+  {browser_cmd, \"/foo/bar\"},
+  {dist_auto_connect, once},
+  {error_logger, tty},
+  {net_setuptime, 5},
+  {start_dist_ac, true}
+]}" =
+  { "kernel"
+    { "browser_cmd" = "/foo/bar" }
+    { "dist_auto_connect" = "once" }
+    { "error_logger" = "tty" }
+    { "net_setuptime" = "5" }
+    { "start_dist_ac" = "true" } }
 
 (* Group: config *)
 
@@ -76,3 +96,14 @@ test list_bare_config get "[
       { "value" = "gaz" }
       { "value" = "gat" } } }
 
+(* Test Erlang's kernel app config is parsed *)
+test list_bare_config get "[
+  {foo, [{bar, [baz, bat]}]},
+  {kernel, [{start_timer, true}]}
+  ].\n" =
+  { "foo"
+    { "bar"
+      { "value" = "baz" }
+      { "value" = "bat" } } }
+  { "kernel"
+    { "start_timer" = "true" } }

@@ -1,3 +1,9 @@
+1.4.0 - 2015-XX-XX
+  - Lens changes/additions
+    * Dnsmasq: Parse the structure of the 'address' and 'server' options
+               (incompatible change) (Kaarle Ritvanen)
+    * Sudoers: allow '+' in user/groupnames (Andreas Grüninger)
+
 1.3.0 - 2014-11-07
   - General changes/additions
     * Add missing cp entry in manpage (GH issue #78)

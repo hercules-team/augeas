@@ -24,6 +24,9 @@ module Erlang =
 
 (* Group: Spacing Functions *)
 
+(* View: space *)
+let space = del /[ \t\n]*/ ""
+
 (* View: lspace
      Add spaces to the left of char *)
 let lspace (char:string) = del (/[ \t\n]*/ . char) char
@@ -72,8 +75,8 @@ let comma = ","
 (* View: opt_list
      An optional list of elements, in square brackets *)
 let opt_list (lns:lens) = rspace lbrack
-                        . Build.opt_list lns (lrspace comma)
-                        . lspace rbrack
+                        . (Build.opt_list lns (lrspace comma) . space)?
+                        . Util.del_str rbrack
 
 (* View: integer
      Store a <Rx.integer> *)
@@ -119,7 +122,7 @@ let value (kw:regexp) (sto:lens) =
   . sto
   . lspace rbrace ]
 
-(* View: value
+(* View: tuple
      A tuple of values *)
 let tuple (one:lens) (two:lens) =
   [ rspace lbrace
@@ -147,6 +150,26 @@ let value_list (kw:regexp) (sto:lens) =
 let application (name:regexp) (parameter:lens) =
   list name parameter
 
+(* View: kernel_parameters
+     Config parameters accepted for kernel app *)
+let kernel_parameters =
+    value "browser_cmd" path
+  | value "dist_auto_connect" (store /never|once/)
+  | value "error_logger" (store /tty|false|silent/)
+  | value "net_setuptime" integer
+  | value "net_ticktime" integer
+  | value "shutdown_timeout" integer
+  | value "sync_nodes_timeout" integer
+  | value "start_dist_ac" boolean
+  | value "start_boot_server" boolean
+  | value "start_disk_log" boolean
+  | value "start_pg2" boolean
+  | value "start_timer" boolean
+
+(* View: kernel
+     Core Erlang kernel app configuration *)
+let kernel = application "kernel" kernel_parameters
+
 (* View: comment *)
 let comment = Util.comment_generic /%[ \t]*/ "% "
 
@@ -155,7 +178,7 @@ let comment = Util.comment_generic /%[ \t]*/ "% "
 let config (app:lens) =
     (Util.empty | comment)*
   . rspace lbrack
-  . Build.opt_list app (lrspace comma)
+  . Build.opt_list (kernel | app) (lrspace comma)
   . lrspace rbrack
   . Util.del_str "." . Util.eol
   . (Util.empty | comment)*

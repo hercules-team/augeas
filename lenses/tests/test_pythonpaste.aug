@@ -39,3 +39,20 @@ use = egg:Paste#urlmap
 /: public_version_api
 /v3: a_new_api_version
 "
+
+    (* Paste can define global config in DEFAULT, then override with "set" in sections, RHBZ#1175545 *)
+    test PythonPaste.lns get "[DEFAULT]
+log_name = swift
+log_facility = LOG_LOCAL1
+
+[app:proxy-server]
+use = egg:swift#proxy
+set log_name = proxy-server\n" =
+      { "DEFAULT"
+        { "log_name" = "swift" }
+        { "log_facility" = "LOG_LOCAL1" }
+        {  } }
+      { "app:proxy-server"
+        { "use" = "egg:swift#proxy" }
+        { "log_name" = "proxy-server"
+          { "@set" } } }
