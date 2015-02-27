@@ -9,6 +9,7 @@
       strings returned by aug_match can always be fed to aug_get, even if
       they contain special characters
   - Lens changes/additions
+    * Dns_Zone: New lens to parse DNS zone files (Kaarle Ritvanen)
     * Dnsmasq: Parse the structure of the 'address' and 'server' options
                (incompatible change) (Kaarle Ritvanen)
     * Sudoers: allow '+' in user/groupnames (Andreas Grüninger)
