@@ -20,6 +20,7 @@ lens_tests =			\
   lens-access.sh		\
   lens-activemq_conf.sh		\
   lens-activemq_xml.sh		\
+  lens-afs_cellalias.sh			\
   lens-aliases.sh		\
   lens-anacron.sh		\
   lens-approx.sh		\
