@@ -10,6 +10,7 @@
       they contain special characters
   - Lens changes/additions
     * AFS_Cellalias: new lens (Pat Riehecky)
+    * Dns_Zone: New lens to parse DNS zone files (Kaarle Ritvanen)
     * Dnsmasq: Parse the structure of the 'address' and 'server' options
                (incompatible change) (Kaarle Ritvanen)
     * Iscsid: new lens (Joey Boggs and Pat Riehecky) (Issue #174)
