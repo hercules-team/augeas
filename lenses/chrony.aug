@@ -112,7 +112,7 @@ module Chrony =
     (* Variable: log_flags
         log has a specific options list
     *)
-    let log_flags = /measurments|statistics|tracking|rtc|refclocks|tempcomp/
+    let log_flags = /measurements|statistics|tracking|rtc|refclocks|tempcomp/
 
     (* Variable: simple_keys
          Options with single values
