@@ -1,9 +1,9 @@
 (*
-Module: Test_AFS
-  Provides unit tests and examples for the <AFS> lens.
+Module: Test_AFS_cellalias
+  Provides unit tests and examples for the <AFS_cellalias> lens.
 *)
 
-module Test_AFS =
+module Test_AFS_cellalias =
 
 (* Variable: conf
     A full configuration *)
@@ -21,9 +21,9 @@ fnal.gov fnal
 fnal.gov/files fnal-files
 "
 
-(* Test: AFS.lns
+(* Test: AFS_cellalias.lns
      Test the full <conf> *)
-test AFS.lns get conf = { "#comment" = "Cell Aliases are meant to act like symlinks like '/afs/openafs.org -> oao'" }
+test AFS_cellalias.lns get conf = { "#comment" = "Cell Aliases are meant to act like symlinks like '/afs/openafs.org -> oao'" }
   { "#comment" = "in root.afs, so sites relying on such a link for their cell can use dynroot." }
   { "#comment" = "These aliases are set with 'fs newalias', or read from" }
   { "#comment" = "/usr/vice/etc/CellAlias" }
