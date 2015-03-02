@@ -35,7 +35,7 @@ generatecommandkey
 noclientlog
 logchange 0.5
 logdir /var/log/chrony
-log rtc
+log rtc measurements
 leapsectz right/UTC
 broadcast 10 192.168.1.255
 broadcast 10 192.168.100.255 123
@@ -102,6 +102,7 @@ initstepslew 30 foo.bar.com baz.quz.com
   { "logdir" = "/var/log/chrony" }
   { "log"
     { "rtc" }
+    { "measurements" }
   }
   { "leapsectz" = "right/UTC" }
   { "broadcast"
