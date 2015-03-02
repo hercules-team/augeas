@@ -148,6 +148,15 @@ unset ONBOOT    #   We do not want this var
   test lns get "#MOUNTD_NFS_V3\n#\n" =
     { "#comment" = "MOUNTD_NFS_V3" }
 
+  (* Handle leading whitespace at the beginning of a line correctly *)
+  test lns get " var=value\n" = { "var" = "value" }
+
+  test lns put " var=value\n" after set "/var" "val2" = " var=val2\n"
+
+  test lns get "\t \tvar=value\n" = { "var" = "value" }
+
+  test lns get "  export var=value\n" = { "var" = "value" { "export" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

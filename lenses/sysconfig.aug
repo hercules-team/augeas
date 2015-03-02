@@ -46,8 +46,10 @@ module Sysconfig =
     let word = char* . "\"" . char* in
     Quote.do_squote (store word+)
 
-  let export = Shellvars.export
-  let kv (value:lens) = [ export? . key key_re . eq . value . comment_or_eol ]
+  let kv (value:lens) =
+    let export = Shellvars.export in
+    let indent = Util.del_opt_ws "" in
+    [ indent . export? . key key_re . eq . value . comment_or_eol ]
 
   let assign =
     let nothing = del /(""|'')?/ "" . value "" in
