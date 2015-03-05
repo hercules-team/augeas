@@ -406,7 +406,6 @@ esac\n" =
 
   (* Empty comment before entries *)
   test Shellvars.lns get "# \nfoo=bar\n" =
-  { }
   { "foo" = "bar" }
 
   (* Empty comment after entries *)
@@ -507,6 +506,31 @@ fi\n" =
   test lns get "export MALLOC_PERTURB_=$(($RANDOM % 255 + 1))\n" =
     { "MALLOC_PERTURB_" = "$(($RANDOM % 255 + 1))"
       { "export" } }
+
+  (*
+   * Github issue 202
+   *)
+  let starts_with_blank = "\n  \nVAR=value\n"
+
+  test lns get starts_with_blank = { "VAR" = "value" }
+
+  (* It is now possible to insert at the beginning of a file
+   * that starts with blank lines *)
+  test lns put starts_with_blank after
+    insb "#comment" "/*[1]";
+    set "/#comment[1]" "a comment" =
+    " # a comment\nVAR=value\n"
+
+  (* Modifications of the file lose the blank lines though *)
+  test lns put starts_with_blank after
+    set "/VAR2" "abc" = "VAR=value\nVAR2=abc\n"
+
+  test lns put starts_with_blank after
+    rm "/VAR";
+    set "/VAR2" "abc" = "VAR2=abc\n"
+
+  test lns put starts_with_blank after
+    rm "/VAR"         = ""
 
 (* Local Variables: *)
 (* mode: caml       *)

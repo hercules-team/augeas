@@ -13,6 +13,9 @@ About: Lens Usage
 module Shellvars =
   autoload xfm
 
+  (* Delete a blank line, rather than mapping it *)
+  let del_empty = del (Util.empty_generic_re . "\n") "\n"
+
   let empty   = Util.empty
   let empty_part_re = Util.empty_generic_re . /\n+/
   let eol = del (/[ \t]+|[ \t]*[;\n]/ . empty_part_re*) "\n"
@@ -186,9 +189,9 @@ module Shellvars =
       | case entry entry_noeol
       | function entry
 
-  let lns_norec = empty* . (comment | entry_eol) *
+  let lns_norec = del_empty* . (comment | entry_eol) *
 
-  let lns = empty* . (comment | entry_eol | rec_entry) *
+  let lns = del_empty* . (comment | entry_eol | rec_entry) *
 
   let sc_incl (n:string) = (incl ("/etc/sysconfig/" . n))
   let sc_excl (n:string) = (excl ("/etc/sysconfig/" . n))

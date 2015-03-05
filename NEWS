@@ -11,6 +11,10 @@
   - Lens changes/additions
     * Dnsmasq: Parse the structure of the 'address' and 'server' options
                (incompatible change) (Kaarle Ritvanen)
+    * Shellvars: make insertion at the beginning of a file that starts with
+                 blank lines work; the new lens will remove blank lines
+                 from the beginning of a file as soon as lines are added to
+                 or removed from it (GH issue #202)
     * Sudoers: allow '+' in user/groupnames (Andreas Grüninger)
     * Sysconfig: handle leading whitespace at beginning of a line, RHBZ#761246
 
