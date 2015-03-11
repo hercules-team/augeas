@@ -86,6 +86,7 @@ lens_tests =			\
   lens-interfaces.sh		\
   lens-iptables.sh		\
   lens-iproute2.sh		\
+  lens-iscsid.sh		\
   lens-jettyrealm.sh		\
   lens-jmxaccess.sh		\
   lens-jmxpassword.sh		\

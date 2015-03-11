@@ -11,6 +11,7 @@
   - Lens changes/additions
     * Dnsmasq: Parse the structure of the 'address' and 'server' options
                (incompatible change) (Kaarle Ritvanen)
+    * Iscsid: new lens (Joey Boggs and Pat Riehecky) (Issue #174)
     * Logrotate: support 'dateformat' directive (Issue #217)
     * Postfix_sasl_smtpd: new lens contributed by larsen0815 (Issue #182)
     * Shellvars: make insertion at the beginning of a file that starts with
