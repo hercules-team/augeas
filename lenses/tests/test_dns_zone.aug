@@ -353,3 +353,32 @@ bar TXT \"ab cd\\\\ef\\\"gh\"
   { "$ORIGIN" = "example.com." }
   { "foo" { "1" { "type" = "TXT" } { "rdata" = "abc\\\\def\\\"ghi" } } }
   { "bar" { "1" { "type" = "TXT" } { "rdata" = "\"ab cd\\\\ef\\\"gh\"" } } }
+
+
+(* Whitespace at the end of the line *)
+test lns get "
+$ORIGIN example.com. \n@ IN SOA ns root.example.com. (1 2 3 4 5) \t
+foo 1D IN A 10.1.2.3\t
+" =
+  { "$ORIGIN" = "example.com." }
+  { "@"
+    { "1"
+      { "class" = "IN" }
+      { "type" = "SOA" }
+      { "mname" = "ns" }
+      { "rname" = "root.example.com." }
+      { "serial" = "1" }
+      { "refresh" = "2" }
+      { "retry" = "3" }
+      { "expiry" = "4" }
+      { "minimum" = "5" }
+    }
+  }
+  { "foo"
+    { "1"
+      { "ttl" = "1D" }
+      { "class" = "IN" }
+      { "type" = "A" }
+      { "rdata" = "10.1.2.3" }
+    }
+  }

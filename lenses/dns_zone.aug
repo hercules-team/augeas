@@ -16,8 +16,8 @@ module Dns_Zone =
 
 autoload xfm
 
-let eol = del /(([ \t\n]*;[^\n]*)?\n)+/ "\n"
-let opt_eol = del /(([ \t\n]*;[^\n]*)?\n)*/ ""
+let eol = del /([ \t\n]*(;[^\n]*)?\n)+/ "\n"
+let opt_eol = del /([ \t\n]*(;[^\n]*)?\n)*/ ""
 
 let ws = del /[ \t]+|(([ \t\n]*;[^\n]*)?\n)+[ \t]*/ " "
 let opt_ws = del /(([ \t\n]*;[^\n]*)?\n)*[ \t]*/ ""
