@@ -128,9 +128,17 @@ static const char *const axis_sep = "::";
  * encounters any of these characters, unless they are escaped by preceding
  * them with a '\\'.
  *
- * See parse_name for the gory details
+ * See parse_name for the gory details.
+ *
+ * If you change this value, you also must change NAME_ESCAPE to match
  */
 static const char const name_follow[] = "][|/=()!,";
+
+/* The characters in a name that need to be escaped. This must always
+ * contain NAME_FOLLOW and the backslash. We also include space, as there
+ * are some situations where it ends a name
+ */
+static const char const name_escape[] = "][|/=()!," "\\ ";
 
 /* Doubly linked list of location steps. Besides the information from the
  * path expression, also contains information to iterate over a node set,
@@ -1624,7 +1632,7 @@ int pathx_escape_name(const char *in, char **out) {
     *out = NULL;
 
     for (p = in; *p; p++) {
-        if (strchr(name_follow, *p) || isspace(*p))
+        if (strchr(name_escape, *p) || isspace(*p))
             num_to_escape += 1;
     }
 
@@ -1635,7 +1643,7 @@ int pathx_escape_name(const char *in, char **out) {
         return -1;
 
     for (p = in, s = *out; *p; p++) {
-        if (strchr(name_follow, *p) || isspace(*p))
+        if (strchr(name_escape, *p) || isspace(*p))
             *s++ = '\\';
         *s++ = *p;
     }
