@@ -11,7 +11,8 @@
   - Lens changes/additions
     * Dnsmasq: Parse the structure of the 'address' and 'server' options
                (incompatible change) (Kaarle Ritvanen)
-    * Postfix_sasl_smtpd: new lens contributed by larsen0815
+    * Logrotate: support 'dateformat' directive (Issue #217)
+    * Postfix_sasl_smtpd: new lens contributed by larsen0815 (Issue #182)
     * Shellvars: make insertion at the beginning of a file that starts with
                  blank lines work; the new lens will remove blank lines
                  from the beginning of a file as soon as lines are added to
