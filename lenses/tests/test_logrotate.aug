@@ -264,3 +264,9 @@ test Logrotate.lns get conf2 =
       { "file"      = "/var/log/mail.warn" }
       { "file"      = "/var/log/mail.err" }
       { "schedule"  = "weekly" } }
+
+(* Issue #217: support for dateformat *)
+let dateformat = "dateformat -%Y%m%d\n"
+
+test Logrotate.lns get dateformat =
+  { "dateformat" = "-%Y%m%d" }

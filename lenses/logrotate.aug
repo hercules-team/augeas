@@ -77,6 +77,7 @@ module Logrotate =
 		| value_to_eol "errors" word
 		| value_to_eol "extension" word
 		| select_to_eol "dateext" /(no)?dateext/
+        | value_to_eol "dateformat" word
 		| value_to_eol "compresscmd" word
 		| value_to_eol "uncompresscmd" word
 		| value_to_eol "compressext" word
