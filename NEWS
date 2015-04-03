@@ -17,6 +17,7 @@
                (incompatible change) (Kaarle Ritvanen)
     * Iscsid: new lens (Joey Boggs and Pat Riehecky) (Issue #174)
     * Logrotate: support 'dateformat' directive (Issue #217)
+                 do not require a space before an opening '{' (Issue #123)
     * Pagekite: more fine-grained control of service_on entries; instead of
                 'source' and 'destination', parse into protocol, kitename,
                 backend_host, backend_port, and secret (Michael Pimmer)

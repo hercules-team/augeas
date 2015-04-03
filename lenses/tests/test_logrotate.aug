@@ -270,3 +270,9 @@ let dateformat = "dateformat -%Y%m%d\n"
 
 test Logrotate.lns get dateformat =
   { "dateformat" = "-%Y%m%d" }
+
+(* Issue #123: no space before '{' *)
+test Logrotate.lns get "/file{\n missingok \t\n}\n" =
+  { "rule"
+    { "file" = "/file" }
+    { "missingok" = "missingok" } }
