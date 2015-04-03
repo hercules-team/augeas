@@ -145,6 +145,7 @@ lens_tests =			\
   lens-postfix_access.sh \
   lens-postfix_main.sh		\
   lens-postfix_master.sh	\
+  lens-postfix-sasl-smtpd.sh \
   lens-postfix_transport.sh	\
   lens-postfix_virtual.sh	\
   lens-postgresql.sh \
