@@ -57,38 +57,38 @@ module Logrotate =
 
    let attrs = select_to_eol "schedule" /(daily|weekly|monthly|yearly)/
                 | value_to_eol "rotate" num
-		| create
-		| flag_to_eol "nocreate"
-		| su
-		| value_to_eol "include" word
-		| select_to_eol "missingok" /(no)?missingok/
-		| select_to_eol "compress" /(no)?compress/
-		| select_to_eol "delaycompress" /(no)?delaycompress/
-		| select_to_eol "ifempty" /(not)?ifempty/
-		| select_to_eol "sharedscripts" /(no)?sharedscripts/
-		| value_to_eol "size" size
-		| tabooext
-		| value_to_eol "olddir" word
-		| flag_to_eol "noolddir"
-		| value_to_eol "mail" word
-		| flag_to_eol "mailfirst"
-		| flag_to_eol "maillast"
-		| flag_to_eol "nomail"
-		| value_to_eol "errors" word
-		| value_to_eol "extension" word
-		| select_to_eol "dateext" /(no)?dateext/
+        | create
+        | flag_to_eol "nocreate"
+        | su
+        | value_to_eol "include" word
+        | select_to_eol "missingok" /(no)?missingok/
+        | select_to_eol "compress" /(no)?compress/
+        | select_to_eol "delaycompress" /(no)?delaycompress/
+        | select_to_eol "ifempty" /(not)?ifempty/
+        | select_to_eol "sharedscripts" /(no)?sharedscripts/
+        | value_to_eol "size" size
+        | tabooext
+        | value_to_eol "olddir" word
+        | flag_to_eol "noolddir"
+        | value_to_eol "mail" word
+        | flag_to_eol "mailfirst"
+        | flag_to_eol "maillast"
+        | flag_to_eol "nomail"
+        | value_to_eol "errors" word
+        | value_to_eol "extension" word
+        | select_to_eol "dateext" /(no)?dateext/
         | value_to_eol "dateformat" word
-		| value_to_eol "compresscmd" word
-		| value_to_eol "uncompresscmd" word
-		| value_to_eol "compressext" word
-		| list_to_eol "compressoptions"
-		| select_to_eol "copy" /(no)?copy/
-		| select_to_eol "copytruncate" /(no)?copytruncate/
-		| value_to_eol "maxage" num
-		| value_to_eol "minsize" size
-		| select_to_eol "shred" /(no)?shred/
-		| value_to_eol "shredcycles" num
-		| value_to_eol "start" num
+        | value_to_eol "compresscmd" word
+        | value_to_eol "uncompresscmd" word
+        | value_to_eol "compressext" word
+        | list_to_eol "compressoptions"
+        | select_to_eol "copy" /(no)?copy/
+        | select_to_eol "copytruncate" /(no)?copytruncate/
+        | value_to_eol "maxage" num
+        | value_to_eol "minsize" size
+        | select_to_eol "shred" /(no)?shred/
+        | value_to_eol "shredcycles" num
+        | value_to_eol "start" num
 
    (* Define hooks *)
 
@@ -119,6 +119,6 @@ module Logrotate =
 
    let filter = incl "/etc/logrotate.d/*"
               . incl "/etc/logrotate.conf"
-	      . Util.stdexcl
+          . Util.stdexcl
 
    let xfm = transform lns filter
