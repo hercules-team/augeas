@@ -259,7 +259,7 @@ let block (entry:lens) = block_setdelim entry
                          block_ldelim_default block_rdelim_default
 
 (* Variable: block_ldelim_newlines_re *)
-let block_ldelim_newlines_re = /[ \t\n]+\{([ \t\n]*\n)?/
+let block_ldelim_newlines_re = /[ \t\n]*\{([ \t\n]*\n)?/
 
 (* Variable: block_rdelim_newlines_re *)
 let block_rdelim_newlines_re = /[ \t]*\}/
@@ -283,6 +283,23 @@ let block_rdelim_newlines_default = "}"
  ************************************************************************)
 let block_newlines (entry:lens) (comment:lens) =
    del block_ldelim_newlines_re block_ldelim_newlines_default
+ . ((entry | comment) . (Util.empty | entry | comment)*)?
+ . del block_rdelim_newlines_re block_rdelim_newlines_default
+
+(************************************************************************
+ * View: block_newlines_spc
+ *   A block enclosed in brackets, with newlines forced
+ *   and indentation defaulting to a tab. The opening brace
+ *   must be preceded by whitespace
+ *
+ *   Parameters:
+ *     entry:lens - the entry to be stored inside the block.
+ *                  This entry should not include <Util.empty>,
+ *                  <Util.comment> or <Util.comment_noindent>,
+ *                  should be indented and finish with an eol.
+ ************************************************************************)
+let block_newlines_spc (entry:lens) (comment:lens) =
+   del (/[ \t\n]/ . block_ldelim_newlines_re) block_ldelim_newlines_default
  . ((entry | comment) . (Util.empty | entry | comment)*)?
  . del block_rdelim_newlines_re block_rdelim_newlines_default
 
@@ -401,4 +418,3 @@ let combine_three_opt (a:lens) (b:lens) (c:lens) =
     combine_three_opt_ord a b c
   | combine_three_opt_ord b a c
   | combine_three_opt_ord c b a
-

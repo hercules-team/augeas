@@ -74,7 +74,7 @@ module Xinetd =
    *       about how to write that down. The resulting regular expressions
    *       would simply be prohibitively large.
    *)
-  let body (attr:lens) = Build.block_newlines
+  let body (attr:lens) = Build.block_newlines_spc
                             (indent . attr . Util.eol)
                             Util.comment
 

@@ -100,7 +100,7 @@ let dquote_spaces (lns1:lens) (lns2:lens) =
 let mailbox = indent
             . dquote_spaces
                (key /mailbox/ . Sep.space)
-               (Build.block_newlines (entry) comment . eol)
+               (Build.block_newlines_spc entry comment . eol)
 
 let block_ldelim_newlines_re = /[ \t]+\{([ \t\n]*\n)?/
 
