@@ -490,10 +490,12 @@ static int main_loop(void) {
                 echo_commands = true;
 
                 // reopen in stream
-                if ((rl_instream = fopen("/dev/tty", "r")) == NULL) {
+                fclose(stdin);
+                if ((stdin = fopen("/dev/tty", "r")) == NULL) {
                     perror("Failed to open terminal for reading");
                     return -1;
                 }
+                rl_instream = stdin;
 
                 // reopen stdout and stream to a tty if originally silenced or
                 // not connected to a tty, for full interactive mode
