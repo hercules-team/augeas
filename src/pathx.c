@@ -1624,7 +1624,7 @@ int pathx_escape_name(const char *in, char **out) {
     *out = NULL;
 
     for (p = in; *p; p++) {
-        if (strchr(name_follow, *p) || isspace(*p))
+        if (strchr(name_follow, *p) || isspace(*p) || *p == '\\')
             num_to_escape += 1;
     }
 
@@ -1635,7 +1635,7 @@ int pathx_escape_name(const char *in, char **out) {
         return -1;
 
     for (p = in, s = *out; *p; p++) {
-        if (strchr(name_follow, *p) || isspace(*p))
+        if (strchr(name_follow, *p) || isspace(*p) || *p == '\\')
             *s++ = '\\';
         *s++ = *p;
     }
