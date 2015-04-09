@@ -1,5 +1,11 @@
 module Test_httpd =
 
+(* Check that we can iterate on directive *)
+let _ = Httpd.directive+
+
+(* Check that we can do a non iterative section *)
+let __ = Httpd.section Httpd.directive
+
 (* directives testing *)
 let d1 = "ServerRoot \"/etc/apache2\"\n"
 test Httpd.directive get d1 =

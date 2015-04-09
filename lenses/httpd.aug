@@ -59,7 +59,7 @@ let empty               = Util.empty_dos
 let indent              = Util.indent
 
 (* borrowed from shellvars.aug *)
-let char_arg_dir  = /[^ '"\t\r\n]|\\\\"|\\\\'/
+let char_arg_dir  = /[^\\ '"\t\r\n]|\\\\"|\\\\'/
 let char_arg_sec  = /[^ '"\t\r\n>]|\\\\"|\\\\'/
 let cdot = /\\\\./
 let cl = /\\\\\n/
@@ -86,13 +86,13 @@ let directive = [ indent . label "directive" . store word .
 let section (body:lens) =
     let eol_comment = Util.comment_generic /[ \t\n]*#[ \t]*/ "# " in
     let inner = (sep_spc . argv arg_sec)? . sep_osp .
-             dels ">" . (eol|eol_comment) . (body . (body|comment)*)? .
+             dels ">" . (eol|eol_comment) . (body . (body|empty|comment)*)? .
              indent . dels "</" in
     let kword = key word in
     let dword = del word "a" in
         [ indent . dels "<" . square kword inner dword . del ">" ">" . eol ]
 
-let rec content = section (content|directive|empty)
+let rec content = section (content|directive)
 
 let lns = (content|directive|comment|empty)*
 
