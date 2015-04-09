@@ -4,6 +4,21 @@ Module: Test_Nginx
 *)
 module Test_nginx =
 
+(* Do some limited typechecking on the recursive lens; note that
+   unrolling once more leads to a typecheck error that seems to
+   be spurious, though it's not clear why
+
+   Unrolling once more amounts to adding the clause
+      Nginx.block (Nginx.block Nginx.simple)
+   to unrolled and results in an error
+      overlapping lenses in union.get
+        Example matched by both: 'upstream{}\n'
+*)
+let unrolled = Nginx.simple | Nginx.block Nginx.simple
+
+let lns_unrolled = (Util.comment | Util.empty | unrolled)
+
+(* Normal unit tests *)
 let lns = Nginx.lns
 
 let conf ="user nginx nginx;
@@ -91,3 +106,91 @@ test lns get conf =
       { "ignore_invalid_headers"      = "on" }
       { "index"      = "index.html index.php" }
       { "include"      = "vhosts/*.conf" } }
+
+(* location blocks *)
+test lns get "location / { }\n" =
+  { "location"
+    { "#uri" = "/" } }
+
+test lns get "location = / { }\n" =
+  { "location"
+      { "#comp" = "=" }
+      { "#uri" = "/" } }
+
+test lns get "location /documents/ { }\n" =
+  { "location"
+    { "#uri" = "/documents/" } }
+
+test lns get "location ^~ /images/ { }\n" =
+  { "location"
+    { "#comp" = "^~" }
+    { "#uri" = "/images/" } }
+
+test lns get "location ~* \.(gif|jpg|jpeg)$ { }\n" =
+  { "location"
+    { "#comp" = "~*" }
+    { "#uri" = "\.(gif|jpg|jpeg)$" } }
+
+test lns get "location @fallback { }\n" =
+ { "location"
+    { "#uri" = "@fallback" } }
+
+(* if blocks *)
+test lns get "if ($slow) {
+  tcp_nodelay on;
+}\n" =
+  { "if"
+    { "#cond" = "($slow)" }
+    { "tcp_nodelay" = "on" } }
+
+test lns get "if ($request_method = POST)   { }\n" =
+ { "if"
+    { "#cond" = "($request_method = POST)" } }
+
+
+test lns get "if ($http_cookie ~* \"id=([^;]+)(?:;|$)\") { }\n" =
+ { "if"
+    { "#cond" = "($http_cookie ~* \"id=([^;]+)(?:;|$)\")" } }
+
+(* geo blocks *)
+test lns get "geo $geo { }\n" =
+  { "geo"
+    { "#geo" = "$geo" } }
+
+test lns get "geo $address $geo { }\n" =
+  { "geo"
+    { "#address" = "$address" }
+    { "#geo" = "$geo" } }
+
+(* map blocks *)
+test lns get "map $http_host $name { }\n" =
+  { "map"
+    { "#source" = "$http_host" }
+    { "#variable" = "$name" } }
+
+(* split_clients block *)
+test lns get "split_clients \"${remote_addr}AAA\" $variable { }\n" =
+  { "split_clients"
+    { "#string" = "\"${remote_addr}AAA\"" }
+    { "#variable" = "$variable" } }
+
+(* upstream block *)
+test lns get "upstream backend { }\n" =
+ { "upstream"
+    { "#name" = "backend" } }
+
+(* GH #179 - recursive blocks *)
+test lns get "http {
+  server {
+    listen 80;
+    location / {
+      root\thtml;
+    }
+  }
+}\n" =
+  { "http"
+    { "server"
+       { "listen" = "80" }
+       { "location"
+         { "#uri" = "/" }
+         { "root" = "html" } } } }

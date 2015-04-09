@@ -24,6 +24,8 @@
     * Logrotate: support 'dateformat' directive (Issue #217)
                  support 'maxsize' directive (RHBZ#1213292)
                  do not require a space before an opening '{' (Issue #123)
+    * Nginx: significantly reworked, now parses entire Nginx stock
+             config successfully (Issue #179)
     * Pagekite: more fine-grained control of service_on entries; instead of
                 'source' and 'destination', parse into protocol, kitename,
                 backend_host, backend_port, and secret (Michael Pimmer)
