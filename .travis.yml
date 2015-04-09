@@ -1,6 +1,11 @@
+sudo: false
+addons:
+  apt:
+    packages:
+      - libxml2-dev
+      - libreadline-dev
+      - valgrind
 install:
-  - sudo apt-get update
-  - sudo apt-get install libxml2-dev libreadline-dev valgrind
   - ./autogen.sh
   - sed -i '41s/ENOENT/ENOENT || errno == EINVAL/' gnulib/tests/test-readlink.h
 language: c
