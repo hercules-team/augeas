@@ -410,3 +410,48 @@ test Httpd.lns get versioncheck =
       }
     }
   }
+
+
+(* GH #220 *)
+let double_comment = "<IfDefine Foo>
+##
+## Comment
+##
+</IfDefine>\n"
+
+test Httpd.lns get double_comment =
+  { "IfDefine"
+    { "arg" = "Foo" }
+    { "#comment" = "#" }
+    { "#comment" = "# Comment" }
+    { "#comment" = "#" }
+  }
+
+let single_comment = "<IfDefine Foo>
+#
+## Comment
+##
+</IfDefine>\n"
+
+test Httpd.lns get single_comment =
+  { "IfDefine"
+    { "arg" = "Foo" }
+    { "#comment" = "# Comment" }
+    { "#comment" = "#" }
+  }
+
+let single_empty = "<IfDefine Foo>
+#
+
+</IfDefine>\n"
+test Httpd.lns get single_empty =
+  { "IfDefine"
+    { "arg" = "Foo" }
+  }
+
+let eol_empty = "<IfDefine Foo> #
+</IfDefine>\n"
+test Httpd.lns get eol_empty =
+  { "IfDefine"
+    { "arg" = "Foo" }
+  }
