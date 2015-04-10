@@ -233,7 +233,8 @@ static void vget_error(struct state *state, struct lens *lens,
 
     if (state->error != NULL)
         return;
-    CALLOC(state->error, 1);
+    if (ALLOC(state->error) < 0)
+        return;
     state->error->lens = ref(lens);
     if (REG_MATCHED(state))
         state->error->pos  = REG_END(state);
