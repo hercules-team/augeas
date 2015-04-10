@@ -2045,7 +2045,7 @@ void aug_close(struct augeas *aug) {
 
 int __aug_load_module_file(struct augeas *aug, const char *filename) {
     api_entry(aug);
-    int r = load_module_file(aug, filename);
+    int r = load_module_file(aug, filename, NULL);
     api_exit(aug);
     return r;
 }

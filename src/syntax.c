@@ -1962,7 +1962,8 @@ static char *module_filename(struct augeas *aug, const char *modname) {
     return filename;
 }
 
-int load_module_file(struct augeas *aug, const char *filename) {
+int load_module_file(struct augeas *aug, const char *filename,
+                     const char *name) {
     struct term *term = NULL;
     int result = -1;
 
@@ -1977,10 +1978,18 @@ int load_module_file(struct augeas *aug, const char *filename) {
         goto error;
 
     struct module *module = compile(term, aug);
-    ERR_THROW(module == NULL, aug, AUG_ESYNTAX,
-              "Failed to load %s", filename);
+    bool bad_module = (module == NULL);
+    if (bad_module && name != NULL) {
+        /* Put an empty placeholder on the module list so that
+         * we don't retry loading this module everytime its mentioned
+         */
+        module = module_create(name);
+    }
+    if (module != NULL)
+        list_append(aug->modules, module);
 
-    list_append(aug->modules, module);
+    ERR_THROW(bad_module, aug, AUG_ESYNTAX, "Failed to load %s", filename);
+
     result = 0;
  error:
     // FIXME: This leads to a bad free of a string used in a del lens
@@ -1998,7 +2007,7 @@ static int load_module(struct augeas *aug, const char *name) {
     if ((filename = module_filename(aug, name)) == NULL)
         return -1;
 
-    if (load_module_file(aug, filename) == -1)
+    if (load_module_file(aug, filename, name) == -1)
         goto error;
 
     free(filename);

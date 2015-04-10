@@ -274,7 +274,7 @@ int define_native_intl(const char *fname, int line,
 
 struct module *builtin_init(struct error *);
 
-int load_module_file(struct augeas *aug, const char *filename);
+int load_module_file(struct augeas *aug, const char *filename, const char *name);
 
 /* The name of the builtin function that checks recursive lenses */
 #define LNS_CHECK_REC_NAME "lns_check_rec"
