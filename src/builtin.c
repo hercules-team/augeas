@@ -97,6 +97,16 @@ static struct value *lns_square(struct info *info, struct value *l1,
     return lns_make_square(ref(info), ref(l1->lens), ref(l2->lens), ref(l3->lens), check);
 }
 
+static void exn_lns_error_detail(struct value *exn, const char *label,
+                                 struct lens *lens) {
+    if (lens == NULL)
+        return;
+
+    char *s = format_info(lens->info);
+    exn_printf_line(exn, "%s: %s", label, s);
+    free(s);
+}
+
 static struct value *make_exn_lns_error(struct info *info,
                                         struct lns_error *err,
                                         const char *text) {
@@ -106,11 +116,9 @@ static struct value *make_exn_lns_error(struct info *info,
         return info->error->exn;
 
     v = make_exn_value(ref(info), "%s", err->message);
-    if (err->lens != NULL) {
-        char *s = format_info(err->lens->info);
-        exn_printf_line(v, "Lens: %s", s);
-        free(s);
-    }
+    exn_lns_error_detail(v, "Lens", err->lens);
+    exn_lns_error_detail(v, "  Last match", err->last);
+    exn_lns_error_detail(v, "  Not matching", err->next);
     if (err->pos >= 0) {
         char *pos = format_pos(text, err->pos);
         size_t line, ofs;

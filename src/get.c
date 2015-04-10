@@ -689,6 +689,90 @@ static struct skel *parse_concat(struct lens *lens, struct state *state,
     return skel;
 }
 
+/* Given a lens that does not match at the current position, try to find
+ * the left-most child LAST that does match and the lens next to it NEXT
+ * that does not match. Return the length of the match.
+ *
+ * If no such child exists, return 0
+ */
+static int try_match(struct lens *lens, struct state *state,
+                     uint start, uint end,
+                     struct lens **last, struct lens **next) {
+    int result = 0, r;
+
+    switch(lens->tag) {
+    case L_VALUE:
+    case L_LABEL:
+    case L_SEQ:
+    case L_COUNTER:
+        *last = lens;
+        return result;
+        break;
+    case L_DEL:
+    case L_KEY:
+    case L_STORE:
+        result = regexp_match(lens->ctype, state->text, end, start, NULL);
+        if (result >= 0)
+            *last = lens;
+        return result;
+    case L_CONCAT:
+        for (int i=0; i < lens->nchildren; i++) {
+            struct lens *child = lens->children[i];
+            struct lens *next_child  =
+                (i < lens->nchildren - 1) ? lens->children[i+1] : NULL;
+
+            r = regexp_match(child->ctype, state->text, end, start, NULL);
+            if (r >= 0) {
+                result += r;
+                start += r;
+                *last = child;
+            } else if (result > 0) {
+                if (*next == NULL)
+                    *next = child;
+                return result;
+            } else {
+                result = try_match(child, state, start, end, last, next);
+                if (result > 0 && *next == NULL)
+                    *next = next_child;
+                return result;
+            }
+        }
+        return result;
+        break;
+    case L_UNION:
+        for (int i=0; i < lens->nchildren; i++) {
+            struct lens *child = lens->children[i];
+            result = try_match(child, state, start, end, last, next);
+            if (result > 0)
+                return result;
+        }
+        return 0;
+        break;
+    case L_SUBTREE:
+    case L_STAR:
+    case L_MAYBE:
+    case L_SQUARE:
+        return try_match(lens->child, state, start, end, last, next);
+        break;
+    default:
+        BUG_ON(true, state->info, "illegal lens tag %d", lens->tag);
+        break;
+    }
+ error:
+    return 0;
+}
+
+static void short_iteration_error(struct lens *lens, struct state *state,
+                                    uint start, uint end) {
+    int match_count;
+
+    get_error(state, lens, "%s", short_iteration);
+
+    match_count = try_match(lens->child, state, start, end,
+                            &state->error->last, &state->error->next);
+    state->error->pos = start + match_count;
+}
+
 static struct tree *get_quant_star(struct lens *lens, struct state *state) {
     ensure0(lens->tag == L_STAR, state->info);
     struct lens *child = lens->child;
@@ -714,8 +798,7 @@ static struct tree *get_quant_star(struct lens *lens, struct state *state) {
     state->regs = old_regs;
     state->nreg = old_nreg;
     if (size != 0) {
-        get_error(state, lens, "%s", short_iteration);
-        state->error->pos = start;
+        short_iteration_error(lens, state, start, end);
     }
     return tree;
 }

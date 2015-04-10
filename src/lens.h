@@ -170,6 +170,8 @@ struct skel {
 
 struct lns_error {
     struct lens  *lens;
+    struct lens  *last;       /* The last lens that matched */
+    struct lens  *next;       /* The next lens that should match but doesn't */
     int           pos;        /* Errors from get/parse */
     char         *path;       /* Errors from put, pos will be -1 */
     char         *message;

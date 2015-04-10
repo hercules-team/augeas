@@ -61,6 +61,8 @@ static const int glob_flags = GLOB_NOSORT;
  */
 static const char *const s_path = "path";
 static const char *const s_lens = "lens";
+static const char *const s_last = "last_matched";
+static const char *const s_next = "next_not_matched";
 static const char *const s_info = "info";
 static const char *const s_mtime = "mtime";
 
@@ -328,9 +330,9 @@ static char *err_path(const char *filename) {
 }
 
 ATTRIBUTE_FORMAT(printf, 4, 5)
-static void err_set(struct augeas *aug,
-                    struct tree *err_info, const char *sub,
-                    const char *format, ...) {
+static struct tree *err_set(struct augeas *aug,
+                            struct tree *err_info, const char *sub,
+                            const char *format, ...) {
     int r;
     va_list ap;
     char *value = NULL;
@@ -351,6 +353,22 @@ static void err_set(struct augeas *aug,
 
  error:
     free(value);
+    return tree;
+}
+
+static struct tree *err_lens_entry(struct augeas *aug, struct tree *where,
+                           struct lens *lens, const char *label) {
+    struct tree *result = NULL;
+
+    if (lens == NULL)
+        return NULL;
+
+    char *fi = format_info(lens->info);
+    if (fi != NULL) {
+        result = err_set(aug, where, label, "%s", fi);
+        free(fi);
+    }
+    return result;
 }
 
 /* Record an error in the tree. The error will show up underneath
@@ -400,12 +418,10 @@ static int store_error(struct augeas *aug,
             if (err->path != NULL) {
                 err_set(aug, err_info, s_path, "%s%s", path, err->path);
             }
-            if (err->lens != NULL) {
-                char *fi = format_info(err->lens->info);
-                if (fi != NULL) {
-                    err_set(aug, err_info, s_lens, "%s", fi);
-                    free(fi);
-                }
+            struct tree *t = err_lens_entry(aug, err_info, err->lens, s_lens);
+            if (t != NULL) {
+                err_lens_entry(aug, t, err->last, s_last);
+                err_lens_entry(aug, t, err->next, s_next);
             }
             err_set(aug, err_info, s_message, "%s", err->message);
         } else if (errnum != 0) {
