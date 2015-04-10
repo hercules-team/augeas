@@ -29,7 +29,7 @@ typedef struct info YYLTYPE;
   do {                                                                  \
     (Current).filename = augl_get_info(scanner)->filename;              \
     (Current).error = augl_get_info(scanner)->error;                    \
-    if (YYID (N)) {                                                     \
+    if (N) {                                                            \
         (Current).first_line   = YYRHSLOC (Rhs, 1).first_line;          \
         (Current).first_column = YYRHSLOC (Rhs, 1).first_column;        \
         (Current).last_line    = YYRHSLOC (Rhs, N).last_line;           \
@@ -56,7 +56,7 @@ struct state {
 
 %locations
 %error-verbose
-%name-prefix="augl_"
+%name-prefix "augl_"
 %defines
 %pure-parser
 %parse-param    {struct term **term}
