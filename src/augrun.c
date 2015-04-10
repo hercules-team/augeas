@@ -1015,7 +1015,7 @@ static void cmd_save(struct command *cmd) {
     r = aug_save(cmd->aug);
     if (r == -1) {
         ERR_REPORT(cmd, AUG_ECMDRUN,
-                   "saving failed (run 'print /augeas//error' for details)");
+                   "saving failed (run 'errors' for details)");
     } else {
         r = aug_match(cmd->aug, "/augeas/events/saved", NULL);
         if (r > 0) {
@@ -1033,7 +1033,7 @@ static const struct command_def cmd_save_def = {
     .opts = cmd_save_opts,
     .handler = cmd_save,
     .synopsis = "save all pending changes",
-    .help = "Save all pending changes to disk. How exactly that is done depends on\n the value of the node /augeas/save, which can be changed by the user.\n The possible values for it are\n \n   noop      - do not write files; useful for finding errors that\n               might happen during a save\n   backup    - save the original file in a file by appending the extension\n               '.augsave' and overwrite the original with new content\n   newfile   - leave the original file untouched and write new content to\n               a file with extension '.augnew' next to the original file\n   overwrite - overwrite the original file with new content\n \n Save always tries to save all files for which entries in the tree have\n changed. When saving fails, some files will be written.  Details about\n why a save failed can by found by issuing the command 'print\n /augeas//error' (note the double slash)"
+    .help = "Save all pending changes to disk. How exactly that is done depends on\n the value of the node /augeas/save, which can be changed by the user.\n The possible values for it are\n \n   noop      - do not write files; useful for finding errors that\n               might happen during a save\n   backup    - save the original file in a file by appending the extension\n               '.augsave' and overwrite the original with new content\n   newfile   - leave the original file untouched and write new content to\n               a file with extension '.augnew' next to the original file\n   overwrite - overwrite the original file with new content\n \n Save always tries to save all files for which entries in the tree have\n changed. When saving fails, some files will be written.  Details about\n why a save failed can by found by running the 'errors' command"
 };
 
 static void cmd_load(struct command *cmd) {
@@ -1041,7 +1041,7 @@ static void cmd_load(struct command *cmd) {
     r = aug_load(cmd->aug);
     if (r == -1) {
         ERR_REPORT(cmd, AUG_ECMDRUN,
-                   "loading failed (run 'print /augeas//error' for details)");
+                   "loading failed (run 'errors' for details)");
     }
 }
 
@@ -1175,6 +1175,114 @@ static const struct command_def cmd_retrieve_def = {
     .help = cmd_retrieve_help
 };
 
+/* Given a path "/augeas/files/FILENAME/error", return FILENAME */
+static char *err_filename(const char *match) {
+    int noise = strlen(AUGEAS_META_FILES) + strlen("/error");
+    if (strlen(match) < noise + 1)
+        goto error;
+    return strndup(match + strlen(AUGEAS_META_FILES), strlen(match) - noise);
+ error:
+    return strdup("(no filename)");
+}
+
+static const char *err_get(struct augeas *aug,
+                           const char *match, const char *child) {
+    char *path = NULL;
+    const char *value = "";
+    int r;
+
+    r = pathjoin(&path, 2, match, child);
+    ERR_NOMEM(r < 0, aug);
+
+    aug_get(aug, path, &value);
+    ERR_BAIL(aug);
+
+ error:
+    free(path);
+    return value;
+}
+
+static void cmd_errors(struct command *cmd) {
+    char **matches = NULL;
+    int cnt = 0;
+    char *filename = NULL;
+    struct augeas *aug = cmd->aug;
+
+    cnt = aug_match(aug, "/augeas//error", &matches);
+    ERR_BAIL(cmd);
+    ERR_THROW(cnt < 0, aug, AUG_ECMDRUN,
+              "  (problem retrieving error messages)\n");
+    if (cnt == 0) {
+        fprintf(cmd->out, "  (no errors)\n");
+        goto done;
+    }
+
+    for (int i=0; i < cnt; i++) {
+        const char *match = matches[i];
+        const char *line  = err_get(aug, match, "line");
+        const char *char_pos = err_get(aug, match, "char");
+        const char *lens     = err_get(aug, match, "lens");
+        const char *last     = err_get(aug, match, "lens/last_matched");
+        const char *next     = err_get(aug, match, "lens/next_not_matched");
+        const char *msg      = err_get(aug, match, "message");
+        const char *kind     = NULL;
+
+        aug_get(aug, match, &kind);
+        ERR_BAIL(aug);
+
+        filename = err_filename(match);
+        ERR_NOMEM(filename == NULL, aug);
+
+        if (i>0)
+            fprintf(cmd->out, "\n");
+
+        if (line != NULL) {
+            fprintf(cmd->out, "Error in %s:%s.%s (%s)\n",
+                    filename, line, char_pos, kind);
+        } else {
+            fprintf(cmd->out, "Error in %s (%s)\n", filename, kind);
+        }
+
+        if (msg != NULL)
+            fprintf(cmd->out, "  %s\n", msg);
+        if (lens != NULL)
+            fprintf(cmd->out, "  Lens: %s\n", lens);
+        if (last != NULL)
+            fprintf(cmd->out, "    Last matched: %s\n", last);
+        if (next != NULL)
+            fprintf(cmd->out, "    Next (no match): %s\n", next);
+    }
+
+ done:
+ error:
+    for (int i=0; i < cnt; i++)
+        free(matches[i]);
+    free(matches);
+    free(filename);
+}
+
+static const struct command_opt_def cmd_errors_opts[] = {
+    CMD_OPT_DEF_LAST
+};
+
+static const char const cmd_errors_help[] =
+    "Show all the errors encountered in processing files. For each error,\n"
+    " print detailed information about where it happened and how. The same\n"
+    " information can be retrieved by running 'print /augeas//error'\n\n"
+    " For each error, the file in which the error occurred together with the\n"
+    " line number and position in that line is shown, as well as information\n"
+    " about the lens that encountered the error. For some errors, the last\n"
+    " lens that matched successfully and the next lens that should have\n"
+    " matched but didn't are also shown\n";
+
+static const struct command_def cmd_errors_def = {
+    .name = "errors",
+    .opts = cmd_errors_opts,
+    .handler = cmd_errors,
+    .synopsis = "show all errors encountered in processing files",
+    .help = cmd_errors_help
+};
+
 /* Groups of commands */
 static const struct command_grp_def cmd_grp_admin_def = {
     .name = "Admin",
@@ -1199,6 +1307,7 @@ static const struct command_grp_def cmd_grp_read_def = {
         &cmd_ls_def,
         &cmd_match_def,
         &cmd_print_def,
+        &cmd_errors_def,
         &cmd_span_def,
         &cmd_def_last
     }
