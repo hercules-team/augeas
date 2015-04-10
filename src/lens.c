@@ -1109,11 +1109,24 @@ char *enc_format(const char *e, size_t len) {
     return result;
 }
 
-static int lns_format_subtree_atype(struct lens *l, char **buf) {
+static int format_atype(struct lens *l, char **buf, uint indent);
+
+static int format_indent(char **buf, uint indent) {
+    if (ALLOC_N(*buf, indent+1) < 0)
+        return -1;
+    memset(*buf, ' ', indent);
+    return 0;
+}
+
+static int format_subtree_atype(struct lens *l, char **buf, uint indent) {
     char *k = NULL, *v = NULL;
     const struct regexp *ktype = l->child->ktype;
     const struct regexp *vtype = l->child->vtype;
     int r, result = -1;
+    char *si = NULL;
+
+    if (format_indent(&si, indent) < 0)
+        goto done;
 
     if (ktype != NULL) {
         k = regexp_escape(ktype);
@@ -1125,30 +1138,32 @@ static int lns_format_subtree_atype(struct lens *l, char **buf) {
         if (v == NULL)
             goto done;
         if (k == NULL)
-            r = xasprintf(buf, "{ = /%s/ }", k, v);
+            r = xasprintf(buf, "%s{ = /%s/ }", si, k, v);
         else
-            r = xasprintf(buf, "{ /%s/ = /%s/ }", k, v);
+            r = xasprintf(buf, "%s{ /%s/ = /%s/ }", si, k, v);
     } else {
         if (k == NULL)
-            r = xasprintf(buf, "{ }", k);
+            r = xasprintf(buf, "%s{ }", si, k);
         else
-            r = xasprintf(buf, "{ /%s/ }", k);
+            r = xasprintf(buf, "%s{ /%s/ }", si, k);
     }
     if (r < 0)
         goto done;
 
     result = 0;
  done:
+    FREE(si);
     FREE(v);
     FREE(k);
     return result;
 }
 
-static int lns_format_rep_atype(struct lens *l, char **buf, char quant) {
+static int format_rep_atype(struct lens *l, char **buf,
+                            uint indent, char quant) {
     char *a = NULL;
     int r, result = -1;
 
-    r = lns_format_atype(l->child, &a);
+    r = format_atype(l->child, &a, indent);
     if (r < 0)
         goto done;
     if (strlen(a) == 0) {
@@ -1172,7 +1187,7 @@ static int lns_format_rep_atype(struct lens *l, char **buf, char quant) {
     return result;
 }
 
-static int lns_format_concat_atype(struct lens *l, char **buf) {
+static int format_concat_atype(struct lens *l, char **buf, uint indent) {
     char **c = NULL, *s = NULL, *p;
     int r, result = -1;
     size_t len = 0, nconc = 0;
@@ -1181,10 +1196,10 @@ static int lns_format_concat_atype(struct lens *l, char **buf) {
         goto done;
 
     for (int i=0; i < l->nchildren; i++) {
-        r = lns_format_atype(l->children[i], c+i);
+        r = format_atype(l->children[i], c+i, indent);
         if (r < 0)
             goto done;
-        len += strlen(c[i]) + 2;
+        len += strlen(c[i]) + 3;
         if (strlen(c[i]) > 0)
             nconc += 1;
         if (l->children[i]->tag == L_UNION)
@@ -1198,9 +1213,15 @@ static int lns_format_concat_atype(struct lens *l, char **buf) {
         bool needs_parens = nconc > 1 && l->children[i]->tag == L_UNION;
         if (strlen(c[i]) == 0)
             continue;
-        if (needs_parens)
+        if (i > 0)
+            *p++ = '\n';
+        char *t = c[i];
+        if (needs_parens) {
+            for (int j=0; j < indent; j++)
+                *p++ = *t++;
             *p++ = '(';
-        p = stpcpy(p, c[i]);
+        }
+        p = stpcpy(p, t);
         if (needs_parens)
             *p++ = ')';
     }
@@ -1217,7 +1238,7 @@ static int lns_format_concat_atype(struct lens *l, char **buf) {
     return result;
 }
 
-static int lns_format_union_atype(struct lens *l, char **buf) {
+static int format_union_atype(struct lens *l, char **buf, uint indent) {
     char **c = NULL, *s = NULL, *p;
     int r, result = -1;
     size_t len = 0;
@@ -1226,10 +1247,10 @@ static int lns_format_union_atype(struct lens *l, char **buf) {
         goto done;
 
     for (int i=0; i < l->nchildren; i++) {
-        r = lns_format_atype(l->children[i], c+i);
+        r = format_atype(l->children[i], c+i, indent + 2);
         if (r < 0)
             goto done;
-        len += strlen(c[i]) + 2;
+        len += strlen(c[i]) + 3;
     }
     len += l->nchildren - 1;
 
@@ -1238,12 +1259,25 @@ static int lns_format_union_atype(struct lens *l, char **buf) {
 
     p = s;
     for (int i=0; i < l->nchildren; i++) {
-        if (i > 0)
-            p = stpcpy(p, " | ");
-        if (strlen(c[i]) == 0)
+        char *t = c[i];
+        if (i > 0) {
+            *p++ = '\n';
+            if (strlen(t) >= indent+2) {
+                p = stpncpy(p, t, indent+2);
+                t += indent+2;
+            } else {
+                memset(p, ' ', indent+2);
+                p += indent+2;
+            }
+            p = stpcpy(p, "| ");
+        } else {
+            /* Skip additional indent */
+            t += 2;
+        }
+        if (strlen(t) == 0)
             p = stpcpy(p, "()");
         else
-            p = stpcpy(p, c[i]);
+            p = stpcpy(p, t);
     }
     *buf = s;
     s = NULL;
@@ -1257,7 +1291,7 @@ static int lns_format_union_atype(struct lens *l, char **buf) {
     return result;
 }
 
-static int lns_format_rec_atype(struct lens *l, char **buf) {
+static int format_rec_atype(struct lens *l, char **buf, uint indent) {
     int r;
 
     if (l->rec_internal) {
@@ -1266,7 +1300,7 @@ static int lns_format_rec_atype(struct lens *l, char **buf) {
     }
 
     char *c = NULL;
-    r = lns_format_atype(l->body, &c);
+    r = format_atype(l->body, &c, indent);
     if (r < 0)
         return -1;
     r = xasprintf(buf, "<<rec:%s>>", c);
@@ -1274,7 +1308,7 @@ static int lns_format_rec_atype(struct lens *l, char **buf) {
     return (r < 0) ? -1 : 0;
 }
 
-int lns_format_atype(struct lens *l, char **buf) {
+static int format_atype(struct lens *l, char **buf, uint indent) {
     *buf = NULL;
 
     switch(l->tag) {
@@ -1289,31 +1323,37 @@ int lns_format_atype(struct lens *l, char **buf) {
         return (*buf == NULL) ? -1 : 0;
         break;
     case L_SUBTREE:
-        return lns_format_subtree_atype(l, buf);
+        return format_subtree_atype(l, buf, indent);
         break;
     case L_STAR:
-        return lns_format_rep_atype(l, buf, '*');
+        return format_rep_atype(l, buf, indent, '*');
         break;
     case L_MAYBE:
-        return lns_format_rep_atype(l, buf, '?');
+        return format_rep_atype(l, buf, indent, '?');
         break;
     case L_CONCAT:
-        return lns_format_concat_atype(l, buf);
+        return format_concat_atype(l, buf, indent);
         break;
     case L_UNION:
-        return lns_format_union_atype(l, buf);
+        return format_union_atype(l, buf, indent);
         break;
     case L_REC:
-        return lns_format_rec_atype(l, buf);
+        return format_rec_atype(l, buf, indent);
         break;
     case L_SQUARE:
-        return lns_format_concat_atype(l->child, buf);
+        return format_concat_atype(l->child, buf, indent);
         break;
     default:
         BUG_LENS_TAG(l);
         break;
     };
     return -1;
+}
+
+int lns_format_atype(struct lens *l, char **buf) {
+    int r = 0;
+    r = format_atype(l, buf, 4);
+    return r;
 }
 
 /*
