@@ -264,6 +264,8 @@ aexp: qid
       { $$ = $2; }
     | '[' exp ']'
       { $$ = make_unop(A_BRACKET, $2, &@$); }
+    | '<' exp '>'
+      { $$ = make_unop(A_REGION, $2, &@$); }
     | '(' ')'
       { $$ = make_unit_term(&@$); }
 
@@ -524,7 +526,7 @@ static struct term *make_binop(enum term_tag tag,
 
 static struct term *make_unop(enum term_tag tag, struct term *exp,
                              struct info *locp) {
-  assert(tag == A_BRACKET);
+  assert(tag == A_BRACKET || tag == A_REGION);
   struct term *term = make_term_locp(tag, locp);
   term->brexp = exp;
   return term;

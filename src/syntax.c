@@ -191,6 +191,7 @@ void free_term(struct term *term) {
         unref(term->ident, string);
         break;
     case A_BRACKET:
+    case A_REGION:
         unref(term->brexp, term);
         break;
     case A_FUNC:
@@ -1265,6 +1266,19 @@ static int check_exp(struct term *term, struct ctx *ctx) {
             }
         }
         break;
+    case A_REGION:
+        result = check_exp(term->brexp, ctx);
+        if (result) {
+            term->type = ref(expect_types(term->info, term->brexp->type,
+                                          1, t_lens));
+            if (term->type == NULL) {
+                type_error1(term->info,
+                             "<..> is only defined for lenses, not for %s",
+                            term->brexp->type);
+                result = 0;
+            }
+        }
+        break;
     case A_FUNC:
         {
             bind_param(&ctx->local, term->param, NULL);
@@ -1610,6 +1624,18 @@ static struct value *compile_bracket(struct term *exp, struct ctx *ctx) {
     return v;
 }
 
+static struct value *compile_region(struct term *exp, struct ctx *ctx) {
+    struct value *arg = compile_exp(exp->info, exp->brexp, ctx);
+    if (EXN(arg))
+        return arg;
+    assert(arg->tag == V_LENS);
+
+    struct value *v = lns_make_region(ref(exp->info), ref(arg->lens));
+    unref(arg, value);
+
+    return v;
+}
+
 static struct value *compile_rep(struct term *rep, struct ctx *ctx) {
     struct value *arg = compile_exp(rep->info, rep->rexp, ctx);
     struct value *v = NULL;
@@ -1683,6 +1709,9 @@ static struct value *compile_exp(struct info *info,
         break;
     case A_BRACKET:
         v = compile_bracket(exp, ctx);
+        break;
+    case A_REGION:
+        v = compile_region(exp, ctx);
         break;
     case A_FUNC:
         v = make_closure(exp, ctx->local);

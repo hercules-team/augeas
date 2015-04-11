@@ -759,6 +759,7 @@ build_nullable(struct jmt_parse *parse, ind_t pos,
                                    lens->children[i], lvl+1);
             break;
         case L_SUBTREE:
+        case L_REGION:
         case L_SQUARE:
             build_nullable(parse, pos, visitor, lens->child, lvl+1);
             break;
@@ -1217,6 +1218,7 @@ static void print_grammar(struct jmt *jmt, struct lens *lens) {
             print_grammar(jmt, lens->children[i]);
         break;
     case L_SUBTREE:
+    case L_REGION:
         print_lens_symbol(stdout, jmt, lens->child);
         printf("\n");
         print_grammar(jmt, lens->child);
@@ -1280,6 +1282,7 @@ static void index_lenses(struct jmt *jmt, struct lens *lens) {
             index_lenses(jmt, lens->children[i]);
         break;
     case L_SUBTREE:
+    case L_REGION:
     case L_STAR:
     case L_MAYBE:
     case L_SQUARE:
@@ -1475,6 +1478,7 @@ static void conv_rhs(struct jmt *jmt, ind_t l) {
         conv_union(jmt, lens, &s, &e, &f);
         break;
     case L_SUBTREE:
+    case L_REGION:
         conv(jmt, lens->child, &s, &e, &f);
         break;
     case L_STAR:

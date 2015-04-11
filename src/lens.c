@@ -344,6 +344,27 @@ struct value *lns_make_subtree(struct info *info, struct lens *l) {
     return make_lens_value(lens);
 }
 
+/*
+ * A region lens l1 = < l >
+ *
+ * Types are simply copied
+ */
+struct value *lns_make_region(struct info *info, struct lens *l) {
+    struct lens *lens;
+
+    lens = make_lens_unop(L_REGION, info, l);
+    for (int t = 0; t < ntypes; t++) {
+        ltype(lens, t) = ref(ltype(l, t));
+    }
+    lens->value = l->value;
+    lens->key = l->key;
+    lens->recursive = l->recursive;
+    lens->rec_internal = l->rec_internal;
+    if (! l->recursive)
+        lens->ctype_nullable = l->ctype_nullable;
+    return make_lens_value(lens);
+}
+
 struct value *lns_make_star(struct info *info, struct lens *l, int check) {
     struct lens *lens;
 
@@ -1001,6 +1022,7 @@ void free_lens(struct lens *lens) {
         unref(lens->string, string);
         break;
     case L_SUBTREE:
+    case L_REGION:
     case L_STAR:
     case L_MAYBE:
     case L_SQUARE:
@@ -1042,8 +1064,9 @@ void lens_release(struct lens *lens) {
     if (lens->tag == L_KEY || lens->tag == L_STORE)
         regexp_release(lens->regexp);
 
-    if (lens->tag == L_SUBTREE || lens->tag == L_STAR
-        || lens->tag == L_MAYBE || lens->tag == L_SQUARE) {
+    if (lens->tag == L_SUBTREE || lens->tag == L_REGION
+        || lens->tag == L_STAR || lens->tag == L_MAYBE
+        || lens->tag == L_SQUARE) {
         lens_release(lens->child);
     }
 
@@ -1323,6 +1346,7 @@ static int format_atype(struct lens *l, char **buf, uint indent) {
         return (*buf == NULL) ? -1 : 0;
         break;
     case L_SUBTREE:
+    case L_REGION:
         return format_subtree_atype(l, buf, indent);
         break;
     case L_STAR:
@@ -1702,6 +1726,7 @@ static void rtn_rules(struct rtn *rtn, struct lens *l) {
         rtn_rules(rtn, l->body);
         RTN_BAIL(rtn);
         break;
+    case L_REGION:
     case L_SQUARE:
         add_trans(rtn, start, prod->end, l->child);
         RTN_BAIL(rtn);
@@ -2039,6 +2064,7 @@ static void propagate_type(struct lens *l, enum lens_type lt) {
     case L_REC:
         /* Nothing to do */
         break;
+    case L_REGION:
     case L_SQUARE:
         propagate_type(l->child, lt);
         ltype(l, lt) = ref(ltype(l->child, lt));
@@ -2119,6 +2145,7 @@ static struct value *typecheck(struct lens *l, int check) {
         exn = typecheck_n(l, lns_make_union, check);
         break;
     case L_SUBTREE:
+    case L_REGION:
     case L_SQUARE:
         exn = typecheck(l->child, check);
         break;
@@ -2234,6 +2261,7 @@ static int ctype_nullable(struct lens *lens, struct value **exn) {
         }
         break;
     case L_SUBTREE:
+    case L_REGION:
     case L_SQUARE:
         ret = ctype_nullable(lens->child, exn);
         nullable = lens->child->ctype_nullable;
@@ -2399,6 +2427,7 @@ void dump_lens(FILE *out, struct lens *lens){
         }
         break;
     case L_SUBTREE:
+    case L_REGION:
         fprintf(out, "\"%p\" -> \"%p\"\n", lens, lens->child);
         dump_lens(out, lens->child);
         break;

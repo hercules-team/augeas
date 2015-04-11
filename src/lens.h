@@ -39,6 +39,7 @@ enum lens_tag {
     L_CONCAT,
     L_UNION,
     L_SUBTREE,
+    L_REGION,
     L_STAR,
     L_MAYBE,
     L_REC,
@@ -94,7 +95,8 @@ struct lens {
             struct string *string; /* L_VALUE, L_LABEL, L_SEQ, L_COUNTER */
         };
         /* Combinators */
-        struct lens *child;         /* L_SUBTREE, L_STAR, L_MAYBE, L_SQUARE */
+        struct lens *child;         /* L_SUBTREE, L_STAR, L_MAYBE,
+                                       L_SQUARE, L_REGION */
         struct {                    /* L_UNION, L_CONCAT */
             unsigned int nchildren;
             struct lens **children;
@@ -134,6 +136,7 @@ struct value *lns_make_union(struct info *, struct lens *, struct lens *,
 struct value *lns_make_concat(struct info *, struct lens *, struct lens *,
                               int check);
 struct value *lns_make_subtree(struct info *, struct lens *);
+struct value *lns_make_region(struct info *, struct lens *);
 struct value *lns_make_star(struct info *, struct lens *,
                             int check);
 struct value *lns_make_plus(struct info *, struct lens *,
@@ -165,7 +168,7 @@ struct skel {
         char        *text;    /* L_DEL */
         struct skel *skels;   /* L_CONCAT, L_STAR */
     };
-    /* Also tag == L_SUBTREE, with no data in the union */
+    /* Also tag == L_SUBTREE || tag == L_REGION, with no data in the union */
 };
 
 struct lns_error {
@@ -178,8 +181,12 @@ struct lns_error {
 };
 
 struct dict *make_dict(char *key, struct skel *skel, struct dict *subdict);
+struct dict *make_dictz(size_t key, struct skel *skel, struct dict *subdict);
+
 void dict_lookup(const char *key, struct dict *dict,
                  struct skel **skel, struct dict **subdict);
+void dict_lookupz(size_t key, struct dict *dict,
+                  struct skel **skel, struct dict **subdict);
 int dict_append(struct dict **dict, struct dict *d2);
 void free_skel(struct skel *skel);
 void free_dict(struct dict *dict);

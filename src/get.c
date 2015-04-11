@@ -314,6 +314,9 @@ static void print_skel(struct skel *skel) {
     case L_SUBTREE:
         print_skel_list(skel->skels, "[", " ", "]");
         break;
+    case L_REGION:
+        print_skel_list(skel->skels, "<", " ", ">");
+        break;
     default:
         printf("??");
         break;
@@ -749,6 +752,7 @@ static int try_match(struct lens *lens, struct state *state,
         return 0;
         break;
     case L_SUBTREE:
+    case L_REGION:
     case L_STAR:
     case L_MAYBE:
     case L_SQUARE:
@@ -911,6 +915,41 @@ static struct skel *parse_subtree(struct lens *lens, struct state *state,
     skel = parse_lens(lens->child, state, &di);
     *dict = make_dict(state->key, skel, di);
     state->key = key;
+    return make_skel(lens);
+}
+
+static struct tree *get_region(struct lens *lens, struct state *state) {
+    struct span *span = state->span;
+
+    struct tree *tree;
+
+    if (state->info->flags & AUG_ENABLE_SPAN) {
+        state->span = make_span(state->info);
+        ERR_NOMEM(state->span == NULL, state->info);
+    }
+
+    tree = get_lens(lens->child, state);
+
+    tree->span = state->span;
+    tree->pos = REG_START(state) + 1;
+
+    if (state->span != NULL) {
+        update_span(span, state->span->span_start, state->span->span_end);
+    }
+
+    state->span = span;
+    return tree;
+ error:
+    return NULL;
+}
+
+static struct skel *parse_region(struct lens *lens, struct state *state,
+                                 struct dict **dict) {
+    struct skel *skel;
+    struct dict *di = NULL;
+
+    skel = parse_lens(lens->child, state, &di);
+    *dict = make_dictz(REG_START(state) + 1, skel, di);
     return make_skel(lens);
 }
 
@@ -1260,6 +1299,7 @@ static void visit_exit(struct lens *lens,
             // FIXME: tree may leak if pop_frame ensure0 fail
             tree = make_tree(top->key, top->value, NULL, top->tree);
             tree->span = state->span;
+            tree->pos = start;
             ERR_NOMEM(tree == NULL, lens->info);
             top = pop_frame(rec_state);
             ensure(lens == top->lens, state->info);
@@ -1275,6 +1315,23 @@ static void visit_exit(struct lens *lens,
             skel = make_skel(lens);
             ERR_NOMEM(skel == NULL, lens->info);
             dict = make_dict(top->key, top->skel, top->dict);
+            ERR_NOMEM(dict == NULL, lens->info);
+            top = pop_frame(rec_state);
+            ensure(lens == top->lens, state->info);
+            state->key = top->key;
+            pop_frame(rec_state);
+            top = push_frame(rec_state, lens);
+            top->skel = skel;
+            top->dict = dict;
+        }
+    } else if (lens->tag == L_REGION) {
+        if (rec_state->mode == M_PARSE) {
+            struct frame *top = top_frame(rec_state);
+            struct skel *skel;
+            struct dict *dict;
+            skel = make_skel(lens);
+            ERR_NOMEM(skel == NULL, lens->info);
+            dict = make_dictz(start, top->skel, top->dict);
             ERR_NOMEM(dict == NULL, lens->info);
             top = pop_frame(rec_state);
             ensure(lens == top->lens, state->info);
@@ -1508,6 +1565,9 @@ static struct tree *get_lens(struct lens *lens, struct state *state) {
     case L_SUBTREE:
         tree = get_subtree(lens, state);
         break;
+    case L_REGION:
+        tree = get_region(lens, state);
+        break;
     case L_STAR:
         tree = get_quant_star(lens, state);
         break;
@@ -1646,6 +1706,9 @@ static struct skel *parse_lens(struct lens *lens, struct state *state,
         break;
     case L_SUBTREE:
         skel = parse_subtree(lens, state, dict);
+        break;
+    case L_REGION:
+        skel = parse_region(lens, state,dict);
         break;
     case L_STAR:
         skel = parse_quant_star(lens, state, dict);

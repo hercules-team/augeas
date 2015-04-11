@@ -376,8 +376,9 @@ struct tree {
     char        *label;      /* Last component of PATH */
     struct tree *children;   /* List of children through NEXT */
     char        *value;
-    int          dirty;
+    size_t       pos;
     struct span *span;
+    int          dirty;
 };
 
 /* The opaque structure used to represent path expressions. API's
