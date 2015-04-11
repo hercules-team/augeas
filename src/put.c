@@ -365,6 +365,9 @@ static int skel_instance_of(struct lens *lens, struct skel *skel) {
         break;
     case L_SUBTREE:
         return skel->tag == L_SUBTREE;
+    case L_REGION:
+        return skel->tag == L_REGION
+            && skel_instance_of(lens->child, skel->skels);
     case L_MAYBE:
         return skel->tag == L_MAYBE || skel_instance_of(lens->child, skel);
     case L_STAR:
@@ -454,6 +457,22 @@ static void put_subtree(struct lens *lens, struct state *state) {
     free_split(split);
     free(state->path);
     state->path = oldpath;
+}
+
+static void put_region(struct lens *lens, struct state *state) {
+    assert(lens->tag == L_REGION);
+    struct skel *oldskel = state->skel;
+    struct dict *olddict = state->dict;
+    struct tree *tree = state->split->tree;
+
+    dict_lookupz(tree->pos, state->dict, &state->skel, &state->dict);
+    if (state->skel == NULL || ! skel_instance_of(lens->child, state->skel)) {
+        create_lens(lens->child, state);
+    } else {
+        put_lens(lens->child, state);
+    }
+    state->skel = oldskel;
+    state->dict = olddict;
 }
 
 static void put_del(ATTRIBUTE_UNUSED struct lens *lens, struct state *state) {
@@ -667,6 +686,9 @@ static void put_lens(struct lens *lens, struct state *state) {
     case L_SUBTREE:
         put_subtree(lens, state);
         break;
+    case L_REGION:
+        put_region(lens, state);
+        break;
     case L_STAR:
         put_quant_star(lens, state);
         break;
@@ -687,6 +709,10 @@ static void put_lens(struct lens *lens, struct state *state) {
 
 static void create_subtree(struct lens *lens, struct state *state) {
     put_subtree(lens, state);
+}
+
+static void create_region(struct lens *lens, struct state *state) {
+    put_region(lens, state);
 }
 
 static void create_del(struct lens *lens, struct state *state) {
@@ -820,6 +846,9 @@ static void create_lens(struct lens *lens, struct state *state) {
         break;
     case L_SUBTREE:
         create_subtree(lens, state);
+        break;
+    case L_REGION:
+        create_region(lens, state);
         break;
     case L_STAR:
         create_quant_star(lens, state);
