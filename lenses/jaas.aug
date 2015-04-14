@@ -1,10 +1,10 @@
 (* Module Jaas *)
-(* Author: Simon Vocella <voxsim@gmail.com> *)
+(* Original Author: Simon Vocella <voxsim@gmail.com> *)
 (* Updated by: Steve Shipway <steve@steveshipway.org> *)
 (* Changes: allow comments within Modules, allow optionless flags,  *)
 (* allow options without linebreaks, allow naked true/false options *)
+(* Trailing ';' terminator should not be included in option value   *)
 (* Note: requires latest Util.aug for multiline comments to work    *)
-
 
 module Jaas =
 
