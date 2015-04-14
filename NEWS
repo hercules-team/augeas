@@ -17,6 +17,7 @@
     * Dnsmasq: Parse the structure of the 'address' and 'server' options
                (incompatible change) (Kaarle Ritvanen)
     * Iscsid: new lens (Joey Boggs and Pat Riehecky) (Issue #174)
+    * Jaas: several improvements to cover more valid syntax (Steve Shipway)
     * Krb5: support keyword krb524_server; allow relam names starting
             with lower-case characters (Jurjen Bokma)
     * Logrotate: support 'dateformat' directive (Issue #217)
