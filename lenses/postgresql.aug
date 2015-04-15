@@ -69,7 +69,9 @@ let entry = entry_gen number
 let lns = (Util.empty | Util.comment | entry)*
 
 (* Variable: filter *)
-let filter = incl "/etc/postgresql/*/*/postgresql.conf"
+let filter = (incl "/var/lib/pgsql/data/postgresql.conf" .
+              incl "/var/lib/pgsql/*/data/postgresql.conf" .
+              incl "/etc/postgresql/*/*/postgresql.conf" )
 
 let xfm = transform lns filter
 

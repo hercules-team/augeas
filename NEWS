@@ -29,6 +29,8 @@
                 backend_host, backend_port, and secret (Michael Pimmer)
                 (incompatible change)
     * Postfix_sasl_smtpd: new lens contributed by larsen0815 (Issue #182)
+    * Postgresql: look for postgresql.conf in paths used on Red Hat based
+                  distros (Haotian Liu)
     * Shellvars: make insertion at the beginning of a file that starts with
                  blank lines work; the new lens will remove blank lines
                  from the beginning of a file as soon as lines are added to
