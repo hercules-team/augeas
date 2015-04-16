@@ -20,6 +20,7 @@
     * Jaas: several improvements to cover more valid syntax (Steve Shipway)
     * Krb5: support keyword krb524_server; allow relam names starting
             with lower-case characters (Jurjen Bokma)
+    * Limits: allow comments at end of line (timdeluxe)
     * Logrotate: support 'dateformat' directive (Issue #217)
                  support 'maxsize' directive (RHBZ#1213292)
                  do not require a space before an opening '{' (Issue #123)

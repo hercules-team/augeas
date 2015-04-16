@@ -29,3 +29,10 @@ ftp hard nproc /ftp
 ftp hard nproc /ftp
 * soft core 0
 * - nofile 4096\n"
+
+  test Limits.lns get "* soft core 0 # clever comment\n" =
+    { "domain" = "*"
+      { "type" = "soft" }
+      { "item" = "core" }
+      { "value" = "0" }
+      { "#comment" = "clever comment" } }
