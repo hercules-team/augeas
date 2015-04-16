@@ -14,6 +14,7 @@ module Limits =
  *************************************************************************)
 
 let eol        = Util.eol
+let comment_or_eol = Util.comment_or_eol
 let spc        = Util.del_ws_spc
 let comment    = Util.comment
 let empty      = Util.empty
@@ -56,7 +57,7 @@ let value      = [ label "value" . store /[A-Za-z0-9_.\/-]+/ ]
 let entry      = [ domain . spc
                  . type   . spc
                  . item   . spc
-                 . value  . eol ]
+                 . value  . comment_or_eol ]
 
 (************************************************************************
  *                                LENS
