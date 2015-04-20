@@ -137,8 +137,10 @@ static char *readline_path_generator(const char *text, int state) {
         if (STREQLEN(chend, end, strlen(end))) {
             if (child_count(child) > 0) {
                 char *c = realloc(child, strlen(child)+2);
-                if (c == NULL)
+                if (c == NULL) {
+                    free(child);
                     return NULL;
+                }
                 child = c;
                 strcat(child, "/");
             }
@@ -146,8 +148,10 @@ static char *readline_path_generator(const char *text, int state) {
             /* strip off context if the user didn't give it */
             if (ctx != NULL) {
                 char *c = realloc(child, strlen(child)-strlen(ctx)+1);
-                if (c == NULL)
+                if (c == NULL) {
+                    free(child);
                     return NULL;
+                }
                 int ctxidx = strlen(ctx);
                 if (child[ctxidx] == SEP)
                     ctxidx++;
