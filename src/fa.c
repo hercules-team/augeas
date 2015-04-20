@@ -899,6 +899,8 @@ static struct state_set *fa_accept_states(struct fa *fa) {
     struct state_set *accept = state_set_init(-1, S_NONE);
     int r;
 
+    E(accept == NULL);
+
     r = mark_reachable(fa);
     E(r < 0);
 
@@ -908,6 +910,7 @@ static struct state_set *fa_accept_states(struct fa *fa) {
     }
     return accept;
  error:
+    state_set_free(accept);
     return NULL;
 }
 
@@ -957,7 +960,9 @@ static struct state_set *fa_reverse(struct fa *fa) {
     int r;
 
     all = fa_states(fa);
+    E(all == NULL);
     accept = fa_accept_states(fa);
+    E(accept == NULL);
 
     F(state_set_init_data(all));
 
@@ -2794,6 +2799,9 @@ static struct fa *expand_alphabet(struct fa *fa, int add_marker,
 static bitset *alphabet(struct fa *fa) {
     bitset *bs = bitset_init(UCHAR_NUM);
 
+    if (bs == NULL)
+        return NULL;
+
     list_for_each(s, fa->initial) {
         for (int i=0; i < s->tused; i++) {
             for (uint c = s->trans[i].min; c <= s->trans[i].max; c++)
@@ -2805,6 +2813,9 @@ static bitset *alphabet(struct fa *fa) {
 
 static bitset *last_chars(struct fa *fa) {
     bitset *bs = bitset_init(UCHAR_NUM);
+
+    if (bs == NULL)
+        return NULL;
 
     list_for_each(s, fa->initial) {
         for (int i=0; i < s->tused; i++) {
@@ -2821,6 +2832,9 @@ static bitset *first_chars(struct fa *fa) {
     bitset *bs = bitset_init(UCHAR_NUM);
     struct state *s = fa->initial;
 
+    if (bs == NULL)
+        return NULL;
+
     for (int i=0; i < s->tused; i++) {
         for (uint c = s->trans[i].min; c <= s->trans[i].max; c++)
             bitset_set(bs, c);
@@ -2828,29 +2842,36 @@ static bitset *first_chars(struct fa *fa) {
     return bs;
 }
 
-/* Return true if F1 and F2 are known to be unambiguously concatenable
- * according to simple heuristics. Return false if they need to be checked
- * further to decide ambiguity */
-static bool is_splittable(struct fa *fa1, struct fa *fa2) {
+/* Return 1 if F1 and F2 are known to be unambiguously concatenable
+ * according to simple heuristics. Return 0 if they need to be checked
+ * further to decide ambiguity
+ * Return -1 if an allocation fails
+ */
+static int is_splittable(struct fa *fa1, struct fa *fa2) {
     bitset *alpha1 = NULL;
     bitset *alpha2 = NULL;
     bitset *last1 = NULL;
     bitset *first2 = NULL;
-    bool result = false;
+    bool result = -1;
 
     alpha2 = alphabet(fa2);
     last1 = last_chars(fa1);
+    if (alpha2 == NULL || last1 == NULL)
+        goto done;
     if (bitset_disjoint(last1, alpha2, UCHAR_NUM)) {
-        result = true;
+        result = 1;
         goto done;
     }
 
     alpha1 = alphabet(fa1);
     first2 = first_chars(fa2);
+    if (alpha1 == NULL || first2 == NULL)
+        goto done;
     if (bitset_disjoint(first2, alpha1, UCHAR_NUM)) {
-        result = true;
+        result = 1;
         goto done;
     }
+    result = 0;
  done:
     bitset_free(alpha1);
     bitset_free(alpha2);
@@ -2880,7 +2901,10 @@ int fa_ambig_example(struct fa *fa1, struct fa *fa2,
     if (v != NULL)
         *v = NULL;
 
-    if (is_splittable(fa1, fa2))
+    r = is_splittable(fa1, fa2);
+    if (r < 0)
+        goto error;
+    if (r == 1)
         return 0;
 
 #define Xs "\001"
