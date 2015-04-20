@@ -802,6 +802,7 @@ static struct tree *get_subtree(struct lens *lens, struct state *state) {
     children = get_lens(lens->child, state);
 
     tree = make_tree(state->key, state->value, NULL, children);
+    ERR_NOMEM(tree == NULL, state->info);
     tree->span = state->span;
 
     if (state->span != NULL) {
