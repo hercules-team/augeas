@@ -86,6 +86,7 @@ module Logrotate =
         | select_to_eol "copytruncate" /(no)?copytruncate/
         | value_to_eol "maxage" num
         | value_to_eol "minsize" size
+        | value_to_eol "maxsize" size
         | select_to_eol "shred" /(no)?shred/
         | value_to_eol "shredcycles" num
         | value_to_eol "start" num

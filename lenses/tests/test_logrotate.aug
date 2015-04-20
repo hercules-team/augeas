@@ -276,3 +276,10 @@ test Logrotate.lns get "/file{\n missingok \t\n}\n" =
   { "rule"
     { "file" = "/file" }
     { "missingok" = "missingok" } }
+
+(* RHBZ#1213292: maxsize 30k *)
+test Logrotate.lns get "/var/log/yum.log {\n maxsize 30k\n}\n" =
+  { "rule"
+      { "file" = "/var/log/yum.log" }
+      { "maxsize" = "30k" } }
+

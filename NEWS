@@ -20,6 +20,7 @@
     * Krb5: support keyword krb524_server; allow relam names starting
             with lower-case characters (Jurjen Bokma)
     * Logrotate: support 'dateformat' directive (Issue #217)
+                 support 'maxsize' directive (RHBZ#1213292)
                  do not require a space before an opening '{' (Issue #123)
     * Pagekite: more fine-grained control of service_on entries; instead of
                 'source' and 'destination', parse into protocol, kitename,
