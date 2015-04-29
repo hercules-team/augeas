@@ -42,7 +42,7 @@ let mod =
   in let opt = [ Util.del_str ":" . key Rx.word . del /[ \t]*=>[ \t]*/ " => "
                . Quote.do_quote (store /[^,\n]*/) ]
   in let opts = Build.opt_list opt comma
-  in [ Util.indent . key "mod" . Sep.space . mod_name
+  in [ Util.indent . Util.del_str "mod" . seq "mod" . Sep.space . mod_name
      . (comma . version)?
      . (comma . opts)?
      . Util.eol ] 
