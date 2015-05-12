@@ -43,3 +43,18 @@ test Shadow.lns get conf =
     { "inactive_days" = "" }
     { "expire_date" = "" }
     { "flag" = "" } }
+
+test Shadow.lns get "+\n" =
+  { "@nisdefault" }
+
+test Shadow.lns get "+::::::::\n" =
+  { "@nisdefault"
+    { "password" = "" }
+    { "lastchange_date" = "" }
+    { "minage_days" = "" }
+    { "maxage_days" = "" }
+    { "warn_days" = "" }
+    { "inactive_days" = "" }
+    { "expire_date" = "" }
+    { "flag" = "" } }
+

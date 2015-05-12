@@ -59,11 +59,24 @@ let entry   = [ key word
                 . [ label "flag"              . store integer? ]
                 . eol ]
 
+let nisdefault = 
+  let overrides =
+        colon
+      . [ label "password"          . store word?    . colon ]
+      . [ label "lastchange_date"   . store integer? . colon ]
+      . [ label "minage_days"       . store integer? . colon ]
+      . [ label "maxage_days"       . store integer? . colon ]
+      . [ label "warn_days"         . store integer? . colon ]
+      . [ label "inactive_days"     . store integer? . colon ]
+      . [ label "expire_date"       . store integer? . colon ]
+      . [ label "flag"              . store integer? ] in
+  [ dels "+" . label "@nisdefault" . overrides? . eol ]
+
 (************************************************************************
  *                                LENS
  *************************************************************************)
 
-let lns        = (comment|empty|entry) *
+let lns        = (comment|empty|entry|nisdefault) *
 
 let filter
                = incl "/etc/shadow"
