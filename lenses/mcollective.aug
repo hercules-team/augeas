@@ -35,5 +35,7 @@ let lns = Simplevars.lns
 
 let filter = incl "/etc/mcollective/client.cfg"
            . incl "/etc/mcollective/server.cfg"
+           . incl "/etc/puppetlabs/mcollective/client.cfg"
+           . incl "/etc/puppetlabs/mcollective/server.cfg"
 
 let xfm = transform lns filter
