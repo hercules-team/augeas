@@ -28,7 +28,7 @@ let comment    = Util.comment
 let empty      = Util.empty
 let dels       = Util.del_str
 
-let word       = Rx.word
+let word       = /[_.A-Za-z0-9][-\@_.A-Za-z0-9]*\$?/
 let integer    = Rx.integer
 
 let colon      = Sep.colon
@@ -88,6 +88,28 @@ let nisentry =
       . [ label "shell"    . sto_to_eol ]? in
   [ dels "+@" . label "@nis" . store word . overrides . eol ]
 
+let nisuserplus =
+  let overrides =
+        colon
+      . [ label "password" . store word ]?    . colon
+      . [ label "uid"      . store integer ]? . colon
+      . [ label "gid"      . store integer ]? . colon
+      . [ label "name"     . sto_to_col ]?    . colon
+      . [ label "home"     . sto_to_col ]?    . colon
+      . [ label "shell"    . sto_to_eol ]? in
+  [ dels "+" . label "@+nisuser" . store word . overrides . eol ]
+
+let nisuserminus =
+  let overrides =
+        colon
+      . [ label "password" . store word ]?    . colon
+      . [ label "uid"      . store integer ]? . colon
+      . [ label "gid"      . store integer ]? . colon
+      . [ label "name"     . sto_to_col ]?    . colon
+      . [ label "home"     . sto_to_col ]?    . colon
+      . [ label "shell"    . sto_to_eol ]? in
+  [ dels "-" . label "@-nisuser" . store word . overrides . eol ]
+
 let nisdefault =
   let overrides =
         colon
@@ -103,7 +125,7 @@ let nisdefault =
  *                                LENS
  *************************************************************************)
 
-let lns        = (comment|empty|entry|nisentry|nisdefault) *
+let lns        = (comment|empty|entry|nisentry|nisdefault|nisuserplus|nisuserminus) *
 
 let filter     = incl "/etc/passwd"
 
