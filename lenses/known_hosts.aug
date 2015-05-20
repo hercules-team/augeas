@@ -32,12 +32,15 @@ autoload xfm
 
 (* View: entry
      A known_hosts entry *)
-let entry = [ Util.indent . seq "entry" . store Rx.neg1
-            . Sep.space
-            . [ label "type" . store Rx.no_spaces ]
-            . Sep.space
-            . [ label "key" . store Rx.no_spaces ]
-            . Util.eol ]
+let entry =
+  let alias = [ label "alias" . store Rx.neg1 ]
+  in [ Util.indent . seq "entry" . store Rx.neg1
+     . (Sep.comma . Build.opt_list alias Sep.comma)?
+     . Sep.space
+     . [ label "type" . store Rx.no_spaces ]
+     . Sep.space
+     . [ label "key" . store Rx.no_spaces ]
+     . Util.eol ]
 
 (* View: lns
      The known_hosts lens *)
