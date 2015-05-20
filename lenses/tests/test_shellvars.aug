@@ -533,8 +533,8 @@ fi\n" =
     rm "/VAR"         = ""
 
   (* Support associative arrays *)
-  test lns get "var[alpha]=something\n" =
-    { "var[alpha]" = "something" }
+  test lns get "var[alpha_beta,gamma]=something\n" =
+    { "var[alpha_beta,gamma]" = "something" }
 
 (* Local Variables: *)
 (* mode: caml       *)
