@@ -532,6 +532,10 @@ fi\n" =
   test lns put starts_with_blank after
     rm "/VAR"         = ""
 
+  (* Support associative arrays *)
+  test lns get "var[alpha]=something\n" =
+    { "var[alpha]" = "something" }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
