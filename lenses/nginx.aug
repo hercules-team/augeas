@@ -44,8 +44,7 @@ let block_re_all = block_re | "if" | "location" | "geo" | "map"
 let simple =
      let kw = Rx.word - block_re_all
   in let sto = store /[^ \t\n;][^;]*/ . Sep.semicolon
-  in Build.key_value_line_comment
-     kw Sep.space sto Util.comment_eol
+  in [ Util.indent . key kw . Sep.space . sto . (Util.eol|Util.comment_eol) ]
 
 let arg (name:string) (rx:regexp) =
   [ label name . Sep.space . store rx ]
@@ -95,8 +94,8 @@ let block_head = key block_re
 (* View: block
      A block containing <simple> entries *)
 let block (entry : lens) =
-  [ block_head
-  . Build.block_newlines (Util.indent . entry) Util.comment
+  [ Util.indent . block_head
+  . Build.block_newlines entry Util.comment
   . Util.eol ]
 
 let rec directive = simple | block directive

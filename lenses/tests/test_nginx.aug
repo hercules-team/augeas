@@ -180,17 +180,33 @@ test lns get "upstream backend { }\n" =
     { "#name" = "backend" } }
 
 (* GH #179 - recursive blocks *)
-test lns get "http {
+let http = "http {
   server {
     listen 80;
     location / {
       root\thtml;
     }
   }
-}\n" =
+  gzip on;
+}\n"
+
+test lns get http =
   { "http"
     { "server"
        { "listen" = "80" }
        { "location"
          { "#uri" = "/" }
-         { "root" = "html" } } } }
+         { "root" = "html" } } }
+    { "gzip" = "on" } }
+
+(* Make sure we do not screw up the indentation of the file *)
+test lns put http after set "/http/gzip" "off" =
+"http {
+  server {
+    listen 80;
+    location / {
+      root\thtml;
+    }
+  }
+  gzip off;
+}\n"
