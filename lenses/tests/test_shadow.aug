@@ -58,3 +58,24 @@ test Shadow.lns get "+::::::::\n" =
     { "expire_date" = "" }
     { "flag" = "" } }
 
+test Shadow.lns put "+\n" after
+  set "@nisdefault/password" "";
+  set "@nisdefault/lastchange_date" "";
+  set "@nisdefault/minage_days" "";
+  set "@nisdefault/maxage_days" "";
+  set "@nisdefault/warn_days" "";
+  set "@nisdefault/inactive_days" "";
+  set "@nisdefault/expire_date" "";
+  set "@nisdefault/flag" ""
+= "+::::::::\n"
+
+test Shadow.lns put "+::::::::\n" after
+  rm "@nisdefault/password";
+  rm "@nisdefault/lastchange_date";
+  rm "@nisdefault/minage_days";
+  rm "@nisdefault/maxage_days";
+  rm "@nisdefault/warn_days";
+  rm "@nisdefault/inactive_days";
+  rm "@nisdefault/expire_date";
+  rm "@nisdefault/flag"
+= "+\n"

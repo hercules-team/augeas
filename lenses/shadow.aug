@@ -45,32 +45,28 @@ let sto_to_eol = Passwd.sto_to_eol
 (************************************************************************
  * Group:                        ENTRIES
  *************************************************************************)
-
+(* Common for entry and nisdefault *)
+let common =  [ label "lastchange_date" . store integer? . colon ]
+            . [ label "minage_days"     . store integer? . colon ]
+            . [ label "maxage_days"     . store integer? . colon ]
+            . [ label "warn_days"       . store integer? . colon ]
+            . [ label "inactive_days"   . store integer? . colon ]
+            . [ label "expire_date"     . store integer? . colon ]
+            . [ label "flag"            . store integer? ]
+              
 (* View: entry *)
-let entry   = [ key word
-                . colon
-                . [ label "password"          . sto_to_col?    . colon ]
-                . [ label "lastchange_date"   . store integer? . colon ]
-                . [ label "minage_days"       . store integer? . colon ]
-                . [ label "maxage_days"       . store integer? . colon ]
-                . [ label "warn_days"         . store integer? . colon ]
-                . [ label "inactive_days"     . store integer? . colon ]
-                . [ label "expire_date"       . store integer? . colon ]
-                . [ label "flag"              . store integer? ]
-                . eol ]
+let entry  = [ key word
+               . colon
+               . [ label "password" . sto_to_col? . colon ]
+               . common
+               . eol ]
 
-let nisdefault = 
-  let overrides =
-        colon
-      . [ label "password"          . store word?    . colon ]
-      . [ label "lastchange_date"   . store integer? . colon ]
-      . [ label "minage_days"       . store integer? . colon ]
-      . [ label "maxage_days"       . store integer? . colon ]
-      . [ label "warn_days"         . store integer? . colon ]
-      . [ label "inactive_days"     . store integer? . colon ]
-      . [ label "expire_date"       . store integer? . colon ]
-      . [ label "flag"              . store integer? ] in
-  [ dels "+" . label "@nisdefault" . overrides? . eol ]
+let nisdefault =
+           let overrides =
+             colon
+               . [ label "password" . store word? . colon ]
+               . common in
+           [ dels "+" . label "@nisdefault" . overrides? . eol ]
 
 (************************************************************************
  *                                LENS
