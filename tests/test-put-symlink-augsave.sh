@@ -17,7 +17,7 @@ mkdir -p $(dirname $ATTACK_FILE)
 cat <<EOF > $HOSTS
 127.0.0.1 localhost
 EOF
-HOSTS_SUM=$(sum $HOSTS)
+HOSTS_SUM=$(sum $HOSTS | cut -d ' ' -f 1)
 
 touch $ATTACK_FILE
 (cd $(dirname $HOSTS) && ln -s ../other/attack $(basename $HOSTS).augsave)
@@ -37,7 +37,7 @@ if [ -h $HOSTS_AUGSAVE ] ; then
     exit 1
 fi
 
-if [ ! "x${HOSTS_SUM}" = "x$(sum $HOSTS_AUGSAVE)" ]; then
+if [ ! "x${HOSTS_SUM}" = "x$(sum $HOSTS_AUGSAVE | cut -d ' ' -f 1)" ]; then
     echo "/etc/hosts.augsave has changed from the original /etc/hosts"
     exit 1
 fi
