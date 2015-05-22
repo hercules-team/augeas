@@ -84,7 +84,7 @@ module Grub =
     let kw_menu_arg (kw:regexp) = kw_arg kw "" " "
 
     (* View: password_arg *)
-    let password_arg = [ key "password" .
+    let password_arg = [ command "password" "" .
       (spc . [ switch "md5" ])? .
       (spc . [ switch "encrypted" ])? .
       spc . store (/[^ \t\n]+/ - /--[^ \t\n]+/) .
@@ -220,6 +220,7 @@ module Grub =
         | map_line
         | kw_pres "lock"
         | kw_pres "makeactive"
+        | password_arg
 
     (* View: boot *)
     let boot =
@@ -281,7 +282,8 @@ module Grub =
  *************************************************************************)
 
     (* View: lns *)
-    let lns = (comment | empty | menu_setting | boot | debian)*
+    let lns = (comment | empty | menu_setting | debian)*
+      . (boot . (comment | empty | boot)*)?
 
     (* View: filter *)
     let filter = incl "/boot/grub/grub.conf"

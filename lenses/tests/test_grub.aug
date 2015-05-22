@@ -240,3 +240,20 @@ password --encrypted ^9^32kwzzX./3WISQ0C /boot/grub/custom.lst
       { "splash" = "silent" }
       { "showopts" } }
     { "initrd" = "(hd0,0)/initrd" } }
+
+  (* Password protected kernel, issue #229 *)
+  test Grub.lns get "title Password Protected Kernel
+        root (hd0,0)
+        kernel /vmlinuz ro root=/dev/mapper/root
+        initrd /initramfs
+        password --md5 secret\n" =
+  { "title" = "Password Protected Kernel"
+    { "root" = "(hd0,0)" }
+    { "kernel" = "/vmlinuz"
+      { "ro" }
+      { "root" = "/dev/mapper/root" }
+    }
+    { "initrd" = "/initramfs" }
+    { "password" = "secret"
+      { "md5" }
+    } }
