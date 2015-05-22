@@ -1,4 +1,4 @@
-1.4.0 - 2015-XX-XX
+1.4.0 - 2015-05-22
   - General changes/additions
     * add a aug_escape_name call to sanitize strings for use in path
       expressions. There are a few characters that are special in path
@@ -14,22 +14,36 @@
       messages; improve the information provided with 'short iteration'
       errors
     * fix segfault when saving to a file that was not writable (Issue #178)
+    * augtool: on interrupt (Ctrl-C), cancel current line instead of
+      exiting (jeremy Lin)
     * updated parser.y to work with Bison 3.0.2
     * fix put-symlink-augsave test to run on Solaris (Geoffrey Gardella,
       issue #242)
   - Lens changes/additions
     * AFS_Cellalias: new lens (Pat Riehecky)
+    * Authorized_keys: allow double quotes in option values (Issue #135)
+    * Chrony: fix typo in log flag 'measurements' (Pat Riehecky)
+    * Clamav: new lens  (Andrew Colin Kissa)
     * Dns_Zone: New lens to parse DNS zone files (Kaarle Ritvanen)
     * Dnsmasq: Parse the structure of the 'address' and 'server' options
                (incompatible change) (Kaarle Ritvanen)
+    * Erlang: parse kernel app config, handle empty lists (RHBZ#1175546)
+    * Exports: support brackets in machine names (Vincent Desjardins)
+    * Grub: support password stanza inside boot/title section (Issue #229)
+    * Httpd: handle eol after opening tag (Issue #220); fix type checking
+      issue (Issue #223)
     * Iscsid: new lens (Joey Boggs and Pat Riehecky) (Issue #174)
     * Jaas: several improvements to cover more valid syntax (Steve Shipway)
-    * Krb5: support keyword krb524_server; allow relam names starting
+    * Known_Hosts: handle aliases for the host name
+    * Krb5: support keyword krb524_server; allow realm names starting
             with lower-case characters (Jurjen Bokma)
     * Limits: allow comments at end of line (timdeluxe)
     * Logrotate: support 'dateformat' directive (Issue #217)
                  support 'maxsize' directive (RHBZ#1213292)
                  do not require a space before an opening '{' (Issue #123)
+    * Mailscanner: new lens (Andrew Colin Kissa)
+    * Mailscanner_Rules: new lens for MailScanner rules (Andrew Colin Kissa)
+    * NagiosCfg: default to no spaces around equal (Issue #177)
     * Nginx: significantly reworked, now parses entire Nginx stock
              config successfully (Issue #179)
     * Pagekite: more fine-grained control of service_on entries; instead of
@@ -38,17 +52,28 @@
                 (incompatible change)
     * Passwd: support nis [+-]username syntax (Borislav Stoichkov); fix
       @nisdefault on OpenBSD (Matt Dainty)
+    * Pgbouncer: new lense for the pgbouncer connection pooler (Andrew
+      Colin Kissa)
     * Postfix_sasl_smtpd: new lens contributed by larsen0815 (Issue #182)
     * Postgresql: look for postgresql.conf in paths used on Red Hat based
                   distros (Haotian Liu)
-    * Shellvars: make insertion at the beginning of a file that starts with
-                 blank lines work; the new lens will remove blank lines
-                 from the beginning of a file as soon as lines are added to
-                 or removed from it (GH issue #202)
-                 add /etc/periodic.conf for FreeBSD (Michael Moll)
+    * Puppetfile: new lens to parse librarian-puppet's Puppetfile
+    * Pylonspaste: new lense for Pylon's paste init configuration files
+                   (Andrew Colin Kissa)
+    * PythonPaste: parse "set" keyword for default overrides (RHBZ#1175545)
+    * Shadow: allow NIS entries (Borislav Stoichkov)
+    * Shellvars: case: support ;; on same line with multiple commands
+                 (Kaarle Ritvanen); make insertion at the beginning of a
+                 file that starts with blank lines work; the new lens will
+                 remove blank lines from the beginning of a file as soon as
+                 lines are added to or removed from it (GH issue #202);
+                 handle associative arrays; add /etc/periodic.conf for
+                 FreeBSD (Michael Moll)
+    * Shellvars_list: support double-quoted continued lines
     * Sudoers: allow '+' in user/groupnames (Andreas Grüninger)
-    * Sysconfig: handle leading whitespace at beginning of a line, RHBZ#761246
     * Sysctl: add /boot/loader.conf for FreeBSD (Michael Moll)
+    * Sysconfig: handle leading whitespace at beginning of a line,
+                 RHBZ#761246
 
 1.3.0 - 2014-11-07
   - General changes/additions
