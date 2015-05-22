@@ -15,12 +15,15 @@ let comment  = IniFile.comment IniFile.comment_re "#"
 let sep      = IniFile.sep IniFile.sep_re IniFile.sep_default
 
 let entry    =
-     let bare = Quote.do_dquote_opt_nil (store /[^#;" \t\r\n]+([ \t]+[^#;" \t\r\n]+)*/)
-  in let quoted = Quote.do_dquote (store /[^"\r\n]*[#;]+[^"\r\n]*/)
-  in [ Util.indent . key IniFile.entry_re . sep . Sep.opt_space . bare . (comment|IniFile.eol) ]
-   | [ Util.indent . key IniFile.entry_re . sep . Sep.opt_space . quoted . (comment|IniFile.eol) ]
-   | [ Util.indent . key IniFile.entry_re . store // .  (comment|IniFile.eol) ]
-   | comment
+  let bare =
+    Quote.do_dquote_opt_nil (store /[^#;" \t\r\n]+([ \t]+[^#;" \t\r\n]+)*/) in
+  let quoted = Quote.do_dquote (store /[^"\r\n]*[#;]+[^"\r\n]*/) in
+  let eol = comment|IniFile.eol in
+  let line (content:lens) = [ Util.indent . content . eol ] in
+    line (key IniFile.entry_re . sep . Sep.opt_space . bare)
+  | line (key IniFile.entry_re . sep . Sep.opt_space . quoted)
+  | line (key IniFile.entry_re . store //)
+  | comment
 
 (************************************************************************
  * sections, led by a "[section]" header
@@ -43,4 +46,3 @@ let filter = (incl "/etc/mysql/my.cnf")
              . (incl "/etc/my.cnf")
 
 let xfm = transform lns filter
-
