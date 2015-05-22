@@ -14,6 +14,9 @@ let comment  = IniFile.comment IniFile.comment_re "#"
 
 let sep      = IniFile.sep IniFile.sep_re IniFile.sep_default
 
+(* Like Rx.fspath, but we also disallow characters that start comments *)
+let fspath   = store /[^ \t\r\n#;]+/
+
 let entry    =
   let bare =
     Quote.do_dquote_opt_nil (store /[^#;" \t\r\n]+([ \t]+[^#;" \t\r\n]+)*/) in
@@ -23,6 +26,7 @@ let entry    =
     line (key IniFile.entry_re . sep . Sep.opt_space . bare)
   | line (key IniFile.entry_re . sep . Sep.opt_space . quoted)
   | line (key IniFile.entry_re . store //)
+  | line (key /!include(dir)?/ . Sep.space . fspath)
   | comment
 
 (************************************************************************
@@ -39,7 +43,7 @@ let record  = IniFile.record title entry
 let includedir = Build.key_value_line /!include(dir)?/ Sep.space (store Rx.fspath)
                . (comment|IniFile.empty)*
 
-let lns    = (comment|IniFile.empty)* . (record|includedir)*
+let lns    = (comment|IniFile.empty)* . record*
 
 let filter = (incl "/etc/mysql/my.cnf")
              . (incl "/etc/mysql/conf.d/*.cnf")
