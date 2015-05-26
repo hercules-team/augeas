@@ -247,6 +247,7 @@ module Shellvars =
                      . incl "/etc/lintianrc"
                      . incl "/etc/lsb-release"
                      . incl "/etc/os-release"
+                     . incl "/etc/periodic.conf"
                      . incl "/etc/popularity-contest.conf"
                      . incl "/etc/rc.conf"
                      . incl "/etc/rc.conf.local"
