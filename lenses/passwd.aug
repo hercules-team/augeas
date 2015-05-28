@@ -28,7 +28,7 @@ let comment    = Util.comment
 let empty      = Util.empty
 let dels       = Util.del_str
 
-let word       = /[_.A-Za-z0-9][-\@_.A-Za-z0-9]*\$?/
+let word       = Rx.word
 let integer    = Rx.integer
 
 let colon      = Sep.colon
@@ -39,6 +39,8 @@ let sto_to_col = store /[^:\r\n]+/
 (************************************************************************
  * Group:                        ENTRIES
  *************************************************************************)
+
+let username  = /[_.A-Za-z0-9][-_.A-Za-z0-9]*\$?/
 
 (* View: password
         pw_passwd *)
@@ -66,7 +68,7 @@ let shell     = [ label "shell"    . sto_to_eol? ]
 
 (* View: entry
         struct passwd *)
-let entry     = [ key word
+let entry     = [ key username
                 . colon
                 . password
                 . uid
@@ -76,39 +78,31 @@ let entry     = [ key word
                 . shell
                 . eol ]
 
-(* A NIS entry has nothing bar the +@:::::: bits. *)
+(* NIS entries *)
+let niscommon =  [ label "password" . sto_to_col ]?    . colon
+               . [ label "uid"      . store integer ]? . colon
+               . [ label "gid"      . store integer ]? . colon
+               . [ label "name"     . sto_to_col ]?    . colon
+               . [ label "home"     . sto_to_col ]?    . colon
+               . [ label "shell"    . sto_to_eol ]?
+
 let nisentry =
   let overrides =
         colon
-      . [ label "password" . sto_to_col ]?   . colon
-      . [ label "uid"      . store integer ]? . colon
-      . [ label "gid"      . store integer ]? . colon
-      . [ label "name"     . sto_to_col ]?   . colon
-      . [ label "home"     . sto_to_col ]?  . colon
-      . [ label "shell"    . sto_to_eol ]? in
-  [ dels "+@" . label "@nis" . store word . overrides . eol ]
+      . niscommon in
+  [ dels "+@" . label "@nis" . store username . overrides . eol ]
 
 let nisuserplus =
   let overrides =
         colon
-      . [ label "password" . store word ]?    . colon
-      . [ label "uid"      . store integer ]? . colon
-      . [ label "gid"      . store integer ]? . colon
-      . [ label "name"     . sto_to_col ]?    . colon
-      . [ label "home"     . sto_to_col ]?    . colon
-      . [ label "shell"    . sto_to_eol ]? in
-  [ dels "+" . label "@+nisuser" . store word . overrides . eol ]
+      . niscommon in
+  [ dels "+" . label "@+nisuser" . store username . overrides . eol ]
 
 let nisuserminus =
   let overrides =
         colon
-      . [ label "password" . store word ]?    . colon
-      . [ label "uid"      . store integer ]? . colon
-      . [ label "gid"      . store integer ]? . colon
-      . [ label "name"     . sto_to_col ]?    . colon
-      . [ label "home"     . sto_to_col ]?    . colon
-      . [ label "shell"    . sto_to_eol ]? in
-  [ dels "-" . label "@-nisuser" . store word . overrides . eol ]
+      . niscommon in
+  [ dels "-" . label "@-nisuser" . store username . overrides . eol ]
 
 let nisdefault =
   let overrides =
