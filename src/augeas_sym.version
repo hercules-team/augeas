@@ -66,7 +66,7 @@ AUGEAS_0.18.0 {
       aug_cp;
 } AUGEAS_0.16.0;
 
-AUGEAS_0.19.0 {
+AUGEAS_0.20.0 {
     global:
       aug_escape_name;
 } AUGEAS_0.18.0;
