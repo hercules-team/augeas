@@ -35,6 +35,8 @@ let colon      = Sep.colon
 
 let sto_to_eol = store Rx.space_in
 let sto_to_col = store /[^:\r\n]+/
+(* Store an empty string if nothing matches *)
+let sto_to_col_or_empty = store /[^:\r\n]*/
 
 (************************************************************************
  * Group:                        ENTRIES
@@ -107,7 +109,7 @@ let nisuserminus =
 let nisdefault =
   let overrides =
         colon
-      . [ label "password" . store word?    . colon ]
+      . [ label "password" . sto_to_col_or_empty . colon ]
       . [ label "uid"      . store integer? . colon ]
       . [ label "gid"      . store integer? . colon ]
       . [ label "name"     . sto_to_col?    . colon ]

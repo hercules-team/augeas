@@ -35,7 +35,8 @@
                 'source' and 'destination', parse into protocol, kitename,
                 backend_host, backend_port, and secret (Michael Pimmer)
                 (incompatible change)
-    * Passwd: support nis [+-]username syntax (Borislav Stoichkov)
+    * Passwd: support nis [+-]username syntax (Borislav Stoichkov); fix
+      @nisdefault on OpenBSD (Matt Dainty)
     * Postfix_sasl_smtpd: new lens contributed by larsen0815 (Issue #182)
     * Postgresql: look for postgresql.conf in paths used on Red Hat based
                   distros (Haotian Liu)
