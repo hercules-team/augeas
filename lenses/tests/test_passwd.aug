@@ -45,12 +45,21 @@ test Passwd.lns get "+\n" =
 
 test Passwd.lns get "+::::::/sbin/nologin\n" =
   { "@nisdefault"
-    { "password" = "" }
+    { "password" }
     { "uid" = "" }
     { "gid" = "" }
     { "name" }
     { "home" }
     { "shell" = "/sbin/nologin" } }
+
+test Passwd.lns get "+:*:0:0:::\n" =
+  { "@nisdefault"
+    { "password" = "*" }
+    { "uid" = "0" }
+    { "gid" = "0" }
+    { "name" }
+    { "home" }
+    { "shell" } }
 
 (* NIS entries with overrides, ticket #339 *)
 test Passwd.lns get "+@bob:::::/home/bob:/bin/bash\n" =
