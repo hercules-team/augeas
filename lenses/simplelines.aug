@@ -43,5 +43,6 @@ let filter = incl "/etc/at.allow"
            . incl "/etc/cron.d/cron.deny"
            . incl "/etc/default/grub_installdevice"
            . incl "/etc/pam.d/allow.pamlist"
+           . incl "/etc/hostname.*"
 
 let xfm = transform lns filter
