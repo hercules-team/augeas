@@ -348,6 +348,34 @@ static void testPathEscaping(CuTest *tc) {
     CuAssertIntEquals(tc, ENOENT, errno);
 }
 
+/* Test that we handle failure to save a file because we lack permission on
+ * the target file is handled gracefully.
+ *
+ * As reported in https://github.com/hercules-team/augeas/issues/178, this
+ * used to lead to a SEGV
+ */
+static void testSaveNoPermission(CuTest *tc) {
+    int r;
+    char *path = NULL;
+    const char *v;
+
+    r = asprintf(&path, "%s/etc/hosts", root);
+    CuAssertPositive(tc, r);
+
+    r = aug_set(aug, "/files/etc/hosts/1/alias[1]", "othername");
+    CuAssertRetSuccess(tc, r);
+
+    r = chmod(path, 0);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_save(aug);
+    CuAssertIntEquals(tc, -1, r);
+
+    r = aug_get(aug, "/augeas/files/etc/hosts/error", &v);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertStrEquals(tc, "replace_from_missing", v);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -366,6 +394,7 @@ int main(void) {
 
     CuSuiteSetup(suite, setup, teardown);
 
+    SUITE_ADD_TEST(suite, testSaveNoPermission);
     SUITE_ADD_TEST(suite, testSaveNewFile);
     SUITE_ADD_TEST(suite, testRemoveNoPermission);
     SUITE_ADD_TEST(suite, testNonExistentLens);

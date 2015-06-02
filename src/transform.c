@@ -863,8 +863,15 @@ static int transfer_file_attrs(FILE *from, FILE *to,
     int selinux_enabled = (is_selinux_enabled() > 0);
     security_context_t con = NULL;
 
-    int from_fd = fileno(from);
+    int from_fd;
     int to_fd = fileno(to);
+
+    if (from == NULL) {
+        *err_status = "replace_from_missing";
+        return -1;
+    }
+
+    from_fd = fileno(from);
 
     ret = fstat(from_fd, &st);
     if (ret < 0) {
@@ -1151,7 +1158,6 @@ int transform_save(struct augeas *aug, struct tree *xfm,
 
     if (augorig_exists) {
         if (transfer_file_attrs(augorig_canon_fp, fp, &err_status) != 0) {
-            err_status = "xfer_attrs";
             goto done;
         }
     } else {

@@ -13,6 +13,7 @@
     * augtool: new command 'errors' that pretty-prints /augeas//error
       messages; improve the information provided with 'short iteration'
       errors
+    * fix segfault when saving to a file that was not writable (Issue #178)
     * updated parser.y to work with Bison 3.0.2
     * fix put-symlink-augsave test to run on Solaris (Geoffrey Gardella,
       issue #242)
