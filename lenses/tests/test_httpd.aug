@@ -455,3 +455,14 @@ test Httpd.lns get eol_empty =
   { "IfDefine"
     { "arg" = "Foo" }
   }
+
+(* Issue #140 *)
+test Httpd.lns get "<IfModule mod_ssl.c>
+    # one comment
+    # another comment
+</IfModule>\n" =
+  { "IfModule"
+    { "arg" = "mod_ssl.c" }
+    { "#comment" = "one comment" }
+    { "#comment" = "another comment" }
+  }
