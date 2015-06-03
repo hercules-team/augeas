@@ -9,13 +9,6 @@ About: Reference
 
   See http://chrony.tuxfamily.org/manual.html#Configuration-file
 
-About: Limitations
-  Does not (currently) support
-    - include
-    - manual
-    - refclock
-    - tempcomp
-
 About: License
   This file is licenced under the LGPL v2+, like the rest of Augeas.
 
@@ -58,6 +51,9 @@ module Chrony =
     (* Variable: ip *)
     let ip         = Rx.ip
 
+    (* Variable: path *)
+    let path       = Rx.fspath
+
 (************************************************************************
  * Group: Create required expressions
  ************************************************************************)
@@ -80,24 +76,39 @@ module Chrony =
     let no_space   = /[^ \t\r\n!;#%]+/
 
     (* Variable: cmd_options
-         Server/Peer options with values
+         Server/Peer/Pool options with values
     *)
     let cmd_options = "key"
                     | /maxdelay((dev)?ratio)?/
                     | /(min|max)poll/
+                    | /(min|max)samples/
+                    | "maxsources"
                     | "polltarget"
                     | "port"
                     | "presend"
+                    | "version"
 
     (* Variable: cmd_flags
-         Server/Peer options without values
+         Server/Peer/Pool options without values
     *)
     let cmd_flags = "auto_offline"|"iburst"|"noselect"|"offline"|"prefer"
 
-    (* Variable: server_peer
-         Server/Peer key names
+    (* Variable: ntp_source
+         Server/Peer/Pool key names
     *)
-    let server_peer = "server"|"peer"
+    let ntp_source = "server"|"peer"|"pool"
+
+    (* Variable: refclock_options
+         refclock options with values
+    *)
+    let refclock_options = "refid"|"lock"|"poll"|"dpoll"|"filter"|"rate"
+                            |"minsamples"|"maxsamples"|"offset"|"delay"
+                            |"precision"|"maxdispersion"
+
+    (* Variable: refclock_flags
+         refclock options without values
+    *)
+    let refclock_flags = "noselect"|"prefer"
 
     (* Variable: flags
          Options without values
@@ -105,6 +116,7 @@ module Chrony =
     let flags = "dumponexit"
               | "generatecommandkey"
               | "lock_all"
+              | "manual"
               | "noclientlog"
               | "rtconutc"
               | "rtcsync"
@@ -117,15 +129,16 @@ module Chrony =
     (* Variable: simple_keys
          Options with single values
     *)
-    let simple_keys = "acquisitionport" | "allow" | "bindaddress"
-                    | "bindcmdaddress" | "cmdallow" | "cmddeny"
-                    | "combinelimit" | "commandkey" | "cmdport"
-                    | "corrtimeratio" | "deny" | "driftfile"
-                    | "dumpdir" | "keyfile" | "leapsectz" | "linux_hz"
-                    | "linux_freq_scale" | "logbanner" | "logchange"
-                    | "logdir" | "maxclockerror" | "maxsamples"
-                    | "maxupdateskew" | "minsamples" | "clientloglimit"
-                    | "pidfile" | "port" | "reselectdist" | "rtcdevice"
+    let simple_keys = "acquisitionport" | "allow" | "bindacqaddress"
+                    | "bindaddress" | "bindcmdaddress" | "clientloglimit"
+                    | "cmdallow" | "cmddeny" | "combinelimit" | "commandkey"
+                    | "cmdport" | "corrtimeratio" | "deny" | "driftfile"
+                    | "dumpdir" | "hwclockfile" | "include" | "keyfile"
+                    | "leapsecmode" | "leapsectz" | "linux_freq_scale"
+                    | "linux_hz" | "logbanner" | "logchange" | "logdir"
+                    | "maxclockerror" | "maxsamples" | "maxslewrate"
+                    | "maxupdateskew" | "minsamples" | "minsources" | "pidfile"
+                    | "port" | "reselectdist" | "rtcautotrim" | "rtcdevice"
                     | "rtcfile" | "sched_priority" | "stratumweight" | "user"
 
 (************************************************************************
@@ -156,7 +169,7 @@ module Chrony =
     (* Property: Options with multiple values
     
       Each of these gets their own parsing block
-      - server|peer <address> <options>
+      - server|peer|pool <address> <options>
       - log <options>
       - broadcast <interval> <address> <optional port>
       - fallbackdrift <min> <max>
@@ -165,12 +178,15 @@ module Chrony =
       - mailonchange <emailaddress> <threshold>
       - makestep <threshold> <limit>
       - maxchange <threshold> <delay> <limit>
+      - refclock <driver> <parameter> <options>
+      - smoothtime <maxfreq> <maxwander> <options>
+      - tempcomp <sensorfile> <interval> (<t0> <k0> <k1> <k2> | <pointfile> )
     *)
 
     (* View: host_list
-        Find all ntp servers/peers and their flags/options
+        Find all NTP sources and their flags/options
     *)
-    let host_list = [ Util.indent . key server_peer
+    let host_list = [ Util.indent . key ntp_source
                          . space . store address_re
                          . ( host_flags | host_options )*
                          . eol ]
@@ -243,6 +259,46 @@ module Chrony =
                       . [ label "limit" . store integer ]
                       . eol ]
 
+    (* View: refclock
+         refclock has specific syntax
+    *)
+    let refclock = [ Util.indent . key "refclock"
+                      . space
+                      . [ label "driver" . store word ]
+                      . space
+                      . [ label "parameter" . store no_space ]
+                      . ( space . ( [ key refclock_flags ]
+                         | [ key refclock_options . space . store no_space ] )
+                        )*
+                      . eol ]
+
+    (* View: smoothtime
+         smoothtime has specific syntax
+    *)
+    let smoothtime = [ Util.indent . key "smoothtime"
+                      . space
+                      . [ label "maxfreq" . store number ]
+                      . space
+                      . [ label "maxwander" . store number ]
+                      . ( space . [ key "leaponly" ] )?
+                      . eol ]
+
+    (* View: tempcomp
+         tempcomp has specific syntax
+    *)
+    let tempcomp = [ Util.indent . key "tempcomp"
+                      . space
+                      . [ label "sensorfile" . store path ]
+                      . space
+                      . [ label "interval" . store number ]
+                      . space
+                      . ( [ label "t0" . store number ] . space
+                              . [ label "k0" . store number ] . space
+                              . [ label "k1" . store number ] . space
+                              . [ label "k2" . store number ]
+                              | [ label "pointfile" . store path ] )
+                      . eol ]
+
 (************************************************************************
  * Group: Final lense summary
  ************************************************************************)
@@ -250,7 +306,8 @@ module Chrony =
  *   All supported chrony settings
  *)
 let settings = host_list | log_list | bcast | fdrift | istepslew
-             | local | email | makestep | maxchange | kv | all_flags
+             | local | email | makestep | maxchange | refclock | smoothtime
+             | tempcomp | kv | all_flags
 
 (*
  * View: lns
