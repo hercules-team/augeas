@@ -23,8 +23,8 @@ server ntp6.example.com maxdelay 2 iburst presend 2
 server ntp7.example.com iburst presend 2 offline
 peer ntpc1.example.com
 stratumweight 0
-driftfile /var/lib/chrony/drift
-rtcsync
+	driftfile /var/lib/chrony/drift
+	rtcsync
 makestep 10 -1
 bindcmdaddress 127.0.0.1
 bindcmdaddress ::1

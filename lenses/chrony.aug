@@ -144,14 +144,14 @@ module Chrony =
  * Group: Lenses for parsing out sections
  ************************************************************************)
     (* View: all_flags
-        match all flags using Build.flag_line
+        options without any arguments
     *)
-    let all_flags = Build.flag_line flags
+    let all_flags = [ Util.indent . key flags . eol ]
 
     (* View: kv
         options with only one arg can be directly mapped to key = value
     *)
-    let kv = Build.key_value_line_comment simple_keys space (store no_space) comment
+    let kv = [ Util.indent . key simple_keys . space . (store no_space) . eol ]
 
     (* Property: Options with multiple values
     
