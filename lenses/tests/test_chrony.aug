@@ -25,7 +25,7 @@ peer ntpc1.example.com
 stratumweight 0
 driftfile /var/lib/chrony/drift
 rtcsync
-makestep 10 3
+makestep 10 -1
 bindcmdaddress 127.0.0.1
 bindcmdaddress ::1
 local stratum 10
@@ -87,7 +87,7 @@ initstepslew 30 foo.bar.com baz.quz.com
   { "rtcsync" }
   { "makestep"
     { "threshold" = "10" }
-    { "limit" = "3" }
+    { "limit" = "-1" }
   }
   { "bindcmdaddress" = "127.0.0.1" }
   { "bindcmdaddress" = "::1" }

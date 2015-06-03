@@ -50,10 +50,10 @@ module Chrony =
     let word       = Rx.word
 
     (* Variable: integer *)
-    let integer    = Rx.integer
+    let integer    = Rx.relinteger
 
     (* Variable: decimal *)
-    let decimal    = Rx.decimal
+    let decimal    = Rx.reldecimal
 
     (* Variable: ip *)
     let ip         = Rx.ip
