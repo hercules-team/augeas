@@ -186,7 +186,8 @@ module Chrony =
     let bcast = [ Util.indent . key "broadcast"
                       . space . [ label "interval" . store integer ]
                       . space . store_address
-                      . ( space . [ label "port" . store integer] | eol) ]
+                      . ( space . [ label "port" . store integer ] )?
+                      . eol ]
 
     (* View: fdrift
          fallbackdrift has specific syntax

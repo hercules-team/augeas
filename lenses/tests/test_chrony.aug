@@ -114,7 +114,6 @@ initstepslew 30 foo.bar.com baz.quz.com
     { "address" = "192.168.100.255" }
     { "port" = "123" }
   }
-  {  }
   { "fallbackdrift"
     { "min" = "16" }
     { "max" = "19" }
