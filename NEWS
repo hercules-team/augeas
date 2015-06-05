@@ -1,3 +1,10 @@
+1.5.0 - 2015-XX-XX
+  - General changes/additions
+  - Lens changes/additions
+    * Chrony: allow signed numbers and indentation, fix stray EOL entry,
+              disallow comment on EOL, add many missing directives and
+              options (Miroslav Lichvar, RHBZ#1213281)
+
 1.4.0 - 2015-05-22
   - General changes/additions
     * add a aug_escape_name call to sanitize strings for use in path
