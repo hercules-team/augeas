@@ -142,7 +142,7 @@ AC_DEFUN([AUGEAS_CHECK_READLINE], [
   if test $use_readline = yes; then
       saved_libs=$LIBS
       LIBS=$READLINE_LIBS
-      AC_CHECK_FUNCS([rl_completion_matches])
+      AC_CHECK_FUNCS([rl_completion_matches rl_crlf rl_replace_line])
       LIBS=$saved_libs
   fi
 ])
