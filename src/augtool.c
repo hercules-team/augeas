@@ -201,6 +201,21 @@ static char **rl_completion_matches(ATTRIBUTE_UNUSED const char *text,
 }
 #endif
 
+#ifndef HAVE_RL_CRLF
+static int rl_crlf(void) {
+    if (rl_outstream != NULL)
+        putc('\n', rl_outstream);
+    return 0;
+}
+#endif
+
+#ifndef HAVE_RL_REPLACE_LINE
+static void rl_replace_line(ATTRIBUTE_UNUSED const char *text,
+                              ATTRIBUTE_UNUSED int clear_undo) {
+    return;
+}
+#endif
+
 static char **readline_completion(const char *text, int start,
                                   ATTRIBUTE_UNUSED int end) {
     if (start == 0)
