@@ -5,8 +5,7 @@ Module: Known_Hosts
 Author: Raphaël Pinson <raphink@gmail.com>
 
 About: Reference
-  This lens ensures that conf files included in ActiveMQ /FuseMQ are properly
-  handled by Augeas.
+  This lens manages OpenSSH's known_hosts files. See `man 8 sshd` for reference.
 
 About: License
   This file is licenced under the LGPL v2+, like the rest of Augeas.
