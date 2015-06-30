@@ -175,9 +175,14 @@ test lns get "split_clients \"${remote_addr}AAA\" $variable { }\n" =
     { "#variable" = "$variable" } }
 
 (* upstream block *)
-test lns get "upstream backend { }\n" =
+test lns get "upstream backend {
+  server server1.example.com;
+  server server2.example.com;
+}\n" =
  { "upstream"
-    { "#name" = "backend" } }
+    { "#name" = "backend" }
+    { "server" = "server1.example.com" }
+    { "server" = "server2.example.com" } }
 
 (* GH #179 - recursive blocks *)
 let http = "http {
