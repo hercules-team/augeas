@@ -4,6 +4,13 @@ Module: Test_Nginx
 *)
 module Test_nginx =
 
+(* Check for non-recursive ambiguities *)
+let directive = Nginx.simple
+              | Nginx.block (
+                   Nginx.simple
+                 | Nginx.block Nginx.simple
+              )
+
 (* Do some limited typechecking on the recursive lens; note that
    unrolling once more leads to a typecheck error that seems to
    be spurious, though it's not clear why
