@@ -775,8 +775,8 @@ test Xml.lns get "<doc></doc><bad/>" = *
 (* document element must be complete *)
 test Xml.lns get "<doc>" = *
 
-(* emtpy document is rejected *)
-test Xml.lns get "" = *
+(* accept empty document *)
+test Xml.lns get "\n" = {}
 
 (* malformed element *)
 test Xml.lns get "<a><A@/></a>" = *
@@ -823,3 +823,6 @@ test Xml.lns get "<!DOCTYPE doc [
 test Xml.lns get "<a password=\"my\!pass\" />" =
   { "a" = "#empty"
     { "#attribute" { "password" = "my\!pass" } } }
+
+test Xml.lns put ""
+after set "/a" "#empty" = "<a/>\n"

@@ -154,7 +154,7 @@ let doc = (sep_osp . (prolog  | comment | doctype | pi_instruction))* .
           ((sep_osp . content) | (sep_osp . empty_element)) .
           (sep_osp . (comment | pi_instruction ))* . sep_osp
 
-let lns = doc
+let lns = doc | Util.empty?
 
 let filter = (incl "/etc/xml/*.xml")
     . (incl "/etc/xml/catalog")
