@@ -4,6 +4,7 @@
     * Chrony: allow signed numbers and indentation, fix stray EOL entry,
               disallow comment on EOL, add many missing directives and
               options (Miroslav Lichvar, RHBZ#1213281)
+    * Rhsm: new lens to parse subscription-manager's /etc/rhsm/rhsm.conf
     * Xml: allow empty document (Issue #255)
 
 1.4.0 - 2015-05-22
