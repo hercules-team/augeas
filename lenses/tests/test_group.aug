@@ -47,3 +47,8 @@ test Group.lns get "+:::\n" =
   { "@nisdefault"
     { "password" = "" }
     { "gid" = "" } }
+
+test Group.lns get "+:*::\n" =
+  { "@nisdefault"
+    { "password" = "*" }
+    { "gid" = "" } }
