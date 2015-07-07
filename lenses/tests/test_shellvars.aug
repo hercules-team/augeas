@@ -165,6 +165,11 @@ unset ONBOOT    #   We do not want this var
   { "@builtin" = "exit" }
   { "@builtin" = "exit" { "args" = "2" } }
 
+  (* Allow wrapping builtin arguments to multiple lines *)
+  test Shellvars.lns get "ulimit -c \\\nunlimited\nulimit \\\n -x 123\n" =
+  { "@builtin" = "ulimit" { "args" = "-c \\\nunlimited" } }
+  { "@builtin" = "ulimit" { "args" = "\\\n -x 123" } }
+
   (* Test semicolons *)
   test lns get "VAR1=\"this;is;a;test\"\nVAR2=this;\n" =
   { "VAR1" = "\"this;is;a;test\"" }
@@ -399,6 +404,10 @@ esac\n" =
   test Shellvars.lns get "FOO=``bar``\n" =
   { "FOO" = "``bar``" }
 
+  (* Partial quoting is allowed *)
+  test Shellvars.lns get "FOO=\"$bar\"/'baz'/$(quux)$((1 + 2))\n" =
+  { "FOO" = "\"$bar\"/'baz'/$(quux)$((1 + 2))" }
+
   (* unset can be used on wildcard variables *)
   test Shellvars.lns get "unset ${!LC_*}\n" =
   { "@unset"
@@ -535,6 +544,32 @@ fi\n" =
   (* Support associative arrays *)
   test lns get "var[alpha_beta,gamma]=something\n" =
     { "var[alpha_beta,gamma]" = "something" }
+
+  (* Allow wrapping loop condition to multiple lines *)
+  test Shellvars.lns get "for x in foo \\\nbar\\\nbaz; do y=$x; done\n" =
+  { "@for" = "x in foo \\\nbar\\\nbaz" { "y" = "$x" } }
+
+  (* Allow quotes in loop conditions *)
+  test Shellvars.lns get "for x in \"$@\"; do y=$x; done\n" =
+  { "@for" = "x in \"$@\"" { "y" = "$x" } }
+
+  (* case: support quotes and spaces in pattern lists *)
+  test lns get "case $ARG in
+        \"foo bar\")
+           Foo=0
+           ;;
+        baz | quux)
+           Foo=1
+           ;;
+esac\n" =
+    { "@case" = "$ARG"
+      { "@case_entry" = "\"foo bar\""
+        { "Foo" = "0" }
+      }
+      { "@case_entry" = "baz | quux"
+        { "Foo" = "1" }
+      }
+    }
 
 (* Local Variables: *)
 (* mode: caml       *)

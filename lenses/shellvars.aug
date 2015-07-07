@@ -34,7 +34,7 @@ module Shellvars =
   let xchgs   = Build.xchgs
   let semicol = del /;?/ ""
 
-  let char  = /[^`;() '"\t\n]|\\\\"/
+  let char  = /[^`;()'"\n\\# \t]#*|\\\\(.|\n)/
   let dquot =
        let char = /[^"\\]|\\\\./ | Rx.cl
     in "\"" . char* . "\""                    (* " Emacs, relax *)
@@ -45,22 +45,14 @@ module Shellvars =
   let dollar_assign = /\$\([^\(\)#\n]*\)/
   let dollar_arithm = /\$\(\([^\)#\n]*\)\)/
 
-  let anyquot = (dquot|squot)+ | bquot | dbquot | dollar_assign | dollar_arithm
-
-  let to_semicol_re = /[^#; \t\n][^#;\n]+[^#; \t\n]|[^#; \t\n]+/
-  let sto_to_semicol = store to_semicol_re
-
-  let sto_to_semicol_quot =
-       let no_semicol_re = /[^"'#;\n]/
-    in let no_semicol_spc_re = /[^"'#; \t\n]/
-    in let multi_chars = no_semicol_spc_re . (no_semicol_re|anyquot)+ . no_semicol_spc_re
-    in store (no_semicol_spc_re | multi_chars)
+  let anyquot = (char|dquot|squot|dollar_assign|dollar_arithm)+ | bquot | dbquot
+  let sto_to_semicol = store (anyquot . (Rx.space . anyquot)*)
 
   (* Array values of the form '(val1 val2 val3)'. We do not handle empty *)
   (* arrays here because of typechecking headaches. Instead, they are    *)
   (* treated as a simple value                                           *)
   let array =
-    let array_value = store (char+ | anyquot) in
+    let array_value = store anyquot in
     del /\([ \t]*/ "(" . counter "values" .
       [ seq "values" . array_value ] .
       [ del /[ \t\n]+/ " " . seq "values" . array_value ] *
@@ -70,7 +62,7 @@ module Shellvars =
   (* but fairly close.                                                *)
   let simple_value =
     let empty_array = /\([ \t]*\)/ in
-      store (char* | anyquot | empty_array)
+      store (anyquot | empty_array)?
 
   let export = [ key "export" . Util.del_ws_spc ]
   let kv = Util.indent . export? . key key_re
@@ -113,7 +105,7 @@ module Shellvars =
   let generic_cond_start (start_kw:string) (lbl:string)
                          (then_kw:string) (contents:lens) =
       keyword_label start_kw lbl . Sep.space
-      . sto_to_semicol_quot . semicol_eol
+      . sto_to_semicol . semicol_eol
       . keyword then_kw . eol
       . contents
 
@@ -141,7 +133,7 @@ module Shellvars =
 
   let case (entry:lens) (entry_noeol:lens) =
     let case_entry = [ label "@case_entry"
-                       . Util.indent . store /[^ \t\n\)]+/
+                       . Util.indent . sto_to_semicol
                        . Util.del_str ")" . eol
                        . entry* . entry_noeol?
                        . Util.indent . Util.del_str ";;" . eol ] in
