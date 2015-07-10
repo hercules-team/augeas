@@ -82,15 +82,37 @@ let sep_col  = sep_cont_opt_build ":"
 (* Variable: sep_dquote *)
 let sep_dquote   = Util.del_str "\""
 
+(* Group: Negation expressions *)
+
+(************************************************************************
+ * View: del_negate
+ *   Delete an even number of '!' signs
+ *************************************************************************)
+let del_negate = del /(!!)*/ ""
+
+(************************************************************************
+ * View: negate_node
+ *   Negation of boolean values for <defaults>. Accept one optional '!'
+ *   and produce a 'negate' node if there is one.
+ *************************************************************************)
+let negate_node = [ del "!" "!" . label "negate" ]
+
+(************************************************************************
+ * View: negate_or_value
+ *   A <del_negate>, followed by either a negated key, or a key/value pair
+ *************************************************************************)
+let negate_or_value (key:lens) (value:lens) =
+  [ del_negate . (negate_node . key | key . value) ]
 
 (* Group: Stores *)
 
 (* Variable: sto_to_com_cmnd
 sto_to_com_cmnd does not begin or end with a space *)
-let sto_to_com_cmnd =
+
+let sto_to_com_cmnd = del_negate . negate_node? . (
       let alias = Rx.word - /(NO)?(PASSWD|EXEC|SETENV)/
-   in let non_alias = /(!?[\/a-z]([^,:#()\n\\]|\\\\[=:,\\])*[^,=:#() \t\n\\])|[^,=:#() \t\n\\]/
-   in store (alias | non_alias)
+     in let non_alias = /[\/a-z]([^,:#()\n\\]|\\\\[=:,\\])*[^,=:#() \t\n\\]|[^,=:#() \t\n\\]/
+   in store (alias | non_alias))
 
 (* Variable: sto_to_com
 
@@ -251,9 +273,11 @@ let cmnd_alias  = alias_entry "Cmnd_Alias" "command" sto_to_com_cmnd
  *     >           'Cmnd_Alias'  Cmnd_Alias (':' Cmnd_Alias)*
  *************************************************************************)
 let alias = user_alias | runas_alias | host_alias | cmnd_alias
+
 (************************************************************************
  * Group:                          DEFAULTS
  *************************************************************************)
+
 
 (************************************************************************
  * View: default_type
@@ -269,22 +293,6 @@ let alias = user_alias | runas_alias | host_alias | cmnd_alias
 let default_type     =
   let value = store /[@:!>][^ \t\n\\]+/ in
   [ label "type" . value ]
-
-(************************************************************************
- * View: del_negate
- *   Delete an even number of '!' signs
- *************************************************************************)
-let del_negate = del /(!!)*/ ""
-
-(************************************************************************
- * View: negate_node
- *   Negation of boolean values for <defaults>. Accept one optional '!'
- *   and produce a 'negate' node if there is one.
- *************************************************************************)
-let negate_node = [ del "!" "!" . label "negate" ]
-
-let negate_or_value (key:lens) (value:lens) =
-  [ del_negate . (negate_node . key | key . value) ]
 
 (************************************************************************
  * View: parameter_flag
