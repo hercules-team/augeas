@@ -326,3 +326,16 @@ test Sudoers.spec get "group+user somehost = ALL\n" =
       { "command" = "ALL" }
     }
   }
+
+(* Test: Sudoers.spec
+     https://github.com/hercules-team/augeas/issues/262:  Sudoers lens doesn't suppot `!` for command aliases *)
+test Sudoers.spec get "%opssudoers ALL=(ALL) ALL, !BANNED\n" = 
+  { "spec"
+    { "user" = "%opssudoers" }
+    { "host_group"
+      { "host" = "ALL" }
+      { "command" = "ALL"
+        { "runas_user" = "ALL" } }
+      { "command" = "!BANNED" }
+    }
+  }
