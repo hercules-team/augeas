@@ -92,7 +92,7 @@ let parameters = listeners
                | Erlang.value "msg_store_index_module" Erlang.bare
                | Erlang.value "backing_queue_module" Erlang.bare
                | Erlang.value "msg_store_file_size_limit" Erlang.integer
-               | Erlang.value "queue_index_max_ journal_entries" Erlang.integer
+               | Erlang.value "queue_index_max_journal_entries" Erlang.integer
 
 (* View: rabbit
     The rabbit <Erlang.application> config *)
