@@ -49,6 +49,14 @@ test tuple_bare get "{foo, bar}" =
     { "value" = "foo" }
     { "value" = "bar" } }
 
+let tuple3_bare = Erlang.tuple3 Erlang.bare Erlang.bare Erlang.bare
+
+test tuple3_bare get "{foo, bar, baz}" =
+  { "tuple"
+    { "value" = "foo" }
+    { "value" = "bar" }
+    { "value" = "baz" } }
+
 (* Group: application *)
 
 let list_bare_app = Erlang.application (Rx.word - "kernel") list_bare
