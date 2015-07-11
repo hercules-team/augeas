@@ -62,6 +62,21 @@ test Rabbitmq.cluster_nodes get "{cluster_nodes, ['rabbit@rabbit1', 'rabbit@rabb
      { "value" = "rabbit@rabbit2" }
      { "value" = "rabbit@rabbit3" } }
 
+(* Test: Rabbitmq.cluster_partition_handling, single value *)
+test Rabbitmq.cluster_partition_handling get "{cluster_partition_handling, ignore}" =
+  { "cluster_partition_handling" = "ignore" }
+
+(* Test: Rabbitmq.cluster_partition_handling, tuple *)
+test Rabbitmq.cluster_partition_handling get "{cluster_partition_handling, {pause_if_all_down, ['rabbit@rabbit1', 'rabbit@rabbit2', 'rabbit@rabbit3'], autoheal}}" =
+  { "cluster_partition_handling"
+    { "tuple"
+      { "value" = "pause_if_all_down" }
+      { "value"
+        { "value" = "rabbit@rabbit1" }
+        { "value" = "rabbit@rabbit2" }
+        { "value" = "rabbit@rabbit3" } }
+      { "value" = "autoheal" } } }
+
 (* Test: Rabbitmq.lns
      Top-level test *)
 test Rabbitmq.lns get "

@@ -132,6 +132,18 @@ let tuple (one:lens) (two:lens) =
   . [ label "value" . two ]
   . lspace rbrace ]
 
+(* View: tuple3
+     A tuple of 3 values *)
+let tuple3 (one:lens) (two:lens) (three:lens) =
+  [ rspace lbrace
+  . label "tuple"
+  . [ label "value" . one ]
+  . lrspace comma
+  . [ label "value" . two ]
+  . lrspace comma
+  . [ label "value" . three ]
+  . lspace rbrace ]
+
 (* View: list
      A list of lenses *)
 let list (kw:regexp) (lns:lens) =

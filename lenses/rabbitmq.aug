@@ -60,6 +60,14 @@ let cluster_nodes =
                | nodes
   in Erlang.value "cluster_nodes" value
 
+(* View: cluster_partition_handling
+     Can be single value or
+     `{pause_if_all_down, [nodes], ignore | autoheal}` *)
+let cluster_partition_handling =
+     let nodes = Erlang.opt_list (Erlang.make_value Erlang.quoted)
+  in let value = Erlang.tuple3 Erlang.bare nodes Erlang.bare
+               | Erlang.bare
+  in Erlang.value "cluster_partition_handling" value
 
 (* View: tcp_listen_options *)
 let tcp_listen_options =
@@ -93,6 +101,7 @@ let parameters = listeners
                | Erlang.value "backing_queue_module" Erlang.bare
                | Erlang.value "msg_store_file_size_limit" Erlang.integer
                | Erlang.value "queue_index_max_journal_entries" Erlang.integer
+               | cluster_partition_handling
 
 (* View: rabbit
     The rabbit <Erlang.application> config *)
