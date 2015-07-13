@@ -34,12 +34,12 @@ module Shellvars =
   let xchgs   = Build.xchgs
   let semicol = del /;?/ ""
 
-  let char  = /[^`;()'"\n\\# \t]#*|\\\\(.|\n)/
+  let char  = /[^`;()'"&|\n\\# \t]#*|\\\\(.|\n)/
   let dquot =
        let char = /[^"\\]|\\\\./ | Rx.cl
     in "\"" . char* . "\""                    (* " Emacs, relax *)
   let squot = /'[^']*'/
-  let bquot = /`[^`\n]*`/
+  let bquot = /`[^`\n]+`/
   (* dbquot don't take spaces or semi-colons *)
   let dbquot = /``[^` \t\n;]+``/
   let dollar_assign = /\$\([^\(\)#\n]*\)/
@@ -98,10 +98,13 @@ module Shellvars =
     . ( Util.del_ws_spc . store Rx.integer )?
 
   let condition =
-       let sto_cond = store /[^[#; \t\n][^#;\n]+[^]#; \t\n]|[^[]#; \t\n]+/
+       let action (operator:string) (lbl:string) =
+         [ Sep.opt_space . Util.del_str operator . Sep.opt_space
+         . label lbl . sto_to_semicol ]
     in let cond (start:string) (end:string) = [ label "type" . store start ]
-                                            . Util.del_ws_spc . sto_cond
+                                            . Util.del_ws_spc . sto_to_semicol
                                             . Util.del_ws_spc . Util.del_str end
+                                            . ( action "&&" "@and" | action "||" "@or" )*
     in Util.indent . label "@condition" . (cond "[" "]" | cond "[[" "]]")
 
 
@@ -139,8 +142,10 @@ module Shellvars =
     generic_cond "select" "@select" "do" entry+ "done"
 
   let case (entry:lens) (entry_noeol:lens) =
-    let case_entry = [ label "@case_entry"
-                       . Util.indent . sto_to_semicol
+       let pattern = [ label "@pattern" . sto_to_semicol . Sep.opt_space ]
+    in let case_entry = [ label "@case_entry"
+                       . Util.indent . pattern
+                       . (Util.del_str "|" . Sep.opt_space . pattern)*
                        . Util.del_str ")" . eol
                        . entry* . entry_noeol?
                        . Util.indent . Util.del_str ";;" . eol ] in

@@ -261,11 +261,14 @@ done\n" =
     ;;
 esac\n" =
   { "@case" = "$f"
-    { "@case_entry" = "/tmp/file1"
+    { "@case_entry"
+      { "@pattern" = "/tmp/file1" }
       { ".source" = "/tmp/file1" } }
-    { "@case_entry" = "/tmp/file2"
+    { "@case_entry"
+      { "@pattern" = "/tmp/file2" }
       { ".source" = "/tmp/file2" } }
-    { "@case_entry" = "*"
+    { "@case_entry"
+      { "@pattern" = "*" }
       { "@unset"
         { "1" = "f" } } } }
 
@@ -308,7 +311,8 @@ esac\n" =
 
   esac\n" =
   { "@case" = "$f"
-    { "@case_entry" = "a"
+    { "@case_entry"
+      { "@pattern" = "a" }
       { "B" = "C" } }
     }
 
@@ -325,9 +329,11 @@ esac\n" =
     ;;
   esac\n" =
   { "@case" = "$f"
-    { "@case_entry" = "a"
+    { "@case_entry"
+      { "@pattern" = "a" }
       { "B" = "C" } }
-    { "@case_entry" = "b"
+    { "@case_entry"
+      { "@pattern" = "b" }
       { "A" = "D" } } }
 
 
@@ -348,11 +354,13 @@ unset f
 esac\n" =
   { "@case" = "${INTERFACE}"
     { "#comment" = "comment before" }
-    { "@case_entry" = "eth0"
+    { "@case_entry"
+      { "@pattern" = "eth0" }
       { "#comment" = "comment in" }
       { "OPTIONS" = "()" } }
     { "#comment" = "comment before 2" }
-    { "@case_entry" = "*"
+    { "@case_entry"
+      { "@pattern" = "*" }
       { "#comment" = "comment in 2" }
       { "@unset"
         { "1" = "f" } } }
@@ -364,7 +372,7 @@ esac\n" =
   ;;
   esac\n" =
   { "@case" = "$a"
-    { "@case_entry" = "*" } }
+    { "@case_entry" { "@pattern" = "*" } } }
 
   (* case variables can be surrounded by double quotes *)
   test Shellvars.lns get "case \"${options}\" in
@@ -373,7 +381,8 @@ esac\n" =
   ;;
 esac\n" =
   { "@case" = "\"${options}\""
-    { "@case_entry" = "*debug*"
+    { "@case_entry"
+      { "@pattern" = "*debug*" }
       { "@builtin" = "shift" } } }
 
   (* Double quoted values can have newlines *)
@@ -473,9 +482,11 @@ test2\"\n" =
         1) TestVar=\"test1\" ;;
 esac\n" =
     { "@case" = "$ARG"
-      { "@case_entry" = "0"
+      { "@case_entry"
+        { "@pattern" = "0" }
         { "TestVar" = "\"test0\"" } }
-      { "@case_entry" = "1"
+      { "@case_entry"
+        { "@pattern" = "1" }
         { "TestVar" = "\"test1\"" } } }
 
   (* case: support ;; on the same line with multiple commands *)
@@ -486,11 +497,13 @@ esac\n" =
 	   Bar=3; Baz=4;;
 esac\n" =
     { "@case" = "$ARG"
-      { "@case_entry" = "0"
+      { "@case_entry"
+        { "@pattern" = "0" }
         { "Foo" = "0" }
         { "Bar" = "1" }
       }
-      { "@case_entry" = "1"
+      { "@case_entry"
+        { "@pattern" = "1" }
         { "Foo" = "2" }
         { "Bar" = "3" }
         { "Baz" = "4" }
@@ -572,13 +585,24 @@ fi\n" =
            ;;
 esac\n" =
     { "@case" = "$ARG"
-      { "@case_entry" = "\"foo bar\""
+      { "@case_entry"
+        { "@pattern" = "\"foo bar\"" }
         { "Foo" = "0" }
       }
-      { "@case_entry" = "baz | quux"
+      { "@case_entry"
+        { "@pattern" = "baz" }
+        { "@pattern" = "quux" }
         { "Foo" = "1" }
       }
     }
+
+  (* Allow && and || constructs after condition *)
+  test Shellvars.lns get "[ -f $FILENAME ] && do this || or that\n" =
+  { "@condition" = "-f $FILENAME"
+    { "type" = "[" }
+    { "@and" = "do this" }
+    { "@or" = "or that" }
+  }
 
 (* Local Variables: *)
 (* mode: caml       *)
