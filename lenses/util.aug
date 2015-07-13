@@ -127,6 +127,11 @@ Variable: indent
   let comment_c_style =
     comment_generic /[ \t]*\/\/[ \t]*/ "// "
 
+(* View: comment_c_style_or_hash
+    A comment line, C-style or hash *)
+  let comment_c_style_or_hash =
+    comment_generic /[ \t]*((\/\/)|#)[ \t]*/ "// "
+
 (* View: empty_generic
   A generic definition of <empty>
   Map empty lines, including empty comments *)
