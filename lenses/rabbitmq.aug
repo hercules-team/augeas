@@ -34,12 +34,14 @@ let listeners =
 (* View: ssl_options
     (Incomplete) list of SSL options *)
 let ssl_options =
-     let option = Erlang.value /((ca)?cert|key)file/ Erlang.path
+     let versions_list = Erlang.opt_list (Erlang.make_value Erlang.quoted)
+  in let option = Erlang.value /((ca)?cert|key)file/ Erlang.path
                 | Erlang.value "verify" Erlang.bare
                 | Erlang.value "verify_fun" Erlang.boolean
                 | Erlang.value /fail_if_no_peer_cert|reuse_sessions/ Erlang.boolean
                 | Erlang.value "depth" Erlang.integer
                 | Erlang.value "password" Erlang.quoted
+                | Erlang.value "versions" versions_list
   in Erlang.list "ssl_options" option
 
 (* View: disk_free_limit *)

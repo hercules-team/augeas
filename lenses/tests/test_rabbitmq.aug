@@ -18,12 +18,17 @@ test Rabbitmq.ssl_options get "{ssl_options, [
   {certfile,\"/path/to/server/cert.pem\"},
   {keyfile,\"/path/to/server/key.pem\"},
   {verify,verify_peer},
+  {versions, ['tlsv1.2', 'tlsv1.1', 'tlsv1']},
   {fail_if_no_peer_cert,false}]}" =
   { "ssl_options"
     { "cacertfile" = "/path/to/testca/cacert.pem" }
     { "certfile" = "/path/to/server/cert.pem" }
     { "keyfile" = "/path/to/server/key.pem" }
     { "verify" = "verify_peer" }
+    { "versions"
+      { "value" = "tlsv1.2" }
+      { "value" = "tlsv1.1" }
+      { "value" = "tlsv1" } }
     { "fail_if_no_peer_cert" = "false" } }
 
 (* Test: Rabbitmq.disk_free_limit *)
