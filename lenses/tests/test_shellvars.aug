@@ -541,6 +541,10 @@ fi\n" =
     { "@condition" = "-f $FILENAME"
       { "type" = "[" } }
 
+  test Shellvars.lns get "[[ -f $FILENAME ]]\n" =
+    { "@condition" = "-f $FILENAME"
+      { "type" = "[[" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
