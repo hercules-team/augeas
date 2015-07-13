@@ -165,6 +165,10 @@ unset ONBOOT    #   We do not want this var
   { "@builtin" = "exit" }
   { "@builtin" = "exit" { "args" = "2" } }
 
+  (* Allow the [ builtin *)
+  test Shellvars.lns get "[ -f $FILENAME ]\n" =
+  { "@builtin" = "[" { "args" = "-f $FILENAME ]" } }
+
   (* Test semicolons *)
   test lns get "VAR1=\"this;is;a;test\"\nVAR2=this;\n" =
   { "VAR1" = "\"this;is;a;test\"" }
