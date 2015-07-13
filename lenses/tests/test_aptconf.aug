@@ -172,3 +172,7 @@ Unattended-Upgrade::Package-Blacklist {
   test AptConf.lns get complex_elem =
      { "DPkg" { "Post-Invoke"
        { "@elem" = "if [ -d /var/lib/update-notifier ]; then touch /var/lib/update-notifier/dpkg-run-stamp; fi; if [ -e /var/lib/update-notifier/updates-available ]; then echo > /var/lib/update-notifier/updates-available; fi " } } }
+
+  (* Accept hash comments *)
+  test AptConf.lns get "# a comment\n" =
+     { "#comment" = "a comment" }

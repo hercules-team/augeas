@@ -41,7 +41,7 @@ let indent = Util.indent
 
 (* View: comment_simple
    A one-line comment, C-style *)
-let comment_simple = Util.comment_c_style
+let comment_simple = Util.comment_c_style_or_hash
 
 (* View: comment_multi
    A multiline comment, C-style *)
