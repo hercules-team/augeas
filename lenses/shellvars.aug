@@ -34,7 +34,7 @@ module Shellvars =
   let xchgs   = Build.xchgs
   let semicol = del /;?/ ""
 
-  let char  = /[^`;()'"|\n\\# \t]#*|\\\\(.|\n)/
+  let char  = /[^`;()'"&|\n\\# \t]#*|\\\\(.|\n)/
   let dquot =
        let char = /[^"\\]|\\\\./ | Rx.cl
     in "\"" . char* . "\""                    (* " Emacs, relax *)
@@ -107,9 +107,13 @@ module Shellvars =
     . ( Util.del_ws_spc . store Rx.integer )?
 
   let condition =
-       let cond (start:string) (end:string) = [ label "type" . store start ]
+       let action (operator:string) (lbl:string) =
+         [ Sep.opt_space . Util.del_str operator . Sep.opt_space
+         . label lbl . sto_to_semicol ]
+    in let cond (start:string) (end:string) = [ label "type" . store start ]
                                             . Util.del_ws_spc . sto_to_semicol
                                             . Util.del_ws_spc . Util.del_str end
+                                            . ( action "&&" "@and" | action "||" "@or" )*
     in Util.indent . label "@condition" . (cond "[" "]" | cond "[[" "]]")
 
 
