@@ -121,12 +121,17 @@ module Ntp =
       let arg = [ key arg_names . sep_spc . store Rx.decimal ] in
       [ key "tos" . (sep_spc . arg)* . eol ]
 
+    let interface =
+         let action = [ label "action" . store /listen|ignore|drop/ ]
+      in let addresses = [ label "addresses" . store Rx.word ]
+      in [ key "interface" . sep_spc . action . sep_spc . addresses . eol ]
+
     (* Define lens *)
 
     let lns = ( comment | empty | command_record | fudge_record
               | restrict_record | simple_settings | statistics_record
               | filegen_record | broadcastclient
-              | auth_command | tinker | tos)*
+              | auth_command | tinker | tos | interface)*
 
     let filter = (incl "/etc/ntp.conf")
 

@@ -24,6 +24,9 @@ statistics loopstats peerstats clockstats
 filegen loopstats file loopstats type day enable link
 filegen peerstats file peerstats type day disable
 filegen clockstats file clockstats type day enable nolink
+
+interface ignore wildcard
+interface listen 127.0.0.1
 "
 
    test Ntp.lns get conf =
@@ -69,6 +72,13 @@ filegen clockstats file clockstats type day enable nolink
 	 { "type" = "day" }
          { "enable" = "enable" }
 	 { "link" = "nolink" } }
+   { }
+   { "interface"
+         { "action" = "ignore" }
+         { "addresses" = "wildcard" } }
+   { "interface"
+         { "action" = "listen" }
+         { "addresses" = "127.0.0.1" } }
 
   (* Some things needed to process the default ntp.conf on Fedora *)
   test Ntp.lns get
