@@ -107,9 +107,8 @@ module Shellvars =
     . ( Util.del_ws_spc . store Rx.integer )?
 
   let condition =
-       let sto_cond = store /[^[#; \t\n][^#;\n]+[^]#; \t\n]|[^[]#; \t\n]+/
-    in let cond (start:string) (end:string) = [ label "type" . store start ]
-                                            . Util.del_ws_spc . sto_cond
+       let cond (start:string) (end:string) = [ label "type" . store start ]
+                                            . Util.del_ws_spc . sto_to_semicol
                                             . Util.del_ws_spc . Util.del_str end
     in Util.indent . label "@condition" . (cond "[" "]" | cond "[[" "]]")
 
