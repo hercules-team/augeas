@@ -536,6 +536,11 @@ fi\n" =
   test lns get "var[alpha_beta,gamma]=something\n" =
     { "var[alpha_beta,gamma]" = "something" }
 
+  (* GH #188: support more conditions *)
+  test Shellvars.lns get "[ -f $FILENAME ]\n" =
+    { "@condition" = "-f $FILENAME"
+      { "type" = "[" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

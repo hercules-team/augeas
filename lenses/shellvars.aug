@@ -105,6 +105,13 @@ module Shellvars =
     . Util.del_str "return"
     . ( Util.del_ws_spc . store Rx.integer )?
 
+  let condition =
+       let sto_cond = store /[^[#; \t\n][^#;\n]+[^]#; \t\n]|[^[]#; \t\n]+/
+    in let cond (start:string) (end:string) = [ label "type" . store start ]
+                                            . Util.del_ws_spc . sto_cond
+                                            . Util.del_ws_spc . Util.del_str end
+    in Util.indent . label "@condition" . (cond "[" "]" | cond "[[" "]]")
+
 
 (************************************************************************
  * Group:                 CONDITIONALS AND LOOPS
@@ -169,6 +176,7 @@ module Shellvars =
         | entry_eol_item bare_export
         | entry_eol_item builtin
         | entry_eol_item return
+        | entry_eol_item condition
 
   let entry_noeol =
     let entry_item (item:lens) = [ item ] in
@@ -178,6 +186,7 @@ module Shellvars =
         | entry_item bare_export
         | entry_item builtin
         | entry_item return
+        | entry_item condition
 
   let rec rec_entry =
     let entry = comment | entry_eol | rec_entry in
