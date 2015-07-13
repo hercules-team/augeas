@@ -34,12 +34,12 @@ module Shellvars =
   let xchgs   = Build.xchgs
   let semicol = del /;?/ ""
 
-  let char  = /[^`;()'"\n\\# \t]#*|\\\\(.|\n)/
+  let char  = /[^`;()'"|\n\\# \t]#*|\\\\(.|\n)/
   let dquot =
        let char = /[^"\\]|\\\\./ | Rx.cl
     in "\"" . char* . "\""                    (* " Emacs, relax *)
   let squot = /'[^']*'/
-  let bquot = /`[^`\n]*`/
+  let bquot = /`[^`\n]+`/
   (* dbquot don't take spaces or semi-colons *)
   let dbquot = /``[^` \t\n;]+``/
   let dollar_assign = /\$\([^\(\)#\n]*\)/
@@ -139,8 +139,10 @@ module Shellvars =
     generic_cond "select" "@select" "do" entry+ "done"
 
   let case (entry:lens) (entry_noeol:lens) =
-    let case_entry = [ label "@case_entry"
-                       . Util.indent . sto_to_semicol
+       let pattern = [ label "@pattern" . sto_to_semicol . Sep.opt_space ]
+    in let case_entry = [ label "@case_entry"
+                       . Util.indent . pattern
+                       . (Util.del_str "|" . Sep.opt_space . pattern)*
                        . Util.del_str ")" . eol
                        . entry* . entry_noeol?
                        . Util.indent . Util.del_str ";;" . eol ] in
