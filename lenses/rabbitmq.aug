@@ -83,8 +83,7 @@ let parameters = listeners
                | ssl_options
                | disk_free_limit
                | log_levels
-               | Erlang.value "vm_memory_high_watermark" Erlang.decimal
-               | Erlang.value "vm_memory_high_watermark_paging_ratio" Erlang.decimal
+               | Erlang.value /vm_memory_high_watermark(_paging_ratio)?/ Erlang.decimal
                | Erlang.value "frame_max" Erlang.integer
                | Erlang.value "heartbeat" Erlang.integer
                | Erlang.value /default_(vhost|user|pass)/ Erlang.glob
@@ -103,11 +102,9 @@ let parameters = listeners
                | Erlang.value "msg_store_index_module" Erlang.bare
                | Erlang.value "backing_queue_module" Erlang.bare
                | Erlang.value "msg_store_file_size_limit" Erlang.integer
-               | Erlang.value "queue_index_max_journal_entries" Erlang.integer
-               | Erlang.value "queue_index_embed_msgs_below" Erlang.integer
+               | Erlang.value /queue_index_(max_journal_entries|embed_msgs_below)/ Erlang.integer
                | cluster_partition_handling
-               | Erlang.value "handshake_timeout" Erlang.integer
-               | Erlang.value "ssl_handshake_timeout" Erlang.integer
+               | Erlang.value /(ssl_)?handshake_timeout/ Erlang.integer
                | Erlang.value "channel_max" Erlang.integer
                | Erlang.value_list "loopback_users" Erlang.glob
                | Erlang.value "reverse_dns_lookups" Erlang.boolean
