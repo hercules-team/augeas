@@ -183,7 +183,8 @@ www-data +biglab=(rpinson)NOEXEC: ICAL \
 	  { "host_group"
 	      { "host" = "ALPHA" }
 	      { "command" = "/usr/bin/su [!-]*" }
-	      { "command" = "!/usr/bin/su *root*" } } }
+	      { "command" = "/usr/bin/su *root*" 
+                  { "negate" } } } }
       {}
       { "spec"
           { "user"    = "@my\ admin\ group" }
@@ -328,14 +329,29 @@ test Sudoers.spec get "group+user somehost = ALL\n" =
   }
 
 (* Test: Sudoers.spec
-     https://github.com/hercules-team/augeas/issues/262:  Sudoers lens doesn't suppot `!` for command aliases *)
-test Sudoers.spec get "%opssudoers ALL=(ALL) ALL, !BANNED\n" = 
+     GH #262:  Sudoers lens doesn't support `!` for command aliases *)
+test Sudoers.spec get "%opssudoers ALL=(ALL) ALL, !!!BANNED\n" = 
   { "spec"
     { "user" = "%opssudoers" }
     { "host_group"
       { "host" = "ALL" }
       { "command" = "ALL"
         { "runas_user" = "ALL" } }
-      { "command" = "!BANNED" }
+      { "command" = "BANNED"
+        { "negate" } }
+    }
+  }
+
+(* Test: Sudoers.spec
+     Handle multiple `!` properly in commands *)
+test Sudoers.spec get "%opssudoers ALL=(ALL) ALL, !!!/bin/mount\n" =
+  { "spec"
+    { "user" = "%opssudoers" }
+    { "host_group"
+      { "host" = "ALL" }
+      { "command" = "ALL"
+        { "runas_user" = "ALL" } }
+      { "command" = "/bin/mount"
+        { "negate" } }
     }
   }
