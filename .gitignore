@@ -35,12 +35,14 @@ src/parser.[ch]
 src/lexer.[ch]
 src/augtool
 src/augparse
+src/callgrind.*
 tests/fatest
 tests/leak
 tests/lens-*.sh
 tests/test-api
 tests/test-xpath
 tests/test-load
+tests/test-perf
 tests/test-run
 tests/test-save
 tests/*.trs

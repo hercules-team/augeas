@@ -265,7 +265,7 @@ noinst_SCRIPTS = $(check_SCRIPTS)
 
 noinst_PROGRAMS = leak
 
-check_PROGRAMS = fatest test-xpath test-load test-save test-api test-run
+check_PROGRAMS = fatest test-xpath test-load test-perf test-save test-api test-run
 
 TESTS_ENVIRONMENT = \
   PATH='$(abs_top_builddir)/src$(PATH_SEPARATOR)'"$$PATH" \
@@ -294,6 +294,9 @@ test_api_LDADD = $(top_builddir)/src/libaugeas.la $(LIBXML_LIBS) $(GNULIB)
 
 test_run_SOURCES = test-run.c cutest.c cutest.h $(top_srcdir)/src/memory.c $(top_srcdir)/src/memory.h
 test_run_LDADD = $(top_builddir)/src/libaugeas.la $(LIBXML_LIBS) $(GNULIB)
+
+test_perf_SOURCES = test-perf.c cutest.c cutest.h $(top_srcdir)/src/memory.c $(top_srcdir)/src/memory.h
+test_perf_LDADD = $(top_builddir)/src/libaugeas.la $(LIBXML_LIBS) $(GNULIB)
 
 leak_SOURCES = leak.c
 leak_LDADD =  $(top_builddir)/src/libaugeas.la $(LIBXML_LIBS) $(GNULIB)
