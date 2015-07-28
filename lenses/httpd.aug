@@ -104,6 +104,7 @@ let filter = (incl "/etc/apache2/apache2.conf") .
              (incl "/etc/apache2/conf-available/*.conf") .
              (incl "/etc/apache2/mods-available/*") .
              (incl "/etc/apache2/sites-available/*") .
+             (incl "/etc/apache2/vhosts.d/*.conf") .
              (incl "/etc/httpd/conf.d/*.conf") .
              (incl "/etc/httpd/httpd.conf") .
              (incl "/etc/httpd/conf/httpd.conf") .
