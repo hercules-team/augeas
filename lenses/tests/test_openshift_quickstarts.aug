@@ -116,30 +116,38 @@ let new_conf = "[
 (* Test: OpenShift_Quickstarts.lns *)
 test OpenShift_Quickstarts.lns get conf =
   { "array"
+    { }
     { "dict"
       { "entry" = "quickstart"
         { "dict"
+          { }
           { "entry" = "id"
             { "string" = "1" }
           }
+          { }
           { "entry" = "name"
             { "string" = "CakePHP" }
           }
+          { }
           { "entry" = "website"
             { "string" = "http://cakephp.org/" }
           }
+          { }
           { "entry" = "initial_git_url"
             { "string" = "git://github.com/openshift/cakephp-example.git" }
           }
+          { }
           { "entry" = "cartridges"
             { "array"
               { "string" = "php-5.4" }
               { "string" = "mysql-5.1" }
             }
           }
+          { }
           { "entry" = "summary"
             { "string" = "CakePHP is a rapid development framework for PHP which uses commonly known design patterns like Active Record, Association Data Mapping, Front Controller and MVC." }
           }
+          { }
           { "entry" = "tags"
             { "array"
               { "string" = "php" }
@@ -147,35 +155,44 @@ test OpenShift_Quickstarts.lns get conf =
               { "string" = "framework" }
             }
           }
+          { }
           { "entry" = "admin_tags"
             { "array" }
           }
         }
       }
     }
+    { }
     { "dict"
       { "entry" = "quickstart"
         { "dict"
+          { }
           { "entry" = "id"
             { "string" = "2" }
           }
+          { }
           { "entry" = "name"
             { "string" = "Django" }
           }
+          { }
           { "entry" = "website"
             { "string" = "https://www.djangoproject.com/" }
           }
+          { }
           { "entry" = "initial_git_url"
             { "string" = "git://github.com/openshift/django-example.git" }
           }
+          { }
           { "entry" = "cartridges"
             { "array"
               { "string" = "python-2.7" }
             }
           }
+          { }
           { "entry" = "summary"
             { "string" = "A high-level Python web framework that encourages rapid development and clean, pragmatic design. Administrator user name and password are written to $OPENSHIFT_DATA_DIR/CREDENTIALS." }
           }
+          { }
           { "entry" = "tags"
             { "array"
               { "string" = "python" }
@@ -183,36 +200,45 @@ test OpenShift_Quickstarts.lns get conf =
               { "string" = "framework" }
             }
           }
+          { }
           { "entry" = "admin_tags"
             { "array" }
           }
         }
       }
     }
+    { }
     { "dict"
       { "entry" = "quickstart"
         { "dict"
+          { }
           { "entry" = "id"
             { "string" = "4" }
           }
+          { }
           { "entry" = "name"
             { "string" = "Drupal" }
           }
+          { }
           { "entry" = "website"
             { "string" = "http://drupal.org/" }
           }
+          { }
           { "entry" = "initial_git_url"
             { "string" = "git://github.com/openshift/drupal-example.git" }
           }
+          { }
           { "entry" = "cartridges"
             { "array"
               { "string" = "php-5.4" }
               { "string" = "mysql-5.1" }
             }
           }
+          { }
           { "entry" = "summary"
             { "string" = "An open source content management platform written in PHP powering millions of websites and applications. It is built, used, and supported by an active and diverse community of people around the world. Administrator user name and password are written to $OPENSHIFT_DATA_DIR/CREDENTIALS." }
           }
+          { }
           { "entry" = "tags"
             { "array"
               { "string" = "php" }
@@ -222,36 +248,45 @@ test OpenShift_Quickstarts.lns get conf =
               { "string" = "instant_app" }
             }
           }
+          { }
           { "entry" = "admin_tags"
             { "array" }
           }
         }
       }
     }
+    { }
     { "dict"
       { "entry" = "quickstart"
         { "dict"
+          { }
           { "entry" = "id"
             { "string" = "6" }
           }
+          { }
           { "entry" = "name"
             { "string" = "Ruby on Rails" }
           }
+          { }
           { "entry" = "website"
             { "string" = "http://rubyonrails.org/" }
           }
+          { }
           { "entry" = "initial_git_url"
             { "string" = "git://github.com/openshift/rails-example.git" }
           }
+          { }
           { "entry" = "cartridges"
             { "array"
               { "string" = "ruby-1.9" }
               { "string" = "mysql-5.1" }
             }
           }
+          { }
           { "entry" = "summary"
             { "string" = "An open source web framework for Ruby that is optimized for programmer happiness and sustainable productivity. It lets you write beautiful code by favoring convention over configuration." }
           }
+          { }
           { "entry" = "tags"
             { "array"
               { "string" = "ruby" }
@@ -259,36 +294,45 @@ test OpenShift_Quickstarts.lns get conf =
               { "string" = "framework" }
             }
           }
+          { }
           { "entry" = "admin_tags"
             { "array" }
           }
         }
       }
     }
+    { }
     { "dict"
       { "entry" = "quickstart"
         { "dict"
+          { }
           { "entry" = "id"
             { "string" = "8" }
           }
+          { }
           { "entry" = "name"
             { "string" = "WordPress" }
           }
+          { }
           { "entry" = "website"
             { "string" = "http://wordpress.org" }
           }
+          { }
           { "entry" = "initial_git_url"
             { "string" = "git://github.com/openshift/wordpress-example.git" }
           }
+          { }
           { "entry" = "cartridges"
             { "array"
               { "string" = "php-5.4" }
               { "string" = "mysql-5.1" }
             }
           }
+          { }
           { "entry" = "summary"
             { "string" = "A semantic personal publishing platform written in PHP with a MySQL back end, focusing on aesthetics, web standards, and usability. Administrator user name and password are written to $OPENSHIFT_DATA_DIR/CREDENTIALS." }
           }
+          { }
           { "entry" = "tags"
             { "array"
               { "string" = "php" }
@@ -298,11 +342,13 @@ test OpenShift_Quickstarts.lns get conf =
               { "string" = "instant_app" }
             }
           }
+          { }
           { "entry" = "admin_tags"
             { "array" }
           }
         }
       }
+      { }
     }
 }
 
