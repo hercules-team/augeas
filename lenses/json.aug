@@ -17,8 +17,9 @@ let ws = del spc ""
 let eol = del spc "\n"
 let delim (c:string) (d:string) = del (c . spc) d
 let dels (s:string) = del s s
+let comment = Util.comment_generic /\/\/[ \t]*/ "// " . del spc ""
 
-let comma = delim "," ","
+let comma = delim "," "," . comment?
 let colon = delim ":" ":"
 let lbrace = delim "{" "{"
 let rbrace = delim "}" "}"
@@ -39,7 +40,7 @@ let value0 = str | number | const /true|false|null/
 let fix_value (value:lens) =
   let array = [ label "array" . lbrack . (Build.opt_list value comma)? . rbrack ] in
   let pair = [ label "entry" . str_store . colon . value ] in
-  let obj = [ label "dict" . lbrace . (Build.opt_list pair comma)? . rbrace ] in
+  let obj = [ label "dict" . lbrace . comment? . (Build.opt_list pair comma)? . rbrace ] in
   (str | number | obj | array | const /true|false|null/)
 
 (* Typecheck finitely deep nesting *)
@@ -47,6 +48,6 @@ let value1 = fix_value value0
 let value2 = fix_value value1
 
 (* Process arbitrarily deeply nested JSON objects *)
-let rec rlns = fix_value rlns
+let rec rlns = comment* . fix_value rlns . comment*
 
 let lns = ws . rlns

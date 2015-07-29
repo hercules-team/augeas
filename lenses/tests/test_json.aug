@@ -328,3 +328,62 @@ test lns get t =
               { "string" = "cofax.tld" } }
             { "entry" = "taglib-location"
               { "string" = "/WEB-INF/tlds/cofax.tld" } } } } } } }
+
+(* Comments *)
+test lns get "// A comment
+{\"menu\": 1 }
+// Another comment\n" =
+  { "#comment" = "A comment" }
+  { "dict"
+    { "entry" = "menu"
+      { "number" = "1" } } }
+  { "#comment" = "Another comment" }
+
+
+let s_commented = "{\"menu\": {  // menu
+  \"id\": \"file\",  // file
+  \"value\": \"File\",
+  \"popup\": { // popup
+    \"menuitem\": [ // array
+      {\"value\": \"New\", \"onclick\": \"CreateNewDoc()\"},
+      {\"value\": \"Open\", \"onclick\": \"OpenDoc()\"},
+      {\"value\": \"Close\", \"onclick\": \"CloseDoc()\"}
+    ]
+  }
+}}"
+test lns get s_commented =
+  { "dict"
+    { "entry" = "menu"
+      { "dict"
+        { "#comment" = "menu" }
+        { "entry" = "id"
+          { "string" = "file" }
+        }
+        { "#comment" = "file" }
+        { "entry" = "value"
+          { "string" = "File" }
+        }
+        { "entry" = "popup"
+          { "dict"
+            { "#comment" = "popup" }
+            { "entry" = "menuitem"
+              { "array"
+                { "#comment" = "array" }
+                { "dict"
+                  { "entry" = "value"
+                    { "string" = "New" }
+                  }
+                  { "entry" = "onclick"
+                    { "string" = "CreateNewDoc()" } } }
+                { "dict"
+                  { "entry" = "value"
+                    { "string" = "Open" }
+                  }
+                  { "entry" = "onclick"
+                    { "string" = "OpenDoc()" } } }
+                { "dict"
+                  { "entry" = "value"
+                    { "string" = "Close" }
+                  }
+                  { "entry" = "onclick"
+                    { "string" = "CloseDoc()" } } } } } } } } } }
