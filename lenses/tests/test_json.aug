@@ -331,12 +331,16 @@ test lns get t =
 
 (* Comments *)
 test lns get "// A comment
+//
 {\"menu\": 1 }
+//
 // Another comment\n" =
   { "#comment" = "A comment" }
+  { }
   { "dict"
     { "entry" = "menu"
       { "number" = "1" } } }
+  { }
   { "#comment" = "Another comment" }
 
 

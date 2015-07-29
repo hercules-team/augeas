@@ -18,6 +18,7 @@ let eol = del spc "\n"
 let delim (c:string) (d:string) = del (c . spc) d
 let dels (s:string) = del s s
 let comment = Util.comment_generic /\/\/[ \t]*/ "// " . del spc ""
+            | [ del /\/\/[ \t\n]*\n/ "//\n" ]
 
 let comma = delim "," "," . comment?
 let colon = delim ":" ":"
