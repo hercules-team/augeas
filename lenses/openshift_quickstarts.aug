@@ -33,11 +33,8 @@ About: Examples
 module OpenShift_Quickstarts =
     autoload xfm
 
-(* View: json *)
-let json = Json.lns
-
 (* View: lns *)
-let lns = (Util.empty | json )*
+let lns = Json.lns
 
 (* Variable: filter *)
 let filter = incl "/etc/openshift/quickstarts.json"
