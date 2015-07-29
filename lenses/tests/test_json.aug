@@ -52,23 +52,32 @@ test lns get s =
   { "dict"
     { "entry" = "menu"
       { "dict"
+        { }
         { "entry" = "id" { "string" = "file" } }
+        { }
         { "entry" = "value" { "string" = "File" } }
+        { }
         { "entry" = "popup"
           { "dict"
+            { }
             { "entry" = "menuitem"
               { "array"
+                { }
                 { "dict"
                   { "entry" = "value" { "string" = "New" } }
                   { "entry" = "onclick"
                     { "string" = "CreateNewDoc()" } } }
+                { }
                 { "dict"
                   { "entry" = "value" { "string" = "Open" } }
                   { "entry" = "onclick" { "string" = "OpenDoc()" } } }
+                { }
                 { "dict"
                   { "entry" = "value" { "string" = "Close" } }
                   { "entry" = "onclick" { "string" = "CloseDoc()" } }
-                } } } } } } } }
+                  { }
+                }
+                { } } } { } } } } } }
 
 let t = "
 {\"web-app\": {
@@ -164,168 +173,255 @@ test lns get t =
   { "dict"
     { "entry" = "web-app"
       { "dict"
+        { }
         { "entry" = "servlet"
           { "array"
+            { }
             { "dict"
+              { }
               { "entry" = "servlet-name" { "string" = "cofaxCDS" } }
+              { }
               { "entry" = "servlet-class"
                 { "string" = "org.cofax.cds.CDSServlet" } }
+              { }
               { "entry" = "init-param"
                 { "dict"
+                  { }
                   { "entry" = "configGlossary:installationAt"
                     { "string" = "Philadelphia, PA" } }
+                  { }
                   { "entry" = "configGlossary:adminEmail"
                     { "string" = "ksm@pobox.com" } }
+                  { }
                   { "entry" = "configGlossary:poweredBy"
                     { "string" = "Cofax" } }
+                  { }
                   { "entry" = "configGlossary:poweredByIcon"
                     { "string" = "/images/cofax.gif" } }
+                  { }
                   { "entry" = "configGlossary:staticPath"
                     { "string" = "/content/static" } }
+                  { }
                   { "entry" = "templateProcessorClass"
                     { "string" = "org.cofax.WysiwygTemplate" } }
+                  { }
                   { "entry" = "templateLoaderClass"
                     { "string" = "org.cofax.FilesTemplateLoader" } }
+                  { }
                   { "entry" = "templatePath"
                     { "string" = "templates" } }
+                  { }
                   { "entry" = "templateOverridePath"
                     { "string" = "" } }
+                  { }
                   { "entry" = "defaultListTemplate"
                     { "string" = "listTemplate.htm" } }
+                  { }
                   { "entry" = "defaultFileTemplate"
                     { "string" = "articleTemplate.htm" } }
+                  { }
                   { "entry" = "useJSP"
                     { "const" = "false" } }
+                  { }
                   { "entry" = "jspListTemplate"
                     { "string" = "listTemplate.jsp" } }
+                  { }
                   { "entry" = "jspFileTemplate"
                     { "string" = "articleTemplate.jsp" } }
+                  { }
                   { "entry" = "cachePackageTagsTrack"
                     { "number" = "200" } }
+                  { }
                   { "entry" = "cachePackageTagsStore"
                     { "number" = "200" } }
+                  { }
                   { "entry" = "cachePackageTagsRefresh"
                     { "number" = "60" } }
+                  { }
                   { "entry" = "cacheTemplatesTrack"
                     { "number" = "100" } }
+                  { }
                   { "entry" = "cacheTemplatesStore"
                     { "number" = "50" } }
+                  { }
                   { "entry" = "cacheTemplatesRefresh"
                     { "number" = "15" } }
+                  { }
                   { "entry" = "cachePagesTrack"
                     { "number" = "200" } }
+                  { }
                   { "entry" = "cachePagesStore"
                     { "number" = "100" } }
+                  { }
                   { "entry" = "cachePagesRefresh"
                     { "number" = "10" } }
+                  { }
                   { "entry" = "cachePagesDirtyRead"
                     { "number" = "10" } }
+                  { }
                   { "entry" = "searchEngineListTemplate"
                     { "string" = "forSearchEnginesList.htm" } }
+                  { }
                   { "entry" = "searchEngineFileTemplate"
                     { "string" = "forSearchEngines.htm" } }
+                  { }
                   { "entry" = "searchEngineRobotsDb"
                     { "string" = "WEB-INF/robots.db" } }
+                  { }
                   { "entry" = "useDataStore"
                     { "const" = "true" } }
+                  { }
                   { "entry" = "dataStoreClass"
                     { "string" = "org.cofax.SqlDataStore" } }
+                  { }
                   { "entry" = "redirectionClass"
                     { "string" = "org.cofax.SqlRedirection" } }
+                  { }
                   { "entry" = "dataStoreName"
                     { "string" = "cofax" } }
+                  { }
                   { "entry" = "dataStoreDriver"
                     { "string" = "com.microsoft.jdbc.sqlserver.SQLServerDriver" } }
+                  { }
                   { "entry" = "dataStoreUrl"
                     { "string" = "jdbc:microsoft:sqlserver://LOCALHOST:1433;DatabaseName=goon" } }
+                  { }
                   { "entry" = "dataStoreUser"
                     { "string" = "sa" } }
+                  { }
                   { "entry" = "dataStorePassword"
                     { "string" = "dataStoreTestQuery" } }
+                  { }
                   { "entry" = "dataStoreTestQuery"
                     { "string" = "SET NOCOUNT ON;select test='test';" } }
+                  { }
                   { "entry" = "dataStoreLogFile"
                     { "string" = "/usr/local/tomcat/logs/datastore.log" } }
+                  { }
                   { "entry" = "dataStoreInitConns"
                     { "number" = "10" } }
+                  { }
                   { "entry" = "dataStoreMaxConns"
                     { "number" = "100" } }
+                  { }
                   { "entry" = "dataStoreConnUsageLimit"
                     { "number" = "100" } }
+                  { }
                   { "entry" = "dataStoreLogLevel"
                     { "string" = "debug" } }
+                  { }
                   { "entry" = "maxUrlLength"
                     { "number" = "500" } } } } }
+            { }
             { "dict"
+              { }
               { "entry" = "servlet-name"
                 { "string" = "cofaxEmail" } }
+              { }
               { "entry" = "servlet-class"
                 { "string" = "org.cofax.cds.EmailServlet" } }
+              { }
               { "entry" = "init-param"
                 { "dict"
+                  { }
                   { "entry" = "mailHost"
                     { "string" = "mail1" } }
+                  { }
                   { "entry" = "mailHostOverride"
                     { "string" = "mail2" } } } } }
+            { }
             { "dict"
+              { }
               { "entry" = "servlet-name"
                 { "string" = "cofaxAdmin" } }
+              { }
               { "entry" = "servlet-class"
                 { "string" = "org.cofax.cds.AdminServlet" } } }
+            { }
+            { }
             { "dict"
+              { }
               { "entry" = "servlet-name"
                 { "string" = "fileServlet" } }
+              { }
               { "entry" = "servlet-class"
                 { "string" = "org.cofax.cds.FileServlet" } } }
+            { }
             { "dict"
+              { }
               { "entry" = "servlet-name"
                 { "string" = "cofaxTools" } }
+              { }
               { "entry" = "servlet-class"
                 { "string" = "org.cofax.cms.CofaxToolsServlet" } }
+              { }
               { "entry" = "init-param"
                 { "dict"
+                  { }
                   { "entry" = "templatePath"
                     { "string" = "toolstemplates/" } }
+                  { }
                   { "entry" = "log"
                     { "number" = "1" } }
+                  { }
                   { "entry" = "logLocation"
                     { "string" = "/usr/local/tomcat/logs/CofaxTools.log" } }
+                  { }
                   { "entry" = "logMaxSize"
                     { "string" = "" } }
+                  { }
                   { "entry" = "dataLog"
                     { "number" = "1" } }
+                  { }
                   { "entry" = "dataLogLocation"
                     { "string" = "/usr/local/tomcat/logs/dataLog.log" } }
+                  { }
                   { "entry" = "dataLogMaxSize"
                     { "string" = "" } }
+                  { }
                   { "entry" = "removePageCache"
                     { "string" = "/content/admin/remove?cache=pages&id=" } }
+                  { }
                   { "entry" = "removeTemplateCache"
                     { "string" = "/content/admin/remove?cache=templates&id=" } }
+                  { }
                   { "entry" = "fileTransferFolder"
                     { "string" = "/usr/local/tomcat/webapps/content/fileTransferFolder" } }
+                  { }
                   { "entry" = "lookInContext"
                     { "number" = "1" } }
+                  { }
                   { "entry" = "adminGroupID"
                     { "number" = "4" } }
+                  { }
                   { "entry" = "betaServer"
                     { "const" = "true" } } } } } } }
+        { }
         { "entry" = "servlet-mapping"
           { "dict"
+            { }
             { "entry" = "cofaxCDS"
               { "string" = "/" } }
+            { }
             { "entry" = "cofaxEmail"
               { "string" = "/cofaxutil/aemail/*" } }
+            { }
             { "entry" = "cofaxAdmin"
               { "string" = "/admin/*" } }
+            { }
             { "entry" = "fileServlet"
               { "string" = "/static/*" } }
+            { }
             { "entry" = "cofaxTools"
               { "string" = "/tools/*" } } } }
+        { }
+        { }
         { "entry" = "taglib"
           { "dict"
+            { }
             { "entry" = "taglib-uri"
               { "string" = "cofax.tld" } }
+            { }
             { "entry" = "taglib-location"
               { "string" = "/WEB-INF/tlds/cofax.tld" } } } } } } }
 
@@ -334,60 +430,49 @@ test lns get "// A comment
 //
 {\"menu\": 1 }
 //
-// Another comment\n" =
+/*
+This is a multiline comment
+*/\n" =
   { "#comment" = "A comment" }
   { }
   { "dict"
     { "entry" = "menu"
-      { "number" = "1" } } }
+      { "number" = "1" } }
   { }
-  { "#comment" = "Another comment" }
+  { }
+  { "#mcomment"
+    { "1" = "This is a multiline comment" } } }
 
 
-let s_commented = "{\"menu\": {  // menu
-  \"id\": \"file\",  // file
-  \"value\": \"File\",
-  \"popup\": { // popup
-    \"menuitem\": [ // array
-      {\"value\": \"New\", \"onclick\": \"CreateNewDoc()\"},
-      {\"value\": \"Open\", \"onclick\": \"OpenDoc()\"},
-      {\"value\": \"Close\", \"onclick\": \"CloseDoc()\"}
-    ]
-  }
-}}"
+let s_commented = "/* before */
+{ // before all values
+\"key\": // my key
+    \"value\" // my value
+      , // after value
+\"key2\": [ // before array values
+  \"val21\",
+  \"val22\"
+  // after value 22
+]
+// after all values
+}
+"
 test lns get s_commented =
+  { "#mcomment" { "1" = "before" } }
   { "dict"
-    { "entry" = "menu"
-      { "dict"
-        { "#comment" = "menu" }
-        { "entry" = "id"
-          { "string" = "file" }
-        }
-        { "#comment" = "file" }
-        { "entry" = "value"
-          { "string" = "File" }
-        }
-        { "entry" = "popup"
-          { "dict"
-            { "#comment" = "popup" }
-            { "entry" = "menuitem"
-              { "array"
-                { "#comment" = "array" }
-                { "dict"
-                  { "entry" = "value"
-                    { "string" = "New" }
-                  }
-                  { "entry" = "onclick"
-                    { "string" = "CreateNewDoc()" } } }
-                { "dict"
-                  { "entry" = "value"
-                    { "string" = "Open" }
-                  }
-                  { "entry" = "onclick"
-                    { "string" = "OpenDoc()" } } }
-                { "dict"
-                  { "entry" = "value"
-                    { "string" = "Close" }
-                  }
-                  { "entry" = "onclick"
-                    { "string" = "CloseDoc()" } } } } } } } } } }
+    { "#comment" = "before all values" }
+    { "entry" = "key"
+      { "#comment" = "my key" }
+      { "string" = "value" { "#comment" = "my value" } } }
+    { "#comment" = "after value" }
+    { "entry" = "key2"
+      { "array"
+        { "#comment" = "before array values" }
+        { "string" = "val21" }
+        {  }
+        { "string" = "val22"
+          {  }
+          { "#comment" = "after value 22" } }
+        {  }
+        { "#comment" = "after all values" } } }
+    {  } }
