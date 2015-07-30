@@ -113,6 +113,14 @@ vrrp_instance VI_1 {
   native_ipv6
   dont_track_primary
   preempt_delay
+
+  mcast_src_ip 192.168.1.1
+  unicast_src_ip 192.168.1.1
+
+  unicast_peer {
+    192.168.1.2
+    192.168.1.3
+  }
 }
 
 virtual_server 192.168.1.11 22 {
@@ -273,7 +281,14 @@ vrrp_script chk_apache2 {       # Requires keepalived-1.1.13
        { "vmac_xmit_base" }
        { "native_ipv6" }
        { "dont_track_primary" }
-       { "preempt_delay" } }
+       { "preempt_delay" }
+       { }
+       { "mcast_src_ip" = "192.168.1.1" }
+       { "unicast_src_ip" = "192.168.1.1" }
+       { }
+       { "unicast_peer"
+         { "ipaddr" = "192.168.1.2" }
+         { "ipaddr" = "192.168.1.3" } } }
      { }
      { "virtual_server"
        { "ip" = "192.168.1.11" }

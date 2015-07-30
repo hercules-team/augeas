@@ -197,7 +197,7 @@ let vrrp_sync_group = named_block "vrrp_sync_group" vrrp_sync_group_field
 let vrrp_instance_field =
       let word_re = "state" | "interface" | "lvs_sync_daemon_interface"
    in let num_re = "virtual_router_id" | "priority" | "advert_int" | "garp_master_delay"
-   in let to_eol_re = /notify_(master|backup|fault)/
+   in let to_eol_re = /notify_(master|backup|fault)/ | /(mcast|unicast)_src_ip/
    in let flag_re = "smtp_alert" | "nopreempt" | "ha_suspend" | "debug" | "use_vmac" | "vmac_xmit_base" | "native_ipv6" | "dont_track_primary" | "preempt_delay"
    in field word_re sto_word
     | field num_re sto_num
@@ -208,6 +208,7 @@ let vrrp_instance_field =
          )
     | block "virtual_ipaddress" static_ipaddress_field
     | block /track_(interface|script)/ ( flag word )
+    | block "unicast_peer" static_ipaddress_field
 
 (* View: vrrp_instance *)
 let vrrp_instance = named_block "vrrp_instance" vrrp_instance_field
