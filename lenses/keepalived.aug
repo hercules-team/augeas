@@ -73,6 +73,9 @@ let sto_word = store word
 (* View: sto_num *)
 let sto_num = store Rx.relinteger
 
+(* View: sto_ipv6 *)
+let sto_ipv6 = store Rx.ipv6
+
 (* View: sto_to_eol *)
 let sto_to_eol = store /[^#! \t\n][^#!\n]*[^#! \t\n]|[^#! \t\n]/
 
@@ -128,12 +131,14 @@ let email = [ indent . label "email" . sto_email_addr . comment_or_eol ]
 (* View: global_defs_field
 Possible fields in the global_defs block *)
 let global_defs_field =
-      let word_re = "smtp_server"|"lvs_id"|"router_id"
+      let word_re = "smtp_server"|"lvs_id"|"router_id"|"vrrp_mcast_group4"
+   in let ipv6_re = "vrrp_mcast_group6"
    in let num_re = "smtp_connect_timeout"
    in block "notification_email" email
     | field "notification_email_from" sto_email_addr
     | field word_re sto_word
     | field num_re sto_num
+    | field ipv6_re sto_ipv6
 
 (* View: global_defs
 A global_defs block *)
