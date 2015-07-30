@@ -50,6 +50,9 @@ vrrp_instance VI_1 {
     check_apache2    # weight = +2 si ok, 0 si nok
   }
   garp_master_delay 5
+  garp_master_repeat 5
+  garp_master_refresh 5
+  garp_master_refresh_repeat 5
   priority 50
   advert_int 2
   authentication {
@@ -218,6 +221,9 @@ vrrp_script chk_apache2 {       # Requires keepalived-1.1.13
        { "track_script"
          { "check_apache2" { "#comment" = "weight = +2 si ok, 0 si nok" } } }
        { "garp_master_delay" = "5" }
+       { "garp_master_repeat" = "5" }
+       { "garp_master_refresh" = "5" }
+       { "garp_master_refresh_repeat" = "5" }
        { "priority" = "50" }
        { "advert_int" = "2" }
        { "authentication"
