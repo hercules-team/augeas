@@ -172,6 +172,8 @@ vrrp_script chk_apache2 {       # Requires keepalived-1.1.13
   script \"killall -0 apache2\"   # faster
   interval 2                      # check every 2 seconds
   weight 2                        # add 2 points of prio if OK
+  fall 5
+  raise 5
 }
 
 ! that's all
@@ -353,7 +355,9 @@ vrrp_script chk_apache2 {       # Requires keepalived-1.1.13
          { "interval" = "2"
            { "#comment" = "check every 2 seconds" } }
          { "weight" = "2"
-           { "#comment" = "add 2 points of prio if OK" } } }
+           { "#comment" = "add 2 points of prio if OK" } }
+         { "fall" = "5" }
+         { "raise" = "5" } }
        { }
        { "#comment" = "that's all" }
 
