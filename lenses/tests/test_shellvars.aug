@@ -584,6 +584,10 @@ esac\n" =
   test lns get "eval `dircolors`\n" =
     { "@eval" = "`dircolors`" }
 
+  (* alias *)
+  test lns get "alias ls='ls $LS_OPTIONS'\n" =
+    { "@alias" = "ls" { "value" = "'ls $LS_OPTIONS'" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

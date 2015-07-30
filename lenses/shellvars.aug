@@ -87,6 +87,11 @@ module Shellvars =
     Util.indent . Util.del_str "eval" . Util.del_ws_spc
     . label "@eval" . store anyquot
 
+  let alias =
+    Util.indent . Util.del_str "alias" . Util.del_ws_spc
+    . label "@alias" . store key_re . eq
+    . [ label "value" . store anyquot ]
+
   let builtin =
     Util.indent . label "@builtin"
     . store shell_builtin_cmds
@@ -174,6 +179,7 @@ module Shellvars =
         | entry_eol_item return
         | entry_eol_item condition
         | entry_eol_item eval
+        | entry_eol_item alias
 
   let entry_noeol =
     let entry_item (item:lens) = [ item ] in
@@ -185,6 +191,7 @@ module Shellvars =
         | entry_item return
         | entry_item condition
         | entry_item eval
+        | entry_item alias
 
   let rec rec_entry =
     let entry = comment | entry_eol | rec_entry in
