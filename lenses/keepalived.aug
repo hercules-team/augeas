@@ -198,7 +198,7 @@ let vrrp_instance_field =
       let word_re = "state" | "interface" | "lvs_sync_daemon_interface"
    in let num_re = "virtual_router_id" | "priority" | "advert_int" | "garp_master_delay"
    in let to_eol_re = /notify_(master|backup|fault)/
-   in let flag_re = "smtp_alert" | "nopreempt" | "ha_suspend" | "debug"
+   in let flag_re = "smtp_alert" | "nopreempt" | "ha_suspend" | "debug" | "use_vmac" | "vmac_xmit_base" | "native_ipv6" | "dont_track_primary" | "preempt_delay"
    in field word_re sto_word
     | field num_re sto_num
     | field to_eol_re sto_to_eol
