@@ -580,6 +580,10 @@ esac\n" =
       }
     }
 
+  (* eval *)
+  test lns get "eval `dircolors`\n" =
+    { "@eval" = "`dircolors`" }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

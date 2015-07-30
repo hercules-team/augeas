@@ -83,6 +83,10 @@ module Shellvars =
 
   let shell_builtin_cmds = "ulimit" | "shift" | "exit"
 
+  let eval =
+    Util.indent . Util.del_str "eval" . Util.del_ws_spc
+    . label "@eval" . store anyquot
+
   let builtin =
     Util.indent . label "@builtin"
     . store shell_builtin_cmds
@@ -169,6 +173,7 @@ module Shellvars =
         | entry_eol_item builtin
         | entry_eol_item return
         | entry_eol_item condition
+        | entry_eol_item eval
 
   let entry_noeol =
     let entry_item (item:lens) = [ item ] in
@@ -179,6 +184,7 @@ module Shellvars =
         | entry_item builtin
         | entry_item return
         | entry_item condition
+        | entry_item eval
 
   let rec rec_entry =
     let entry = comment | entry_eol | rec_entry in
