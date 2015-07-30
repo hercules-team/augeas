@@ -215,7 +215,7 @@ let vrrp_instance = named_block "vrrp_instance" vrrp_instance_field
 
 (* View: vrrp_script_field *)
 let vrrp_script_field =
-      let num_re = "interval" | "weight"
+      let num_re = "interval" | "weight" | "fall" | "raise"
    in let to_eol_re = "script"
    in field to_eol_re sto_to_eol
     | field num_re sto_num
