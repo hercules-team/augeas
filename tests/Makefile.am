@@ -199,6 +199,7 @@ lens_tests =			\
   lens-sysctl.sh		\
   lens-systemd.sh		\
   lens-thttpd.sh		\
+  lens-tmpfiles.sh		\
   lens-tuned.sh			\
   lens-up2date.sh		\
   lens-updatedb.sh		\
