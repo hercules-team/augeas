@@ -107,6 +107,12 @@ vrrp_instance VI_1 {
     10.234.66.146/32 dev vlan933 # parse it well
     ! and more if you want them
   }
+
+  use_vmac
+  vmac_xmit_base
+  native_ipv6
+  dont_track_primary
+  preempt_delay
 }
 
 virtual_server 192.168.1.11 22 {
@@ -261,7 +267,13 @@ vrrp_script chk_apache2 {       # Requires keepalived-1.1.13
            { "prefixlen" = "32" }
            { "dev" = "vlan933" }
            { "#comment" = "parse it well" } }
-         { "#comment" = "and more if you want them" } } }
+         { "#comment" = "and more if you want them" } }
+       { }
+       { "use_vmac" }
+       { "vmac_xmit_base" }
+       { "native_ipv6" }
+       { "dont_track_primary" }
+       { "preempt_delay" } }
      { }
      { "virtual_server"
        { "ip" = "192.168.1.11" }
