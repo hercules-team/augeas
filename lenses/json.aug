@@ -25,16 +25,21 @@ let rbrack = Util.del_str "]"
 
 let str_store = Quote.dquote . store /[^"]*/ . Quote.dquote  (* " Emacs, relax *)
 
-let number = [ label "number" . store /-?[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?/ . comments ]
+let number = [ label "number" . store /-?[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?/
+             . comments ]
 let str = [ label "string" . str_store . comments ]
 
 let const (r:regexp) = [ label "const" . store r . comments ]
 
 let fix_value (value:lens) =
-  let array = [ label "array" . lbrack . ((Build.opt_list value comma . rbrack . comments) | (rbrack . ws)) ] in
-  let pair = [ label "entry" . str_store . ws . colon . value ] in
-  let obj = [ label "dict" . lbrace . ((Build.opt_list pair comma. rbrace . comments) | (rbrace . ws)) ] in
-  (str | number | obj | array | const /true|false|null/)
+     let array = [ label "array" . lbrack
+               . ( ( Build.opt_list value comma . rbrack . comments )
+                   | (rbrack . ws) ) ]
+  in let pair = [ label "entry" . str_store . ws . colon . value ]
+  in let obj = [ label "dict" . lbrace
+             . ( ( Build.opt_list pair comma. rbrace . comments )
+                 | (rbrace . ws ) ) ]
+  in (str | number | obj | array | const /true|false|null/)
 
 (* Process arbitrarily deeply nested JSON objects *)
 let rec rlns = fix_value rlns
