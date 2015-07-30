@@ -2,6 +2,15 @@ module Test_json =
 
 let lns = Json.lns
 
+(* Non recursive checks *)
+
+(* Typecheck finitely deep nesting *)
+let value0 = Json.str | Json.number | Json.const /true|false|null/
+let value1 = Json.fix_value value0
+(* This test is usually too heavy, activate at will
+let value2 = Json.fix_value value1
+*)
+
 test lns get "\"menu\"" = { "string" = "menu" }
 
 test lns get "true" = { "const" = "true" }

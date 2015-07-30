@@ -43,19 +43,11 @@ let str = [ label "string" . str_store . comment_delim* . Sep.opt_space ]
 
 let const (r:regexp) = [ label "const" . store r . comment_val* . ws ]
 
-let value0 = str | number | const /true|false|null/
-
 let fix_value (value:lens) =
   let array = [ label "array" . lbrack . ((Build.opt_list value comma . rbrack . comment_delim* . Sep.opt_space) | (rbrack . ws)) ] in
   let pair = [ label "entry" . str_store . ws . colon . value ] in
   let obj = [ label "dict" . lbrace . ((Build.opt_list pair comma. rbrace . comment_delim* . Sep.opt_space) | (rbrace . ws)) ] in
   (str | number | obj | array | const /true|false|null/)
-
-(* Typecheck finitely deep nesting *)
-(*
-let value1 = fix_value value0
-let value2 = fix_value value1
-*)
 
 (* Process arbitrarily deeply nested JSON objects *)
 let rec rlns = fix_value rlns
