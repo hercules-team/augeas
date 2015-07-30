@@ -188,7 +188,12 @@ let global_conf = global_defs | static_routes
  *************************************************************************)
 
 (*View: vrrp_sync_group_field *)
-let vrrp_sync_group_field = block "group" [ indent . key word . comment_or_eol ]
+let vrrp_sync_group_field =
+      let to_eol_re = /notify(_master|_backup|_fault)?/
+   in let flag_re = "smtp_alert"
+   in field to_eol_re sto_to_eol
+    | flag flag_re
+    | block "group" [ indent . key word . comment_or_eol ]
 
 (* View: vrrp_sync_group *)
 let vrrp_sync_group = named_block "vrrp_sync_group" vrrp_sync_group_field

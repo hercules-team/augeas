@@ -36,6 +36,9 @@ vrrp_sync_group VG1 {
     inside_network  # name of vrrp_instance (below)
     outside_network # One for each moveable IP.
   }
+  notify /usr/bin/foo
+  notify_master /usr/bin/foo
+  smtp_alert
 }
 
 vrrp_instance VI_1 {
@@ -211,7 +214,10 @@ vrrp_script chk_apache2 {       # Requires keepalived-1.1.13
          { "inside_network"
            { "#comment" = "name of vrrp_instance (below)" } }
          { "outside_network"
-           { "#comment" = "One for each moveable IP." } } } }
+           { "#comment" = "One for each moveable IP." } } }
+         { "notify" = "/usr/bin/foo" }
+         { "notify_master" = "/usr/bin/foo" }
+         { "smtp_alert" } }
      {}
      { "vrrp_instance" = "VI_1"
        { "state" = "MASTER" }
