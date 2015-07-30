@@ -87,7 +87,7 @@ let flag (kw:regexp) = [ indent . key kw . comment_or_eol ]
    An IP <space> port pair *)
 let ip_port = [ label "ip" . sto_word ] . sep_spc . [ label "port" . sto_num ]
 
-(* View: lens_block 
+(* View: lens_block
 A generic block with a title lens.
 The definition is very similar to Build.block_newlines
 but uses a different type of <comment>. *)
@@ -99,13 +99,13 @@ let lens_block (title:lens) (sto:lens) =
 A simple block with just a block title *)
 let block (kw:regexp) (sto:lens) = lens_block (key kw) sto
 
-(* View: named_block 
+(* View: named_block
 A block with a block title and name *)
 let named_block (kw:string) (sto:lens) = lens_block (key kw . sep_spc . sto_word) sto
 
 (* View: named_block_arg_title
 A title lens for named_block_arg *)
-let named_block_arg_title (kw:string) (name:string) (arg:string) = 
+let named_block_arg_title (kw:string) (name:string) (arg:string) =
                             key kw . sep_spc
                           . [ label name . sto_word ]
                           . sep_spc
@@ -113,7 +113,7 @@ let named_block_arg_title (kw:string) (name:string) (arg:string) =
 
 (* View: named_block_arg
 A block with a block title, a name and an argument *)
-let named_block_arg (kw:string) (name:string) (arg:string) (sto:lens) = 
+let named_block_arg (kw:string) (name:string) (arg:string) (sto:lens) =
                            lens_block (named_block_arg_title kw name arg) sto
 
 
@@ -173,7 +173,7 @@ let static_routes = block "static_ipaddress" static_ipaddress_field
                   | block "static_routes" static_routes_field
 
 
-(* View: global_conf 
+(* View: global_conf
 A global configuration entry *)
 let global_conf = global_defs | static_routes
 
