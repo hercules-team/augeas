@@ -72,6 +72,7 @@ vrrp_instance VI_1 {
   notify_master   \"/svr/scripts/notify_master.sh\"
   notify_backup   \"/svr/scripts/notify_backup.sh\"
   notify_fault    \"/svr/scripts/notify_fault.sh\"
+  notify          \"/svr/scripts/notify.sh\"
 
   ! each virtual router id must be unique per instance name!
   virtual_router_id 51
@@ -248,6 +249,7 @@ vrrp_script chk_apache2 {       # Requires keepalived-1.1.13
        { "notify_master" = "\"/svr/scripts/notify_master.sh\"" }
        { "notify_backup" = "\"/svr/scripts/notify_backup.sh\"" }
        { "notify_fault" = "\"/svr/scripts/notify_fault.sh\"" }
+       { "notify" = "\"/svr/scripts/notify.sh\"" }
        { }
        { "#comment" = "each virtual router id must be unique per instance name!" }
        { "virtual_router_id" = "51" }
