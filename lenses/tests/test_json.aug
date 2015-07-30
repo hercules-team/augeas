@@ -179,6 +179,7 @@ let t = "
     \"taglib-location\": \"/WEB-INF/tlds/cofax.tld\"}}}"
 
 test lns get t =
+  { }
   { "dict"
     { "entry" = "web-app"
       { "dict"
