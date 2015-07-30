@@ -32,8 +32,8 @@ module Fstab =
                  . Util.comment_or_eol ]
 
   let lns = ( empty | comment | record ) *
-  let filter = (incl "/etc/fstab")
-             . (incl "/etc/mtab")
+  let filter = incl "/etc/fstab"
+             . incl "/etc/mtab"
 
   let xfm = transform lns filter
 
