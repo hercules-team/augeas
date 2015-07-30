@@ -26,6 +26,9 @@ global_defs {
   ! this will be used in SMTP alerts, so you should make
   ! each router easily identifiable
   lvs_id LVS_EXAMPLE_01
+
+  vrrp_mcast_group4 224.0.0.18
+  vrrp_mcast_group6 ff02::12
 }
 
 vrrp_sync_group VG1 {
@@ -179,7 +182,10 @@ vrrp_script chk_apache2 {       # Requires keepalived-1.1.13
        { "#comment" = "each load balancer should have a different ID" }
        { "#comment" = "this will be used in SMTP alerts, so you should make" }
        { "#comment" = "each router easily identifiable" }
-       { "lvs_id" = "LVS_EXAMPLE_01" } }
+       { "lvs_id" = "LVS_EXAMPLE_01" }
+       {}
+       { "vrrp_mcast_group4" = "224.0.0.18" }
+       { "vrrp_mcast_group6" = "ff02::12" } }
      {}
      { "vrrp_sync_group" = "VG1"
        { "group"
