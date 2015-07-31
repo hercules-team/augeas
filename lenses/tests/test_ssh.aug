@@ -21,6 +21,9 @@ RemoteForward 2221 lhost1:22
 LocalForward 3001 remotehost:3000
 Ciphers aes128-ctr,aes192-ctr
 MACs hmac-md5,hmac-sha1,umac-64@openssh.com
+HostKeyAlgorithms ssh-ed25519-cert-v01@openssh.com,ssh-ed25519,ssh-rsa-cert-v01@openssh.com,ssh-rsa
+KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256
+PubkeyAcceptedKeyTypes ssh-ed25519-cert-v01@openssh.com,ssh-ed25519,ssh-rsa-cert-v01@openssh.com,ssh-rsa
 "
 
     test Ssh.lns get conf =
@@ -61,6 +64,22 @@ MACs hmac-md5,hmac-sha1,umac-64@openssh.com
 	    { "2" = "hmac-sha1" }
 	    { "3" = "umac-64@openssh.com" }
 	}
+    { "HostKeyAlgorithms"
+      { "1" = "ssh-ed25519-cert-v01@openssh.com" }
+      { "2" = "ssh-ed25519" }
+      { "3" = "ssh-rsa-cert-v01@openssh.com" }
+      { "4" = "ssh-rsa" }
+    }
+    { "KexAlgorithms"
+      { "1" = "curve25519-sha256@libssh.org" }
+      { "2" = "diffie-hellman-group-exchange-sha256" }
+    }
+    { "PubkeyAcceptedKeyTypes"
+      { "1" = "ssh-ed25519-cert-v01@openssh.com" }
+      { "2" = "ssh-ed25519" }
+      { "3" = "ssh-rsa-cert-v01@openssh.com" }
+      { "4" = "ssh-rsa" }
+    }
     }
 
 (* Test: Ssh.lns
