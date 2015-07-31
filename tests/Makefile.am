@@ -74,6 +74,7 @@ lens_tests =			\
   lens-fstab.sh			\
   lens-fuse.sh			\
   lens-gdm.sh			\
+  lens-getcap.sh		\
   lens-group.sh			\
   lens-gshadow.sh			\
   lens-gtkbookmarks.sh			\
@@ -179,6 +180,7 @@ lens_tests =			\
   lens-rmt.sh			\
   lens-rsyncd.sh		\
   lens-rsyslog.sh		\
+  lens-rtadvd.sh		\
   lens-rx.sh			\
   lens-samba.sh			\
   lens-securetty.sh     \
@@ -208,6 +210,7 @@ lens_tests =			\
   lens-syslog.sh		\
   lens-sysctl.sh		\
   lens-systemd.sh		\
+  lens-termcap.sh		\
   lens-thttpd.sh		\
   lens-tmpfiles.sh		\
   lens-trapperkeeper.sh		\
