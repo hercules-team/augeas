@@ -1,10 +1,46 @@
 1.5.0 - 2015-XX-XX
   - General changes/additions
   - Lens changes/additions
+    * AptConf: support hash comments
     * Chrony: allow signed numbers and indentation, fix stray EOL entry,
               disallow comment on EOL, add many missing directives and
               options (Miroslav Lichvar, RHBZ#1213281)
+    * Group: support NIS map, support an overridden and disabled password,
+             i.e. `+:*::` (Matt Dainty) (Issue #258)
+    * Httpd: add paths to SLES vhosts
+             (Jan Doleschal) (Issue #268)
+    * Json: add comments support, refactor
+    * Known_Hosts: refactoring and description fixed
+    * MasterPasswd: new lens to parse /etc/master.passwd
+                    (Matt Dainty) (Issue #258)
+    * Nginx: add non-recursive ambiguities tests
+    * Ntp: add support for basic interface syntax
+    * OpenShift_Quickstarts: Use Json.lns
+    * Rabbitmq: remove space in option name,
+                add support for cluster_partitioning_handling,
+                add missing simple options (Joe Topjian) (Issue #264)
     * Rhsm: new lens to parse subscription-manager's /etc/rhsm/rhsm.conf
+    * Shellvars: allow partial quoting, mixing multiple styles
+                 (Kaarle Ritvanen) (Issue #183);
+                 allow wrapping builtin argument to multiple lines
+                 (Kaarle Ritvanen) (Issue #184);
+                 support ;; on same line with multiple commands
+                 (Kaarle Ritvanen) (Issue #185);
+                 allow line wrapping and improve quoting support
+                 (Kaarle Ritvanen) (Issue #187);
+                 accept [] and [[]] builtins (Issue #188);
+                 allow && and || constructs after condition
+                 (Kaarle Ritvanen) (Issue #265);
+                 add pattern nodes in case entries
+                 (BREAKING CHANGE: case entry values are now in a
+                 @pattern subnode) (Kaarle Ritvanen) (Issue #265)
+                 add eval builtin support;
+                 add alias builtin support;
+    * Simplelines: parse OpenBSD's hostname.if(5)
+                   files (Jasper Lievisse Adriaanse) (Issue #252)
+    * Tmpfiles: new lens to parse systemd's tempfiles.d configuration
+                files (Julien Pivotto) (Issue #269)
+    * Util: add comment_c_style_or_hash lens
     * Xml: allow empty document (Issue #255)
 
 1.4.0 - 2015-05-22
