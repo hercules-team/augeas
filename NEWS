@@ -10,6 +10,15 @@
     * Httpd: add paths to SLES vhosts
              (Jan Doleschal) (Issue #268)
     * Json: add comments support, refactor
+    * Keepalived: fix space/tag alignments and hanging spaces,
+                  add vrrp_mcast_group4 and vrrp_mcast_group6,
+                  add more vrrp_instance flags,
+                  add mcast/unicast_src_ip and unicast_peer,
+                  add missing garp options,
+                  add vrrp_script options,
+                  expand vrrp_sync_group block,
+                  allow notify option
+                  (Joe Topjian) (Issue #266)
     * Known_Hosts: refactoring and description fixed
     * MasterPasswd: new lens to parse /etc/master.passwd
                     (Matt Dainty) (Issue #258)
