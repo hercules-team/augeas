@@ -50,6 +50,7 @@ lens_tests =			\
   lens-cpanel.sh	\
   lens-cron.sh			\
   lens-crypttab.sh		\
+  lens-csv.sh		\
   lens-cyrus_imapd.sh		\
   lens-cups.sh		\
   lens-darkice.sh		\
