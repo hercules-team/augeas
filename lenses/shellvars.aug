@@ -116,11 +116,18 @@ module Shellvars =
                                             . ( action "&&" "@and" | action "||" "@or" )*
     in Util.indent . label "@condition" . (cond "[" "]" | cond "[[" "]]")
 
-  let command =
+  (* Entry types *)
+  let entry_eol_item (item:lens) = [ item . comment_or_eol ]
+  let entry_item (item:lens) = [ item ]
+
+  (* Command *)
+  let rec command =
        let reserved_key = /exit|shift|return|ulimit|unset|export|source|\.|if|for|select|while|until|then|else|fi|done|case|eval|alias/
     in let word = /[A-Za-z0-9_.-\/]+/
+    in let pipe = del /[ \t]*\|[ \t]*/ " | "
     in Util.indent . label "@command" . store (word - reserved_key)
      . [ Sep.space . label "@arg" . sto_to_semicol]?
+     . (pipe . (entry_eol_item command | entry_item command) )*
 
 (************************************************************************
  * Group:                 CONDITIONALS AND LOOPS
@@ -179,8 +186,6 @@ module Shellvars =
       . Util.indent . Util.del_str "}" . eol ]
 
   let entry_eol =
-    let entry_eol_item (item:lens) =
-      [ item . comment_or_eol ] in
       entry_eol_item source
         | entry_eol_item kv
         | entry_eol_item unset
@@ -193,7 +198,6 @@ module Shellvars =
         | entry_eol_item command
 
   let entry_noeol =
-    let entry_item (item:lens) = [ item ] in
       entry_item source
         | entry_item kv
         | entry_item unset

@@ -622,6 +622,14 @@ test Shellvars.lns get "echo foobar 'and this is baz'
     { "@arg" = "with args" }
   }
 
+(* Test: Shellvars.lns
+     Support pipes in commands *)
+test Shellvars.lns get "echo \"$STRING\" | grep foo\n" =
+  { "@command" = "echo"
+    { "@arg" = "\"$STRING\"" }
+    { "@command" = "grep"
+      { "@arg" = "foo" } } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
