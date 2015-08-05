@@ -28,6 +28,8 @@
     * Rabbitmq: remove space in option name,
                 add support for cluster_partitioning_handling,
                 add missing simple options (Joe Topjian) (Issue #264)
+    * Reprepro_Uploaders: add support for distribution field
+                          (Mathieu Alorent) (Issue #277)
     * Rhsm: new lens to parse subscription-manager's /etc/rhsm/rhsm.conf
     * Shellvars: allow partial quoting, mixing multiple styles
                  (Kaarle Ritvanen) (Issue #183);
