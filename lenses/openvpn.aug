@@ -66,6 +66,9 @@ let empty   = Util.empty
  *   - ns-cert-type => "server"
  *   - resolv-retry => "infinite"
  *   - script-security => [0-3] (execve|system)?
+ *   - ping => num
+ *   - ping-restart => num
+ *   - up => filename
  *************************************************************************)
 
 let single_ip  = "local"
@@ -75,6 +78,8 @@ let single_num = "port"
 	       | "mute"
                | "fragment"
                | "mssfix"
+               | "ping"
+               | "ping-restart"
 let single_fn  = "ca"
                | "cert"
 	       | "key"
@@ -85,6 +90,7 @@ let single_fn  = "ca"
 	       | "log"
 	       | "log-append"
 	       | "client-config-dir"
+	       | "up"
 let single_an  = "user"
                | "group"
 
@@ -119,6 +125,7 @@ let single     = single_entry single_num num_re
  *   - mute-replay-warnings
  *   - http-proxy-retry
  *   - daemon
+ *   - ping-timer-rem
  *
  *************************************************************************)
 
@@ -133,6 +140,7 @@ let flag_words = "client-to-client"
 	       | "mute-replay-warnings"
 	       | "http-proxy-retry"
 	       | "daemon"
+	       | "ping-timer-rem"
 
 let flag_entry (kw:regexp)
                = [ key kw . comment_or_eol ]
@@ -151,6 +159,7 @@ let flag       = flag_entry flag_words
  *   - tls-auth      => filename [01]
  *   - remote        => hostname/IP num
  *   - management    => IP num filename
+ *   - plugin        => filename filename
  *
  *************************************************************************)
 
@@ -193,7 +202,9 @@ let remote        = [ key "remote" . sep
 
 let http_proxy    = [ key "http-proxy" .
                     ( sep . [ label "server" . store /[A-Za-z0-9._-]+/ ] .
-		    ( sep . [ label "port"   . num      ] )? )?
+		    ( sep . [ label "port"   . num      ] .
+		    ( sep . [ label "authfile" . store /[A-Za-z0-9._\/-]+/ ] .
+		    ( sep . [ label "authtype" . store /(none|basic|ntlm)/ ] )? )? )? )?
 		    . comment_or_eol
 		    ]
 
@@ -203,6 +214,10 @@ let management    = [ key "management" . sep
                     . [ label "pwfile" . filename       ] . comment_or_eol
                     ]
 
+let plugin        = [ key "plugin" . sep
+                    . [ label "module"        . store /[A-Za-z0-9._\/-]+/ ] . sep
+                    . [ label "initstring"    . filename      ] . comment_or_eol
+                    ]
 
 let other         = server
                   | server_bridge
@@ -213,6 +228,7 @@ let other         = server
 		  | remote
 		  | http_proxy
 		  | management
+		  | plugin
 
 
 (************************************************************************
