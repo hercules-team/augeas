@@ -37,7 +37,7 @@ let metadata = [ Util.indent . key "metadata" . Util.eol ]
 (* View: mod
      a module entry, with optional version and options *)
 let mod =
-     let mod_name = Quote.do_quote (store (Rx.word . /[\/-]/ . Rx.word))
+     let mod_name = Quote.do_quote (store (Rx.word))
   in let version = [ label "@version" . Quote.do_quote (store /[^:\n]+/) ]
   in let opt = [ Util.del_str ":" . key Rx.word . del /[ \t]*=>[ \t]*/ " => "
                . Quote.do_quote (store /[^,\n]*/) ]
