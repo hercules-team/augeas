@@ -140,3 +140,11 @@ test Rsyslog.lns get ":msg, !contains, \"error\" /var/log/noterror.log\n" =
     { "value" = "error" }
     { "action"
       { "file" = "/var/log/noterror.log" } } }
+
+test Rsyslog.lns get ":msg,!contains,\"garbage\" ~\n" =
+  { "filter"
+    { "property" = "msg" }
+    { "operation" = "!contains" }
+    { "value" = "garbage" }
+    { "action"
+      { "discard" } } }

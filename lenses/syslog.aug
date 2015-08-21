@@ -198,10 +198,15 @@ module Syslog =
 	 *)
 	let logprogram = pipe . [ label "program" . store /[^ \t\n][^\n]+[^ \t\n]/ ]
 
-	(* View: action
-	 an action is either a file, a host, users, or a program
+	(* View: discard
+	 discards matching messages
 	 *)
-        let action = (file | loghost | users | logprogram)
+	let discard = [ label "discard" . Util.del_str "~" ]
+
+	(* View: action
+	 an action is either a file, a host, users, a program, or discard
+	 *)
+        let action = (file | loghost | users | logprogram | discard)
 
 	(* Group: Entry *)
 

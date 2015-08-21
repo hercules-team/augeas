@@ -212,6 +212,12 @@ daemon.info                                     /var/log/cvsupd.log
 	  set "/entry[1]/action/file" "/foo"
 	  = "*.* /foo\n"
 
+	(* changing file to discard *)
+	test Syslog.lns put "*.* /var\n" after
+	  rm "/entry[1]/action/file" ;
+	  set "/entry[1]/action/discard" ""
+	  = "*.* ~\n"
+
 	(* removing entry *)
 	test Syslog.lns put "*.* /var\n" after
 	  rm "/entry[1]"

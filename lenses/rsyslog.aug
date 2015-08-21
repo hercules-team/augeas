@@ -48,7 +48,7 @@ let entry = [ label "entry" . Syslog.selectors . Syslog.sep_tab .
 (* View: prop_filter
    Parses property-based filters, which start with ":" and the property name *)
 let prop_filter =
-     let sep = Sep.comma . Util.del_ws_spc
+     let sep = Sep.comma . Util.del_opt_ws " "
   in let prop_name = [ Util.del_str ":" . label "property" . store Rx.word ]
   in let prop_oper = [ label "operation" . store /[A-Za-z!-]+/ ]
   in let prop_val  = [ label "value" . Quote.do_dquote (store /[^\n"]*/) ]
