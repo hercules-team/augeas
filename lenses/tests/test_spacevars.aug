@@ -6,7 +6,7 @@ keyword value
 # I like comments
 very.useful-key my=value
 
-
+a.flag
 "
 
     let lns = Spacevars.lns
@@ -18,4 +18,4 @@ very.useful-key my=value
         { "#comment" = "I like comments"}
         { "very.useful-key" = "my=value" }
 	{}
-	{}
+        { "a.flag" }

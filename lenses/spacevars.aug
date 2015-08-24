@@ -24,11 +24,13 @@ let empty   = Util.empty
 
 let entry = Build.key_ws_value /[A-Za-z0-9._-]+(\[[0-9]+\])?/
 
+let flag = [ key /[A-Za-z0-9._-]+(\[[0-9]+\])?/ . Util.doseol ]
+
 (************************************************************************
  *                                LENS
  *************************************************************************)
 
-let lns = (comment|empty|entry)*
+let lns = (comment|empty|entry|flag)*
 
 let simple_lns = lns    (* An alias for compatibility reasons *)
 
