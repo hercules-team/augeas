@@ -183,9 +183,10 @@ let group =
              . store Rx.word ]
   in let contains = [ key "contains" . Sep.space
                     . store Rx.word ]
+  in let empty = [ key "empty" ]
   in [ key "group" . Sep.space
      . store Rx.word . Sep.space
-     . (add | contains) . Util.eol ]
+     . (add | contains | empty) . Util.eol ]
 
 (* View: entry
    An entry is either an <allow> statement

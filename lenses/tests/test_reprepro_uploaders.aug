@@ -152,3 +152,9 @@ test Reprepro_Uploaders.lns get "group groupname add key-id\n" =
 test Reprepro_Uploaders.lns get "group groupname contains group2\n" =
   { "group" = "groupname"
     { "contains" = "group2" } }
+
+(* Test: Reprepro_Uploaders.lns
+     Empty group, GH #283 *)
+test Reprepro_Uploaders.lns get "group groupname empty\n" =
+  { "group" = "groupname"
+    { "empty" } }
