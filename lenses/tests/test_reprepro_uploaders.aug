@@ -147,3 +147,8 @@ test Reprepro_Uploaders.lns get "group groupname add key-id\n" =
   { "group" = "groupname"
     { "add" = "key-id" } }
 
+(* Test: Reprepro_Uploaders.lns
+     Group inheritance, GH #283 *)
+test Reprepro_Uploaders.lns get "group groupname contains group2\n" =
+  { "group" = "groupname"
+    { "contains" = "group2" } }

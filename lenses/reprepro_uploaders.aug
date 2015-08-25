@@ -179,10 +179,13 @@ let allow =
 (* View: group
    A group declaration *)
 let group =
-    [ key "group" . Sep.space
-  . store Rx.word . Sep.space
-  . [ key "add" . Sep.space
-    . store Rx.word . Util.eol ] ]
+     let add = [ key "add" . Sep.space
+             . store Rx.word ]
+  in let contains = [ key "contains" . Sep.space
+                    . store Rx.word ]
+  in [ key "group" . Sep.space
+     . store Rx.word . Sep.space
+     . (add | contains) . Util.eol ]
 
 (* View: entry
    An entry is either an <allow> statement
