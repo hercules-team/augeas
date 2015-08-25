@@ -29,7 +29,8 @@
                 add support for cluster_partitioning_handling,
                 add missing simple options (Joe Topjian) (Issue #264)
     * Reprepro_Uploaders: add support for distribution field
-                          (Mathieu Alorent) (Issue #277)
+                          (Mathieu Alorent) (Issue #277),
+                          add support for groups (Issue #283)
     * Rhsm: new lens to parse subscription-manager's /etc/rhsm/rhsm.conf
     * Rsyslog: improve property filter parsing,
                treat whitespace after commas as optional.
