@@ -42,9 +42,10 @@ let block_re_all = block_re | "if" | "location" | "geo" | "map"
 (* View: simple
      A simple entry *)
 let simple =
-     let kw = Rx.word - block_re_all
+     let kw = /[A-Za-z0-9_.:-]+/ - block_re_all
+  in let mask = [ label "mask" . Util.del_str "/" . store Rx.integer ]
   in let sto = store /[^ \t\n;][^;]*/ . Sep.semicolon
-  in [ Util.indent . key kw . Sep.space . sto . (Util.eol|Util.comment_eol) ]
+  in [ Util.indent . key kw . mask? . Sep.space . sto . (Util.eol|Util.comment_eol) ]
 
 let arg (name:string) (rx:regexp) =
   [ label name . Sep.space . store rx ]
