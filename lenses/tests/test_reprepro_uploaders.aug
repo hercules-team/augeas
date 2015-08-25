@@ -158,3 +158,9 @@ test Reprepro_Uploaders.lns get "group groupname contains group2\n" =
 test Reprepro_Uploaders.lns get "group groupname empty\n" =
   { "group" = "groupname"
     { "empty" } }
+
+(* Test: Reprepro_Uploaders.lns
+     Unused group, GH #283 *)
+test Reprepro_Uploaders.lns get "group groupname unused\n" =
+  { "group" = "groupname"
+    { "unused" } }
