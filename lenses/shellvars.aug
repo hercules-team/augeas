@@ -106,28 +106,66 @@ module Shellvars =
     . Util.del_str "return"
     . ( Util.del_ws_spc . store Rx.integer )?
 
+  let action (operator:string) (lbl:string) (sto:lens) =
+    [ del (Rx.opt_space . operator . Rx.opt_space) (" " . operator . " ")
+    . label ("@".lbl) . sto ]
+
+  let action_pipe = action "|" "pipe"
+  let action_and = action "&&" "and"
+  let action_or = action "||" "or"
+
   let condition =
-       let action (operator:string) (lbl:string) =
-         [ Sep.opt_space . Util.del_str operator . Sep.opt_space
-         . label lbl . sto_to_semicol ]
-    in let cond (start:string) (end:string) = [ label "type" . store start ]
-                                            . Util.del_ws_spc . sto_to_semicol
-                                            . Util.del_ws_spc . Util.del_str end
-                                            . ( action "&&" "@and" | action "||" "@or" )*
+    let cond (start:string) (end:string) = [ label "type" . store start ]
+                                         . Util.del_ws_spc . sto_to_semicol
+                                         . Util.del_ws_spc . Util.del_str end
+                                         . ( action_and sto_to_semicol | action_or sto_to_semicol )*
     in Util.indent . label "@condition" . (cond "[" "]" | cond "[[" "]]")
 
   (* Entry types *)
   let entry_eol_item (item:lens) = [ item . comment_or_eol ]
   let entry_item (item:lens) = [ item ]
 
+  let entry_eol_nocommand =
+      entry_eol_item source
+        | entry_eol_item kv
+        | entry_eol_item unset
+        | entry_eol_item bare_export
+        | entry_eol_item builtin
+        | entry_eol_item return
+        | entry_eol_item condition
+        | entry_eol_item eval
+        | entry_eol_item alias
+
+  let entry_noeol_nocommand =
+      entry_item source
+        | entry_item kv
+        | entry_item unset
+        | entry_item bare_export
+        | entry_item builtin
+        | entry_item return
+        | entry_item condition
+        | entry_item eval
+        | entry_item alias
+
   (* Command *)
   let rec command =
        let reserved_key = /exit|shift|return|ulimit|unset|export|source|\.|if|for|select|while|until|then|else|fi|done|case|eval|alias/
     in let word = /[A-Za-z0-9_.-\/]+/
-    in let pipe = del /[ \t]*\|[ \t]*/ " | "
+    in let entry_eol = entry_eol_nocommand | entry_eol_item command
+    in let entry_noeol = entry_noeol_nocommand | entry_item command
+    in let entry = entry_eol | entry_noeol
+    in let pipe = action_pipe (entry_eol_item command | entry_item command)
+    in let and = action_and entry
+    in let or = action_or entry
     in Util.indent . label "@command" . store (word - reserved_key)
      . [ Sep.space . label "@arg" . sto_to_semicol]?
-     . (pipe . (entry_eol_item command | entry_item command) )*
+     . ( pipe | and | or )?
+
+  let entry_eol = entry_eol_nocommand
+                | entry_eol_item command
+
+  let entry_noeol = entry_noeol_nocommand
+                  | entry_item command
 
 (************************************************************************
  * Group:                 CONDITIONALS AND LOOPS
@@ -184,30 +222,6 @@ module Shellvars =
       . eol . Util.del_str "{" . eol
       . entry+
       . Util.indent . Util.del_str "}" . eol ]
-
-  let entry_eol =
-      entry_eol_item source
-        | entry_eol_item kv
-        | entry_eol_item unset
-        | entry_eol_item bare_export
-        | entry_eol_item builtin
-        | entry_eol_item return
-        | entry_eol_item condition
-        | entry_eol_item eval
-        | entry_eol_item alias
-        | entry_eol_item command
-
-  let entry_noeol =
-      entry_item source
-        | entry_item kv
-        | entry_item unset
-        | entry_item bare_export
-        | entry_item builtin
-        | entry_item return
-        | entry_item condition
-        | entry_item eval
-        | entry_item alias
-        | entry_item command
 
   let rec rec_entry =
     let entry = comment | entry_eol | rec_entry in

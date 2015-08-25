@@ -51,7 +51,8 @@
                  @pattern subnode) (Kaarle Ritvanen) (Issue #265)
                  add eval builtin support;
                  add alias builtin support;
-                 allow (almost) any command
+                 allow (almost) any command;
+                 allow && and || after commands (Issue #215)
     * Simplelines: parse OpenBSD's hostname.if(5)
                    files (Jasper Lievisse Adriaanse) (Issue #252)
     * Spacevars: support flags (Issue #279)

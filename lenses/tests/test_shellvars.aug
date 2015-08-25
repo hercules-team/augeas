@@ -627,8 +627,46 @@ test Shellvars.lns get "echo foobar 'and this is baz'
 test Shellvars.lns get "echo \"$STRING\" | grep foo\n" =
   { "@command" = "echo"
     { "@arg" = "\"$STRING\"" }
-    { "@command" = "grep"
-      { "@arg" = "foo" } } }
+    { "@pipe"
+      { "@command" = "grep"
+        { "@arg" = "foo" } } } }
+
+(* Test: Shellvars.lns
+     Support && and || after command
+     GH #215 *)
+test Shellvars.lns get "grep -q \"Debian\" /etc/issue && echo moo\n" =
+  { "@command" = "grep"
+    { "@arg" = "-q \"Debian\" /etc/issue" }
+    { "@and"
+      { "@command" = "echo"
+        { "@arg" = "moo" } } } }
+
+test Shellvars.lns get "grep -q \"Debian\" /etc/issue || echo baa\n" =
+  { "@command" = "grep"
+    { "@arg" = "-q \"Debian\" /etc/issue" }
+    { "@or"
+      { "@command" = "echo"
+        { "@arg" = "baa" } } } }
+
+test Shellvars.lns get "grep -q \"Debian\" /etc/issue && DEBIAN=1\n" =
+  { "@command" = "grep"
+    { "@arg" = "-q \"Debian\" /etc/issue" }
+    { "@and"
+      { "DEBIAN" = "1" } } }
+
+test Shellvars.lns get "cat /etc/issue | grep -q \"Debian\" && echo moo || echo baa\n" =
+  { "@command" = "cat"
+    { "@arg" = "/etc/issue" }
+    { "@pipe"
+      { "@command" = "grep"
+        { "@arg" = "-q \"Debian\"" }
+        { "@and"
+          { "@command" = "echo"
+            { "@arg" = "moo" }
+            { "@or"
+              { "@command" = "echo"
+                { "@arg" = "baa" } } } } } } } }
+
 
 (* Local Variables: *)
 (* mode: caml       *)
