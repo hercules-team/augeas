@@ -133,3 +133,11 @@ test Reprepro_Uploaders.lns get conf =
             { "or" = "source" { "not" } { "or" = "*melanie*" } { "or" = "katya" } } }
     { "by" = "key"
       { "key" = "any" } } }
+
+(* Test: Reprepro_Uploaders.lns
+     Support group conditions, GH #283 *)
+test Reprepro_Uploaders.lns get "allow sections 'desktop/*' by group groupname\n" =
+  { "allow"
+    { "and" { "or" = "sections" { "or" = "desktop/*" } } }
+    { "by" = "group" { "group" = "groupname" } } }
+

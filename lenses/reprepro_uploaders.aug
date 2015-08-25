@@ -9,7 +9,6 @@ About: Reference
 
 About: License
    This file is licenced under the LGPL v2+, like the rest of Augeas.
-
 About: Lens Usage
    See <lns>.
 
@@ -129,6 +128,16 @@ let by_key =
                   . store (Rx.word - "any") ] in
     value "key" . (any_key | named_key)
 
+(* View: by_group
+   Authenticate packages by a groupname.
+
+   > $reprepro/allow[1]/by/group = "groupname"
+
+ *)
+let by_group = value "group"
+             . [ key "group" . Sep.space
+             . store Rx.word ]
+
 (* View: by
    <by> statements define who is allowed to upload.
    It can be simple keywords, like "anybody" or "unsigned",
@@ -143,7 +152,7 @@ let by_key =
 let by =
     [ key "by" . Sep.space
          . ( store ("anybody"|"unsigned")
-           | by_key ) ]
+           | by_key | by_group ) ]
 
 (* View: entry
    An entry is an allow statement, e.g.:
