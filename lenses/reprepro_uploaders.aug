@@ -154,8 +154,8 @@ let by =
          . ( store ("anybody"|"unsigned")
            | by_key | by_group ) ]
 
-(* View: entry
-   An entry is an allow statement, e.g.:
+(* View: allow
+   An allow entry, e.g.:
 
    > $reprepro/allow[1]
    > $reprepro/allow[1]/and[1]
@@ -171,10 +171,24 @@ let by =
    > $reprepro/allow[1]/by/key = "ABCD1234"
 
  *)
-let entry =
+let allow =
     [ key "allow" . Sep.space
   . condition_list . Sep.space
   . by . Util.eol ]
+
+(* View: group
+   A group declaration *)
+let group =
+    [ key "group" . Sep.space
+  . store Rx.word . Sep.space
+  . [ key "add" . Sep.space
+    . store Rx.word . Util.eol ] ]
+
+(* View: entry
+   An entry is either an <allow> statement
+   or a <group> definition.
+ *)
+let entry = allow | group
 
 (* View: lns
    The lens is made of <Util.empty>, <Util.comment> and <entry> lines *)

@@ -141,3 +141,9 @@ test Reprepro_Uploaders.lns get "allow sections 'desktop/*' by group groupname\n
     { "and" { "or" = "sections" { "or" = "desktop/*" } } }
     { "by" = "group" { "group" = "groupname" } } }
 
+(* Test: Reprepro_Uploaders.lns
+     Declare group condition, GH #283 *)
+test Reprepro_Uploaders.lns get "group groupname add key-id\n" =
+  { "group" = "groupname"
+    { "add" = "key-id" } }
+
