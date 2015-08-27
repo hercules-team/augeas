@@ -56,3 +56,10 @@ mod 'herculesteam/augeasproviders', '2.1.x'\n" =
   { "3" = "herculesteam/augeasproviders"
     { "@version" = "2.1.x" }
   }
+
+(* Test: Puppetfile.lns
+     Owner is not mandatory if git is given *)
+test Puppetfile.lns get "mod 'stdlib',
+  :git => \"git://github.com/puppetlabs/puppetlabs-stdlib.git\"\n" =
+  { "1" = "stdlib"
+    { "git" = "git://github.com/puppetlabs/puppetlabs-stdlib.git" } }
