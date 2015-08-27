@@ -9,7 +9,8 @@
              i.e. `+:*::` (Matt Dainty) (Issue #258)
     * Httpd: add paths to SLES vhosts
              (Jan Doleschal) (Issue #268)
-    * Json: add comments support, refactor
+    * Json: add comments support, refactor,
+            allow escaped quotes and blackslashes
     * Keepalived: fix space/tag alignments and hanging spaces,
                   add vrrp_mcast_group4 and vrrp_mcast_group6,
                   add more vrrp_instance flags,

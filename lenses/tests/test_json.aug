@@ -486,3 +486,11 @@ test lns get s_commented =
         {  }
         { "#comment" = "after all values" } } }
     {  } }
+
+(* Test lns
+     Allow escaped quotes and backslashes *)
+test lns get "{ \"filesystem\": \"ext3\\" \\\\ SEC_TYPE=\\"ext2\" }\n" =
+  { "dict"
+    { "entry" = "filesystem"
+      { "string" = "ext3\\" \\\\ SEC_TYPE=\\"ext2" } }
+    {  } }
