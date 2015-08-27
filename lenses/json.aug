@@ -23,7 +23,7 @@ let rbrace = Util.del_str "}"
 let lbrack = Util.del_str "[" . comments
 let rbrack = Util.del_str "]"
 
-let str_store = Quote.dquote . store /([^\\\\"]|\\\\"|\\\\\\\\)*/ . Quote.dquote  (* " Emacs, relax *)
+let str_store = Quote.dquote . store /([^\\\\"]|\\\\("|\\\\))*/ . Quote.dquote  (* " Emacs, relax *)
 
 let number = [ label "number" . store /-?[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?/
              . comments ]
