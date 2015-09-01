@@ -22,8 +22,14 @@ let indent = Util.indent
 (* Define separators *)
 let sep    = Util.del_ws_spc
 
-(* Define value regexps *)
-let ip_re  = Rx.ip
+(* Define value regexps.
+   Custom simplified ipv6 used instead of Rx.ipv6 as the augeas Travis instances
+   are limited to 2GB of memory. Using 'ipv6_re = Rx.ipv6' consumes an extra
+   2GB of memory and thus the test is OOM-killed.
+*)
+let ipv6_re = /[0-9A-Fa-f:]+/
+let ipv4_re = Rx.ipv4
+let ip_re  = ipv4_re|ipv6_re
 let num_re = Rx.integer
 let fn_re  = /[^#; \t\n][^#;\n]*[^#; \t\n]|[^#; \t\n]/
 let fn_safe_re = /[^#; \t\r\n]+/
@@ -34,7 +40,7 @@ let host_re = ip_re|hn_re
 let proto_re = /(tcp|udp)/
 let proto_ext_re = /(udp|tcp-client|tcp-server)/
 let alg_re = /(none|[A-Za-z][A-Za-z0-9-]+)/
-let ipv6_bits_re = Rx.ipv6 . /\/[0-9]+/
+let ipv6_bits_re = ipv6_re . /\/[0-9]+/
 
 (* Define store aliases *)
 let ip     = store ip_re
@@ -250,8 +256,8 @@ let double  = double_entry "keepalive" "ping" num_re "timeout" num_re
             | double_entry "connect-freq" "num" num_re "sec" num_re
             | double_entry "verify-x509-name" "name" hn_re "type"
                 /(subject|name|name-prefix)/
-            | double_entry "ifconfig-ipv6" "address" ipv6_bits_re "remote" Rx.ipv6
-            | double_entry "ifconfig-ipv6-push" "address" ipv6_bits_re "remote" Rx.ipv6
+            | double_entry "ifconfig-ipv6" "address" ipv6_bits_re "remote" ipv6_re
+            | double_entry "ifconfig-ipv6-push" "address" ipv6_bits_re "remote" ipv6_re
             | double_secopt_entry "iroute" "local" ip_re "netmask" ip_re
             | double_secopt_entry "stale-routes-check" "age" num_re "interval" num_re
             | double_secopt_entry "ifconfig-pool-persist"
@@ -402,7 +408,7 @@ let route_ipv6 =
     let route_net_re = /(vpn_gateway|net_gateway|remote_host)/ in
         [ key "route-ipv6" . sep
         . [ label "network" . store (route_net_re|ipv6_bits_re) ]
-        . (sep . [ label "gateway" . store (route_net_re|Rx.ipv6) ]
+        . (sep . [ label "gateway" . store (route_net_re|ipv6_re) ]
             . (sep . [ label "metric" . store (/default/|num_re)] )?
         )?
         . comment_or_eol
