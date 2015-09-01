@@ -45,6 +45,8 @@ let common_setting =
  |kv "rr_weight" /priorities|uniform/
  |kv "no_path_retry" (Rx.integer | /fail|queue/)
  |kv /rr_min_io(_rq)?/ Rx.integer
+ |kv "flush_on_last_del" /yes|no/
+ |qstr "reservation_key"
 
 let default_setting =
   kv "polling_interval" Rx.integer
@@ -58,6 +60,18 @@ let default_setting =
   (* These are not in the manpage but in the example multipath.conf *)
   |kv "prio" Rx.word
   |kv "max_fds" Rx.integer
+  |kv "multipath_dir" Rx.fspath
+  |kv "find_multipaths" /yes|no/
+  |kv "queue_without_daemon" /yes|no/
+  |kv "checker_timeout" Rx.integer
+  |kv "log_checker_err" /once|always/
+  |kv "hwtable_regex_match" /yes|no/
+  |kv "retain_attached_hw_handler" /yes|no/
+  |kv "detect_prio" /yes|no/
+  |kv "reload_readwrite" /yes|no/
+  |kv "replace_wwid_whitespace" /yes|no/
+  |kv "force_sync" /yes|no/
+  |kv "config_dir" Rx.fspath
   (* SUSE extensions *)
   |kv "async_timeout" Rx.integer
   |kv "max_polling_interval" Rx.integer
