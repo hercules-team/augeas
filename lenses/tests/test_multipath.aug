@@ -40,6 +40,15 @@ defaults {
   reassign_maps yes
   fast_io_fail_tmo  5
   async_timeout 5
+  flush_on_last_del no
+  delay_watch_checks no
+  delay_wait_checks no
+  find_multipaths yes
+  checker_timeout 10
+  hwtable_regex_match yes
+  reload_readwrite no
+  force_sync yes
+  config_dir /etc/multipath/conf.d
 }
 
 # Sections without empty lines in between
@@ -61,6 +70,7 @@ multipaths {
 		failback		manual
 		rr_weight		priorities
 		no_path_retry		5
+        flush_on_last_del yes
 	}
 	multipath {
 		wwid			1DEC_____321816758474
@@ -80,12 +90,15 @@ devices {
 		rr_weight		priorities
 		rr_min_io_rq		75
 		no_path_retry		queue
+        reservation_key a12345
 	}
 	device {
 		vendor			\"COMPAQ  \"
 		product			\"MSA1000         \"
 		path_grouping_policy	multibus
 		polling_interval	9
+        delay_watch_checks 10
+        delay_wait_checks 10
 	}
 }\n"
 
@@ -126,7 +139,16 @@ test Multipath.lns get conf =
     { "verbosity" = "2" }
     { "reassign_maps" = "yes" }
     { "fast_io_fail_tmo" = "5" }
-    { "async_timeout" = "5" } }
+    { "async_timeout" = "5" }
+    { "flush_on_last_del" = "no" }
+    { "delay_watch_checks" = "no" }
+    { "delay_wait_checks" = "no" }
+    { "find_multipaths" = "yes" }
+    { "checker_timeout" = "10" }
+    { "hwtable_regex_match" = "yes" }
+    { "reload_readwrite" = "no" }
+    { "force_sync" = "yes" }
+    { "config_dir" = "/etc/multipath/conf.d" } }
   { }
   { "#comment" = "Sections without empty lines in between" }
   { "blacklist"
@@ -145,7 +167,8 @@ test Multipath.lns get conf =
       { "path_selector" = "round-robin 0" }
       { "failback" = "manual" }
       { "rr_weight" = "priorities" }
-      { "no_path_retry" = "5" } }
+      { "no_path_retry" = "5" }
+      { "flush_on_last_del" = "yes" } }
     { "multipath"
       { "wwid" = "1DEC_____321816758474" }
       { "alias" = "red" } } }
@@ -161,9 +184,12 @@ test Multipath.lns get conf =
       { "failback" = "15" }
       { "rr_weight" = "priorities" }
       { "rr_min_io_rq" = "75" }
-      { "no_path_retry" = "queue" } }
+      { "no_path_retry" = "queue" }
+      { "reservation_key" = "a12345" } }
     { "device"
       { "vendor" = "COMPAQ  " }
       { "product" = "MSA1000         " }
       { "path_grouping_policy" = "multibus" }
-      { "polling_interval" = "9" } } }
+      { "polling_interval" = "9" }
+      { "delay_watch_checks" = "10" }
+      { "delay_wait_checks" = "10" } } }
