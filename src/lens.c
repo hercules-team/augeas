@@ -334,6 +334,7 @@ struct value *lns_make_subtree(struct info *info, struct lens *l) {
 
     lens = make_lens_unop(L_SUBTREE, info, l);
     lens->ctype = ref(l->ctype);
+    lens->sub = l;
     if (! l->recursive)
         lens->atype = subtree_atype(info, l->ktype, l->vtype);
     lens->value = lens->key = 0;
