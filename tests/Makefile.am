@@ -73,6 +73,7 @@ lens_tests =			\
   lens-fuse.sh			\
   lens-gdm.sh			\
   lens-group.sh			\
+  lens-grubenv.sh			\
   lens-gshadow.sh			\
   lens-gtkbookmarks.sh			\
   lens-json.sh          \
