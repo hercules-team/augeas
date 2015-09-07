@@ -23,6 +23,7 @@
     * Known_Hosts: refactoring and description fixed
     * MasterPasswd: new lens to parse /etc/master.passwd
                     (Matt Dainty) (Issue #258)
+    * Multipath: add various missing keywoards (Olivier Mangold) (Issue #289)
     * Nginx: add non-recursive ambiguities tests
     * Ntp: add support for basic interface syntax
     * OpenShift_Quickstarts: Use Json.lns
