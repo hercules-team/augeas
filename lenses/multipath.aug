@@ -45,6 +45,10 @@ let common_setting =
  |kv "rr_weight" /priorities|uniform/
  |kv "no_path_retry" (Rx.integer | /fail|queue/)
  |kv /rr_min_io(_rq)?/ Rx.integer
+ |kv "flush_on_last_del" /yes|no/
+ |kv "reservation_key" Rx.word
+ |kv "delay_watch_checks" (Rx.integer|"no")
+ |kv "delay_wait_checks" (Rx.integer|"no")
 
 let default_setting =
   kv "polling_interval" Rx.integer
@@ -55,9 +59,15 @@ let default_setting =
   |kv "fast_io_fail_tmo" Rx.integer
   |kv "verbosity" /[0-6]/
   |kv "reassign_maps" /yes|no/
-  (* These are not in the manpage but in the example multipath.conf *)
   |kv "prio" Rx.word
   |kv "max_fds" Rx.integer
+  |kv "find_multipaths" /yes|no/
+  |kv "checker_timeout" Rx.integer
+  |kv "hwtable_regex_match" /yes|no/
+  |kv "reload_readwrite" /yes|no/
+  |kv "replace_wwid_whitespace" /yes|no/
+  |kv "force_sync" /yes|no/
+  |kv "config_dir" Rx.fspath
   (* SUSE extensions *)
   |kv "async_timeout" Rx.integer
   |kv "max_polling_interval" Rx.integer
@@ -74,7 +84,6 @@ let default_setting =
   |kv "log_checker_err" Rx.word
   |kv "retain_attached_hw_handler" /yes|no/
   |kv "detect_prio" /yes|no/
-  |kv "flush_on_last_del" /yes|no/
 
 (* A device subsection *)
 let device =
@@ -117,4 +126,5 @@ let devices =
 
 let lns = (comment|empty|defaults|blacklist|devices|multipaths)*
 
-let xfm = transform lns (incl "/etc/multipath.conf")
+let xfm = transform lns (incl "/etc/multipath.conf" .
+                         incl "/etc/multipath/conf.d/*.conf")
