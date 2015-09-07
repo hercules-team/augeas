@@ -61,6 +61,8 @@
     * Simplelines: parse OpenBSD's hostname.if(5)
                    files (Jasper Lievisse Adriaanse) (Issue #252)
     * Spacevars: support flags (Issue #279)
+    * Ssh: add support for HostKeyAlgorithms, KexAlgorithms
+           and PubkeyAcceptedKeyTypes (Oliver Mangold) (Issue #290)
     * Syslog: recognize '~' as a valid syslog action (discard)
               (Gregory Smith) (Issue #282)
     * Tmpfiles: new lens to parse systemd's tempfiles.d configuration
