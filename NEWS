@@ -5,6 +5,7 @@
     * Chrony: allow signed numbers and indentation, fix stray EOL entry,
               disallow comment on EOL, add many missing directives and
               options (Miroslav Lichvar, RHBZ#1213281)
+    * Dhclient: avoid put ambiguity for node without value (Issue #294)
     * Group: support NIS map, support an overridden and disabled password,
              i.e. `+:*::` (Matt Dainty) (Issue #258)
     * Httpd: add paths to SLES vhosts
