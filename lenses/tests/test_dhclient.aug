@@ -148,3 +148,6 @@ test Dhclient.lns get "send dhcp-client-identifier = hardware;\n" =
   { "send"
     { "dhcp-client-identifier"
       { "#eval" = "hardware" } } }
+
+test Dhclient.lns put "send host-name = gethostname();\n"
+  after set "/send/host-name/#eval" "test" = "send host-name = test;\n"

@@ -95,7 +95,8 @@ let stmt_hash_re      = "send"
 
 let stmt_hash         = [ key stmt_hash_re
                         . sep_spc
-                        . [ key word . sep_spc . (sto_to_spc_noeval|rfc_code|eval) ]
+                        . ( [ key word . sep_spc . sto_to_spc_noeval ]
+                          | [ key word . sep_spc . (rfc_code|eval) ] )
                         . sep_scl
                         . comment_or_eol ]
 
