@@ -1,4 +1,4 @@
-module Test_aptsource =
+module Test_aptsources =
 
   let simple_source = "deb ftp://mirror.bytemark.co.uk/debian/ etch main\n"
   let multi_components = "deb http://security.debian.org/ etch/updates main contrib non-free\n"
