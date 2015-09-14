@@ -10,7 +10,7 @@ module Aptsources =
  * Group: Utility variables/functions
  ************************************************************************)
   (* View:  sep_ws *)
-  let sep_ws = del /[ \t]+/ " "
+  let sep_ws = Sep.space
 
   (* View: eol *)
   let eol = Util.del_str "\n"
@@ -21,18 +21,27 @@ module Aptsources =
   let empty = Util.empty
 
   (* View: word *)
-  let word = /[^# \n\t]+/
+  let word = /[^][# \n\t]+/
 
 (************************************************************************
  * Group: Keywords
  ************************************************************************)
   (* View: record *)
-  let record = [ Util.indent . seq "source" . [ label "type" . store word ] . sep_ws .
-                                [ label "uri"  . store word ] . sep_ws .
-                                [ label "distribution" . store word ]  .
-                                [ label "component" . sep_ws . store word ]* .
-                                del /[ \t]*(#.*)?/ ""
-                 . eol ]
+  let record =
+       let option = Build.key_value Rx.word Sep.equal (store Rx.word)
+    in let options = [ label "options"
+                . Util.del_str "[" . Sep.opt_space
+                . Build.opt_list option Sep.space
+                . Sep.opt_space . Util.del_str "]"
+                . sep_ws ]
+    in [ Util.indent . seq "source"
+       . [ label "type" . store word ] . sep_ws
+       . options?
+       . [ label "uri"  . store word ] . sep_ws
+       . [ label "distribution" . store word ]
+       . [ label "component" . sep_ws . store word ]*
+       . del /[ \t]*(#.*)?/ ""
+       . eol ]
 
 (************************************************************************
  * Group: Lens
