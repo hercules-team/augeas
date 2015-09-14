@@ -23,6 +23,14 @@ module Aptsources =
   (* View: word *)
   let word = /[^][# \n\t]+/
 
+  (* View: uri *)
+  let uri =
+       let protocol = /[a-z+]+:/
+    in let path = /\/[^] \t]*/
+    in let path_brack = /\[[^]]+\]\/?/
+    in protocol? . path
+     | protocol . path_brack
+
 (************************************************************************
  * Group: Keywords
  ************************************************************************)
@@ -38,7 +46,7 @@ module Aptsources =
     in [ Util.indent . seq "source"
        . [ label "type" . store word ] . sep_ws
        . options?
-       . [ label "uri"  . store word ] . sep_ws
+       . [ label "uri"  . store uri ] . sep_ws
        . [ label "distribution" . store word ]
        . [ label "component" . sep_ws . store word ]*
        . del /[ \t]*(#.*)?/ ""

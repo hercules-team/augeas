@@ -88,6 +88,14 @@ deb [ arch+=amd64 trusted-=true ] http://ftp.us.debian.org/debian sid main contr
     { "component" = "main" }
     { "component" = "contrib" } }
 
+    (* cdrom entries may have spaces, GH #296 *)
+    test Aptsources.lns get "deb cdrom:[Debian GNU/Linux 7.5.0 _Wheezy_ - Official amd64 CD Binary-1 20140426-13:37]/ wheezy main\n" =
+  { "1"
+    { "type" = "deb" }
+    { "uri" = "cdrom:[Debian GNU/Linux 7.5.0 _Wheezy_ - Official amd64 CD Binary-1 20140426-13:37]/" }
+    { "distribution" = "wheezy" }
+    { "component" = "main" } }
+
 
 (* Local Variables: *)
 (* mode: caml       *)
