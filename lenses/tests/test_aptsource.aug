@@ -67,7 +67,7 @@ deb ftp://mirror.bytemark.co.uk/debian/ etch main non-free contrib
 
     (* Support options, GH #295 *)
     test Aptsources.lns get "deb [arch=amd64] tor+http://ftp.us.debian.org/debian sid main contrib
-deb [ arch=amd64 trusted=true ] http://ftp.us.debian.org/debian sid main contrib\n" =
+deb [ arch+=amd64 trusted-=true ] http://ftp.us.debian.org/debian sid main contrib\n" =
   { "1"
     { "type" = "deb" }
     { "options"
@@ -80,8 +80,8 @@ deb [ arch=amd64 trusted=true ] http://ftp.us.debian.org/debian sid main contrib
   { "2"
     { "type" = "deb" }
     { "options"
-      { "arch" = "amd64" }
-      { "trusted" = "true" }
+      { "arch" = "amd64" { "operation" = "+" } }
+      { "trusted" = "true" { "operation" = "-" } }
     }
     { "uri" = "http://ftp.us.debian.org/debian" }
     { "distribution" = "sid" }

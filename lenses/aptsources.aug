@@ -28,7 +28,8 @@ module Aptsources =
  ************************************************************************)
   (* View: record *)
   let record =
-       let option = Build.key_value Rx.word Sep.equal (store Rx.word)
+       let option_sep = [ label "operation" . store /[+-]/]? . Sep.equal
+    in let option = Build.key_value /arch|trusted/ option_sep (store Rx.word)
     in let options = [ label "options"
                 . Util.del_str "[" . Sep.opt_space
                 . Build.opt_list option Sep.space
