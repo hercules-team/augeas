@@ -2,6 +2,9 @@
   - General changes/additions
   - Lens changes/additions
     * AptConf: support hash comments
+    * AptSources: support options (Issue #295),
+                  support brackets with spaces in URI (GH #296)
+                  rename test file to test_aptsources.aug
     * Chrony: allow signed numbers and indentation, fix stray EOL entry,
               disallow comment on EOL, add many missing directives and
               options (Miroslav Lichvar, RHBZ#1213281)
