@@ -68,6 +68,8 @@
     * Spacevars: support flags (Issue #279)
     * Ssh: add support for HostKeyAlgorithms, KexAlgorithms
            and PubkeyAcceptedKeyTypes (Oliver Mangold) (Issue #290)
+    * Sudoers: support for negated command alias
+               (Geoff Williams) (Issue #262)
     * Syslog: recognize '~' as a valid syslog action (discard)
               (Gregory Smith) (Issue #282)
     * Tmpfiles: new lens to parse systemd's tempfiles.d configuration
