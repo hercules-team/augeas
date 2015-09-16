@@ -750,14 +750,14 @@ static int lua_aug_defvar(lua_State *L) {
 
 static int lua_aug_defnode(lua_State *L) {
     int r;
-    const char *name, *expr, *value;
+    const char *name, *expr, *value = NULL;
 
     lua_checkargs(L, "aug_defnode", 3);
 
     name = luaL_checkstring(L, 1);
     // TODO: check string really
     expr = luaL_checkstring(L, 2);
-    value = luaL_checkstring(L, 3);
+    value = lua_tostring(L, 3);
 
     r = aug_defnode(aug, name, expr, value, NULL);
     if (r < 0)
