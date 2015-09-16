@@ -503,11 +503,9 @@ static void install_signal_handlers(void) {
 
 static void lua_checkargs(lua_State *L, const char *name, int arity) {
     int n = lua_gettop(L);
-    char *msg = NULL;
+    char msg[1024];
     if (n != arity) {
-        strcat(msg, "Wrong number of arguments for '");
-        strcat(msg, name);
-        strcat(msg, "'");
+        snprintf(msg, sizeof(msg), "Wrong number of arguments for '%s'", name);
         lua_pushstring(L, msg);
         lua_error(L);
     }
