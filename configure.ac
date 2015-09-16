@@ -110,6 +110,8 @@ gl_INIT
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([LIBXML], [libxml-2.0])
 
+PKG_CHECK_MODULES([LIBLUA], [lua5.2])
+
 AC_CHECK_FUNCS([strerror_r fsync])
 
 AC_OUTPUT(Makefile \

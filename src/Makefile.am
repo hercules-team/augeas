@@ -1,7 +1,7 @@
 GNULIB= ../gnulib/lib/libgnu.la
 GNULIB_CFLAGS= -I $(top_builddir)/gnulib/lib -I $(top_srcdir)/gnulib/lib
 
-AM_CFLAGS = @AUGEAS_CFLAGS@ @WARN_CFLAGS@ $(GNULIB_CFLAGS) $(LIBXML_CFLAGS)
+AM_CFLAGS = @AUGEAS_CFLAGS@ @WARN_CFLAGS@ $(GNULIB_CFLAGS) $(LIBXML_CFLAGS) $(LIBLUA_CFLAGS)
 
 AM_YFLAGS=-d -p spec_
 
@@ -35,13 +35,13 @@ endif
 
 libaugeas_la_LDFLAGS = $(AUGEAS_VERSION_SCRIPT) \
     -version-info $(LIBAUGEAS_VERSION_INFO)
-libaugeas_la_LIBADD = liblexer.la libfa.la $(LIB_SELINUX) $(LIBXML_LIBS) $(GNULIB)
+libaugeas_la_LIBADD = liblexer.la libfa.la $(LIB_SELINUX) $(LIBXML_LIBS) $(LIBLUA_LIBS) $(GNULIB)
 
 augtool_SOURCES = augtool.c
-augtool_LDADD = libaugeas.la $(READLINE_LIBS) $(LIBXML_LIBS) $(GNULIB)
+augtool_LDADD = libaugeas.la $(READLINE_LIBS) $(LIBXML_LIBS) $(LIBLUA_LIBS) $(GNULIB)
 
 augparse_SOURCES = augparse.c
-augparse_LDADD = libaugeas.la $(LIBXML_LIBS) $(GNULIB)
+augparse_LDADD = libaugeas.la $(LIBXML_LIBS) $(LIBLUA_LIBS) $(GNULIB)
 
 libfa_la_SOURCES = fa.c fa.h hash.c hash.h memory.c memory.h ref.h ref.c
 libfa_la_LIBADD = $(LIB_SELINUX) $(GNULIB)

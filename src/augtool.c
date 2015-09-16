@@ -39,6 +39,10 @@
 #include <stdarg.h>
 #include <sys/time.h>
 
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
+
 /* Global variables */
 
 static augeas *aug = NULL;
@@ -50,6 +54,8 @@ char *transforms = NULL;
 size_t transformslen = 0;
 const char *inputfile = NULL;
 int echo_commands = 0;         /* Gets also changed in main_loop */
+bool use_lua = false;
+static lua_State *LS = NULL;
 bool print_version = false;
 bool auto_save = false;
 bool interactive = false;
@@ -58,6 +64,7 @@ bool timing = false;
 char *history_file = NULL;
 
 #define AUGTOOL_PROMPT "augtool> "
+#define AUGTOOL_LUA_PROMPT "augtool|lua> "
 
 /*
  * General utilities
@@ -302,6 +309,7 @@ static void help(void) {
                     "                       syntax, e.g. -t 'Fstab incl /etc/fstab.bak'\n");
     fprintf(stderr, "  -e, --echo           echo commands when reading from a file\n");
     fprintf(stderr, "  -f, --file FILE      read commands from FILE\n");
+    fprintf(stderr, "  -l, --lua            use Lua interpreter instead of native Augeas\n");
     fprintf(stderr, "  -s, --autosave       automatically save at the end of instructions\n");
     fprintf(stderr, "  -i, --interactive    run an interactive shell after evaluating\n"
                     "                       the commands in STDIN and FILE\n");
@@ -334,6 +342,7 @@ static void parse_opts(int argc, char **argv) {
         { "transform",   1, 0, 't' },
         { "echo",        0, 0, 'e' },
         { "file",        1, 0, 'f' },
+        { "lua",         0, 0, 'l' },
         { "autosave",    0, 0, 's' },
         { "interactive", 0, 0, 'i' },
         { "nostdinc",    0, 0, 'S' },
@@ -346,7 +355,7 @@ static void parse_opts(int argc, char **argv) {
     };
     int idx;
 
-    while ((opt = getopt_long(argc, argv, "hnbcr:I:t:ef:siSLA", options, &idx)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hnbcr:I:t:ef:lsiSLA", options, &idx)) != -1) {
         switch(opt) {
         case 'c':
             flags |= AUG_TYPE_CHECK;
@@ -374,6 +383,9 @@ static void parse_opts(int argc, char **argv) {
             break;
         case 'f':
             inputfile = optarg;
+            break;
+        case 'l':
+            use_lua = true;
             break;
         case 's':
             auto_save = true;
@@ -489,6 +501,420 @@ static void install_signal_handlers(void) {
     sigaction(SIGINT, &sigint_action, NULL);
 }
 
+static void lua_checkargs(lua_State *L, const char *name, int arity) {
+    int n = lua_gettop(L);
+    char *msg = NULL;
+    if (n != arity) {
+        strcat(msg, "Wrong number of arguments for '");
+        strcat(msg, name);
+        strcat(msg, "'");
+        lua_pushstring(L, msg);
+        lua_error(L);
+    }
+}
+
+static int lua_pusherror(lua_State *L) {
+    lua_pushstring(L, aug_error_message(aug));
+    lua_error(L);
+    return 1;
+}
+
+static int lua_aug_get(lua_State *L) {
+    int r;
+    const char *path, *value;
+
+    /* get number of arguments */
+    lua_checkargs(L, "aug_get", 1);
+
+    path = luaL_checkstring(L, 1);
+    // TODO: check string really
+
+    r = aug_get(aug, path, &value);
+    if (r < 0)
+        return lua_pusherror(L);
+    lua_pushstring(L, value);
+
+    /* return the number of results */
+    return 1;
+}
+
+static int lua_aug_label(lua_State *L) {
+    int r;
+    const char *path, *value;
+
+    lua_checkargs(L, "aug_label", 1);
+
+    path = luaL_checkstring(L, 1);
+    // TODO: check string really
+
+    r = aug_label(aug, path, &value);
+    if (r < 0)
+        return lua_pusherror(L);
+    lua_pushstring(L, value);
+
+    /* return the number of results */
+    return 1;
+}
+
+static int lua_aug_set(lua_State *L) {
+    int r;
+    const char *path, *value;
+
+    lua_checkargs(L, "aug_set", 2);
+
+    path = luaL_checkstring(L, 1);
+    // TODO: check string really
+    value = luaL_checkstring(L, 2);
+
+    r = aug_set(aug, path, value);
+    if (r < 0)
+        return lua_pusherror(L);
+
+    /* return the number of results */
+    return 0;
+}
+
+static int lua_aug_setm(lua_State *L) {
+    int r;
+    const char *base, *sub, *value;
+
+    lua_checkargs(L, "aug_setm", 3);
+
+    base = luaL_checkstring(L, 1);
+    // TODO: check string really
+    sub = luaL_checkstring(L, 2);
+    value = luaL_checkstring(L, 3);
+
+    r = aug_setm(aug, base, sub, value);
+    if (r < 0)
+        return lua_pusherror(L);
+
+    /* return the number of results */
+    return 0;
+}
+
+static int lua_aug_insert(lua_State *L) {
+    int r;
+    const char *path, *label;
+    int before;
+
+    lua_checkargs(L, "aug_insert", 3);
+
+    path = luaL_checkstring(L, 1);
+    // TODO: check string really
+    label = luaL_checkstring(L, 2);
+    before = lua_toboolean(L, 3);
+
+    r = aug_insert(aug, path, label, before);
+    if (r < 0)
+        return lua_pusherror(L);
+
+    /* return the number of results */
+    return 0;
+}
+
+static int lua_aug_rm(lua_State *L) {
+    int r;
+    const char *path;
+
+    lua_checkargs(L, "aug_rm", 1);
+
+    path = luaL_checkstring(L, 1);
+    // TODO: check string really
+
+    r = aug_rm(aug, path);
+    if (r < 0)
+        return lua_pusherror(L);
+
+    /* return the number of results */
+    return 0;
+}
+
+static int lua_aug_mv(lua_State *L) {
+    int r;
+    const char *path, *new_path;
+
+    lua_checkargs(L, "aug_mv", 2);
+
+    path = luaL_checkstring(L, 1);
+    // TODO: check string really
+    new_path = luaL_checkstring(L, 2);
+
+    r = aug_mv(aug, path, new_path);
+    if (r < 0)
+        return lua_pusherror(L);
+
+    /* return the number of results */
+    return 0;
+}
+
+static int lua_aug_cp(lua_State *L) {
+    int r;
+    const char *path, *new_path;
+
+    lua_checkargs(L, "aug_cp", 2);
+
+    path = luaL_checkstring(L, 1);
+    // TODO: check string really
+    new_path = luaL_checkstring(L, 2);
+
+    r = aug_cp(aug, path, new_path);
+    if (r < 0)
+        return lua_pusherror(L);
+
+    /* return the number of results */
+    return 0;
+}
+
+static int lua_aug_rename(lua_State *L) {
+    int r;
+    const char *path, *label;
+
+    lua_checkargs(L, "aug_rename", 2);
+
+    path = luaL_checkstring(L, 1);
+    // TODO: check string really
+    label = luaL_checkstring(L, 2);
+
+    r = aug_rename(aug, path, label);
+    if (r < 0)
+        return lua_pusherror(L);
+
+    /* return the number of results */
+    return 0;
+}
+
+static int lua_aug_matches(lua_State *L) {
+    int r;
+    const char *path;
+
+    lua_checkargs(L, "aug_matches", 1);
+
+    path = luaL_checkstring(L, 1);
+    // TODO: check string really
+    // TODO: a second arg is possible (value)
+
+    r = aug_match(aug, path, NULL);
+    if (r < 0)
+        return lua_pusherror(L);
+
+    lua_pushinteger(L, r);
+    /* return the number of results */
+    return 1;
+}
+
+static int lua_aug_match(lua_State *L) {
+    int r, i;
+    const char *path;
+    char **match = NULL;
+
+    lua_checkargs(L, "aug_match", 1);
+
+    path = luaL_checkstring(L, 1);
+    // TODO: check string really
+    // TODO: a second arg is possible (value)
+
+    r = aug_match(aug, path, &match);
+    if (r < 0)
+        return lua_pusherror(L);
+
+    lua_newtable(L);
+    for (i = 0; i < r; i++) {
+        lua_pushnumber(L, i+1);
+        lua_pushstring(L, match[i]);
+        lua_settable(L, -3);
+        free(match[i]);
+    }
+    free(match);
+    lua_pushinteger(L, r);
+
+    /* return the number of results */
+    return 2;
+}
+
+static int lua_aug_defvar(lua_State *L) {
+    int r;
+    const char *name, *expr;
+
+    lua_checkargs(L, "aug_defvar", 2);
+
+    name = luaL_checkstring(L, 1);
+    // TODO: check string really
+    expr = luaL_checkstring(L, 2);
+
+    r = aug_defvar(aug, name, expr);
+    if (r < 0)
+        return lua_pusherror(L);
+
+    /* return the number of results */
+    return 0;
+}
+
+static int lua_aug_defnode(lua_State *L) {
+    int r;
+    const char *name, *expr, *value;
+
+    lua_checkargs(L, "aug_defnode", 3);
+
+    name = luaL_checkstring(L, 1);
+    // TODO: check string really
+    expr = luaL_checkstring(L, 2);
+    value = luaL_checkstring(L, 3);
+
+    r = aug_defnode(aug, name, expr, value, NULL);
+    if (r < 0)
+        return lua_pusherror(L);
+
+    /* return the number of results */
+    return 0;
+}
+
+static int lua_aug_save(lua_State *L) {
+    int r;
+
+    lua_checkargs(L, "aug_save", 0);
+
+    r = aug_save(aug);
+    if (r == -1) {
+        lua_pushstring(L, "saving failed (run 'errors' for details)");
+        lua_error(L);
+    } else {
+        r = aug_match(aug, "/augeas/events/saved", NULL);
+        if (r > 0)
+            printf("Saved %d file(s)\n", r);
+    }
+
+    /* return the number of results */
+    return 0;
+}
+
+static int lua_aug_load(lua_State *L) {
+    int r;
+
+    lua_checkargs(L, "aug_load", 0);
+
+    r = aug_load(aug);
+    if (r < 0)
+        return lua_pusherror(L);
+
+    /* return the number of results */
+    return 0;
+}
+
+static int lua_aug_text_store(lua_State *L) {
+    int r;
+    const char *lens, *node, *path;
+
+    lua_checkargs(L, "aug_text_store", 3);
+
+    lens = luaL_checkstring(L, 1);
+    node = luaL_checkstring(L, 2);
+    path = luaL_checkstring(L, 3);
+
+    r = aug_text_store(aug, lens, node, path);
+    if (r < 0)
+        return lua_pusherror(L);
+
+    /* return the number of results */
+    return 0;
+}
+
+static int lua_aug_text_retrieve(lua_State *L) {
+    int r;
+    const char *lens, *node_in, *path, *node_out;
+
+    lua_checkargs(L, "aug_text_retrieve", 4);
+
+    lens = luaL_checkstring(L, 1);
+    node_in = luaL_checkstring(L, 2);
+    path = luaL_checkstring(L, 3);
+    node_out = luaL_checkstring(L, 4);
+
+    r = aug_text_retrieve(aug, lens, node_in, path, node_out);
+    if (r < 0)
+        return lua_pusherror(L);
+
+    /* return the number of results */
+    return 0;
+}
+
+static int lua_aug_transform(lua_State *L) {
+    int r;
+    const char *lens, *file;
+    bool excl;
+
+    lua_checkargs(L, "aug_transform", 3);
+
+    lens = luaL_checkstring(L, 1);
+    file = luaL_checkstring(L, 2);
+    excl = lua_toboolean(L, 3);
+
+    r = aug_transform(aug, lens, file, excl);
+    if (r < 0)
+        return lua_pusherror(L);
+
+    /* return the number of results */
+    return 0;
+}
+
+static void setup_lua(void) {
+    LS = luaL_newstate();
+    luaL_openlibs(LS);
+    lua_register(LS, "aug_get", lua_aug_get);
+    lua_register(LS, "aug_label", lua_aug_label);
+    lua_register(LS, "aug_set", lua_aug_set);
+    lua_register(LS, "aug_setm", lua_aug_setm);
+    // lua_register(LS, "aug_span", lua_aug_span);
+    lua_register(LS, "aug_insert", lua_aug_insert);
+    lua_register(LS, "aug_rm", lua_aug_rm);
+    lua_register(LS, "aug_mv", lua_aug_mv);
+    lua_register(LS, "aug_cp", lua_aug_cp);
+    lua_register(LS, "aug_rename", lua_aug_rename);
+    lua_register(LS, "aug_matches", lua_aug_matches);
+    lua_register(LS, "aug_match", lua_aug_match);
+    lua_register(LS, "aug_defvar", lua_aug_defvar);
+    lua_register(LS, "aug_defnode", lua_aug_defnode);
+    lua_register(LS, "aug_save", lua_aug_save);
+    lua_register(LS, "aug_load", lua_aug_load);
+    lua_register(LS, "aug_text_store", lua_aug_text_store);
+    lua_register(LS, "aug_text_retrieve", lua_aug_text_retrieve);
+    // lua_register(LS, "aug_escape_name", lua_aug_escape_name);
+    lua_register(LS, "aug_transform", lua_aug_transform);
+    // lua_register(LS, "aug_print", lua_aug_print);
+    // lua_register(LS, "aug_to_xml", lua_aug_to_xml);
+    // lua_register(LS, "aug_srun", lua_aug_srun);
+    // lua_register(LS, "aug_errors", lua_aug_errors);
+    
+    // short names
+    lua_register(LS, "get", lua_aug_get);
+    lua_register(LS, "label", lua_aug_label);
+    lua_register(LS, "set", lua_aug_set);
+    lua_register(LS, "setm", lua_aug_setm);
+    // lua_register(LS, "span", lua_aug_span);
+    lua_register(LS, "insert", lua_aug_insert);
+    lua_register(LS, "ins", lua_aug_insert); // alias
+    lua_register(LS, "rm", lua_aug_rm);
+    lua_register(LS, "mv", lua_aug_mv);
+    lua_register(LS, "move", lua_aug_mv); // alias
+    lua_register(LS, "cp", lua_aug_cp);
+    lua_register(LS, "copy", lua_aug_cp); // alias
+    lua_register(LS, "rename", lua_aug_rename);
+    lua_register(LS, "matches", lua_aug_matches);
+    lua_register(LS, "match", lua_aug_match);
+    lua_register(LS, "defvar", lua_aug_defvar);
+    lua_register(LS, "defnode", lua_aug_defnode);
+    lua_register(LS, "save", lua_aug_save);
+    lua_register(LS, "load", lua_aug_load);
+    lua_register(LS, "text_store", lua_aug_text_store);
+    lua_register(LS, "text_retrieve", lua_aug_text_retrieve);
+    // lua_register(LS, "escape_name", lua_aug_escape_name);
+    lua_register(LS, "transform", lua_aug_transform);
+    // lua_register(LS, "print", lua_aug_print);
+    // lua_register(LS, "to_xml", lua_aug_to_xml);
+    // lua_register(LS, "srun", lua_aug_srun);
+    // lua_register(LS, "errors", lua_aug_errors);
+}
+
 static int main_loop(void) {
     char *line = NULL;
     int ret = 0;
@@ -498,14 +924,27 @@ static int main_loop(void) {
     bool get_line = true;
     bool in_interactive = false;
 
+    if (use_lua)
+        setup_lua();
+
     if (inputfile) {
-        if (freopen(inputfile, "r", stdin) == NULL) {
-            char *msg = NULL;
-            if (asprintf(&msg, "Failed to open %s", inputfile) < 0)
-                perror("Failed to open input file");
-            else
-                perror(msg);
-            return -1;
+        if (use_lua) {
+            if (luaL_dofile(LS, inputfile)) {
+                printf("%s\n", lua_tostring(LS, -1));
+                lua_close(LS);
+                return -1;
+            }
+            lua_close(LS);
+            return 0;
+        } else {
+            if (freopen(inputfile, "r", stdin) == NULL) {
+                char *msg = NULL;
+                if (asprintf(&msg, "Failed to open %s", inputfile) < 0)
+                    perror("Failed to open input file");
+                else
+                    perror(msg);
+                return -1;
+            }
         }
     }
 
@@ -520,7 +959,10 @@ static int main_loop(void) {
 
     while(1) {
         if (get_line) {
-            line = readline(AUGTOOL_PROMPT);
+            if (use_lua)
+                line = readline(AUGTOOL_LUA_PROMPT);
+            else
+                line = readline(AUGTOOL_PROMPT);
         } else {
             line = NULL;
         }
@@ -568,25 +1010,40 @@ static int main_loop(void) {
         }
 
         if (end_reached) {
+            if (use_lua)
+                lua_close(LS);
             if (echo_commands)
                 printf("\n");
             return ret;
         }
 
-        if (*line == '\0' || *line == '#') {
-            free(line);
-            continue;
-        }
+        if (use_lua) {
+            // FIXME: newlines don't work!
+            code = luaL_loadbuffer(LS, line, strlen(line), "line") || lua_pcall(LS, 0, 0, 0);
+            if (isatty(fileno(stdin)))
+                add_history(line);
 
-        code = run_command(line, timing);
-        if (code == -2) {
-            free(line);
-            return ret;
-        }
+            if (code) {
+                fprintf(stderr, "%s\n", lua_tostring(LS, -1));
+                lua_pop(LS, 1); /* pop error message from the stack */
+                ret = -1;
+            }
+        } else {
+            if (*line == '\0' || *line == '#') {
+                free(line);
+                continue;
+            }
 
-        if (code < 0) {
-            ret = -1;
-            print_aug_error();
+            code = run_command(line);
+            if (code == -2) {
+                free(line);
+                return ret;
+            }
+
+            if (code < 0) {
+                ret = -1;
+                print_aug_error();
+            }
         }
 
         if (line != inputline)
