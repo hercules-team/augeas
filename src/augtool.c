@@ -932,6 +932,17 @@ static int main_loop(void) {
                 lua_close(LS);
                 return -1;
             }
+            if (auto_save) {
+                strncpy(inputline, "save()", sizeof(inputline));
+                line = inputline;
+                code = luaL_loadbuffer(LS, line, strlen(line), "line") || lua_pcall(LS, 0, 0, 0);
+
+                if (code) {
+                    fprintf(stderr, "%s\n", lua_tostring(LS, -1));
+                    lua_pop(LS, 1); /* pop error message from the stack */
+                    ret = -1;
+                }
+            }
             lua_close(LS);
             return 0;
         } else {
