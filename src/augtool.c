@@ -65,6 +65,7 @@ char *history_file = NULL;
 
 #define AUGTOOL_PROMPT "augtool> "
 #define AUGTOOL_LUA_PROMPT "augtool|lua> "
+#define AUGTOOL_LUA_CONT_PROMPT "augtool|lua?>   "
 
 /*
  * General utilities
@@ -966,8 +967,18 @@ static void setup_lua(void) {
     // lua_register(LS, "errors", lua_aug_errors);
 }
 
+static int ends_with(const char *str, const char *suffix) {
+    if (!str || !suffix)
+        return 0;
+    size_t lenstr = strlen(str);
+    size_t lensuffix = strlen(suffix);
+    if (lensuffix > lenstr)
+        return 0;
+    return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
+}
+
 static int main_loop(void) {
-    char *line = NULL;
+    char *line = NULL, *cur_line = NULL;
     int ret = 0;
     char inputline [128];
     int code;
@@ -1021,10 +1032,14 @@ static int main_loop(void) {
 
     while(1) {
         if (get_line) {
-            if (use_lua)
-                line = readline(AUGTOOL_LUA_PROMPT);
-            else
+            if (use_lua) {
+                if (cur_line == NULL)
+                    line = readline(AUGTOOL_LUA_PROMPT);
+                else
+                    line = readline(AUGTOOL_LUA_CONT_PROMPT);
+            } else {
                 line = readline(AUGTOOL_PROMPT);
+            }
         } else {
             line = NULL;
         }
@@ -1086,14 +1101,29 @@ static int main_loop(void) {
 
         if (use_lua) {
             // FIXME: newlines don't work!
-            code = luaL_loadbuffer(LS, line, strlen(line), "line") || lua_pcall(LS, 0, 0, 0);
+            char *buf;
+            if (cur_line == NULL) {
+                buf = malloc(sizeof(char) * strlen(line));
+                strcpy(buf, line);
+            } else {
+                sprintf(buf, "%s\n%s", cur_line, line);
+            }
+            code = luaL_loadbuffer(LS, buf, strlen(buf), "line") || lua_pcall(LS, 0, 0, 0);
             if (isatty(fileno(stdin)))
                 add_history(line);
 
             if (code) {
-                fprintf(stderr, "%s\n", lua_tostring(LS, -1));
-                lua_pop(LS, 1); /* pop error message from the stack */
-                ret = -1;
+                const char *err = lua_tostring(LS, -1);
+                if (ends_with(err, " near <eof>")) {
+                    cur_line = malloc(sizeof(char) * strlen(buf));
+                    strcpy(cur_line, buf);
+                } else {
+                  fprintf(stderr, "%s\n", err);
+                  lua_pop(LS, 1); /* pop error message from the stack */
+                  ret = -1;
+                }
+            } else {
+                cur_line = NULL;
             }
         } else {
             code = run_command(line);
