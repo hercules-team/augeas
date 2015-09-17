@@ -1079,6 +1079,11 @@ static int main_loop(void) {
             return ret;
         }
 
+        if (*line == '\0' || *line == '#') {
+            free(line);
+            continue;
+        }
+
         if (use_lua) {
             // FIXME: newlines don't work!
             code = luaL_loadbuffer(LS, line, strlen(line), "line") || lua_pcall(LS, 0, 0, 0);
@@ -1091,11 +1096,6 @@ static int main_loop(void) {
                 ret = -1;
             }
         } else {
-            if (*line == '\0' || *line == '#') {
-                free(line);
-                continue;
-            }
-
             code = run_command(line);
             if (code == -2) {
                 free(line);
