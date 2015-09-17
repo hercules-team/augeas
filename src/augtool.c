@@ -958,7 +958,9 @@ static void setup_lua(void) {
     lua_register(LS, "save", lua_aug_save);
     lua_register(LS, "load", lua_aug_load);
     lua_register(LS, "text_store", lua_aug_text_store);
+    lua_register(LS, "store", lua_aug_text_store); // alias
     lua_register(LS, "text_retrieve", lua_aug_text_retrieve);
+    lua_register(LS, "retrieve", lua_aug_text_retrieve); // alias
     // lua_register(LS, "escape_name", lua_aug_escape_name);
     lua_register(LS, "transform", lua_aug_transform);
     // lua_register(LS, "print", lua_aug_print);
