@@ -742,7 +742,6 @@ static int lua_aug_matches(lua_State *L) {
 
     path = luaL_checkstring(L, 1);
     // TODO: check string really
-    // TODO: a second arg is possible (value)
 
     r = aug_match(aug, path, NULL);
     if (r < 0)
@@ -762,7 +761,6 @@ static int lua_aug_match(lua_State *L) {
 
     path = luaL_checkstring(L, 1);
     // TODO: check string really
-    // TODO: a second arg is possible (value)
 
     r = aug_match(aug, path, &match);
     if (r < 0)
