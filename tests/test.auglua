@@ -36,9 +36,23 @@ assert(aug_get("etc/passwd/root/uid") == aug_get("etc/passwd/qux/uid"))
 aug_rename("etc/passwd/qux", "bar")
 assert(aug_get("etc/passwd/root/uid") == aug_get("etc/passwd/bar/uid"))
 
+--- test aug_clear()
+aug_clear("etc/passwd/qux/uid")
+assert(aug_get("etc/passwd/qux/uid") == nil)
+
+--- test aug_clearm()
+aug_clearm("etc/passwd/*", "uid")
+assert(aug_get("etc/passwd/root/uid") == nil)
+
+--- test aug_touch()
+aug_touch("etc/passwd/flex/uid")
+assert(aug_get("etc/passwd/flex/uid") == nil)
+aug_touch("etc/passwd/root/gid")
+assert(aug_get("etc/passwd/root/gid") == "0")
+
 --- test aug_matches()
 m = aug_matches("etc/passwd/*")
-assert(m == 20)
+assert(m == 22)
 
 --- test aug_match()
 m = aug_match("etc/passwd/*")

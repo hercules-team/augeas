@@ -682,6 +682,58 @@ static int lua_aug_rename(lua_State *L) {
     return 0;
 }
 
+static int lua_aug_clear(lua_State *L) {
+    int r;
+    const char *path;
+
+    lua_checkargs(L, "aug_clear", 1);
+
+    path = luaL_checkstring(L, 1);
+
+    r = aug_set(aug, path, NULL);
+    if (r < 0)
+        return lua_pusherror(L);
+
+    /* return the number of results */
+    return 0;
+}
+
+static int lua_aug_clearm(lua_State *L) {
+    int r;
+    const char *base, *sub;
+
+    lua_checkargs(L, "aug_clearm", 2);
+
+    base = luaL_checkstring(L, 1);
+    sub = luaL_checkstring(L, 2);
+
+    r = aug_setm(aug, base, sub, NULL);
+    if (r < 0)
+        return lua_pusherror(L);
+
+    /* return the number of results */
+    return 0;
+}
+
+static int lua_aug_touch(lua_State *L) {
+    int r;
+    const char *path;
+
+    lua_checkargs(L, "aug_touch", 1);
+
+    path = luaL_checkstring(L, 1);
+
+    r = aug_match(aug, path, NULL);
+    if (r == 0) {
+        r = aug_set(aug, path, NULL);
+        if (r < 0)
+            return lua_pusherror(L);
+    }
+
+    /* return the number of results */
+    return 0;
+}
+
 static int lua_aug_matches(lua_State *L) {
     int r;
     const char *path;
@@ -868,6 +920,9 @@ static void setup_lua(void) {
     lua_register(LS, "aug_mv", lua_aug_mv);
     lua_register(LS, "aug_cp", lua_aug_cp);
     lua_register(LS, "aug_rename", lua_aug_rename);
+    lua_register(LS, "aug_clear", lua_aug_clear);
+    lua_register(LS, "aug_clearm", lua_aug_clearm);
+    lua_register(LS, "aug_touch", lua_aug_touch);
     lua_register(LS, "aug_matches", lua_aug_matches);
     lua_register(LS, "aug_match", lua_aug_match);
     lua_register(LS, "aug_defvar", lua_aug_defvar);
