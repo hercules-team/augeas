@@ -909,64 +909,44 @@ static int lua_aug_transform(lua_State *L) {
 static void setup_lua(void) {
     LS = luaL_newstate();
     luaL_openlibs(LS);
-    lua_register(LS, "aug_get", lua_aug_get);
-    lua_register(LS, "aug_label", lua_aug_label);
-    lua_register(LS, "aug_set", lua_aug_set);
-    lua_register(LS, "aug_setm", lua_aug_setm);
-    // lua_register(LS, "aug_span", lua_aug_span);
-    lua_register(LS, "aug_insert", lua_aug_insert);
-    lua_register(LS, "aug_rm", lua_aug_rm);
-    lua_register(LS, "aug_mv", lua_aug_mv);
-    lua_register(LS, "aug_cp", lua_aug_cp);
-    lua_register(LS, "aug_rename", lua_aug_rename);
-    lua_register(LS, "aug_clear", lua_aug_clear);
-    lua_register(LS, "aug_clearm", lua_aug_clearm);
-    lua_register(LS, "aug_touch", lua_aug_touch);
-    lua_register(LS, "aug_matches", lua_aug_matches);
-    lua_register(LS, "aug_match", lua_aug_match);
-    lua_register(LS, "aug_defvar", lua_aug_defvar);
-    lua_register(LS, "aug_defnode", lua_aug_defnode);
-    lua_register(LS, "aug_save", lua_aug_save);
-    lua_register(LS, "aug_load", lua_aug_load);
-    lua_register(LS, "aug_text_store", lua_aug_text_store);
-    lua_register(LS, "aug_text_retrieve", lua_aug_text_retrieve);
-    // lua_register(LS, "aug_escape_name", lua_aug_escape_name);
-    lua_register(LS, "aug_transform", lua_aug_transform);
-    // lua_register(LS, "aug_print", lua_aug_print);
-    // lua_register(LS, "aug_to_xml", lua_aug_to_xml);
-    // lua_register(LS, "aug_srun", lua_aug_srun);
-    // lua_register(LS, "aug_errors", lua_aug_errors);
-    
-    // short names
-    lua_register(LS, "get", lua_aug_get);
-    lua_register(LS, "label", lua_aug_label);
-    lua_register(LS, "set", lua_aug_set);
-    lua_register(LS, "setm", lua_aug_setm);
-    // lua_register(LS, "span", lua_aug_span);
-    lua_register(LS, "insert", lua_aug_insert);
-    lua_register(LS, "ins", lua_aug_insert); // alias
-    lua_register(LS, "rm", lua_aug_rm);
-    lua_register(LS, "mv", lua_aug_mv);
-    lua_register(LS, "move", lua_aug_mv); // alias
-    lua_register(LS, "cp", lua_aug_cp);
-    lua_register(LS, "copy", lua_aug_cp); // alias
-    lua_register(LS, "rename", lua_aug_rename);
-    lua_register(LS, "matches", lua_aug_matches);
-    lua_register(LS, "match", lua_aug_match);
-    lua_register(LS, "defvar", lua_aug_defvar);
-    lua_register(LS, "defnode", lua_aug_defnode);
-    lua_register(LS, "save", lua_aug_save);
-    lua_register(LS, "load", lua_aug_load);
-    lua_register(LS, "text_store", lua_aug_text_store);
-    lua_register(LS, "store", lua_aug_text_store); // alias
-    lua_register(LS, "text_retrieve", lua_aug_text_retrieve);
-    lua_register(LS, "retrieve", lua_aug_text_retrieve); // alias
-    // lua_register(LS, "escape_name", lua_aug_escape_name);
-    lua_register(LS, "transform", lua_aug_transform);
-    // lua_register(LS, "print", lua_aug_print);
-    // lua_register(LS, "to_xml", lua_aug_to_xml);
-    // lua_register(LS, "srun", lua_aug_srun);
-    // lua_register(LS, "errors", lua_aug_errors);
+
+    static const luaL_Reg aug[] = {
+        { "get", lua_aug_get },
+        { "label", lua_aug_label },
+        { "set", lua_aug_set },
+        { "setm", lua_aug_setm },
+        //{ "span", lua_aug_span },
+        { "insert", lua_aug_insert },
+        { "ins", lua_aug_insert }, // alias
+        { "rm", lua_aug_rm },
+        { "mv", lua_aug_mv },
+        { "move", lua_aug_mv }, // alias
+        { "cp", lua_aug_cp },
+        { "copy", lua_aug_cp }, // alias
+        { "rename", lua_aug_rename },
+        { "clear", lua_aug_clear },
+        { "clearm", lua_aug_clearm },
+        { "touch", lua_aug_touch },
+        { "matches", lua_aug_matches },
+        { "match", lua_aug_match },
+        { "defvar", lua_aug_defvar },
+        { "defnode", lua_aug_defnode },
+        { "save", lua_aug_save },
+        { "load", lua_aug_load },
+        { "text_store", lua_aug_text_store },
+        { "store", lua_aug_text_store }, // alias
+        { "text_retrieve", lua_aug_text_retrieve },
+        { "retrieve", lua_aug_text_retrieve }, // alias
+        //{ "escape_name", lua_aug_escape_name },
+        { "transform", lua_aug_transform },
+        //{ "print", lua_aug_print },
+        //{ "to_xml", lua_aug_to_xml },
+        //{ "errors", lua_aug_errors },
+        { NULL, NULL }
+    };
+
+    luaL_newlib(LS, aug);
+    lua_setglobal(LS, "aug");
 }
 
 static int ends_with(const char *str, const char *suffix) {
