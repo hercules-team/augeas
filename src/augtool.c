@@ -979,7 +979,7 @@ static int ends_with(const char *str, const char *suffix) {
     return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
 }
 
-static int main_loop(void) {
+static int main_loop(int argc, char **argv) {
     char *line = NULL, *cur_line = NULL;
     int ret = 0;
     char inputline [128];
@@ -990,8 +990,15 @@ static int main_loop(void) {
 
     if (inputfile) {
         if (use_lua) {
-            if (luaL_dofile(LS, inputfile)) {
-                printf("%s\n", lua_tostring(LS, -1));
+            if (luaL_loadfile(LS, inputfile)) {
+                printf("luaL_loadfile() failed: %s\n", lua_tostring(LS, -1));
+                lua_close(LS);
+                return -1;
+            }
+            for (int i=0; i < argc; i++)
+                lua_pushstring(LS, argv[i]);
+            if (lua_pcall(LS, argc, 0, 0)) {
+                printf("lua_pcall() failed: %s\n", lua_tostring(LS, -1));
                 lua_close(LS);
                 return -1;
             }
@@ -1241,11 +1248,11 @@ int main(int argc, char **argv) {
         return EXIT_SUCCESS;
     }
     readline_init();
-    if (optind < argc) {
+    if (optind < argc && !use_lua) {
         // Accept one command from the command line
         r = run_args(argc - optind, argv+optind);
     } else {
-        r = main_loop();
+        r = main_loop(argc - optind, argv+optind);
     }
     if (history_file != NULL)
         write_history(history_file);
