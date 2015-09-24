@@ -28,17 +28,14 @@
 #include <lauxlib.h>
 #include <stdbool.h>
 
-typedef struct LuaAug {
-  augeas *aug;
-} LuaAug;
 
 static const char Key = 'k';
 
 static augeas *checkaug(lua_State *L) {
   lua_pushlightuserdata(L, (void *)&Key);
   lua_gettable(L, LUA_REGISTRYINDEX);
-  augeas *b = (augeas *)lua_touserdata(L, -1); // Convert value
-  return b;
+  augeas *aug = (augeas *)lua_touserdata(L, -1); // Convert value
+  return aug;
 }
 
 static void lua_checkargs(lua_State *L, const char *name, int arity) {
@@ -470,6 +467,8 @@ struct lua_State *setup_lua(augeas *a) {
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
   
+    // lightuserdata is shared between libs
+    // do we really want to use that?
     lua_pushlightuserdata(L, (void *)&Key);
     lua_pushlightuserdata(L, (void *)a); // Push pointer
     lua_settable(L, LUA_REGISTRYINDEX);
