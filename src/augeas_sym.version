@@ -69,4 +69,5 @@ AUGEAS_0.18.0 {
 AUGEAS_0.20.0 {
     global:
       aug_escape_name;
+      setup_lua;
 } AUGEAS_0.18.0;
