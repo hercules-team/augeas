@@ -24,6 +24,11 @@ SubTitle: Modules
 #   yyyy  - Four digit year.  2006 is "2006"
 #   year  - Four digit year.  2006 is "2006"
 
+# These are indexes you deleted, so Natural Docs will not add them again
+# unless you remove them from this line.
+
+Don't Index: Properties
+
 
 # --------------------------------------------------------------------------
 # 
@@ -134,7 +139,7 @@ Group: Specific Modules  {
    File: OpenShift_Config  (openshift_config.aug)
    File: OpenShift_Http  (openshift_http.aug)
    File: OpenShift_Quickstarts  (openshift_quickstarts.aug)
-   File: Pagekite (pagekite.aug)
+   File: Pagekite  (pagekite.aug)
    File: Pam  (pam.aug)
    File: PamConf  (pamconf.aug)
    File: Passwd  (passwd.aug)
@@ -183,9 +188,15 @@ Group: Specific Modules  {
    File: VWware_Config  (vmware_config.aug)
    File: Vfstab  (vfstab.aug)
    File: Xinetd  (xinetd.aug)
-   File: Xymon  (xymon.aug)
-   File: XymonAlerting (xymonalerting.aug)
    File: Xorg  (xorg.aug)
+   File: ClamAV  (clamav.aug)
+   File: Dns_Zone  (dns_zone.aug)
+   File: Mailscanner  (mailscanner.aug)
+   File: Mailscanner_rules  (mailscanner_rules.aug)
+   File: MasterPasswd  (masterpasswd.aug)
+   File: Pgbouncer  (pgbouncer.aug)
+   File: PylonsPaste  (pylonspaste.aug)
+   File: Xymon_Alerting  (xymon_alerting.aug)
    }  # Group: Specific Modules
 
 Group: Generic Modules  {
@@ -215,10 +226,9 @@ Group: Tests and Examples  {
    File: Test_Carbon  (tests/test_carbon.aug)
    File: Test_Channels  (tests/test_channels.aug)
    File: Test_Chrony  (tests/test_chrony.aug)
-   File: Test_ClamAV  (tests/test_clamav.aug)
    File: Test_Collectd  (tests/test_collectd.aug)
    File: Test_CPanel  (tests/test_cpanel.aug)
-   File: Test_CSV  (tests/test_csv.aug)
+   File: test_csv.aug  (tests/test_csv.aug)
    File: Test_Cups  (tests/test_cups.aug)
    File: Test_Dovecot  (tests/test_dovecot.aug)
    File: Test_Erlang  (tests/test_erlang.aug)
@@ -240,8 +250,6 @@ Group: Tests and Examples  {
    File: Test_Ldso  (tests/test_ldso.aug)
    File: Test_Lightdm  (tests/test_lightdm.aug)
    File: Test_LVM  (tests/test_lvm.aug)
-   File: Test_Mailscanner  (tests/test_mailscanner.aug)
-   File: Test_Mailscanner_Rules  (tests/test_mailscanner_rules.aug)
    File: Test_MCollective  (tests/test_mcollective.aug)
    File: Test_Memcached  (tests/test_memcached.aug)
    File: Test_MongoDBServer  (tests/test_mongodbserver.aug)
@@ -252,21 +260,18 @@ Group: Tests and Examples  {
    File: Test_OpenShift_Config  (tests/test_openshift_config.aug)
    File: Test_OpenShift_Http  (tests/test_openshift_http.aug)
    File: Test_OpenShift_Quickstarts  (tests/test_openshift_quickstarts.aug)
-   File: Test_Pgbouncer  (tests/test_pgbouncer.aug)
    File: Test_Postfix_Transport  (tests/test_postfix_transport.aug)
    File: Test_Postfix_Virtual  (tests/test_postfix_virtual.aug)
    File: Test_Postgresql  (tests/test_postgresql.aug)
    File: Test_Protocols  (tests/test_protocols.aug)
    File: Test_Puppet_Auth  (tests/test_puppet_auth.aug)
    File: Test_Puppetfile  (tests/test_puppetfile.aug)
-   File: Test_Pylonspaste  (tests/test_pylonspaste.aug)
    File: Test_Qpid  (tests/test_qpid.aug)
    File: Test_Quote  (tests/test_quote.aug)
    File: Test_Rabbitmq  (tests/test_rabbitmq.aug)
    File: Test_Redis  (tests/test_redis.aug)
    File: Test_Reprepro_Uploaders  (tests/test_reprepro_uploaders.aug)
    File: Test_Rhsm  (tests/test_rhsm.aug)
-   File: Test_Rmt  (tests/test_rmt.aug)
    File: Test_Rsyslog  (tests/test_rsyslog.aug)
    File: Test_Simplelines  (tests/test_simplelines.aug)
    File: Test_Simplevars  (tests/test_simplevars.aug)
@@ -277,19 +282,23 @@ Group: Tests and Examples  {
    File: Test_Systemd  (tests/test_systemd.aug)
    File: Test_Thttpd  (tests/test_thttpd.aug)
    File: Test_Tmpfiles  (tests/test_tmpfiles.aug)
-   File: Test_Tuned  (tests/test_tuned.aug)
    File: Test_Up2date  (tests/test_up2date.aug)
    File: Test_UpdateDB  (tests/test_updatedb.aug)
    File: Test_VMware_Config  (tests/test_vmware_config.aug)
    File: Test_Xml  (tests/test_xml.aug)
-   File: Test_Xymon  (tests/test_xymon.aug)
-   File: Test_XymonAlerting  (tests/test_xymonalerting.aug)
    File: Test_Yum  (tests/test_yum.aug)
    File: Test_login_defs  (tests/test_login_defs.aug)
    File: Test_sssd  (tests/test_sssd.aug)
    File: Test_sudoers  (no auto-title, tests/test_sudoers.aug)
    File: Test_ssh  (tests/test_ssh.aug)
    File: Test_sshd  (tests/test_sshd.aug)
+   File: AptPreferences.pin  (tests/test_aptpreferences.aug)
+   File: Desktop.lns  (tests/test_desktop.aug)
+   File: test_httpd.aug  (tests/test_httpd.aug)
+   File: test_shellvars.aug  (tests/test_shellvars.aug)
+   File: test_shellvars_list.aug  (tests/test_shellvars_list.aug)
+   File: test_slapd.aug  (tests/test_slapd.aug)
+   File: Test_Xymon_Alerting  (tests/test_xymon_alerting.aug)
    }  # Group: Tests and Examples
 
 Group: Index  {

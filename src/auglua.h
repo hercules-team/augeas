@@ -28,7 +28,7 @@
 extern "C" {
 #endif
 
-struct lua_State *setup_lua(augeas *a);
+struct lua_State *luaopen_augeas(augeas *a);
 
 #ifdef __cplusplus
 }

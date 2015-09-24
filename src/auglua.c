@@ -463,7 +463,7 @@ static int lua_aug_transform(lua_State *L) {
   return 0;
 }
 
-struct lua_State *setup_lua(augeas *a) {
+struct lua_State *luaopen_augeas(augeas *a) {
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
   

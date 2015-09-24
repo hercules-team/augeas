@@ -776,7 +776,7 @@ int main(int argc, char **argv) {
     }
 
     if (use_lua)
-        LS = setup_lua(aug);
+        LS = luaopen_augeas(aug);
 
     add_transforms(transforms, transformslen);
     if (print_version) {
