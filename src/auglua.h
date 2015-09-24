@@ -30,6 +30,8 @@ extern "C" {
 
 struct lua_State *luaopen_augeas(augeas *a);
 
+int aug_lua(lua_State *L, const char *text);
+
 #ifdef __cplusplus
 }
 #endif

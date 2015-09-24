@@ -648,7 +648,8 @@ static int main_loop(int argc, char **argv) {
             } else {
                 sprintf(buf, "%s\n%s", cur_line, line);
             }
-            code = luaL_loadbuffer(LS, buf, strlen(buf), "line") || lua_pcall(LS, 0, 0, 0);
+
+            code = aug_lua(LS, buf);
             if (isatty(fileno(stdin)))
                 add_history(line);
 

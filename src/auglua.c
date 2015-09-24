@@ -514,6 +514,11 @@ struct lua_State *luaopen_augeas(augeas *a) {
     return L;
 }
 
+int aug_lua(lua_State *L, const char *text) {
+    int code = luaL_loadbuffer(L, text, strlen(text), "line") || lua_pcall(L, 0, 0, 0);
+    return code;
+}
+
 
 /*
  * Local variables:
