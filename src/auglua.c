@@ -29,10 +29,10 @@
 #include <stdbool.h>
 
 
-static const char *Key = "augeas_registry_key";
+static const char *registry_key = "augeas_registry_key";
 
 static augeas *checkaug(lua_State *L) {
-  lua_pushlightuserdata(L, (void *)&Key);
+  lua_pushlightuserdata(L, (void *)&registry_key);
   lua_gettable(L, LUA_REGISTRYINDEX);
   augeas *aug = (augeas *)lua_touserdata(L, -1); // Convert value
   return aug;
@@ -469,7 +469,7 @@ struct lua_State *luaopen_augeas(augeas *a) {
   
     // lightuserdata is shared between libs
     // do we really want to use that?
-    lua_pushlightuserdata(L, (void *)&Key);
+    lua_pushlightuserdata(L, (void *)&registry_key);
     lua_pushlightuserdata(L, (void *)a); // Push pointer
     lua_settable(L, LUA_REGISTRYINDEX);
 
