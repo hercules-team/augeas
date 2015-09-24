@@ -29,7 +29,7 @@
 #include <stdbool.h>
 
 
-static const char Key = 'k';
+static const char *Key = "augeas_registry_key";
 
 static augeas *checkaug(lua_State *L) {
   lua_pushlightuserdata(L, (void *)&Key);
