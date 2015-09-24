@@ -641,7 +641,6 @@ static int main_loop(int argc, char **argv) {
         }
 
         if (use_lua) {
-            // FIXME: newlines don't work!
             char *buf;
             if (cur_line == NULL) {
                 buf = malloc(sizeof(char) * strlen(line));
