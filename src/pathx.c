@@ -1158,10 +1158,14 @@ static bool eval_pred(struct expr *expr, struct state *state) {
     }
 }
 
-static void ns_remove(struct nodeset *ns, int ind) {
-    memmove(ns->nodes + ind, ns->nodes + ind+1,
-            sizeof(ns->nodes[0]) * (ns->used - (ind+1)));
-    ns->used -= 1;
+/* Remove COUNT successive entries from NS. The first entry to remove is at
+   IND */
+static void ns_remove(struct nodeset *ns, int ind, int count) {
+    if (count < 1)
+        return;
+    memmove(ns->nodes + ind, ns->nodes + ind+count,
+            sizeof(ns->nodes[0]) * (ns->used - (ind+count)));
+    ns->used -= count;
 }
 
 /*
@@ -1177,17 +1181,33 @@ static void ns_filter(struct nodeset *ns, struct pred *predicates,
     uint old_ctx_pos = state->ctx_pos;
 
     for (int p=0; p < predicates->nexpr; p++) {
+        int first_bad = -1;  /* The index of the first non-matching node */
         state->ctx_len = ns->used;
         state->ctx_pos = 1;
         for (int i=0; i < ns->used; state->ctx_pos++) {
             state->ctx = ns->nodes[i];
             bool match = eval_pred(predicates->exprs[p], state);
             RET_ON_ERROR;
+            /* We remove non-matching nodes from NS in batches; this logic
+             * makes sure that we only call ns_remove at the end of a run
+             * of non-matching nodes
+             */
             if (match) {
-                i+=1;
+                if (first_bad >= 0) {
+                    ns_remove(ns, first_bad, i - first_bad);
+                    i = first_bad + 1;
+                } else {
+                    i += 1;
+                }
+                first_bad = -1;
             } else {
-                ns_remove(ns, i);
+                if (first_bad == -1)
+                    first_bad = i;
+                i += 1;
             }
+        }
+        if (first_bad >= 0) {
+            ns_remove(ns, first_bad, ns->used - first_bad);
         }
     }
 
@@ -2953,7 +2973,7 @@ void pathx_symtab_remove_descendants(struct pathx_symtab *symtab,
             while (t != t->parent && t != tree)
                 t = t->parent;
             if (t == tree)
-                ns_remove(ns, i);
+                ns_remove(ns, i, 1);
             else
                 i += 1;
         }
