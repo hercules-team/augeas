@@ -495,11 +495,14 @@ static struct nodeset *make_nodeset(struct state *state) {
     return result;
 }
 
+/* Add NODE to NS if it is not in NS yet. This relies on the flag
+ * NODE->ADDED and care must be taken that NS_CLEAR_ADDED is called on NS
+ * as soon as we are done adding nodes to it.
+ */
 static void ns_add(struct nodeset *ns, struct tree *node,
                    struct state *state) {
-    for (int i=0; i < ns->used; i++)
-        if (ns->nodes[i] == node)
-            return;
+    if (node->added)
+        return;
     if (ns->used >= ns->size) {
         size_t size = 2 * ns->size;
         if (size < 10) size = 10;
@@ -508,7 +511,13 @@ static void ns_add(struct nodeset *ns, struct tree *node,
         ns->size = size;
     }
     ns->nodes[ns->used] = node;
+    node->added = 1;
     ns->used += 1;
+}
+
+static void ns_clear_added(struct nodeset *ns) {
+    for (int i=0; i < ns->used; i++)
+        ns->nodes[i]->added = 0;
 }
 
 static struct nodeset *
@@ -1003,10 +1012,13 @@ static void eval_union(struct state *state) {
     RET_ON_ERROR;
     for (int i=0; i < r->nodeset->used; i++) {
         ns_add(res, r->nodeset->nodes[i], state);
-        RET_ON_ERROR;
+        if (HAS_ERROR(state))
+            goto error;
     }
     state->value_pool[vind].nodeset = res;
     push_value(vind, state);
+ error:
+    ns_clear_added(res);
 }
 
 static void eval_concat_string(struct state *state) {
@@ -1217,9 +1229,11 @@ static void ns_from_locpath(struct locpath *lp, uint *maxns,
         struct tree *root_tree;
         root_tree = step_root(first_step, state->ctx, state->root_ctx);
         ns_add((*ns)[0], root_tree, state);
+        ns_clear_added((*ns)[0]);
     } else {
         for (int i=0; i < root->used; i++)
             ns_add((*ns)[0], root->nodes[i], state);
+        ns_clear_added((*ns)[0]);
     }
 
     if (HAS_ERROR(state))
@@ -1232,9 +1246,11 @@ static void ns_from_locpath(struct locpath *lp, uint *maxns,
         for (int i=0; i < work->used; i++) {
             for (struct tree *node = step_first(step, work->nodes[i]);
                  node != NULL;
-                 node = step_next(step, work->nodes[i], node))
+                 node = step_next(step, work->nodes[i], node)) {
                 ns_add(next, node, state);
+            }
         }
+        ns_clear_added(next);
         ns_filter(next, step->predicates, state);
         if (HAS_ERROR(state))
             goto error;

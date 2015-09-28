@@ -36,6 +36,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <locale.h>
+#include <stdint.h>
 
 /*
  * Various parameters about env vars, special tree nodes etc.
@@ -377,6 +378,7 @@ struct tree {
     struct tree *children;   /* List of children through NEXT */
     char        *value;
     int          dirty;
+    uint8_t      added;      /* only used by ns_add to dedupe nodesets */
     struct span *span;
 };
 
