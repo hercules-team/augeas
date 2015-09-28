@@ -1216,6 +1216,40 @@ static void ns_filter(struct nodeset *ns, struct pred *predicates,
     state->ctx_len = old_ctx_len;
 }
 
+/* Return true if PRED is solely the predicate '[n]' as in 'foo[17]' */
+static bool position_pred(struct pred *pred) {
+    return pred != NULL &&
+        pred->nexpr == 1 &&
+        pred->exprs[0]->tag == E_VALUE &&
+        pred->exprs[0]->type == T_NUMBER;
+}
+
+/* Return the tree node at the position implied by STEP->PREDICATES. It is
+   assumed and required that STEP->PREDICATES is actually a
+   POSITION_PRED.
+
+   This method hand-optimizes the important case of a path expression like
+   'service[42]'
+*/
+static struct tree *position_filter(struct nodeset *ns,
+                                    struct step *step,
+                                    struct state *state) {
+    int value_ind = step->predicates->exprs[0]->value_ind;
+    int number = state->value_pool[value_ind].number;
+
+    int pos = 1;
+    for (int i=0; i < ns->used; i++) {
+        for (struct tree *node = step_first(step, ns->nodes[i]);
+             node != NULL;
+             node = step_next(step, ns->nodes[i], node), pos++) {
+            if (pos == number)
+                return node;
+        }
+    }
+
+    return NULL;
+}
+
 /* Return an array of nodesets, one for each step in the locpath.
  *
  * On return, (*NS)[0] will contain state->ctx, and (*NS)[*MAXNS] will
@@ -1263,17 +1297,25 @@ static void ns_from_locpath(struct locpath *lp, uint *maxns,
     list_for_each(step, lp->steps) {
         struct nodeset *work = (*ns)[cur_ns];
         struct nodeset *next = (*ns)[cur_ns + 1];
-        for (int i=0; i < work->used; i++) {
-            for (struct tree *node = step_first(step, work->nodes[i]);
-                 node != NULL;
-                 node = step_next(step, work->nodes[i], node)) {
+        if (position_pred(step->predicates)) {
+            struct tree *node = position_filter(work, step, state);
+            if (node) {
                 ns_add(next, node, state);
+                ns_clear_added(next);
             }
+        } else {
+            for (int i=0; i < work->used; i++) {
+                for (struct tree *node = step_first(step, work->nodes[i]);
+                     node != NULL;
+                     node = step_next(step, work->nodes[i], node)) {
+                    ns_add(next, node, state);
+                }
+            }
+            ns_clear_added(next);
+            ns_filter(next, step->predicates, state);
+            if (HAS_ERROR(state))
+                goto error;
         }
-        ns_clear_added(next);
-        ns_filter(next, step->predicates, state);
-        if (HAS_ERROR(state))
-            goto error;
         cur_ns += 1;
     }
 
