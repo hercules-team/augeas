@@ -1,7 +1,7 @@
 /*
  * builtin.c: builtin primitives
  *
- * Copyright (C) 2007-2011 David Lutterkort
+ * Copyright (C) 2007-2015 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
