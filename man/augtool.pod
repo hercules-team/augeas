@@ -97,6 +97,13 @@ C<load> command. Using this option gives the fastest startup.
 Load span positions for nodes in the tree, as they relate to the original
 file. Enables the use of the B<span> command to retrieve position data.
 
+=item B<--timing>
+
+After executing each command, print how long, in milliseconds, executing
+the command took. This makes it easier to spot slow queries, usually
+through B<match> commands, and allows exploring alternative queries that
+yield the same result but might be faster.
+
 =item B<--version>
 
 Print version information and exit. The version is also in the tree under

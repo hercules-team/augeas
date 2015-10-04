@@ -217,6 +217,12 @@ they need to be set up manually and loading must be initiated with a
 .IX Item "--span"
 Load span positions for nodes in the tree, as they relate to the original
 file. Enables the use of the \fBspan\fR command to retrieve position data.
+.IP "\fB\-\-timing\fR" 4
+.IX Item "--timing"
+After executing each command, print how long, in milliseconds, executing
+the command took. This makes it easier to spot slow queries, usually
+through \fBmatch\fR commands, and allows exploring alternative queries that
+yield the same result but might be faster.
 .IP "\fB\-\-version\fR" 4
 .IX Item "--version"
 Print version information and exit. The version is also in the tree under

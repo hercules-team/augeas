@@ -37,6 +37,7 @@
 #include <sys/stat.h>
 #include <pwd.h>
 #include <stdarg.h>
+#include <sys/time.h>
 
 /* Global variables */
 
@@ -52,6 +53,7 @@ int echo_commands = 0;         /* Gets also changed in main_loop */
 bool print_version = false;
 bool auto_save = false;
 bool interactive = false;
+bool timing = false;
 /* History file is ~/.augeas/history */
 char *history_file = NULL;
 
@@ -293,6 +295,7 @@ static void usage(void) {
     fprintf(stderr, "  -L, --noload         do not load any files into the tree on startup\n");
     fprintf(stderr, "  -A, --noautoload     do not autoload modules from the search path\n");
     fprintf(stderr, "  --span               load span positions for nodes related to a file\n");
+    fprintf(stderr, "  --timing             after executing each command, show how long it took\n");
     fprintf(stderr, "  --version            print version information and exit.\n");
 
     exit(EXIT_FAILURE);
@@ -303,7 +306,8 @@ static void parse_opts(int argc, char **argv) {
     size_t loadpathlen = 0;
     enum {
         VAL_VERSION = CHAR_MAX + 1,
-        VAL_SPAN = VAL_VERSION + 1
+        VAL_SPAN = VAL_VERSION + 1,
+        VAL_TIMING = VAL_SPAN + 1
     };
     struct option options[] = {
         { "help",        0, 0, 'h' },
@@ -321,6 +325,7 @@ static void parse_opts(int argc, char **argv) {
         { "noload",      0, 0, 'L' },
         { "noautoload",  0, 0, 'A' },
         { "span",        0, 0, VAL_SPAN },
+        { "timing",      0, 0, VAL_TIMING },
         { "version",     0, 0, VAL_VERSION },
         { 0, 0, 0, 0}
     };
@@ -377,6 +382,9 @@ static void parse_opts(int argc, char **argv) {
         case VAL_SPAN:
             flags |= AUG_ENABLE_SPAN;
             break;
+        case VAL_TIMING:
+            timing = true;
+            break;
         default:
             usage();
             break;
@@ -405,10 +413,24 @@ static void print_version_info(void) {
     fprintf(stderr, "Something went terribly wrong internally - please file a bug\n");
 }
 
-static int run_command(const char *line) {
-    int result;
+static void print_time_taken(const struct timeval *start,
+                             const struct timeval *stop) {
+    time_t elapsed = (stop->tv_sec - start->tv_sec)*1000
+                   + (stop->tv_usec - start->tv_usec)/1000;
+    printf("Time: %ld ms\n", elapsed);
+}
 
+static int run_command(const char *line, bool with_timing) {
+    int result;
+    struct timeval stop, start;
+
+    gettimeofday(&start, NULL);
     result = aug_srun(aug, stdout, line);
+    gettimeofday(&stop, NULL);
+    if (with_timing && result >= 0) {
+        print_time_taken(&start, &stop);
+    }
+
     if (isatty(fileno(stdin)))
         add_history(line);
     return result;
@@ -539,7 +561,7 @@ static int main_loop(void) {
             continue;
         }
 
-        code = run_command(line);
+        code = run_command(line, timing);
         if (code == -2) {
             free(line);
             return ret;
@@ -570,12 +592,12 @@ static int run_args(int argc, char **argv) {
     }
     if (echo_commands)
         printf("%s%s\n", AUGTOOL_PROMPT, line);
-    code = run_command(line);
+    code = run_command(line, timing);
     free(line);
     if (code >= 0 && auto_save)
         if (echo_commands)
             printf("%ssave\n", AUGTOOL_PROMPT);
-        code = run_command("save");
+    code = run_command("save", false);
 
     if (code < 0) {
         code = -1;
@@ -612,12 +634,26 @@ static void add_transforms(char *ts, size_t tslen) {
 
 int main(int argc, char **argv) {
     int r;
+    struct timeval start, stop;
 
     setlocale(LC_ALL, "");
 
     parse_opts(argc, argv);
 
+    if (timing) {
+        printf("Initializing augeas ... ");
+        fflush(stdout);
+    }
+    gettimeofday(&start, NULL);
+
     aug = aug_init(root, loadpath, flags|AUG_NO_ERR_CLOSE);
+
+    gettimeofday(&stop, NULL);
+    if (timing) {
+        printf("done\n");
+        print_time_taken(&start, &stop);
+    }
+
     if (aug == NULL || aug_error(aug) != AUG_NOERROR) {
         fprintf(stderr, "Failed to initialize Augeas\n");
         if (aug != NULL)
