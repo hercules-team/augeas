@@ -355,7 +355,7 @@ F</usr/share/augeas/lenses/dist>
 
 =head1 AUTHOR
 
-  David Lutterkort <dlutter@redhat.com>
+David Lutterkort <lutter@watzmann.net>
 
 =head1 COPYRIGHT AND LICENSE
 

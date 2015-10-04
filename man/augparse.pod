@@ -95,6 +95,17 @@ resulting string is then compared to RESULT, which can be a string, the
 symbol B<?> to print the result of applying LENS to STRING, or the symbol
 B<*> to indicate that the test should produce an exception.
 
+=head1 AUTHOR
+
+David Lutterkort <lutter@watzmann.net>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2007-2015 David Lutterkort
+
+Augeas (and augparse) are distributed under the GNU Lesser General Public
+License (LGPL)
+
 =head1 SEE ALSO
 
 B<Augeas> project homepage L<http://www.augeas.net/>
