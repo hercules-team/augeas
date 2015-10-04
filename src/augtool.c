@@ -270,7 +270,7 @@ static void readline_init(void) {
 }
 
 __attribute__((noreturn))
-static void usage(void) {
+static void help(void) {
     fprintf(stderr, "Usage: %s [OPTIONS] [COMMAND]\n", progname);
     fprintf(stderr, "Load the Augeas tree and modify it. If no COMMAND is given, run interactively\n");
     fprintf(stderr, "Run '%s help' to get a list of possible commands.\n",
@@ -343,7 +343,7 @@ static void parse_opts(int argc, char **argv) {
             flags |= AUG_SAVE_NEWFILE;
             break;
         case 'h':
-            usage();
+            help();
             break;
         case 'r':
             root = optarg;
@@ -386,7 +386,9 @@ static void parse_opts(int argc, char **argv) {
             timing = true;
             break;
         default:
-            usage();
+            fprintf(stderr, "Try '%s --help' for more information.\n",
+                    progname);
+            exit(EXIT_FAILURE);
             break;
         }
     }
