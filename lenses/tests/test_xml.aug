@@ -96,6 +96,23 @@ test Xml.doctype get "<!DOCTYPE foo [
     }
   }
 
+(* Test: Xml.doctype
+   This is an example of a !DOCTYPE tag with !ELEMENT children tags and
+   external entities. *)
+test Xml.doctype get "<!DOCTYPE foo [
+<!ELEMENT bar SYSTEM \"foo\">
+<!ELEMENT baz PUBLIC \"bar\">
+]>" =
+
+  { "!DOCTYPE" = "foo"
+    { "!ELEMENT" = "bar"
+      { "SYSTEM" = "foo" }
+    }
+    { "!ELEMENT" = "baz"
+      { "PUBLIC" = "bar" }
+    }
+  }
+
 (* Group: Attributes *)
 
 (* Variable: att_def1 *)
