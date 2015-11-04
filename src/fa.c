@@ -1455,6 +1455,8 @@ static int minimize_hopcroft(struct fa *fa) {
     int *nsnum = NULL;
     int *nsind = NULL;
     int result = -1;
+    unsigned int nstates = 0;
+    int nsigma = 0;
 
     F(determinize(fa, NULL));
 
@@ -1474,9 +1476,8 @@ static int minimize_hopcroft(struct fa *fa) {
     list_for_each(s, fa->initial) {
         F(state_set_push(states, s));
     }
-    unsigned int nstates = states->used;
+    nstates = states->used;
 
-    int nsigma;
     sigma = start_points(fa, &nsigma);
     E(sigma == NULL);
 
