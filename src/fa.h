@@ -102,7 +102,7 @@ struct fa *fa_union(const struct fa *fa1, const struct fa *fa2);
 /* Return a finite automaton that accepts the intersection of the languages
  * of FA1 and FA2.
  */
-struct fa *fa_intersect(struct fa *fa1, struct fa *fa2);
+struct fa *fa_intersect(const struct fa *fa1, const struct fa *fa2);
 
 /* Return a finite automaton that accepts the complement of the language of
  * FA, i.e. the set of all words not accepted by FA

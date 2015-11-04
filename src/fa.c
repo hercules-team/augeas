@@ -2203,17 +2203,20 @@ struct fa *fa_iter(struct fa *fa, int min, int max) {
     }
 }
 
-static void sort_transition_intervals(struct fa *fa) {
+static void sort_transition_intervals(const struct fa *fa) {
     list_for_each(s, fa->initial) {
         qsort(s->trans, s->tused, sizeof(*s->trans), trans_intv_cmp);
     }
 }
 
-struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
+struct fa *fa_intersect(const struct fa *fa1, const struct fa *fa2) {
     int ret;
-    struct fa *fa = NULL;
+    struct fa *fa = NULL, *fa1_clone = NULL, *fa2_clone = NULL;
     struct state_set *worklist = NULL;
     state_triple_hash *newstates = NULL;
+
+    if (fa1 == NULL || fa2 == NULL)
+        goto error;
 
     if (fa1 == fa2)
         return fa_clone(fa1);
@@ -2222,8 +2225,12 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
         return fa_make_empty();
 
     if (fa1->nocase != fa2->nocase) {
-        F(case_expand(fa1));
-        F(case_expand(fa2));
+        fa1_clone = fa_clone(fa1);
+        fa2_clone = fa_clone(fa2);
+        if (fa1_clone == NULL || fa2_clone == NULL)
+            goto error;
+        F(case_expand(fa1_clone));
+        F(case_expand(fa2_clone));
     }
 
     fa = fa_make_empty();
@@ -2232,22 +2239,23 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
     if (fa == NULL || worklist == NULL || newstates == NULL)
         goto error;
 
-    sort_transition_intervals(fa1);
-    sort_transition_intervals(fa2);
+    sort_transition_intervals(fa1_clone ? fa1_clone : fa1);
+    sort_transition_intervals(fa2_clone ? fa2_clone : fa2);
 
-    F(state_set_push(worklist, fa1->initial));
-    F(state_set_push(worklist, fa2->initial));
+    struct state *fa1_initial = (fa1_clone ? fa1_clone : fa1)->initial;
+    struct state *fa2_initial = (fa2_clone ? fa2_clone : fa2)->initial;
+    F(state_set_push(worklist, fa1_initial));
+    F(state_set_push(worklist, fa2_initial));
     F(state_set_push(worklist, fa->initial));
-    F(state_triple_push(newstates,
-                         fa1->initial, fa2->initial, fa->initial));
+    F(state_triple_push(newstates, fa1_initial, fa2_initial, fa->initial));
     while (worklist->used) {
         struct state *s  = state_set_pop(worklist);
-        struct state *p2 = state_set_pop(worklist);
-        struct state *p1 = state_set_pop(worklist);
+        const struct state *p2 = state_set_pop(worklist);
+        const struct state *p1 = state_set_pop(worklist);
         s->accept = p1->accept && p2->accept;
 
-        struct trans *t1 = p1->trans;
-        struct trans *t2 = p2->trans;
+        const struct trans *t1 = p1->trans;
+        const struct trans *t2 = p2->trans;
         for (int n1 = 0, b2 = 0; n1 < p1->tused; n1++) {
             while (b2 < p2->tused && t2[b2].max < t1[n1].min)
                 b2++;
@@ -2277,8 +2285,10 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
             }
         }
     }
-    fa->deterministic = fa1->deterministic && fa2->deterministic;
-    fa->nocase = fa1->nocase && fa2->nocase;
+    fa->deterministic = ((fa1_clone ? fa1_clone : fa1)->deterministic &&
+                         (fa2_clone ? fa2_clone : fa2)->deterministic);
+    fa->nocase = ((fa1_clone ? fa1_clone : fa1)->nocase &&
+                  (fa2_clone ? fa2_clone : fa2)->nocase);
  done:
     state_set_free(worklist);
     state_triple_free(newstates);
@@ -2288,6 +2298,8 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
             fa = NULL;
         }
     }
+    fa_free(fa1_clone);
+    fa_free(fa2_clone);
 
     return fa;
  error:
