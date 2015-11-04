@@ -83,9 +83,9 @@ struct fa *fa_make_basic(unsigned int basic);
  */
 int fa_is_basic(struct fa *fa, unsigned int basic);
 
-/* Minimize FA using Brzozowski's algorithm. As a side-effect, the
- * automaton will also be deterministic after being minimized. Modifies the
- * automaton in place.
+/* Minimize FA using the currently-set fa_minimization_algorithm.
+ * As a side effect, the automaton will also be deterministic after being
+ * minimized. Modifies the automaton in place.
  */
 int fa_minimize(struct fa *fa);
 
