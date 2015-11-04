@@ -97,7 +97,7 @@ struct fa *fa_concat(const struct fa *fa1, const struct fa *fa2);
 /* Return a finite automaton that accepts the union of the languages that
  * FA1 and FA2 accept (the '|' operator in regular expressions).
  */
-struct fa *fa_union(struct fa *fa1, struct fa *fa2);
+struct fa *fa_union(const struct fa *fa1, const struct fa *fa2);
 
 /* Return a finite automaton that accepts the intersection of the languages
  * of FA1 and FA2.
