@@ -2004,22 +2004,22 @@ static int concat_in_place(struct fa *fa1, struct fa **fa2) {
     return 0;
 }
 
-struct fa *fa_concat(struct fa *fa1, struct fa *fa2) {
-    fa1 = fa_clone(fa1);
-    fa2 = fa_clone(fa2);
+struct fa *fa_concat(const struct fa *fa1, const struct fa *fa2) {
+    struct fa *fa1_clone = fa_clone(fa1);
+    struct fa *fa2_clone = fa_clone(fa2);
 
-    if (fa1 == NULL || fa2 == NULL)
+    if (fa1_clone == NULL || fa2_clone == NULL)
         goto error;
 
-    F(concat_in_place(fa1, &fa2));
+    F(concat_in_place(fa1_clone, &fa2_clone));
 
-    F(collect(fa1));
+    F(collect(fa1_clone));
 
-    return fa1;
+    return fa1_clone;
 
  error:
-    fa_free(fa1);
-    fa_free(fa2);
+    fa_free(fa1_clone);
+    fa_free(fa2_clone);
     return NULL;
 }
 

@@ -92,7 +92,7 @@ int fa_minimize(struct fa *fa);
 /* Return a finite automaton that accepts the concatenation of the
  * languages for FA1 and FA2, i.e. L(FA1).L(FA2)
  */
-struct fa *fa_concat(struct fa *fa1, struct fa *fa2);
+struct fa *fa_concat(const struct fa *fa1, const struct fa *fa2);
 
 /* Return a finite automaton that accepts the union of the languages that
  * FA1 and FA2 accept (the '|' operator in regular expressions).
