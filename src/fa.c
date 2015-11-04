@@ -437,6 +437,10 @@ static struct state *add_state(struct fa *fa, int accept) {
     for (struct trans *t = (s)->trans;                                  \
          (t - (s)->trans) < (s)->tused;                                 \
          t++)
+#define for_each_const_trans(t, s)                                      \
+    for (const struct trans *t = (s)->trans;                            \
+         (t - (s)->trans) < (s)->tused;                                 \
+         t++)
 
 ATTRIBUTE_RETURN_CHECK
 static int add_new_trans(struct state *from, struct state *to,
@@ -1881,7 +1885,7 @@ int fa_is_basic(const struct fa *fa, unsigned int basic) {
     return 0;
 }
 
-static struct fa *fa_clone(struct fa *fa) {
+static struct fa *fa_clone(const struct fa *fa) {
     struct fa *result = NULL;
     struct state_set *set = state_set_init(-1, S_DATA|S_SORTED);
     int r;
@@ -1904,9 +1908,9 @@ static struct fa *fa_clone(struct fa *fa) {
         q->reachable = s->reachable;
     }
     for (int i=0; i < set->used; i++) {
-        struct state *s = set->states[i];
+        const struct state *s = set->states[i];
         struct state *sc = set->data[i];
-        for_each_trans(t, s) {
+        for_each_const_trans(t, s) {
             int to = state_set_index(set, t->to);
             assert(to >= 0);
             struct state *toc = set->data[to];
