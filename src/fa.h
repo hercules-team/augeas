@@ -81,7 +81,7 @@ struct fa *fa_make_basic(unsigned int basic);
 /* Return 1 if FA accepts the basic language BASIC, which must be one of
  * the constantsfrom enum FA_BASIC.
  */
-int fa_is_basic(struct fa *fa, unsigned int basic);
+int fa_is_basic(const struct fa *fa, unsigned int basic);
 
 /* Minimize FA using Brzozowski's algorithm. As a side-effect, the
  * automaton will also be deterministic after being minimized. Modifies the

@@ -1849,7 +1849,7 @@ struct fa *fa_make_basic(unsigned int basic) {
     return NULL;
 }
 
-int fa_is_basic(struct fa *fa, unsigned int basic) {
+int fa_is_basic(const struct fa *fa, unsigned int basic) {
     if (basic == FA_EMPTY) {
         return ! fa->initial->accept && fa->initial->tused == 0;
     } else if (basic == FA_EPSILON) {
@@ -1860,8 +1860,8 @@ int fa_is_basic(struct fa *fa, unsigned int basic) {
         if (fa->nocase) {
             if (fa->initial->tused != 2)
                 return 0;
-            struct trans *t1 = fa->initial->trans;
-            struct trans *t2 = fa->initial->trans + 1;
+            const struct trans *t1 = fa->initial->trans;
+            const struct trans *t2 = fa->initial->trans + 1;
             if (t1->to != fa->initial || t2->to != fa->initial)
                 return 0;
             if (t2->max != UCHAR_MAX) {
@@ -1871,7 +1871,7 @@ int fa_is_basic(struct fa *fa, unsigned int basic) {
             return (t1->min == UCHAR_MIN && t1->max == 'A' - 1 &&
                     t2->min == 'Z' + 1 && t2->max == UCHAR_MAX);
         } else {
-            struct trans *t = fa->initial->trans;
+            const struct trans *t = fa->initial->trans;
             return fa->initial->tused == 1 &&
                 t->to == fa->initial &&
                 t->min == UCHAR_MIN && t->max == UCHAR_MAX;
