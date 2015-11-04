@@ -697,7 +697,8 @@ static struct state *state_set_pop_data(struct state_set *set, void **d) {
     return s;
 }
 
-static void *state_set_find_data(struct state_set *set, struct state *s) {
+static void *state_set_find_data(const struct state_set *set,
+                                 const struct state *s) {
     int i = state_set_index(set, s);
     if (i >= 0)
         return set->data[i];
