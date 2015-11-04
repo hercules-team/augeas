@@ -1986,7 +1986,7 @@ int aug_transform(struct augeas *aug, const char *lens,
 }
 
 int aug_escape_name(augeas *aug, const char *in, char **out) {
-    int result;
+    int result = -1;
 
     api_entry(aug);
     ARG_CHECK(in == NULL, aug, "aug_escape_name: IN must not be NULL");
