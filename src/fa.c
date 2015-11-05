@@ -2601,7 +2601,7 @@ static struct re_str *string_extend(struct re_str *dst,
     return dst;
 }
 
-static char pick_char(struct trans *t) {
+static char pick_char(const struct trans *t) {
     for (int c = t->min; c <= t->max; c++)
         if (isalpha(c)) return c;
     for (int c = t->min; c <= t->max; c++)
@@ -2614,7 +2614,7 @@ static char pick_char(struct trans *t) {
 /* Generate an example string for FA. Traverse all transitions and record
  * at each turn the "best" word found for that state.
  */
-int fa_example(struct fa *fa, char **example, size_t *example_len) {
+int fa_example(const struct fa *fa, char **example, size_t *example_len) {
     struct re_str *word = NULL;
     struct state_set *path = NULL, *worklist = NULL;
     struct re_str *str = NULL;
@@ -2640,9 +2640,9 @@ int fa_example(struct fa *fa, char **example, size_t *example_len) {
     F(state_set_push(worklist, fa->initial));
 
     while (worklist->used) {
-        struct state *s = state_set_pop(worklist);
+        const struct state *s = state_set_pop(worklist);
         struct re_str *ps = state_set_find_data(path, s);
-        for_each_trans(t, s) {
+        for_each_const_trans(t, s) {
             char c = pick_char(t);
             int toind = state_set_index(path, t->to);
             if (toind == -1) {
@@ -2657,7 +2657,7 @@ int fa_example(struct fa *fa, char **example, size_t *example_len) {
     }
 
     for (int i=0; i < path->used; i++) {
-        struct state *p = path->states[i];
+        const struct state *p = path->states[i];
         struct re_str *ps = path->data[i];
         if (p->accept &&
             (word == NULL || word->len == 0
@@ -2673,7 +2673,7 @@ int fa_example(struct fa *fa, char **example, size_t *example_len) {
     if (word != NULL) {
         *example_len = word->len;
         *example = word->rx;
-        free(word);
+        FREE(word);
     }
     return 0;
  error:

@@ -164,9 +164,12 @@ struct fa *fa_overlap(const struct fa *fa1, const struct fa *fa2);
  *  EXAMPLE_LEN will hold the length of the example.
  *
  * Return 0 on success, and a negative numer on error. On error, *EXAMPLE
- * will be NULL
+ * will be NULL.
+ *
+ * If *EXAMPLE is set, it is the caller's responsibility to free the string
+ * by calling free().
  */
-int fa_example(struct fa *fa, char **example, size_t *example_len);
+int fa_example(const struct fa *fa, char **example, size_t *example_len);
 
 /* Produce an example of an ambiguous word for the concatenation of the
  * languages of FA1 and FA2. The return value is such a word (which must be
