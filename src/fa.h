@@ -188,7 +188,7 @@ int fa_example(const struct fa *fa, char **example, size_t *example_len);
  * Returns 0 on success, and a negative number on failure. On failure, UPV,
  * PV, and V will be NULL
  */
-int fa_ambig_example(struct fa *fa1, struct fa *fa2,
+int fa_ambig_example(const struct fa *fa1, const struct fa *fa2,
                      char **upv, size_t *upv_len,
                      char **pv, char **v);
 

@@ -2902,12 +2902,13 @@ static int is_splittable(const struct fa *fa1, const struct fa *fa2) {
 /* This algorithm is due to Anders Moeller, and can be found in class
  * AutomatonOperations in dk.brics.grammar
  */
-int fa_ambig_example(struct fa *fa1, struct fa *fa2,
+int fa_ambig_example(const struct fa *fa1, const struct fa *fa2,
                      char **upv, size_t *upv_len,
                      char **pv, char **v) {
     static const char X = '\001';
     static const char Y = '\002';
     char *result = NULL, *s = NULL;
+    size_t result_len = 0;
     int ret = -1, r;
     struct fa *mp = NULL, *ms = NULL, *sp = NULL, *ss = NULL, *amb = NULL;
     struct fa *a1f = NULL, *a1t = NULL, *a2f = NULL, *a2t = NULL;
@@ -2991,23 +2992,30 @@ int fa_ambig_example(struct fa *fa1, struct fa *fa2,
 
     if (s != NULL) {
         char *t;
-        F(ALLOC_N(result, (strlen(s)-1)/2 + 1));
+        result_len = (s_len-1)/2 - 1;
+        F(ALLOC_N(result, result_len + 1));
         t = result;
         int i = 0;
-        for (i=0; s[2*i] == X; i++)
+        for (i=0; s[2*i] == X; i++) {
+            assert((t - result) < result_len);
             *t++ = s[2*i + 1];
+        }
         if (pv != NULL)
             *pv = t;
         i += 1;
 
-        for ( ;s[2*i] == X; i++)
+        for ( ;s[2*i] == X; i++) {
+            assert((t - result) < result_len);
             *t++ = s[2*i + 1];
+        }
         if (v != NULL)
             *v = t;
         i += 1;
 
-        for (; 2*i+1 < strlen(s); i++)
+        for (; 2*i+1 < s_len; i++) {
+            assert((t - result) < result_len);
             *t++ = s[2*i + 1];
+        }
     }
     ret = 0;
 
@@ -3028,7 +3036,7 @@ int fa_ambig_example(struct fa *fa1, struct fa *fa2,
     FREE(s);
     *upv = result;
     if (result != NULL)
-        *upv_len = strlen(result);
+        *upv_len = result_len;
     return ret;
  error:
     FREE(result);

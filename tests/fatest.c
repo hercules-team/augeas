@@ -395,6 +395,7 @@ static void assertAmbig(CuTest *tc, const char *regexp1, const char *regexp2,
     CuAssertPtrNotNull(tc, v);
 
     CuAssertStrEquals(tc, exp_upv, upv);
+    CuAssertIntEquals(tc, strlen(exp_upv), upv_len);
     CuAssertStrEquals(tc, exp_pv, pv);
     CuAssertStrEquals(tc, exp_v, v);
     free(upv);
@@ -421,6 +422,31 @@ static void testAmbig(CuTest *tc) {
     assertNotAmbig(tc, "a*", "a");
     assertNotAmbig(tc, "(a*b)*", "a*b");
     assertNotAmbig(tc, "(a|b|c|d|abcd)", "(a|b|c|d|abcd)");
+}
+
+static void testAmbigWithNuls(CuTest *tc) {
+    struct fa *fa1 = make_fa(tc, "X\0ba?", 5, REG_NOERROR);
+    struct fa *fa2 = make_fa(tc, "a?\0Y", 4, REG_NOERROR);
+    char *upv, *pv, *v;
+    size_t upv_len;
+    int r = fa_ambig_example(fa1, fa2, &upv, &upv_len, &pv, &v);
+    CuAssertIntEquals(tc, 0, r);
+    CuAssertIntEquals(tc, 6, (int)upv_len);
+    /* u = "X\0b" */
+    size_t u_len = pv - upv;
+    CuAssertIntEquals(tc, 3, u_len);
+    CuAssertIntEquals(tc, (int)'X', upv[0]);
+    CuAssertIntEquals(tc, (int)'\0', upv[1]);
+    CuAssertIntEquals(tc, (int)'b', upv[2]);
+    /* p = "a" */
+    size_t p_len = v - pv;
+    CuAssertIntEquals(tc, 1, p_len);
+    CuAssertIntEquals(tc, (int)'a', pv[0]);
+    /* v = "\0Y" */
+    size_t v_len = upv_len - (v - upv);
+    CuAssertIntEquals(tc, 2, v_len);
+    CuAssertIntEquals(tc, (int)'\0', v[0]);
+    CuAssertIntEquals(tc, (int)'Y', v[1]);
 }
 
 static void assertFaAsRegexp(CuTest *tc, const char *regexp) {
@@ -657,6 +683,7 @@ int main(int argc, char **argv) {
         SUITE_ADD_TEST(suite, testOverlap);
         SUITE_ADD_TEST(suite, testExample);
         SUITE_ADD_TEST(suite, testAmbig);
+        SUITE_ADD_TEST(suite, testAmbigWithNuls);
         SUITE_ADD_TEST(suite, testAsRegexp);
         SUITE_ADD_TEST(suite, testAsRegexpMinus);
         SUITE_ADD_TEST(suite, testRangeEnd);
