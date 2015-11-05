@@ -2815,31 +2815,31 @@ static struct fa *expand_alphabet(struct fa *fa, int add_marker,
     return NULL;
 }
 
-static bitset *alphabet(struct fa *fa) {
+static bitset *alphabet(const struct fa *fa) {
     bitset *bs = bitset_init(UCHAR_NUM);
 
     if (bs == NULL)
         return NULL;
 
-    list_for_each(s, fa->initial) {
-        for (int i=0; i < s->tused; i++) {
-            for (uint c = s->trans[i].min; c <= s->trans[i].max; c++)
+    list_for_each(s, (const struct state *)fa->initial) {
+        for_each_const_trans(t, s) {
+            for (uint c = t->min; c <= t->max; c++)
                 bitset_set(bs, c);
         }
     }
     return bs;
 }
 
-static bitset *last_chars(struct fa *fa) {
+static bitset *last_chars(const struct fa *fa) {
     bitset *bs = bitset_init(UCHAR_NUM);
 
     if (bs == NULL)
         return NULL;
 
-    list_for_each(s, fa->initial) {
-        for (int i=0; i < s->tused; i++) {
-            if (s->trans[i].to->accept) {
-                for (uint c = s->trans[i].min; c <= s->trans[i].max; c++)
+    list_for_each(s, (const struct state *)fa->initial) {
+        for_each_const_trans(t, s) {
+            if (t->to->accept) {
+                for (uint c = t->min; c <= t->max; c++)
                     bitset_set(bs, c);
             }
         }
@@ -2847,15 +2847,15 @@ static bitset *last_chars(struct fa *fa) {
     return bs;
 }
 
-static bitset *first_chars(struct fa *fa) {
+static bitset *first_chars(const struct fa *fa) {
     bitset *bs = bitset_init(UCHAR_NUM);
-    struct state *s = fa->initial;
+    const struct state *s = fa->initial;
 
     if (bs == NULL)
         return NULL;
 
-    for (int i=0; i < s->tused; i++) {
-        for (uint c = s->trans[i].min; c <= s->trans[i].max; c++)
+    for_each_const_trans(t, s) {
+        for (uint c = t->min; c <= t->max; c++)
             bitset_set(bs, c);
     }
     return bs;
@@ -2866,12 +2866,12 @@ static bitset *first_chars(struct fa *fa) {
  * further to decide ambiguity
  * Return -1 if an allocation fails
  */
-static int is_splittable(struct fa *fa1, struct fa *fa2) {
+static int is_splittable(const struct fa *fa1, const struct fa *fa2) {
     bitset *alpha1 = NULL;
     bitset *alpha2 = NULL;
     bitset *last1 = NULL;
     bitset *first2 = NULL;
-    bool result = -1;
+    int result = -1;
 
     alpha2 = alphabet(fa2);
     last1 = last_chars(fa1);
