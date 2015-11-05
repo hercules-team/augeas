@@ -1964,17 +1964,17 @@ static int union_in_place(struct fa *fa1, struct fa **fa2) {
 }
 
 struct fa *fa_union(const struct fa *fa1, const struct fa *fa2) {
-    struct fa *fa1_clone = fa_clone(fa1);
-    struct fa *fa2_clone = fa_clone(fa2);
-    if (fa1_clone == NULL || fa2_clone == NULL)
+    struct fa *cfa1 = fa_clone(fa1);
+    struct fa *cfa2 = fa_clone(fa2);
+    if (cfa1 == NULL || cfa2 == NULL)
         goto error;
 
-    F(union_in_place(fa1_clone, &fa2_clone));
+    F(union_in_place(cfa1, &cfa2));
 
-    return fa1_clone;
+    return cfa1;
  error:
-    fa_free(fa1_clone);
-    fa_free(fa2_clone);
+    fa_free(cfa1);
+    fa_free(cfa2);
     return NULL;
 }
 
@@ -2007,21 +2007,21 @@ static int concat_in_place(struct fa *fa1, struct fa **fa2) {
 }
 
 struct fa *fa_concat(const struct fa *fa1, const struct fa *fa2) {
-    struct fa *fa1_clone = fa_clone(fa1);
-    struct fa *fa2_clone = fa_clone(fa2);
+    struct fa *cfa1 = fa_clone(fa1);
+    struct fa *cfa2 = fa_clone(fa2);
 
-    if (fa1_clone == NULL || fa2_clone == NULL)
+    if (cfa1 == NULL || cfa2 == NULL)
         goto error;
 
-    F(concat_in_place(fa1_clone, &fa2_clone));
+    F(concat_in_place(cfa1, &cfa2));
 
-    F(collect(fa1_clone));
+    F(collect(cfa1));
 
-    return fa1_clone;
+    return cfa1;
 
  error:
-    fa_free(fa1_clone);
-    fa_free(fa2_clone);
+    fa_free(cfa1);
+    fa_free(cfa2);
     return NULL;
 }
 
@@ -2213,7 +2213,7 @@ static void sort_transition_intervals(const struct fa *fa) {
 
 struct fa *fa_intersect(const struct fa *fa1, const struct fa *fa2) {
     int ret;
-    struct fa *fa = NULL, *fa1_clone = NULL, *fa2_clone = NULL;
+    struct fa *fa = NULL, *cfa1 = NULL, *cfa2 = NULL;
     struct state_set *worklist = NULL;
     state_triple_hash *newstates = NULL;
 
@@ -2227,12 +2227,12 @@ struct fa *fa_intersect(const struct fa *fa1, const struct fa *fa2) {
         return fa_make_empty();
 
     if (fa1->nocase != fa2->nocase) {
-        fa1_clone = fa_clone(fa1);
-        fa2_clone = fa_clone(fa2);
-        if (fa1_clone == NULL || fa2_clone == NULL)
+        cfa1 = fa_clone(fa1);
+        cfa2 = fa_clone(fa2);
+        if (cfa1 == NULL || cfa2 == NULL)
             goto error;
-        F(case_expand(fa1_clone));
-        F(case_expand(fa2_clone));
+        F(case_expand(cfa1));
+        F(case_expand(cfa2));
     }
 
     fa = fa_make_empty();
@@ -2241,11 +2241,11 @@ struct fa *fa_intersect(const struct fa *fa1, const struct fa *fa2) {
     if (fa == NULL || worklist == NULL || newstates == NULL)
         goto error;
 
-    sort_transition_intervals(fa1_clone ? fa1_clone : fa1);
-    sort_transition_intervals(fa2_clone ? fa2_clone : fa2);
+    sort_transition_intervals(cfa1 ? cfa1 : fa1);
+    sort_transition_intervals(cfa2 ? cfa2 : fa2);
 
-    struct state *fa1_initial = (fa1_clone ? fa1_clone : fa1)->initial;
-    struct state *fa2_initial = (fa2_clone ? fa2_clone : fa2)->initial;
+    struct state *fa1_initial = (cfa1 ? cfa1 : fa1)->initial;
+    struct state *fa2_initial = (cfa2 ? cfa2 : fa2)->initial;
     F(state_set_push(worklist, fa1_initial));
     F(state_set_push(worklist, fa2_initial));
     F(state_set_push(worklist, fa->initial));
@@ -2287,10 +2287,10 @@ struct fa *fa_intersect(const struct fa *fa1, const struct fa *fa2) {
             }
         }
     }
-    fa->deterministic = ((fa1_clone ? fa1_clone : fa1)->deterministic &&
-                         (fa2_clone ? fa2_clone : fa2)->deterministic);
-    fa->nocase = ((fa1_clone ? fa1_clone : fa1)->nocase &&
-                  (fa2_clone ? fa2_clone : fa2)->nocase);
+    fa->deterministic = ((cfa1 ? cfa1 : fa1)->deterministic &&
+                         (cfa2 ? cfa2 : fa2)->deterministic);
+    fa->nocase = ((cfa1 ? cfa1 : fa1)->nocase &&
+                  (cfa2 ? cfa2 : fa2)->nocase);
  done:
     state_set_free(worklist);
     state_triple_free(newstates);
@@ -2300,8 +2300,8 @@ struct fa *fa_intersect(const struct fa *fa1, const struct fa *fa2) {
             fa = NULL;
         }
     }
-    fa_free(fa1_clone);
-    fa_free(fa2_clone);
+    fa_free(cfa1);
+    fa_free(cfa2);
 
     return fa;
  error:
@@ -2438,17 +2438,17 @@ static int totalize(struct fa *fa) {
 }
 
 struct fa *fa_complement(const struct fa *fa) {
-    struct fa *fac = fa_clone(fa);
-    E(fac == NULL);
-    F(determinize(fac, NULL));
-    F(totalize(fac));
-    list_for_each(s, fac->initial)
+    struct fa *cfa = fa_clone(fa);
+    E(cfa == NULL);
+    F(determinize(cfa, NULL));
+    F(totalize(cfa));
+    list_for_each(s, cfa->initial)
         s->accept = ! s->accept;
 
-    F(collect(fac));
-    return fac;
+    F(collect(cfa));
+    return cfa;
  error:
-    fa_free(fac);
+    fa_free(cfa);
     return NULL;
 }
 
