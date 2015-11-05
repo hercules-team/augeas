@@ -145,8 +145,8 @@ int fa_equals(struct fa *fa1, struct fa *fa2);
 /* Free all memory used by FA */
 void fa_free(struct fa *fa);
 
-/* Print FA to OUT as a graphviz dot file */
-void fa_dot(FILE *out, struct fa *fa);
+/* Print FA to OUT as a graphviz dot file. FA can not be NULL. */
+void fa_dot(FILE *out, const struct fa *fa);
 
 /* Return a finite automaton that accepts the overlap of the languages of
  * FA1 and FA2. The overlap of two languages is the set of strings that can

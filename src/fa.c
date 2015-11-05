@@ -4479,9 +4479,9 @@ static void print_char(FILE *out, uchar c) {
     }
 }
 
-void fa_dot(FILE *out, struct fa *fa) {
+void fa_dot(FILE *out, const struct fa *fa) {
     fprintf(out, "digraph {\n  rankdir=LR;");
-    list_for_each(s, fa->initial) {
+    list_for_each(s, (const struct state *)fa->initial) {
         if (s->accept) {
             fprintf(out, "\"%p\" [shape=doublecircle];\n", s);
         } else {
@@ -4493,8 +4493,8 @@ void fa_dot(FILE *out, struct fa *fa) {
 
     struct re_str str;
     MEMZERO(&str, 1);
-    list_for_each(s, fa->initial) {
-        for_each_trans(t, s) {
+    list_for_each(s, (const struct state *)fa->initial) {
+        for_each_const_trans(t, s) {
             fprintf(out, "\"%p\" -> \"%p\" [ label = \"", s, t->to);
             if (fa->trans_re) {
                 re_as_string(t->re, &str);
