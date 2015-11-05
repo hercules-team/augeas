@@ -2435,18 +2435,18 @@ static int totalize(struct fa *fa) {
     return -1;
 }
 
-struct fa *fa_complement(struct fa *fa) {
-    fa = fa_clone(fa);
-    E(fa == NULL);
-    F(determinize(fa, NULL));
-    F(totalize(fa));
-    list_for_each(s, fa->initial)
+struct fa *fa_complement(const struct fa *fa) {
+    struct fa *fac = fa_clone(fa);
+    E(fac == NULL);
+    F(determinize(fac, NULL));
+    F(totalize(fac));
+    list_for_each(s, fac->initial)
         s->accept = ! s->accept;
 
-    F(collect(fa));
-    return fa;
+    F(collect(fac));
+    return fac;
  error:
-    fa_free(fa);
+    fa_free(fac);
     return NULL;
 }
 

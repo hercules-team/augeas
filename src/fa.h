@@ -107,7 +107,7 @@ struct fa *fa_intersect(const struct fa *fa1, const struct fa *fa2);
 /* Return a finite automaton that accepts the complement of the language of
  * FA, i.e. the set of all words not accepted by FA
  */
-struct fa *fa_complement(struct fa *fa);
+struct fa *fa_complement(const struct fa *fa);
 
 /* Return a finite automaton that accepts the set difference of the
  * languages of FA1 and FA2, i.e. L(FA1)\L(FA2)
