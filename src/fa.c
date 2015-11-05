@@ -3185,7 +3185,7 @@ int fa_nocase(struct fa *fa) {
     return -1;
 }
 
-int fa_is_nocase(struct fa *fa) {
+int fa_is_nocase(const struct fa *fa) {
     return fa->nocase;
 }
 

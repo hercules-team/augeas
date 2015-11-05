@@ -245,8 +245,9 @@ int fa_expand_char_ranges(const char *regexp, size_t regexp_len,
  */
 int fa_nocase(struct fa *fa);
 
-/* Return 1 if FA matches ignoring case, 0 if matches are case sensitive */
-int fa_is_nocase(struct fa *fa);
+/* Return 1 if FA matches ignoring case, 0 if matches are case sensitive.
+   FA can not be NULL. */
+int fa_is_nocase(const struct fa *fa);
 
 /* Assume REGEXP is a case-insensitive regular expression, and convert it
  * to one that matches the same strings when used case sensitively. All
