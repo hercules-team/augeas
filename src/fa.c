@@ -2450,7 +2450,7 @@ struct fa *fa_complement(const struct fa *fa) {
     return NULL;
 }
 
-struct fa *fa_minus(struct fa *fa1, struct fa *fa2) {
+struct fa *fa_minus(const struct fa *fa1, const struct fa *fa2) {
     if (fa1 == NULL || fa2 == NULL)
         return NULL;
 

@@ -112,7 +112,7 @@ struct fa *fa_complement(const struct fa *fa);
 /* Return a finite automaton that accepts the set difference of the
  * languages of FA1 and FA2, i.e. L(FA1)\L(FA2)
  */
-struct fa *fa_minus(struct fa *fa1, struct fa *fa2);
+struct fa *fa_minus(const struct fa *fa1, const struct fa *fa2);
 
 /* Return a finite automaton that accepts a repetition of the language that
  * FA accepts. If MAX == -1, the returned automaton accepts arbitrarily
