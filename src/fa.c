@@ -2692,7 +2692,7 @@ struct enum_intl {
     size_t    bsize;
 };
 
-static int fa_enumerate_intl(struct state *s, struct enum_intl *ei, int pos) {
+static int fa_enumerate_intl(const struct state *s, struct enum_intl *ei, int pos) {
     int result = -1;
 
     if (ei->bsize <= pos + 1) {
@@ -2701,7 +2701,7 @@ static int fa_enumerate_intl(struct state *s, struct enum_intl *ei, int pos) {
     }
 
     ei->buf[pos] = '\0';
-    for_each_trans(t, s) {
+    for_each_const_trans(t, s) {
         if (t->to->visited)
             return -2;
         t->to->visited = 1;
@@ -2725,7 +2725,7 @@ static int fa_enumerate_intl(struct state *s, struct enum_intl *ei, int pos) {
     return result;
 }
 
-int fa_enumerate(struct fa *fa, int limit, char ***words) {
+int fa_enumerate(const struct fa *fa, int limit, char ***words) {
     struct enum_intl ei;
     int result = -1;
 

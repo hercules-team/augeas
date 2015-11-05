@@ -272,7 +272,7 @@ int fa_expand_nocase(const char *regexp, size_t regexp_len,
  * Return the number of generated words on success, -1 if we run out of
  * memory, and -2 if FA has more than LIMIT words.
  */
-int fa_enumerate(struct fa *fa, int limit, char ***words);
+int fa_enumerate(const struct fa *fa, int limit, char ***words);
 
 #endif
 
