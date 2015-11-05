@@ -131,10 +131,11 @@ struct fa *fa_minus(const struct fa *fa1, const struct fa *fa2);
  */
 struct fa *fa_iter(const struct fa *fa, int min, int max);
 
-/* Return 1 if the language of FA1 is contained in the language of FA2, 0
- * otherwise.
+/* If successful, returns 1 if the language of FA1 is contained in the language
+ * of FA2, 0 otherwise. Returns -1 if an error occurred. Makes FA2 deterministic
+ * as a side effect.
  */
-int fa_contains(struct fa *fa1, struct fa *fa2);
+int fa_contains(const struct fa *fa1, struct fa *fa2);
 
 /* Return 1 if the language of FA1 equals the language of FA2 */
 int fa_equals(struct fa *fa1, struct fa *fa2);

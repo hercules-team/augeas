@@ -765,8 +765,9 @@ static int state_pair_push(struct state_set **set,
 /* Return the index of the pair (FST, SND) in SET, or -1 if SET contains no
    such pair.
  */
-static int state_pair_find(struct state_set *set, struct state *fst,
-                           struct state *snd) {
+static int state_pair_find(const struct state_set *set,
+                           const struct state *fst,
+                           const struct state *snd) {
     for (int i=0; i < set->used; i++)
         if (set->states[i] == fst && set->data[i] == snd)
             return i;
@@ -2308,7 +2309,7 @@ struct fa *fa_intersect(const struct fa *fa1, const struct fa *fa2) {
     goto done;
 }
 
-int fa_contains(struct fa *fa1, struct fa *fa2) {
+int fa_contains(const struct fa *fa1, struct fa *fa2) {
     int result = 0;
     struct state_set *worklist = NULL;  /* List of pairs of states */
     struct state_set *visited = NULL;   /* List of pairs of states */
@@ -2326,7 +2327,7 @@ int fa_contains(struct fa *fa1, struct fa *fa2) {
     F(state_pair_push(&worklist, fa1->initial, fa2->initial));
     F(state_pair_push(&visited, fa1->initial, fa2->initial));
     while (worklist->used) {
-        struct state *p1, *p2;
+        const struct state *p1, *p2;
         void *v2;
         p1 = state_set_pop_data(worklist, &v2);
         p2 = v2;
@@ -2334,8 +2335,8 @@ int fa_contains(struct fa *fa1, struct fa *fa2) {
         if (p1->accept && !p2->accept)
             goto done;
 
-        struct trans *t1 = p1->trans;
-        struct trans *t2 = p2->trans;
+        const struct trans *t1 = p1->trans;
+        const struct trans *t2 = p2->trans;
         for(int n1 = 0, b2 = 0; n1 < p1->tused; n1++) {
             while (b2 < p2->tused && t2[b2].max < t1[n1].min)
                 b2++;
