@@ -79,7 +79,7 @@ int fa_compile(const char *re, size_t size, struct fa **fa);
 struct fa *fa_make_basic(unsigned int basic);
 
 /* Return 1 if FA accepts the basic language BASIC, which must be one of
- * the constantsfrom enum FA_BASIC.
+ * the constants from enum FA_BASIC. FA can not be NULL.
  */
 int fa_is_basic(const struct fa *fa, unsigned int basic);
 

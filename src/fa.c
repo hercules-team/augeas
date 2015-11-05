@@ -1856,6 +1856,7 @@ struct fa *fa_make_basic(unsigned int basic) {
 }
 
 int fa_is_basic(const struct fa *fa, unsigned int basic) {
+    assert(fa != NULL);
     if (basic == FA_EMPTY) {
         return ! fa->initial->accept && fa->initial->tused == 0;
     } else if (basic == FA_EPSILON) {
