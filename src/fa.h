@@ -153,7 +153,7 @@ void fa_dot(FILE *out, const struct fa *fa);
  * be split in more than one way into a left part accepted by FA1 and a
  * right part accepted by FA2.
  */
-struct fa *fa_overlap(struct fa *fa1, struct fa *fa2);
+struct fa *fa_overlap(const struct fa *fa1, const struct fa *fa2);
 
 /* Produce an example for the language of FA. The example is not
  * necessarily the shortest possible. The implementation works very hard to

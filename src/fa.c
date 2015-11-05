@@ -2492,35 +2492,35 @@ static int accept_to_accept(struct fa *fa) {
     return -1;
 }
 
-struct fa *fa_overlap(struct fa *fa1, struct fa *fa2) {
+struct fa *fa_overlap(const struct fa *fa1, const struct fa *fa2) {
     struct fa *fa = NULL, *eps = NULL, *result = NULL;
     struct state_set *map = NULL;
 
     if (fa1 == NULL || fa2 == NULL)
         return NULL;
 
-    fa1 = fa_clone(fa1);
-    fa2 = fa_clone(fa2);
-    if (fa1 == NULL || fa2 == NULL)
+    struct fa *cfa1 = fa_clone(fa1);
+    struct fa *cfa2 = fa_clone(fa2);
+    if (cfa1 == NULL || cfa2 == NULL)
         goto error;
 
-    if (determinize(fa1, NULL) < 0)
+    if (determinize(cfa1, NULL) < 0)
         goto error;
-    if (accept_to_accept(fa1) < 0)
+    if (accept_to_accept(cfa1) < 0)
         goto error;
 
-    map = fa_reverse(fa2);
+    map = fa_reverse(cfa2);
     state_set_free(map);
-    if (determinize(fa2, NULL) < 0)
+    if (determinize(cfa2, NULL) < 0)
         goto error;
-    if (accept_to_accept(fa2) < 0)
+    if (accept_to_accept(cfa2) < 0)
         goto error;
-    map = fa_reverse(fa2);
+    map = fa_reverse(cfa2);
     state_set_free(map);
-    if (determinize(fa2, NULL) < 0)
+    if (determinize(cfa2, NULL) < 0)
         goto error;
 
-    fa = fa_intersect(fa1, fa2);
+    fa = fa_intersect(cfa1, cfa2);
     if (fa == NULL)
         goto error;
 
@@ -2533,8 +2533,8 @@ struct fa *fa_overlap(struct fa *fa1, struct fa *fa2) {
         goto error;
 
  error:
-    fa_free(fa1);
-    fa_free(fa2);
+    fa_free(cfa1);
+    fa_free(cfa2);
     fa_free(fa);
     fa_free(eps);
     return result;
