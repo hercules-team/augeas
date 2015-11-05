@@ -2777,20 +2777,20 @@ int fa_enumerate(struct fa *fa, int limit, char ***words) {
  *
  * The returned automaton is a copy of FA, FA is not modified.
  */
-static struct fa *expand_alphabet(struct fa *fa, int add_marker,
+static struct fa *expand_alphabet(const struct fa *fa, int add_marker,
                                   char X, char Y) {
     int ret;
 
-    fa = fa_clone(fa);
-    if (fa == NULL)
+    struct fa *cfa = fa_clone(fa);
+    if (cfa == NULL)
         return NULL;
 
-    F(mark_reachable(fa));
-    list_for_each(p, fa->initial) {
+    F(mark_reachable(cfa));
+    list_for_each(p, cfa->initial) {
         if (! p->reachable)
             continue;
 
-        struct state *r = add_state(fa, 0);
+        struct state *r = add_state(cfa, 0);
         r->trans = p->trans;
         r->tused = p->tused;
         r->tsize = p->tsize;
@@ -2800,7 +2800,7 @@ static struct fa *expand_alphabet(struct fa *fa, int add_marker,
         if (ret < 0)
             goto error;
         if (add_marker) {
-            struct state *q = add_state(fa, 0);
+            struct state *q = add_state(cfa, 0);
             ret = add_new_trans(p, q, Y, Y);
             if (ret < 0)
                 goto error;
@@ -2809,9 +2809,9 @@ static struct fa *expand_alphabet(struct fa *fa, int add_marker,
                 goto error;
         }
     }
-    return fa;
+    return cfa;
  error:
-    fa_free(fa);
+    fa_free(cfa);
     return NULL;
 }
 
