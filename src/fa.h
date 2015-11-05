@@ -129,7 +129,7 @@ struct fa *fa_minus(const struct fa *fa1, const struct fa *fa2);
  * - FA? = FA_ITER(FA, 0, 1)
  * - FA{n,m} = FA_ITER(FA, n, m) with 0 <= n and m = -1 or n <= m
  */
-struct fa *fa_iter(struct fa *fa, int min, int max);
+struct fa *fa_iter(const struct fa *fa, int min, int max);
 
 /* Return 1 if the language of FA1 is contained in the language of FA2, 0
  * otherwise.

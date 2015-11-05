@@ -2059,42 +2059,42 @@ static struct fa *fa_make_char_set(bitset *cset, int negate) {
     return NULL;
 }
 
-static struct fa *fa_star(struct fa *fa) {
+static struct fa *fa_star(const struct fa *fa) {
     struct state *s;
     int r;
 
-    fa = fa_clone(fa);
-    if (fa == NULL)
+    struct fa *cfa = fa_clone(fa);
+    if (cfa == NULL)
         return NULL;
 
-    s = add_state(fa, 1);
+    s = add_state(cfa, 1);
     if (s == NULL)
         goto error;
 
-    r = add_epsilon_trans(s, fa->initial);
+    r = add_epsilon_trans(s, cfa->initial);
     if (r < 0)
         goto error;
 
-    set_initial(fa, s);
-    list_for_each(p, fa->initial->next) {
+    set_initial(cfa, s);
+    list_for_each(p, cfa->initial->next) {
         if (p->accept) {
             r = add_epsilon_trans(p, s);
             if (r < 0)
                 goto error;
         }
     }
-    fa->deterministic = 0;
-    fa->minimal = 0;
+    cfa->deterministic = 0;
+    cfa->minimal = 0;
 
-    return fa;
+    return cfa;
 
  error:
-    fa_free(fa);
+    fa_free(cfa);
     return NULL;
 }
 
 /* Form the automaton (FA){N}; FA is not modified */
-static struct fa *repeat(struct fa *fa, int n) {
+static struct fa *repeat(const struct fa *fa, int n) {
     if (n == 0) {
         return fa_make_epsilon();
     } else if (n == 1) {
@@ -2120,7 +2120,7 @@ static struct fa *repeat(struct fa *fa, int n) {
     }
 }
 
-struct fa *fa_iter(struct fa *fa, int min, int max) {
+struct fa *fa_iter(const struct fa *fa, int min, int max) {
     int r;
 
     if (min < 0)
