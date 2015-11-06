@@ -34,11 +34,11 @@
         _p->next = (tail);                                              \
     } while (0)
 
-/* `typeof((list) + 1)' is used for cases where `(list)' is a const pointer.
-   http://stackoverflow.com/questions/18063373/is-it-possible-to-un-const-typeof-in-gcc-pure-c
+/* `typeof((typeof(list))((list)->next))' is used for cases where `(list)'
+   is a const pointer.
 */
 #define list_for_each(iter, list)                                       \
-    for (typeof((list) + 1) (iter) = (list); (iter) != NULL; (iter) = (iter)->next)
+    for (typeof((typeof(list))((list)->next)) (iter) = (list); (iter) != NULL; (iter) = (iter)->next)
 
 #define list_remove(elt, list)                                          \
     do {                                                                \
