@@ -138,8 +138,9 @@ struct fa *fa_iter(const struct fa *fa, int min, int max);
 int fa_contains(const struct fa *fa1, struct fa *fa2);
 
 /* If successful, returns 1 if the language of FA1 equals the language of FA2.
-   Returns -1 if an error occurred. Can make FA1 and/or FA2 deterministic as a
-   side effect. */
+ * Returns -1 if an error occurred. Can make FA1 and/or FA2 deterministic as a
+ * side effect.
+ */
 int fa_equals(struct fa *fa1, struct fa *fa2);
 
 /* Free all memory used by FA */
@@ -246,7 +247,8 @@ int fa_expand_char_ranges(const char *regexp, size_t regexp_len,
 int fa_nocase(struct fa *fa);
 
 /* Return 1 if FA matches ignoring case, 0 if matches are case sensitive.
-   FA can not be NULL. */
+ * FA can not be NULL.
+ */
 int fa_is_nocase(const struct fa *fa);
 
 /* Assume REGEXP is a case-insensitive regular expression, and convert it
