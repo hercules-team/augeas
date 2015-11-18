@@ -67,7 +67,8 @@
                    files (Jasper Lievisse Adriaanse) (Issue #252)
     * Spacevars: support flags (Issue #279)
     * Ssh: add support for HostKeyAlgorithms, KexAlgorithms
-           and PubkeyAcceptedKeyTypes (Oliver Mangold) (Issue #290)
+           and PubkeyAcceptedKeyTypes (Oliver Mangold) (Issue #290),
+           add support for GlobalKnownHostsFile (Issue #316)
     * Sudoers: support for negated command alias
                (Geoff Williams) (Issue #262)
     * Syslog: recognize '~' as a valid syslog action (discard)
