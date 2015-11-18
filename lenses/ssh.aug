@@ -54,6 +54,11 @@ module Ssh =
       in [ indent . key k . counter "commas_entry" . spc .
            Build.opt_list value comma . eol ]
 
+    let spaces_entry (k:regexp) =
+         let value = [ seq "spaces_entry" . value_to_spc ]
+      in [ indent . key k . counter "spaces_entry" . spc .
+           Build.opt_list value spc . eol ]
+
     let fw_entry (k:regexp) = [ indent . key k . spc .
 	    [ key /[^ \t\r\n\/]+/ . spc . value_to_eol . eol ]]
 
@@ -69,6 +74,8 @@ module Ssh =
     let algorithms = commas_entry /(HostKey|Kex)Algorithms/i
     let pubkey_accepted_key_types = commas_entry /PubkeyAcceptedKeyTypes/i
 
+    let global_knownhosts_file = spaces_entry /GlobalKnownHostsFile/i
+
     let special_entry = send_env
 	                    | proxy_command
 	                    | remote_fw
@@ -77,9 +84,10 @@ module Ssh =
 	                    | ciphers
 	                    | algorithms
 	                    | pubkey_accepted_key_types
+                      | global_knownhosts_file
 
     let key_re = /[A-Za-z0-9]+/
-               - /SendEnv|Host|ProxyCommand|RemoteForward|LocalForward|MACs|Ciphers|(HostKey|Kex)Algorithms|PubkeyAcceptedKeyTypes/i
+               - /SendEnv|Host|ProxyCommand|RemoteForward|LocalForward|MACs|Ciphers|(HostKey|Kex)Algorithms|PubkeyAcceptedKeyTypes|GlobalKnownHostsFile/i
 
 
     let other_entry = [ indent . key key_re

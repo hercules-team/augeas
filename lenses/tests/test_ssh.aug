@@ -87,3 +87,12 @@ PubkeyAcceptedKeyTypes ssh-ed25519-cert-v01@openssh.com,ssh-ed25519,ssh-rsa-cert
 
 test Ssh.lns get "Proxycommand ssh -q test nc -q0 %h 22\n" =
   { "Proxycommand" = "ssh -q test nc -q0 %h 22" }
+
+(* Test: Ssh.lns
+     GlobalKnownHostsFile *)
+test Ssh.lns get "GlobalKnownHostsFile /etc/ssh/ssh_known_hosts /etc/ssh/ssh_known_hosts2\n" =
+  { "GlobalKnownHostsFile"
+    { "1" = "/etc/ssh/ssh_known_hosts" }
+    { "2" = "/etc/ssh/ssh_known_hosts2" }
+  }
+
