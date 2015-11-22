@@ -4186,28 +4186,29 @@ static int convert_strings(struct fa *fa) {
  *     the transition INI -> FIN
  * (5) Convert that STRUCT RE to a string with RE_AS_STRING
  */
-int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len) {
+int fa_as_regexp(const struct fa *fa, char **regexp, size_t *regexp_len) {
+    struct fa *cfa = NULL;
     int r;
     struct state *fin = NULL, *ini = NULL;
     struct re *eps = NULL;
 
     *regexp = NULL;
     *regexp_len = 0;
-    fa = fa_clone(fa);
-    if (fa == NULL)
+    cfa = fa_clone(fa);
+    if (cfa == NULL)
         goto error;
 
     eps = make_re(EPSILON);
     if (eps == NULL)
         goto error;
 
-    fin = add_state(fa,1);
+    fin = add_state(cfa,1);
     if (fin == NULL)
         goto error;
 
-    fa->trans_re = 1;
+    cfa->trans_re = 1;
 
-    list_for_each(s, fa->initial) {
+    list_for_each(s, cfa->initial) {
         r = convert_trans_to_re(s);
         if (r < 0)
             goto error;
@@ -4219,18 +4220,18 @@ int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len) {
         }
     }
 
-    ini = add_state(fa, 0);
+    ini = add_state(cfa, 0);
     if (ini == NULL)
         goto error;
 
-    r = add_new_re_trans(ini, fa->initial, ref(eps));
+    r = add_new_re_trans(ini, cfa->initial, ref(eps));
     if (r < 0)
         goto error;
-    set_initial(fa, ini);
+    set_initial(cfa, ini);
 
-    convert_strings(fa);
+    convert_strings(cfa);
 
-    list_for_each(s, fa->initial->next) {
+    list_for_each(s, cfa->initial->next) {
         if (s == fin)
             continue;
         /* Eliminate S */
@@ -4239,7 +4240,7 @@ int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len) {
             if (t->to == s)
                 loop = t->re;
         }
-        list_for_each(s1, fa->initial) {
+        list_for_each(s1, cfa->initial) {
             if (s == s1)
                 continue;
             for (int t1 = 0; t1 < s1->tused; t1++) {
@@ -4261,7 +4262,7 @@ int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len) {
 
     re_unref(eps);
 
-    for_each_trans(t, fa->initial) {
+    for_each_trans(t, cfa->initial) {
         if (t->to == fin) {
             struct re_str str;
             MEMZERO(&str, 1);
@@ -4272,16 +4273,16 @@ int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len) {
         }
     }
 
-    list_for_each(s, fa->initial) {
+    list_for_each(s, cfa->initial) {
         for_each_trans(t, s) {
             unref(t->re, re);
         }
     }
-    fa_free(fa);
+    fa_free(cfa);
 
     return 0;
  error:
-    fa_free(fa);
+    fa_free(cfa);
     re_unref(eps);
     return -1;
 }

@@ -204,9 +204,9 @@ int fa_ambig_example(const struct fa *fa1, const struct fa *fa2,
  * On success, REGEXP_LEN is set to the length of REGEXP
  *
  * Return 0 on success, and a negative number on failure. The only reason
- * to fail for FA_AS_REGEXP is running out of memory.
+ * for FA_AS_REGEXP to fail is running out of memory.
  */
-int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len);
+int fa_as_regexp(const struct fa *fa, char **regexp, size_t *regexp_len);
 
 /* Given the regular expression REGEXP construct a new regular expression
  * NEWREGEXP that does not match strings containing any of the characters
