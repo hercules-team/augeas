@@ -378,7 +378,8 @@ struct tree {
     struct tree *children;   /* List of children through NEXT */
     char        *value;
     int          dirty;
-    uint8_t      added;      /* only used by ns_add to dedupe nodesets */
+    uint8_t      added;      /* only used by ns_add and tree_rm to dedupe
+                                nodesets */
     struct span *span;
 };
 

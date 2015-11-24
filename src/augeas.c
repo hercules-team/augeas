@@ -1142,6 +1142,7 @@ int tree_rm(struct pathx *p) {
     struct tree *tree, **del;
     int cnt = 0, ndel = 0, i;
 
+    /* set ndel to the number of trees we could possibly delete */
     for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
         if (! TREE_HIDDEN(tree))
             ndel += 1;
@@ -1159,12 +1160,32 @@ int tree_rm(struct pathx *p) {
         if (TREE_HIDDEN(tree))
             continue;
         pathx_symtab_remove_descendants(pathx_get_symtab(p), tree);
-        del[i] = tree;
-        i += 1;
+        /* Collect the tree nodes that actually need to be deleted in
+           del. Mark the root of every subtree we are going to free by
+           setting tree->added. Only add a node to del if none of its
+           ancestors would have been freed by the time we get to freeing
+           that node; this avoids double frees for situations where the
+           path expression matches both /node and /node/child as unlinking
+           /node implicitly unlinks /node/child */
+        int live = 1;
+        for (struct tree *t = tree; live && ! ROOT_P(t); t = t->parent) {
+            if (t->added)
+                live = 0;
+        }
+        if (live) {
+            del[i] = tree;
+            i += 1;
+            tree->added = 1;
+        }
     }
+    /* ndel now means: the number of trees we are actually going to delete */
+    ndel = i;
 
-    for (i = 0; i < ndel; i++)
-        cnt += tree_unlink_raw(del[i]);
+    for (i = 0; i < ndel; i++) {
+        if (del[i] != NULL) {
+            cnt += tree_unlink_raw(del[i]);
+        }
+    }
     free(del);
 
     return cnt;
