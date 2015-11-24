@@ -13,6 +13,7 @@
              i.e. `+:*::` (Matt Dainty) (Issue #258)
     * Httpd: add paths to SLES vhosts
              (Jan Doleschal) (Issue #268)
+             parse backslashes in directive arguments (Issue #307)
     * Json: add comments support, refactor,
             allow escaped quotes and blackslashes
     * Keepalived: fix space/tag alignments and hanging spaces,

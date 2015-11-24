@@ -466,3 +466,14 @@ test Httpd.lns get "<IfModule mod_ssl.c>
     { "#comment" = "one comment" }
     { "#comment" = "another comment" }
   }
+
+(* Issue #307: backslashes in regexes *)
+test Httpd.lns get "<VirtualHost *:80>
+  RewriteRule ^/(.*) http\:\/\/example\.com\/$1 [L,R,NE]
+</VirtualHost>\n" =
+  { "VirtualHost"
+    { "arg" = "*:80" }
+    { "directive" = "RewriteRule"
+      { "arg" = "^/(.*)" }
+      { "arg" = "http\:\/\/example\.com\/$1" }
+      { "arg" = "[L,R,NE]" } } }
