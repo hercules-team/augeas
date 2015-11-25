@@ -79,7 +79,7 @@ int fa_compile(const char *re, size_t size, struct fa **fa);
 struct fa *fa_make_basic(unsigned int basic);
 
 /* Return 1 if FA accepts the basic language BASIC, which must be one of
- * the constantsfrom enum FA_BASIC.
+ * the constants from enum FA_BASIC.
  */
 int fa_is_basic(struct fa *fa, unsigned int basic);
 
@@ -131,12 +131,14 @@ struct fa *fa_minus(struct fa *fa1, struct fa *fa2);
  */
 struct fa *fa_iter(struct fa *fa, int min, int max);
 
-/* Return 1 if the language of FA1 is contained in the language of FA2, 0
- * otherwise.
+/* If successful, returns 1 if the language of FA1 is contained in the language
+ * of FA2, 0 otherwise. Returns a negative number if an error occurred.
  */
 int fa_contains(struct fa *fa1, struct fa *fa2);
 
-/* Return 1 if the language of FA1 equals the language of FA2 */
+/* If successful, returns 1 if the language of FA1 equals the language of FA2,
+ * 0 otherwise. Returns a negative number if an error occurred.
+ */
 int fa_equals(struct fa *fa1, struct fa *fa2);
 
 /* Free all memory used by FA */
@@ -161,7 +163,10 @@ struct fa *fa_overlap(struct fa *fa1, struct fa *fa2);
  *  EXAMPLE_LEN will hold the length of the example.
  *
  * Return 0 on success, and a negative numer on error. On error, *EXAMPLE
- * will be NULL
+ * will be NULL.
+ *
+ * If *EXAMPLE is set, it is the caller's responsibility to free the string
+ * by calling free().
  */
 int fa_example(struct fa *fa, char **example, size_t *example_len);
 
@@ -197,7 +202,7 @@ int fa_ambig_example(struct fa *fa1, struct fa *fa2,
  * On success, REGEXP_LEN is set to the length of REGEXP
  *
  * Return 0 on success, and a negative number on failure. The only reason
- * to fail for FA_AS_REGEXP is running out of memory.
+ * for FA_AS_REGEXP to fail is running out of memory.
  */
 int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len);
 
