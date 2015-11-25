@@ -437,6 +437,10 @@ static struct state *add_state(struct fa *fa, int accept) {
     for (struct trans *t = (s)->trans;                                  \
          (t - (s)->trans) < (s)->tused;                                 \
          t++)
+#define for_each_const_trans(t, s)                                      \
+    for (const struct trans *t = (s)->trans;                            \
+         (t - (s)->trans) < (s)->tused;                                 \
+         t++)
 
 ATTRIBUTE_RETURN_CHECK
 static int add_new_trans(struct state *from, struct state *to,
@@ -697,7 +701,8 @@ static struct state *state_set_pop_data(struct state_set *set, void **d) {
     return s;
 }
 
-static void *state_set_find_data(struct state_set *set, struct state *s) {
+static void *state_set_find_data(const struct state_set *set,
+                                 const struct state *s) {
     int i = state_set_index(set, s);
     if (i >= 0)
         return set->data[i];
@@ -760,8 +765,9 @@ static int state_pair_push(struct state_set **set,
 /* Return the index of the pair (FST, SND) in SET, or -1 if SET contains no
    such pair.
  */
-static int state_pair_find(struct state_set *set, struct state *fst,
-                           struct state *snd) {
+static int state_pair_find(const struct state_set *set,
+                           const struct state *fst,
+                           const struct state *snd) {
     for (int i=0; i < set->used; i++)
         if (set->states[i] == fst && set->data[i] == snd)
             return i;
@@ -1850,7 +1856,8 @@ struct fa *fa_make_basic(unsigned int basic) {
     return NULL;
 }
 
-int fa_is_basic(struct fa *fa, unsigned int basic) {
+int fa_is_basic(const struct fa *fa, unsigned int basic) {
+    assert(fa != NULL);
     if (basic == FA_EMPTY) {
         return ! fa->initial->accept && fa->initial->tused == 0;
     } else if (basic == FA_EPSILON) {
@@ -1861,8 +1868,8 @@ int fa_is_basic(struct fa *fa, unsigned int basic) {
         if (fa->nocase) {
             if (fa->initial->tused != 2)
                 return 0;
-            struct trans *t1 = fa->initial->trans;
-            struct trans *t2 = fa->initial->trans + 1;
+            const struct trans *t1 = fa->initial->trans;
+            const struct trans *t2 = fa->initial->trans + 1;
             if (t1->to != fa->initial || t2->to != fa->initial)
                 return 0;
             if (t2->max != UCHAR_MAX) {
@@ -1872,7 +1879,7 @@ int fa_is_basic(struct fa *fa, unsigned int basic) {
             return (t1->min == UCHAR_MIN && t1->max == 'A' - 1 &&
                     t2->min == 'Z' + 1 && t2->max == UCHAR_MAX);
         } else {
-            struct trans *t = fa->initial->trans;
+            const struct trans *t = fa->initial->trans;
             return fa->initial->tused == 1 &&
                 t->to == fa->initial &&
                 t->min == UCHAR_MIN && t->max == UCHAR_MAX;
@@ -1881,7 +1888,7 @@ int fa_is_basic(struct fa *fa, unsigned int basic) {
     return 0;
 }
 
-static struct fa *fa_clone(struct fa *fa) {
+static struct fa *fa_clone(const struct fa *fa) {
     struct fa *result = NULL;
     struct state_set *set = state_set_init(-1, S_DATA|S_SORTED);
     int r;
@@ -1904,9 +1911,9 @@ static struct fa *fa_clone(struct fa *fa) {
         q->reachable = s->reachable;
     }
     for (int i=0; i < set->used; i++) {
-        struct state *s = set->states[i];
+        const struct state *s = set->states[i];
         struct state *sc = set->data[i];
-        for_each_trans(t, s) {
+        for_each_const_trans(t, s) {
             int to = state_set_index(set, t->to);
             assert(to >= 0);
             struct state *toc = set->data[to];
@@ -1957,18 +1964,18 @@ static int union_in_place(struct fa *fa1, struct fa **fa2) {
     return 0;
 }
 
-struct fa *fa_union(struct fa *fa1, struct fa *fa2) {
-    fa1 = fa_clone(fa1);
-    fa2 = fa_clone(fa2);
-    if (fa1 == NULL || fa2 == NULL)
+struct fa *fa_union(const struct fa *fa1, const struct fa *fa2) {
+    struct fa *cfa1 = fa_clone(fa1);
+    struct fa *cfa2 = fa_clone(fa2);
+    if (cfa1 == NULL || cfa2 == NULL)
         goto error;
 
-    F(union_in_place(fa1, &fa2));
+    F(union_in_place(cfa1, &cfa2));
 
-    return fa1;
+    return cfa1;
  error:
-    fa_free(fa1);
-    fa_free(fa2);
+    fa_free(cfa1);
+    fa_free(cfa2);
     return NULL;
 }
 
@@ -2000,22 +2007,22 @@ static int concat_in_place(struct fa *fa1, struct fa **fa2) {
     return 0;
 }
 
-struct fa *fa_concat(struct fa *fa1, struct fa *fa2) {
-    fa1 = fa_clone(fa1);
-    fa2 = fa_clone(fa2);
+struct fa *fa_concat(const struct fa *fa1, const struct fa *fa2) {
+    struct fa *cfa1 = fa_clone(fa1);
+    struct fa *cfa2 = fa_clone(fa2);
 
-    if (fa1 == NULL || fa2 == NULL)
+    if (cfa1 == NULL || cfa2 == NULL)
         goto error;
 
-    F(concat_in_place(fa1, &fa2));
+    F(concat_in_place(cfa1, &cfa2));
 
-    F(collect(fa1));
+    F(collect(cfa1));
 
-    return fa1;
+    return cfa1;
 
  error:
-    fa_free(fa1);
-    fa_free(fa2);
+    fa_free(cfa1);
+    fa_free(cfa2);
     return NULL;
 }
 
@@ -2055,42 +2062,42 @@ static struct fa *fa_make_char_set(bitset *cset, int negate) {
     return NULL;
 }
 
-static struct fa *fa_star(struct fa *fa) {
+static struct fa *fa_star(const struct fa *fa) {
     struct state *s;
     int r;
 
-    fa = fa_clone(fa);
-    if (fa == NULL)
+    struct fa *cfa = fa_clone(fa);
+    if (cfa == NULL)
         return NULL;
 
-    s = add_state(fa, 1);
+    s = add_state(cfa, 1);
     if (s == NULL)
         goto error;
 
-    r = add_epsilon_trans(s, fa->initial);
+    r = add_epsilon_trans(s, cfa->initial);
     if (r < 0)
         goto error;
 
-    set_initial(fa, s);
-    list_for_each(p, fa->initial->next) {
+    set_initial(cfa, s);
+    list_for_each(p, cfa->initial->next) {
         if (p->accept) {
             r = add_epsilon_trans(p, s);
             if (r < 0)
                 goto error;
         }
     }
-    fa->deterministic = 0;
-    fa->minimal = 0;
+    cfa->deterministic = 0;
+    cfa->minimal = 0;
 
-    return fa;
+    return cfa;
 
  error:
-    fa_free(fa);
+    fa_free(cfa);
     return NULL;
 }
 
 /* Form the automaton (FA){N}; FA is not modified */
-static struct fa *repeat(struct fa *fa, int n) {
+static struct fa *repeat(const struct fa *fa, int n) {
     if (n == 0) {
         return fa_make_epsilon();
     } else if (n == 1) {
@@ -2116,7 +2123,7 @@ static struct fa *repeat(struct fa *fa, int n) {
     }
 }
 
-struct fa *fa_iter(struct fa *fa, int min, int max) {
+struct fa *fa_iter(const struct fa *fa, int min, int max) {
     int r;
 
     if (min < 0)
@@ -2199,17 +2206,20 @@ struct fa *fa_iter(struct fa *fa, int min, int max) {
     }
 }
 
-static void sort_transition_intervals(struct fa *fa) {
+static void sort_transition_intervals(const struct fa *fa) {
     list_for_each(s, fa->initial) {
         qsort(s->trans, s->tused, sizeof(*s->trans), trans_intv_cmp);
     }
 }
 
-struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
+struct fa *fa_intersect(const struct fa *fa1, const struct fa *fa2) {
     int ret;
-    struct fa *fa = NULL;
+    struct fa *fa = NULL, *cfa1 = NULL, *cfa2 = NULL;
     struct state_set *worklist = NULL;
     state_triple_hash *newstates = NULL;
+
+    if (fa1 == NULL || fa2 == NULL)
+        goto error;
 
     if (fa1 == fa2)
         return fa_clone(fa1);
@@ -2218,8 +2228,12 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
         return fa_make_empty();
 
     if (fa1->nocase != fa2->nocase) {
-        F(case_expand(fa1));
-        F(case_expand(fa2));
+        cfa1 = fa_clone(fa1);
+        cfa2 = fa_clone(fa2);
+        if (cfa1 == NULL || cfa2 == NULL)
+            goto error;
+        F(case_expand(cfa1));
+        F(case_expand(cfa2));
     }
 
     fa = fa_make_empty();
@@ -2228,22 +2242,23 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
     if (fa == NULL || worklist == NULL || newstates == NULL)
         goto error;
 
-    sort_transition_intervals(fa1);
-    sort_transition_intervals(fa2);
+    sort_transition_intervals(cfa1 ? cfa1 : fa1);
+    sort_transition_intervals(cfa2 ? cfa2 : fa2);
 
-    F(state_set_push(worklist, fa1->initial));
-    F(state_set_push(worklist, fa2->initial));
+    struct state *fa1_initial = (cfa1 ? cfa1 : fa1)->initial;
+    struct state *fa2_initial = (cfa2 ? cfa2 : fa2)->initial;
+    F(state_set_push(worklist, fa1_initial));
+    F(state_set_push(worklist, fa2_initial));
     F(state_set_push(worklist, fa->initial));
-    F(state_triple_push(newstates,
-                         fa1->initial, fa2->initial, fa->initial));
+    F(state_triple_push(newstates, fa1_initial, fa2_initial, fa->initial));
     while (worklist->used) {
         struct state *s  = state_set_pop(worklist);
-        struct state *p2 = state_set_pop(worklist);
-        struct state *p1 = state_set_pop(worklist);
+        const struct state *p2 = state_set_pop(worklist);
+        const struct state *p1 = state_set_pop(worklist);
         s->accept = p1->accept && p2->accept;
 
-        struct trans *t1 = p1->trans;
-        struct trans *t2 = p2->trans;
+        const struct trans *t1 = p1->trans;
+        const struct trans *t2 = p2->trans;
         for (int n1 = 0, b2 = 0; n1 < p1->tused; n1++) {
             while (b2 < p2->tused && t2[b2].max < t1[n1].min)
                 b2++;
@@ -2273,8 +2288,10 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
             }
         }
     }
-    fa->deterministic = fa1->deterministic && fa2->deterministic;
-    fa->nocase = fa1->nocase && fa2->nocase;
+    fa->deterministic = ((cfa1 ? cfa1 : fa1)->deterministic &&
+                         (cfa2 ? cfa2 : fa2)->deterministic);
+    fa->nocase = ((cfa1 ? cfa1 : fa1)->nocase &&
+                  (cfa2 ? cfa2 : fa2)->nocase);
  done:
     state_set_free(worklist);
     state_triple_free(newstates);
@@ -2284,6 +2301,8 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
             fa = NULL;
         }
     }
+    fa_free(cfa1);
+    fa_free(cfa2);
 
     return fa;
  error:
@@ -2292,7 +2311,7 @@ struct fa *fa_intersect(struct fa *fa1, struct fa *fa2) {
     goto done;
 }
 
-int fa_contains(struct fa *fa1, struct fa *fa2) {
+int fa_contains(const struct fa *fa1, struct fa *fa2) {
     int result = 0;
     struct state_set *worklist = NULL;  /* List of pairs of states */
     struct state_set *visited = NULL;   /* List of pairs of states */
@@ -2310,7 +2329,7 @@ int fa_contains(struct fa *fa1, struct fa *fa2) {
     F(state_pair_push(&worklist, fa1->initial, fa2->initial));
     F(state_pair_push(&visited, fa1->initial, fa2->initial));
     while (worklist->used) {
-        struct state *p1, *p2;
+        const struct state *p1, *p2;
         void *v2;
         p1 = state_set_pop_data(worklist, &v2);
         p2 = v2;
@@ -2318,8 +2337,8 @@ int fa_contains(struct fa *fa1, struct fa *fa2) {
         if (p1->accept && !p2->accept)
             goto done;
 
-        struct trans *t1 = p1->trans;
-        struct trans *t2 = p2->trans;
+        const struct trans *t1 = p1->trans;
+        const struct trans *t2 = p2->trans;
         for(int n1 = 0, b2 = 0; n1 < p1->tused; n1++) {
             while (b2 < p2->tused && t2[b2].max < t1[n1].min)
                 b2++;
@@ -2419,22 +2438,22 @@ static int totalize(struct fa *fa) {
     return -1;
 }
 
-struct fa *fa_complement(struct fa *fa) {
-    fa = fa_clone(fa);
-    E(fa == NULL);
-    F(determinize(fa, NULL));
-    F(totalize(fa));
-    list_for_each(s, fa->initial)
+struct fa *fa_complement(const struct fa *fa) {
+    struct fa *cfa = fa_clone(fa);
+    E(cfa == NULL);
+    F(determinize(cfa, NULL));
+    F(totalize(cfa));
+    list_for_each(s, cfa->initial)
         s->accept = ! s->accept;
 
-    F(collect(fa));
-    return fa;
+    F(collect(cfa));
+    return cfa;
  error:
-    fa_free(fa);
+    fa_free(cfa);
     return NULL;
 }
 
-struct fa *fa_minus(struct fa *fa1, struct fa *fa2) {
+struct fa *fa_minus(const struct fa *fa1, const struct fa *fa2) {
     if (fa1 == NULL || fa2 == NULL)
         return NULL;
 
@@ -2474,35 +2493,35 @@ static int accept_to_accept(struct fa *fa) {
     return -1;
 }
 
-struct fa *fa_overlap(struct fa *fa1, struct fa *fa2) {
+struct fa *fa_overlap(const struct fa *fa1, const struct fa *fa2) {
     struct fa *fa = NULL, *eps = NULL, *result = NULL;
     struct state_set *map = NULL;
 
     if (fa1 == NULL || fa2 == NULL)
         return NULL;
 
-    fa1 = fa_clone(fa1);
-    fa2 = fa_clone(fa2);
-    if (fa1 == NULL || fa2 == NULL)
+    struct fa *cfa1 = fa_clone(fa1);
+    struct fa *cfa2 = fa_clone(fa2);
+    if (cfa1 == NULL || cfa2 == NULL)
         goto error;
 
-    if (determinize(fa1, NULL) < 0)
+    if (determinize(cfa1, NULL) < 0)
         goto error;
-    if (accept_to_accept(fa1) < 0)
+    if (accept_to_accept(cfa1) < 0)
         goto error;
 
-    map = fa_reverse(fa2);
+    map = fa_reverse(cfa2);
     state_set_free(map);
-    if (determinize(fa2, NULL) < 0)
+    if (determinize(cfa2, NULL) < 0)
         goto error;
-    if (accept_to_accept(fa2) < 0)
+    if (accept_to_accept(cfa2) < 0)
         goto error;
-    map = fa_reverse(fa2);
+    map = fa_reverse(cfa2);
     state_set_free(map);
-    if (determinize(fa2, NULL) < 0)
+    if (determinize(cfa2, NULL) < 0)
         goto error;
 
-    fa = fa_intersect(fa1, fa2);
+    fa = fa_intersect(cfa1, cfa2);
     if (fa == NULL)
         goto error;
 
@@ -2515,8 +2534,8 @@ struct fa *fa_overlap(struct fa *fa1, struct fa *fa2) {
         goto error;
 
  error:
-    fa_free(fa1);
-    fa_free(fa2);
+    fa_free(cfa1);
+    fa_free(cfa2);
     fa_free(fa);
     fa_free(eps);
     return result;
@@ -2583,7 +2602,7 @@ static struct re_str *string_extend(struct re_str *dst,
     return dst;
 }
 
-static char pick_char(struct trans *t) {
+static char pick_char(const struct trans *t) {
     for (int c = t->min; c <= t->max; c++)
         if (isalpha(c)) return c;
     for (int c = t->min; c <= t->max; c++)
@@ -2596,7 +2615,7 @@ static char pick_char(struct trans *t) {
 /* Generate an example string for FA. Traverse all transitions and record
  * at each turn the "best" word found for that state.
  */
-int fa_example(struct fa *fa, char **example, size_t *example_len) {
+int fa_example(const struct fa *fa, char **example, size_t *example_len) {
     struct re_str *word = NULL;
     struct state_set *path = NULL, *worklist = NULL;
     struct re_str *str = NULL;
@@ -2622,9 +2641,9 @@ int fa_example(struct fa *fa, char **example, size_t *example_len) {
     F(state_set_push(worklist, fa->initial));
 
     while (worklist->used) {
-        struct state *s = state_set_pop(worklist);
+        const struct state *s = state_set_pop(worklist);
         struct re_str *ps = state_set_find_data(path, s);
-        for_each_trans(t, s) {
+        for_each_const_trans(t, s) {
             char c = pick_char(t);
             int toind = state_set_index(path, t->to);
             if (toind == -1) {
@@ -2639,7 +2658,7 @@ int fa_example(struct fa *fa, char **example, size_t *example_len) {
     }
 
     for (int i=0; i < path->used; i++) {
-        struct state *p = path->states[i];
+        const struct state *p = path->states[i];
         struct re_str *ps = path->data[i];
         if (p->accept &&
             (word == NULL || word->len == 0
@@ -2655,7 +2674,7 @@ int fa_example(struct fa *fa, char **example, size_t *example_len) {
     if (word != NULL) {
         *example_len = word->len;
         *example = word->rx;
-        free(word);
+        FREE(word);
     }
     return 0;
  error:
@@ -2674,7 +2693,7 @@ struct enum_intl {
     size_t    bsize;
 };
 
-static int fa_enumerate_intl(struct state *s, struct enum_intl *ei, int pos) {
+static int fa_enumerate_intl(const struct state *s, struct enum_intl *ei, int pos) {
     int result = -1;
 
     if (ei->bsize <= pos + 1) {
@@ -2683,7 +2702,7 @@ static int fa_enumerate_intl(struct state *s, struct enum_intl *ei, int pos) {
     }
 
     ei->buf[pos] = '\0';
-    for_each_trans(t, s) {
+    for_each_const_trans(t, s) {
         if (t->to->visited)
             return -2;
         t->to->visited = 1;
@@ -2707,7 +2726,7 @@ static int fa_enumerate_intl(struct state *s, struct enum_intl *ei, int pos) {
     return result;
 }
 
-int fa_enumerate(struct fa *fa, int limit, char ***words) {
+int fa_enumerate(const struct fa *fa, int limit, char ***words) {
     struct enum_intl ei;
     int result = -1;
 
@@ -2759,20 +2778,20 @@ int fa_enumerate(struct fa *fa, int limit, char ***words) {
  *
  * The returned automaton is a copy of FA, FA is not modified.
  */
-static struct fa *expand_alphabet(struct fa *fa, int add_marker,
+static struct fa *expand_alphabet(const struct fa *fa, int add_marker,
                                   char X, char Y) {
     int ret;
 
-    fa = fa_clone(fa);
-    if (fa == NULL)
+    struct fa *cfa = fa_clone(fa);
+    if (cfa == NULL)
         return NULL;
 
-    F(mark_reachable(fa));
-    list_for_each(p, fa->initial) {
+    F(mark_reachable(cfa));
+    list_for_each(p, cfa->initial) {
         if (! p->reachable)
             continue;
 
-        struct state *r = add_state(fa, 0);
+        struct state *r = add_state(cfa, 0);
         r->trans = p->trans;
         r->tused = p->tused;
         r->tsize = p->tsize;
@@ -2782,7 +2801,7 @@ static struct fa *expand_alphabet(struct fa *fa, int add_marker,
         if (ret < 0)
             goto error;
         if (add_marker) {
-            struct state *q = add_state(fa, 0);
+            struct state *q = add_state(cfa, 0);
             ret = add_new_trans(p, q, Y, Y);
             if (ret < 0)
                 goto error;
@@ -2791,37 +2810,37 @@ static struct fa *expand_alphabet(struct fa *fa, int add_marker,
                 goto error;
         }
     }
-    return fa;
+    return cfa;
  error:
-    fa_free(fa);
+    fa_free(cfa);
     return NULL;
 }
 
-static bitset *alphabet(struct fa *fa) {
+static bitset *alphabet(const struct fa *fa) {
     bitset *bs = bitset_init(UCHAR_NUM);
 
     if (bs == NULL)
         return NULL;
 
-    list_for_each(s, fa->initial) {
-        for (int i=0; i < s->tused; i++) {
-            for (uint c = s->trans[i].min; c <= s->trans[i].max; c++)
+    list_for_each(s, (const struct state *)fa->initial) {
+        for_each_const_trans(t, s) {
+            for (uint c = t->min; c <= t->max; c++)
                 bitset_set(bs, c);
         }
     }
     return bs;
 }
 
-static bitset *last_chars(struct fa *fa) {
+static bitset *last_chars(const struct fa *fa) {
     bitset *bs = bitset_init(UCHAR_NUM);
 
     if (bs == NULL)
         return NULL;
 
-    list_for_each(s, fa->initial) {
-        for (int i=0; i < s->tused; i++) {
-            if (s->trans[i].to->accept) {
-                for (uint c = s->trans[i].min; c <= s->trans[i].max; c++)
+    list_for_each(s, (const struct state *)fa->initial) {
+        for_each_const_trans(t, s) {
+            if (t->to->accept) {
+                for (uint c = t->min; c <= t->max; c++)
                     bitset_set(bs, c);
             }
         }
@@ -2829,15 +2848,15 @@ static bitset *last_chars(struct fa *fa) {
     return bs;
 }
 
-static bitset *first_chars(struct fa *fa) {
+static bitset *first_chars(const struct fa *fa) {
     bitset *bs = bitset_init(UCHAR_NUM);
-    struct state *s = fa->initial;
+    const struct state *s = fa->initial;
 
     if (bs == NULL)
         return NULL;
 
-    for (int i=0; i < s->tused; i++) {
-        for (uint c = s->trans[i].min; c <= s->trans[i].max; c++)
+    for_each_const_trans(t, s) {
+        for (uint c = t->min; c <= t->max; c++)
             bitset_set(bs, c);
     }
     return bs;
@@ -2848,12 +2867,12 @@ static bitset *first_chars(struct fa *fa) {
  * further to decide ambiguity
  * Return -1 if an allocation fails
  */
-static int is_splittable(struct fa *fa1, struct fa *fa2) {
+static int is_splittable(const struct fa *fa1, const struct fa *fa2) {
     bitset *alpha1 = NULL;
     bitset *alpha2 = NULL;
     bitset *last1 = NULL;
     bitset *first2 = NULL;
-    bool result = -1;
+    int result = -1;
 
     alpha2 = alphabet(fa2);
     last1 = last_chars(fa1);
@@ -2884,12 +2903,13 @@ static int is_splittable(struct fa *fa1, struct fa *fa2) {
 /* This algorithm is due to Anders Moeller, and can be found in class
  * AutomatonOperations in dk.brics.grammar
  */
-int fa_ambig_example(struct fa *fa1, struct fa *fa2,
+int fa_ambig_example(const struct fa *fa1, const struct fa *fa2,
                      char **upv, size_t *upv_len,
                      char **pv, char **v) {
     static const char X = '\001';
     static const char Y = '\002';
     char *result = NULL, *s = NULL;
+    size_t result_len = 0;
     int ret = -1, r;
     struct fa *mp = NULL, *ms = NULL, *sp = NULL, *ss = NULL, *amb = NULL;
     struct fa *a1f = NULL, *a1t = NULL, *a2f = NULL, *a2t = NULL;
@@ -2973,23 +2993,30 @@ int fa_ambig_example(struct fa *fa1, struct fa *fa2,
 
     if (s != NULL) {
         char *t;
-        F(ALLOC_N(result, (strlen(s)-1)/2 + 1));
+        result_len = (s_len-1)/2 - 1;
+        F(ALLOC_N(result, result_len + 1));
         t = result;
         int i = 0;
-        for (i=0; s[2*i] == X; i++)
+        for (i=0; s[2*i] == X; i++) {
+            assert((t - result) < result_len);
             *t++ = s[2*i + 1];
+        }
         if (pv != NULL)
             *pv = t;
         i += 1;
 
-        for ( ;s[2*i] == X; i++)
+        for ( ;s[2*i] == X; i++) {
+            assert((t - result) < result_len);
             *t++ = s[2*i + 1];
+        }
         if (v != NULL)
             *v = t;
         i += 1;
 
-        for (; 2*i+1 < strlen(s); i++)
+        for (; 2*i+1 < s_len; i++) {
+            assert((t - result) < result_len);
             *t++ = s[2*i + 1];
+        }
     }
     ret = 0;
 
@@ -3010,7 +3037,7 @@ int fa_ambig_example(struct fa *fa1, struct fa *fa2,
     FREE(s);
     *upv = result;
     if (result != NULL)
-        *upv_len = strlen(result);
+        *upv_len = result_len;
     return ret;
  error:
     FREE(result);
@@ -3159,7 +3186,7 @@ int fa_nocase(struct fa *fa) {
     return -1;
 }
 
-int fa_is_nocase(struct fa *fa) {
+int fa_is_nocase(const struct fa *fa) {
     return fa->nocase;
 }
 
@@ -4160,28 +4187,29 @@ static int convert_strings(struct fa *fa) {
  *     the transition INI -> FIN
  * (5) Convert that STRUCT RE to a string with RE_AS_STRING
  */
-int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len) {
+int fa_as_regexp(const struct fa *fa, char **regexp, size_t *regexp_len) {
+    struct fa *cfa = NULL;
     int r;
     struct state *fin = NULL, *ini = NULL;
     struct re *eps = NULL;
 
     *regexp = NULL;
     *regexp_len = 0;
-    fa = fa_clone(fa);
-    if (fa == NULL)
+    cfa = fa_clone(fa);
+    if (cfa == NULL)
         goto error;
 
     eps = make_re(EPSILON);
     if (eps == NULL)
         goto error;
 
-    fin = add_state(fa,1);
+    fin = add_state(cfa,1);
     if (fin == NULL)
         goto error;
 
-    fa->trans_re = 1;
+    cfa->trans_re = 1;
 
-    list_for_each(s, fa->initial) {
+    list_for_each(s, cfa->initial) {
         r = convert_trans_to_re(s);
         if (r < 0)
             goto error;
@@ -4193,18 +4221,18 @@ int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len) {
         }
     }
 
-    ini = add_state(fa, 0);
+    ini = add_state(cfa, 0);
     if (ini == NULL)
         goto error;
 
-    r = add_new_re_trans(ini, fa->initial, ref(eps));
+    r = add_new_re_trans(ini, cfa->initial, ref(eps));
     if (r < 0)
         goto error;
-    set_initial(fa, ini);
+    set_initial(cfa, ini);
 
-    convert_strings(fa);
+    convert_strings(cfa);
 
-    list_for_each(s, fa->initial->next) {
+    list_for_each(s, cfa->initial->next) {
         if (s == fin)
             continue;
         /* Eliminate S */
@@ -4213,7 +4241,7 @@ int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len) {
             if (t->to == s)
                 loop = t->re;
         }
-        list_for_each(s1, fa->initial) {
+        list_for_each(s1, cfa->initial) {
             if (s == s1)
                 continue;
             for (int t1 = 0; t1 < s1->tused; t1++) {
@@ -4235,7 +4263,7 @@ int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len) {
 
     re_unref(eps);
 
-    for_each_trans(t, fa->initial) {
+    for_each_trans(t, cfa->initial) {
         if (t->to == fin) {
             struct re_str str;
             MEMZERO(&str, 1);
@@ -4246,16 +4274,16 @@ int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len) {
         }
     }
 
-    list_for_each(s, fa->initial) {
+    list_for_each(s, cfa->initial) {
         for_each_trans(t, s) {
             unref(t->re, re);
         }
     }
-    fa_free(fa);
+    fa_free(cfa);
 
     return 0;
  error:
-    fa_free(fa);
+    fa_free(cfa);
     re_unref(eps);
     return -1;
 }
@@ -4461,9 +4489,9 @@ static void print_char(FILE *out, uchar c) {
     }
 }
 
-void fa_dot(FILE *out, struct fa *fa) {
+void fa_dot(FILE *out, const struct fa *fa) {
     fprintf(out, "digraph {\n  rankdir=LR;");
-    list_for_each(s, fa->initial) {
+    list_for_each(s, (const struct state *)fa->initial) {
         if (s->accept) {
             fprintf(out, "\"%p\" [shape=doublecircle];\n", s);
         } else {
@@ -4475,8 +4503,8 @@ void fa_dot(FILE *out, struct fa *fa) {
 
     struct re_str str;
     MEMZERO(&str, 1);
-    list_for_each(s, fa->initial) {
-        for_each_trans(t, s) {
+    list_for_each(s, (const struct state *)fa->initial) {
+        for_each_const_trans(t, s) {
             fprintf(out, "\"%p\" -> \"%p\" [ label = \"", s, t->to);
             if (fa->trans_re) {
                 re_as_string(t->re, &str);

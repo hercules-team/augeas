@@ -34,8 +34,11 @@
         _p->next = (tail);                                              \
     } while (0)
 
+/* `typeof((typeof(list))((list)->next))' is used for cases where `(list)'
+   is a const pointer.
+*/
 #define list_for_each(iter, list)                                       \
-    for (typeof(list) (iter) = list; (iter) != NULL; (iter) = (iter)->next)
+    for (typeof((typeof(list))((list)->next)) (iter) = (list); (iter) != NULL; (iter) = (iter)->next)
 
 #define list_remove(elt, list)                                          \
     do {                                                                \

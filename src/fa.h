@@ -79,9 +79,9 @@ int fa_compile(const char *re, size_t size, struct fa **fa);
 struct fa *fa_make_basic(unsigned int basic);
 
 /* Return 1 if FA accepts the basic language BASIC, which must be one of
- * the constantsfrom enum FA_BASIC.
+ * the constants from enum FA_BASIC. FA can not be NULL.
  */
-int fa_is_basic(struct fa *fa, unsigned int basic);
+int fa_is_basic(const struct fa *fa, unsigned int basic);
 
 /* Minimize FA using the currently-set fa_minimization_algorithm.
  * As a side effect, the automaton will also be deterministic after being
@@ -92,27 +92,27 @@ int fa_minimize(struct fa *fa);
 /* Return a finite automaton that accepts the concatenation of the
  * languages for FA1 and FA2, i.e. L(FA1).L(FA2)
  */
-struct fa *fa_concat(struct fa *fa1, struct fa *fa2);
+struct fa *fa_concat(const struct fa *fa1, const struct fa *fa2);
 
 /* Return a finite automaton that accepts the union of the languages that
  * FA1 and FA2 accept (the '|' operator in regular expressions).
  */
-struct fa *fa_union(struct fa *fa1, struct fa *fa2);
+struct fa *fa_union(const struct fa *fa1, const struct fa *fa2);
 
 /* Return a finite automaton that accepts the intersection of the languages
  * of FA1 and FA2.
  */
-struct fa *fa_intersect(struct fa *fa1, struct fa *fa2);
+struct fa *fa_intersect(const struct fa *fa1, const struct fa *fa2);
 
 /* Return a finite automaton that accepts the complement of the language of
  * FA, i.e. the set of all words not accepted by FA
  */
-struct fa *fa_complement(struct fa *fa);
+struct fa *fa_complement(const struct fa *fa);
 
 /* Return a finite automaton that accepts the set difference of the
  * languages of FA1 and FA2, i.e. L(FA1)\L(FA2)
  */
-struct fa *fa_minus(struct fa *fa1, struct fa *fa2);
+struct fa *fa_minus(const struct fa *fa1, const struct fa *fa2);
 
 /* Return a finite automaton that accepts a repetition of the language that
  * FA accepts. If MAX == -1, the returned automaton accepts arbitrarily
@@ -129,28 +129,32 @@ struct fa *fa_minus(struct fa *fa1, struct fa *fa2);
  * - FA? = FA_ITER(FA, 0, 1)
  * - FA{n,m} = FA_ITER(FA, n, m) with 0 <= n and m = -1 or n <= m
  */
-struct fa *fa_iter(struct fa *fa, int min, int max);
+struct fa *fa_iter(const struct fa *fa, int min, int max);
 
-/* Return 1 if the language of FA1 is contained in the language of FA2, 0
- * otherwise.
+/* If successful, returns 1 if the language of FA1 is contained in the language
+ * of FA2, 0 otherwise. Returns -1 if an error occurred. Can make FA2 deterministic
+ * as a side effect.
  */
-int fa_contains(struct fa *fa1, struct fa *fa2);
+int fa_contains(const struct fa *fa1, struct fa *fa2);
 
-/* Return 1 if the language of FA1 equals the language of FA2 */
+/* If successful, returns 1 if the language of FA1 equals the language of FA2.
+ * Returns -1 if an error occurred. Can make FA1 and/or FA2 deterministic as a
+ * side effect.
+ */
 int fa_equals(struct fa *fa1, struct fa *fa2);
 
 /* Free all memory used by FA */
 void fa_free(struct fa *fa);
 
-/* Print FA to OUT as a graphviz dot file */
-void fa_dot(FILE *out, struct fa *fa);
+/* Print FA to OUT as a graphviz dot file. FA can not be NULL. */
+void fa_dot(FILE *out, const struct fa *fa);
 
 /* Return a finite automaton that accepts the overlap of the languages of
  * FA1 and FA2. The overlap of two languages is the set of strings that can
  * be split in more than one way into a left part accepted by FA1 and a
  * right part accepted by FA2.
  */
-struct fa *fa_overlap(struct fa *fa1, struct fa *fa2);
+struct fa *fa_overlap(const struct fa *fa1, const struct fa *fa2);
 
 /* Produce an example for the language of FA. The example is not
  * necessarily the shortest possible. The implementation works very hard to
@@ -161,9 +165,12 @@ struct fa *fa_overlap(struct fa *fa1, struct fa *fa2);
  *  EXAMPLE_LEN will hold the length of the example.
  *
  * Return 0 on success, and a negative numer on error. On error, *EXAMPLE
- * will be NULL
+ * will be NULL.
+ *
+ * If *EXAMPLE is set, it is the caller's responsibility to free the string
+ * by calling free().
  */
-int fa_example(struct fa *fa, char **example, size_t *example_len);
+int fa_example(const struct fa *fa, char **example, size_t *example_len);
 
 /* Produce an example of an ambiguous word for the concatenation of the
  * languages of FA1 and FA2. The return value is such a word (which must be
@@ -182,7 +189,7 @@ int fa_example(struct fa *fa, char **example, size_t *example_len);
  * Returns 0 on success, and a negative number on failure. On failure, UPV,
  * PV, and V will be NULL
  */
-int fa_ambig_example(struct fa *fa1, struct fa *fa2,
+int fa_ambig_example(const struct fa *fa1, const struct fa *fa2,
                      char **upv, size_t *upv_len,
                      char **pv, char **v);
 
@@ -197,9 +204,9 @@ int fa_ambig_example(struct fa *fa1, struct fa *fa2,
  * On success, REGEXP_LEN is set to the length of REGEXP
  *
  * Return 0 on success, and a negative number on failure. The only reason
- * to fail for FA_AS_REGEXP is running out of memory.
+ * for FA_AS_REGEXP to fail is running out of memory.
  */
-int fa_as_regexp(struct fa *fa, char **regexp, size_t *regexp_len);
+int fa_as_regexp(const struct fa *fa, char **regexp, size_t *regexp_len);
 
 /* Given the regular expression REGEXP construct a new regular expression
  * NEWREGEXP that does not match strings containing any of the characters
@@ -239,8 +246,10 @@ int fa_expand_char_ranges(const char *regexp, size_t regexp_len,
  */
 int fa_nocase(struct fa *fa);
 
-/* Return 1 if FA matches ignoring case, 0 if matches are case sensitive */
-int fa_is_nocase(struct fa *fa);
+/* Return 1 if FA matches ignoring case, 0 if matches are case sensitive.
+ * FA can not be NULL.
+ */
+int fa_is_nocase(const struct fa *fa);
 
 /* Assume REGEXP is a case-insensitive regular expression, and convert it
  * to one that matches the same strings when used case sensitively. All
@@ -265,7 +274,7 @@ int fa_expand_nocase(const char *regexp, size_t regexp_len,
  * Return the number of generated words on success, -1 if we run out of
  * memory, and -2 if FA has more than LIMIT words.
  */
-int fa_enumerate(struct fa *fa, int limit, char ***words);
+int fa_enumerate(const struct fa *fa, int limit, char ***words);
 
 #endif
 
