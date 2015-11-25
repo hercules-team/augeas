@@ -1,5 +1,7 @@
 1.5.0 - 2015-XX-XX
   - General changes/additions
+    * augtool: new --timing option that prints after each operation how long
+      it took
   - Lens changes/additions
     * AptConf: support hash comments
     * AptSources: support options (Issue #295),
