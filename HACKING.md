@@ -53,3 +53,16 @@ to augtool verbatim
   debugging augtool with commands in `build/augcmds.txt`
 * `./src/try valgrind`: run the commands from `build/augcmds.txt` through
   augtool under valgrind to check for memory leaks
+
+# Platform specific notes
+
+## Mac OSX
+
+OSX comes with a crippled reimplementation of readline, `libedit`; while
+Augeas will build against `libedit`, you can get full readline
+functionality by installing the `readline` package from
+[Homebrew](http://brew.sh/) and setting the following:
+```sh
+> export CPPFLAGS=-I/usr/local/opt/readline/include
+> export LDFLAGS=-L/usr/local/opt/readline/lib
+```
