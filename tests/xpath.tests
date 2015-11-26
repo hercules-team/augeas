@@ -331,3 +331,7 @@ test escape2 /files/etc/sysconfig/network-scripts/ifcfg-weird\ \[\!\]\ \(used\ t
 
 test escape3 /files/etc/sysconfig/network-scripts/*[DEVICE = 'weird']
      /files/etc/sysconfig/network-scripts/ifcfg-weird\ \[\!\]\ \(used\ to\ fail\)
+
+# Test matching in the presence of hidden nodes
+test hidden1 /files/etc/security/limits.conf/*[label() != '#comment'][1]
+     /files/etc/security/limits.conf/domain[1] = @jackuser

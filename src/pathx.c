@@ -2546,7 +2546,11 @@ int pathx_parse(const struct tree *tree,
  *************************************************************************/
 
 static bool step_matches(struct step *step, struct tree *tree) {
-    return (step->name == NULL || streqx(step->name, tree->label));
+    if (step->name == NULL) {
+        return step->axis == ROOT || tree->label != NULL;
+    } else {
+        return streqx(step->name, tree->label);
+    }
 }
 
 static struct tree *tree_prev(struct tree *pos) {
