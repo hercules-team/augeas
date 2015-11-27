@@ -470,10 +470,15 @@ test Httpd.lns get "<IfModule mod_ssl.c>
 (* Issue #307: backslashes in regexes *)
 test Httpd.lns get "<VirtualHost *:80>
   RewriteRule ^/(.*) http\:\/\/example\.com\/$1 [L,R,NE]
+  RewriteRule \.css\.gz$ - [T=text/css,E=no-gzip:1]
 </VirtualHost>\n" =
   { "VirtualHost"
     { "arg" = "*:80" }
     { "directive" = "RewriteRule"
       { "arg" = "^/(.*)" }
       { "arg" = "http\:\/\/example\.com\/$1" }
-      { "arg" = "[L,R,NE]" } } }
+      { "arg" = "[L,R,NE]" } }
+    { "directive" = "RewriteRule"
+      { "arg" = "\.css\.gz$" }
+      { "arg" = "-" }
+      { "arg" = "[T=text/css,E=no-gzip:1]" } } }
