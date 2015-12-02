@@ -35,7 +35,7 @@ let integer = Rx.integer
 let user      = [ label "user" . store word ]
 let user_list = Build.opt_list user comma
 let params    = [ label "password" . store password  . colon ]
-                . [ label "gid"      . store integer? . colon ]
+                . [ label "gid"      . store integer . colon ]
                 . user_list?
 let entry     = Build.key_value_line word colon params
 
