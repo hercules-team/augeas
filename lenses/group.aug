@@ -35,24 +35,25 @@ let integer = Rx.integer
 let user      = [ label "user" . store word ]
 let user_list = Build.opt_list user comma
 let params    = [ label "password" . store password  . colon ]
-                . [ label "gid"      . store integer . colon ]
+                . [ label "gid"      . store integer? . colon ]
                 . user_list?
 let entry     = Build.key_value_line word colon params
 
-let nisdefault =
-  let overrides =
-        colon
-      . [ label "password" . store password? . colon ]
-      . [ label "gid"      . store integer?  . colon ]
-      . user_list? in
-  [ dels "+" . label "@nisdefault" . overrides? . eol ]
+
+
+let nis_params = [ label "password" . store password? . colon ]
+                 . [ label "gid"      . store integer?  . colon ]
+                 . user_list?
+
+let nisentry   = [ dels "+" . user . colon . label "@nis" . nis_params . eol ]
+let nisdefault = [ dels "+" . colon . label "@nisdefault" . nis_params . eol ]
 
 
 (************************************************************************
  *                                LENS
  *************************************************************************)
 
-let lns        = (comment|empty|entry|nisdefault) *
+let lns        = (comment|empty|entry|nisentry|nisdefault) *
 
 let filter     = incl "/etc/group"
 
