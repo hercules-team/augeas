@@ -667,7 +667,7 @@ static int main_loop(int argc, char **argv) {
                 cur_line = NULL;
             }
         } else {
-            code = run_command(line);
+            code = run_command(line, timing);
             if (code == -2) {
                 free(line);
                 return ret;
