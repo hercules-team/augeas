@@ -70,7 +70,6 @@ static int lua_aug_get(lua_State *L) {
       return lua_pusherror(L);
   lua_pushstring(L, value);
 
-  /* return the number of results */
   return 1;
 }
 
@@ -89,7 +88,6 @@ static int lua_aug_label(lua_State *L) {
       return lua_pusherror(L);
   lua_pushstring(L, value);
 
-  /* return the number of results */
   return 1;
 }
 
@@ -108,7 +106,6 @@ static int lua_aug_set(lua_State *L) {
   if (r < 0)
       return lua_pusherror(L);
 
-  /* return the number of results */
   return 0;
 }
 
@@ -128,7 +125,6 @@ static int lua_aug_setm(lua_State *L) {
   if (r < 0)
       return lua_pusherror(L);
 
-  /* return the number of results */
   return 0;
 }
 
@@ -149,7 +145,6 @@ static int lua_aug_insert(lua_State *L) {
   if (r < 0)
       return lua_pusherror(L);
 
-  /* return the number of results */
   return 0;
 }
 
@@ -167,7 +162,6 @@ static int lua_aug_rm(lua_State *L) {
   if (r < 0)
       return lua_pusherror(L);
 
-  /* return the number of results */
   return 0;
 }
 
@@ -186,7 +180,6 @@ static int lua_aug_mv(lua_State *L) {
   if (r < 0)
       return lua_pusherror(L);
 
-  /* return the number of results */
   return 0;
 }
 
@@ -205,7 +198,6 @@ static int lua_aug_cp(lua_State *L) {
   if (r < 0)
       return lua_pusherror(L);
 
-  /* return the number of results */
   return 0;
 }
 
@@ -224,7 +216,6 @@ static int lua_aug_rename(lua_State *L) {
   if (r < 0)
       return lua_pusherror(L);
 
-  /* return the number of results */
   return 0;
 }
 
@@ -241,7 +232,6 @@ static int lua_aug_clear(lua_State *L) {
   if (r < 0)
       return lua_pusherror(L);
 
-  /* return the number of results */
   return 0;
 }
 
@@ -259,7 +249,6 @@ static int lua_aug_clearm(lua_State *L) {
   if (r < 0)
       return lua_pusherror(L);
 
-  /* return the number of results */
   return 0;
 }
 
@@ -279,7 +268,6 @@ static int lua_aug_touch(lua_State *L) {
           return lua_pusherror(L);
   }
 
-  /* return the number of results */
   return 0;
 }
 
@@ -298,7 +286,6 @@ static int lua_aug_matches(lua_State *L) {
       return lua_pusherror(L);
 
   lua_pushinteger(L, r);
-  /* return the number of results */
   return 1;
 }
 
@@ -327,7 +314,6 @@ static int lua_aug_match(lua_State *L) {
   free(match);
   lua_pushinteger(L, r);
 
-  /* return the number of results */
   return 2;
 }
 
@@ -346,7 +332,6 @@ static int lua_aug_defvar(lua_State *L) {
   if (r < 0)
       return lua_pusherror(L);
 
-  /* return the number of results */
   return 0;
 }
 
@@ -366,7 +351,6 @@ static int lua_aug_defnode(lua_State *L) {
   if (r < 0)
       return lua_pusherror(L);
 
-  /* return the number of results */
   return 0;
 }
 
@@ -386,7 +370,6 @@ static int lua_aug_save(lua_State *L) {
           printf("Saved %d file(s)\n", r);
   }
 
-  /* return the number of results */
   return 0;
 }
 
@@ -400,7 +383,6 @@ static int lua_aug_load(lua_State *L) {
   if (r < 0)
       return lua_pusherror(L);
 
-  /* return the number of results */
   return 0;
 }
 
@@ -419,7 +401,6 @@ static int lua_aug_text_store(lua_State *L) {
   if (r < 0)
       return lua_pusherror(L);
 
-  /* return the number of results */
   return 0;
 }
 
@@ -439,7 +420,6 @@ static int lua_aug_text_retrieve(lua_State *L) {
   if (r < 0)
       return lua_pusherror(L);
 
-  /* return the number of results */
   return 0;
 }
 
@@ -459,7 +439,6 @@ static int lua_aug_transform(lua_State *L) {
   if (r < 0)
       return lua_pusherror(L);
 
-  /* return the number of results */
   return 0;
 }
 
