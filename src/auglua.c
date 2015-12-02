@@ -42,8 +42,7 @@ static void lua_checkargs(lua_State *L, const char *name, int arity) {
   int n = lua_gettop(L);
   char msg[1024];
   if (n != arity) {
-      snprintf(msg, sizeof(msg), "Wrong number of arguments for '%s'", name);
-      lua_pushstring(L, msg);
+      lua_pushfstring(L, msg, sizeof(msg), "Wrong number of arguments for '%s'", name);
       lua_error(L);
   }
 }
