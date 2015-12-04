@@ -482,3 +482,8 @@ test Httpd.lns get "<VirtualHost *:80>
       { "arg" = "\.css\.gz$" }
       { "arg" = "-" }
       { "arg" = "[T=text/css,E=no-gzip:1]" } } }
+
+(* https://github.com/letsencrypt/letsencrypt/issues/1294#issuecomment-161805063 *)
+test Httpd.lns get "<IfModule>
+</ifModule>\n" =
+  { "IfModule" }

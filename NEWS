@@ -20,6 +20,7 @@
     * Httpd: add paths to SLES vhosts
              (Jan Doleschal) (Issue #268)
              parse backslashes in directive arguments (Issue #307)
+             parse mismatching case of opening/closing tags
     * Json: add comments support, refactor,
             allow escaped quotes and blackslashes
     * Keepalived: fix space/tag alignments and hanging spaces,
