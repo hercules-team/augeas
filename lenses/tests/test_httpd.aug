@@ -505,3 +505,13 @@ test Httpd.lns get "SSLRequire %{SSL_CLIENT_S_DN_CN} in {\"foo@bar.com\", bar@fo
     { "wordlist"
       { "arg" = "\"foo@bar.com\"" }
       { "arg" = "bar@foo.com" } } }
+
+(* Issue #330: optional end double quote to directive arg, for messages *)
+test Httpd.lns get "SSLCipherSuite \"EECDH+ECDSA+AESGCM EECDH+aRS$\n" =
+  { "directive" = "SSLCipherSuite"
+    { "arg" = "\"EECDH+ECDSA+AESGCM EECDH+aRS$" } }
+
+test Httpd.lns get "ErrorDocument 404 \"The requested file favicon.ico was not found.\n" =
+  { "directive" = "ErrorDocument"
+    { "arg" = "404" }
+    { "arg" = "\"The requested file favicon.ico was not found." } }

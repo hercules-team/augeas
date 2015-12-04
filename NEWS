@@ -23,6 +23,7 @@
              parse mismatching case of opening/closing tags
              parse multiple ending section tags on one line
              parse wordlists in braces in SSLRequire directives
+             parse directive args starting with double quote (Issue #330)
     * Json: add comments support, refactor,
             allow escaped quotes and blackslashes
     * Keepalived: fix space/tag alignments and hanging spaces,
