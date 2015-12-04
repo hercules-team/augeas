@@ -274,7 +274,6 @@ test Httpd.lns get conf2 =
         { "arg" = "all" }
       }
     }
-    {  }
     { "directive" = "ScriptAlias"
       { "arg" = "/cgi-bin/" }
       { "arg" = "/usr/lib/cgi-bin/" }
@@ -297,7 +296,6 @@ test Httpd.lns get conf2 =
         { "arg" = "all" }
       }
     }
-    {  }
     { "directive" = "ErrorLog"
       { "arg" = "/var/log/apache2/error.log" }
     }
@@ -342,7 +340,6 @@ test Httpd.lns get conf2 =
         { "arg" = "::1/128" }
       }
     }
-    {  }
   }
 
 (* Eol comment *)
@@ -398,7 +395,6 @@ test Httpd.lns get versioncheck =
       }
     }
   }
-  {}
   { "IfVersion"
     { "arg" = ">=" }
     { "arg" = "2.4" }
@@ -487,3 +483,15 @@ test Httpd.lns get "<VirtualHost *:80>
 test Httpd.lns get "<IfModule>
 </ifModule>\n" =
   { "IfModule" }
+
+(* https://github.com/letsencrypt/letsencrypt/issues/1693 *)
+test Httpd.lns get "<IfModule mod_ssl.c>
+  <VirtualHost *:443>
+          ServerAdmin admin@example.com
+  </VirtualHost> </IfModule>\n" =
+  { "IfModule"
+    { "arg" = "mod_ssl.c" }
+    { "VirtualHost"
+      { "arg" = "*:443" }
+      { "directive" = "ServerAdmin"
+        { "arg" = "admin@example.com" } } } }

@@ -199,7 +199,6 @@ test Cups.lns get conf =
       { "arg" = "allow,deny" }
     }
   }
-  {  }
   { "#comment" = "Restrict access to the admin pages..." }
   { "Location"
     { "arg" = "/admin" }
@@ -207,7 +206,6 @@ test Cups.lns get conf =
       { "arg" = "allow,deny" }
     }
   }
-  {  }
   { "#comment" = "Restrict access to configuration files..." }
   { "Location"
     { "arg" = "/admin/conf" }
@@ -222,7 +220,6 @@ test Cups.lns get conf =
       { "arg" = "allow,deny" }
     }
   }
-  {  }
   { "#comment" = "Set the default printer/job policies..." }
   { "Policy"
     { "arg" = "default" }
@@ -250,7 +247,6 @@ test Cups.lns get conf =
         { "arg" = "deny,allow" }
       }
     }
-    {  }
     { "Limit"
       { "arg" = "Send-Document" }
       { "arg" = "Send-URI" }
@@ -280,7 +276,6 @@ test Cups.lns get conf =
         { "arg" = "deny,allow" }
       }
     }
-    {  }
     { "#comment" = "All administration operations require an administrator to authenticate..." }
     { "Limit"
       { "arg" = "CUPS-Add-Modify-Printer" }
@@ -300,7 +295,6 @@ test Cups.lns get conf =
         { "arg" = "deny,allow" }
       }
     }
-    {  }
     { "#comment" = "All printer operations require a printer operator to authenticate..." }
     { "Limit"
       { "arg" = "Pause-Printer" }
@@ -331,7 +325,6 @@ test Cups.lns get conf =
         { "arg" = "deny,allow" }
       }
     }
-    {  }
     { "#comment" = "Only the owner or an administrator can cancel or authenticate a job..." }
     { "Limit"
       { "arg" = "Cancel-Job" }
@@ -345,7 +338,6 @@ test Cups.lns get conf =
         { "arg" = "deny,allow" }
       }
     }
-    {  }
     { "Limit"
       { "arg" = "All" }
       { "directive" = "Order"
@@ -353,7 +345,6 @@ test Cups.lns get conf =
       }
     }
   }
-  {  }
   { "#comment" = "Set the authenticated printer/job policies..." }
   { "Policy"
     { "arg" = "authenticated" }
@@ -384,7 +375,6 @@ test Cups.lns get conf =
         { "arg" = "deny,allow" }
       }
     }
-    {  }
     { "Limit"
       { "arg" = "Send-Document" }
       { "arg" = "Send-URI" }
@@ -417,7 +407,6 @@ test Cups.lns get conf =
         { "arg" = "deny,allow" }
       }
     }
-    {  }
     { "#comment" = "All administration operations require an administrator to authenticate..." }
     { "Limit"
       { "arg" = "CUPS-Add-Modify-Printer" }
@@ -436,7 +425,6 @@ test Cups.lns get conf =
         { "arg" = "deny,allow" }
       }
     }
-    {  }
     { "#comment" = "All printer operations require a printer operator to authenticate..." }
     { "Limit"
       { "arg" = "Pause-Printer" }
@@ -467,7 +455,6 @@ test Cups.lns get conf =
         { "arg" = "deny,allow" }
       }
     }
-    {  }
     { "#comment" = "Only the owner or an administrator can cancel or authenticate a job..." }
     { "Limit"
       { "arg" = "Cancel-Job" }
@@ -484,7 +471,6 @@ test Cups.lns get conf =
         { "arg" = "deny,allow" }
       }
     }
-    {  }
     { "Limit"
       { "arg" = "All" }
       { "directive" = "Order"
