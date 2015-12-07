@@ -495,3 +495,13 @@ test Httpd.lns get "<IfModule mod_ssl.c>
       { "arg" = "*:443" }
       { "directive" = "ServerAdmin"
         { "arg" = "admin@example.com" } } } }
+
+(* Double quotes inside braces in directive arguments
+   https://github.com/letsencrypt/letsencrypt/issues/1766 *)
+test Httpd.lns get "SSLRequire %{SSL_CLIENT_S_DN_CN} in {\"foo@bar.com\", bar@foo.com}\n" =
+  { "directive" = "SSLRequire"
+    { "arg" = "%{SSL_CLIENT_S_DN_CN}" }
+    { "arg" = "in" }
+    { "wordlist"
+      { "arg" = "\"foo@bar.com\"" }
+      { "arg" = "bar@foo.com" } } }
