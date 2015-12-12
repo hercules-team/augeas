@@ -34,7 +34,7 @@ module Shellvars =
   let xchgs   = Build.xchgs
   let semicol = del /;?/ ""
 
-  let char  = /[^`;()'"&|\n\\# \t]#*|\\\\(.|\n)/
+  let char  = /[^`;()'"&|\n\\# \t]#*|\\\\./
   let dquot =
        let char = /[^"\\]|\\\\./ | Rx.cl
     in "\"" . char* . "\""                    (* " Emacs, relax *)
@@ -46,7 +46,7 @@ module Shellvars =
   let dollar_arithm = /\$\(\([^\)#\n]*\)\)/
 
   let anyquot = (char|dquot|squot|dollar_assign|dollar_arithm)+ | bquot | dbquot
-  let sto_to_semicol = store (anyquot . (Rx.space . anyquot)*)
+  let sto_to_semicol = store (anyquot . (Rx.cl_or_space . anyquot)*)
 
   (* Array values of the form '(val1 val2 val3)'. We do not handle empty *)
   (* arrays here because of typechecking headaches. Instead, they are    *)
@@ -95,7 +95,7 @@ module Shellvars =
   let builtin =
     Util.indent . label "@builtin"
     . store shell_builtin_cmds
-    . (Util.del_ws_spc
+    . (Sep.cl_or_space
     . [ label "args" . sto_to_semicol ])?
 
   let keyword (kw:string) = Util.indent . Util.del_str kw
@@ -107,7 +107,7 @@ module Shellvars =
     . ( Util.del_ws_spc . store Rx.integer )?
 
   let action (operator:string) (lbl:string) (sto:lens) =
-    [ del (Rx.opt_space . operator . Rx.opt_space) (" " . operator . " ")
+    [ del (Rx.cl_or_opt_space . operator . Rx.cl_or_opt_space) (" " . operator . " ")
     . label ("@".lbl) . sto ]
 
   let action_pipe = action "|" "pipe"
@@ -158,7 +158,7 @@ module Shellvars =
     in let and = action_and entry
     in let or = action_or entry
     in Util.indent . label "@command" . store (word - reserved_key)
-     . [ Sep.space . label "@arg" . sto_to_semicol]?
+     . [ Sep.cl_or_space . label "@arg" . sto_to_semicol]?
      . ( pipe | and | or )?
 
   let entry_eol = entry_eol_nocommand
