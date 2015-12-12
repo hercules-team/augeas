@@ -168,7 +168,7 @@ unset ONBOOT    #   We do not want this var
   (* Allow wrapping builtin arguments to multiple lines *)
   test Shellvars.lns get "ulimit -c \\\nunlimited\nulimit \\\n -x 123\n" =
   { "@builtin" = "ulimit" { "args" = "-c \\\nunlimited" } }
-  { "@builtin" = "ulimit" { "args" = "\\\n -x 123" } }
+  { "@builtin" = "ulimit" { "args" = "-x 123" } }
 
   (* Test semicolons *)
   test lns get "VAR1=\"this;is;a;test\"\nVAR2=this;\n" =
@@ -667,6 +667,18 @@ test Shellvars.lns get "cat /etc/issue | grep -q \"Debian\" && echo moo || echo 
               { "@command" = "echo"
                 { "@arg" = "baa" } } } } } } } }
 
+
+(* Wrapped command sequences *)
+
+test Shellvars.lns get "foo && \\\nbar baz \\\n|| qux \\\n    quux\\\ncorge  grault\n" =
+  { "@command" = "foo"
+    { "@and"
+      { "@command" = "bar"
+        { "@arg" = "baz" }
+	{ "@or" { "@command" = "qux" { "@arg" = "quux\\\ncorge  grault" } } }
+      }
+    }
+  }
 
 (* Local Variables: *)
 (* mode: caml       *)
