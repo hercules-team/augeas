@@ -355,6 +355,11 @@ static void testPathEscaping(CuTest *tc) {
  * used to lead to a SEGV
  */
 static void testSaveNoPermission(CuTest *tc) {
+    if (getuid() == 0) {
+        puts("pending (testSaveNoPermission): can't test permissions under root account");
+        return;
+    }
+
     int r;
     char *path = NULL;
     const char *v;
