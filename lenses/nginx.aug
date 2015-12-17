@@ -31,6 +31,9 @@ module Nginx =
 
 autoload xfm
 
+(* Variable: word *)
+let word = /[A-Za-z0-9_.:-]+/
+
 (* Variable: block_re
      The keywords reserved for block entries *)
 let block_re = "http" | "events" | "server" | "mail" | "stream"
@@ -42,10 +45,19 @@ let block_re_all = block_re | "if" | "location" | "geo" | "map"
 (* View: simple
      A simple entry *)
 let simple =
-     let kw = /[A-Za-z0-9_.:-]+/ - block_re_all
+     let kw = word - block_re_all
   in let mask = [ label "mask" . Util.del_str "/" . store Rx.integer ]
   in let sto = store /[^ \t\n;][^;]*/ . Sep.semicolon
   in [ Util.indent . key kw . mask? . Sep.space . sto . (Util.eol|Util.comment_eol) ]
+
+(* View: server
+     A simple server entry *)
+let server =
+  [ Util.indent . label "@server" . Util.del_str "server"
+  . [ Sep.space . label "@address" . store word ]
+  . [ Sep.space . key word . (Sep.equal . store word)? ]*
+  . Sep.semicolon
+  . (Util.eol|Util.comment_eol) ]
 
 let arg (name:string) (rx:regexp) =
   [ label name . Sep.space . store rx ]
@@ -99,7 +111,7 @@ let block (entry : lens) =
   . Build.block_newlines entry Util.comment
   . Util.eol ]
 
-let rec directive = simple | block directive
+let rec directive = simple | server | block directive
 
 (* View: lns *)
 let lns = ( Util.comment | Util.empty | directive )*

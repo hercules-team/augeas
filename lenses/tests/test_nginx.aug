@@ -206,6 +206,35 @@ test lns get http =
          { "root" = "html" } } }
     { "gzip" = "on" } }
 
+
+(* GH #335 - server single line entries *)
+let http_server_single_line_entries = "http {
+  upstream big_server_com {
+    server 127.0.0.3:8000 weight=5;
+    server 127.0.0.3:8001 weight=5;
+    server 192.168.0.1:8000;
+    server 192.168.0.1:8001;
+    server backend2.example.com:8080 fail_timeout=5s slow_start=30s;
+    server backend3.example.com      resolve;
+  }
+}\n"
+
+test lns get http_server_single_line_entries =
+  { "http"
+    { "upstream"
+      { "#name" = "big_server_com" }
+      { "@server" { "@address" = "127.0.0.3:8000" } { "weight" = "5" } }
+      { "@server" { "@address" = "127.0.0.3:8001" } { "weight" = "5" } }
+      { "@server" { "@address" = "192.168.0.1:8000" } }
+      { "@server" { "@address" = "192.168.0.1:8001" } }
+      { "@server"
+        { "@address" = "backend2.example.com:8080" }
+        { "fail_timeout" = "5s" }
+        { "slow_start" = "30s" } }
+      { "@server"
+        { "@address" = "backend3.example.com" }
+        { "resolve" } } } }
+
 (* Make sure we do not screw up the indentation of the file *)
 test lns put http after set "/http/gzip" "off" =
 "http {
@@ -246,4 +275,3 @@ test lns get "http {
       { "::1" = "2" }
       { "2001:0db8::" = "1"
         { "mask" = "32" } } } }
-
