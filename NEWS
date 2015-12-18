@@ -78,6 +78,8 @@
                  allow && and || after commands (Issue #215);
                  allow wrapping command sequences
                  (Kaarle Ritvanen) (Issue #333);
+                 allow command-specific environment variable
+                 (Kaarle Ritvanen) (Issue #332);
     * Simplelines: parse OpenBSD's hostname.if(5)
                    files (Jasper Lievisse Adriaanse) (Issue #252)
     * Spacevars: support flags (Issue #279)
