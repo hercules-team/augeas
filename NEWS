@@ -24,6 +24,7 @@
              parse multiple ending section tags on one line
              parse wordlists in braces in SSLRequire directives
              parse directive args starting with double quote (Issue #330)
+             parse directive args containing quotes
     * Json: add comments support, refactor,
             allow escaped quotes and blackslashes
     * Keepalived: fix space/tag alignments and hanging spaces,

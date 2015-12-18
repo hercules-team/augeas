@@ -515,3 +515,19 @@ test Httpd.lns get "ErrorDocument 404 \"The requested file favicon.ico was not f
   { "directive" = "ErrorDocument"
     { "arg" = "404" }
     { "arg" = "\"The requested file favicon.ico was not found." } }
+
+(* Quotes inside a unquoted directive argument
+   https://github.com/letsencrypt/letsencrypt/issues/1934 *)
+test Httpd.lns get "<VirtualHost *:80>
+        WSGIDaemonProcess _graphite processes=5 threads=5 display-name='%{GROUP}' inactivity-timeout=120 user=_graphite group=_graphite
+</VirtualHost>\n" =
+  { "VirtualHost"
+    { "arg" = "*:80" }
+    { "directive" = "WSGIDaemonProcess"
+      { "arg" = "_graphite" }
+      { "arg" = "processes=5" }
+      { "arg" = "threads=5" }
+      { "arg" = "display-name='%{GROUP}'" }
+      { "arg" = "inactivity-timeout=120" }
+      { "arg" = "user=_graphite" }
+      { "arg" = "group=_graphite" } } }
