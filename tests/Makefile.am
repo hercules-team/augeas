@@ -219,6 +219,7 @@ lens_tests =			\
   lens-grub.sh			\
   lens-schroot.sh			\
   lens-xendconfsxp.sh	\
+  lens-yaml.sh	\
   lens-yum.sh
 
 ME = tests/Makefile.am
