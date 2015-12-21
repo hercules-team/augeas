@@ -95,19 +95,10 @@ let arg_wordlist =
 
 let argv (l:lens) = l . (sep_spc . l)*
 
-(* arg_dir_msg may be the last or only argument *)
-let dir_args = (argv (arg_dir|arg_wordlist) . (sep_spc . arg_dir_msg)?) | arg_dir_msg
-
 let directive =
-  [ indent . label "directive" . store word .  (sep_spc . dir_args)? . eol ]
-
-let perl_directive =
-     let perl_word = word . ("::" . word)* . "->" . word
-  in [ indent . label "directive" . store perl_word
-     . Sep.opt_space . Util.del_str "(" . Sep.opt_space
-     . dir_args
-     . Sep.opt_space . Util.del_str ")" . Sep.opt_space . Util.del_str ";"
-     . eol ]
+    (* arg_dir_msg may be the last or only argument *)
+     let dir_args = (argv (arg_dir|arg_wordlist) . (sep_spc . arg_dir_msg)?) | arg_dir_msg
+  in [ indent . label "directive" . store word .  (sep_spc . dir_args)? . eol ]
 
 let section (body:lens) =
     (* opt_eol includes empty lines *)
