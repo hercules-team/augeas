@@ -537,6 +537,6 @@ test Httpd.lns get "<Perl>
     Apache::AuthDBI->setCacheTime(600);
 </Perl>\n" =
   { "Perl"
-    { "perl_directive" = "Apache::AuthDBI->setCacheTime"
+    { "directive" = "Apache::AuthDBI->setCacheTime"
       { "arg" = "600" } } }
 
