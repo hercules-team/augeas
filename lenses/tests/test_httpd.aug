@@ -531,3 +531,10 @@ test Httpd.lns get "<VirtualHost *:80>
       { "arg" = "inactivity-timeout=120" }
       { "arg" = "user=_graphite" }
       { "arg" = "group=_graphite" } } }
+
+(* Issue #327: perl blocks *)
+test Httpd.lns get "<Perl>
+    Apache::AuthDBI->setCacheTime(600);
+</Perl>\n" =
+  { "Perl" = "\n    Apache::AuthDBI->setCacheTime(600);\n" }
+
