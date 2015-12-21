@@ -536,7 +536,5 @@ test Httpd.lns get "<VirtualHost *:80>
 test Httpd.lns get "<Perl>
     Apache::AuthDBI->setCacheTime(600);
 </Perl>\n" =
-  { "Perl"
-    { "directive" = "Apache::AuthDBI->setCacheTime"
-      { "arg" = "600" } } }
+  { "Perl" = "\n    Apache::AuthDBI->setCacheTime(600);\n" }
 

@@ -109,19 +109,20 @@ let perl_directive =
      . Sep.opt_space . Util.del_str ")" . Sep.opt_space . Util.del_str ";"
      . eol ]
 
-let generic_section (kw:regexp) (default:string) (body:lens) =
+let section (body:lens) =
     (* opt_eol includes empty lines *)
     let opt_eol = del /([ \t]*#?\r?\n)*/ "\n" in
     let inner = (sep_spc . argv arg_sec)? . sep_osp .
              dels ">" . opt_eol . ((body|comment) . (body|empty|comment)*)? .
              indent . dels "</" in
-    let kword = key kw in
-    let dword = del kw default in
+    let kword = key (word - /perl/i) in
+    let dword = del (word - /perl/i) "a" in
         [ indent . dels "<" . square kword inner dword . del />[ \t\n\r]*/ ">\n" ]
 
-let section (body:lens) = generic_section (word - /perl/i) "a" body
+let perl_section = [ indent . label "Perl" . del /<perl>/i "<Perl>"
+                   . store /[^<]*/
+                   . del /<\/perl>/i "</Perl>" . eol ]
 
-let perl_section = generic_section /perl/i "Perl" perl_directive
 
 let rec content = section (content|directive)
                 | perl_section
