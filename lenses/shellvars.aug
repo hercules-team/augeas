@@ -107,8 +107,9 @@ module Shellvars =
     . ( Util.del_ws_spc . store Rx.integer )?
 
   let action (operator:string) (lbl:string) (sto:lens) =
-    [ del (Rx.cl_or_opt_space . operator . Rx.cl_or_opt_space) (" " . operator . " ")
-    . label ("@".lbl) . sto ]
+       let sp = Rx.cl_or_opt_space | /[ \t\n]+/
+    in [ del (sp . operator . sp) (" " . operator . " ")
+       . label ("@".lbl) . sto ]
 
   let action_pipe = action "|" "pipe"
   let action_and = action "&&" "and"

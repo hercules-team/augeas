@@ -701,6 +701,14 @@ test Shellvars.lns get "SetDir() # hello
     { "#comment" = "hello" }
     { "@command" = "echo" }
   }
+
+(* Pipe and newline without cl (Issue #339) *)
+test Shellvars.lns get "echo |
+tr\n" =
+  { "@command" = "echo"
+    { "@pipe"
+      { "@command" = "tr" } } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
