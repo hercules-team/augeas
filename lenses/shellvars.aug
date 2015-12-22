@@ -220,7 +220,7 @@ module Shellvars =
     [ Util.indent . label "@function"
       . del /(function[ \t]+)?/ ""
       . store Rx.word . del /[ \t]*\(\)/ "()"
-      . eol . Util.del_str "{" . eol
+      . (comment_eol|eol) . Util.del_str "{" . eol
       . entry+
       . Util.indent . Util.del_str "}" . eol ]
 

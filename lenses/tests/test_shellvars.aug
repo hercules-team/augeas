@@ -692,6 +692,15 @@ test Shellvars.lns get "foo && \\\nbar baz \\\n|| qux \\\n    quux\\\ncorge  gra
     }
   }
 
+(* Comment after function definition (Issue #339) *)
+test Shellvars.lns get "SetDir() # hello
+{
+ echo
+}\n" =
+  { "@function" = "SetDir"
+    { "#comment" = "hello" }
+    { "@command" = "echo" }
+  }
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
