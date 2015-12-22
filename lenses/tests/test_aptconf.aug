@@ -176,3 +176,6 @@ Unattended-Upgrade::Package-Blacklist {
   (* Accept hash comments *)
   test AptConf.lns get "# a comment\n" =
      { "#comment" = "a comment" }
+
+  (* Accept empty hash comments *)
+  test AptConf.lns get "# \n" = { }

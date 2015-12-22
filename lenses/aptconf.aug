@@ -33,7 +33,7 @@ let eol = Util.eol
 
 (* View: empty
    A C-style empty line *)
-let empty = Util.empty_c_style
+let empty = Util.empty_any
 
 (* View: indent
    An indentation *)
