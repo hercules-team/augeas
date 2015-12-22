@@ -26,6 +26,7 @@
              parse directive args starting with double quote (Issue #330)
              parse directive args containing quotes
              support perl directives (Issue #327)
+    * Interfaces: add support for source-directory (Issue #306)
     * Json: add comments support, refactor,
             allow escaped quotes and blackslashes
     * Keepalived: fix space/tag alignments and hanging spaces,
