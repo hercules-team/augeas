@@ -43,6 +43,7 @@
     * Multipath: add various missing keywoards (Olivier Mangold) (Issue #289)
     * Nginx: add non-recursive ambiguities tests,
              allow masks in IP keys and IPv6 (Issue #260)
+             add @server simple nodes (Issue #335)
     * Ntp: add support for basic interface syntax
     * OpenShift_Quickstarts: Use Json.lns
     * OpenVPN: add all options available in OpenVPN 2.3o
