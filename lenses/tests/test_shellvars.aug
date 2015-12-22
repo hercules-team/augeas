@@ -702,6 +702,15 @@ test Shellvars.lns get "SetDir() # hello
     { "@command" = "echo" }
   }
 
+(* Function with new lines *)
+test Shellvars.lns get "MyFunc()
+{
+ echo
+}\n" =
+  { "@function" = "MyFunc"
+    { "@command" = "echo" }
+  }
+
 (* Pipe and newline without cl (Issue #339) *)
 test Shellvars.lns get "echo |
 tr\n" =

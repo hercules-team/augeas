@@ -218,10 +218,11 @@ module Shellvars =
         . keyword "esac" . comment_or_eol ]
 
   let function (entry:lens) =
-    [ Util.indent . label "@function"
+       let func_eol = del /[ \t\n]*/ "\n"
+    in [ Util.indent . label "@function"
       . del /(function[ \t]+)?/ ""
       . store Rx.word . del /[ \t]*\(\)/ "()"
-      . (comment_eol|eol) . Util.del_str "{" . eol
+      . (comment_eol|func_eol) . Util.del_str "{" . func_eol
       . entry+
       . Util.indent . Util.del_str "}" . eol ]
 
