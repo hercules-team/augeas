@@ -97,6 +97,7 @@
     * Vsftpd: add isolate and isolate_network options
               (Florian Chazal) (Issue #334)
     * Xml: allow empty document (Issue #255)
+    * YAML: new lens (subset) (Dimitar Dimitrov) (Issue #338)
 
 1.4.0 - 2015-05-22
   - General changes/additions
