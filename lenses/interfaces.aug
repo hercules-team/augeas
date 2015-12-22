@@ -38,7 +38,7 @@ let stanza_param (l:string) = [ sep_spc . label l . sto_to_spc ]
 
 (* Define reseverved words and multi-value options*)
 let stanza_word =
-   /(source|iface|auto|allow-[a-z-]+|mapping|bond-slaves|bridge-ports)/
+   /(source(-directory)?|iface|auto|allow-[a-z-]+|mapping|bond-slaves|bridge-ports)/
 
 (* Define stanza option indentation *)
 let stanza_indent = del /[ \t]*/ "   "
@@ -100,6 +100,12 @@ let iface   = [ Util.indent
 let source = [ key "source" . sep_spc . sto_to_eol ]
 
 (************************************************************************
+ *                              SOURCE-DIRECTORY
+ *************************************************************************)
+
+let source_directory = [ key "source-directory" . sep_spc . sto_to_eol ]
+
+(************************************************************************
  *                              STANZAS
  *************************************************************************)
 
@@ -109,7 +115,7 @@ let source = [ key "source" . sep_spc . sto_to_eol ]
    come after an auto or hotplug stanza, otherwise they are considered part
    of a iface or mapping block *)
 
-let stanza_single = (auto|allow|source) . (comment|empty)*
+let stanza_single = (auto|allow|source|source_directory) . (comment|empty)*
 let stanza_multi  = iface|mapping
 
 (************************************************************************

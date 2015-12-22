@@ -134,3 +134,8 @@ test Interfaces.lns put "" after
 test Interfaces.lns put "" after
     set "/source[0]" "/etc/network/conf.d/*.conf"
 = "source /etc/network/conf.d/*.conf\n"
+
+(* Test: Interfaces.lns
+     source-directory (Issue #306) *)
+test Interfaces.lns get "source-directory interfaces.d\n" =
+  { "source-directory" = "interfaces.d" }
