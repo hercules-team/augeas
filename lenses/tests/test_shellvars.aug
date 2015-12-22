@@ -718,6 +718,20 @@ tr\n" =
     { "@pipe"
       { "@command" = "tr" } } }
 
+
+(* Subshell (Issue #339) *)
+test Shellvars.lns get "{ echo
+}\n" =
+  { "@subshell"
+    { "@command" = "echo" }
+  } 
+
+(* One-liner function *)
+test Shellvars.lns get "MyFunc() { echo; }\n" =
+  { "@function" = "MyFunc"
+    { "@command" = "echo" }
+  }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)

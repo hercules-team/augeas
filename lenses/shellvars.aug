@@ -20,6 +20,7 @@ module Shellvars =
   let empty_part_re = Util.empty_generic_re . /\n+/
   let eol = del (/[ \t]+|[ \t]*[;\n]/ . empty_part_re*) "\n"
   let semicol_eol = del (/[ \t]*[;\n]/ . empty_part_re*) "\n"
+  let brace_eol = del /[ \t\n]+/ "\n"
 
   let key_re = /[A-Za-z0-9_]+(\[[0-9A-Za-z_,]+\])?/ - ("unset" | "export")
   let matching_re = "${!" . key_re . /[\*@]\}/
@@ -217,14 +218,19 @@ module Shellvars =
         . empty* . comment*
         . keyword "esac" . comment_or_eol ]
 
+  let subshell (entry:lens) =
+    [ Util.indent . label "@subshell"
+    . Util.del_str "{" . brace_eol
+    . entry+
+    . Util.indent . Util.del_str "}" . eol ]
+
   let function (entry:lens) =
-       let func_eol = del /[ \t\n]*/ "\n"
-    in [ Util.indent . label "@function"
-      . del /(function[ \t]+)?/ ""
-      . store Rx.word . del /[ \t]*\(\)/ "()"
-      . (comment_eol|func_eol) . Util.del_str "{" . func_eol
-      . entry+
-      . Util.indent . Util.del_str "}" . eol ]
+    [ Util.indent . label "@function"
+    . del /(function[ \t]+)?/ ""
+    . store Rx.word . del /[ \t]*\(\)/ "()"
+    . (comment_eol|brace_eol) . Util.del_str "{" . brace_eol
+    . entry+
+    . Util.indent . Util.del_str "}" . eol ]
 
   let rec rec_entry =
     let entry = comment | entry_eol | rec_entry in
@@ -235,6 +241,7 @@ module Shellvars =
       | loop_until entry
       | case entry entry_noeol
       | function entry
+      | subshell entry
 
   let lns_norec = del_empty* . (comment | entry_eol) *
 
