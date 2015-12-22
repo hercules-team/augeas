@@ -95,6 +95,7 @@
     * Tmpfiles: new lens to parse systemd's tempfiles.d configuration
                 files (Julien Pivotto) (Issue #269)
     * Util: add comment_c_style_or_hash lens
+            add empty_any lens
     * Vsftpd: add isolate and isolate_network options
               (Florian Chazal) (Issue #334)
     * Xml: allow empty document (Issue #255)
