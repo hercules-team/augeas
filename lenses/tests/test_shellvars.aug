@@ -732,6 +732,19 @@ test Shellvars.lns get "MyFunc() { echo; }\n" =
     { "@command" = "echo" }
   }
 
+
+(*********************************************************
+ * Group: Unsupported syntax                             *
+ *                                                       *
+ * The following tests are known to be failing currently *
+ *********************************************************)
+
+(* Any piping (Issue #343) *)
+test Shellvars.lns get "FOO=bar && BAR=foo
+echo foo || { echo bar; }
+echo FOO | myfunc() { echo bar; }\n" = *
+
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
