@@ -57,3 +57,8 @@ host3:
   { "#comment" = "repo7: branch2" }
   { "repo8" = "branch3" }
 }
+
+(* Ruby YAML header *)
+test YAML.lns get "--- !ruby/object:Puppet::Node::Factspress RETURN)\n" =
+  { "@yaml" = "!ruby/object:Puppet::Node::Factspress RETURN)" }
+

@@ -60,8 +60,11 @@ let entry = [ key Rx.word . colon . (space . anchor)? . eol
             . ((inherit . (repo+)?) | repo+)
             ]
 
+let header = [ label "@yaml" . Util.del_str "---"
+             . (Sep.space . store Rx.space_in)? . eol ]
+
 (*
 View: lns
   The yaml lens
 *)
-let lns = (entry | comment | empty)+
+let lns = ((empty|comment)* . header)? . (entry | comment | empty)*
