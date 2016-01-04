@@ -62,3 +62,14 @@ host3:
 test YAML.lns get "--- !ruby/object:Puppet::Node::Factspress RETURN)\n" =
   { "@yaml" = "!ruby/object:Puppet::Node::Factspress RETURN)" }
 
+
+(* Continued lines *)
+test YAML.lns get "abc:
+  def: |-
+  ghi
+\n" =
+  { "abc"
+    { "def"
+      { "@mval"
+        { "@line" = "ghi" } } } }
+

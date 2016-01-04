@@ -26,7 +26,10 @@ let comment = Util.comment_noindent
 View: indent
   the imposed indent is 2 spaces
 *)
-let indent = Util.del_str "  "
+let indent = del /[ \t]+/ "  "
+
+let mval = [ label "@mval" . Util.del_str "|-" . eol
+           . [ label "@line" . indent . store Rx.space_in . eol ]+ ]
 
 (*
 View: inherit
@@ -39,7 +42,7 @@ let inherit = indent . _inherit . (indent . comment)*
 View: repo
 > { "repo" = "branch" }
 *)
-let _repo = [ key Rx.word . colon . space . val . eol ]
+let _repo = [ key Rx.word . colon . space . (val | mval) . eol ]
 let repo = indent . _repo . (indent . comment)*
 
 (*
