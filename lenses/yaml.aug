@@ -60,6 +60,7 @@ let entry = [ key Rx.word . colon . (space . anchor)? . eol
             . ((inherit . (repo+)?) | repo+)
             ]
 
+(* View: header *)
 let header = [ label "@yaml" . Util.del_str "---"
              . (Sep.space . store Rx.space_in)? . eol ]
 
