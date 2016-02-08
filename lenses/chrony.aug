@@ -92,11 +92,22 @@ module Chrony =
          Server/Peer/Pool options without values
     *)
     let cmd_flags = "auto_offline"|"iburst"|"noselect"|"offline"|"prefer"
+                    |"require"|"trust"
 
     (* Variable: ntp_source
          Server/Peer/Pool key names
     *)
     let ntp_source = "server"|"peer"|"pool"
+
+    (* Variable: allowdeny_types
+         Key names for access configuration
+    *)
+    let allowdeny_types = "allow"|"deny"|"cmdallow"|"cmddeny"
+
+    (* Variable: ratelimit_options
+         Rate limiting options with values
+    *)
+    let ratelimit_options = "interval"|"burst"|"leak"
 
     (* Variable: refclock_options
          refclock options with values
@@ -108,7 +119,7 @@ module Chrony =
     (* Variable: refclock_flags
          refclock options without values
     *)
-    let refclock_flags = "noselect"|"prefer"
+    let refclock_flags = "noselect"|"prefer"|"require"|"trust"
 
     (* Variable: flags
          Options without values
@@ -129,13 +140,14 @@ module Chrony =
     (* Variable: simple_keys
          Options with single values
     *)
-    let simple_keys = "acquisitionport" | "allow" | "bindacqaddress"
+    let simple_keys = "acquisitionport" | "bindacqaddress"
                     | "bindaddress" | "bindcmdaddress" | "clientloglimit"
-                    | "cmdallow" | "cmddeny" | "combinelimit" | "commandkey"
-                    | "cmdport" | "corrtimeratio" | "deny" | "driftfile"
+                    | "combinelimit" | "commandkey"
+                    | "cmdport" | "corrtimeratio" | "driftfile"
                     | "dumpdir" | "hwclockfile" | "include" | "keyfile"
                     | "leapsecmode" | "leapsectz" | "linux_freq_scale"
                     | "linux_hz" | "logbanner" | "logchange" | "logdir"
+                    | "maxdistance"
                     | "maxclockerror" | "maxsamples" | "maxslewrate"
                     | "maxupdateskew" | "minsamples" | "minsources" | "pidfile"
                     | "port" | "reselectdist" | "rtcautotrim" | "rtcdevice"
@@ -170,6 +182,7 @@ module Chrony =
     
       Each of these gets their own parsing block
       - server|peer|pool <address> <options>
+      - allow|deny|cmdallow|cmddeny [all] [<address[/subnet]>]
       - log <options>
       - broadcast <interval> <address> <optional port>
       - fallbackdrift <min> <max>
@@ -178,6 +191,7 @@ module Chrony =
       - mailonchange <emailaddress> <threshold>
       - makestep <threshold> <limit>
       - maxchange <threshold> <delay> <limit>
+      - ratelimit|cmdratelimit <options>
       - refclock <driver> <parameter> <options>
       - smoothtime <maxfreq> <maxwander> <options>
       - tempcomp <sensorfile> <interval> (<t0> <k0> <k1> <k2> | <pointfile> )
@@ -190,6 +204,14 @@ module Chrony =
                          . space . store address_re
                          . ( host_flags | host_options )*
                          . eol ]
+
+    (* View: allowdeny
+        allow/deny/cmdallow/cmddeny has a specific syntax
+    *)
+    let allowdeny = [ Util.indent . key allowdeny_types
+                        . [ space . key "all" ]?
+                        . ( space . store ( no_space - "all" ) )?
+                        . eol ]
 
     (* View: log_list
         log has a specific options list
@@ -259,6 +281,13 @@ module Chrony =
                       . [ label "limit" . store integer ]
                       . eol ]
 
+    (* View: ratelimit
+         ratelimit/cmdratelimit has specific syntax
+    *)
+    let ratelimit = [ Util.indent . key /(cmd)?ratelimit/
+                      . [ space . key ratelimit_options
+                              . space . store no_space ]*
+                      . eol ]
     (* View: refclock
          refclock has specific syntax
     *)
@@ -305,9 +334,9 @@ module Chrony =
 (* View: settings
  *   All supported chrony settings
  *)
-let settings = host_list | log_list | bcast | fdrift | istepslew
+let settings = host_list | allowdeny | log_list | bcast | fdrift | istepslew
              | local | email | makestep | maxchange | refclock | smoothtime
-             | tempcomp | kv | all_flags
+             | ratelimit | tempcomp | kv | all_flags
 
 (*
  * View: lns

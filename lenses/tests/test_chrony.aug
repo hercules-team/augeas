@@ -20,10 +20,14 @@ server ntp3.example.com presend 2
 server ntp4.example.com offline polltarget 4
 server ntp5.example.com maxdelay 2 offline
 server ntp6.example.com maxdelay 2 iburst presend 2
-server ntp7.example.com iburst presend 2 offline
+server ntp7.example.com iburst presend 2 offline prefer trust require
 server ntp8.example.com minsamples 8 maxsamples 16 version 3
 peer ntpc1.example.com
 pool pool1.example.com iburst maxsources 3
+allow
+deny all
+cmdallow 192.168.1.0/24
+cmddeny all 192.168.2.0/24
 stratumweight 0
 	driftfile /var/lib/chrony/drift
 	rtcsync
@@ -45,8 +49,11 @@ broadcast 10 192.168.100.255 123
 fallbackdrift 16 19
 mailonchange root@localhost 0.5
 maxchange 1000 1 2
+maxdistance 1.0
 initstepslew 30 foo.bar.com
 initstepslew 30 foo.bar.com baz.quz.com
+ratelimit interval 4 burst 16 leak 2
+cmdratelimit
 refclock SHM 0 refid SHM0 delay 0.1 offset 0.2 noselect
 refclock PPS /dev/pps0 dpoll 2 poll 3 lock SHM0 rate 5 minsamples 8
 smoothtime 400 0.001 leaponly
@@ -88,6 +95,9 @@ tempcomp /sys/class/hwmon/hwmon0/temp2_input 30 /etc/chrony.tempcomp
     { "iburst" }
     { "presend" = "2" }
     { "offline" }
+    { "prefer" }
+    { "trust" }
+    { "require" }
   }
   { "server" = "ntp8.example.com"
     { "minsamples" = "8" }
@@ -98,6 +108,14 @@ tempcomp /sys/class/hwmon/hwmon0/temp2_input 30 /etc/chrony.tempcomp
   { "pool" = "pool1.example.com"
     { "iburst" }
     { "maxsources" = "3" }
+  }
+  { "allow" }
+  { "deny"
+    { "all" }
+  }
+  { "cmdallow" = "192.168.1.0/24" }
+  { "cmddeny" = "192.168.2.0/24"
+    { "all" }
   }
   { "stratumweight" = "0" }
   { "driftfile" = "/var/lib/chrony/drift" }
@@ -145,6 +163,7 @@ tempcomp /sys/class/hwmon/hwmon0/temp2_input 30 /etc/chrony.tempcomp
     { "delay" = "1" }
     { "limit" = "2" }
   }
+  { "maxdistance" = "1.0" }
   { "initstepslew"
     { "threshold" = "30" }
     { "address" = "foo.bar.com" }
@@ -154,6 +173,12 @@ tempcomp /sys/class/hwmon/hwmon0/temp2_input 30 /etc/chrony.tempcomp
     { "address" = "foo.bar.com" }
     { "address" = "baz.quz.com" }
   }
+  { "ratelimit"
+    { "interval" = "4" }
+    { "burst" = "16" }
+    { "leak" = "2" }
+  }
+  { "cmdratelimit" }
   { "refclock"
     { "driver" = "SHM" }
     { "parameter" = "0" }
