@@ -12,5 +12,6 @@ t=$LENS_DIR/tests/test_$me.aug
 if [ -n "$VALGRIND" ] ; then
   exec $VALGRIND $AUGPARSE --nostdinc -I "$LENS_DIR" "$t"
 else
+  export MALLOC_CHECK_=3
   exec augparse --nostdinc -I "$LENS_DIR" "$t"
 fi

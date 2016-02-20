@@ -32,7 +32,7 @@ run_tests_plain ()
         fi
         printf "$action %-30s ... " $(basename $g .aug)
         set +e
-        errs=$(augparse --nostdinc -I ${MODULES} $g 2>&1 > /dev/null)
+        errs=$(MALLOC_CHECK_=3 augparse --nostdinc -I ${MODULES} $g 2>&1 > /dev/null)
         ret=$?
         set -e
         if [ $ret -eq $ret_fail ]; then
