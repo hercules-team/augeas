@@ -1246,13 +1246,20 @@ static int format_union_atype(struct lens *l, char **buf, uint indent) {
     if (ALLOC_N(c, l->nchildren) < 0)
         goto done;
 
+    /* Estimate the length of the string we will build. The calculation
+       overestimates that length so that the logic is a little simpler than
+       in the loop where we actually build the string */
     for (int i=0; i < l->nchildren; i++) {
         r = format_atype(l->children[i], c+i, indent + 2);
         if (r < 0)
             goto done;
-        len += strlen(c[i]) + 3;
+        /* We will add c[i] and some fixed characters */
+        len += strlen(c[i]) + strlen("\n| ()");
+        if (strlen(c[i]) < indent+2) {
+            /* We will add indent+2 whitespace */
+            len += indent+2;
+        }
     }
-    len += l->nchildren - 1;
 
     if (ALLOC_N(s, len+1) < 0)
         goto done;
@@ -1263,9 +1270,12 @@ static int format_union_atype(struct lens *l, char **buf, uint indent) {
         if (i > 0) {
             *p++ = '\n';
             if (strlen(t) >= indent+2) {
+                /* c[i] is not just whitespace */
                 p = stpncpy(p, t, indent+2);
                 t += indent+2;
             } else {
+                /* c[i] is just whitespace, make sure we indent the
+                   '|' appropriately */
                 memset(p, ' ', indent+2);
                 p += indent+2;
             }
