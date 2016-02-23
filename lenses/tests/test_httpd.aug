@@ -538,3 +538,16 @@ test Httpd.lns get "<Perl>
 </Perl>\n" =
   { "Perl" = "\n    Apache::AuthDBI->setCacheTime(600);\n" }
 
+(* Line continuations inside VirtualHost blocks *)
+test Httpd.lns get "<VirtualHost \\
+    0.0.0.0:7080 \\
+    [00000:000:000:0000::2]:7080 \\
+    0.0.0.0:7080 \\
+    127.0.0.1:7080 \\
+    >
+</VirtualHost>\n" =
+  { "VirtualHost"
+    { "arg" = "0.0.0.0:7080" }
+    { "arg" = "[00000:000:000:0000::2]:7080" }
+    { "arg" = "0.0.0.0:7080" }
+    { "arg" = "127.0.0.1:7080" } }
