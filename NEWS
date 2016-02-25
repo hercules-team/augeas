@@ -103,6 +103,7 @@
               (Gregory Smith) (Issue #282)
     * Tmpfiles: new lens to parse systemd's tempfiles.d configuration
                 files (Julien Pivotto) (Issue #269)
+    * Trapperkeeper: new lens for Puppet server configuration files
     * Util: add comment_c_style_or_hash lens
             add empty_any lens
     * Vsftpd: add isolate and isolate_network options
