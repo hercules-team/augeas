@@ -551,3 +551,12 @@ test Httpd.lns get "<VirtualHost \\
     { "arg" = "[00000:000:000:0000::2]:7080" }
     { "arg" = "0.0.0.0:7080" }
     { "arg" = "127.0.0.1:7080" } }
+
+(* Non-continuation backslashes inside VirtualHost section headings *)
+test Httpd.lns get "<FilesMatch \.php$>
+  ExpiresActive Off
+</FilesMatch>\n" =
+  { "FilesMatch"
+    { "arg" = "\.php$" }
+    { "directive" = "ExpiresActive"
+      { "arg" = "Off" } } }
