@@ -27,7 +27,7 @@ autoload xfm
 (* View: entry
      An inputrc mapping entry *)
 let entry =
-   let mapping = [ label "mapping" . store Rx.word ]
+   let mapping = [ label "mapping" . store /[A-Za-z0-9_."\*\/+\,\\-]+/ ]
    in [ label "entry"
       . Util.del_str "\"" . store /[^" \t\n]+/
       . Util.del_str "\":" . Sep.space
