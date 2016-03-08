@@ -61,6 +61,7 @@ $if term=rxvt
 \"\\e[8~\": end-of-line
 \"\\eOc\": forward-word
 \"\\eOd\": backward-word
+\"\\e[G\": \",\"
 $endif
 
 # for non RH/Debian xterm, can't hurt for RH/Debian xterm
@@ -156,6 +157,9 @@ test Inputrc.lns get conf =
       }
       { "entry" = "\\eOd"
         { "mapping" = "backward-word" }
+      }
+      { "entry" = "\\e[G"
+        { "mapping" = "\",\"" }
       }
     }
     {  }
