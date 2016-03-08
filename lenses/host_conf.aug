@@ -44,7 +44,7 @@ let bool_warn (kw:regexp) = Build.key_value_line kw Sep.space sto_bool_warn
 (* View: list
     A list of items *)
 let list (kw:regexp) (elem:string) =
-  let list_elems = Build.opt_list [seq elem . store Rx.word] (Sep.comma) in
+  let list_elems = Build.opt_list [seq elem . store Rx.word] (Sep.comma . Sep.opt_space) in
   Build.key_value_line kw Sep.space list_elems
 
 (* View: trim *)
