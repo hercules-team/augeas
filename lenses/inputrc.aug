@@ -45,6 +45,8 @@ let variable = [ Util.del_str "set" . Sep.space
 let rec condition = [ Util.del_str "$if" . label "@if"
                     . Sep.space . store Rx.space_in . Util.eol
                     . (Util.empty | Util.comment | condition | variable | entry)*
+                    . [ Util.del_str "$else" . label "@else" . Util.eol
+                      . (Util.empty | Util.comment | condition | variable | entry)* ] ?
                     . Util.del_str "$endif" . Util.eol ]
 
 (* View: lns
