@@ -61,6 +61,7 @@ $if term=rxvt
 \"\\e[8~\": end-of-line
 \"\\eOc\": forward-word
 \"\\eOd\": backward-word
+$else
 \"\\e[G\": \",\"
 $endif
 
@@ -158,8 +159,10 @@ test Inputrc.lns get conf =
       { "entry" = "\\eOd"
         { "mapping" = "backward-word" }
       }
-      { "entry" = "\\e[G"
-        { "mapping" = "\",\"" }
+      { "@else"
+        { "entry" = "\\e[G"
+          { "mapping" = "\",\"" }
+        }
       }
     }
     {  }
