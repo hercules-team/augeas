@@ -270,6 +270,7 @@ module Shellvars =
       sc_incl "network/if-down.d/*" .
       sc_incl "network/ifroute-*" .
       sc_incl "network/if-up.d/*" .
+      sc_excl "network/if-up.d/SuSEfirewall2" .
       sc_incl "network/providers/*" .
       sc_excl "network-scripts" .
       sc_incl "network-scripts/ifcfg-*" .
