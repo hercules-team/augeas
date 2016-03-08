@@ -3,7 +3,7 @@ module Test_Host_Conf =
 let conf = "
 # /etc/host.conf
 # We have named running, but no NIS (yet)
-order   bind,hosts
+order   bind, hosts
 # Allow multiple addrs
 multi   on
 # Guard against spoof attempts
