@@ -20,6 +20,7 @@
     * Dhclient: avoid put ambiguity for node without value (Issue #294)
     * Group: support NIS map, support an overridden and disabled password,
              i.e. `+:*::` (Matt Dainty) (Issue #258)
+    * Host_Conf: support spaces between list items (Cedric Bosdonnat, Issue #358)
     * Httpd: add paths to SLES vhosts
              (Jan Doleschal) (Issue #268)
              parse backslashes in directive arguments (Issue #307)
