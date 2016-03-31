@@ -30,6 +30,7 @@
              parse directive args containing quotes
              support perl directives (Issue #327)
              parse line breaks/continuations in section arguments
+    * Inputrc: support $else (Cedric Bosdonnat, Issue #359)
     * Interfaces: add support for source-directory (Issue #306)
     * Json: add comments support, refactor,
             allow escaped quotes and blackslashes
