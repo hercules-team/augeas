@@ -193,6 +193,7 @@ lens_tests =			\
   lens-ssh.sh			\
   lens-sshd.sh			\
   lens-sssd.sh			\
+  lens-star.sh          \
   lens-stunnel.sh			\
   lens-subversion.sh		\
   lens-sysconfig.sh		\
