@@ -96,6 +96,7 @@
                  exclude SuSEfirewall2 (Cedric Bosdonnat, Issue #357)
     * Simplelines: parse OpenBSD's hostname.if(5)
                    files (Jasper Lievisse Adriaanse) (Issue #252)
+    * Smbusers: add support for ; comments
     * Spacevars: support flags (Issue #279)
     * Ssh: add support for HostKeyAlgorithms, KexAlgorithms
            and PubkeyAcceptedKeyTypes (Oliver Mangold) (Issue #290),

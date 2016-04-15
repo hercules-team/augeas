@@ -12,6 +12,7 @@ jarwin = JosephArwin
 manderso = MarkAnderson MarkusAndersonus
 users = @account
 nobody = *
+;commented = SomeOne
 "
 
 (* Test: Simplevars.lns *)
@@ -27,3 +28,4 @@ test SmbUsers.lns get conf =
      { "username" = "@account" } }
    { "nobody"
      { "username" = "*" } }
+   { "#comment" = "commented = SomeOne" }

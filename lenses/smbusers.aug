@@ -25,7 +25,7 @@ let entry =
   in Build.key_value_line Rx.word Sep.space_equal usernames
 
 (* View: lns *)
-let lns = (Util.empty | Util.comment | entry)*
+let lns = (Util.empty | (Util.comment_generic /[ \t]*[#;][ \t]*/ "# ") | entry)*
 
 (* Variable: filter *)
 let filter = incl "/etc/samba/smbusers"
