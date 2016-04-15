@@ -101,6 +101,7 @@
     * Ssh: add support for HostKeyAlgorithms, KexAlgorithms
            and PubkeyAcceptedKeyTypes (Oliver Mangold) (Issue #290),
            add support for GlobalKnownHostsFile (Issue #316)
+    * Star: New lens to parse /etc/default/star
     * Sudoers: support for negated command alias
                (Geoff Williams) (Issue #262)
     * Syslog: recognize '~' as a valid syslog action (discard)
