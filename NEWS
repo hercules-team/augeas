@@ -56,6 +56,7 @@
     * OpenVPN: add all options available in OpenVPN 2.3o
                (Justin Akers) (Issue #278)
     * Puppetfile: name separator is not mandatory
+                  add support for moduledir (Christoph Maser)
     * Rabbitmq: remove space in option name,
                 add support for cluster_partitioning_handling,
                 add missing simple options (Joe Topjian) (Issue #264)
