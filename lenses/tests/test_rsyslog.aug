@@ -23,6 +23,7 @@ authpriv.*                                              /var/log/secure
 *.*    @@2.7.4.1
 *.emerg :omusrmsg:*
 *.emerg :omusrmsg:foo,bar
+*.emerg | /dev/xconsole
 "
 
 (* Test: Rsyslog.lns *)
@@ -117,6 +118,15 @@ test Rsyslog.lns get conf =
     { "action"
       { "omusrmsg" = "foo" }
       { "omusrmsg" = "bar" } }
+  }
+  { "entry"
+    { "selector"
+      { "facility" = "*" }
+      { "level" = "emerg" }
+    }
+    { "action"
+      { "pipe" = "/dev/xconsole" }
+    }
   }
 
 (* Parse complex $template lines, RHBZ#1083016 *)
