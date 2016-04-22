@@ -26,6 +26,10 @@ module Puppetfile =
      a comma, optionally preceded or followed by spaces or newlines *)
 let comma = del /[ \t\n]*,[ \t\n]*/ ", "
 
+(* View: moduledir
+     The moduledir setting specifies where modules from the Puppetfile will be installed *)
+let moduledir = [ Util.indent . key "moduledir" . Sep.space . Quote.any . Util.eol ]
+
 (* View: forge
      a forge entry *)
 let forge = [ Util.indent . key "forge" . Sep.space . Quote.any . Util.eol ]
@@ -49,4 +53,4 @@ let mod =
 
 (* View: lns
      the Puppetfile lens *)
-let lns = (Util.empty | Util.comment | forge | metadata | mod)*
+let lns = (Util.empty | Util.comment | forge | metadata | mod | moduledir )*
