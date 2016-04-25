@@ -45,6 +45,7 @@
                   allow notify option
                   (Joe Topjian) (Issue #266)
     * Known_Hosts: refactoring and description fixed
+    * Logrotate: support dateyesterday option (Chris Reeves) (GH #367, #368)
     * MasterPasswd: new lens to parse /etc/master.passwd
                     (Matt Dainty) (Issue #258)
     * Multipath: add various missing keywoards (Olivier Mangold) (Issue #289)
