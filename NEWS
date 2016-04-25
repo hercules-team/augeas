@@ -68,7 +68,9 @@
     * Rsyslog: improve property filter parsing,
                treat whitespace after commas as optional.
                recognize '~' as a valid syslog action (discard)
-               (Gregory Smith) (Issue #282)
+               (Gregory Smith) (Issue #282),
+               add support for redirecting output to named pipes
+               (Gerlof Fokkema) (Issue #366)
     * Shellvars: allow partial quoting, mixing multiple styles
                  (Kaarle Ritvanen) (Issue #183);
                  allow wrapping builtin argument to multiple lines
