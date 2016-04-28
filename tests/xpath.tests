@@ -321,9 +321,7 @@ test escape1 /files/etc/sysconfig/network-scripts/*
     /files/etc/sysconfig/network-scripts/ifcfg-eth0
     /files/etc/sysconfig/network-scripts/ifcfg-wlan0
     /files/etc/sysconfig/network-scripts/ifcfg-weird\ \[\!\]\ \(used\ to\ fail\)
-    /files/etc/sysconfig/network-scripts/ifcfg-Auto_FRITZ\!Box_Fon_WLAN_7112
     /files/etc/sysconfig/network-scripts/ifcfg-lo
-    /files/etc/sysconfig/network-scripts/ifcfg-Auto-ALICE-WLAN38_\(automatisch\)
     /files/etc/sysconfig/network-scripts/ifcfg-br0
 
 test escape2 /files/etc/sysconfig/network-scripts/ifcfg-weird\ \[\!\]\ \(used\ to\ fail\)/DEVICE
