@@ -1,4 +1,4 @@
-Format: 1.51
+Format: 1.52
 
 
 Title: Augeas Documentation

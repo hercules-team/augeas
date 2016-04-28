@@ -1,7 +1,14 @@
-1.5.0 - 2015-XX-XX
+1.5.0 - 2015-05-11
   - General changes/additions
     * augtool: new --timing option that prints after each operation how long
       it took
+    * augtool: print brief help message when incorrect options are given rather
+      than dumping all help text
+    * Path expressions: optimize performance of evaluating certain
+      expressions
+    * lots of safety improvements in libfa to avoid using uninitialized
+      values and the like (Daniel Trebbien)
+    * tolerate building against OSX' libedit (Issue #256)
   - API changes
     * aug_match: fix a bug where expressions like /foo/*[2] would match a
       hidden node and pretend there was no match at all. We now make sure
@@ -9,6 +16,11 @@
       problem.
     * aug_get: make sure we set *value to NULL, even if the provided path is
       invalid (Issue #372)
+    * aug_rm: fix segfault when deleting a tree and one of its ancestors
+      (Issue #319)
+    * aug_save: fix segfault when trying to save an invalid subtree. A
+      routine that was generating details for the error message overflowed
+      a buffer it had created (Issue #349)
   - Lens changes/additions
     * AptConf: support hash comments
     * AptSources: support options (Issue #295),
@@ -36,6 +48,7 @@
              support perl directives (Issue #327)
              parse line breaks/continuations in section arguments
              parse escaped spaces in directive/section arguments
+             parse backslashes at the start of directive args (Issue #324)
     * Inputrc: support $else (Cedric Bosdonnat, Issue #359)
     * Interfaces: add support for source-directory (Issue #306)
     * Json: add comments support, refactor,
@@ -54,7 +67,8 @@
     * MasterPasswd: new lens to parse /etc/master.passwd
                     (Matt Dainty) (Issue #258)
     * Multipath: add various missing keywoards (Olivier Mangold) (Issue #289)
-    * Nginx: add non-recursive ambiguities tests,
+    * MySQL: include /etc/my.cnf.d/*.cnf (Issue #353)
+    * Nginx: improve typechecking of lens,
              allow masks in IP keys and IPv6 (Issue #260)
              add @server simple nodes (Issue #335)
     * Ntp: add support for basic interface syntax
