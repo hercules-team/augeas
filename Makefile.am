@@ -8,7 +8,7 @@ lenstestdir=$(datadir)/augeas/lenses/dist/tests
 dist_lens_DATA=$(wildcard lenses/*.aug)
 dist_lenstest_DATA=$(wildcard lenses/tests/*.aug)
 
-EXTRA_DIST=augeas.spec build/ac-aux/move-if-change Makefile.am HACKING
+EXTRA_DIST=augeas.spec build/ac-aux/move-if-change Makefile.am HACKING.md
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = augeas.pc
