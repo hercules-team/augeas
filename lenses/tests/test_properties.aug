@@ -1,5 +1,6 @@
 module Test_properties =
     let conf = "
+#
 # Test tomcat properties file
 #tomcat.commented.value=1
     # config
@@ -50,7 +51,7 @@ overflow.description=\
 let lns = Properties.lns
 
 test lns get conf =
-    { }
+    { } { }
     { "#comment" = "Test tomcat properties file" }
     { "#comment" = "tomcat.commented.value=1" }
     { "#comment" = "config" }
@@ -103,6 +104,7 @@ test lns put conf after
     set "tomcat.port" "99";
     set "tomcat.application.host" "foo.network.com"
     = "
+#
 # Test tomcat properties file
 #tomcat.commented.value=1
     # config
