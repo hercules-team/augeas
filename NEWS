@@ -17,6 +17,7 @@
               add new directives and options that were added in
               chrony-2.2 and chrony-2.3 and improve parsing of
               access configuration (Miroslav Lichvar, Issue #348)
+              add new options for chrony-2.4 (Miroslav Lichvar)
     * Dhclient: avoid put ambiguity for node without value (Issue #294)
     * Group: support NIS map, support an overridden and disabled password,
              i.e. `+:*::` (Matt Dainty) (Issue #258)
