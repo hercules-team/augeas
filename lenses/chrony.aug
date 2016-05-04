@@ -104,6 +104,16 @@ module Chrony =
     *)
     let allowdeny_types = "allow"|"deny"|"cmdallow"|"cmddeny"
 
+    (* Variable: local_options
+         local options with values
+    *)
+    let local_options = "stratum"|"distance"
+
+    (* Variable: local_flags
+         local options without values
+    *)
+    let local_flags = "orphan"
+
     (* Variable: ratelimit_options
          Rate limiting options with values
     *)
@@ -147,7 +157,7 @@ module Chrony =
                     | "dumpdir" | "hwclockfile" | "include" | "keyfile"
                     | "leapsecmode" | "leapsectz" | "linux_freq_scale"
                     | "linux_hz" | "logbanner" | "logchange" | "logdir"
-                    | "maxdistance"
+                    | "maxdistance" | "maxdrift"
                     | "maxclockerror" | "maxsamples" | "maxslewrate"
                     | "maxupdateskew" | "minsamples" | "minsources" | "pidfile"
                     | "port" | "reselectdist" | "rtcautotrim" | "rtcdevice"
@@ -187,7 +197,7 @@ module Chrony =
       - broadcast <interval> <address> <optional port>
       - fallbackdrift <min> <max>
       - initstepslew <threshold> <addr> <optional extra addrs>
-      - local stratum <int>
+      - local <options>
       - mailonchange <emailaddress> <threshold>
       - makestep <threshold> <limit>
       - maxchange <threshold> <delay> <limit>
@@ -246,9 +256,11 @@ module Chrony =
     (* View: local
          local has specific syntax
     *)
-    let local = [ Util.indent . key "local" . space
-                     . [ key "stratum" . space . store integer ]
-                     . eol ]
+    let local = [ Util.indent . key "local"
+                      . ( space . ( [ key local_flags ]
+                         | [ key local_options . space . store no_space ] )
+                        )*
+                      . eol ]
 
     (* View: email
          mailonchange has specific syntax

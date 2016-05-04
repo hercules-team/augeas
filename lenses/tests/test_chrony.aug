@@ -34,7 +34,9 @@ stratumweight 0
 makestep 10 -1
 bindcmdaddress 127.0.0.1
 bindcmdaddress ::1
+local
 local stratum 10
+local distance 1.0 orphan
 keyfile /etc/chrony.keys
 commandkey 1
 generatecommandkey
@@ -50,6 +52,7 @@ fallbackdrift 16 19
 mailonchange root@localhost 0.5
 maxchange 1000 1 2
 maxdistance 1.0
+maxdrift 100
 initstepslew 30 foo.bar.com
 initstepslew 30 foo.bar.com baz.quz.com
 ratelimit interval 4 burst 16 leak 2
@@ -126,8 +129,13 @@ tempcomp /sys/class/hwmon/hwmon0/temp2_input 30 /etc/chrony.tempcomp
   }
   { "bindcmdaddress" = "127.0.0.1" }
   { "bindcmdaddress" = "::1" }
+  { "local" }
   { "local"
     { "stratum" = "10" }
+  }
+  { "local"
+    { "distance" = "1.0" }
+    { "orphan" }
   }
   { "keyfile" = "/etc/chrony.keys" }
   { "commandkey" = "1" }
@@ -164,6 +172,7 @@ tempcomp /sys/class/hwmon/hwmon0/temp2_input 30 /etc/chrony.tempcomp
     { "limit" = "2" }
   }
   { "maxdistance" = "1.0" }
+  { "maxdrift" = "100" }
   { "initstepslew"
     { "threshold" = "30" }
     { "address" = "foo.bar.com" }
