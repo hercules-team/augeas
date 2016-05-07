@@ -572,3 +572,14 @@ test Httpd.lns get "<FilesMatch \.php$>
     { "arg" = "\.php$" }
     { "directive" = "ExpiresActive"
       { "arg" = "Off" } } }
+
+(* Escaped spaces in directive and section arguments *)
+test Httpd.lns get "RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /.+/trackback/?\ HTTP/ [NC]\n" =
+  { "directive" = "RewriteCond"
+    { "arg" = "%{THE_REQUEST}" }
+    { "arg" = "^[A-Z]{3,9}\ /.+/trackback/?\ HTTP/" }
+    { "arg" = "[NC]" } }
+
+test Httpd.lns get "<FilesMatch \ test\.php$></FilesMatch>\n" =
+  { "FilesMatch"
+    { "arg" = "\ test\.php$" } }
