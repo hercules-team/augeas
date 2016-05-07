@@ -1225,6 +1225,7 @@ static void cmd_errors(struct command *cmd) {
         const char *last     = err_get(aug, match, "lens/last_matched");
         const char *next     = err_get(aug, match, "lens/next_not_matched");
         const char *msg      = err_get(aug, match, "message");
+        const char *path     = err_get(aug, match, "path");
         const char *kind     = NULL;
 
         aug_get(aug, match, &kind);
@@ -1239,6 +1240,8 @@ static void cmd_errors(struct command *cmd) {
         if (line != NULL) {
             fprintf(cmd->out, "Error in %s:%s.%s (%s)\n",
                     filename, line, char_pos, kind);
+        } else if (path != NULL) {
+            fprintf(cmd->out, "Error in %s at node %s (%s)\n", filename, path, kind);
         } else {
             fprintf(cmd->out, "Error in %s (%s)\n", filename, kind);
         }
