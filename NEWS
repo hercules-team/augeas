@@ -2,10 +2,13 @@
   - General changes/additions
     * augtool: new --timing option that prints after each operation how long
       it took
+  - API changes
     * aug_match: fix a bug where expressions like /foo/*[2] would match a
       hidden node and pretend there was no match at all. We now make sure
       we never match a hidden node. Thanks to Xavier Mol for reporting the
       problem.
+    * aug_get: make sure we set *value to NULL, even if the provided path is
+      invalid (Issue #372)
   - Lens changes/additions
     * AptConf: support hash comments
     * AptSources: support options (Issue #295),

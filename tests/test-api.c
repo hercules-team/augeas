@@ -121,6 +121,13 @@ static void testGet(CuTest *tc) {
     CuAssertPtrNotNull(tc, value);
     CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
 
+    /* aug_get should set VALUE to NULL even if the path expression is invalid
+       Issue #372 */
+    value = (const char *) 7;
+    r = aug_get(aug, "[invalid path]", &value);
+    CuAssertIntEquals(tc, -1, r);
+    CuAssertPtrEquals(tc, NULL, value);
+
     aug_close(aug);
 }
 

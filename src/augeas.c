@@ -814,13 +814,13 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
     struct tree *match;
     int r;
 
+    if (value != NULL)
+        *value = NULL;
+
     api_entry(aug);
 
     p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), path, true);
     ERR_BAIL(aug);
-
-    if (value != NULL)
-        *value = NULL;
 
     r = pathx_find_one(p, &match);
     ERR_BAIL(aug);
