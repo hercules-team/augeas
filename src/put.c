@@ -111,18 +111,18 @@ static char *encpcpy(char *e, const char *key, const char *value) {
 
 static void regexp_match_error(struct state *state, struct lens *lens,
                                int count, struct split *split) {
-    // FIXME: Split the regexp and encoding back
-    // into something resembling a tree level
     char *text = NULL;
     char *pat = NULL;
 
     lns_format_atype(lens, &pat);
-    text = enc_format(split->enc + split->start, split->end - split->start);
+    text = enc_format_indent(split->enc + split->start,
+                             split->end - split->start,
+                             4);
 
     if (count == -1) {
         put_error(state, lens,
-                  "Failed to match \n    %s\n  with tree\n   %s",
-                  pat, text);
+                  "Failed to match tree\n\n%s\n  with pattern\n   %s",
+                  text, pat);
     } else if (count == -2) {
         put_error(state, lens,
                   "Internal error matching\n    %s\n  with tree\n   %s",

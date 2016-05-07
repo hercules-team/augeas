@@ -249,6 +249,12 @@ void free_lens(struct lens *lens);
  *    { key1 = value1 } { key2 = value2 } .. { keyN = valueN }
  */
 char *enc_format(const char *e, size_t len);
+/* Format an encoded level similar to ENC_FORMAT, but put each tree node
+ * on a new line indented by INDENT spaces. If INDENT is negative, produce the
+ * same output as ENC_FORMAT
+ *    { key1 = value1 } { key2 = value2 } .. { keyN = valueN }
+ */
+char *enc_format_indent(const char *e, size_t len, int indent);
 
 #if ENABLE_DEBUG
 void dump_lens_tree(struct lens *lens);

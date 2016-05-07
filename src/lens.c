@@ -1061,6 +1061,10 @@ void lens_release(struct lens *lens) {
  * Encoding of tree levels
  */
 char *enc_format(const char *e, size_t len) {
+    return enc_format_indent(e, len, 0);
+}
+
+char *enc_format_indent(const char *e, size_t len, int indent) {
     size_t size = 0;
     char *result = NULL, *r;
     const char *k = e;
@@ -1073,6 +1077,8 @@ char *enc_format(const char *e, size_t len) {
         assert(slash != NULL);
         v = eq + 1;
 
+        if (indent > 0)
+            size += indent + 1;
         size += 6;     /* Surrounding braces */
         if (k != eq)
             size += 1 + (eq - k) + 1;
@@ -1092,6 +1098,8 @@ char *enc_format(const char *e, size_t len) {
         assert(eq != NULL && slash != NULL);
         v = eq + 1;
 
+        for (int i=0; i < indent; i++)
+            *r++ = ' ';
         r = stpcpy(r, " { ");
         if (k != eq) {
             r = stpcpy(r, "\"");
@@ -1104,6 +1112,8 @@ char *enc_format(const char *e, size_t len) {
             r = stpcpy(r, "\"");
         }
         r = stpcpy(r, " }");
+        if (indent > 0)
+            *r++ = '\n';
         k = slash + 1;
     }
     return result;
