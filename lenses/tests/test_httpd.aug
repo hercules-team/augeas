@@ -552,6 +552,18 @@ test Httpd.lns get "<VirtualHost \\
     { "arg" = "0.0.0.0:7080" }
     { "arg" = "127.0.0.1:7080" } }
 
+(* Blank line continuations inside VirtualHost blocks *)
+test Httpd.lns get "<VirtualHost \\
+    0.0.0.0:7080 \\
+    \\
+    0.0.0.0:7080 \\
+    \\
+    >
+</VirtualHost>\n" =
+  { "VirtualHost"
+    { "arg" = "0.0.0.0:7080" }
+    { "arg" = "0.0.0.0:7080" } }
+
 (* Non-continuation backslashes inside VirtualHost section headings *)
 test Httpd.lns get "<FilesMatch \.php$>
   ExpiresActive Off
