@@ -1,3 +1,8 @@
+1.6.0 - 2016-XX-XX
+
+  - Lens changes/additions
+    * Vsftpd: Add allow_writeable_chroot boolead option (Robert Moucha) (Issue #376)
+
 1.5.0 - 2016-05-11
   - General changes/additions
     * augtool: new --timing option that prints after each operation how long
