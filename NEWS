@@ -1,4 +1,4 @@
-1.5.0 - 2015-05-11
+1.5.0 - 2016-05-11
   - General changes/additions
     * augtool: new --timing option that prints after each operation how long
       it took
