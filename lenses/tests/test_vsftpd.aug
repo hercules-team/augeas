@@ -40,6 +40,7 @@ chroot_list_file=/etc/vsftpd/chroot_list
 pam_service_name=vsftpd
 userlist_enable=YES
 tcp_wrappers=YES
+allow_writeable_chroot=YES
 
 "
 
@@ -68,5 +69,6 @@ test Vsftpd.lns get conf =
   { "pam_service_name" = "vsftpd" }
   { "userlist_enable" = "YES" }
   { "tcp_wrappers" = "YES" }
+  { "allow_writeable_chroot" = "YES" }
   {}
 
