@@ -10,6 +10,10 @@ let conf = "# rsyslog v5 configuration file
 
 $ModLoad imuxsock # provides support for local system logging (e.g. via logger command)
 $ModLoad imklog   # provides kernel logging support (previously done by rklogd)
+module(load=\"immark\") #provides --MARK-- message capability
+
+timezone(id=\"CET\" offset=\"+01:00\")
+
 $UDPServerRun 514
 $InputTCPServerRun 514
 $ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
@@ -36,6 +40,16 @@ test Rsyslog.lns get conf =
   { "$ModLoad" = "imklog"
     { "#comment" = "provides kernel logging support (previously done by rklogd)" }
   }
+  { "module"
+    { "load" = "immark" }
+    { "#comment" = "provides --MARK-- message capability" }
+  }
+  {  }
+  { "timezone"
+    { "id" = "CET" }
+    { "offset" = "+01:00" }
+  }
+  {  }
   { "$UDPServerRun" = "514" }
   { "$InputTCPServerRun" = "514" }
   { "$ActionFileDefaultTemplate" = "RSYSLOG_TraditionalFileFormat" }

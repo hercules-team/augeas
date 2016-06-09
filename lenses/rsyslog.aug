@@ -26,6 +26,11 @@ autoload xfm
 let macro_rx = /[^,# \n\t][^#\n]*[^,# \n\t]|[^,# \n\t]/
 let macro = [ key /$[A-Za-z0-9]+/ . Sep.space . store macro_rx . Util.comment_or_eol ]
 
+let config_object_param = [ key /[A-Za-z]+/ . Sep.equal . Quote.dquote
+                          . store /[^"]+/ . Quote.dquote . Sep.opt_space ]
+let config_object = [ key /action|global|input|module|parser|timezone/ . Sep.lbracket
+                    . config_object_param+ . Sep.rbracket . Util.comment_or_eol ]
+
 (* View: users
    Map :omusrmsg: and a list of users, or a single *
 *)
@@ -58,7 +63,7 @@ let prop_filter =
   in [ label "filter" . prop_name . sep . prop_oper . sep . prop_val .
        Sep.space . prop_act . Util.eol ]
 
-let entries = ( Syslog.empty | Syslog.comment | entry | macro | prop_filter )*
+let entries = ( Syslog.empty | Syslog.comment | entry | macro | config_object | prop_filter )*
 
 let lns = entries . ( Syslog.program | Syslog.hostname )*
 
