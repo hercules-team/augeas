@@ -35,7 +35,7 @@ module Ntp =
                       sep_spc . store word ]
         | [ sep_spc . key (/autokey|burst|iburst|noselect|preempt/ |
                            /prefer|true|dynamic/) ] in
-      let cmd = /server|peer|broadcast|manycastclient/
+      let cmd = /pool|server|peer|broadcast|manycastclient/
         | /multicastclient|manycastserver/ in
         record cmd opt*
 
