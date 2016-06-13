@@ -2,6 +2,7 @@
 
   - Lens changes/additions
     * Ntp: allow 'pool' (Craig Miskell) (Issue #378)
+    * Rsyslog: Support for rsyslog RainerScript syntax (Craig Miskell) (Issue #379)
     * Vsftpd: Add allow_writeable_chroot boolead option (Robert Moucha) (Issue #376)
 
 1.5.0 - 2016-05-11
