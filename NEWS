@@ -2,6 +2,7 @@
 
   - Lens changes/additions
     * Ntp: allow 'pool' (Craig Miskell) (Issue #378)
+    * Postfix_Passwordmap: New lens to parse Postfix password maps (Anton Baranov) (Issue #380)
     * Rsyslog: Support for rsyslog RainerScript syntax (Craig Miskell) (Issue #379)
     * Vsftpd: Add allow_writeable_chroot boolead option (Robert Moucha) (Issue #376)
 
