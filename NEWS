@@ -1,6 +1,7 @@
 1.6.0 - 2016-XX-XX
 
   - Lens changes/additions
+    * Httpd: follow line continuations in comments
     * Ntp: allow 'pool' (Craig Miskell) (Issue #378)
     * Postfix_Passwordmap: New lens to parse Postfix password maps (Anton Baranov) (Issue #380)
     * Rsyslog: Support for rsyslog RainerScript syntax (Craig Miskell) (Issue #379)

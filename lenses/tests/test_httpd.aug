@@ -583,3 +583,7 @@ test Httpd.lns get "RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /.+/trackback/?\ HTT
 test Httpd.lns get "<FilesMatch \ test\.php$></FilesMatch>\n" =
   { "FilesMatch"
     { "arg" = "\ test\.php$" } }
+
+(* Continuations in comments cause the comment to be continued without a new comment character *)
+test Httpd.lns get "#ServerRoot \\\n  /var/www\n" =
+  { "#comment" = "ServerRoot \\\n  /var/www" }
