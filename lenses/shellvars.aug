@@ -290,6 +290,8 @@ module Shellvars =
                      . excl "/etc/default/rmt"
                      . excl "/etc/default/star"
                      . excl "/etc/default/whoopsie"
+                     . incl "/etc/profile"
+                     . incl "/etc/profile.d/*"
   let filter_misc    = incl "/etc/arno-iptables-firewall/debconf.cfg"
                      . incl "/etc/conf.d/*"
                      . incl "/etc/cron-apt/config"
@@ -313,6 +315,7 @@ module Shellvars =
                      . incl "/etc/ucf.conf"
                      . incl "/etc/locale.conf"
                      . incl "/etc/vconsole.conf"
+                     . incl "/etc/byobu/*"
 
   let filter = filter_sysconfig
              . filter_default
