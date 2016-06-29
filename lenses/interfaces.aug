@@ -84,8 +84,8 @@ let multi_option (t:string) = [ stanza_indent . array t t . eol ]
 
 let iface   = [ Util.indent
               . stanza_id    "iface"
-              . stanza_param "family"
-              . stanza_param "method"
+              . ( stanza_param "family" )?
+              . ( stanza_param "method" )?
               . eol
               . ( stanza_option
                 | multi_option "bond-slaves"
