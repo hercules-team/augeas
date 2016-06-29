@@ -4,6 +4,7 @@ addons:
     packages:
       - libxml2-dev
       - libreadline-dev
+      - liblua5.2-dev
       - valgrind
 install:
   - ./autogen.sh

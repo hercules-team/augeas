@@ -70,3 +70,9 @@ AUGEAS_0.20.0 {
     global:
       aug_escape_name;
 } AUGEAS_0.18.0;
+
+AUGEAS_0.21.0 {
+    global:
+      luaopen_augeas;
+      aug_lua;
+} AUGEAS_0.20.0;

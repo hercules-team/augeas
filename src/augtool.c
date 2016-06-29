@@ -22,6 +22,7 @@
 
 #include <config.h>
 #include "augeas.h"
+#include "auglua.h"
 #include "internal.h"
 #include "safe-alloc.h"
 
@@ -39,6 +40,10 @@
 #include <stdarg.h>
 #include <sys/time.h>
 
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
+
 /* Global variables */
 
 static augeas *aug = NULL;
@@ -50,6 +55,8 @@ char *transforms = NULL;
 size_t transformslen = 0;
 const char *inputfile = NULL;
 int echo_commands = 0;         /* Gets also changed in main_loop */
+bool use_lua = false;
+static lua_State *LS = NULL;
 bool print_version = false;
 bool auto_save = false;
 bool interactive = false;
@@ -58,6 +65,8 @@ bool timing = false;
 char *history_file = NULL;
 
 #define AUGTOOL_PROMPT "augtool> "
+#define AUGTOOL_LUA_PROMPT "augtool|lua> "
+#define AUGTOOL_LUA_CONT_PROMPT "augtool|lua?>   "
 
 /*
  * General utilities
@@ -302,6 +311,7 @@ static void help(void) {
                     "                       syntax, e.g. -t 'Fstab incl /etc/fstab.bak'\n");
     fprintf(stderr, "  -e, --echo           echo commands when reading from a file\n");
     fprintf(stderr, "  -f, --file FILE      read commands from FILE\n");
+    fprintf(stderr, "  -l, --lua            use Lua interpreter instead of native Augeas\n");
     fprintf(stderr, "  -s, --autosave       automatically save at the end of instructions\n");
     fprintf(stderr, "  -i, --interactive    run an interactive shell after evaluating\n"
                     "                       the commands in STDIN and FILE\n");
@@ -334,6 +344,7 @@ static void parse_opts(int argc, char **argv) {
         { "transform",   1, 0, 't' },
         { "echo",        0, 0, 'e' },
         { "file",        1, 0, 'f' },
+        { "lua",         0, 0, 'l' },
         { "autosave",    0, 0, 's' },
         { "interactive", 0, 0, 'i' },
         { "nostdinc",    0, 0, 'S' },
@@ -346,7 +357,7 @@ static void parse_opts(int argc, char **argv) {
     };
     int idx;
 
-    while ((opt = getopt_long(argc, argv, "hnbcr:I:t:ef:siSLA", options, &idx)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hnbcr:I:t:ef:lsiSLA", options, &idx)) != -1) {
         switch(opt) {
         case 'c':
             flags |= AUG_TYPE_CHECK;
@@ -374,6 +385,9 @@ static void parse_opts(int argc, char **argv) {
             break;
         case 'f':
             inputfile = optarg;
+            break;
+        case 'l':
+            use_lua = true;
             break;
         case 's':
             auto_save = true;
@@ -489,8 +503,19 @@ static void install_signal_handlers(void) {
     sigaction(SIGINT, &sigint_action, NULL);
 }
 
-static int main_loop(void) {
-    char *line = NULL;
+
+static int ends_with(const char *str, const char *suffix) {
+    if (!str || !suffix)
+        return 0;
+    size_t lenstr = strlen(str);
+    size_t lensuffix = strlen(suffix);
+    if (lensuffix > lenstr)
+        return 0;
+    return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
+}
+
+static int main_loop(int argc, char **argv) {
+    char *line = NULL, *cur_line = NULL;
     int ret = 0;
     char inputline [128];
     int code;
@@ -499,13 +524,41 @@ static int main_loop(void) {
     bool in_interactive = false;
 
     if (inputfile) {
-        if (freopen(inputfile, "r", stdin) == NULL) {
-            char *msg = NULL;
-            if (asprintf(&msg, "Failed to open %s", inputfile) < 0)
-                perror("Failed to open input file");
-            else
-                perror(msg);
-            return -1;
+        if (use_lua) {
+            if (luaL_loadfile(LS, inputfile)) {
+                printf("luaL_loadfile() failed: %s\n", lua_tostring(LS, -1));
+                lua_close(LS);
+                return -1;
+            }
+            for (int i=0; i < argc; i++)
+                lua_pushstring(LS, argv[i]);
+            if (lua_pcall(LS, argc, 0, 0)) {
+                printf("lua_pcall() failed: %s\n", lua_tostring(LS, -1));
+                lua_close(LS);
+                return -1;
+            }
+            if (auto_save) {
+                strncpy(inputline, "save()", sizeof(inputline));
+                line = inputline;
+                code = luaL_loadbuffer(LS, line, strlen(line), "line") || lua_pcall(LS, 0, 0, 0);
+
+                if (code) {
+                    fprintf(stderr, "%s\n", lua_tostring(LS, -1));
+                    lua_pop(LS, 1); /* pop error message from the stack */
+                    ret = -1;
+                }
+            }
+            lua_close(LS);
+            return 0;
+        } else {
+            if (freopen(inputfile, "r", stdin) == NULL) {
+                char *msg = NULL;
+                if (asprintf(&msg, "Failed to open %s", inputfile) < 0)
+                    perror("Failed to open input file");
+                else
+                    perror(msg);
+                return -1;
+            }
         }
     }
 
@@ -520,7 +573,14 @@ static int main_loop(void) {
 
     while(1) {
         if (get_line) {
-            line = readline(AUGTOOL_PROMPT);
+            if (use_lua) {
+                if (cur_line == NULL)
+                    line = readline(AUGTOOL_LUA_PROMPT);
+                else
+                    line = readline(AUGTOOL_LUA_CONT_PROMPT);
+            } else {
+                line = readline(AUGTOOL_PROMPT);
+            }
         } else {
             line = NULL;
         }
@@ -568,6 +628,8 @@ static int main_loop(void) {
         }
 
         if (end_reached) {
+            if (use_lua)
+                lua_close(LS);
             if (echo_commands)
                 printf("\n");
             return ret;
@@ -578,15 +640,43 @@ static int main_loop(void) {
             continue;
         }
 
-        code = run_command(line, timing);
-        if (code == -2) {
-            free(line);
-            return ret;
-        }
+        if (use_lua) {
+            char *buf;
+            if (cur_line == NULL) {
+                buf = malloc(sizeof(char) * strlen(line));
+                strcpy(buf, line);
+            } else {
+                sprintf(buf, "%s\n%s", cur_line, line);
+            }
 
-        if (code < 0) {
-            ret = -1;
-            print_aug_error();
+            code = aug_lua(LS, buf);
+            if (isatty(fileno(stdin)))
+                add_history(line);
+
+            if (code) {
+                const char *err = lua_tostring(LS, -1);
+                if (ends_with(err, " near <eof>")) {
+                    cur_line = malloc(sizeof(char) * strlen(buf));
+                    strcpy(cur_line, buf);
+                } else {
+                  fprintf(stderr, "%s\n", err);
+                  lua_pop(LS, 1); /* pop error message from the stack */
+                  ret = -1;
+                }
+            } else {
+                cur_line = NULL;
+            }
+        } else {
+            code = run_command(line, timing);
+            if (code == -2) {
+                free(line);
+                return ret;
+            }
+
+            if (code < 0) {
+                ret = -1;
+                print_aug_error();
+            }
         }
 
         if (line != inputline)
@@ -607,9 +697,16 @@ static int run_args(int argc, char **argv) {
         strcat(line, argv[i]);
         strcat(line, " ");
     }
-    if (echo_commands)
-        printf("%s%s\n", AUGTOOL_PROMPT, line);
-    code = run_command(line, timing);
+    if (echo_commands) {
+        if (use_lua)
+            printf("%s%s\n", AUGTOOL_LUA_PROMPT, line);
+        else
+            printf("%s%s\n", AUGTOOL_PROMPT, line);
+    }
+    if (use_lua)
+        code = luaL_loadbuffer(LS, line, strlen(line), "line") || lua_pcall(LS, 0, 0, 0);
+    else
+        code = run_command(line, timing);
     free(line);
     if (code >= 0 && auto_save)
         if (echo_commands)
@@ -677,17 +774,21 @@ int main(int argc, char **argv) {
             print_aug_error();
         exit(EXIT_FAILURE);
     }
+
+    if (use_lua)
+        LS = luaopen_augeas(aug);
+
     add_transforms(transforms, transformslen);
     if (print_version) {
         print_version_info();
         return EXIT_SUCCESS;
     }
     readline_init();
-    if (optind < argc) {
+    if (optind < argc && !use_lua) {
         // Accept one command from the command line
         r = run_args(argc - optind, argv+optind);
     } else {
-        r = main_loop();
+        r = main_loop(argc - optind, argv+optind);
     }
     if (history_file != NULL)
         write_history(history_file);

@@ -1,0 +1,107 @@
+--- test aug.get()
+assert(aug.get("etc/passwd/root/uid") == "0")
+
+--- test aug.label()
+assert(aug.label("etc/passwd/sync") == "sync")
+
+--- test aug.set()
+aug.set("/foo", "bar")
+assert(aug.get("/foo") == "bar")
+
+--- test aug.setm()
+aug.setm("etc/passwd/*", "shell", "zsh")
+assert(aug.get("etc/passwd/sync/shell") == "zsh")
+
+--- test aug.span()
+--- TODO
+
+--- test aug.insert()
+aug.insert("etc/passwd/*[1]", "foo", true)
+assert(aug.label("etc/passwd/*[1]") == "foo")
+
+--- test aug.rm()
+aug.rm("etc/passwd/sync")
+assert(aug.label("etc/passwd/sync") == nil)
+
+--- test aug.mv()
+aug.mv("etc/passwd/root", "etc/passwd/qux")
+assert(aug.label("etc/passwd/*[last()]") == "qux")
+assert(aug.label("etc/passwd/root") == nil)
+
+--- test aug.cp()
+aug.cp("etc/passwd/qux", "etc/passwd/root")
+assert(aug.get("etc/passwd/root/uid") == aug.get("etc/passwd/qux/uid"))
+
+--- test aug.rename()
+aug.rename("etc/passwd/qux", "bar")
+assert(aug.get("etc/passwd/root/uid") == aug.get("etc/passwd/bar/uid"))
+
+--- test aug.clear()
+aug.clear("etc/passwd/qux/uid")
+assert(aug.get("etc/passwd/qux/uid") == nil)
+
+--- test aug.clearm()
+aug.clearm("etc/passwd/*", "uid")
+assert(aug.get("etc/passwd/root/uid") == nil)
+
+--- test aug.touch()
+aug.touch("etc/passwd/flex/uid")
+assert(aug.get("etc/passwd/flex/uid") == nil)
+aug.touch("etc/passwd/root/gid")
+assert(aug.get("etc/passwd/root/gid") == "0")
+
+--- test aug.matches()
+m = aug.matches("etc/passwd/*")
+assert(m == 22)
+
+--- test aug.match()
+m = aug.match("etc/passwd/*")
+c = 0
+for k, v in pairs(m) do c= c+1 end
+assert(c > 0)
+assert(m[1] == "/files/etc/passwd/foo")
+
+--- test aug.defvar()
+aug.defvar("root", "etc/passwd/root")
+assert(aug.label("$root") == "root")
+
+--- test aug.defnode()
+aug.defnode("raphink", "etc/passwd/raphink/uid", "314")
+assert(aug.get("$raphink") == "314")
+--- TODO: support 3 arguments
+--- aug.defnode("gid", "etc/passwd/raphink/gid")
+--- assert(aug.get("$gid") == nil)
+
+--- test aug.save()
+--- reload tree to be clean
+aug.load()
+aug.set("etc/passwd/root/shell", "/bin/zsh")
+aug.save()
+
+--- test aug.load()
+aug.load()
+
+--- test aug.text_store()
+aug.set("/input", "key=value\n")
+aug.text_store("Shellvars.lns", "/input", "/parsed")
+assert(aug.get("/parsed/key") == "value")
+
+--- test aug.text_retrieve()
+aug.set("/parsed/key", "newval")
+aug.text_retrieve("Shellvars.lns", "/input", "/parsed", "/output")
+assert(aug.get("/output") == "key=newval\n")
+
+--- test aug.escape_name()
+--- test that?
+
+--- test aug.transform()
+aug.transform("Json.lns", "/tmp/foo.json", false)
+assert(aug.get("/augeas/load/Json/incl[1]") == "/tmp/foo.json")
+
+--- test aug.print()
+
+--- test aug.to_xml()
+
+--- test aug.srun()
+
+--- test aug.errors()
