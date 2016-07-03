@@ -1,5 +1,9 @@
 1.6.0 - 2016-XX-XX
-
+  - API changes
+    * add aug_load_file to load individual files, bug #135
+  - Augtool/aug_srun changes/additions
+    * add "load-file" command and "-l|--load-file" option
+    * man/augtool.pod: update with "-l|--load-file"
   - Lens changes/additions
     * Httpd: follow line continuations in comments
     * Ntp: allow 'pool' (Craig Miskell) (Issue #378)
