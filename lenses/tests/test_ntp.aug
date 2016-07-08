@@ -106,13 +106,14 @@ interface listen 127.0.0.1
   test Ntp.lns put
     "restrict default kod nomodify notrap nopeer noquery\n"
   after
-    insb "ipv6" "restrict/action[1]" =
+    insb "ip" "restrict/action[1]";
+    set "restrict/ip" "6" =
     "restrict -6 default kod nomodify notrap nopeer noquery\n"
 
   test Ntp.lns get
     "restrict -6 default kod nomodify notrap nopeer noquery\n" =
     { "restrict" = "default"
-      { "ipv6" }
+      { "ip" = "6" }
       { "action" = "kod" }
       { "action" = "nomodify" }
       { "action" = "notrap" }
