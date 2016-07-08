@@ -23,7 +23,7 @@ module Ntp =
 
 
     let kv (k:regexp) (v:regexp) =
-      [ key k . sep_spc. store v . eol ]
+      [ key k . sep_spc. store v ]
 
     (* Define generic record *)
     let record (kw:regexp) (value:lens) =
@@ -53,12 +53,12 @@ module Ntp =
       let flag = [ label "flag" . store flags_re ] in
         [ key /enable|disable/ . (sep_spc . flag)* . eol ]
 
-    let simple_setting (k:regexp) = kv k word
+    let simple_setting (k:regexp) = kv k word . eol
 
     (* Still incomplete, misses logconfig, phone, setvar, tos,
        trap, ttl *)
     let simple_settings =
-        kv "broadcastdelay" Rx.decimal
+        kv "broadcastdelay" Rx.decimal . eol
       | flags
       | simple_setting /driftfile|leapfile|logfile|includefile/
 	  | simple_setting "statsdir"
@@ -96,11 +96,12 @@ module Ntp =
     let filegen_record = [ label "filegen" . filegen . filegen_opts* . eol ]
 
     (* Authentication commands, see authopt.html#cmd; incomplete *)
-    let auth_command =
+    let auth_command_internal =
       [ key /controlkey|keys|keysdir|requestkey|authenticate/ .
-            sep_spc . store word . eol ]
-     | [ key /autokey|revoke/ . [sep_spc . store word]? . eol ]
-     | [ key /trustedkey/ . [ sep_spc . label "key" . store word ]+ . eol ]
+            sep_spc . store word ]
+     | [ key /autokey|revoke/ . [sep_spc . store word]? ]
+     | [ key /trustedkey/ . [ sep_spc . label "key" . store word ]+ ]
+    let auth_command = auth_command_internal . eol
 
     (* tinker [step step | panic panic | dispersion dispersion |
                stepout stepout | minpoll minpoll | allan allan | huffpuff huffpuff] *)
