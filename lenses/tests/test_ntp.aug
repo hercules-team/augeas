@@ -120,6 +120,22 @@ interface listen 127.0.0.1
       { "action" = "nopeer" }
       { "action" = "noquery" } }
 
+  test Ntp.lns put
+    "restrict default kod nomodify notrap nopeer noquery\n"
+  after
+    insb "ip" "restrict/action[1]";
+    set "restrict/ip" "4" =
+    "restrict -4 default kod nomodify notrap nopeer noquery\n"
+
+  test Ntp.lns get
+    "restrict -4 default notrap nomodify nopeer noquery\n" =
+    { "restrict" = "default"
+      { "ip" = "4" }
+      { "action" = "notrap" }
+      { "action" = "nomodify" }
+      { "action" = "nopeer" }
+      { "action" = "noquery" } }
+
   test Ntp.lns get
     "includefile /etc/ntp/crypto/pw\n" =
     { "includefile" = "/etc/ntp/crypto/pw" }
