@@ -6,7 +6,9 @@
     * man/augtool.pod: update with "-l|--load-file"
   - Lens changes/additions
     * Httpd: follow line continuations in comments
-    * Ntp: allow 'pool' (Craig Miskell) (Issue #378)
+    * Ntp: allow 'pool' (Craig Miskell) (Issue #378);
+           fix restrict to allow also -4 and also fix
+           save/store ability (Josef Reidinger) (Issue #386)
     * Postfix_Passwordmap: New lens to parse Postfix password maps (Anton Baranov) (Issue #380)
     * Rsyslog: Support for rsyslog RainerScript syntax (Craig Miskell) (Issue #379)
     * Vsftpd: Add allow_writeable_chroot boolead option (Robert Moucha) (Issue #376)
