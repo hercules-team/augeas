@@ -67,9 +67,10 @@ module Ntp =
 
     (* Define restrict *)
     let restrict_record   =
-      let ip_restrict = [ label "ip" . sep_spc . Util.del_str "-" . store /[46]/ ] in
+      let ip6_restrict = [ label "ipv6" . sep_spc . Util.del_str "-6" ] in
+      let ip4_restrict = [ label "ipv4" . sep_spc . Util.del_str "-4" ] in
       let action    = [ label "action" . sep_spc . store /[^,# \n\t-][^,# \n\t]*/ ] in
-      [ key "restrict" . ip_restrict? . sep_spc . store /[^,# \n\t-][^,# \n\t]*/ . action* . eol ]
+      [ key "restrict" . (ip6_restrict | ip4_restrict)? . sep_spc . store /[^,# \n\t-][^,# \n\t]*/ . action* . eol ]
 
     (* Define statistics *)
     let statistics_flag (kw:string) = [ sep_spc . key kw ]
