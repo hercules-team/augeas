@@ -2773,6 +2773,8 @@ static struct fa *expand_alphabet(struct fa *fa, int add_marker,
             continue;
 
         struct state *r = add_state(fa, 0);
+        if (r == NULL)
+            goto error;
         r->trans = p->trans;
         r->tused = p->tused;
         r->tsize = p->tsize;
