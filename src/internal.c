@@ -52,6 +52,7 @@ int pathjoin(char **path, int nseg, ...) {
             len += strlen(*path) + 1;
             if (REALLOC_N(*path, len) == -1) {
                 FREE(*path);
+                va_end(ap);
                 return -1;
             }
             if (strlen(*path) == 0 || (*path)[strlen(*path)-1] != SEP)
@@ -60,8 +61,10 @@ int pathjoin(char **path, int nseg, ...) {
                 seg += 1;
             strcat(*path, seg);
         } else {
-            if ((*path = malloc(len)) == NULL)
+            if ((*path = malloc(len)) == NULL) {
+                va_end(ap);
                 return -1;
+            }
             strcpy(*path, seg);
         }
     }
