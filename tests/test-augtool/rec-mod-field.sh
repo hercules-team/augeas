@@ -13,5 +13,5 @@ diff='--- /etc/pam.d/newrole
  auth       include\tsystem-auth
  account    include\tsystem-auth
 -password   include\tsystem-auth
-+password   include\tother_module\tother_module_opts
++password   include\tother_module other_module_opts
  session    required\tpam_namespace.so unmnt_remnt no_unmount_on_close'

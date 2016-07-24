@@ -39,7 +39,7 @@ let service = Rx.word
 
 let record  = [ seq "record" . indent .
               [ label "service" . store service ] .
-              Util.del_ws_tab .
+              Sep.space .
               Pam.record ]
 
 let lns = ( empty | comment | include | record ) *
