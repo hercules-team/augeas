@@ -48,11 +48,11 @@ module Pam =
   (* Shared with PamConf *)
   let record = [ label "optional" . del "-" "-" ]? .
                [ label "type" . store types ] .
-               Util.del_ws_tab .
+               Sep.space .
                [ label "control" . store control] .
-               Util.del_ws_tab .
+               Sep.space .
                [ label "module" . store word ] .
-               [ Util.del_ws_tab . label "argument" . store argument ]* .
+               [ Sep.space . label "argument" . store argument ]* .
                comment_or_eol
 
   let record_svc = [ seq "record" . indent . record ]
