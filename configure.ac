@@ -1,4 +1,4 @@
-AC_INIT(augeas, 1.5.0)
+AC_INIT(augeas, 1.6.0)
 AC_CONFIG_SRCDIR([src/augeas.c])
 AC_CONFIG_AUX_DIR([build/ac-aux])
 AM_CONFIG_HEADER([config.h])
@@ -65,8 +65,8 @@ if test x"$enable_debug" = x"yes"; then
 fi
 
 dnl Version info in libtool's notation
-AC_SUBST([LIBAUGEAS_VERSION_INFO], [20:1:20])
-AC_SUBST([LIBFA_VERSION_INFO], [5:2:4])
+AC_SUBST([LIBAUGEAS_VERSION_INFO], [21:0:21])
+AC_SUBST([LIBFA_VERSION_INFO], [5:3:4])
 
 AC_GNU_SOURCE
 

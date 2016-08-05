@@ -1,17 +1,28 @@
-1.6.0 - 2016-XX-XX
+1.6.0 - 2016-08-05
+  - General changes/additions
+    * augtool: add --load-file option, and corresponding load-file command
+      to load individual files based on the autoload information in lenses
+    * path expressions: numbers in path expressions are now 64 bit integers
+      rather than whatever the C compiler decided 'int' would be
   - API changes
     * add aug_load_file to load individual files, bug #135
-  - Augtool/aug_srun changes/additions
-    * add "load-file" command and "-l|--load-file" option
-    * man/augtool.pod: update with "-l|--load-file"
   - Lens changes/additions
     * Httpd: follow line continuations in comments
+    * Nginx: look for nginx.conf in /usr/local/etc, too (Omer Katz)
     * Ntp: allow 'pool' (Craig Miskell) (Issue #378);
            fix restrict to allow also -4 and also fix
            save/store ability (Josef Reidinger) (Issue #386)
-    * Postfix_Passwordmap: New lens to parse Postfix password maps (Anton Baranov) (Issue #380)
-    * Rsyslog: Support for rsyslog RainerScript syntax (Craig Miskell) (Issue #379)
-    * Vsftpd: Add allow_writeable_chroot boolead option (Robert Moucha) (Issue #376)
+    * Pam: use spaces instead of tabs as the separator in new entries
+           (Loren Gordon) (Issue #236)
+    * Postfix_Passwordmap: New lens to parse Postfix password maps
+           (Anton Baranov) (Issue #380)
+    * Rsyslog: Support for rsyslog RainerScript syntax
+           (Craig Miskell) (Issue #379)
+    * Shellvars: Load /etc/lbu/lbu.conf, the config for Alpine's Local
+           Backup Utility (Kaarle Ritvanen)
+           Load /etc/profile, /etc/profile.d/*, and /etc/byobu
+    * Vsftpd: Add allow_writeable_chroot boolead option
+           (Robert Moucha) (Issue #376)
 
 1.5.0 - 2016-05-11
   - General changes/additions

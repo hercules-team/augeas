@@ -117,7 +117,7 @@ Language: Augeas
 
    Extension: aug
    Block Comment: (* *)
-   Augeas Variable Prototype Enders: \n let test module filter
    Augeas Test Prototype Enders: \n let test module filter
    Augeas Lens Prototype Enders: \n let test module filter
+   Augeas Variable Prototype Enders: \n let test module filter
    Perl Package: NaturalDocs::Languages::Augeas
