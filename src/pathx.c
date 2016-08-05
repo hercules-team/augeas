@@ -184,7 +184,7 @@ struct value {
     enum type tag;
     union {
         struct nodeset  *nodeset;     /* T_NODESET */
-        int              number;      /* T_NUMBER  */
+        int64_t          number;      /* T_NUMBER  */
         char            *string;      /* T_STRING  */
         bool             boolval;     /* T_BOOLEAN */
         struct regexp   *regexp;      /* T_REGEXP  */
