@@ -56,8 +56,12 @@ e.g. C<-t 'Fstab incl /etc/fstab.bak'>.
 
 =item B<-l>, B<--load-file>=I<FILE>
 
-Load invididual FILE in the tree,
-e.g. C<-l '/etc/fstab' -l '/etc/hosts'>.
+Load an invididual FILE into the tree. The lens to use is determined
+automatically (based on autoload information in the lenses) and will be the
+same that is used for this file when the entire tree is loaded. The option
+can be specified multiple times to load several files, e.g. C<-l /etc/fstab
+-l /etc/hosts>. This lens implies C<--noload> so that only the files
+specified with this option will be loaded.
 
 =item B<-f>, B<--file>=I<FILE>
 
@@ -171,8 +175,9 @@ the FILE will be excluded from the LENS. FILE may contain wildcards.
 
 =item B<load-file> E<lt>FILEE<gt>
 
-Load a specific FILE, using autoload statements.  You need to call load
-after this action.
+Load a specific FILE, automatically determining the proper lens from the
+information in F</augeas/load>; without further intervention, the lens that
+would oridnarily be used for this file will be used.
 
 =back
 
