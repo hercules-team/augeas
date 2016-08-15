@@ -28,7 +28,7 @@ let eol = Util.del_str "\n"
 
 (* View: comment *)
 let comment = Util.comment
-            | [ del /^#[ \t]*\r?\n/ "#\n" ]
+            | [ del /#[ \t]*\r?\n/ "#\n" ]
 
 (* View: entry
      An entry of fields, quoted or not *)
