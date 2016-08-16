@@ -1,7 +1,7 @@
 /*
  * augtool.c:
  *
- * Copyright (C) 2007-2015 David Lutterkort
+ * Copyright (C) 2007-2016 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -428,7 +428,7 @@ static void print_version_info(void) {
         goto error;
 
     fprintf(stderr, "augtool %s <http://augeas.net/>\n", version);
-    fprintf(stderr, "Copyright (C) 2007-2015 David Lutterkort\n");
+    fprintf(stderr, "Copyright (C) 2007-2016 David Lutterkort\n");
     fprintf(stderr, "License LGPLv2+: GNU LGPL version 2.1 or later\n");
     fprintf(stderr, "                 <http://www.gnu.org/licenses/lgpl-2.1.html>\n");
     fprintf(stderr, "This is free software: you are free to change and redistribute it.\n");
