@@ -723,8 +723,11 @@ static void xfm_error(struct tree *xfm, const char *msg) {
     char *v = msg ? strdup(msg) : NULL;
     char *l = strdup("error");
 
-    if (l == NULL || v == NULL)
+    if (l == NULL || v == NULL) {
+        free(v);
+        free(l);
         return;
+    }
     tree_append(xfm, l, v);
 }
 
