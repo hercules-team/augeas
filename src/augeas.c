@@ -910,7 +910,7 @@ int aug_defvar(augeas *aug, const char *name, const char *expr) {
 
 int aug_defnode(augeas *aug, const char *name, const char *expr,
                 const char *value, int *created) {
-    struct pathx *p;
+    struct pathx *p = NULL;
     int result = -1;
     int r, cr;
     struct tree *tree;
@@ -951,12 +951,10 @@ int aug_defnode(augeas *aug, const char *name, const char *expr,
     }
 
  done:
+ error:
     free_pathx(p);
     api_exit(aug);
     return result;
- error:
-    api_exit(aug);
-    return -1;
 }
 
 struct tree *tree_set(struct pathx *p, const char *value) {
