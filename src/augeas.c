@@ -1041,6 +1041,8 @@ int aug_setm(struct augeas *aug, const char *base,
     }
 
  done:
+    free_pathx(bx);
+    free_pathx(sx);
     api_exit(aug);
     return result;
  error:
