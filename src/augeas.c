@@ -1192,7 +1192,7 @@ int tree_rm(struct pathx *p) {
 
 int aug_rm(struct augeas *aug, const char *path) {
     struct pathx *p = NULL;
-    int result;
+    int result = -1;
 
     api_entry(aug);
 
@@ -1200,14 +1200,11 @@ int aug_rm(struct augeas *aug, const char *path) {
     ERR_BAIL(aug);
 
     result = tree_rm(p);
-    free_pathx(p);
-    ERR_BAIL(aug);
 
+ error:
+    free_pathx(p);
     api_exit(aug);
     return result;
- error:
-    api_exit(aug);
-    return -1;
 }
 
 int aug_span(struct augeas *aug, const char *path, char **filename,
