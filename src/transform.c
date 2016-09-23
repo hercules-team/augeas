@@ -580,6 +580,8 @@ static int load_file(struct augeas *aug, struct lens *lens,
     info->first_line = 1;
 
     if (aug->flags & AUG_ENABLE_SPAN) {
+        /* Allocate the span already to capture a reference to
+           info->filename */
         span = make_span(info);
         ERR_NOMEM(span == NULL, info);
     }
@@ -599,6 +601,7 @@ static int load_file(struct augeas *aug, struct lens *lens,
     /* top level node span entire file length */
     if (span != NULL && tree != NULL) {
         tree->parent->span = span;
+        span = NULL;
         tree->parent->span->span_start = 0;
         tree->parent->span->span_end = text_len;
     }
@@ -612,6 +615,7 @@ static int load_file(struct augeas *aug, struct lens *lens,
  error:
     free_lns_error(err);
     free(path);
+    free_span(span);
     free_tree(tree);
     free(text);
     return result;
