@@ -974,8 +974,8 @@ struct tree *tree_set(struct pathx *p, const char *value) {
 }
 
 int aug_set(struct augeas *aug, const char *path, const char *value) {
-    struct pathx *p;
-    int result;
+    struct pathx *p = NULL;
+    int result = -1;
 
     api_entry(aug);
 
@@ -988,13 +988,10 @@ int aug_set(struct augeas *aug, const char *path, const char *value) {
     ERR_BAIL(aug);
 
     result = tree_set(p, value) == NULL ? -1 : 0;
+ error:
     free_pathx(p);
-
     api_exit(aug);
     return result;
- error:
-    api_exit(aug);
-    return -1;
 }
 
 int aug_setm(struct augeas *aug, const char *base,
@@ -2059,7 +2056,7 @@ error:
 
 int aug_print(const struct augeas *aug, FILE *out, const char *pathin) {
     struct pathx *p;
-    int result;
+    int result = -1;
 
     api_entry(aug);
 
@@ -2071,13 +2068,10 @@ int aug_print(const struct augeas *aug, FILE *out, const char *pathin) {
     ERR_BAIL(aug);
 
     result = print_tree(out, p, 0);
+ error:
     free_pathx(p);
-
     api_exit(aug);
     return result;
- error:
-    api_exit(aug);
-    return -1;
 }
 
 void aug_close(struct augeas *aug) {
