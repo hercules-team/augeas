@@ -1860,8 +1860,8 @@ int aug_text_store(augeas *aug, const char *lens, const char *node,
 
     /* Validate PATH is syntactically correct */
     p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), path, true);
-    ERR_BAIL(aug);
     free_pathx(p);
+    ERR_BAIL(aug);
 
     r = aug_get(aug, node, &src);
     ERR_BAIL(aug);
