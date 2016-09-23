@@ -653,7 +653,6 @@ int text_store(struct augeas *aug, const char *lens_path,
     struct info *info = NULL;
     struct lns_error *err = NULL;
     struct tree *tree = NULL;
-    struct span *span = NULL;
     int result = -1;
     const char *err_status = NULL;
     struct lens *lens = NULL;
@@ -675,13 +674,6 @@ int text_store(struct augeas *aug, const char *lens_path,
 
     tree_freplace(aug, path, tree);
     ERR_BAIL(aug);
-
-    /* top level node span entire file length */
-    if (span != NULL && tree != NULL) {
-        tree->parent->span = span;
-        tree->parent->span->span_start = 0;
-        tree->parent->span->span_end = strlen(text);
-    }
 
     tree = NULL;
 
