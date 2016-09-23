@@ -1911,13 +1911,15 @@ int aug_text_retrieve(struct augeas *aug, const char *lens,
 
 int aug_to_xml(const struct augeas *aug, const char *pathin,
                xmlNode **xmldoc, unsigned int flags) {
-    struct pathx *p;
-    int result;
+    struct pathx *p = NULL;
+    int result = -1;
 
     api_entry(aug);
 
     ARG_CHECK(flags != 0, aug, "aug_to_xml: FLAGS must be 0");
     ARG_CHECK(xmldoc == NULL, aug, "aug_to_xml: XMLDOC must be non-NULL");
+
+    *xmldoc = NULL;
 
     if (pathin == NULL || strlen(pathin) == 0 || strcmp(pathin, "/") == 0) {
         pathin = "/*";
@@ -1927,15 +1929,11 @@ int aug_to_xml(const struct augeas *aug, const char *pathin,
     ERR_BAIL(aug);
     result = tree_to_xml(p, xmldoc, pathin);
     ERR_THROW(result < 0, aug, AUG_ENOMEM, NULL);
+error:
     free_pathx(p);
     api_exit(aug);
 
     return result;
- error:
-    if (xmldoc !=NULL)
-        *xmldoc = NULL;
-    api_exit(aug);
-    return -1;
 }
 
 int aug_transform(struct augeas *aug, const char *lens,
