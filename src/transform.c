@@ -555,6 +555,7 @@ static int load_file(struct augeas *aug, struct lens *lens,
     struct lns_error *err = NULL;
     struct span *span = NULL;
     int result = -1, r, text_len = 0;
+    struct info *info = NULL;
 
     path = file_name_path(aug, filename);
     ERR_NOMEM(path == NULL, aug);
@@ -571,7 +572,6 @@ static int load_file(struct augeas *aug, struct lens *lens,
     text_len = strlen(text);
     text = append_newline(text, text_len);
 
-    struct info *info;
     make_ref(info);
     make_ref(info->filename);
     info->filename->str = strdup(filename);
@@ -587,8 +587,6 @@ static int load_file(struct augeas *aug, struct lens *lens,
     }
 
     tree = lns_get(info, lens, text, &err);
-
-    unref(info, info);
 
     if (err != NULL) {
         err_status = "parse_failed";
@@ -613,6 +611,7 @@ static int load_file(struct augeas *aug, struct lens *lens,
     store_error(aug, filename + strlen(aug->root) - 1, path, err_status,
                 errno, err, text);
  error:
+    unref(info, info);
     free_lns_error(err);
     free(path);
     free_span(span);
@@ -674,8 +673,6 @@ int text_store(struct augeas *aug, const char *lens_path,
         goto error;
     }
 
-    unref(info, info);
-
     tree_freplace(aug, path, tree);
     ERR_BAIL(aug);
 
@@ -690,6 +687,7 @@ int text_store(struct augeas *aug, const char *lens_path,
 
     result = 0;
  error:
+    unref(info, info);
     store_error(aug, NULL, path, err_status, errno, err, text);
     free_tree(tree);
     free_lns_error(err);
