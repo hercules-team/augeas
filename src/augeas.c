@@ -1557,6 +1557,7 @@ static int unlink_removed_files(struct augeas *aug,
             if (pathx_parse(tm, err_of_aug(aug), file_nodes, true,
                             aug->symtab, NULL, &px) != PATHX_NOERROR) {
                 result = -1;
+                free_pathx(px);
                 continue;
             }
             for (struct tree *t = pathx_first(px);
