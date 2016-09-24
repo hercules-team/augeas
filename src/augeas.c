@@ -2013,7 +2013,7 @@ int aug_escape_name(augeas *aug, const char *in, char **out) {
 }
 
 int aug_load_file(struct augeas *aug, const char *file) {
-    int result = -1;
+    int result = -1, r;
     struct tree *meta = tree_child_cr(aug->origin, s_augeas);
     struct tree *load = tree_child_cr(meta, s_load);
     char *tree_path = NULL;
@@ -2036,7 +2036,9 @@ int aug_load_file(struct augeas *aug, const char *file) {
 
     /* Mark the nodes we just loaded as clean so they won't get saved
        without additional modifications */
-    xasprintf(&tree_path, "/files/%s", file);
+    r = xasprintf(&tree_path, "/files/%s", file);
+    ERR_NOMEM(r < 0, aug);
+
     struct tree *t = tree_fpath(aug, tree_path);
     if (t != NULL) {
         tree_clean(t);
