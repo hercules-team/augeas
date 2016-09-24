@@ -563,7 +563,6 @@ static value_ind_t make_value(enum type tag, struct state *state) {
     return state->value_pool_used++;
 }
 
-ATTRIBUTE_UNUSED
 static value_ind_t clone_value(struct value *v, struct state *state) {
     value_ind_t vind = make_value(v->tag, state);
     RET0_ON_ERROR;
@@ -579,7 +578,6 @@ static value_ind_t clone_value(struct value *v, struct state *state) {
     case T_STRING:
         clone->string = strdup(v->string);
         if (clone->string == NULL) {
-            FREE(clone);
             STATE_ENOMEM;
         }
         break;
