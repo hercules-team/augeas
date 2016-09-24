@@ -1372,11 +1372,6 @@ int remove_file(struct augeas *aug, struct tree *tree) {
     file_path = path->value + strlen(AUGEAS_FILES_TREE);
     path = NULL;
 
-    if (file_path == NULL) {
-        err_status = "no path for file";
-        goto error;
-    }
-
     meta_path = path_of_tree(tree);
     if (meta_path == NULL) {
         err_status = "path_of_tree";
