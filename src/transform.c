@@ -1295,7 +1295,6 @@ int text_retrieve(struct augeas *aug, const char *lens_name,
     struct memstream ms;
     bool ms_open = false;
     const char *err_status = NULL;
-    char *dyn_err_status = NULL;
     struct lns_error *err = NULL;
     struct lens *lens = NULL;
     int result = -1, r;
@@ -1337,12 +1336,7 @@ int text_retrieve(struct augeas *aug, const char *lens_name,
     result = 0;
 
  done:
-    {
-        const char *emsg =
-            dyn_err_status == NULL ? err_status : dyn_err_status;
-        store_error(aug, NULL, path, emsg, errno, err, text_in);
-    }
-    free(dyn_err_status);
+    store_error(aug, NULL, path, err_status, errno, err, text_in);
     lens_release(lens);
     if (result < 0) {
         free(*text_out);
