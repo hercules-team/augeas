@@ -356,14 +356,6 @@ static const struct func builtin_funcs[] = {
 
 #define STATE_ENOMEM STATE_ERROR(state, PATHX_ENOMEM)
 
-#define ENOMEM_ON_NULL(state, v)                                        \
-    do {                                                                \
-        if (v == NULL) {                                                \
-            STATE_ERROR(state, PATHX_ENOMEM);                           \
-            return NULL;                                                \
-        }                                                               \
-    } while (0);
-
 /*
  * Free the various data structures
  */
@@ -1913,7 +1905,10 @@ parse_relative_location_path(struct state *state) {
         if (*state->pos == '/') {
             state->pos += 1;
             step = make_step(DESCENDANT_OR_SELF, state);
-            ENOMEM_ON_NULL(state, step);
+            if (step == NULL) {
+                STATE_ENOMEM;
+                goto error;
+            }
             list_append(locpath->steps, step);
         }
         step = parse_step(state);
