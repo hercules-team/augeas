@@ -354,9 +354,7 @@ char *path_expand(struct tree *tree, const char *ppath) {
     if (ppath == NULL)
         ppath = "";
 
-    if (tree == NULL)
-        label = "(no_tree)";
-    else if (tree->label == NULL)
+    if (tree->label == NULL)
         label = "(none)";
     else
         label = tree->label;
