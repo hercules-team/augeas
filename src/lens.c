@@ -2109,7 +2109,7 @@ static struct value *typecheck_n(struct lens *l,
     acc = ref(l->children[0]);
     for (int i=1; i < l->nchildren; i++) {
         struct info *info = merge_info(acc->info, l->children[i]->info);
-        ERR_BAIL(acc->info);
+        ERR_NOMEM(info == NULL, acc->info);
         exn = (*make)(info, acc, ref(l->children[i]), check);
         if (EXN(exn))
             goto error;
