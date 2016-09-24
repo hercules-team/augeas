@@ -1250,8 +1250,10 @@ static void ns_from_locpath(struct locpath *lp, uint *maxns,
                             const struct nodeset *root,
                             struct state *state) {
     struct tree *old_ctx = state->ctx;
-
     *maxns = 0;
+
+    ensure(lp != NULL, state);
+
     *ns = NULL;
     list_for_each(step, lp->steps)
         *maxns += 1;
@@ -1267,8 +1269,7 @@ static void ns_from_locpath(struct locpath *lp, uint *maxns,
 
     if (root == NULL) {
         struct step *first_step = NULL;
-        if (lp != NULL)
-            first_step = lp->steps;
+        first_step = lp->steps;
 
         struct tree *root_tree;
         root_tree = step_root(first_step, state->ctx, state->root_ctx);
