@@ -119,6 +119,25 @@ struct rec_state {
 #define REG_MATCHED(state) (REG_VALID(state)                            \
                             && (state)->regs->start[(state)->nreg] >= 0)
 
+/* The macros SAVE_REGS and RESTORE_REGS are used to remember and restore
+ * where our caller was in processing their regexp match before we do
+ * matching ourselves (and would therefore clobber the caller's state)
+ *
+ * These two macros are admittedly horrible in that they declare local
+ * variables called OLD_REGS and OLD_NREG. The alternative to avoiding that
+ * would be to manually manage a stack of regs/nreg in STATE.
+ */
+#define SAVE_REGS(state)                                                \
+    struct re_registers *old_regs = state->regs;                        \
+    uint old_nreg = state->nreg;                                        \
+    state->regs = NULL;                                                 \
+    state->nreg = 0
+
+#define RESTORE_REGS(state)                                             \
+    free_regs(state);                                                   \
+    state->regs = old_regs;                                             \
+    state->nreg = old_nreg;
+
 /*
  * AST utils
  */
@@ -777,13 +796,11 @@ static struct tree *get_quant_star(struct lens *lens, struct state *state) {
     ensure0(lens->tag == L_STAR, state->info);
     struct lens *child = lens->child;
     struct tree *tree = NULL, *tail = NULL;
-    struct re_registers *old_regs = state->regs;
-    uint old_nreg = state->nreg;
     uint end = REG_END(state);
     uint start = REG_START(state);
     uint size = end - start;
 
-    state->regs = NULL;
+    SAVE_REGS(state);
     while (size > 0 && match(state, child, child->ctype, end, start) > 0) {
         struct tree *t = NULL;
 
@@ -794,9 +811,7 @@ static struct tree *get_quant_star(struct lens *lens, struct state *state) {
         size -= REG_SIZE(state);
         free_regs(state);
     }
-    free_regs(state);
-    state->regs = old_regs;
-    state->nreg = old_nreg;
+    RESTORE_REGS(state);
     if (size != 0) {
         short_iteration_error(lens, state, start, end);
     }
@@ -808,14 +823,12 @@ static struct skel *parse_quant_star(struct lens *lens, struct state *state,
     ensure0(lens->tag == L_STAR, state->info);
     struct lens *child = lens->child;
     struct skel *skel = make_skel(lens), *tail = NULL;
-    struct re_registers *old_regs = state->regs;
-    uint old_nreg = state->nreg;
     uint end = REG_END(state);
     uint start = REG_START(state);
     uint size = end - start;
 
     *dict = NULL;
-    state->regs = NULL;
+    SAVE_REGS(state);
     while (size > 0 && match(state, child, child->ctype, end, start) > 0) {
         struct skel *sk;
         struct dict *di = NULL;
@@ -828,9 +841,7 @@ static struct skel *parse_quant_star(struct lens *lens, struct state *state,
         size -= REG_SIZE(state);
         free_regs(state);
     }
-    free_regs(state);
-    state->regs = old_regs;
-    state->nreg = old_nreg;
+    RESTORE_REGS(state);
     if (size != 0) {
         get_error(state, lens, "%s", short_iteration);
     }
@@ -947,13 +958,12 @@ static struct tree *get_square(struct lens *lens, struct state *state) {
 
     struct lens *concat = lens->child;
     struct tree *tree = NULL;
-    struct re_registers *old_regs = state->regs;
-    uint old_nreg = state->nreg;
     uint end = REG_END(state);
     uint start = REG_START(state);
     char *rsqr = NULL, *lsqr = NULL;
     int r;
 
+    SAVE_REGS(state);
     r = match(state, lens->child, lens->child->ctype, end, start);
     ERR_NOMEM(r < 0, state->info);
 
@@ -982,9 +992,7 @@ static struct tree *get_square(struct lens *lens, struct state *state) {
     }
 
  done:
-    free_regs(state);
-    state->nreg = old_nreg;
-    state->regs = old_regs;
+    RESTORE_REGS(state);
     FREE(lsqr);
     FREE(rsqr);
     return tree;
@@ -998,13 +1006,12 @@ static struct tree *get_square(struct lens *lens, struct state *state) {
 static struct skel *parse_square(struct lens *lens, struct state *state,
                                  struct dict **dict) {
     ensure0(lens->tag == L_SQUARE, state->info);
-    struct re_registers *old_regs = state->regs;
-    uint old_nreg = state->nreg;
     uint end = REG_END(state);
     uint start = REG_START(state);
     struct skel *skel = NULL, *sk = NULL;
     int r;
 
+    SAVE_REGS(state);
     r = match(state, lens->child, lens->child->ctype, end, start);
     ERR_NOMEM(r < 0, state->info);
 
@@ -1015,9 +1022,7 @@ static struct skel *parse_square(struct lens *lens, struct state *state,
     sk->skels = skel;
 
  error:
-    free_regs(state);
-    state->regs = old_regs;
-    state->nreg = old_nreg;
+    RESTORE_REGS(state);
     return sk;
 }
 
@@ -1117,13 +1122,12 @@ static void visit_terminal(struct lens *lens, size_t start, size_t end,
                            void *data) {
     struct rec_state *rec_state = data;
     struct state *state = rec_state->state;
-    struct re_registers *old_regs = state->regs;
     struct ast *child;
-    uint old_nreg = state->nreg;
 
     if (state->error != NULL)
         return;
 
+    SAVE_REGS(state);
     if (debugging("cf.get"))
         dbg_visit(lens, 'T', start, end, rec_state->fused, rec_state->lvl);
     match(state, lens, lens->ctype, end, start);
@@ -1135,9 +1139,7 @@ static void visit_terminal(struct lens *lens, size_t start, size_t end,
     child = ast_append(rec_state, lens, start, end);
     ERR_NOMEM(child == NULL, state->info);
  error:
-    free_regs(state);
-    state->regs = old_regs;
-    state->nreg = old_nreg;
+    RESTORE_REGS(state);
 }
 
 static bool rec_gen_span(struct rec_state *rec_state) {
@@ -1380,8 +1382,6 @@ static struct frame *rec_process(enum mode_t mode, struct lens *lens,
     uint end = REG_END(state);
     uint start = REG_START(state);
     size_t len = 0;
-    struct re_registers *old_regs = state->regs;
-    uint old_nreg = state->nreg;
     int r;
     struct jmt_visitor visitor;
     struct rec_state rec_state;
@@ -1390,14 +1390,12 @@ static struct frame *rec_process(enum mode_t mode, struct lens *lens,
 
     MEMZERO(&rec_state, 1);
     MEMZERO(&visitor, 1);
+    SAVE_REGS(state);
 
     if (lens->jmt == NULL) {
         lens->jmt = jmt_build(lens);
         ERR_BAIL(lens->info);
     }
-
-    state->regs = NULL;
-    state->nreg = 0;
 
     rec_state.mode  = mode;
     rec_state.state = state;
@@ -1435,8 +1433,7 @@ static struct frame *rec_process(enum mode_t mode, struct lens *lens,
  done:
     if (debugging("cf.get.ast"))
         print_ast(ast_root(rec_state.ast), 0);
-    state->regs = old_regs;
-    state->nreg = old_nreg;
+    RESTORE_REGS(state);
     jmt_free_parse(visitor.parse);
     free_ast(ast_root(rec_state.ast));
     return rec_state.frames;
