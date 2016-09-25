@@ -163,7 +163,7 @@ struct skel {
     enum lens_tag tag;
     union {
         char        *text;    /* L_DEL */
-        struct skel *skels;   /* L_CONCAT, L_STAR */
+        struct skel *skels;   /* L_CONCAT, L_STAR, L_SQUARE */
     };
     /* Also tag == L_SUBTREE, with no data in the union */
 };
