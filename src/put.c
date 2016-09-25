@@ -410,10 +410,7 @@ static int skel_instance_of(struct lens *lens, struct skel *skel) {
     case L_MAYBE:
         return skel->tag == L_MAYBE || skel_instance_of(lens->child, skel);
     case L_STAR:
-        if (skel->tag != lens->tag)
-            return 0;
-        if (lens->tag == L_MAYBE &&
-            skel->skels != NULL && skel->skels->next != NULL)
+        if (skel->tag != L_STAR)
             return 0;
         list_for_each(s, skel->skels) {
             if (! skel_instance_of(lens->child, s))
