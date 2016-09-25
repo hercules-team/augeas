@@ -385,6 +385,8 @@ static int skel_instance_of(struct lens *lens, struct skel *skel) {
         return skel->tag == L_COUNTER;
     case L_CONCAT:
         {
+            if (skel->tag != L_CONCAT)
+                return 0;
             struct skel *s = skel->skels;
             for (int i=0; i < lens->nchildren; i++) {
                 if (! skel_instance_of(lens->children[i], s))
