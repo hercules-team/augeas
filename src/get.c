@@ -1140,6 +1140,11 @@ static void visit_terminal(struct lens *lens, size_t start, size_t end,
     state->nreg = old_nreg;
 }
 
+static bool rec_gen_span(struct rec_state *rec_state) {
+    return ((rec_state->mode == M_GET)
+            && (rec_state->state->info->flags & AUG_ENABLE_SPAN));
+}
+
 static void visit_enter(struct lens *lens,
                         ATTRIBUTE_UNUSED size_t start,
                         ATTRIBUTE_UNUSED size_t end,
@@ -1159,12 +1164,17 @@ static void visit_enter(struct lens *lens,
         struct frame *f = push_frame(rec_state, lens);
         f->key = state->key;
         f->value = state->value;
-        f->span = state->span;
         state->key = NULL;
         state->value = NULL;
+        if (rec_gen_span(rec_state)) {
+            f->span = state->span;
+            state->span = make_span(state->info);
+            ERR_NOMEM(state->span == NULL, state->info);
+        }
     } else if (lens->tag == L_MAYBE) {
-        push_frame(rec_state, lens);
-        if (state->info->flags & AUG_ENABLE_SPAN) {
+        struct frame *f = push_frame(rec_state, lens);
+        if (rec_gen_span(rec_state)) {
+            f->span = state->span;
             state->span = make_span(state->info);
             ERR_NOMEM(state->span == NULL, state->info);
         }
@@ -1266,7 +1276,9 @@ static void visit_exit(struct lens *lens,
             state->key = top->key;
             state->value = top->value;
             state->span = top->span;
-            pop_frame(rec_state);
+            top = pop_frame(rec_state);
+            if (top != NULL)
+                free_span(top->span);
             top = push_frame(rec_state, lens);
             top->tree = tree;
         } else {

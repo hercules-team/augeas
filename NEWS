@@ -1,3 +1,8 @@
+1.7.0 - ???
+  - General changes/additions
+    * fix a use-after-free in recursive lenses when spans are
+      enabled (Issue #397)
+
 1.6.0 - 2016-08-05
   - General changes/additions
     * augtool: add --load-file option, and corresponding load-file command
