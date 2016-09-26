@@ -830,8 +830,10 @@ int transform_load(struct augeas *aug, struct tree *xfm, const char *file) {
         const char *filename = matches[i] + strlen(aug->root) - 1;
         struct tree *finfo = file_info(aug, filename);
 
-        if (file != NULL && STRNEQ(filename, file))
-          continue;
+        if (file != NULL && STRNEQ(filename, file)) {
+            FREE(matches[i]);
+            continue;
+        }
 
         if (finfo != NULL && !finfo->dirty &&
             tree_child(finfo, s_lens) != NULL) {
