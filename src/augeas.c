@@ -1696,8 +1696,10 @@ int dump_tree(FILE *out, struct tree *tree) {
     struct pathx *p;
     int result;
 
-    if (pathx_parse(tree, NULL, "/*", true, NULL, NULL, &p) != PATHX_NOERROR)
+    if (pathx_parse(tree, NULL, "/*", true, NULL, NULL, &p) != PATHX_NOERROR) {
+        free_pathx(p);
         return -1;
+    }
 
     result = print_tree(out, p, 1);
     free_pathx(p);
