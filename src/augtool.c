@@ -720,6 +720,7 @@ int main(int argc, char **argv) {
     if (history_file != NULL)
         write_history(history_file);
 
+    aug_close(aug);
     return r == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
