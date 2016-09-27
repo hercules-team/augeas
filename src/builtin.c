@@ -149,14 +149,13 @@ static void exn_print_tree(struct value *exn, struct tree *tree) {
 static struct value *make_pathx_exn(struct info *info, struct pathx *p) {
     struct value *v;
     char *msg;
-    const char *txt;
+    const char *txt, *px_err;
     int pos;
 
-    msg = strdup(pathx_error(p, &txt, &pos));
-    if (msg == NULL)
-        return NULL;
+    px_err = pathx_error(p, &txt, &pos);
+    v = make_exn_value(ref(info), "syntax error in path expression: %s",
+                       px_err);
 
-    v = make_exn_value(ref(info), "syntax error in path expression: %s", msg);
     if (ALLOC_N(msg, strlen(txt) + 4) >= 0) {
         strncpy(msg, txt, pos);
         strcat(msg, "|=|");
