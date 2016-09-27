@@ -1895,8 +1895,7 @@ int define_native_intl(const char *file, int line,
     v = NULL;
 
     func = build_func(params, body);
-    if (func == NULL)
-        goto error;
+    params = NULL;
     body = NULL;
 
     ctx.aug = NULL;
@@ -1920,6 +1919,9 @@ int define_native_intl(const char *file, int line,
     module->bindings = ctx.local;
     return 0;
  error:
+    list_for_each(p, params) {
+        unref(p, term);
+    }
     unref(v, value);
     unref(body, term);
     unref(func, term);
