@@ -1311,8 +1311,10 @@ static int determinize(struct fa *fa, struct state_set *ini) {
     E(points == NULL);
     if (make_ini) {
         ini = state_set_init(-1, S_NONE);
-        if (ini == NULL || state_set_push(ini, fa->initial) < 0)
+        if (ini == NULL || state_set_push(ini, fa->initial) < 0) {
+            state_set_free(ini);
             goto error;
+        }
     }
 
     F(state_set_list_add(&worklist, ini));
