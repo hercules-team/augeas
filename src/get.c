@@ -1041,7 +1041,11 @@ static void print_frames(struct rec_state *state) {
         } else {
             fprintf(stderr, " { %s = %s } ", f->tree->label, f->tree->value);
         }
-        fprintf(stderr, "%s\n", format_lens(f->lens));
+        char *s = format_lens(f->lens);
+        if (s != NULL) {
+            fprintf(stderr, "%s\n", s);
+            free(s);
+        }
     }
 }
 
