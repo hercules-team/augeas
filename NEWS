@@ -2,6 +2,9 @@
   - General changes/additions
     * fix a use-after-free in recursive lenses when spans are
       enabled (Issue #397)
+    * fix an illegal memory access during put that can be triggered by a
+      lens of the form 'del ... | l1 . l2' when the put has to jump
+      branches in the union (Issue #398)
 
 1.6.0 - 2016-08-05
   - General changes/additions
