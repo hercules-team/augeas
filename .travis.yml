@@ -9,4 +9,4 @@ notifications:
   irc:
     channels:
       - "irc.freenode.org#augeas"
-script: ./configure --enable-deubg=yes && make && make check && ./src/try valgrind
+script: ./configure --enable-debug=yes && make && make check && ./src/try valgrind
