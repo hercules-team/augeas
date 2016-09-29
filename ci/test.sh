@@ -19,8 +19,20 @@ make -j 2
 end_fold_marker 'compilation'
 
 start_fold_marker 'test'
-make check -j 2 || exit_status=$1 && echo gnulib/tests/test-suite.log && exit $exit_status
+set +e
+make check -j 2
+exit_status=$1
 end_fold_marker 'test'
+
+if [[ $exit_status -ne 0 ]];
+then
+start_fold_marker 'error'
+cat gnulib/tests/test-suite.log
+end_fold_marker 'error'
+exit $exit_status
+fi
+
+set -e
 
 start_fold_marker 'test.lenses'
 ./src/try valgrind
