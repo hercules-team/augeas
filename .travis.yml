@@ -1,21 +1,7 @@
 sudo: true
 dist: trusty
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - gcc-6
-      - libxml2-dev
-      - libreadline-dev
-      - valgrind
 install:
-  - sudo add-apt-repository ppa:jonathonf/binutils -y && sudo add-apt-repository ppa:ondrej/autotools -y
-  - sudo apt-get update
-  - sudo apt-get install --only-upgrade libtool automake autoconf autogen binutils -y
-  - sudo apt-get install libselinux1-dev
-  - ./autogen.sh || exit_status=$? && echo "travis_fold:start:install.configlog" && echo "An error occured while running autogen. Exit status is $exit_status." && cat config.log && echo "travis_fold:end:install.configlog" && exit 1
-  - sed -i '41s/ENOENT/ENOENT || errno == EINVAL/' gnulib/tests/test-readlink.h
+  - ./ci/install.sh
 language: c
 compiler: gcc-6
 notifications:
