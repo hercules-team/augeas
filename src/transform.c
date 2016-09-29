@@ -774,6 +774,7 @@ void transform_file_error(struct augeas *aug, const char *status,
     int r;
 
     err = tree_fpath_cr(aug, ep);
+    FREE(ep);
     if (err == NULL)
         return;
 
