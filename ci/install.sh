@@ -15,7 +15,7 @@ sudo add-apt-repository ppa:jonathonf/binutils -y &&\
 
 sudo apt-get update
 sudo apt-get install --only-upgrade automake autoconf binutils -y
-sudo apt-get install libselinux1-dev gcc-6 libxml2-dev libreadline-dev valgrind
+sudo apt-get install libselinux1-dev gcc-6 libxml2-dev libreadline-dev valgrind -y
 end_fold_marker 'dependencies'
 
 start_fold_marker 'autogen'
