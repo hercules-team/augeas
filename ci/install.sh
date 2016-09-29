@@ -11,7 +11,7 @@ end_fold_marker() {
 start_fold_marker 'dependencies'
 sudo add-apt-repository ppa:jonathonf/binutils -y &&\
   sudo add-apt-repository ppa:ondrej/autotools -y &&\
-  sudo add-apt-repository ppa:ubuntu-toolchain-r-test -y
+  sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
 
 sudo apt-get update
 sudo apt-get install --only-upgrade automake autoconf binutils -y
@@ -19,7 +19,7 @@ sudo apt-get install libselinux1-dev gcc-6 libxml2-dev libreadline-dev valgrind
 end_fold_marker 'dependencies'
 
 start_fold_marker 'autogen'
-../autogen.sh
+./autogen.sh
 exit_status=$?
 end_fold_marker 'autogen'
 
