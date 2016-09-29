@@ -1,15 +1,15 @@
-sudo: false
+sudo: true
 addons:
   apt:
     sources:
       - ubuntu-toolchain-r-test
     packages:
-      - ld
       - gcc-6
       - libxml2-dev
       - libreadline-dev
       - valgrind
 install:
+  - sudo apt-get install --only-upgrade ld -y
   - ./autogen.sh || cat config.log && exit 1
   - sed -i '41s/ENOENT/ENOENT || errno == EINVAL/' gnulib/tests/test-readlink.h
 language: c
