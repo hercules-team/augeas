@@ -61,6 +61,7 @@ AC_ARG_ENABLE([debug],
                              [enable debugging output])],[],[enable_debug=yes])
 AM_CONDITIONAL([ENABLE_DEBUG], test x"$enable_debug" = x"yes")
 if test x"$enable_debug" = x"yes"; then
+   CFLAGS="${CFLAGS} -O0 -g3 -fsanitize=address -fno-omit-frame-pointer"
    AC_DEFINE([ENABLE_DEBUG], [1], [whether debugging is enabled])
 fi
 
