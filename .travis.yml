@@ -4,8 +4,7 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
     packages:
-    packages:
-      - binutils
+      - ld
       - gcc-6
       - libxml2-dev
       - libreadline-dev
