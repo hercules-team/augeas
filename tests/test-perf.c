@@ -98,7 +98,9 @@ int main(void) {
     CuSuiteDetails(suite, &output);
     printf("%s\n", output);
     free(output);
-    return suite->failCount;
+    int result = suite->failCount;
+    CuSuiteFree(suite);
+    return result;
 }
 
 /*

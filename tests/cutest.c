@@ -316,6 +316,15 @@ void CuSuiteDetails(CuSuite* testSuite, char **details) {
 	}
 }
 
+void CuSuiteFree(CuSuite *suite) {
+    for (int i=0; i < suite->count; i++) {
+        CuTest *test = suite->list[i];
+        free(test->name);
+        free(test->message);
+        free(test);
+    }
+    free(suite);
+}
 /*
  * Test utilities
  */
