@@ -21,7 +21,7 @@ end_fold_marker 'compilation'
 start_fold_marker 'test'
 set +e
 make check -j 2
-exit_status=$1
+exit_status=$?
 end_fold_marker 'test'
 
 if [[ $exit_status -ne 0 ]];
