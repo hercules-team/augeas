@@ -5,14 +5,16 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
     packages:
+      - binutils
       - gcc-6
       - libxml2-dev
       - libreadline-dev
       - valgrind
 install:
-  - ./autogen.sh CC='gcc-6' || cat config.log && exit 1
+  - ./autogen.sh || cat config.log && exit 1
   - sed -i '41s/ENOENT/ENOENT || errno == EINVAL/' gnulib/tests/test-readlink.h
 language: c
+compiler: gcc-6
 notifications:
   email: false
   irc:
