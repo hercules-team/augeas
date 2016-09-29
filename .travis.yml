@@ -1,17 +1,13 @@
-sudo: false
-addons:
-  apt:
-    packages:
-      - libxml2-dev
-      - libreadline-dev
-      - valgrind
+sudo: true
+dist: trusty
+cache: ccache
 install:
-  - ./autogen.sh
-  - sed -i '41s/ENOENT/ENOENT || errno == EINVAL/' gnulib/tests/test-readlink.h
+  - ./ci/install.sh
 language: c
+compiler: gcc-6
 notifications:
   email: false
   irc:
     channels:
       - "irc.freenode.org#augeas"
-script: ./configure --enable-deubg=yes && make && make check && ./src/try valgrind
+script: ./ci/test.sh
