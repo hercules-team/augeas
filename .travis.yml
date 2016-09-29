@@ -10,7 +10,7 @@ addons:
       - libreadline-dev
       - valgrind
 install:
-  - ./autogen.sh || cat config.log && exit 1
+  - ./autogen.sh CC='gcc-6' || cat config.log && exit 1
   - sed -i '41s/ENOENT/ENOENT || errno == EINVAL/' gnulib/tests/test-readlink.h
 language: c
 notifications:
