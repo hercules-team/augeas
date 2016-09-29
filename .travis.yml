@@ -10,6 +10,8 @@ addons:
       - libreadline-dev
       - valgrind
 install:
+  - sudo add-apt-repository ppa:jonathonf/binutils -y
+  - sudo apt-get update
   - sudo apt-get install --only-upgrade binutils -y
   - ./autogen.sh || cat config.log && exit 1
   - sed -i '41s/ENOENT/ENOENT || errno == EINVAL/' gnulib/tests/test-readlink.h
