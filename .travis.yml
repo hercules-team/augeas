@@ -13,6 +13,7 @@ install:
   - sudo add-apt-repository ppa:jonathonf/binutils -y
   - sudo apt-get update
   - sudo apt-get install --only-upgrade binutils -y
+  - sudo apt-get install libselinux1-dev
   - ./autogen.sh || printf "An error occured while running autogen. Exit status is $?." && cat config.log && exit 1
   - sed -i '41s/ENOENT/ENOENT || errno == EINVAL/' gnulib/tests/test-readlink.h
 language: c
