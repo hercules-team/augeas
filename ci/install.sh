@@ -27,7 +27,7 @@ if [[ $exit_status -ne 0 ]];
 then
   start_fold_marker 'error'
   echo "An error occured while running autogen. Exit status is $exit_status."
-  cat ../config.log
+  cat config.log
   end_fold_marker 'error'
   exit $exit_status
 fi
