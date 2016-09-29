@@ -1,7 +1,11 @@
 sudo: false
 addons:
   apt:
+    sources:
+      - ubuntu-toolchain-r-test
     packages:
+    packages:
+      - gcc-6
       - libxml2-dev
       - libreadline-dev
       - valgrind
