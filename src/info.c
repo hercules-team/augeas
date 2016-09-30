@@ -63,6 +63,11 @@ char *format_info(struct info *info) {
     const char *fname;
     char *result = NULL;
     int r = 0;
+
+    if (info == NULL) {
+        return strdup("(no file info)");
+    }
+
     int fl = info->first_line, ll = info->last_line;
     int fc = info->first_column, lc = info->last_column;
     fname = (info->filename != NULL) ? info->filename->str : "(unknown file)";

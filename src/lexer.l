@@ -56,12 +56,11 @@ static void loc_update(YYLTYPE *yylloc, const char *s, int len) {
 
 static char *regexp_literal(const char *s, int len) {
   char *u = unescape(s, len, RX_ESCAPES);
-  size_t u_len = strlen(u);
 
   if (u == NULL)
     return NULL;
 
-  regexp_c_locale(&u, &u_len);
+  regexp_c_locale(&u, strlen(u));
 
   return u;
 }

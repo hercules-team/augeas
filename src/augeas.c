@@ -910,7 +910,7 @@ int aug_defvar(augeas *aug, const char *name, const char *expr) {
 
 int aug_defnode(augeas *aug, const char *name, const char *expr,
                 const char *value, int *created) {
-    struct pathx *p;
+    struct pathx *p = NULL;
     int result = -1;
     int r, cr;
     struct tree *tree;
@@ -951,12 +951,10 @@ int aug_defnode(augeas *aug, const char *name, const char *expr,
     }
 
  done:
+ error:
     free_pathx(p);
     api_exit(aug);
     return result;
- error:
-    api_exit(aug);
-    return -1;
 }
 
 struct tree *tree_set(struct pathx *p, const char *value) {
@@ -974,8 +972,8 @@ struct tree *tree_set(struct pathx *p, const char *value) {
 }
 
 int aug_set(struct augeas *aug, const char *path, const char *value) {
-    struct pathx *p;
-    int result;
+    struct pathx *p = NULL;
+    int result = -1;
 
     api_entry(aug);
 
@@ -988,13 +986,10 @@ int aug_set(struct augeas *aug, const char *path, const char *value) {
     ERR_BAIL(aug);
 
     result = tree_set(p, value) == NULL ? -1 : 0;
+ error:
     free_pathx(p);
-
     api_exit(aug);
     return result;
- error:
-    api_exit(aug);
-    return -1;
 }
 
 int aug_setm(struct augeas *aug, const char *base,
@@ -1044,6 +1039,8 @@ int aug_setm(struct augeas *aug, const char *base,
     }
 
  done:
+    free_pathx(bx);
+    free_pathx(sx);
     api_exit(aug);
     return result;
  error:
@@ -1193,7 +1190,7 @@ int tree_rm(struct pathx *p) {
 
 int aug_rm(struct augeas *aug, const char *path) {
     struct pathx *p = NULL;
-    int result;
+    int result = -1;
 
     api_entry(aug);
 
@@ -1201,14 +1198,11 @@ int aug_rm(struct augeas *aug, const char *path) {
     ERR_BAIL(aug);
 
     result = tree_rm(p);
-    free_pathx(p);
-    ERR_BAIL(aug);
 
+ error:
+    free_pathx(p);
     api_exit(aug);
     return result;
- error:
-    api_exit(aug);
-    return -1;
 }
 
 int aug_span(struct augeas *aug, const char *path, char **filename,
@@ -1563,6 +1557,7 @@ static int unlink_removed_files(struct augeas *aug,
             if (pathx_parse(tm, err_of_aug(aug), file_nodes, true,
                             aug->symtab, NULL, &px) != PATHX_NOERROR) {
                 result = -1;
+                free_pathx(px);
                 continue;
             }
             for (struct tree *t = pathx_first(px);
@@ -1701,8 +1696,10 @@ int dump_tree(FILE *out, struct tree *tree) {
     struct pathx *p;
     int result;
 
-    if (pathx_parse(tree, NULL, "/*", true, NULL, NULL, &p) != PATHX_NOERROR)
+    if (pathx_parse(tree, NULL, "/*", true, NULL, NULL, &p) != PATHX_NOERROR) {
+        free_pathx(p);
         return -1;
+    }
 
     result = print_tree(out, p, 1);
     free_pathx(p);
@@ -1861,8 +1858,8 @@ int aug_text_store(augeas *aug, const char *lens, const char *node,
 
     /* Validate PATH is syntactically correct */
     p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), path, true);
-    ERR_BAIL(aug);
     free_pathx(p);
+    ERR_BAIL(aug);
 
     r = aug_get(aug, node, &src);
     ERR_BAIL(aug);
@@ -1917,13 +1914,15 @@ int aug_text_retrieve(struct augeas *aug, const char *lens,
 
 int aug_to_xml(const struct augeas *aug, const char *pathin,
                xmlNode **xmldoc, unsigned int flags) {
-    struct pathx *p;
-    int result;
+    struct pathx *p = NULL;
+    int result = -1;
 
     api_entry(aug);
 
     ARG_CHECK(flags != 0, aug, "aug_to_xml: FLAGS must be 0");
     ARG_CHECK(xmldoc == NULL, aug, "aug_to_xml: XMLDOC must be non-NULL");
+
+    *xmldoc = NULL;
 
     if (pathin == NULL || strlen(pathin) == 0 || strcmp(pathin, "/") == 0) {
         pathin = "/*";
@@ -1933,15 +1932,11 @@ int aug_to_xml(const struct augeas *aug, const char *pathin,
     ERR_BAIL(aug);
     result = tree_to_xml(p, xmldoc, pathin);
     ERR_THROW(result < 0, aug, AUG_ENOMEM, NULL);
+error:
     free_pathx(p);
     api_exit(aug);
 
     return result;
- error:
-    if (xmldoc !=NULL)
-        *xmldoc = NULL;
-    api_exit(aug);
-    return -1;
 }
 
 int aug_transform(struct augeas *aug, const char *lens,
@@ -2021,7 +2016,7 @@ int aug_escape_name(augeas *aug, const char *in, char **out) {
 }
 
 int aug_load_file(struct augeas *aug, const char *file) {
-    int result = -1;
+    int result = -1, r;
     struct tree *meta = tree_child_cr(aug->origin, s_augeas);
     struct tree *load = tree_child_cr(meta, s_load);
     char *tree_path = NULL;
@@ -2044,7 +2039,9 @@ int aug_load_file(struct augeas *aug, const char *file) {
 
     /* Mark the nodes we just loaded as clean so they won't get saved
        without additional modifications */
-    xasprintf(&tree_path, "/files/%s", file);
+    r = xasprintf(&tree_path, "/files/%s", file);
+    ERR_NOMEM(r < 0, aug);
+
     struct tree *t = tree_fpath(aug, tree_path);
     if (t != NULL) {
         tree_clean(t);
@@ -2059,7 +2056,7 @@ error:
 
 int aug_print(const struct augeas *aug, FILE *out, const char *pathin) {
     struct pathx *p;
-    int result;
+    int result = -1;
 
     api_entry(aug);
 
@@ -2071,13 +2068,10 @@ int aug_print(const struct augeas *aug, FILE *out, const char *pathin) {
     ERR_BAIL(aug);
 
     result = print_tree(out, p, 0);
+ error:
     free_pathx(p);
-
     api_exit(aug);
     return result;
- error:
-    api_exit(aug);
-    return -1;
 }
 
 void aug_close(struct augeas *aug) {

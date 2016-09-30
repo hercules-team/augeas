@@ -356,14 +356,6 @@ static const struct func builtin_funcs[] = {
 
 #define STATE_ENOMEM STATE_ERROR(state, PATHX_ENOMEM)
 
-#define ENOMEM_ON_NULL(state, v)                                        \
-    do {                                                                \
-        if (v == NULL) {                                                \
-            STATE_ERROR(state, PATHX_ENOMEM);                           \
-            return NULL;                                                \
-        }                                                               \
-    } while (0);
-
 /*
  * Free the various data structures
  */
@@ -563,7 +555,6 @@ static value_ind_t make_value(enum type tag, struct state *state) {
     return state->value_pool_used++;
 }
 
-ATTRIBUTE_UNUSED
 static value_ind_t clone_value(struct value *v, struct state *state) {
     value_ind_t vind = make_value(v->tag, state);
     RET0_ON_ERROR;
@@ -579,7 +570,6 @@ static value_ind_t clone_value(struct value *v, struct state *state) {
     case T_STRING:
         clone->string = strdup(v->string);
         if (clone->string == NULL) {
-            FREE(clone);
             STATE_ENOMEM;
         }
         break;
@@ -1260,8 +1250,10 @@ static void ns_from_locpath(struct locpath *lp, uint *maxns,
                             const struct nodeset *root,
                             struct state *state) {
     struct tree *old_ctx = state->ctx;
-
     *maxns = 0;
+
+    ensure(lp != NULL, state);
+
     *ns = NULL;
     list_for_each(step, lp->steps)
         *maxns += 1;
@@ -1277,8 +1269,7 @@ static void ns_from_locpath(struct locpath *lp, uint *maxns,
 
     if (root == NULL) {
         struct step *first_step = NULL;
-        if (lp != NULL)
-            first_step = lp->steps;
+        first_step = lp->steps;
 
         struct tree *root_tree;
         root_tree = step_root(first_step, state->ctx, state->root_ctx);
@@ -1915,7 +1906,10 @@ parse_relative_location_path(struct state *state) {
         if (*state->pos == '/') {
             state->pos += 1;
             step = make_step(DESCENDANT_OR_SELF, state);
-            ENOMEM_ON_NULL(state, step);
+            if (step == NULL) {
+                STATE_ENOMEM;
+                goto error;
+            }
             list_append(locpath->steps, step);
         }
         step = parse_step(state);
