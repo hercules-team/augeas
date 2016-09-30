@@ -28,6 +28,7 @@ if [[ $exit_status -ne 0 ]];
 then
 start_fold_marker 'error'
 cat gnulib/tests/test-suite.log
+cat tests/test-suite.log
 end_fold_marker 'error'
 exit $exit_status
 fi
