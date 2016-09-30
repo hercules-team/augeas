@@ -1489,6 +1489,7 @@ int aug_srun(augeas *aug, FILE *out, const char *text) {
         text = (*eol == '\0') ? eol : eol + 1;
     }
  done:
+    free_command_opts(&cmd);
     FREE(line);
 
     api_exit(aug);
