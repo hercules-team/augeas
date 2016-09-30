@@ -168,11 +168,19 @@
 #endif
 #endif
 
+/* A poor man's macro to get some move semantics: return the value of P but
+   set P itself to NULL. This has the effect that if you say 'x = move(y)'
+   that there is still only one pointer pointing to the memory Y pointed to
+   initially.
+ */
+#define move(p) ({ typeof(p) _tmp = (p); (p) = NULL; _tmp; })
+
 #else
 #define ATTRIBUTE_UNUSED
 #define ATTRIBUTE_FORMAT(...)
 #define ATTRIBUTE_PURE
 #define ATTRIBUTE_RETURN_CHECK
+#define move(p) p
 #endif                                   /* __GNUC__ */
 
 #define ARRAY_CARDINALITY(array) (sizeof (array) / sizeof *(array))
