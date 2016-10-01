@@ -93,6 +93,24 @@ static char *findpath(char *s, char **p) {
     return s;
 }
 
+static void free_tests(struct test *test) {
+    while (test != NULL) {
+        struct test *del = test;
+        test = test->next;
+        struct entry *entry = del->entries;
+        while (entry != NULL) {
+            struct entry *e = entry;
+            entry = entry->next;
+            free(e->path);
+            free(e->value);
+            free(e);
+        }
+        free(del->name);
+        free(del->match);
+        free(del);
+    }
+}
+
 static struct test *read_tests(void) {
     char *fname;
     FILE *fp;
@@ -139,6 +157,8 @@ static struct test *read_tests(void) {
             die("xpath.tests has incorrect format");
         }
     }
+    fclose(fp);
+    free(fname);
     return result;
 }
 
@@ -206,6 +226,10 @@ static int run_one_test(struct augeas *aug, struct test *t) {
             print_pv(matches[i], val);
         }
     }
+    for (int i=0; i < nact; i++) {
+        free(matches[i]);
+    }
+    free(matches);
     return result;
 }
 
@@ -376,6 +400,7 @@ static int run_tests(struct test *tests, int argc, char **argv) {
             result = EXIT_FAILURE;
     }
     aug_close(aug);
+    free(lensdir);
 
     return result;
 }
@@ -392,7 +417,7 @@ int main(int argc, char **argv) {
     }
 
     tests = read_tests();
-    return run_tests(tests, argc - 1, argv + 1);
+    int result = run_tests(tests, argc - 1, argv + 1);
     /*
     list_for_each(t, tests) {
         printf("Test %s\n", t->name);
@@ -405,6 +430,8 @@ int main(int argc, char **argv) {
         }
     }
     */
+    free_tests(tests);
+    return result;
 }
 
 /*

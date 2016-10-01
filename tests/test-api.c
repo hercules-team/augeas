@@ -514,8 +514,8 @@ static void testRename(CuTest *tc) {
 static void testToXml(CuTest *tc) {
     struct augeas *aug;
     int r;
-    xmlNodePtr xmldoc;
-    const xmlChar *value;
+    xmlNodePtr xmldoc, xmlnode;
+    xmlChar *value;
 
     aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
     r = aug_load(aug);
@@ -525,28 +525,35 @@ static void testToXml(CuTest *tc) {
     CuAssertRetSuccess(tc, r);
 
     value = xmlGetProp(xmldoc, BAD_CAST "match");
-    CuAssertStrEquals(tc, "/files/etc/passwd", (const char*)value);
+    CuAssertStrEquals(tc, "/files/etc/passwd", (const char *) value);
+    xmlFree(value);
 
-    xmldoc = xmlFirstElementChild(xmldoc);
-    value = xmlGetProp(xmldoc, BAD_CAST "label");
-    CuAssertStrEquals(tc, "passwd", (const char*)value);
+    xmlnode = xmlFirstElementChild(xmldoc);
+    value = xmlGetProp(xmlnode, BAD_CAST "label");
+    CuAssertStrEquals(tc, "passwd", (const char *) value);
+    xmlFree(value);
 
-    value = xmlGetProp(xmldoc, BAD_CAST "path");
-    CuAssertStrEquals(tc, "/files/etc/passwd", (const char*)value);
+    value = xmlGetProp(xmlnode, BAD_CAST "path");
+    CuAssertStrEquals(tc, "/files/etc/passwd", (const char *) value);
+    xmlFree(value);
 
-    xmldoc = xmlFirstElementChild(xmldoc);
-    value = xmlGetProp(xmldoc, BAD_CAST "label");
-    CuAssertStrEquals(tc, "root", (const char*)value);
+    xmlnode = xmlFirstElementChild(xmlnode);
+    value = xmlGetProp(xmlnode, BAD_CAST "label");
+    CuAssertStrEquals(tc, "root", (const char *) value);
+    xmlFree(value);
+    xmlFreeNode(xmldoc);
 
     /* Bug #239 */
     r = aug_set(aug, "/augeas/context", "/files/etc/passwd");
     CuAssertRetSuccess(tc, r);
     r = aug_to_xml(aug, ".", &xmldoc, 0);
     CuAssertRetSuccess(tc, r);
-    xmldoc = xmlFirstElementChild(xmldoc);
-    value = xmlGetProp(xmldoc, BAD_CAST "label");
-    CuAssertStrEquals(tc, "passwd", (const char*)value);
+    xmlnode = xmlFirstElementChild(xmldoc);
+    value = xmlGetProp(xmlnode, BAD_CAST "label");
+    CuAssertStrEquals(tc, "passwd", (const char *) value);
+    xmlFree(value);
 
+    xmlFreeNode(xmldoc);
     aug_close(aug);
 }
 
@@ -606,6 +613,8 @@ static void testTextStore(CuTest *tc) {
 
     r = aug_match(aug, "/t2", NULL);
     CuAssertIntEquals(tc, 0, r);
+
+    aug_close(aug);
 }
 
 static void testTextRetrieve(CuTest *tc) {
@@ -630,6 +639,8 @@ static void testTextRetrieve(CuTest *tc) {
     CuAssertIntEquals(tc, 1, r);
 
     CuAssertStrEquals(tc, hosts, hosts_out);
+
+    aug_close(aug);
 }
 
 static void testAugEscape(CuTest *tc) {
@@ -647,6 +658,8 @@ static void testAugEscape(CuTest *tc) {
 
     CuAssertStrEquals(tc, out, exp);
     free(out);
+
+    aug_close(aug);
 }
 
 static void testRm(CuTest *tc) {
@@ -661,6 +674,8 @@ static void testRm(CuTest *tc) {
 
     r = aug_rm(aug, "/files//*");
     CuAssertIntEquals(tc, 5, r);
+
+    aug_close(aug);
 }
 
 static void testLoadFile(CuTest *tc) {
@@ -694,6 +709,8 @@ static void testLoadFile(CuTest *tc) {
     CuAssertRetSuccess(tc, r);
     r = aug_match(aug, "/files/etc/mtab", NULL);
     CuAssertIntEquals(tc, 0, r);
+
+    aug_close(aug);
 }
 
 int main(void) {

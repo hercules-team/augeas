@@ -59,6 +59,7 @@ static void testPerfPredicate(CuTest *tc) {
         if (!asprintf(&path, "/test/service[%i]", i))
             die("failed to generate set path");
         aug_set(aug, path, "test");
+        free(path);
     }
 
     for (int i=1; i <= 5000; i++) {
@@ -66,6 +67,7 @@ static void testPerfPredicate(CuTest *tc) {
             die("failed to generate set path");
         aug_get(aug, path, &value);
         CuAssertStrEquals(tc, "test", value);
+        free(path);
     }
 
     gettimeofday(&stop, NULL);
