@@ -1443,6 +1443,7 @@ static struct frame *rec_process(enum mode_t mode, struct lens *lens,
     for(i = 0; i < rec_state.fused; i++) {
         f = nth_frame(&rec_state, i);
         FREE(f->key);
+        free_span(f->span);
         if (mode == M_GET) {
             FREE(f->value);
             free_tree(f->tree);
