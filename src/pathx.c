@@ -1953,8 +1953,10 @@ static void parse_location_path(struct state *state) {
                     goto err_nomem;
             }
             struct step *step = make_step(ROOT, state);
-            if (HAS_ERROR(state))
+            if (HAS_ERROR(state)) {
+                free_step(step);
                 goto error;
+            }
             list_cons(locpath->steps, step);
         }
     } else {
