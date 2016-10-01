@@ -883,7 +883,7 @@ static struct skel *parse_quant_maybe(struct lens *lens, struct state *state,
 static struct tree *get_subtree(struct lens *lens, struct state *state) {
     char *key = state->key;
     char *value = state->value;
-    struct span *span = state->span;
+    struct span *span = move(state->span);
 
     struct tree *tree = NULL, *children;
 
@@ -898,10 +898,10 @@ static struct tree *get_subtree(struct lens *lens, struct state *state) {
 
     tree = make_tree(state->key, state->value, NULL, children);
     ERR_NOMEM(tree == NULL, state->info);
-    tree->span = state->span;
+    tree->span = move(state->span);
 
-    if (state->span != NULL) {
-        update_span(span, state->span->span_start, state->span->span_end);
+    if (tree->span != NULL) {
+        update_span(span, tree->span->span_start, tree->span->span_end);
     }
 
     state->key = key;
@@ -909,6 +909,8 @@ static struct tree *get_subtree(struct lens *lens, struct state *state) {
     state->span = span;
     return tree;
  error:
+    free_span(state->span);
+    state->span = span;
     return NULL;
 }
 
