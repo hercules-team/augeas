@@ -1449,13 +1449,13 @@ int aug_srun(augeas *aug, FILE *out, const char *text) {
 
     api_entry(aug);
 
-    if (text == NULL)
-        goto done;
-
     MEMZERO(&cmd, 1);
     cmd.aug = aug;
     cmd.error = aug->error;
     cmd.out = out;
+
+    if (text == NULL)
+        goto done;
 
     while (*text != '\0' && result >= 0) {
         eol = strchrnul(text, '\n');
