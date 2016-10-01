@@ -851,22 +851,23 @@ void lns_put(FILE *out, struct lens *lens, struct tree *tree,
             *err = err1;
         else
             free_lns_error(err1);
-        return;
+        goto error;
     }
     state.out = out;
     state.split = make_split(tree);
     state.key = tree->label;
     put_lens(lens, &state);
-
-    free(state.path);
-    free_split(state.split);
-    free_skel(state.skel);
-    free_dict(state.dict);
     if (err != NULL) {
         *err = state.error;
     } else {
         free_lns_error(state.error);
     }
+
+ error:
+    free(state.path);
+    free_split(state.split);
+    free_skel(state.skel);
+    free_dict(state.dict);
 }
 
 /*
