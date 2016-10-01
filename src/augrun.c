@@ -1232,7 +1232,6 @@ static const char *err_get(struct augeas *aug,
 static void cmd_errors(struct command *cmd) {
     char **matches = NULL;
     int cnt = 0;
-    char *filename = NULL;
     struct augeas *aug = cmd->aug;
 
     cnt = aug_match(aug, "/augeas//error", &matches);
@@ -1258,7 +1257,7 @@ static void cmd_errors(struct command *cmd) {
         aug_get(aug, match, &kind);
         ERR_BAIL(aug);
 
-        filename = err_filename(match);
+        char *filename = err_filename(match);
         ERR_NOMEM(filename == NULL, aug);
 
         if (i>0)
@@ -1272,6 +1271,7 @@ static void cmd_errors(struct command *cmd) {
         } else {
             fprintf(cmd->out, "Error in %s (%s)\n", filename, kind);
         }
+        FREE(filename);
 
         if (msg != NULL)
             fprintf(cmd->out, "  %s\n", msg);
@@ -1288,7 +1288,6 @@ static void cmd_errors(struct command *cmd) {
     for (int i=0; i < cnt; i++)
         free(matches[i]);
     free(matches);
-    free(filename);
 }
 
 static const struct command_opt_def cmd_errors_opts[] = {
