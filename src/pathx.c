@@ -121,8 +121,6 @@ static const char *const axis_names[] = {
     "following-sibling"
 };
 
-static const char *const axis_sep = "::";
-
 /* The characters that can follow a name in a location expression (aka path)
  * The parser will assume that name (path component) is finished when it
  * encounters any of these characters, unless they are escaped by preceding
