@@ -1272,8 +1272,8 @@ static void visit_exit(struct lens *lens,
             struct tree *tree;
             // FIXME: tree may leak if pop_frame ensure0 fail
             tree = make_tree(top->key, top->value, NULL, top->tree);
-            tree->span = state->span;
             ERR_NOMEM(tree == NULL, lens->info);
+            tree->span = state->span;
             top = pop_frame(rec_state);
             ensure(lens == top->lens, state->info);
             state->key = top->key;
