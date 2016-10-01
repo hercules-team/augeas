@@ -1180,12 +1180,7 @@ static void visit_enter(struct lens *lens,
             ERR_NOMEM(state->span == NULL, state->info);
         }
     } else if (lens->tag == L_MAYBE) {
-        struct frame *f = push_frame(rec_state, lens);
-        if (rec_gen_span(rec_state)) {
-            f->span = state->span;
-            state->span = make_span(state->info);
-            ERR_NOMEM(state->span == NULL, state->info);
-        }
+        push_frame(rec_state, lens);
     }
     child = ast_append(rec_state, lens, start, end);
     if (child != NULL)
