@@ -68,7 +68,14 @@ struct state {
     uint                 nreg;
 };
 
-/* Used by recursive lenses to stack intermediate results */
+/* Used by recursive lenses to stack intermediate results
+   Frames are used for a few different purposes:
+
+   (1) to save results from individual lenses that are later gathered and
+       combined by combinators like L_STAR and L_CONCAT
+   (2) to preserve parse state when descending into a L_SUBTREE
+   (3) as a marker to determine if a L_MAYBE had a match or not
+ */
 struct frame {
     struct lens     *lens;
     char            *key;
@@ -1171,6 +1178,8 @@ static void visit_enter(struct lens *lens,
     rec_state->lvl += 1;
     if (lens->tag == L_SUBTREE) {
         /* Same for parse and get */
+        /* Use this frame to preserve the current state before we process
+           the contents of the subtree, i.e., lens->child */
         struct frame *f = push_frame(rec_state, lens);
         f->key = state->key;
         f->value = state->value;
@@ -1182,6 +1191,8 @@ static void visit_enter(struct lens *lens,
             ERR_NOMEM(state->span == NULL, state->info);
         }
     } else if (lens->tag == L_MAYBE) {
+        /* Push a frame as a marker so we can tell whether lens->child
+           actually had a match or not */
         push_frame(rec_state, lens);
     }
     child = ast_append(rec_state, lens, start, end);
@@ -1191,6 +1202,7 @@ static void visit_enter(struct lens *lens,
     return;
 }
 
+/* Combine n frames from the stack into one new frame for M_GET */
 static void get_combine(struct rec_state *rec_state,
                         struct lens *lens, uint n) {
     struct tree *tree = NULL, *tail = NULL;
@@ -1221,6 +1233,7 @@ static void get_combine(struct rec_state *rec_state,
     return;
 }
 
+/* Combine n frames from the stack into one new frame for M_PUT */
 static void parse_combine(struct rec_state *rec_state,
                           struct lens *lens, uint n) {
     struct skel *skel = make_skel(lens), *tail = NULL;
@@ -1290,6 +1303,7 @@ static void visit_exit(struct lens *lens,
     ERR_BAIL(lens->info);
 
     if (lens->tag == L_SUBTREE) {
+        /* Get the result of parsing lens->child */
         struct frame *top = pop_frame(rec_state);
         if (rec_state->mode == M_GET) {
             struct tree *tree;
@@ -1297,11 +1311,13 @@ static void visit_exit(struct lens *lens,
             tree = make_tree(top->key, top->value, NULL, top->tree);
             ERR_NOMEM(tree == NULL, lens->info);
             tree->span = state->span;
+            /* Restore the parse state from before entering this subtree */
             top = pop_frame(rec_state);
             ensure(lens == top->lens, state->info);
             state->key = top->key;
             state->value = top->value;
             state->span = top->span;
+            /* Push the result of parsing this subtree */
             top = push_frame(rec_state, lens);
             top->tree = tree;
         } else {
@@ -1337,6 +1353,10 @@ static void visit_exit(struct lens *lens,
             && top_frame(rec_state)->lens == lens->child) {
             n = 2;
         }
+        /* If n = 2, the top of the stack is our child's result, and the
+           frame underneath it is the marker frame we pushed during
+           visit_enter. Combine these two frames into one, which represents
+           the result of parsing the whole L_MAYBE. */
         if (rec_state->mode == M_GET)
             get_combine(rec_state, lens, n);
         else
@@ -1368,6 +1388,8 @@ static void visit_exit(struct lens *lens,
             parse_combine(rec_state, lens, 1);
         }
     } else {
+        /* Turn the top frame from having the result of one of our children
+           to being our result */
         top_frame(rec_state)->lens = lens;
     }
     ast_pop(rec_state);
