@@ -378,6 +378,10 @@ void api_exit(const struct augeas *aug);
  * marked dirty, too. Instead of setting this flag directly, the function
  * TREE_MARK_DIRTY in augeas.c should be used (and only functions in that
  * file should have a need to mark nodes as dirty)
+ *
+ * The FILE flag is set for entries underneath /augeas/files that hold the
+ * metadata for a file. It is only set by ADD_FILE_INFO and can not be set
+ * by the user.
  */
 struct tree {
     struct tree *next;
@@ -385,10 +389,13 @@ struct tree {
     char        *label;      /* Last component of PATH */
     struct tree *children;   /* List of children through NEXT */
     char        *value;
-    int          dirty;
-    uint8_t      added;      /* only used by ns_add and tree_rm to dedupe
-                                nodesets */
     struct span *span;
+
+    /* Flags */
+    bool         dirty;
+    bool         file;
+    bool         added;      /* only used by ns_add and tree_rm to dedupe
+                                nodesets */
 };
 
 /* The opaque structure used to represent path expressions. API's

@@ -713,6 +713,27 @@ static void testLoadFile(CuTest *tc) {
     aug_close(aug);
 }
 
+/* Make sure that if somebody erroneously creates a node
+   /augeas/files/path, we do not corrupt the tree. It used to be that
+   having such a node would free /augeas/files
+*/
+static void testLoadBadPath(CuTest *tc) {
+    struct augeas *aug;
+    int r;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    r = aug_set(aug, "/augeas/files/path", "/files");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    aug_close(aug);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -734,6 +755,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testAugEscape);
     SUITE_ADD_TEST(suite, testRm);
     SUITE_ADD_TEST(suite, testLoadFile);
+    SUITE_ADD_TEST(suite, testLoadBadPath);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)

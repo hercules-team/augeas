@@ -466,6 +466,7 @@ static int add_file_info(struct augeas *aug, const char *node,
     ERR_NOMEM(r < 0, aug);
 
     file = tree_fpath_cr(aug, path);
+    file->file = true;
     ERR_BAIL(aug);
 
     /* Set 'path' */

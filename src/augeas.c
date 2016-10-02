@@ -697,7 +697,7 @@ static void tree_rm_dirty_files(struct augeas *aug, struct tree *tree) {
     if (!tree->dirty)
         return;
 
-    if ((p = tree_child(tree, "path")) != NULL) {
+    if (tree->file && ((p = tree_child(tree, "path")) != NULL)) {
         tree_unlink(aug, tree_fpath(aug, p->value));
         tree_unlink(aug, tree);
     } else {
