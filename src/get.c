@@ -1252,6 +1252,30 @@ static void parse_combine(struct rec_state *rec_state,
     return;
 }
 
+static void visit_exit_put_subtree(struct lens *lens,
+                                   struct rec_state *rec_state,
+                                   struct frame *top) {
+    struct state *state = rec_state->state;
+    struct skel *skel = NULL;
+    struct dict *dict = NULL;
+
+    skel = make_skel(lens);
+    ERR_NOMEM(skel == NULL, lens->info);
+    dict = make_dict(top->key, top->skel, top->dict);
+    ERR_NOMEM(dict == NULL, lens->info);
+
+    top = pop_frame(rec_state);
+    ensure(lens == top->lens, state->info);
+    state->key = top->key;
+    pop_frame(rec_state);
+    top = push_frame(rec_state, lens);
+    top->skel = move(skel);
+    top->dict = move(dict);
+ error:
+    free_skel(skel);
+    free_dict(dict);
+}
+
 static void visit_exit(struct lens *lens,
                        ATTRIBUTE_UNUSED size_t start,
                        ATTRIBUTE_UNUSED size_t end,
@@ -1287,19 +1311,7 @@ static void visit_exit(struct lens *lens,
             top = push_frame(rec_state, lens);
             top->tree = tree;
         } else {
-            struct skel *skel;
-            struct dict *dict;
-            skel = make_skel(lens);
-            ERR_NOMEM(skel == NULL, lens->info);
-            dict = make_dict(top->key, top->skel, top->dict);
-            ERR_NOMEM(dict == NULL, lens->info);
-            top = pop_frame(rec_state);
-            ensure(lens == top->lens, state->info);
-            state->key = top->key;
-            pop_frame(rec_state);
-            top = push_frame(rec_state, lens);
-            top->skel = skel;
-            top->dict = dict;
+            visit_exit_put_subtree(lens, rec_state, top);
         }
     } else if (lens->tag == L_CONCAT) {
         ensure(rec_state->fused >= lens->nchildren, state->info);
