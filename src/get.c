@@ -115,6 +115,9 @@ struct rec_state {
     size_t               start;
     uint                 lvl;  /* Debug only */
     struct ast          *ast;
+    /* Will either be get_combine or parse_combine, depending on MODE, for
+       the duration of the whole recursive parse */
+    void (*combine)(struct rec_state *, struct lens *, uint);
 };
 
 #define REG_START(state) ((state)->regs->start[(state)->nreg])
@@ -1342,20 +1345,14 @@ static void visit_exit(struct lens *lens,
                     format_lens(lens->children[i]),
                     format_lens(fr->lens));
         }
-        if (rec_state->mode == M_GET)
-            get_combine(rec_state, lens, lens->nchildren);
-        else
-            parse_combine(rec_state, lens, lens->nchildren);
+        rec_state->combine(rec_state, lens, lens->nchildren);
     } else if (lens->tag == L_STAR) {
         uint n = 0;
         while (n < rec_state->fused &&
                nth_frame(rec_state, n)->lens == lens->child)
             n++;
         ERR_BAIL(state->info);
-        if (rec_state->mode == M_GET)
-            get_combine(rec_state, lens, n);
-        else
-            parse_combine(rec_state, lens, n);
+        rec_state->combine(rec_state, lens, n);
     } else if (lens->tag == L_MAYBE) {
         uint n = 1;
         if (rec_state->fused > 0
@@ -1367,10 +1364,7 @@ static void visit_exit(struct lens *lens,
            frame underneath it is the marker frame we pushed during
            visit_enter. Combine these two frames into one, which represents
            the result of parsing the whole L_MAYBE. */
-        if (rec_state->mode == M_GET)
-            get_combine(rec_state, lens, n);
-        else
-            parse_combine(rec_state, lens, n);
+        rec_state->combine(rec_state, lens, n);
     } else if (lens->tag == L_SQUARE) {
         if (rec_state->mode == M_GET) {
             struct ast *square, *concat, *right, *left;
@@ -1393,10 +1387,8 @@ static void visit_exit(struct lens *lens,
             FREE(rsqr);
             if (! ret)
                 goto error;
-            get_combine(rec_state, lens, 1);
-        } else {
-            parse_combine(rec_state, lens, 1);
         }
+        rec_state->combine(rec_state, lens, 1);
     } else {
         /* Turn the top frame from having the result of one of our children
            to being our result */
@@ -1446,6 +1438,7 @@ static struct frame *rec_process(enum mode_t mode, struct lens *lens,
     rec_state.lvl   = 0;
     rec_state.start = start;
     rec_state.ast = make_ast(lens);
+    rec_state.combine = (mode == M_GET) ? get_combine : parse_combine;
     ERR_NOMEM(rec_state.ast == NULL, state->info);
 
     visitor.parse = jmt_parse(lens->jmt, state->text + start, end - start);
