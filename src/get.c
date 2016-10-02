@@ -1147,6 +1147,7 @@ static void visit_terminal(struct lens *lens, size_t start, size_t end,
         dbg_visit(lens, 'T', start, end, rec_state->fused, rec_state->lvl);
     match(state, lens, lens->ctype, end, start);
     struct frame *top = push_frame(rec_state, lens);
+    ERR_BAIL(state->info);
     if (rec_state->mode == M_GET)
         get_terminal(top, lens, state);
     else
@@ -1181,6 +1182,7 @@ static void visit_enter(struct lens *lens,
         /* Use this frame to preserve the current state before we process
            the contents of the subtree, i.e., lens->child */
         struct frame *f = push_frame(rec_state, lens);
+        ERR_BAIL(state->info);
         f->key = state->key;
         f->value = state->value;
         state->key = NULL;
@@ -1194,6 +1196,7 @@ static void visit_enter(struct lens *lens,
         /* Push a frame as a marker so we can tell whether lens->child
            actually had a match or not */
         push_frame(rec_state, lens);
+        ERR_BAIL(state->info);
     }
     child = ast_append(rec_state, lens, start, end);
     if (child != NULL)
@@ -1226,6 +1229,7 @@ static void get_combine(struct rec_state *rec_state,
         }
     }
     top = push_frame(rec_state, lens);
+    ERR_BAIL(lens->info);
     top->tree = tree;
     top->key = key;
     top->value = value;
@@ -1254,6 +1258,7 @@ static void parse_combine(struct rec_state *rec_state,
         }
     }
     top = push_frame(rec_state, lens);
+    ERR_BAIL(lens->info);
     top->skel = move(skel);
     top->dict = move(dict);
     top->key = key;
@@ -1279,6 +1284,7 @@ static void visit_exit_put_subtree(struct lens *lens,
     ensure(lens == top->lens, state->info);
     state->key = top->key;
     top = push_frame(rec_state, lens);
+    ERR_BAIL(state->info);
     top->skel = move(skel);
     top->dict = move(dict);
  error:
@@ -1319,6 +1325,7 @@ static void visit_exit(struct lens *lens,
             state->span = top->span;
             /* Push the result of parsing this subtree */
             top = push_frame(rec_state, lens);
+            ERR_BAIL(state->info);
             top->tree = tree;
         } else {
             visit_exit_put_subtree(lens, rec_state, top);
