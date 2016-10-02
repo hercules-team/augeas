@@ -1243,10 +1243,12 @@ static void parse_combine(struct rec_state *rec_state,
         }
     }
     top = push_frame(rec_state, lens);
-    top->skel = skel;
-    top->dict = dict;
+    top->skel = move(skel);
+    top->dict = move(dict);
     top->key = key;
  error:
+    free_skel(skel);
+    free_dict(dict);
     return;
 }
 
