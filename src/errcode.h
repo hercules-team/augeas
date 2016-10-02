@@ -91,24 +91,19 @@ void reset_error(struct error *err);
         }                                                       \
     } while(0)
 
-/* A variant of assert that uses our error reporting infrastructure
- * instead of aborting
+/* Assertions that use our error reporting infrastructure instead of
+ * aborting
  */
-#ifdef NDEBUG
-# define ensure(cond, obj) if (0) goto error
-# define ensure0(cond, obj) if (0) return NULL
-#else
-# define ensure(cond, obj)                                           \
+#define ensure(cond, obj)                                            \
     if (!(cond)) {                                                   \
         bug_on((obj)->error, __FILE__, __LINE__, NULL);              \
         goto error;                                                  \
     }
-# define ensure0(cond, obj)                                          \
+#define ensure0(cond, obj)                                           \
     if (!(cond)) {                                                   \
         bug_on((obj)->error, __FILE__, __LINE__, NULL);              \
         return NULL;                                                 \
     }
-#endif
 
 #define BUG_ON(cond, obj, fmt ...)                                  \
     if (cond) {                                                     \
