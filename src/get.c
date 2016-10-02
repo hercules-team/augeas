@@ -1297,6 +1297,7 @@ static void visit_exit(struct lens *lens,
                        void *data) {
     struct rec_state *rec_state = data;
     struct state *state = rec_state->state;
+    struct tree *tree = NULL;
 
     if (state->error != NULL)
         return;
@@ -1312,8 +1313,6 @@ static void visit_exit(struct lens *lens,
         struct frame *top = pop_frame(rec_state);
         ERR_BAIL(state->info);
         if (rec_state->mode == M_GET) {
-            struct tree *tree;
-            // FIXME: tree may leak if pop_frame ensure0 fail
             tree = make_tree(top->key, top->value, NULL, top->tree);
             ERR_NOMEM(tree == NULL, lens->info);
             tree->span = state->span;
@@ -1327,7 +1326,7 @@ static void visit_exit(struct lens *lens,
             /* Push the result of parsing this subtree */
             top = push_frame(rec_state, lens);
             ERR_BAIL(state->info);
-            top->tree = tree;
+            top->tree = move(tree);
         } else {
             visit_exit_put_subtree(lens, rec_state, top);
         }
@@ -1406,6 +1405,7 @@ static void visit_exit(struct lens *lens,
     }
     ast_pop(rec_state);
  error:
+    free_tree(tree);
     return;
 }
 
