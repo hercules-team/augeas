@@ -5,6 +5,12 @@
     * fix an illegal memory access during put that can be triggered by a
       lens of the form 'del ... | l1 . l2' when the put has to jump
       branches in the union (Issue #398)
+    * a large number of fixes based on Coverity scanning and running with
+      gcc's address sanitizer. None of the issues uncovered would have lead
+      to particularly significant leaks (they were all on the order 100-200
+      bytes) and often hard to trigger, but we now have proof that at least
+      while running tests there are no leaks at all.
+      See https://github.com/hercules-team/augeas/pull/405 for details.
 
 1.6.0 - 2016-08-05
   - General changes/additions
