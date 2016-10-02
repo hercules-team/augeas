@@ -1089,11 +1089,13 @@ static struct frame *push_frame(struct rec_state *state, struct lens *lens) {
 static struct frame *pop_frame(struct rec_state *state) {
     ensure0(state->fused > 0, state->state->info);
 
-    state->fused -= 1;
-    if (state->fused > 0)
-        return top_frame(state);
-    else
+    if (state->fused > 0) {
+        struct frame *result = top_frame(state);
+        state->fused -= 1;
+        return result;
+    } else {
         return NULL;
+    }
 }
 
 static void dbg_visit(struct lens *lens, char action, size_t start, size_t end,
@@ -1195,10 +1197,8 @@ static void get_combine(struct rec_state *rec_state,
     char *key = NULL, *value = NULL;
     struct frame *top = NULL;
 
-    if (n > 0)
-        top = top_frame(rec_state);
-
-    for (int i=0; i < n; i++, top = pop_frame(rec_state)) {
+    for (int i=0; i < n; i++) {
+        top = pop_frame(rec_state);
         list_tail_cons(tree, tail, top->tree);
         /* top->tree might have more than one node, update tail */
         if (tail != NULL)
@@ -1228,10 +1228,8 @@ static void parse_combine(struct rec_state *rec_state,
     char *key = NULL;
     struct frame *top = NULL;
 
-    if (n > 0)
-        top = top_frame(rec_state);
-
-    for (int i=0; i < n; i++, top = pop_frame(rec_state)) {
+    for (int i=0; i < n; i++) {
+        top = pop_frame(rec_state);
         list_tail_cons(skel->skels, tail, top->skel);
         /* top->skel might have more than one node, update skel */
         if (tail != NULL)
@@ -1267,7 +1265,6 @@ static void visit_exit_put_subtree(struct lens *lens,
     top = pop_frame(rec_state);
     ensure(lens == top->lens, state->info);
     state->key = top->key;
-    pop_frame(rec_state);
     top = push_frame(rec_state, lens);
     top->skel = move(skel);
     top->dict = move(dict);
@@ -1293,7 +1290,7 @@ static void visit_exit(struct lens *lens,
     ERR_BAIL(lens->info);
 
     if (lens->tag == L_SUBTREE) {
-        struct frame *top = top_frame(rec_state);
+        struct frame *top = pop_frame(rec_state);
         if (rec_state->mode == M_GET) {
             struct tree *tree;
             // FIXME: tree may leak if pop_frame ensure0 fail
@@ -1305,9 +1302,6 @@ static void visit_exit(struct lens *lens,
             state->key = top->key;
             state->value = top->value;
             state->span = top->span;
-            top = pop_frame(rec_state);
-            if (top != NULL)
-                free_span(top->span);
             top = push_frame(rec_state, lens);
             top->tree = tree;
         } else {
