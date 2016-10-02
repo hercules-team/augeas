@@ -1067,7 +1067,7 @@ static struct frame *top_frame(struct rec_state *state) {
 /* The nth frame from the top of the stack, where 0th frame is the top */
 ATTRIBUTE_PURE
 static struct frame *nth_frame(struct rec_state *state, uint n) {
-    assert(state->fsize > n);
+    ensure0(state->fsize > n, state->state->info);
     return state->frames + state->fused - (n+1);
 }
 
@@ -1096,13 +1096,9 @@ static struct frame *push_frame(struct rec_state *state, struct lens *lens) {
 static struct frame *pop_frame(struct rec_state *state) {
     ensure0(state->fused > 0, state->state->info);
 
-    if (state->fused > 0) {
-        struct frame *result = top_frame(state);
-        state->fused -= 1;
-        return result;
-    } else {
-        return NULL;
-    }
+    struct frame *result = top_frame(state);
+    state->fused -= 1;
+    return result;
 }
 
 static void dbg_visit(struct lens *lens, char action, size_t start, size_t end,
@@ -1214,6 +1210,7 @@ static void get_combine(struct rec_state *rec_state,
 
     for (int i=0; i < n; i++) {
         top = pop_frame(rec_state);
+        ERR_BAIL(lens->info);
         list_tail_cons(tree, tail, top->tree);
         /* top->tree might have more than one node, update tail */
         if (tail != NULL)
@@ -1247,6 +1244,7 @@ static void parse_combine(struct rec_state *rec_state,
 
     for (int i=0; i < n; i++) {
         top = pop_frame(rec_state);
+        ERR_BAIL(lens->info);
         list_tail_cons(skel->skels, tail, top->skel);
         /* top->skel might have more than one node, update skel */
         if (tail != NULL)
@@ -1281,6 +1279,7 @@ static void visit_exit_put_subtree(struct lens *lens,
     ERR_NOMEM(dict == NULL, lens->info);
 
     top = pop_frame(rec_state);
+    ERR_BAIL(state->info);
     ensure(lens == top->lens, state->info);
     state->key = top->key;
     top = push_frame(rec_state, lens);
@@ -1311,6 +1310,7 @@ static void visit_exit(struct lens *lens,
     if (lens->tag == L_SUBTREE) {
         /* Get the result of parsing lens->child */
         struct frame *top = pop_frame(rec_state);
+        ERR_BAIL(state->info);
         if (rec_state->mode == M_GET) {
             struct tree *tree;
             // FIXME: tree may leak if pop_frame ensure0 fail
@@ -1319,6 +1319,7 @@ static void visit_exit(struct lens *lens,
             tree->span = state->span;
             /* Restore the parse state from before entering this subtree */
             top = pop_frame(rec_state);
+            ERR_BAIL(state->info);
             ensure(lens == top->lens, state->info);
             state->key = top->key;
             state->value = top->value;
@@ -1334,6 +1335,7 @@ static void visit_exit(struct lens *lens,
         ensure(rec_state->fused >= lens->nchildren, state->info);
         for (int i = 0; i < lens->nchildren; i++) {
             struct frame *fr = nth_frame(rec_state, i);
+            ERR_BAIL(state->info);
             BUG_ON(lens->children[i] != fr->lens,
                     lens->info,
              "Unexpected lens in concat %zd..%zd\n  Expected: %s\n  Actual: %s",
@@ -1350,6 +1352,7 @@ static void visit_exit(struct lens *lens,
         while (n < rec_state->fused &&
                nth_frame(rec_state, n)->lens == lens->child)
             n++;
+        ERR_BAIL(state->info);
         if (rec_state->mode == M_GET)
             get_combine(rec_state, lens, n);
         else
@@ -1360,6 +1363,7 @@ static void visit_exit(struct lens *lens,
             && top_frame(rec_state)->lens == lens->child) {
             n = 2;
         }
+        ERR_BAIL(state->info);
         /* If n = 2, the top of the stack is our child's result, and the
            frame underneath it is the marker frame we pushed during
            visit_enter. Combine these two frames into one, which represents
@@ -1398,6 +1402,7 @@ static void visit_exit(struct lens *lens,
         /* Turn the top frame from having the result of one of our children
            to being our result */
         top_frame(rec_state)->lens = lens;
+        ERR_BAIL(state->info);
     }
     ast_pop(rec_state);
  error:
