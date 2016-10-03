@@ -12,6 +12,7 @@ module Test_splunk =
    let inputs = "[default]
 host = splunk-node-1.example.com
 enable_autocomplete_login = False
+_meta = metakey::metaval foo::bar
 
 [udp://514]
 connection_host = none
@@ -23,6 +24,7 @@ test Splunk.lns get inputs =
   { "target" = "default"
       { "host" = "splunk-node-1.example.com" }
       { "enable_autocomplete_login" = "False" }
+      { "_meta" = "metakey::metaval foo::bar" }
   {}}
   { "target" = "udp://514"
       { "connection_host" = "none" }
