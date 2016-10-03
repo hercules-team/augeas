@@ -35,7 +35,7 @@ let word_opt_quot_re = /[A-Za-z][A-Za-z0-9_]*/
 
 (* View: word_opt_quot
      Storing a <word_opt_quot_re>, with or without quotes *)
-let word_opt_quot = Quote.do_squote_opt (store word_opt_quot_re)
+let word_opt_quot = Quote.do_squote_opt_nil (store word_opt_quot_re)
 
 (* Variable: number_re
      A relative decimal number, optionally with unit *)
@@ -43,7 +43,7 @@ let number_re = Rx.reldecimal . /[kMG]?B|[m]?s|min|h|d/?
 
 (* View: number
      Storing <number_re>, with or without quotes *)
-let number = Quote.do_squote_opt (store number_re)
+let number = Quote.do_squote_opt_nil (store number_re)
 
 (* View: word_quot
      Anything other than <word_opt_quot> or <number>
