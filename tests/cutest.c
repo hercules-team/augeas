@@ -39,8 +39,8 @@
 #include "cutest.h"
 #include "memory.h"
 
-#define HUGE_STRING_LEN	8192
-#define STRING_MAX		256
+#define HUGE_STRING_LEN 8192
+#define STRING_MAX      256
 
 #define asprintf_or_die(strp, fmt, args ...)                            \
     if (asprintf(strp, fmt, ## args) == -1) {                           \
@@ -58,142 +58,142 @@ void die_oom(void) {
  *-------------------------------------------------------------------------*/
 
 void CuTestInit(CuTest* t, const char* name, TestFunction function) {
-	t->name = strdup(name);
-	t->failed = 0;
-	t->ran = 0;
-	t->message = NULL;
-	t->function = function;
-	t->jumpBuf = NULL;
+    t->name = strdup(name);
+    t->failed = 0;
+    t->ran = 0;
+    t->message = NULL;
+    t->function = function;
+    t->jumpBuf = NULL;
 }
 
 CuTest* CuTestNew(const char* name, TestFunction function) {
-	CuTest* tc = NULL;
+    CuTest* tc = NULL;
     if (ALLOC(tc) < 0)
         die_oom();
-	CuTestInit(tc, name, function);
-	return tc;
+    CuTestInit(tc, name, function);
+    return tc;
 }
 
 void CuTestRun(CuTest* tc, TestFunction setup, TestFunction teardown) {
-	jmp_buf buf;
+    jmp_buf buf;
 
     if (getenv("CUTEST") && STRNEQ(getenv("CUTEST"), tc->name))
         return;
-	tc->jumpBuf = &buf;
-	if (setjmp(buf) == 0) {
+    tc->jumpBuf = &buf;
+    if (setjmp(buf) == 0) {
         if (setup)
             (setup)(tc);
-		tc->ran = 1;
-		(tc->function)(tc);
-	}
+        tc->ran = 1;
+        (tc->function)(tc);
+    }
     if (teardown && setjmp(buf) == 0) {
         (teardown)(tc);
     }
-	tc->jumpBuf = 0;
+    tc->jumpBuf = 0;
 }
 
 static void CuFailInternal(CuTest* tc, const char* file, int line,
                            const char *string) {
-	char *buf = NULL;
+    char *buf = NULL;
 
-	asprintf_or_die(&buf, "%s:%d: %s", file, line, string);
+    asprintf_or_die(&buf, "%s:%d: %s", file, line, string);
 
-	tc->failed = 1;
-	tc->message = buf;
-	if (tc->jumpBuf != 0) longjmp(*(tc->jumpBuf), 0);
+    tc->failed = 1;
+    tc->message = buf;
+    if (tc->jumpBuf != 0) longjmp(*(tc->jumpBuf), 0);
 }
 
 void CuFail_Line(CuTest* tc, const char* file, int line,
                  const char* message2, const char* message) {
     char *string = NULL;
 
-	if (message2 != NULL) {
-		asprintf_or_die(&string, "%s:%s", message2, message);
-	} else {
+    if (message2 != NULL) {
+        asprintf_or_die(&string, "%s:%s", message2, message);
+    } else {
         string = strdup(message);
     }
-	CuFailInternal(tc, file, line, string);
+    CuFailInternal(tc, file, line, string);
 }
 
 void CuAssert_Line(CuTest* tc, const char* file, int line,
                    const char* message, int condition) {
-	if (condition) return;
-	CuFail_Line(tc, file, line, NULL, message);
+    if (condition) return;
+    CuFail_Line(tc, file, line, NULL, message);
 }
 
 void CuAssertStrEquals_LineMsg(CuTest* tc, const char* file, int line,
                                const char* message,
                                const char* expected, const char* actual) {
-	char *string = NULL;
+    char *string = NULL;
 
-	if ((expected == NULL && actual == NULL) ||
-	    (expected != NULL && actual != NULL &&
-	     strcmp(expected, actual) == 0))
+    if ((expected == NULL && actual == NULL) ||
+        (expected != NULL && actual != NULL &&
+         strcmp(expected, actual) == 0))
         {
             return;
         }
 
-	if (message != NULL) {
+    if (message != NULL) {
         asprintf_or_die(&string, "%s: expected <%s> but was <%s>", message,
                         expected, actual);
-	} else {
+    } else {
         asprintf_or_die(&string, "expected <%s> but was <%s>", expected, actual);
     }
-	CuFailInternal(tc, file, line, string);
+    CuFailInternal(tc, file, line, string);
 }
 
 void CuAssertStrNotEqual_LineMsg(CuTest* tc, const char* file, int line,
                                  const char* message,
                                  const char* expected, const char* actual) {
-	char *string = NULL;
+    char *string = NULL;
 
     if (expected != NULL && actual != NULL && strcmp(expected, actual) != 0)
         return;
 
-	if (message != NULL) {
+    if (message != NULL) {
         asprintf_or_die(&string, "%s: expected <%s> but was <%s>", message,
                         expected, actual);
-	} else {
+    } else {
         asprintf_or_die(&string, "expected <%s> but was <%s>", expected, actual);
     }
-	CuFailInternal(tc, file, line, string);
+    CuFailInternal(tc, file, line, string);
 }
 
 void CuAssertIntEquals_LineMsg(CuTest* tc, const char* file, int line,
                                const char* message,
                                int expected, int actual) {
-	char buf[STRING_MAX];
-	if (expected == actual) return;
-	sprintf(buf, "expected <%d> but was <%d>", expected, actual);
-	CuFail_Line(tc, file, line, message, buf);
+    char buf[STRING_MAX];
+    if (expected == actual) return;
+    sprintf(buf, "expected <%d> but was <%d>", expected, actual);
+    CuFail_Line(tc, file, line, message, buf);
 }
 
 void CuAssertDblEquals_LineMsg(CuTest* tc, const char* file, int line,
                                const char* message,
                                double expected, double actual, double delta) {
-	char buf[STRING_MAX];
-	if (fabs(expected - actual) <= delta) return;
-	sprintf(buf, "expected <%lf> but was <%lf>", expected, actual);
-	CuFail_Line(tc, file, line, message, buf);
+    char buf[STRING_MAX];
+    if (fabs(expected - actual) <= delta) return;
+    sprintf(buf, "expected <%lf> but was <%lf>", expected, actual);
+    CuFail_Line(tc, file, line, message, buf);
 }
 
 void CuAssertPtrEquals_LineMsg(CuTest* tc, const char* file, int line,
                                const char* message,
                                const void* expected, const void* actual) {
-	char buf[STRING_MAX];
-	if (expected == actual) return;
-	sprintf(buf, "expected pointer <0x%p> but was <0x%p>", expected, actual);
-	CuFail_Line(tc, file, line, message, buf);
+    char buf[STRING_MAX];
+    if (expected == actual) return;
+    sprintf(buf, "expected pointer <0x%p> but was <0x%p>", expected, actual);
+    CuFail_Line(tc, file, line, message, buf);
 }
 
 void CuAssertPtrNotEqual_LineMsg(CuTest* tc, const char* file, int line,
                                  const char* message,
                                  const void* expected, const void* actual) {
-	char buf[STRING_MAX];
-	if (expected != actual) return;
-	sprintf(buf, "expected pointer <0x%p> to be different from <0x%p>",
+    char buf[STRING_MAX];
+    if (expected != actual) return;
+    sprintf(buf, "expected pointer <0x%p> to be different from <0x%p>",
             expected, actual);
-	CuFail_Line(tc, file, line, message, buf);
+    CuFail_Line(tc, file, line, message, buf);
 }
 
 
@@ -202,16 +202,16 @@ void CuAssertPtrNotEqual_LineMsg(CuTest* tc, const char* file, int line,
  *-------------------------------------------------------------------------*/
 
 void CuSuiteInit(CuSuite* testSuite) {
-	testSuite->count = 0;
-	testSuite->failCount = 0;
+    testSuite->count = 0;
+    testSuite->failCount = 0;
 }
 
 CuSuite* CuSuiteNew(void) {
-	CuSuite* testSuite = NULL;
+    CuSuite* testSuite = NULL;
     if (ALLOC(testSuite) < 0)
         die_oom();
-	CuSuiteInit(testSuite);
-	return testSuite;
+    CuSuiteInit(testSuite);
+    return testSuite;
 }
 
 void CuSuiteSetup(CuSuite *testSuite,
@@ -221,14 +221,14 @@ void CuSuiteSetup(CuSuite *testSuite,
 }
 
 void CuSuiteAdd(CuSuite* testSuite, CuTest *testCase) {
-	assert(testSuite->count < MAX_TEST_CASES);
-	testSuite->list[testSuite->count] = testCase;
-	testSuite->count++;
+    assert(testSuite->count < MAX_TEST_CASES);
+    testSuite->list[testSuite->count] = testCase;
+    testSuite->count++;
 }
 
 void CuSuiteAddSuite(CuSuite* testSuite, CuSuite* testSuite2) {
-	int i;
-	for (i = 0 ; i < testSuite2->count ; ++i)
+    int i;
+    for (i = 0 ; i < testSuite2->count ; ++i)
         {
             CuTest* testCase = testSuite2->list[i];
             CuSuiteAdd(testSuite, testCase);
@@ -236,8 +236,8 @@ void CuSuiteAddSuite(CuSuite* testSuite, CuSuite* testSuite2) {
 }
 
 void CuSuiteRun(CuSuite* testSuite) {
-	int i;
-	for (i = 0 ; i < testSuite->count ; ++i)
+    int i;
+    for (i = 0 ; i < testSuite->count ; ++i)
         {
             CuTest* testCase = testSuite->list[i];
             CuTestRun(testCase, testSuite->setup, testSuite->teardown);
@@ -258,22 +258,22 @@ static void string_append(char **s, const char *p) {
 }
 
 void CuSuiteSummary(CuSuite* testSuite, char **summary) {
-	int i;
+    int i;
 
-	for (i = 0 ; i < testSuite->count ; ++i)
+    for (i = 0 ; i < testSuite->count ; ++i)
         {
             CuTest* testCase = testSuite->list[i];
             string_append(summary, testCase->failed ? "F" : ".");
         }
-	string_append(summary, "\n\n");
+    string_append(summary, "\n\n");
 }
 
 void CuSuiteDetails(CuSuite* testSuite, char **details) {
-	int i;
-	int failCount = 0;
+    int i;
+    int failCount = 0;
     char *s = NULL;
 
-	if (testSuite->failCount == 0)
+    if (testSuite->failCount == 0)
         {
             int passCount = testSuite->count - testSuite->failCount;
             const char* testWord = passCount == 1 ? "test" : "tests";
@@ -281,27 +281,27 @@ void CuSuiteDetails(CuSuite* testSuite, char **details) {
             string_append(details, s);
             free(s);
         } else {
-		if (testSuite->failCount == 1)
-			string_append(details, "There was 1 failure:\n");
-		else {
+        if (testSuite->failCount == 1)
+            string_append(details, "There was 1 failure:\n");
+        else {
             asprintf_or_die(&s, "There were %d failures:\n",
                             testSuite->failCount);
             string_append(details, s);
             free(s);
         }
-		for (i = 0 ; i < testSuite->count ; ++i) {
-			CuTest* testCase = testSuite->list[i];
-			if (testCase->failed) {
-				failCount++;
-				asprintf_or_die(&s, "%d) %s:\n%s\n",
+        for (i = 0 ; i < testSuite->count ; ++i) {
+            CuTest* testCase = testSuite->list[i];
+            if (testCase->failed) {
+                failCount++;
+                asprintf_or_die(&s, "%d) %s:\n%s\n",
                          failCount, testCase->name, testCase->message);
                 string_append(details, s);
                 free(s);
-			}
-		}
-		string_append(details, "\n!!!FAILURES!!!\n");
+            }
+        }
+        string_append(details, "\n!!!FAILURES!!!\n");
 
-		asprintf_or_die(&s, "Runs: %d ",   testSuite->count);
+        asprintf_or_die(&s, "Runs: %d ",   testSuite->count);
         string_append(details, s);
         free(s);
 
@@ -310,10 +310,10 @@ void CuSuiteDetails(CuSuite* testSuite, char **details) {
         string_append(details, s);
         free(s);
 
-		asprintf_or_die(&s, "Fails: %d\n",  testSuite->failCount);
+        asprintf_or_die(&s, "Fails: %d\n",  testSuite->failCount);
         string_append(details, s);
         free(s);
-	}
+    }
 }
 
 void CuSuiteFree(CuSuite *suite) {
