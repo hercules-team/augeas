@@ -158,8 +158,6 @@ let stmt_integer      = [ indent
 
 let stmt_string_re    = "ddns-update-style"
                       | "ddns-updates"
-                      | "ddns-hostname"
-                      | "ddns-domainname"
                       | "ddns-rev-domainname"
                       | "log-facility"
                       | "server-name"
@@ -209,6 +207,8 @@ let stmt_string_tpl (kw:regexp) (l:lens) = [ indent
 let stmt_string  = stmt_string_tpl stmt_string_re bare
                  | stmt_string_tpl stmt_string_re quote
                  | stmt_string_tpl "filename" dquote
+                 | stmt_string_tpl "ddns-hostname" dquote
+                 | stmt_string_tpl "ddns-domainname" dquote
 
 (************************************************************************
  *                         RANGE STATEMENTS
@@ -277,8 +277,10 @@ let stmt_option_code  = [ label "label" . store word . sep_spc ]
 
 let stmt_option_basic = [ key word . sep_spc . stmt_option_list ]
 let stmt_option_extra = [ key word . sep_spc . store /true|false/ . sep_spc . stmt_option_list ]
+let stmt_option_special = [ key "domain-name" . sep_spc . [label "arg" . dquote] ]
+                        | [ key "host-name"   . sep_spc . [label "arg" . dquote] ]
 
-let stmt_option_body = stmt_option_basic | stmt_option_extra
+let stmt_option_body = stmt_option_special | stmt_option_basic | stmt_option_extra
 
 let stmt_option1  = [ indent
                         . key "option"
