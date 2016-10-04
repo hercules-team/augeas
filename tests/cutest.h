@@ -47,11 +47,11 @@ typedef void (*TestFunction)(CuTest *);
 
 struct CuTest
 {
-	const char* name;
+	char* name;
 	TestFunction function;
 	int failed;
 	int ran;
-	const char* message;
+	char* message;
 	jmp_buf *jumpBuf;
 };
 
