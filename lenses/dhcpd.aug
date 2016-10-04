@@ -462,9 +462,8 @@ let stmt_block_arg_re = "host"
                       | "on"
 
 let stmt_block_arg (body:lens)
-                      = ( [ indent . key stmt_block_arg_re . sep_spc . bare . sep_obr . body* . sep_cbr ]
-                         |[ indent . key stmt_block_arg_re . sep_spc . dquote_any . sep_obr . body* . sep_cbr ]
-                         |[ indent . key stmt_block_arg_re . sep_spc . bare_to_scl . sep_obr . body* . sep_cbr ]
+                      = ( [ indent . key stmt_block_arg_re . sep_spc . dquote_any . sep_obr . body* . sep_cbr ]
+                         |[ indent . key stmt_block_arg_re . sep_spc . bare . sep_obr . body* . sep_cbr ]
                          |[ indent . del /key/ "key" . label "key_block" . sep_spc . dquote_any . sep_obr . body* . sep_cbr . del /(;([ \t]*\n)*)?/ ""  ]
                          |[ indent . del /key/ "key" . label "key_block" . sep_spc . bare_to_scl . sep_obr . body* . sep_cbr . del /(;([ \t]*\n)*)?/ "" ])
 
