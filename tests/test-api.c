@@ -1,7 +1,7 @@
 /*
  * test-api.c: test public API functions for conformance
  *
- * Copyright (C) 2009-2015 David Lutterkort
+ * Copyright (C) 2009-2016 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -514,8 +514,8 @@ static void testRename(CuTest *tc) {
 static void testToXml(CuTest *tc) {
     struct augeas *aug;
     int r;
-    xmlNodePtr xmldoc;
-    const xmlChar *value;
+    xmlNodePtr xmldoc, xmlnode;
+    xmlChar *value;
 
     aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
     r = aug_load(aug);
@@ -525,28 +525,35 @@ static void testToXml(CuTest *tc) {
     CuAssertRetSuccess(tc, r);
 
     value = xmlGetProp(xmldoc, BAD_CAST "match");
-    CuAssertStrEquals(tc, "/files/etc/passwd", (const char*)value);
+    CuAssertStrEquals(tc, "/files/etc/passwd", (const char *) value);
+    xmlFree(value);
 
-    xmldoc = xmlFirstElementChild(xmldoc);
-    value = xmlGetProp(xmldoc, BAD_CAST "label");
-    CuAssertStrEquals(tc, "passwd", (const char*)value);
+    xmlnode = xmlFirstElementChild(xmldoc);
+    value = xmlGetProp(xmlnode, BAD_CAST "label");
+    CuAssertStrEquals(tc, "passwd", (const char *) value);
+    xmlFree(value);
 
-    value = xmlGetProp(xmldoc, BAD_CAST "path");
-    CuAssertStrEquals(tc, "/files/etc/passwd", (const char*)value);
+    value = xmlGetProp(xmlnode, BAD_CAST "path");
+    CuAssertStrEquals(tc, "/files/etc/passwd", (const char *) value);
+    xmlFree(value);
 
-    xmldoc = xmlFirstElementChild(xmldoc);
-    value = xmlGetProp(xmldoc, BAD_CAST "label");
-    CuAssertStrEquals(tc, "root", (const char*)value);
+    xmlnode = xmlFirstElementChild(xmlnode);
+    value = xmlGetProp(xmlnode, BAD_CAST "label");
+    CuAssertStrEquals(tc, "root", (const char *) value);
+    xmlFree(value);
+    xmlFreeNode(xmldoc);
 
     /* Bug #239 */
     r = aug_set(aug, "/augeas/context", "/files/etc/passwd");
     CuAssertRetSuccess(tc, r);
     r = aug_to_xml(aug, ".", &xmldoc, 0);
     CuAssertRetSuccess(tc, r);
-    xmldoc = xmlFirstElementChild(xmldoc);
-    value = xmlGetProp(xmldoc, BAD_CAST "label");
-    CuAssertStrEquals(tc, "passwd", (const char*)value);
+    xmlnode = xmlFirstElementChild(xmldoc);
+    value = xmlGetProp(xmlnode, BAD_CAST "label");
+    CuAssertStrEquals(tc, "passwd", (const char *) value);
+    xmlFree(value);
 
+    xmlFreeNode(xmldoc);
     aug_close(aug);
 }
 
@@ -606,6 +613,8 @@ static void testTextStore(CuTest *tc) {
 
     r = aug_match(aug, "/t2", NULL);
     CuAssertIntEquals(tc, 0, r);
+
+    aug_close(aug);
 }
 
 static void testTextRetrieve(CuTest *tc) {
@@ -630,6 +639,8 @@ static void testTextRetrieve(CuTest *tc) {
     CuAssertIntEquals(tc, 1, r);
 
     CuAssertStrEquals(tc, hosts, hosts_out);
+
+    aug_close(aug);
 }
 
 static void testAugEscape(CuTest *tc) {
@@ -647,6 +658,8 @@ static void testAugEscape(CuTest *tc) {
 
     CuAssertStrEquals(tc, out, exp);
     free(out);
+
+    aug_close(aug);
 }
 
 static void testRm(CuTest *tc) {
@@ -661,6 +674,64 @@ static void testRm(CuTest *tc) {
 
     r = aug_rm(aug, "/files//*");
     CuAssertIntEquals(tc, 5, r);
+
+    aug_close(aug);
+}
+
+static void testLoadFile(CuTest *tc) {
+    struct augeas *aug;
+    const char *value;
+    int r;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    /* augeas should load a single file */
+    r = aug_load_file(aug, "/etc/fstab");
+    CuAssertRetSuccess(tc, r);
+    r = aug_get(aug, "/files/etc/fstab/1/vfstype", &value);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertPtrNotNull(tc, value);
+
+    /* Only one file should be loaded */
+    r = aug_match(aug, "/files/etc/*", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    /* augeas should return an error when no lens can be found for a file */
+    r = aug_load_file(aug, "/etc/unknown.conf");
+    CuAssertIntEquals(tc, -1, r);
+    CuAssertIntEquals(tc, AUG_ENOLENS, aug_error(aug));
+
+    /* augeas should return without an error when trying to load a
+       nonexistant file that would be handled by a lens */
+    r = aug_load_file(aug, "/etc/mtab");
+    CuAssertRetSuccess(tc, r);
+    r = aug_match(aug, "/files/etc/mtab", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    aug_close(aug);
+}
+
+/* Make sure that if somebody erroneously creates a node
+   /augeas/files/path, we do not corrupt the tree. It used to be that
+   having such a node would free /augeas/files
+*/
+static void testLoadBadPath(CuTest *tc) {
+    struct augeas *aug;
+    int r;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    r = aug_set(aug, "/augeas/files/path", "/files");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    aug_close(aug);
 }
 
 int main(void) {
@@ -683,6 +754,8 @@ int main(void) {
     SUITE_ADD_TEST(suite, testTextRetrieve);
     SUITE_ADD_TEST(suite, testAugEscape);
     SUITE_ADD_TEST(suite, testRm);
+    SUITE_ADD_TEST(suite, testLoadFile);
+    SUITE_ADD_TEST(suite, testLoadBadPath);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)
@@ -701,7 +774,9 @@ int main(void) {
     CuSuiteDetails(suite, &output);
     printf("%s\n", output);
     free(output);
-    return suite->failCount;
+    int result = suite->failCount;
+    CuSuiteFree(suite);
+    return result;
 }
 
 /*

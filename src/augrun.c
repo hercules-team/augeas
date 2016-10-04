@@ -1,7 +1,7 @@
 /*
  * augrun.c: command interpreter for augeas
  *
- * Copyright (C) 2011-2015 David Lutterkort
+ * Copyright (C) 2011-2016 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1010,6 +1010,33 @@ static const struct command_def cmd_transform_def = {
     .help = cmd_transform_help
 };
 
+static void cmd_load_file(struct command *cmd) {
+    const char *file = arg_value(cmd, "file");
+    int r = 0;
+
+    r = aug_load_file(cmd->aug, file);
+    if (r < 0)
+      ERR_REPORT(cmd, AUG_ECMDRUN,
+          "Failed to load file %s", file);
+}
+
+static const struct command_opt_def cmd_load_file_opts[] = {
+    { .type = CMD_PATH, .name = "file", .optional = false,
+      .help = "the file to load" },
+    CMD_OPT_DEF_LAST
+};
+
+static const char const cmd_load_file_help[] =
+    "Load a specific FILE, using autoload statements.\n";
+
+static const struct command_def cmd_load_file_def = {
+    .name = "load-file",
+    .opts = cmd_load_file_opts,
+    .handler = cmd_load_file,
+    .synopsis = "load a specific file",
+    .help = cmd_load_file_help
+};
+
 static void cmd_save(struct command *cmd) {
     int r;
     r = aug_save(cmd->aug);
@@ -1205,7 +1232,6 @@ static const char *err_get(struct augeas *aug,
 static void cmd_errors(struct command *cmd) {
     char **matches = NULL;
     int cnt = 0;
-    char *filename = NULL;
     struct augeas *aug = cmd->aug;
 
     cnt = aug_match(aug, "/augeas//error", &matches);
@@ -1231,7 +1257,7 @@ static void cmd_errors(struct command *cmd) {
         aug_get(aug, match, &kind);
         ERR_BAIL(aug);
 
-        filename = err_filename(match);
+        char *filename = err_filename(match);
         ERR_NOMEM(filename == NULL, aug);
 
         if (i>0)
@@ -1245,6 +1271,7 @@ static void cmd_errors(struct command *cmd) {
         } else {
             fprintf(cmd->out, "Error in %s (%s)\n", filename, kind);
         }
+        FREE(filename);
 
         if (msg != NULL)
             fprintf(cmd->out, "  %s\n", msg);
@@ -1261,7 +1288,6 @@ static void cmd_errors(struct command *cmd) {
     for (int i=0; i < cnt; i++)
         free(matches[i]);
     free(matches);
-    free(filename);
 }
 
 static const struct command_opt_def cmd_errors_opts[] = {
@@ -1297,6 +1323,7 @@ static const struct command_grp_def cmd_grp_admin_def = {
         &cmd_save_def,
         &cmd_store_def,
         &cmd_transform_def,
+        &cmd_load_file_def,
         &cmd_def_last
     }
 };
@@ -1422,13 +1449,13 @@ int aug_srun(augeas *aug, FILE *out, const char *text) {
 
     api_entry(aug);
 
-    if (text == NULL)
-        goto done;
-
     MEMZERO(&cmd, 1);
     cmd.aug = aug;
     cmd.error = aug->error;
     cmd.out = out;
+
+    if (text == NULL)
+        goto done;
 
     while (*text != '\0' && result >= 0) {
         eol = strchrnul(text, '\n');
@@ -1461,6 +1488,7 @@ int aug_srun(augeas *aug, FILE *out, const char *text) {
         text = (*eol == '\0') ? eol : eol + 1;
     }
  done:
+    free_command_opts(&cmd);
     FREE(line);
 
     api_exit(aug);

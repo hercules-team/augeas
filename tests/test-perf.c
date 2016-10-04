@@ -1,7 +1,7 @@
 /*
  * test-perf.c: test performance of API functions
  *
- * Copyright (C) 2009-2015 Red Hat Inc.
+ * Copyright (C) 2009-2016 Red Hat Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -59,6 +59,7 @@ static void testPerfPredicate(CuTest *tc) {
         if (!asprintf(&path, "/test/service[%i]", i))
             die("failed to generate set path");
         aug_set(aug, path, "test");
+        free(path);
     }
 
     for (int i=1; i <= 5000; i++) {
@@ -66,6 +67,7 @@ static void testPerfPredicate(CuTest *tc) {
             die("failed to generate set path");
         aug_get(aug, path, &value);
         CuAssertStrEquals(tc, "test", value);
+        free(path);
     }
 
     gettimeofday(&stop, NULL);
@@ -98,7 +100,9 @@ int main(void) {
     CuSuiteDetails(suite, &output);
     printf("%s\n", output);
     free(output);
-    return suite->failCount;
+    int result = suite->failCount;
+    CuSuiteFree(suite);
+    return result;
 }
 
 /*

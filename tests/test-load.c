@@ -1,7 +1,7 @@
 /*
  * test-load.c: test the aug_load functionality
  *
- * Copyright (C) 2009-2015 David Lutterkort
+ * Copyright (C) 2009-2016 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -470,6 +470,9 @@ static void testReloadExternalMod(CuTest *tc) {
 
     r = aug_match(aug, "/files/etc/hosts/*", NULL);
     CuAssertIntEquals(tc, 5, r);
+
+    free(mtime);
+    aug_close(aug);
 }
 
 /* Bug #259 - after save with /augeas/save = newfile, make sure we discard
@@ -554,6 +557,8 @@ static void testPermsErrorReported(CuTest *tc) {
 
     r = aug_get(aug, "/augeas/files/etc/hosts/error/message", &s);
     CuAssertIntEquals(tc, 1, r);
+
+    aug_close(aug);
 }
 
 /* Test bug #252 - excl patterns have no effect when loading with a root */
@@ -577,6 +582,8 @@ static void testLoadExclWithRoot(CuTest *tc) {
 
     r = aug_match(aug, "/augeas//error", NULL);
     CuAssertIntEquals(tc, 0, r);
+
+    aug_close(aug);
 }
 
 /* Test excl patterns matching the end of a filename work, e.g. *.bak */
@@ -601,11 +608,14 @@ static void testLoadTrailingExcl(CuTest *tc) {
 
     r = aug_match(aug, "/augeas/files/etc/sysconfig/network-scripts/ifcfg-lo.rpmsave", NULL);
     CuAssertIntEquals(tc, 0, r);
+
+    aug_close(aug);
 }
 
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
+
     CuSuiteSetup(suite, NULL, NULL);
     SUITE_ADD_TEST(suite, testDefault);
     SUITE_ADD_TEST(suite, testNoLoad);
@@ -646,7 +656,10 @@ int main(void) {
     CuSuiteDetails(suite, &output);
     printf("%s\n", output);
     free(output);
-    return suite->failCount;
+
+    int result = suite->failCount;
+    CuSuiteFree(suite);
+    return result;
 }
 
 /*

@@ -1,7 +1,7 @@
 /*
  * test-run.c: test the aug_srun API function
  *
- * Copyright (C) 2009-2015 David Lutterkort
+ * Copyright (C) 2009-2016 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -63,6 +63,17 @@ struct test {
     bool  out_present;
 };
 
+static void free_tests(struct test *test) {
+    if (test == NULL)
+        return;
+    free_tests(test->next);
+    free(test->name);
+    free(test->module);
+    free(test->cmd);
+    free(test->out);
+    free(test);
+}
+
 #define die(msg)                                                    \
     do {                                                            \
         fprintf(stderr, "%d: Fatal error: %s\n", __LINE__, msg);    \
@@ -114,7 +125,7 @@ static bool looking_at(const char *s, const char *kw) {
 }
 
 static struct test *read_tests(void) {
-    char *fname;
+    char *fname = NULL;
     FILE *fp;
     char line[BUFSIZ];
     struct test *result = NULL, *t = NULL;
@@ -171,6 +182,7 @@ static struct test *read_tests(void) {
         if (t->out != NULL)
             t->out_present = true;
     }
+    free(fname);
     return result;
 }
 
@@ -184,7 +196,7 @@ static struct test *read_tests(void) {
 
 static int load_module(struct augeas *aug, struct test *test) {
     char *fname, *fpath;
-    int r;
+    int r, result = -1;
 
     if (test->module == NULL)
         return 0;
@@ -200,10 +212,11 @@ static int load_module(struct augeas *aug, struct test *test) {
 
     r = __aug_load_module_file(aug, fpath);
     fail(r < 0, "Could not load %s", fpath);
-
-    return 0;
+    result = 0;
  error:
-    return -1;
+    free(fname);
+    free(fpath);
+    return result;
 }
 
 static int run_one_test(struct test *test) {
@@ -282,7 +295,9 @@ int main(int argc, char **argv) {
         die("out of memory setting lensdir");
 
     tests = read_tests();
-    return run_tests(tests, argc - 1, argv + 1);
+    int result = run_tests(tests, argc - 1, argv + 1);
+    free_tests(tests);
+    return result;
 }
 
 /*

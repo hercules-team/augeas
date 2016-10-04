@@ -1,7 +1,7 @@
 /*
  * fa.c: finite automata
  *
- * Copyright (C) 2007-2015 David Lutterkort
+ * Copyright (C) 2007-2016 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1311,8 +1311,10 @@ static int determinize(struct fa *fa, struct state_set *ini) {
     E(points == NULL);
     if (make_ini) {
         ini = state_set_init(-1, S_NONE);
-        if (ini == NULL || state_set_push(ini, fa->initial) < 0)
+        if (ini == NULL || state_set_push(ini, fa->initial) < 0) {
+            state_set_free(ini);
             goto error;
+        }
     }
 
     F(state_set_list_add(&worklist, ini));
@@ -2773,6 +2775,8 @@ static struct fa *expand_alphabet(struct fa *fa, int add_marker,
             continue;
 
         struct state *r = add_state(fa, 0);
+        if (r == NULL)
+            goto error;
         r->trans = p->trans;
         r->tused = p->tused;
         r->tsize = p->tsize;

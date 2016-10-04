@@ -1,7 +1,7 @@
 /*
  * parser.c: parse a configuration file according to a grammar
  *
- * Copyright (C) 2007-2015 David Lutterkort
+ * Copyright (C) 2007-2016 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -118,6 +118,25 @@ struct rec_state {
                           (state)->nreg < (state)->regs->num_regs)
 #define REG_MATCHED(state) (REG_VALID(state)                            \
                             && (state)->regs->start[(state)->nreg] >= 0)
+
+/* The macros SAVE_REGS and RESTORE_REGS are used to remember and restore
+ * where our caller was in processing their regexp match before we do
+ * matching ourselves (and would therefore clobber the caller's state)
+ *
+ * These two macros are admittedly horrible in that they declare local
+ * variables called OLD_REGS and OLD_NREG. The alternative to avoiding that
+ * would be to manually manage a stack of regs/nreg in STATE.
+ */
+#define SAVE_REGS(state)                                                \
+    struct re_registers *old_regs = state->regs;                        \
+    uint old_nreg = state->nreg;                                        \
+    state->regs = NULL;                                                 \
+    state->nreg = 0
+
+#define RESTORE_REGS(state)                                             \
+    free_regs(state);                                                   \
+    state->regs = old_regs;                                             \
+    state->nreg = old_nreg;
 
 /*
  * AST utils
@@ -777,13 +796,11 @@ static struct tree *get_quant_star(struct lens *lens, struct state *state) {
     ensure0(lens->tag == L_STAR, state->info);
     struct lens *child = lens->child;
     struct tree *tree = NULL, *tail = NULL;
-    struct re_registers *old_regs = state->regs;
-    uint old_nreg = state->nreg;
     uint end = REG_END(state);
     uint start = REG_START(state);
     uint size = end - start;
 
-    state->regs = NULL;
+    SAVE_REGS(state);
     while (size > 0 && match(state, child, child->ctype, end, start) > 0) {
         struct tree *t = NULL;
 
@@ -794,9 +811,7 @@ static struct tree *get_quant_star(struct lens *lens, struct state *state) {
         size -= REG_SIZE(state);
         free_regs(state);
     }
-    free_regs(state);
-    state->regs = old_regs;
-    state->nreg = old_nreg;
+    RESTORE_REGS(state);
     if (size != 0) {
         short_iteration_error(lens, state, start, end);
     }
@@ -808,14 +823,12 @@ static struct skel *parse_quant_star(struct lens *lens, struct state *state,
     ensure0(lens->tag == L_STAR, state->info);
     struct lens *child = lens->child;
     struct skel *skel = make_skel(lens), *tail = NULL;
-    struct re_registers *old_regs = state->regs;
-    uint old_nreg = state->nreg;
     uint end = REG_END(state);
     uint start = REG_START(state);
     uint size = end - start;
 
     *dict = NULL;
-    state->regs = NULL;
+    SAVE_REGS(state);
     while (size > 0 && match(state, child, child->ctype, end, start) > 0) {
         struct skel *sk;
         struct dict *di = NULL;
@@ -828,9 +841,7 @@ static struct skel *parse_quant_star(struct lens *lens, struct state *state,
         size -= REG_SIZE(state);
         free_regs(state);
     }
-    free_regs(state);
-    state->regs = old_regs;
-    state->nreg = old_nreg;
+    RESTORE_REGS(state);
     if (size != 0) {
         get_error(state, lens, "%s", short_iteration);
     }
@@ -872,7 +883,7 @@ static struct skel *parse_quant_maybe(struct lens *lens, struct state *state,
 static struct tree *get_subtree(struct lens *lens, struct state *state) {
     char *key = state->key;
     char *value = state->value;
-    struct span *span = state->span;
+    struct span *span = move(state->span);
 
     struct tree *tree = NULL, *children;
 
@@ -887,10 +898,10 @@ static struct tree *get_subtree(struct lens *lens, struct state *state) {
 
     tree = make_tree(state->key, state->value, NULL, children);
     ERR_NOMEM(tree == NULL, state->info);
-    tree->span = state->span;
+    tree->span = move(state->span);
 
-    if (state->span != NULL) {
-        update_span(span, state->span->span_start, state->span->span_end);
+    if (tree->span != NULL) {
+        update_span(span, tree->span->span_start, tree->span->span_end);
     }
 
     state->key = key;
@@ -898,6 +909,8 @@ static struct tree *get_subtree(struct lens *lens, struct state *state) {
     state->span = span;
     return tree;
  error:
+    free_span(state->span);
+    state->span = span;
     return NULL;
 }
 
@@ -947,13 +960,12 @@ static struct tree *get_square(struct lens *lens, struct state *state) {
 
     struct lens *concat = lens->child;
     struct tree *tree = NULL;
-    struct re_registers *old_regs = state->regs;
-    uint old_nreg = state->nreg;
     uint end = REG_END(state);
     uint start = REG_START(state);
     char *rsqr = NULL, *lsqr = NULL;
     int r;
 
+    SAVE_REGS(state);
     r = match(state, lens->child, lens->child->ctype, end, start);
     ERR_NOMEM(r < 0, state->info);
 
@@ -982,9 +994,7 @@ static struct tree *get_square(struct lens *lens, struct state *state) {
     }
 
  done:
-    free_regs(state);
-    state->nreg = old_nreg;
-    state->regs = old_regs;
+    RESTORE_REGS(state);
     FREE(lsqr);
     FREE(rsqr);
     return tree;
@@ -998,13 +1008,12 @@ static struct tree *get_square(struct lens *lens, struct state *state) {
 static struct skel *parse_square(struct lens *lens, struct state *state,
                                  struct dict **dict) {
     ensure0(lens->tag == L_SQUARE, state->info);
-    struct re_registers *old_regs = state->regs;
-    uint old_nreg = state->nreg;
     uint end = REG_END(state);
     uint start = REG_START(state);
     struct skel *skel = NULL, *sk = NULL;
     int r;
 
+    SAVE_REGS(state);
     r = match(state, lens->child, lens->child->ctype, end, start);
     ERR_NOMEM(r < 0, state->info);
 
@@ -1015,9 +1024,7 @@ static struct skel *parse_square(struct lens *lens, struct state *state,
     sk->skels = skel;
 
  error:
-    free_regs(state);
-    state->regs = old_regs;
-    state->nreg = old_nreg;
+    RESTORE_REGS(state);
     return sk;
 }
 
@@ -1036,7 +1043,11 @@ static void print_frames(struct rec_state *state) {
         } else {
             fprintf(stderr, " { %s = %s } ", f->tree->label, f->tree->value);
         }
-        fprintf(stderr, "%s\n", format_lens(f->lens));
+        char *s = format_lens(f->lens);
+        if (s != NULL) {
+            fprintf(stderr, "%s\n", s);
+            free(s);
+        }
     }
 }
 
@@ -1117,13 +1128,12 @@ static void visit_terminal(struct lens *lens, size_t start, size_t end,
                            void *data) {
     struct rec_state *rec_state = data;
     struct state *state = rec_state->state;
-    struct re_registers *old_regs = state->regs;
     struct ast *child;
-    uint old_nreg = state->nreg;
 
     if (state->error != NULL)
         return;
 
+    SAVE_REGS(state);
     if (debugging("cf.get"))
         dbg_visit(lens, 'T', start, end, rec_state->fused, rec_state->lvl);
     match(state, lens, lens->ctype, end, start);
@@ -1135,9 +1145,12 @@ static void visit_terminal(struct lens *lens, size_t start, size_t end,
     child = ast_append(rec_state, lens, start, end);
     ERR_NOMEM(child == NULL, state->info);
  error:
-    free_regs(state);
-    state->regs = old_regs;
-    state->nreg = old_nreg;
+    RESTORE_REGS(state);
+}
+
+static bool rec_gen_span(struct rec_state *rec_state) {
+    return ((rec_state->mode == M_GET)
+            && (rec_state->state->info->flags & AUG_ENABLE_SPAN));
 }
 
 static void visit_enter(struct lens *lens,
@@ -1159,15 +1172,15 @@ static void visit_enter(struct lens *lens,
         struct frame *f = push_frame(rec_state, lens);
         f->key = state->key;
         f->value = state->value;
-        f->span = state->span;
         state->key = NULL;
         state->value = NULL;
-    } else if (lens->tag == L_MAYBE) {
-        push_frame(rec_state, lens);
-        if (state->info->flags & AUG_ENABLE_SPAN) {
+        if (rec_gen_span(rec_state)) {
+            f->span = state->span;
             state->span = make_span(state->info);
             ERR_NOMEM(state->span == NULL, state->info);
         }
+    } else if (lens->tag == L_MAYBE) {
+        push_frame(rec_state, lens);
     }
     child = ast_append(rec_state, lens, start, end);
     if (child != NULL)
@@ -1230,11 +1243,37 @@ static void parse_combine(struct rec_state *rec_state,
         }
     }
     top = push_frame(rec_state, lens);
-    top->skel = skel;
-    top->dict = dict;
+    top->skel = move(skel);
+    top->dict = move(dict);
     top->key = key;
  error:
+    free_skel(skel);
+    free_dict(dict);
     return;
+}
+
+static void visit_exit_put_subtree(struct lens *lens,
+                                   struct rec_state *rec_state,
+                                   struct frame *top) {
+    struct state *state = rec_state->state;
+    struct skel *skel = NULL;
+    struct dict *dict = NULL;
+
+    skel = make_skel(lens);
+    ERR_NOMEM(skel == NULL, lens->info);
+    dict = make_dict(top->key, top->skel, top->dict);
+    ERR_NOMEM(dict == NULL, lens->info);
+
+    top = pop_frame(rec_state);
+    ensure(lens == top->lens, state->info);
+    state->key = top->key;
+    pop_frame(rec_state);
+    top = push_frame(rec_state, lens);
+    top->skel = move(skel);
+    top->dict = move(dict);
+ error:
+    free_skel(skel);
+    free_dict(dict);
 }
 
 static void visit_exit(struct lens *lens,
@@ -1259,30 +1298,20 @@ static void visit_exit(struct lens *lens,
             struct tree *tree;
             // FIXME: tree may leak if pop_frame ensure0 fail
             tree = make_tree(top->key, top->value, NULL, top->tree);
-            tree->span = state->span;
             ERR_NOMEM(tree == NULL, lens->info);
+            tree->span = state->span;
             top = pop_frame(rec_state);
             ensure(lens == top->lens, state->info);
             state->key = top->key;
             state->value = top->value;
             state->span = top->span;
-            pop_frame(rec_state);
+            top = pop_frame(rec_state);
+            if (top != NULL)
+                free_span(top->span);
             top = push_frame(rec_state, lens);
             top->tree = tree;
         } else {
-            struct skel *skel;
-            struct dict *dict;
-            skel = make_skel(lens);
-            ERR_NOMEM(skel == NULL, lens->info);
-            dict = make_dict(top->key, top->skel, top->dict);
-            ERR_NOMEM(dict == NULL, lens->info);
-            top = pop_frame(rec_state);
-            ensure(lens == top->lens, state->info);
-            state->key = top->key;
-            pop_frame(rec_state);
-            top = push_frame(rec_state, lens);
-            top->skel = skel;
-            top->dict = dict;
+            visit_exit_put_subtree(lens, rec_state, top);
         }
     } else if (lens->tag == L_CONCAT) {
         ensure(rec_state->fused >= lens->nchildren, state->info);
@@ -1368,8 +1397,6 @@ static struct frame *rec_process(enum mode_t mode, struct lens *lens,
     uint end = REG_END(state);
     uint start = REG_START(state);
     size_t len = 0;
-    struct re_registers *old_regs = state->regs;
-    uint old_nreg = state->nreg;
     int r;
     struct jmt_visitor visitor;
     struct rec_state rec_state;
@@ -1378,14 +1405,12 @@ static struct frame *rec_process(enum mode_t mode, struct lens *lens,
 
     MEMZERO(&rec_state, 1);
     MEMZERO(&visitor, 1);
+    SAVE_REGS(state);
 
     if (lens->jmt == NULL) {
         lens->jmt = jmt_build(lens);
         ERR_BAIL(lens->info);
     }
-
-    state->regs = NULL;
-    state->nreg = 0;
 
     rec_state.mode  = mode;
     rec_state.state = state;
@@ -1423,8 +1448,7 @@ static struct frame *rec_process(enum mode_t mode, struct lens *lens,
  done:
     if (debugging("cf.get.ast"))
         print_ast(ast_root(rec_state.ast), 0);
-    state->regs = old_regs;
-    state->nreg = old_nreg;
+    RESTORE_REGS(state);
     jmt_free_parse(visitor.parse);
     free_ast(ast_root(rec_state.ast));
     return rec_state.frames;
@@ -1433,6 +1457,7 @@ static struct frame *rec_process(enum mode_t mode, struct lens *lens,
     for(i = 0; i < rec_state.fused; i++) {
         f = nth_frame(&rec_state, i);
         FREE(f->key);
+        free_span(f->span);
         if (mode == M_GET) {
             FREE(f->value);
             free_tree(f->tree);

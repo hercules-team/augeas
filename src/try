@@ -30,7 +30,8 @@ if [[ "x$1" == "xgdb" ]] ; then
 elif [[ "x$1" == "xstrace" ]] ; then
     libtool --mode=execute /usr/bin/strace ./augtool --nostdinc < $AUGCMDS
 elif [[ "x$1" == "xvalgrind" ]] ; then
-    libtool --mode=execute valgrind --leak-check=full ./augtool --nostdinc < $AUGCMDS
+    shift
+    libtool --mode=execute valgrind --leak-check=full ./augtool --nostdinc "$@" < $AUGCMDS
 elif [[ "x$1" == "xcallgrind" ]] ; then
     libtool --mode=execute valgrind --tool=callgrind ./augtool --nostdinc < $AUGCMDS
 elif [[ "x$1" == "xcli" ]] ; then

@@ -1,7 +1,7 @@
 /*
  * info.c: filename/linenumber information for parser/interpreter
  *
- * Copyright (C) 2007-2015 David Lutterkort
+ * Copyright (C) 2007-2016 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -63,6 +63,11 @@ char *format_info(struct info *info) {
     const char *fname;
     char *result = NULL;
     int r = 0;
+
+    if (info == NULL) {
+        return strdup("(no file info)");
+    }
+
     int fl = info->first_line, ll = info->last_line;
     int fc = info->first_column, lc = info->last_column;
     fname = (info->filename != NULL) ? info->filename->str : "(unknown file)";

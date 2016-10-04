@@ -1,11 +1,42 @@
-1.6.0 - 2016-XX-XX
+1.7.0 - ???
+  - General changes/additions
+    * fix a use-after-free in recursive lenses when spans are
+      enabled (Issue #397)
+    * fix an illegal memory access during put that can be triggered by a
+      lens of the form 'del ... | l1 . l2' when the put has to jump
+      branches in the union (Issue #398)
+    * a large number of fixes based on Coverity scanning and running with
+      gcc's address sanitizer. None of the issues uncovered would have lead
+      to particularly significant leaks (they were all on the order 100-200
+      bytes) and often hard to trigger, but we now have proof that at least
+      while running tests there are no leaks at all.
+      See https://github.com/hercules-team/augeas/pull/405 for details.
 
+1.6.0 - 2016-08-05
+  - General changes/additions
+    * augtool: add --load-file option, and corresponding load-file command
+      to load individual files based on the autoload information in lenses
+    * path expressions: numbers in path expressions are now 64 bit integers
+      rather than whatever the C compiler decided 'int' would be
+  - API changes
+    * add aug_load_file to load individual files, bug #135
   - Lens changes/additions
     * Httpd: follow line continuations in comments
-    * Ntp: allow 'pool' (Craig Miskell) (Issue #378)
-    * Postfix_Passwordmap: New lens to parse Postfix password maps (Anton Baranov) (Issue #380)
-    * Rsyslog: Support for rsyslog RainerScript syntax (Craig Miskell) (Issue #379)
-    * Vsftpd: Add allow_writeable_chroot boolead option (Robert Moucha) (Issue #376)
+    * Nginx: look for nginx.conf in /usr/local/etc, too (Omer Katz)
+    * Ntp: allow 'pool' (Craig Miskell) (Issue #378);
+           fix restrict to allow also -4 and also fix
+           save/store ability (Josef Reidinger) (Issue #386)
+    * Pam: use spaces instead of tabs as the separator in new entries
+           (Loren Gordon) (Issue #236)
+    * Postfix_Passwordmap: New lens to parse Postfix password maps
+           (Anton Baranov) (Issue #380)
+    * Rsyslog: Support for rsyslog RainerScript syntax
+           (Craig Miskell) (Issue #379)
+    * Shellvars: Load /etc/lbu/lbu.conf, the config for Alpine's Local
+           Backup Utility (Kaarle Ritvanen)
+           Load /etc/profile, /etc/profile.d/*, and /etc/byobu
+    * Vsftpd: Add allow_writeable_chroot boolead option
+           (Robert Moucha) (Issue #376)
 
 1.5.0 - 2016-05-11
   - General changes/additions

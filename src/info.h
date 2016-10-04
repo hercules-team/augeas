@@ -1,7 +1,7 @@
 /*
  * info.h: filename/linenumber information for parser/interpreter
  *
- * Copyright (C) 2007-2015 David Lutterkort
+ * Copyright (C) 2007-2016 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

@@ -1,7 +1,7 @@
 /*
  * put.c:
  *
- * Copyright (C) 2007-2015 David Lutterkort
+ * Copyright (C) 2007-2016 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -385,6 +385,8 @@ static int skel_instance_of(struct lens *lens, struct skel *skel) {
         return skel->tag == L_COUNTER;
     case L_CONCAT:
         {
+            if (skel->tag != L_CONCAT)
+                return 0;
             struct skel *s = skel->skels;
             for (int i=0; i < lens->nchildren; i++) {
                 if (! skel_instance_of(lens->children[i], s))
@@ -408,10 +410,7 @@ static int skel_instance_of(struct lens *lens, struct skel *skel) {
     case L_MAYBE:
         return skel->tag == L_MAYBE || skel_instance_of(lens->child, skel);
     case L_STAR:
-        if (skel->tag != lens->tag)
-            return 0;
-        if (lens->tag == L_MAYBE &&
-            skel->skels != NULL && skel->skels->next != NULL)
+        if (skel->tag != L_STAR)
             return 0;
         list_for_each(s, skel->skels) {
             if (! skel_instance_of(lens->child, s))
@@ -852,22 +851,23 @@ void lns_put(FILE *out, struct lens *lens, struct tree *tree,
             *err = err1;
         else
             free_lns_error(err1);
-        return;
+        goto error;
     }
     state.out = out;
     state.split = make_split(tree);
     state.key = tree->label;
     put_lens(lens, &state);
-
-    free(state.path);
-    free_split(state.split);
-    free_skel(state.skel);
-    free_dict(state.dict);
     if (err != NULL) {
         *err = state.error;
     } else {
         free_lns_error(state.error);
     }
+
+ error:
+    free(state.path);
+    free_split(state.split);
+    free_skel(state.skel);
+    free_dict(state.dict);
 }
 
 /*

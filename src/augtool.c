@@ -1,7 +1,7 @@
 /*
  * augtool.c:
  *
- * Copyright (C) 2007-2015 David Lutterkort
+ * Copyright (C) 2007-2016 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -47,7 +47,9 @@ static unsigned int flags = AUG_NONE;
 const char *root = NULL;
 char *loadpath = NULL;
 char *transforms = NULL;
+char *loadonly = NULL;
 size_t transformslen = 0;
+size_t loadonlylen = 0;
 const char *inputfile = NULL;
 int echo_commands = 0;         /* Gets also changed in main_loop */
 bool print_version = false;
@@ -177,7 +179,7 @@ static char *readline_command_generator(const char *text, int state) {
         "quit", "clear", "defnode", "defvar",
         "get", "label", "ins", "load", "ls", "match",
         "mv", "cp", "rename", "print", "dump-xml", "rm", "save", "set", "setm",
-        "clearm", "span", "store", "retrieve", "transform",
+        "clearm", "span", "store", "retrieve", "transform", "load-file",
         "help", "touch", "insert", "move", "copy", "errors", NULL };
 
     static int current = 0;
@@ -291,27 +293,28 @@ static void help(void) {
     fprintf(stderr, "Run '%s help' to get a list of possible commands.\n",
             progname);
     fprintf(stderr, "\nOptions:\n\n");
-    fprintf(stderr, "  -c, --typecheck      typecheck lenses\n");
-    fprintf(stderr, "  -b, --backup         preserve originals of modified files with\n"
-                    "                       extension '.augsave'\n");
-    fprintf(stderr, "  -n, --new            save changes in files with extension '.augnew',\n"
-                    "                       leave original unchanged\n");
-    fprintf(stderr, "  -r, --root ROOT      use ROOT as the root of the filesystem\n");
-    fprintf(stderr, "  -I, --include DIR    search DIR for modules; can be given multiple times\n");
-    fprintf(stderr, "  -t, --transform XFM  add a file transform; uses the 'transform' command\n"
-                    "                       syntax, e.g. -t 'Fstab incl /etc/fstab.bak'\n");
-    fprintf(stderr, "  -e, --echo           echo commands when reading from a file\n");
-    fprintf(stderr, "  -f, --file FILE      read commands from FILE\n");
-    fprintf(stderr, "  -s, --autosave       automatically save at the end of instructions\n");
-    fprintf(stderr, "  -i, --interactive    run an interactive shell after evaluating\n"
-                    "                       the commands in STDIN and FILE\n");
-    fprintf(stderr, "  -S, --nostdinc       do not search the builtin default directories\n"
-                    "                       for modules\n");
-    fprintf(stderr, "  -L, --noload         do not load any files into the tree on startup\n");
-    fprintf(stderr, "  -A, --noautoload     do not autoload modules from the search path\n");
-    fprintf(stderr, "  --span               load span positions for nodes related to a file\n");
-    fprintf(stderr, "  --timing             after executing each command, show how long it took\n");
-    fprintf(stderr, "  --version            print version information and exit.\n");
+    fprintf(stderr, "  -c, --typecheck        typecheck lenses\n");
+    fprintf(stderr, "  -b, --backup           preserve originals of modified files with\n"
+                    "                         extension '.augsave'\n");
+    fprintf(stderr, "  -n, --new              save changes in files with extension '.augnew',\n"
+                    "                         leave original unchanged\n");
+    fprintf(stderr, "  -r, --root ROOT        use ROOT as the root of the filesystem\n");
+    fprintf(stderr, "  -I, --include DIR      search DIR for modules; can be given multiple times\n");
+    fprintf(stderr, "  -t, --transform XFM    add a file transform; uses the 'transform' command\n"
+                    "                         syntax, e.g. -t 'Fstab incl /etc/fstab.bak'\n");
+    fprintf(stderr, "  -l, --load-file FILE   load individual FILE in the tree\n");
+    fprintf(stderr, "  -e, --echo             echo commands when reading from a file\n");
+    fprintf(stderr, "  -f, --file FILE        read commands from FILE\n");
+    fprintf(stderr, "  -s, --autosave         automatically save at the end of instructions\n");
+    fprintf(stderr, "  -i, --interactive      run an interactive shell after evaluating\n"
+                    "                         the commands in STDIN and FILE\n");
+    fprintf(stderr, "  -S, --nostdinc         do not search the builtin default directories\n"
+                    "                         for modules\n");
+    fprintf(stderr, "  -L, --noload           do not load any files into the tree on startup\n");
+    fprintf(stderr, "  -A, --noautoload       do not autoload modules from the search path\n");
+    fprintf(stderr, "  --span                 load span positions for nodes related to a file\n");
+    fprintf(stderr, "  --timing               after executing each command, show how long it took\n");
+    fprintf(stderr, "  --version              print version information and exit.\n");
 
     exit(EXIT_FAILURE);
 }
@@ -332,6 +335,7 @@ static void parse_opts(int argc, char **argv) {
         { "root",        1, 0, 'r' },
         { "include",     1, 0, 'I' },
         { "transform",   1, 0, 't' },
+        { "load-file",   1, 0, 'l' },
         { "echo",        0, 0, 'e' },
         { "file",        1, 0, 'f' },
         { "autosave",    0, 0, 's' },
@@ -346,7 +350,7 @@ static void parse_opts(int argc, char **argv) {
     };
     int idx;
 
-    while ((opt = getopt_long(argc, argv, "hnbcr:I:t:ef:siSLA", options, &idx)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hnbcr:I:t:l:ef:siSLA", options, &idx)) != -1) {
         switch(opt) {
         case 'c':
             flags |= AUG_TYPE_CHECK;
@@ -368,6 +372,11 @@ static void parse_opts(int argc, char **argv) {
             break;
         case 't':
             argz_add(&transforms, &transformslen, optarg);
+            break;
+        case 'l':
+            // --load-file implies --noload
+            flags |= AUG_NO_LOAD;
+            argz_add(&loadonly, &loadonlylen, optarg);
             break;
         case 'e':
             echo_commands = 1;
@@ -419,7 +428,7 @@ static void print_version_info(void) {
         goto error;
 
     fprintf(stderr, "augtool %s <http://augeas.net/>\n", version);
-    fprintf(stderr, "Copyright (C) 2007-2015 David Lutterkort\n");
+    fprintf(stderr, "Copyright (C) 2007-2016 David Lutterkort\n");
     fprintf(stderr, "License LGPLv2+: GNU LGPL version 2.1 or later\n");
     fprintf(stderr, "                 <http://www.gnu.org/licenses/lgpl-2.1.html>\n");
     fprintf(stderr, "This is free software: you are free to change and redistribute it.\n");
@@ -649,6 +658,24 @@ static void add_transforms(char *ts, size_t tslen) {
     }
 }
 
+static void load_files(char *ts, size_t tslen) {
+    char *command;
+    int r;
+    char *t = NULL;
+
+    while ((t = argz_next(ts, tslen, t))) {
+        r = xasprintf(&command, "load-file %s", t);
+        if (r < 0)
+            fprintf(stderr, "error: Failed to load file %s: could not allocate memory\n", t);
+
+        r = aug_srun(aug, stdout, command);
+        if (r < 0)
+            fprintf(stderr, "error: Failed to load file %s: %s\n", t, aug_error_message(aug));
+
+        free(command);
+    }
+}
+
 int main(int argc, char **argv) {
     int r;
     struct timeval start, stop;
@@ -677,6 +704,7 @@ int main(int argc, char **argv) {
             print_aug_error();
         exit(EXIT_FAILURE);
     }
+    load_files(loadonly, loadonlylen);
     add_transforms(transforms, transformslen);
     if (print_version) {
         print_version_info();
@@ -692,6 +720,7 @@ int main(int argc, char **argv) {
     if (history_file != NULL)
         write_history(history_file);
 
+    aug_close(aug);
     return r == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 

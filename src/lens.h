@@ -1,7 +1,7 @@
 /*
  * lens.h: Repreentation of lenses
  *
- * Copyright (C) 2007-2015 David Lutterkort
+ * Copyright (C) 2007-2016 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -163,7 +163,7 @@ struct skel {
     enum lens_tag tag;
     union {
         char        *text;    /* L_DEL */
-        struct skel *skels;   /* L_CONCAT, L_STAR */
+        struct skel *skels;   /* L_CONCAT, L_STAR, L_SQUARE */
     };
     /* Also tag == L_SUBTREE, with no data in the union */
 };

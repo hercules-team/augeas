@@ -304,6 +304,7 @@ module Shellvars =
                      . incl "/etc/cvs-pserver.conf"
                      . incl "/etc/devscripts.conf"
                      . incl "/etc/kamailio/kamctlrc"
+                     . incl "/etc/lbu/lbu.conf"
                      . incl "/etc/lintianrc"
                      . incl "/etc/lsb-release"
                      . incl "/etc/os-release"

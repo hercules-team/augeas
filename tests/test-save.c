@@ -1,7 +1,7 @@
 /*
  * test-save.c: test various aspects of saving
  *
- * Copyright (C) 2009-2015 David Lutterkort
+ * Copyright (C) 2009-2016 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -61,6 +61,7 @@ static void setup(CuTest *tc) {
     run(tc, "chmod -R u+w %s", root);
 
     aug = aug_init(root, lensdir, AUG_NO_STDINC);
+    free(lensdir);
     CuAssertPtrNotNull(tc, aug);
 }
 
@@ -175,6 +176,7 @@ static void testMtime(CuTest *tc) {
 
     CuAssertStrNotEqual(tc, mtime1, mtime2);
     CuAssertStrNotEqual(tc, "0", mtime2);
+    free(mtime1);
 }
 
 /* Check that loading and saving a file given with a relative path
@@ -285,6 +287,7 @@ static void testUmask(CuTest *tc, int tumask, mode_t expected_mode) {
 
     CuAssertIntEquals(tc, 0, stat(fpath, &buf));
     CuAssertIntEquals(tc, expected_mode, buf.st_mode & 0777);
+    free(fpath);
 }
 static void testUmask077(CuTest *tc) {
     testUmask(tc, 0077, 0600);
@@ -346,6 +349,9 @@ static void testPathEscaping(CuTest *tc) {
     r = access(fname, R_OK);
     CuAssertIntEquals(tc, -1, r);
     CuAssertIntEquals(tc, ENOENT, errno);
+
+    free(s);
+    free(fname);
 }
 
 /* Test that we handle failure to save a file because we lack permission on
@@ -379,6 +385,7 @@ static void testSaveNoPermission(CuTest *tc) {
     r = aug_get(aug, "/augeas/files/etc/hosts/error", &v);
     CuAssertIntEquals(tc, 1, r);
     CuAssertStrEquals(tc, "replace_from_missing", v);
+    free(path);
 }
 
 int main(void) {
@@ -417,7 +424,9 @@ int main(void) {
     CuSuiteDetails(suite, &output);
     printf("%s\n", output);
     free(output);
-    return suite->failCount;
+    int result = suite->failCount;
+    CuSuiteFree(suite);
+    return result;
 }
 
 /*

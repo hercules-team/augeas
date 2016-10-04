@@ -232,6 +232,7 @@ int main (int argc, char **argv) {
       }
     }
     putchar('\n');
+    free(rx);
   }
 
   return 0;

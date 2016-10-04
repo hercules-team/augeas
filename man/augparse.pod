@@ -101,7 +101,7 @@ David Lutterkort <lutter@watzmann.net>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2007-2015 David Lutterkort
+Copyright 2007-2016 David Lutterkort
 
 Augeas (and augparse) are distributed under the GNU Lesser General Public
 License (LGPL)

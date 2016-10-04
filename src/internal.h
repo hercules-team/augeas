@@ -1,7 +1,7 @@
 /*
  * internal.h: Useful definitions
  *
- * Copyright (C) 2007-2015 David Lutterkort
+ * Copyright (C) 2007-2016 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -168,11 +168,19 @@
 #endif
 #endif
 
+/* A poor man's macro to get some move semantics: return the value of P but
+   set P itself to NULL. This has the effect that if you say 'x = move(y)'
+   that there is still only one pointer pointing to the memory Y pointed to
+   initially.
+ */
+#define move(p) ({ typeof(p) _tmp = (p); (p) = NULL; _tmp; })
+
 #else
 #define ATTRIBUTE_UNUSED
 #define ATTRIBUTE_FORMAT(...)
 #define ATTRIBUTE_PURE
 #define ATTRIBUTE_RETURN_CHECK
+#define move(p) p
 #endif                                   /* __GNUC__ */
 
 #define ARRAY_CARDINALITY(array) (sizeof (array) / sizeof *(array))
@@ -370,6 +378,10 @@ void api_exit(const struct augeas *aug);
  * marked dirty, too. Instead of setting this flag directly, the function
  * TREE_MARK_DIRTY in augeas.c should be used (and only functions in that
  * file should have a need to mark nodes as dirty)
+ *
+ * The FILE flag is set for entries underneath /augeas/files that hold the
+ * metadata for a file. It is only set by ADD_FILE_INFO and can not be set
+ * by the user.
  */
 struct tree {
     struct tree *next;
@@ -377,10 +389,13 @@ struct tree {
     char        *label;      /* Last component of PATH */
     struct tree *children;   /* List of children through NEXT */
     char        *value;
-    int          dirty;
-    uint8_t      added;      /* only used by ns_add and tree_rm to dedupe
-                                nodesets */
     struct span *span;
+
+    /* Flags */
+    bool         dirty;
+    bool         file;
+    bool         added;      /* only used by ns_add and tree_rm to dedupe
+                                nodesets */
 };
 
 /* The opaque structure used to represent path expressions. API's

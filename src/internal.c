@@ -1,7 +1,7 @@
 /*
  * internal.c: internal data structures and helpers
  *
- * Copyright (C) 2007-2015 David Lutterkort
+ * Copyright (C) 2007-2016 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -52,6 +52,7 @@ int pathjoin(char **path, int nseg, ...) {
             len += strlen(*path) + 1;
             if (REALLOC_N(*path, len) == -1) {
                 FREE(*path);
+                va_end(ap);
                 return -1;
             }
             if (strlen(*path) == 0 || (*path)[strlen(*path)-1] != SEP)
@@ -60,8 +61,10 @@ int pathjoin(char **path, int nseg, ...) {
                 seg += 1;
             strcat(*path, seg);
         } else {
-            if ((*path = malloc(len)) == NULL)
+            if ((*path = malloc(len)) == NULL) {
+                va_end(ap);
                 return -1;
+            }
             strcpy(*path, seg);
         }
     }
@@ -351,9 +354,7 @@ char *path_expand(struct tree *tree, const char *ppath) {
     if (ppath == NULL)
         ppath = "";
 
-    if (tree == NULL)
-        label = "(no_tree)";
-    else if (tree->label == NULL)
+    if (tree->label == NULL)
         label = "(none)";
     else
         label = tree->label;

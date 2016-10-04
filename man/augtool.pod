@@ -54,6 +54,15 @@ F</usr/share/augeas/lenses> and F</usr/share/augeas/lenses/dist>.
 Add a file transform; uses the 'transform' command syntax,
 e.g. C<-t 'Fstab incl /etc/fstab.bak'>.
 
+=item B<-l>, B<--load-file>=I<FILE>
+
+Load an invididual FILE into the tree. The lens to use is determined
+automatically (based on autoload information in the lenses) and will be the
+same that is used for this file when the entire tree is loaded. The option
+can be specified multiple times to load several files, e.g. C<-l /etc/fstab
+-l /etc/hosts>. This lens implies C<--noload> so that only the files
+specified with this option will be loaded.
+
 =item B<-f>, B<--file>=I<FILE>
 
 Read commands from FILE.
@@ -163,6 +172,12 @@ full lens name.  If a module name is given, then "lns" will be the lens
 assumed.  The FILTER must be either "incl" or "excl".  If the filter is
 "incl",  the FILE will be parsed by the LENS.  If the filter is "excl",
 the FILE will be excluded from the LENS. FILE may contain wildcards.
+
+=item B<load-file> E<lt>FILEE<gt>
+
+Load a specific FILE, automatically determining the proper lens from the
+information in F</augeas/load>; without further intervention, the lens that
+would oridnarily be used for this file will be used.
 
 =back
 
@@ -366,7 +381,7 @@ David Lutterkort <lutter@watzmann.net>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2007-2015 David Lutterkort
+Copyright 2007-2016 David Lutterkort
 
 Augeas (and augtool) are distributed under the GNU Lesser General Public
 License (LGPL)

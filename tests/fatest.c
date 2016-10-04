@@ -1,7 +1,7 @@
 /*
  * fatest.c:
  *
- * Copyright (C) 2007-2015 David Lutterkort
+ * Copyright (C) 2007-2016 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -447,6 +447,7 @@ static void testAmbigWithNuls(CuTest *tc) {
     CuAssertIntEquals(tc, 2, v_len);
     CuAssertIntEquals(tc, (int)'\0', v[0]);
     CuAssertIntEquals(tc, (int)'Y', v[1]);
+    free(upv);
 }
 
 static void assertFaAsRegexp(CuTest *tc, const char *regexp) {
@@ -517,6 +518,7 @@ static void testNul(CuTest *tc) {
     CuAssertIntEquals(tc, 0, r);
     CuAssertIntEquals(tc, re0_len, re_len);
     CuAssertIntEquals(tc, 0, memcmp(re0, re, re0_len));
+    free(re);
 }
 
 static void testRestrictAlphabet(CuTest *tc) {
@@ -623,6 +625,14 @@ static void testNoCaseComplement(CuTest *tc) {
     isect = fa_intersect(key, comp);
 
     CuAssertIntEquals(tc, 1, fa_is_basic(isect, FA_EMPTY));
+    fa_free(isect);
+}
+
+static void free_words(int n, char **words) {
+    for (int i=0; i < n; i++) {
+        free(words[i]);
+    }
+    free(words);
 }
 
 static void testEnumerate(CuTest *tc) {
@@ -655,6 +665,7 @@ static void testEnumerate(CuTest *tc) {
             CuFail(tc, msg);
         }
     }
+    free_words(10, words);
 
     r = fa_enumerate(fa_inf, 100, &words);
     CuAssertIntEquals(tc, -2, r);
@@ -665,6 +676,7 @@ static void testEnumerate(CuTest *tc) {
     CuAssertPtrNotNull(tc, words);
     CuAssertStrEquals(tc, "", words[0]);
     CuAssertStrEquals(tc, "a", words[1]);
+    free_words(10, words);
 }
 
 int main(int argc, char **argv) {
@@ -700,10 +712,9 @@ int main(int argc, char **argv) {
         CuSuiteDetails(suite, &output);
         printf("%s\n", output);
         free(output);
-        if (getenv("FAILMALLOC_INTERVAL") != NULL)
-            return EXIT_SUCCESS;
-        else
-            return suite->failCount;
+        int result = suite->failCount;
+        CuSuiteFree(suite);
+        return result;
     }
 
     for (int i=1; i<argc; i++) {

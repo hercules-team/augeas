@@ -1,7 +1,7 @@
 /*
  * lens.c:
  *
- * Copyright (C) 2007-2015 David Lutterkort
+ * Copyright (C) 2007-2016 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -71,6 +71,10 @@ static const struct string digits_string = {
 static const struct string *const digits_pat = &digits_string;
 
 char *format_lens(struct lens *l) {
+    if (l == NULL) {
+        return strdup("(no lens)");
+    }
+
     char *inf = format_info(l->info);
     char *result;
 
@@ -83,15 +87,14 @@ char *format_lens(struct lens *l) {
 #define BUG_LENS_TAG(lns)  bug_lens_tag(lns, __FILE__, __LINE__)
 
 static void bug_lens_tag(struct lens *lens, const char *file, int lineno) {
-    char *s = format_lens(lens);
-
     if (lens != NULL && lens->info != NULL && lens->info->error != NULL) {
+        char *s = format_lens(lens);
         bug_on(lens->info->error, file, lineno, "Unexpected lens tag %s", s);
+        free(s);
     } else {
         /* We are really screwed */
         assert(0);
     }
-    free(s);
     return;
 }
 
@@ -2109,7 +2112,7 @@ static struct value *typecheck_n(struct lens *l,
     acc = ref(l->children[0]);
     for (int i=1; i < l->nchildren; i++) {
         struct info *info = merge_info(acc->info, l->children[i]->info);
-        ERR_BAIL(acc->info);
+        ERR_NOMEM(info == NULL, acc->info);
         exn = (*make)(info, acc, ref(l->children[i]), check);
         if (EXN(exn))
             goto error;
