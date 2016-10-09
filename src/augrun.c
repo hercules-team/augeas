@@ -1202,6 +1202,43 @@ static const struct command_def cmd_retrieve_def = {
     .help = cmd_retrieve_help
 };
 
+#include "syntax.h"
+#include "schema.h"
+
+static void cmd_schema(struct command *cmd) {
+    const char *lens_name = arg_value(cmd, "lens");
+    struct augeas *aug = cmd->aug;
+    struct lens *lens = NULL;
+    struct schema *schema = NULL;
+
+    lens = lens_lookup(aug, lens_name);
+    if (lens == NULL) {
+        ERR_REPORT(cmd, AUG_ECMDRUN, "Lens %s does not exist", lens_name);
+        return;
+    }
+
+    schema = schema_from_lens(lens);
+    ERR_BAIL(aug);
+    simplify_schema(schema);
+    dump_schema(cmd->out, schema);
+ error:
+    free_schema(schema);
+}
+
+static const struct command_opt_def cmd_schema_opts[] = {
+    { .type = CMD_STR, .name = "lens", .optional = false,
+      .help = "show schema for this lens" },
+    CMD_OPT_DEF_LAST
+};
+
+static const struct command_def cmd_schema_def = {
+    .name = "schema",
+    .opts = cmd_schema_opts,
+    .handler = cmd_schema,
+    .synopsis = "show the schema for a lens",
+    .help = "show the schema for a lens"
+};
+
 /* Given a path "/augeas/files/FILENAME/error", return FILENAME */
 static char *err_filename(const char *match) {
     int noise = strlen(AUGEAS_META_FILES) + strlen("/error");
@@ -1324,6 +1361,7 @@ static const struct command_grp_def cmd_grp_admin_def = {
         &cmd_store_def,
         &cmd_transform_def,
         &cmd_load_file_def,
+        &cmd_schema_def,
         &cmd_def_last
     }
 };
