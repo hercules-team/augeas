@@ -11,6 +11,8 @@
       bytes) and often hard to trigger, but we now have proof that at least
       while running tests there are no leaks at all.
       See https://github.com/hercules-team/augeas/pull/405 for details.
+  - Lens changes/additions
+    * Opendkim: new lens for /etc/opendkim.conf (Craig Miskell)
 
 1.6.0 - 2016-08-05
   - General changes/additions
