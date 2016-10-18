@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
+set -o pipefail
 
 start_fold_marker() {
   echo "travis_fold:start:script.$1"
@@ -50,7 +51,6 @@ exit $exit_status
 fi
 
 set -e
-
 start_fold_marker 'test.lenses'
 ./src/try valgrind 2>&1 | colout2 -t valgrind
 end_fold_marker 'test.lenses'

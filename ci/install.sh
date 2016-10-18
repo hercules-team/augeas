@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -o pipefail
 
 start_fold_marker() {
   echo "travis_fold:start:install.$1"
