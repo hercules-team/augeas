@@ -49,6 +49,7 @@ lens_tests =			\
   lens-collectd.sh	\
   lens-cpanel.sh	\
   lens-cron.sh			\
+  lens-cron_user.sh			\
   lens-crypttab.sh		\
   lens-csv.sh		\
   lens-cyrus_imapd.sh		\

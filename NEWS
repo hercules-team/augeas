@@ -18,6 +18,7 @@
       checked properly. This new check might lead to errors in existing
       lenses, requiring that they be fixed.
   - Lens changes/additions
+    * Cron_User: New lens to handle user crontab files in /var/spool/cron
     * Opendkim: new lens for /etc/opendkim.conf (Craig Miskell)
 
 1.6.0 - 2016-08-05

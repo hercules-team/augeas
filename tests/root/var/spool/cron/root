@@ -1,0 +1,4 @@
+MAILTO=cron@example.com
+RANDOM_DELAY=7
+17 12 */4 * * /usr/sbin/boom
+@reboot       /usr/sbin/boom
