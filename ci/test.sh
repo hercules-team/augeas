@@ -52,5 +52,11 @@ fi
 
 set -e
 start_fold_marker 'test.lenses'
+start_fold_marker 'test.lenses.asan'
+./src/try asan
+end_fold_marker 'test.lenses.asan'
+start_fold_marker 'test.lenses.valgrind'
+./configure --enable-debug 2>&1 | colout2 -t configure
 ./src/try valgrind 2>&1 | colout2 -t valgrind
+end_fold_marker 'test.lenses.valgrind'
 end_fold_marker 'test.lenses'
