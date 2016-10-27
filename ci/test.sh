@@ -24,7 +24,7 @@ print_error_log() {
 }
 
 start_fold_marker 'configure'
-./configure --enable-debug=yes 2>&1 | colout2 -t configure
+./configure --enable-asan 2>&1 | colout2 -t configure
 end_fold_marker 'configure'
 
 start_fold_marker 'compilation'

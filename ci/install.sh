@@ -35,7 +35,7 @@ sudo pip3 install -q colout2
 end_fold_marker 'dependencies'
 
 start_fold_marker 'autogen'
-./autogen.sh 2>&1 | colout2 -t autogen
+./autogen.sh --enable-asan 2>&1 | colout2 -t autogen
 exit_status=$?
 end_fold_marker 'autogen'
 
