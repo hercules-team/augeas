@@ -75,7 +75,7 @@ let sep_eq  = Util.del_str "="
  *************************************************************************)
 
 let shellvar =
-  let key_re = /[A-Za-z-1-9_]+(\[[0-9]+\])?/ - "entry" in
+  let key_re = /[A-Za-z1-9_-]+(\[[0-9]+\])?/ - "entry" in
   let sto_to_eol = store /[^\n]*[^ \t\n]/ in
   [ key key_re . sep_eq . sto_to_eol . eol ]
 

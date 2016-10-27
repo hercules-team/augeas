@@ -1164,13 +1164,28 @@ static int check_binop(const char *opname, struct term *term,
     return 0;
 }
 
-static int check_value(struct value *v) {
+static int check_value(struct term *term) {
     const char *msg;
+    struct value *v = term->value;
 
     if (v->tag == V_REGEXP) {
+        /* The only literal that needs checking are regular expressions,
+           where we need to make sure the regexp is syntactically
+           correct */
         if (regexp_check(v->regexp, &msg) == -1) {
             syntax_error(v->info, "Invalid regular expression: %s", msg);
             return 0;
+        }
+        term->type = make_base_type(T_REGEXP);
+    } else if (v->tag == V_EXN) {
+        /* Exceptions can't be typed */
+        return 0;
+    } else {
+        /* There are cases where we generate values internally, and
+           those have their type already set; we don't want to
+           overwrite that */
+        if (term->type == NULL) {
+            term->type = value_type(v);
         }
     }
     return 1;
@@ -1238,7 +1253,7 @@ static int check_exp(struct term *term, struct ctx *ctx) {
             term->type = ref(term->left->type->img);
         break;
     case A_VALUE:
-        result = check_value(term->value);
+        result = check_value(term);
         break;
     case A_IDENT:
         {

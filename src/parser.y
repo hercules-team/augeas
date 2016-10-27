@@ -539,7 +539,6 @@ static struct term *make_ident(char *qname, struct info *locp) {
 static struct term *make_unit_term(struct info *locp) {
   struct term *term = make_term_locp(A_VALUE, locp);
   term->value = make_unit(ref(term->info));
-  term->type = make_base_type(T_UNIT);
   return term;
 }
 
@@ -547,7 +546,6 @@ static struct term *make_string_term(char *value, struct info *locp) {
   struct term *term = make_term_locp(A_VALUE, locp);
   term->value = make_value(V_STRING, ref(term->info));
   term->value->string = make_string(value);
-  term->type = make_base_type(T_STRING);
   return term;
 }
 
@@ -555,7 +553,6 @@ static struct term *make_regexp_term(char *pattern, int nocase,
                                      struct info *locp) {
   struct term *term = make_term_locp(A_VALUE, locp);
   term->value = make_value(V_REGEXP, ref(term->info));
-  term->type = make_base_type(T_REGEXP);
   term->value->regexp = make_regexp(term->info, pattern, nocase);
   return term;
 }
@@ -603,7 +600,6 @@ static struct term *make_tree_value(struct tree *tree, struct info *locp) {
   struct term *term = make_term_locp(A_VALUE, locp);
   struct value *value = make_value(V_TREE, ref(term->info));
   value->origin = make_tree_origin(tree);
-  term->type = make_base_type(T_TREE);
   term->value = value;
   return term;
 }

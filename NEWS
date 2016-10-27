@@ -11,6 +11,12 @@
       bytes) and often hard to trigger, but we now have proof that at least
       while running tests there are no leaks at all.
       See https://github.com/hercules-team/augeas/pull/405 for details.
+    * The type checker now checks regexes that are involved in
+      expressions. For example, it used to be possible to write 'let rx =
+      /a/ | /b)/' and not get an error from the syntax checker, even though
+      'let rx = /b)/' would result in an error. Such constructs are now
+      checked properly. This new check might lead to errors in existing
+      lenses, requiring that they be fixed.
   - Lens changes/additions
     * Opendkim: new lens for /etc/opendkim.conf (Craig Miskell)
 
