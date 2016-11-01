@@ -1,4 +1,8 @@
-SUBDIRS=gnulib/lib src gnulib/tests tests man doc examples
+SUBDIRS = gnulib/lib src
+if ENABLE_GNULIB_TESTS
+SUBDIRS += gnulib/tests
+endif
+SUBDIRS += tests man doc examples
 
 ACLOCAL_AMFLAGS = -I gnulib/m4
 
