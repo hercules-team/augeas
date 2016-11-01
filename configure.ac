@@ -68,11 +68,11 @@ dnl --enable-asan=(yes|no)
 AC_ARG_ENABLE([asan],
               [AC_HELP_STRING([--enable-asan=no/yes],
                              [enable address sanitizers])],[],[enable_asan=yes])
-AM_CONDITIONAL([ENABLE_DEBUG], test x"$enable_debug" = x"yes")
+AM_CONDITIONAL([ENABLE_ASAN], test x"$enable_asan" = x"yes")
 if test x"$enable_asan" = x"yes"; then
    CFLAGS="${CFLAGS} -O0 -g3 -fsanitize=address -fno-omit-frame-pointer"
    LDFLAGS="${LDFLAGS} -fsanitize=address"
-   AC_DEFINE([ENABLE_DEBUG], [1], [whether address sanitizers are enabled])
+   AC_DEFINE([ENABLE_ASAN], [1], [whether address sanitizers are enabled])
 fi
 
 dnl Version info in libtool's notation
