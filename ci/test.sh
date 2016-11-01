@@ -58,6 +58,7 @@ end_fold_marker 'test.lenses.asan'
 start_fold_marker 'test.lenses.valgrind'
 make clean
 ./autogen.sh --enable-debug 2>&1 | colout2 -t autogen
+make -j 2
 ./src/try valgrind 2>&1 | colout2 -t valgrind
 end_fold_marker 'test.lenses.valgrind'
 end_fold_marker 'test.lenses'
