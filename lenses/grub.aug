@@ -289,5 +289,6 @@ module Grub =
     let filter = incl "/boot/grub/grub.conf"
                . incl "/boot/grub/menu.lst"
                . incl "/etc/grub.conf"
+               . incl "/boot/efi/EFI/*/grub.conf"
 
     let xfm = transform lns filter

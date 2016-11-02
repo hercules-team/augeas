@@ -19,6 +19,8 @@
       lenses, requiring that they be fixed.
   - Lens changes/additions
     * Cron_User: New lens to handle user crontab files in /var/spool/cron
+    * Grub: also look for UEFI grub files in /boot/efi/EFI/*/grub.conf
+            (Rich Jones)
     * Opendkim: new lens for /etc/opendkim.conf (Craig Miskell)
 
 1.6.0 - 2016-08-05
