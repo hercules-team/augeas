@@ -1459,6 +1459,29 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
     return -1;
 }
 
+/* XFM1 and XFM2 can both be used to save the same file. That is an error
+   only if the two lenses in the two transforms are actually different. */
+static int check_save_dup(struct augeas *aug, const char *path,
+                          struct tree *xfm1, struct tree *xfm2) {
+    int result = 0;
+    struct lens *l1 = xfm_lens(aug, xfm1, NULL);
+    struct lens *l2 = xfm_lens(aug, xfm2, NULL);
+    if (l1 != l2) {
+        const char *filename = path + strlen(AUGEAS_FILES_TREE) + 1;
+        transform_file_error(aug, "mxfm_save", filename,
+                             "Lenses %s and %s could be used to save this file",
+                             xfm_lens_name(xfm1),
+                             xfm_lens_name(xfm2));
+        ERR_REPORT(aug, AUG_EMXFM,
+                   "Path %s transformable by lens %s and %s",
+                   path,
+                   xfm_lens_name(xfm1),
+                   xfm_lens_name(xfm2));
+        result = -1;
+    }
+    return result;
+}
+
 static int tree_save(struct augeas *aug, struct tree *tree,
                      const char *path) {
     int result = 0;
@@ -1483,18 +1506,7 @@ static int tree_save(struct augeas *aug, struct tree *tree,
                     if (transform == NULL || transform == xfm) {
                         transform = xfm;
                     } else {
-                        const char *filename =
-                            tpath + strlen(AUGEAS_FILES_TREE) + 1;
-                        transform_file_error(aug, "mxfm_save", filename,
-                           "Lenses %s and %s could be used to save this file",
-                                             xfm_lens_name(transform),
-                                             xfm_lens_name(xfm));
-                        ERR_REPORT(aug, AUG_EMXFM,
-                                   "Path %s transformable by lens %s and %s",
-                                   tpath,
-                                   xfm_lens_name(transform),
-                                   xfm_lens_name(xfm));
-                        result = -1;
+                        result = check_save_dup(aug, tpath, transform, xfm);
                     }
                 }
             }

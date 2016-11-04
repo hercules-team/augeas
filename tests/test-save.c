@@ -147,9 +147,21 @@ static void testMultipleXfm(CuTest *tc) {
 
     r = aug_set(aug, "/files/etc/yum.repos.d/fedora.repo/fedora/enabled", "0");
     CuAssertIntEquals(tc, 0, r);
+    /* What we have set up is fine: two ways to save the same file with the
+       same lens */
+    r = aug_save(aug);
+    CuAssertIntEquals(tc, 0, r);
+
+    /* Now we make it bad: a different lens for the same file */
+    r = aug_set(aug, "/augeas/load/Yum2/lens", "@Subversion");
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_set(aug, "/files/etc/yum.repos.d/fedora.repo/fedora/enabled", "1");
+    CuAssertIntEquals(tc, 0, r);
 
     r = aug_save(aug);
     CuAssertIntEquals(tc, -1, r);
+
     r = aug_error(aug);
     CuAssertIntEquals(tc, AUG_EMXFM, r);
 }

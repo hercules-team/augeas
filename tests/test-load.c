@@ -612,6 +612,46 @@ static void testLoadTrailingExcl(CuTest *tc) {
     aug_close(aug);
 }
 
+static void testMultipleXfm(CuTest *tc) {
+    augeas *aug = NULL;
+    static const char *const cmds =
+        "set /augeas/context /augeas/load\n"
+        "set P1/lens Passwd.lns\n"
+        "set P1/incl /etc/passwd\n"
+        "set P2/lens @Passwd\n"
+        "set P2/incl /etc/passwd\n"
+        "load";
+    int r;
+    const char *v;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+
+    /* The initial setup is fine: two different transforms that want to use
+       the same lens to load a file */
+    r = aug_srun(aug, stderr, cmds);
+    CuAssertIntEquals(tc, 6, r);
+
+    r = aug_match(aug, "/augeas/files/etc/passwd", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    /* Now change things so we use two different lenses for the same file */
+    r = aug_set(aug, "/augeas/load/P2/lens", "Hosts.lns");
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_rm(aug, "/files/*");
+    CuAssertPositive(tc, r);
+
+    r = aug_load(aug);
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_get(aug, "/augeas/files/etc/passwd/error", &v);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertStrEquals(tc, "mxfm_load", v);
+
+    aug_close(aug);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -634,6 +674,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testPermsErrorReported);
     SUITE_ADD_TEST(suite, testLoadExclWithRoot);
     SUITE_ADD_TEST(suite, testLoadTrailingExcl);
+    SUITE_ADD_TEST(suite, testMultipleXfm);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)

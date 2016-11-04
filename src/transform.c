@@ -697,8 +697,8 @@ const char *xfm_lens_name(struct tree *xfm) {
     return l->value;
 }
 
-static struct lens *xfm_lens(struct augeas *aug,
-                             struct tree *xfm, const char **lens_name) {
+struct lens *xfm_lens(struct augeas *aug,
+                      struct tree *xfm, const char **lens_name) {
     struct tree *l = NULL;
 
     for (l = xfm->children;
@@ -707,7 +707,8 @@ static struct lens *xfm_lens(struct augeas *aug,
 
     if (l == NULL || l->value == NULL)
         return NULL;
-    *lens_name = l->value;
+    if (lens_name != NULL)
+        *lens_name = l->value;
 
     return lens_from_name(aug, l->value);
 }
@@ -836,13 +837,25 @@ int transform_load(struct augeas *aug, struct tree *xfm, const char *file) {
 
         if (finfo != NULL && !finfo->dirty &&
             tree_child(finfo, s_lens) != NULL) {
+            /* We have a potential conflict: since FINFO is not marked as
+               dirty (see aug_load for how the dirty flag on nodes under
+               /augeas/files is used during loading), we already processed
+               it with another lens. The other lens is recorded in
+               FINFO. If it so happens that the lenses are actually the
+               same, we silently move on, as this duplication does no
+               harm. If they are different we definitely have a problem and
+               need to record an error and remove the work the first lens
+               did. */
             const char *s = xfm_lens_name(finfo);
-            char *fpath = file_name_path(aug, matches[i]);
-            transform_file_error(aug, "mxfm_load", filename,
-              "Lenses %s and %s could be used to load this file",
-                                 s, lens_name);
-            aug_rm(aug, fpath);
-            free(fpath);
+            struct lens *other_lens = lens_from_name(aug, s);
+            if (lens != other_lens) {
+                char *fpath = file_name_path(aug, matches[i]);
+                transform_file_error(aug, "mxfm_load", filename,
+                  "Lenses %s and %s could be used to load this file",
+                                     s, lens_name);
+                aug_rm(aug, fpath);
+                free(fpath);
+            }
         } else if (!file_current(aug, matches[i], finfo)) {
             load_file(aug, lens, lens_name, matches[i]);
         }
