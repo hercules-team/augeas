@@ -201,6 +201,7 @@ Group: Specific Modules  {
    File: Trapperkeeper  (trapperkeeper.aug)
    File: Xymon_Alerting  (xymon_alerting.aug)
    File: Yaml  (yaml.aug)
+   File: Cron_User  (cron_user.aug)
    }  # Group: Specific Modules
 
 Group: Generic Modules  {

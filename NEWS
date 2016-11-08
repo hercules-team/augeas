@@ -1,5 +1,7 @@
-1.7.0 - ???
+1.7.0 - 2016-11-08
   - General changes/additions
+    * allow multiple transforms handling the same file as long as they
+      also use the same lens (reported by Rich Jones)
     * fix a use-after-free in recursive lenses when spans are
       enabled (Issue #397)
     * fix an illegal memory access during put that can be triggered by a
@@ -19,9 +21,13 @@
       lenses, requiring that they be fixed.
   - Lens changes/additions
     * Cron_User: New lens to handle user crontab files in /var/spool/cron
+    * Csv: fix failure to load lens on OpenBSD (Issue #396)
     * Grub: also look for UEFI grub files in /boot/efi/EFI/*/grub.conf
             (Rich Jones)
     * Opendkim: new lens for /etc/opendkim.conf (Craig Miskell)
+    * Php: look for php.ini where Ubunto 16.04 puts it, too (Michael Wodniok)
+    * Splunk: support Splunk Universal Forwarder and underscore-prefixed
+              keys for 6.x (Jason Antman)
 
 1.6.0 - 2016-08-05
   - General changes/additions
