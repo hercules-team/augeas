@@ -1,3 +1,7 @@
+1.8.0 - ???
+  - Lens changes/additions
+    * Tmpfiles: parse 'q'/'Q' modes
+
 1.7.0 - 2016-11-08
   - General changes/additions
     * allow multiple transforms handling the same file as long as they

@@ -291,7 +291,7 @@ Invalid example that contain invalid age  *)
 
   (* Variable: invalid_type
 Invalid example that contain invalid type (bad letter) *)
-  let invalid_type = "q /var/tmp/js 0000 jonhsmith 60 1s foo\n"
+  let invalid_type = "e /var/tmp/js 0000 jonhsmith 60 1s foo\n"
 
   (* Variable: invalid_type_num
  Invalid example that contain invalid type (numeric) *)
