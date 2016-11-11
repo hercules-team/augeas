@@ -826,3 +826,80 @@ test Xml.lns get "<a password=\"my\!pass\" />" =
 
 test Xml.lns put ""
 after set "/a" "#empty" = "<a/>\n"
+
+(* Issue #142 *)
+test Xml.entity_def get
+  "<!ENTITY open-hatch SYSTEM \"http://examplecom/OpenHatch.xml\">" =
+  { "!ENTITY" = "open-hatch"
+    { "SYSTEM"
+      { "#systemliteral" = "http://examplecom/OpenHatch.xml" }
+    } }
+
+test Xml.entity_def get
+  "<!ENTITY open-hatch PUBLIC \"-//Textuality//TEXT Standard open-hatch boilerplate//EN\" \"http://www.textuality.com/boilerplate/OpenHatch.xml\">" =
+  { "!ENTITY" = "open-hatch"
+    { "PUBLIC"
+      { "#pubidliteral" =
+          "-//Textuality//TEXT Standard open-hatch boilerplate//EN" }
+      { "#systemliteral" =
+          "http://www.textuality.com/boilerplate/OpenHatch.xml" } } }
+
+let dt_with_entities =
+"<!DOCTYPE server-xml [
+  <!ENTITY sys-ent SYSTEM \"sys-file.xml\">
+  <!ENTITY pub-ent PUBLIC \"-//something public//TEXT\"
+                          \"pub-file.xml\">
+ ]>"
+
+test Xml.doctype get dt_with_entities =
+  { "!DOCTYPE" = "server-xml"
+    { "!ENTITY" = "sys-ent"
+      { "SYSTEM"
+        { "#systemliteral" = "sys-file.xml" }
+      }
+    }
+    { "!ENTITY" = "pub-ent"
+      { "PUBLIC"
+        { "#pubidliteral" = "-//something public//TEXT" }
+        { "#systemliteral" = "pub-file.xml" }
+      }
+    }
+  }
+
+test Xml.doctype put dt_with_entities after
+    rm "/\!DOCTYPE/\!ENTITY[2]";
+    set "/\!DOCTYPE/\!ENTITY[. = \"sys-ent\"]/SYSTEM/#systemliteral"
+        "other-file.xml"
+  =
+"<!DOCTYPE server-xml [
+  <!ENTITY sys-ent SYSTEM \"other-file.xml\">
+  ]>"
+
+test Xml.lns get (dt_with_entities . "<body></body>") =
+  { "!DOCTYPE" = "server-xml"
+    { "!ENTITY" = "sys-ent"
+      { "SYSTEM"
+        { "#systemliteral" = "sys-file.xml" }
+      }
+    }
+    { "!ENTITY" = "pub-ent"
+      { "PUBLIC"
+        { "#pubidliteral" = "-//something public//TEXT" }
+        { "#systemliteral" = "pub-file.xml" }
+      }
+    }
+  }
+  { "body" }
+
+test Xml.lns put "<?xml version=\"1.0\"?>
+<body>
+</body>"
+    after
+    insa "!DOCTYPE" "#declaration";
+    set "\\!DOCTYPE" "Server";
+    set "\\!DOCTYPE/\\!ENTITY" "resourcesFile";
+    set "\\!DOCTYPE/\\!ENTITY/SYSTEM/#systemliteral" "data.xml"
+  =
+"<?xml version=\"1.0\"?><!DOCTYPE Server[
+<!ENTITY resourcesFile SYSTEM \"data.xml\">]>
+<body>\n</body>"

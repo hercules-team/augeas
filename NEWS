@@ -2,6 +2,7 @@
   - Lens changes/additions
     * Tmpfiles: parse 'q'/'Q' modes, parse two-character arguments,
                 parse three-digit file modes
+    * Xml: support external entity declarations in the doctype (Issue #142)
 
 1.7.0 - 2016-11-08
   - General changes/additions

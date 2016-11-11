@@ -78,7 +78,13 @@ let att_def       = counter "att_id" .
 
 let att_list_def = decl_def /!ATTLIST/ att_def
 
-let entity_def    = decl_def /!ENTITY/ ([sep_spc . label "#decl" . sto_dquote ])
+let entity_def   =
+  let literal (lbl:string) = [ sep_spc . label lbl . sto_dquote ] in
+  decl_def /!ENTITY/
+    ( literal "#decl"
+    | [ sep_spc . key /SYSTEM/ . literal "#systemliteral" ]
+    | [ sep_spc . key /PUBLIC/ . literal "#pubidliteral"
+                               . literal "#systemliteral" ] )
 
 let decl_def_item = elem_def | entity_def | att_list_def | notation_def
 
