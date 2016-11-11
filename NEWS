@@ -1,6 +1,6 @@
 1.8.0 - ???
   - Lens changes/additions
-    * Tmpfiles: parse 'q'/'Q' modes
+    * Tmpfiles: parse 'q'/'Q' modes, parse two-character arguments
 
 1.7.0 - 2016-11-08
   - General changes/additions

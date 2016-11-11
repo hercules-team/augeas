@@ -66,7 +66,7 @@ optionally starts with a "~'. *)
 
   (* View: argument
 The last field. It can contain spaces. *)
-  let argument = /([^# \t\n][^#\n]+)?[^# \t\n]/
+  let argument = /([^# \t\n][^#\n]*[^# \t\n]|[^# \t\n])/
 
   (* View: field
 Applies to the other fields: path, gid and uid fields *)

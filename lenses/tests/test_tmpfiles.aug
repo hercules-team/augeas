@@ -172,6 +172,34 @@ Tree for <complex_arg> *)
         { "argument" = "user.name=\"John Smith\" security.SMACK64=screen" }
     }
 
+  (* Variable: valid_short_args
+A short argument value example. *)
+  let valid_short_args = "h /var/log/journal - - - - C\nh /var/log/journal - - - - +C\n"
+
+  (* Variable: valid_short_args_tree
+Tree for <valid_short_args> *)
+  let valid_short_args_tree =
+    {
+        "1"
+        { "type" = "h" }
+        { "path" = "/var/log/journal" }
+        { "mode" = "-" }
+        { "uid" = "-" }
+        { "gid" = "-" }
+        { "age" = "-" }
+        { "argument" = "C" }
+    }
+    {
+        "2"
+        { "type" = "h" }
+        { "path" = "/var/log/journal" }
+        { "mode" = "-" }
+        { "uid" = "-" }
+        { "gid" = "-" }
+        { "age" = "-" }
+        { "argument" = "+C" }
+    }
+
   (* Variable: valid_age
 Example with a complex age. *)
   let valid_age = "v /var/tmp/js 4221 johnsmith - ~10d12h\n"
@@ -326,6 +354,8 @@ Invalid example that contain invalid mode (letter) *)
   test Tmpfiles.lns get short_age = short_age_tree
 
   test Tmpfiles.lns get complex_arg = complex_arg_tree
+
+  test Tmpfiles.lns get valid_short_args = valid_short_args_tree
 
   test Tmpfiles.lns get valid_second = valid_second_tree
 
