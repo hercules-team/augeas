@@ -56,8 +56,8 @@ Not all letters are valid.
   let type     = /([fFwdDvqQpLcbCxXrRzZtThHaAm]|[AabcLp]\+)!?/
 
   (* View: mode
-"-", or 4 bytes. Optionally starts with a "~". *)
-  let mode     = /(-|~?[0-7]{4})/
+"-", or 3-4 bytes. Optionally starts with a "~". *)
+  let mode     = /(-|~?[0-7]{3,4})/
 
   (* View: age
 "-", or one of the formats seen in the manpage: 10d, 5seconds, 1y5days.

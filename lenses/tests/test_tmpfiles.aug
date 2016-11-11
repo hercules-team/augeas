@@ -305,6 +305,20 @@ Tree for <valid_base> *)
         { "argument" = "foo" }
     }
 
+  (* Variable: mode3
+Mode field example with only three digits *)
+  let mode3 = "c+! /tmp/foo 755\n"
+
+  (* Variable: mode3_tree
+Tree for <mode3> *)
+  let mode3_tree =
+    {
+        "1"
+        { "type" = "c+!" }
+        { "path" = "/tmp/foo" }
+        { "mode" = "755" }
+    }
+
 (************************************************************************
  * Group:                 INVALID EXAMPLES
  *************************************************************************)
@@ -368,6 +382,8 @@ Invalid example that contain invalid mode (letter) *)
   test Tmpfiles.lns get hyphen = hyphen_tree
 
   test Tmpfiles.lns get valid_base = valid_base_tree
+
+  test Tmpfiles.lns get mode3 = mode3_tree
 
 
 (* failure cases *)
