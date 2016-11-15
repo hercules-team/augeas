@@ -110,7 +110,19 @@ gl_INIT
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([LIBXML], [libxml-2.0])
 
-PKG_CHECK_MODULES([LIBLUA], [lua5.2])
+m4_foreach_w([LUAPKG], [lua5.1 lua5.2 lua5.3 lua], [
+  AC_MSG_CHECKING([for LUAPKG])
+  PKG_CHECK_EXISTS(LUAPKG, [
+    AC_MSG_RESULT([yes])
+    LIBLUA_CFLAGS=$($PKG_CONFIG --cflags LUAPKG)
+    LIBLUA_LIBS=$($PKG_CONFIG --libs LUAPKG)
+  ], [AC_MSG_RESULT([no])])
+])
+if test -z "$LIBLUA_LIBS"; then
+  AC_MSG_ERROR([no Lua libraries found])
+fi
+AC_SUBST([LIBLUA_CFLAGS])
+AC_SUBST([LIBLUA_LIBS])
 
 AC_CHECK_FUNCS([strerror_r fsync])
 
