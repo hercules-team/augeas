@@ -4,6 +4,12 @@
 -- In general, the functions map straight to the C library. See the
 -- descriptions below for details.
  */
+
+/*
+ * Copyright (C) 2010-2013 Natanael Copa <ncopa@alpinelinux.org>
+ * Copyright (C) 2013 Kaarle Ritvanen
+ */
+
 #include <assert.h>
 #include <stdlib.h>
 
