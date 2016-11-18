@@ -11,14 +11,14 @@ BUILT_SOURCES = datadir.h
 
 DISTCLEANFILES = datadir.h
 
-lib_LTLIBRARIES = libfa.la libaugeas.la
+lib_LTLIBRARIES = libfa.la libaugeas.la libauglua.la
 noinst_LTLIBRARIES = liblexer.la
 
 bin_PROGRAMS = augtool augparse
 
 include_HEADERS = augeas.h fa.h
 
-libaugeas_la_SOURCES = augeas.h augeas.c augrun.c auglua.h auglua.c pathx.c \
+libaugeas_la_SOURCES = augeas.h augeas.c augrun.c pathx.c \
 	internal.h internal.c \
 	memory.h memory.c ref.h ref.c \
     syntax.c syntax.h parser.y builtin.c lens.c lens.h regexp.c regexp.h \
@@ -26,19 +26,26 @@ libaugeas_la_SOURCES = augeas.h augeas.c augrun.c auglua.h auglua.c pathx.c \
     info.c info.h errcode.c errcode.h jmt.h jmt.c
 
 if USE_VERSION_SCRIPT
+  AUGLUA_VERSION_SCRIPT = $(VERSION_SCRIPT_FLAGS)$(srcdir)/auglua_sym.version
   AUGEAS_VERSION_SCRIPT = $(VERSION_SCRIPT_FLAGS)$(srcdir)/augeas_sym.version
   FA_VERSION_SCRIPT = $(VERSION_SCRIPT_FLAGS)$(srcdir)/fa_sym.version
 else
+  AUGLUA_VERSION_SCRIPT =
   AUGEAS_VERSION_SCRIPT =
   FA_VERSION_SCRIPT =
 endif
 
 libaugeas_la_LDFLAGS = $(AUGEAS_VERSION_SCRIPT) \
     -version-info $(LIBAUGEAS_VERSION_INFO)
-libaugeas_la_LIBADD = liblexer.la libfa.la $(LIB_SELINUX) $(LIBXML_LIBS) $(LIBLUA_LIBS) $(GNULIB)
+libaugeas_la_LIBADD = liblexer.la libfa.la $(LIB_SELINUX) $(LIBXML_LIBS) $(GNULIB)
+
+libauglua_la_LDFLAGS = $(AUGLUA_VERSION_SCRIPT) \
+    -version-info $(LIBAUGLUA_VERSION_INFO)
+libauglua_la_SOURCES = augeas.h auglua.c auglua.h internal.h
+libauglua_la_LIBADD = libaugeas.la $(LIBLUA_LIBS)
 
 augtool_SOURCES = augtool.c
-augtool_LDADD = libaugeas.la $(READLINE_LIBS) $(LIBXML_LIBS) $(LIBLUA_LIBS) $(GNULIB)
+augtool_LDADD = libaugeas.la libauglua.la $(READLINE_LIBS) $(GNULIB)
 
 augparse_SOURCES = augparse.c
 augparse_LDADD = libaugeas.la $(LIBXML_LIBS) $(LIBLUA_LIBS) $(GNULIB)

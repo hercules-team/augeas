@@ -1,0 +1,6 @@
+AUGLUA_0.0.0 {
+    global:
+      luaopen_augeas;
+      aug_lua;
+    local: *;
+};
