@@ -23,6 +23,7 @@
 
 #include "internal.h"
 #include "augeas.h"
+#include "luamod.h"
 #include "auglua.h"
 #include <lua.h>
 #include <lualib.h>
@@ -35,8 +36,8 @@
 static augeas *checkaug(lua_State *L) {
   lua_pushliteral(L, REG_KEY_INSTANCE);
   lua_gettable(L, LUA_REGISTRYINDEX);
-  augeas *aug = (augeas *)lua_touserdata(L, -1); // Convert value
-  return aug;
+  augeas **aug = (augeas **)lua_touserdata(L, -1); // Convert value
+  return *aug;
 }
 
 static void lua_checkargs(lua_State *L, const char *name, int arity) {
@@ -446,10 +447,8 @@ struct lua_State *setup_lua(augeas *a) {
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
   
-    // lightuserdata is shared between libs
-    // do we really want to use that?
     lua_pushliteral(L, REG_KEY_INSTANCE);
-    lua_pushlightuserdata(L, (void *)a); // Push pointer
+    luamod_push_augeas(L, a);
     lua_settable(L, LUA_REGISTRYINDEX);
 
     static const luaL_Reg augfuncs[] = {

@@ -43,6 +43,7 @@ static int luaL_typerror (lua_State *L, int narg, const char *tname)
 
 struct aug_userdata {
 	augeas *aug;
+	int gc;
 };
 
 struct aug_flagmap {
@@ -110,9 +111,17 @@ static augeas *Paug_checkarg(lua_State *L, int index)
 	return ud->aug;
 }
 
+void luamod_push_augeas(lua_State *L, augeas *a) {
+	struct aug_userdata *ud = (struct aug_userdata *) lua_newuserdata(L, sizeof(struct aug_userdata));
+	luaL_getmetatable(L, PAUG_META);
+	lua_setmetatable(L, -2);
+	ud->aug = a;
+	ud->gc = 0;
+}
+
 static int Paug_init(lua_State *L)
 {
-	struct aug_userdata *ud;
+	augeas *a;
 	struct aug_flagmap *f;
 	const char *root = NULL, *loadpath = NULL;
 	int flags = 0;
@@ -129,13 +138,13 @@ static int Paug_init(lua_State *L)
 		flags = luaL_optinteger(L, 3, AUG_NONE);
 	}
 
-	ud = (struct aug_userdata *) lua_newuserdata(L, sizeof(struct aug_userdata));
-	luaL_getmetatable(L, PAUG_META);
-	lua_setmetatable(L, -2);
-
-	ud->aug = aug_init(root, loadpath, flags);
-	if (ud->aug == NULL)
+	a = aug_init(root, loadpath, flags);
+	if (a == NULL)
 		luaL_error(L, "aug_init failed");
+
+	luamod_push_augeas(L, a);
+	((struct aug_userdata *) lua_touserdata(L, -1))->gc = 1;
+
 	return 1;
 }
 
@@ -162,7 +171,7 @@ static int Paug_close(lua_State *L)
 	luaL_checktype(L, 1, LUA_TUSERDATA);
 	ud = (struct aug_userdata *) luaL_checkudata(L, 1, PAUG_META);
 
-	if (ud && ud->aug) {
+	if (ud && ud->gc && ud->aug) {
 		aug_close(ud->aug);
 		ud->aug = NULL;
 	}

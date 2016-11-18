@@ -44,7 +44,7 @@ libaugeas_la_LIBADD = liblexer.la libfa.la $(LIB_SELINUX) $(LIBXML_LIBS) $(GNULI
 
 libauglua_la_LDFLAGS = $(AUGLUA_VERSION_SCRIPT) \
     -version-info $(LIBAUGLUA_VERSION_INFO)
-libauglua_la_SOURCES = augeas.h auglua.c auglua.h internal.h
+libauglua_la_SOURCES = augeas.h auglua.c auglua.h internal.h luamod.c luamod.h
 libauglua_la_LIBADD = libaugeas.la $(LIBLUA_LIBS)
 
 augtool_SOURCES = augtool.c
