@@ -41,6 +41,10 @@ static int luaL_typerror (lua_State *L, int narg, const char *tname)
 }
 #endif
 
+struct aug_userdata {
+	augeas *aug;
+};
+
 struct aug_flagmap {
 	const char *name;
 	int value;
@@ -98,17 +102,17 @@ static int pushresult(lua_State *L, int i, augeas *aug, const char *info)
 
 static augeas *Paug_checkarg(lua_State *L, int index)
 {
-	augeas **a;
+	struct aug_userdata *ud;
 	luaL_checktype(L, index, LUA_TUSERDATA);
-	a = (augeas **) luaL_checkudata(L, index, PAUG_META);
-	if (a == NULL)
+	ud = (struct aug_userdata *) luaL_checkudata(L, index, PAUG_META);
+	if (ud == NULL)
 		luaL_typerror(L, index, PAUG_META);
-	return *a;
+	return ud->aug;
 }
 
 static int Paug_init(lua_State *L)
 {
-	augeas **a;
+	struct aug_userdata *ud;
 	struct aug_flagmap *f;
 	const char *root = NULL, *loadpath = NULL;
 	int flags = 0;
@@ -125,12 +129,12 @@ static int Paug_init(lua_State *L)
 		flags = luaL_optinteger(L, 3, AUG_NONE);
 	}
 
-	a = (augeas **) lua_newuserdata(L, sizeof(augeas *));
+	ud = (struct aug_userdata *) lua_newuserdata(L, sizeof(struct aug_userdata));
 	luaL_getmetatable(L, PAUG_META);
 	lua_setmetatable(L, -2);
 
-	*a = aug_init(root, loadpath, flags);
-	if (*a == NULL)
+	ud->aug = aug_init(root, loadpath, flags);
+	if (ud->aug == NULL)
 		luaL_error(L, "aug_init failed");
 	return 1;
 }
@@ -154,13 +158,13 @@ static int Paug_defnode(lua_State *L)
 
 static int Paug_close(lua_State *L)
 {
-	augeas **a;
+	struct aug_userdata *ud;
 	luaL_checktype(L, 1, LUA_TUSERDATA);
-	a = (augeas **) luaL_checkudata(L, 1, PAUG_META);
+	ud = (struct aug_userdata *) luaL_checkudata(L, 1, PAUG_META);
 
-	if (a && *a) {
-		aug_close(*a);
-		*a = NULL;
+	if (ud && ud->aug) {
+		aug_close(ud->aug);
+		ud->aug = NULL;
 	}
 	return 0;
 }
