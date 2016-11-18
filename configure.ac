@@ -117,6 +117,7 @@ m4_foreach_w([LUAPKG], [lua5.1 lua5.2 lua5.3 lua], [
     AC_MSG_RESULT([yes])
     LIBLUA_CFLAGS=$($PKG_CONFIG --cflags LUAPKG)
     LIBLUA_LIBS=$($PKG_CONFIG --libs LUAPKG)
+    LUA_VERSION=$($PKG_CONFIG --variable=V LUAPKG)
   ], [AC_MSG_RESULT([no])])
 ])
 if test -z "$LIBLUA_LIBS"; then
@@ -124,6 +125,7 @@ if test -z "$LIBLUA_LIBS"; then
 fi
 AC_SUBST([LIBLUA_CFLAGS])
 AC_SUBST([LIBLUA_LIBS])
+AC_SUBST([LUA_VERSION])
 
 AC_CHECK_FUNCS([strerror_r fsync])
 

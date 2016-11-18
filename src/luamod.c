@@ -7,7 +7,7 @@
 
 /*
  * Copyright (C) 2010-2013 Natanael Copa <ncopa@alpinelinux.org>
- * Copyright (C) 2013 Kaarle Ritvanen
+ * Copyright (C) 2013-2016 Kaarle Ritvanen
  */
 
 #include <assert.h>
@@ -17,7 +17,7 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
-#include <augeas.h>
+#include "augeas.h"
 
 #define LIBNAME "augeas"
 #define PAUG_META "augeas"

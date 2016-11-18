@@ -14,6 +14,9 @@ DISTCLEANFILES = datadir.h
 lib_LTLIBRARIES = libfa.la libaugeas.la libauglua.la
 noinst_LTLIBRARIES = liblexer.la
 
+luadir = $(libdir)/lua/$(LUA_VERSION)
+lua_LTLIBRARIES = augeas.la
+
 bin_PROGRAMS = augtool augparse
 
 include_HEADERS = augeas.h fa.h
@@ -56,6 +59,10 @@ libfa_la_LDFLAGS = $(FA_VERSION_SCRIPT) -version-info $(LIBFA_VERSION_INFO)
 
 liblexer_la_SOURCES = lexer.l
 liblexer_la_CFLAGS = $(AM_CFLAGS) -Wno-error
+
+augeas_la_SOURCES = augeas.h luamod.c
+augeas_la_LIBADD = libaugeas.la
+augeas_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version -module -shared
 
 FAILMALLOC_START ?= 1
 FAILMALLOC_REP   ?= 20
