@@ -60,7 +60,7 @@ libfa_la_LDFLAGS = $(FA_VERSION_SCRIPT) -version-info $(LIBFA_VERSION_INFO)
 liblexer_la_SOURCES = lexer.l
 liblexer_la_CFLAGS = $(AM_CFLAGS) -Wno-error
 
-augeas_la_SOURCES = augeas.h luamod.c
+augeas_la_SOURCES = augeas.h luamod.c luamod.h
 augeas_la_LIBADD = libaugeas.la
 augeas_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version -module -shared
 

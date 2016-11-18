@@ -18,6 +18,7 @@
 #include <lauxlib.h>
 
 #include "augeas.h"
+#include "luamod.h"
 
 #define LIBNAME "augeas"
 #define PAUG_META "augeas"
