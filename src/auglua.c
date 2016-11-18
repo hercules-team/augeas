@@ -31,7 +31,13 @@
 #include <stdbool.h>
 
 
+#define REG_KEY_MODULE "augeas-module"
 #define REG_KEY_INSTANCE "augeas-instance"
+
+static void push_reg_value(lua_State *L, const char *key) {
+    lua_pushstring(L, key);
+    lua_gettable(L, LUA_REGISTRYINDEX);
+}
 
 static augeas *checkaug(lua_State *L) {
   lua_pushliteral(L, REG_KEY_INSTANCE);
@@ -443,10 +449,39 @@ static int lua_aug_transform(lua_State *L) {
   return 0;
 }
 
+static int call_function(lua_State *L) {
+    lua_pushvalue(L, lua_upvalueindex(1));
+    lua_insert(L, 1);
+
+    push_reg_value(L, REG_KEY_INSTANCE);
+    lua_insert(L, 2);
+
+    lua_call(L, lua_gettop(L) - 1, LUA_MULTRET);
+
+    if (lua_isnil(L, 1) && lua_isstring(L, 2)) {
+        lua_pushvalue(L, 2);
+        lua_error(L);
+    }
+    return lua_gettop(L);
+}
+
+static int bind_function(lua_State *L) {
+    push_reg_value(L, REG_KEY_MODULE);
+    lua_insert(L, 2);
+    lua_gettable(L, 2);
+
+    lua_pushcclosure(L, call_function, 1);
+    return 1;
+}
+
 struct lua_State *setup_lua(augeas *a) {
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
   
+    lua_pushliteral(L, REG_KEY_MODULE);
+    luaopen_augeas(L);
+    lua_settable(L, LUA_REGISTRYINDEX);
+
     lua_pushliteral(L, REG_KEY_INSTANCE);
     luamod_push_augeas(L, a);
     lua_settable(L, LUA_REGISTRYINDEX);
@@ -487,6 +522,11 @@ struct lua_State *setup_lua(augeas *a) {
     };
 
     luaL_newlib(L, augfuncs);
+
+    static const luaL_Reg meta[] = {{"__index", bind_function}, {NULL, NULL}};
+    luaL_newlib(L, meta);
+    lua_setmetatable(L, -2);
+
     lua_setglobal(L, "aug");
 
     return L;
