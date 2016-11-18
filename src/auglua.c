@@ -2,6 +2,7 @@
  * auglua.c: lua integration for augtool
  *
  * Copyright (C) 2015 Raphaël Pinson
+ * Copyright (C) 2016 Kaarle Ritvanen
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -441,7 +442,7 @@ static int lua_aug_transform(lua_State *L) {
   return 0;
 }
 
-struct lua_State *luaopen_augeas(augeas *a) {
+struct lua_State *setup_lua(augeas *a) {
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
   
