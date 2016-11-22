@@ -281,6 +281,13 @@ static int Paug_clearm(lua_State *L)
 	return Paug_setm(L);
 }
 
+static int Paug_touch(lua_State *L)
+{
+	augeas *a = Paug_checkarg(L, 1);
+	const char *path = luaL_checkstring(L, 2);
+	return aug_match(a, path, NULL) ? 0 : Paug_clear(L);
+}
+
 static int Paug_matches(lua_State *L)
 {
 	augeas *a = Paug_checkarg(L, 1);
@@ -413,6 +420,7 @@ function set(augobj, path, value)
 	{"rename",	Paug_rename},
 	{"clear",	Paug_clear},
 	{"clearm",	Paug_clearm},
+	{"touch",	Paug_touch},
 	{"matches",	Paug_matches},
 /*
 --- Collects paths in the Augeas tree.
