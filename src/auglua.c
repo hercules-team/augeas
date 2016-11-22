@@ -62,23 +62,6 @@ static int lua_pusherror(lua_State *L) {
   return 1;
 }
 
-static int lua_aug_clearm(lua_State *L) {
-  int r;
-  const char *base, *sub;
-
-  lua_checkargs(L, "aug_clearm", 2);
-
-  base = luaL_checkstring(L, 1);
-  sub = luaL_checkstring(L, 2);
-
-  augeas *aug = checkaug(L);
-  r = aug_setm(aug, base, sub, NULL);
-  if (r < 0)
-      return lua_pusherror(L);
-
-  return 0;
-}
-
 static int lua_aug_touch(lua_State *L) {
   int r;
   const char *path;
@@ -212,7 +195,6 @@ struct lua_State *setup_lua(augeas *a) {
 
     static const luaL_Reg augfuncs[] = {
         //{ "span", lua_aug_span },
-        { "clearm", lua_aug_clearm },
         { "touch", lua_aug_touch },
         { "save", lua_aug_save },
         { "text_store", lua_aug_text_store },
