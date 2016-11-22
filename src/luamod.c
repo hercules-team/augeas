@@ -251,6 +251,14 @@ static int Paug_mv(lua_State *L)
 	return pushresult(L, aug_mv(a, src, dst), a, NULL);
 }
 
+static int Paug_cp(lua_State *L)
+{
+	augeas *a = Paug_checkarg(L, 1);
+	const char *src = luaL_checkstring(L, 2);
+	const char *dst = luaL_checkstring(L, 3);
+	return pushresult(L, aug_cp(a, src, dst), a, NULL);
+}
+
 static int Paug_matches(lua_State *L)
 {
 	augeas *a = Paug_checkarg(L, 1);
@@ -378,6 +386,8 @@ function set(augobj, path, value)
 	{"rm",		Paug_rm},
 	{"mv",		Paug_mv},
 	{"move",	Paug_mv},
+	{"cp",		Paug_cp},
+	{"copy",	Paug_cp},
 	{"matches",	Paug_matches},
 /*
 --- Collects paths in the Augeas tree.
