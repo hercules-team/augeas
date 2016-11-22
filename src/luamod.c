@@ -267,6 +267,13 @@ static int Paug_rename(lua_State *L)
 	return pushresult(L, aug_rename(a, path, label), a, path);
 }
 
+static int Paug_clear(lua_State *L)
+{
+	lua_settop(L, 2);
+	lua_pushnil(L);
+	return Paug_set(L);
+}
+
 static int Paug_matches(lua_State *L)
 {
 	augeas *a = Paug_checkarg(L, 1);
@@ -397,6 +404,7 @@ function set(augobj, path, value)
 	{"cp",		Paug_cp},
 	{"copy",	Paug_cp},
 	{"rename",	Paug_rename},
+	{"clear",	Paug_clear},
 	{"matches",	Paug_matches},
 /*
 --- Collects paths in the Augeas tree.
