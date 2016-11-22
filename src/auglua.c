@@ -62,24 +62,6 @@ static int lua_pusherror(lua_State *L) {
   return 1;
 }
 
-static int lua_aug_label(lua_State *L) {
-  int r;
-  const char *path, *value;
-
-  lua_checkargs(L, "aug_label", 1);
-
-  path = luaL_checkstring(L, 1);
-  // TODO: check string really
-
-  augeas *aug = checkaug(L);
-  r = aug_label(aug, path, &value);
-  if (r < 0)
-      return lua_pusherror(L);
-  lua_pushstring(L, value);
-
-  return 1;
-}
-
 static int lua_aug_cp(lua_State *L) {
   int r;
   const char *path, *new_path;
@@ -281,7 +263,6 @@ struct lua_State *setup_lua(augeas *a) {
     lua_settable(L, LUA_REGISTRYINDEX);
 
     static const luaL_Reg augfuncs[] = {
-        { "label", lua_aug_label },
         //{ "span", lua_aug_span },
         { "cp", lua_aug_cp },
         { "copy", lua_aug_cp }, // alias

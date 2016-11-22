@@ -8,6 +8,7 @@
 /*
  * Copyright (C) 2010-2013 Natanael Copa <ncopa@alpinelinux.org>
  * Copyright (C) 2013-2016 Kaarle Ritvanen
+ * Copyright (C) 2015 Raphaël Pinson
  */
 
 #include <assert.h>
@@ -194,6 +195,18 @@ static int Paug_get(lua_State *L)
 	return 1;
 }
 
+static int Paug_label(lua_State *L)
+{
+	const char *value;
+	augeas *a = Paug_checkarg(L, 1);
+	const char *path = luaL_checkstring(L, 2);
+	int r = aug_label(a, path, &value);
+	if (r < 0)
+		return pusherror(L, a, path);
+	lua_pushstring(L, value);
+	return 1;
+}
+
 static int Paug_set(lua_State *L)
 {
 	augeas *a;
@@ -357,6 +370,7 @@ function get(augobj, path)
 -- * `value` Value for path
 function set(augobj, path, value)
  */
+	{"label",	Paug_label},
 	{"set",		Paug_set},
 	{"setm",	Paug_setm},
 	{"insert",	Paug_insert},
