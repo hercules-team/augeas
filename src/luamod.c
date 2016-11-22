@@ -360,8 +360,10 @@ function set(augobj, path, value)
 	{"set",		Paug_set},
 	{"setm",	Paug_setm},
 	{"insert",	Paug_insert},
+	{"ins",		Paug_insert},
 	{"rm",		Paug_rm},
 	{"mv",		Paug_mv},
+	{"move",	Paug_mv},
 	{"matches",	Paug_matches},
 /*
 --- Collects paths in the Augeas tree.
