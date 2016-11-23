@@ -111,13 +111,23 @@ gl_INIT
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([LIBXML], [libxml-2.0])
 
+LUA_SUBDIRS=
+LUA_MAKEFILES=
 m4_foreach_w([LUAPKG], [lua5.1 lua5.2 lua5.3 lua], [
   AC_MSG_CHECKING([for LUAPKG])
   PKG_CHECK_EXISTS(LUAPKG, [
     AC_MSG_RESULT([yes])
     LIBLUA_CFLAGS=$($PKG_CONFIG --cflags LUAPKG)
     LIBLUA_LIBS=$($PKG_CONFIG --libs LUAPKG)
-    LUA_VERSION=$($PKG_CONFIG --variable=V LUAPKG)
+    LUA_SUBDIRS="$LUA_SUBDIRS LUAPKG"
+
+    LUA_SUBDIR=src/LUAPKG
+    AS_MKDIR_P([$LUA_SUBDIR])
+
+    LUA_MAKEFILE=$LUA_SUBDIR/Makefile
+    ln -fs ../Makefile.luamod $LUA_MAKEFILE.am
+    eval $AUTOMAKE $LUA_MAKEFILE
+    LUA_MAKEFILES="$LUA_MAKEFILES $LUA_MAKEFILE"
   ], [AC_MSG_RESULT([no])])
 ])
 if test -z "$LIBLUA_LIBS"; then
@@ -125,7 +135,7 @@ if test -z "$LIBLUA_LIBS"; then
 fi
 AC_SUBST([LIBLUA_CFLAGS])
 AC_SUBST([LIBLUA_LIBS])
-AC_SUBST([LUA_VERSION])
+AC_SUBST([LUA_SUBDIRS])
 
 AC_CHECK_FUNCS([strerror_r fsync])
 
@@ -133,6 +143,7 @@ AC_OUTPUT(Makefile \
           gnulib/lib/Makefile \
           gnulib/tests/Makefile \
           src/Makefile \
+	  $LUA_MAKEFILES \
           man/Makefile \
           tests/Makefile \
           examples/Makefile \

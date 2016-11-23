@@ -1,3 +1,5 @@
+SUBDIRS = . $(LUA_SUBDIRS)
+
 GNULIB= ../gnulib/lib/libgnu.la
 GNULIB_CFLAGS= -I $(top_builddir)/gnulib/lib -I $(top_srcdir)/gnulib/lib
 
@@ -13,9 +15,6 @@ DISTCLEANFILES = datadir.h
 
 lib_LTLIBRARIES = libfa.la libaugeas.la libauglua.la
 noinst_LTLIBRARIES = liblexer.la
-
-luadir = $(libdir)/lua/$(LUA_VERSION)
-lua_LTLIBRARIES = augeas.la
 
 bin_PROGRAMS = augtool augparse
 
@@ -59,10 +58,6 @@ libfa_la_LDFLAGS = $(FA_VERSION_SCRIPT) -version-info $(LIBFA_VERSION_INFO)
 
 liblexer_la_SOURCES = lexer.l
 liblexer_la_CFLAGS = $(AM_CFLAGS) -Wno-error
-
-augeas_la_SOURCES = augeas.h luamod.c luamod.h
-augeas_la_LIBADD = libaugeas.la
-augeas_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version -module -shared
 
 FAILMALLOC_START ?= 1
 FAILMALLOC_REP   ?= 20
