@@ -55,13 +55,6 @@ static void lua_checkargs(lua_State *L, const char *name, int arity) {
   }
 }
 
-static int lua_pusherror(lua_State *L) {
-  augeas *aug = checkaug(L);
-  lua_pushstring(L, aug_error_message(aug));
-  lua_error(L);
-  return 1;
-}
-
 static int lua_aug_save(lua_State *L) {
   int r;
 
@@ -77,25 +70,6 @@ static int lua_aug_save(lua_State *L) {
       if (r > 0)
           printf("Saved %d file(s)\n", r);
   }
-
-  return 0;
-}
-
-static int lua_aug_transform(lua_State *L) {
-  int r;
-  const char *lens, *file;
-  bool excl;
-
-  lua_checkargs(L, "aug_transform", 3);
-
-  lens = luaL_checkstring(L, 1);
-  file = luaL_checkstring(L, 2);
-  excl = lua_toboolean(L, 3);
-
-  augeas *aug = checkaug(L);
-  r = aug_transform(aug, lens, file, excl);
-  if (r < 0)
-      return lua_pusherror(L);
 
   return 0;
 }
@@ -141,7 +115,6 @@ struct lua_State *setup_lua(augeas *a) {
         //{ "span", lua_aug_span },
         { "save", lua_aug_save },
         //{ "escape_name", lua_aug_escape_name },
-        { "transform", lua_aug_transform },
         //{ "to_xml", lua_aug_to_xml },
         //{ "errors", lua_aug_errors },
         { NULL, NULL }

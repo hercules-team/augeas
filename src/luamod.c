@@ -346,6 +346,14 @@ static int Paug_text_retrieve(lua_State *L) {
 	return pushresult(L, aug_text_retrieve(a, lens, node_in, path, node_out), a, NULL);
 }
 
+static int Paug_transform(lua_State *L) {
+	augeas *a = Paug_checkarg(L, 1);
+	const char *lens = luaL_checkstring(L, 2);
+	const char *file = luaL_checkstring(L, 3);
+	int excl = lua_toboolean(L, 4);
+	return pushresult(L, aug_transform(a, lens, file, excl), a, NULL);
+}
+
 static int Paug_print(lua_State *L)
 {
 	augeas *a;
@@ -460,6 +468,7 @@ function load(augobj)
 	{"store",		Paug_text_store},
 	{"text_retrieve",	Paug_text_retrieve},
 	{"retrieve",		Paug_text_retrieve},
+	{"transform",		Paug_transform},
 /*
 --- Prints the value(s) for an Augeas path.
 --
