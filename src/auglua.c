@@ -39,64 +39,54 @@ static void push_reg_value(lua_State *L, const char *key) {
     lua_gettable(L, LUA_REGISTRYINDEX);
 }
 
-static augeas *checkaug(lua_State *L) {
-  lua_pushliteral(L, REG_KEY_INSTANCE);
-  lua_gettable(L, LUA_REGISTRYINDEX);
-  augeas **aug = (augeas **)lua_touserdata(L, -1); // Convert value
-  return *aug;
-}
-
-static void lua_checkargs(lua_State *L, const char *name, int arity) {
-  int n = lua_gettop(L);
-  char msg[1024];
-  if (n != arity) {
-      lua_pushfstring(L, msg, sizeof(msg), "Wrong number of arguments for '%s'", name);
-      lua_error(L);
-  }
-}
-
-static int lua_aug_save(lua_State *L) {
-  int r;
-
-  lua_checkargs(L, "aug_save", 0);
-
-  augeas *aug = checkaug(L);
-  r = aug_save(aug);
-  if (r == -1) {
-      lua_pushstring(L, "saving failed (run 'errors' for details)");
-      lua_error(L);
-  } else {
-      r = aug_match(aug, "/augeas/events/saved", NULL);
-      if (r > 0)
-          printf("Saved %d file(s)\n", r);
-  }
-
-  return 0;
-}
-
-static int call_function(lua_State *L) {
-    lua_pushvalue(L, lua_upvalueindex(1));
+static int call_function(lua_State *L, const char *name) {
+    push_reg_value(L, REG_KEY_MODULE);
+    lua_pushstring(L, name);
+    lua_gettable(L, -2);
     lua_insert(L, 1);
 
     push_reg_value(L, REG_KEY_INSTANCE);
     lua_insert(L, 2);
 
     lua_call(L, lua_gettop(L) - 1, LUA_MULTRET);
+    return lua_gettop(L);
+}
 
+static int call_bound_function(lua_State *L) {
+    int vals = call_function(L, lua_tostring(L, lua_upvalueindex(1)));
     if (lua_isnil(L, 1) && lua_isstring(L, 2)) {
         lua_pushvalue(L, 2);
         lua_error(L);
     }
-    return lua_gettop(L);
+    return vals;
 }
 
 static int bind_function(lua_State *L) {
-    push_reg_value(L, REG_KEY_MODULE);
-    lua_insert(L, 2);
-    lua_gettable(L, 2);
-
-    lua_pushcclosure(L, call_function, 1);
+    lua_pushcclosure(L, call_bound_function, 1);
     return 1;
+}
+
+static int lua_aug_save(lua_State *L) {
+    int n;
+
+    call_function(L, "save");
+
+    if (lua_isnil(L, 1)) {
+        lua_pushstring(L, "saving failed (run 'errors' for details)");
+        lua_error(L);
+    } else {
+        lua_settop(L, 0);
+        lua_pushliteral(L, "/augeas/events/saved");
+        call_function(L, "match");
+
+        if (!lua_isnil(L, 1)) {
+            n = (int) lua_tointeger(L, 2);
+            if (n > 0)
+                printf("Saved %d file(s)\n", n);
+        }
+    }
+
+    return 0;
 }
 
 struct lua_State *setup_lua(augeas *a) {
