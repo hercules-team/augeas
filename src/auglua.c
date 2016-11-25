@@ -81,25 +81,6 @@ static int lua_aug_save(lua_State *L) {
   return 0;
 }
 
-static int lua_aug_text_retrieve(lua_State *L) {
-  int r;
-  const char *lens, *node_in, *path, *node_out;
-
-  lua_checkargs(L, "aug_text_retrieve", 4);
-
-  lens = luaL_checkstring(L, 1);
-  node_in = luaL_checkstring(L, 2);
-  path = luaL_checkstring(L, 3);
-  node_out = luaL_checkstring(L, 4);
-
-  augeas *aug = checkaug(L);
-  r = aug_text_retrieve(aug, lens, node_in, path, node_out);
-  if (r < 0)
-      return lua_pusherror(L);
-
-  return 0;
-}
-
 static int lua_aug_transform(lua_State *L) {
   int r;
   const char *lens, *file;
@@ -159,8 +140,6 @@ struct lua_State *setup_lua(augeas *a) {
     static const luaL_Reg augfuncs[] = {
         //{ "span", lua_aug_span },
         { "save", lua_aug_save },
-        { "text_retrieve", lua_aug_text_retrieve },
-        { "retrieve", lua_aug_text_retrieve }, // alias
         //{ "escape_name", lua_aug_escape_name },
         { "transform", lua_aug_transform },
         //{ "to_xml", lua_aug_to_xml },

@@ -337,6 +337,15 @@ static int Paug_text_store(lua_State *L) {
 	return pushresult(L, aug_text_store(a, lens, node, path), a, NULL);
 }
 
+static int Paug_text_retrieve(lua_State *L) {
+	augeas *a = Paug_checkarg(L, 1);
+	const char *lens = luaL_checkstring(L, 2);
+	const char *node_in = luaL_checkstring(L, 3);
+	const char *path = luaL_checkstring(L, 4);
+	const char *node_out = luaL_checkstring(L, 5);
+	return pushresult(L, aug_text_retrieve(a, lens, node_in, path, node_out), a, NULL);
+}
+
 static int Paug_print(lua_State *L)
 {
 	augeas *a;
@@ -388,16 +397,16 @@ static const luaL_Reg Paug_methods[] = {
 --   calls
 function init(params)
  */
-	{"init",	Paug_init},
-	{"defvar",	Paug_defvar},
-	{"defnode",	Paug_defnode},
+	{"init",		Paug_init},
+	{"defvar",		Paug_defvar},
+	{"defnode",		Paug_defnode},
 /*
 --- Closes the library. Optional; automatically called by garbage collector.
 --
 -- * `augobj` Augeas object from init()
 function close(augobj)
  */
-	{"close",	Paug_close},
+	{"close",		Paug_close},
 /*
 --- Gets the value for an Augeas path.
 --
@@ -406,7 +415,7 @@ function close(augobj)
 -- * `[return]` Value for path
 function get(augobj, path)
  */
-	{"get",		Paug_get},
+	{"get",			Paug_get},
 /*
 --- Sets the value for an Augeas path.
 --
@@ -415,21 +424,21 @@ function get(augobj, path)
 -- * `value` Value for path
 function set(augobj, path, value)
  */
-	{"label",	Paug_label},
-	{"set",		Paug_set},
-	{"setm",	Paug_setm},
-	{"insert",	Paug_insert},
-	{"ins",		Paug_insert},
-	{"rm",		Paug_rm},
-	{"mv",		Paug_mv},
-	{"move",	Paug_mv},
-	{"cp",		Paug_cp},
-	{"copy",	Paug_cp},
-	{"rename",	Paug_rename},
-	{"clear",	Paug_clear},
-	{"clearm",	Paug_clearm},
-	{"touch",	Paug_touch},
-	{"matches",	Paug_matches},
+	{"label",		Paug_label},
+	{"set",			Paug_set},
+	{"setm",		Paug_setm},
+	{"insert",		Paug_insert},
+	{"ins",			Paug_insert},
+	{"rm",			Paug_rm},
+	{"mv",			Paug_mv},
+	{"move",		Paug_mv},
+	{"cp",			Paug_cp},
+	{"copy",		Paug_cp},
+	{"rename",		Paug_rename},
+	{"clear",		Paug_clear},
+	{"clearm",		Paug_clearm},
+	{"touch",		Paug_touch},
+	{"matches",		Paug_matches},
 /*
 --- Collects paths in the Augeas tree.
 --
@@ -438,17 +447,19 @@ function set(augobj, path, value)
 -- * `[return]` Array of matching paths
 function match(augobj, path)
  */
-	{"match",	Paug_match},
-	{"save",	Paug_save},
+	{"match",		Paug_match},
+	{"save",		Paug_save},
 /*
 --- Loads the values for the Augeas tree.
 --
 -- * `augobj` Augeas object from init()
 function load(augobj)
  */
-	{"load",	Paug_load},
-	{"text_store",	Paug_text_store},
-	{"store",	Paug_text_store},
+	{"load",		Paug_load},
+	{"text_store",		Paug_text_store},
+	{"store",		Paug_text_store},
+	{"text_retrieve",	Paug_text_retrieve},
+	{"retrieve",		Paug_text_retrieve},
 /*
 --- Prints the value(s) for an Augeas path.
 --
@@ -457,8 +468,8 @@ function load(augobj)
 -- * `file_handle` *optional* open file for output; otherwise uses stdout
 function print(augobj, path, file_handle)
  */
-	{"print",	Paug_print},
-	{"error",	Paug_error},
+	{"print",		Paug_print},
+	{"error",		Paug_error},
 	{"error_message",	Paug_error_message},
 	{"error_minor_message",	Paug_error_minor_message},
 	{"error_details",	Paug_error_details},
