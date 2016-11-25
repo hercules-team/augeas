@@ -81,24 +81,6 @@ static int lua_aug_save(lua_State *L) {
   return 0;
 }
 
-static int lua_aug_text_store(lua_State *L) {
-  int r;
-  const char *lens, *node, *path;
-
-  lua_checkargs(L, "aug_text_store", 3);
-
-  lens = luaL_checkstring(L, 1);
-  node = luaL_checkstring(L, 2);
-  path = luaL_checkstring(L, 3);
-
-  augeas *aug = checkaug(L);
-  r = aug_text_store(aug, lens, node, path);
-  if (r < 0)
-      return lua_pusherror(L);
-
-  return 0;
-}
-
 static int lua_aug_text_retrieve(lua_State *L) {
   int r;
   const char *lens, *node_in, *path, *node_out;
@@ -177,8 +159,6 @@ struct lua_State *setup_lua(augeas *a) {
     static const luaL_Reg augfuncs[] = {
         //{ "span", lua_aug_span },
         { "save", lua_aug_save },
-        { "text_store", lua_aug_text_store },
-        { "store", lua_aug_text_store }, // alias
         { "text_retrieve", lua_aug_text_retrieve },
         { "retrieve", lua_aug_text_retrieve }, // alias
         //{ "escape_name", lua_aug_escape_name },

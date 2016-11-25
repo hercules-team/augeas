@@ -329,6 +329,14 @@ static int Paug_load(lua_State *L)
 	return pushresult(L, aug_load(a), a, NULL);
 }
 
+static int Paug_text_store(lua_State *L) {
+	augeas *a = Paug_checkarg(L, 1);
+	const char *lens = luaL_checkstring(L, 2);
+	const char *node = luaL_checkstring(L, 3);
+	const char *path = luaL_checkstring(L, 4);
+	return pushresult(L, aug_text_store(a, lens, node, path), a, NULL);
+}
+
 static int Paug_print(lua_State *L)
 {
 	augeas *a;
@@ -439,6 +447,8 @@ function match(augobj, path)
 function load(augobj)
  */
 	{"load",	Paug_load},
+	{"text_store",	Paug_text_store},
+	{"store",	Paug_text_store},
 /*
 --- Prints the value(s) for an Augeas path.
 --
