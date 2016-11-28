@@ -1,0 +1,13 @@
+# Copyright (C) 2016 Kaarle Ritvanen
+
+AUTOMAKE_OPTIONS = subdir-objects
+
+LUA_PACKAGE = $(notdir $(CURDIR))
+
+luadir = $(libdir)/lua/$(shell $(PKG_CONFIG) --variable=V $(LUA_PACKAGE))
+lua_LTLIBRARIES = augeas.la
+
+augeas_la_SOURCES = ../augeas.h ../luamod.c ../luamod.h
+augeas_la_CFLAGS = $(AM_CFLAGS) $(LIBXML_CFLAGS) $(shell $(PKG_CONFIG) --cflags $(LUA_PACKAGE))
+augeas_la_LIBADD = ../libaugeas.la
+augeas_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version -module -shared

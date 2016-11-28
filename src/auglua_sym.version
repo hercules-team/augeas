@@ -1,0 +1,6 @@
+AUGLUA_0.0.0 {
+    global:
+      setup_lua;
+      aug_lua;
+    local: *;
+};

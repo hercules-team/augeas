@@ -65,6 +65,7 @@ if test x"$enable_debug" = x"yes"; then
 fi
 
 dnl Version info in libtool's notation
+AC_SUBST([LIBAUGLUA_VERSION_INFO], [0:0:0])
 AC_SUBST([LIBAUGEAS_VERSION_INFO], [20:0:20])
 AC_SUBST([LIBFA_VERSION_INFO], [5:1:4])
 
@@ -110,7 +111,31 @@ gl_INIT
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([LIBXML], [libxml-2.0])
 
-PKG_CHECK_MODULES([LIBLUA], [lua5.2])
+LUA_SUBDIRS=
+LUA_MAKEFILES=
+m4_foreach_w([LUAPKG], [lua5.1 lua5.2 lua5.3 lua], [
+  AC_MSG_CHECKING([for LUAPKG])
+  PKG_CHECK_EXISTS(LUAPKG, [
+    AC_MSG_RESULT([yes])
+    LIBLUA_CFLAGS=$($PKG_CONFIG --cflags LUAPKG)
+    LIBLUA_LIBS=$($PKG_CONFIG --libs LUAPKG)
+    LUA_SUBDIRS="$LUA_SUBDIRS LUAPKG"
+
+    LUA_SUBDIR=src/LUAPKG
+    AS_MKDIR_P([$LUA_SUBDIR])
+
+    LUA_MAKEFILE=$LUA_SUBDIR/Makefile
+    ln -fs ../Makefile.luamod $LUA_MAKEFILE.am
+    eval $AUTOMAKE $LUA_MAKEFILE
+    LUA_MAKEFILES="$LUA_MAKEFILES $LUA_MAKEFILE"
+  ], [AC_MSG_RESULT([no])])
+])
+if test -z "$LIBLUA_LIBS"; then
+  AC_MSG_ERROR([no Lua libraries found])
+fi
+AC_SUBST([LIBLUA_CFLAGS])
+AC_SUBST([LIBLUA_LIBS])
+AC_SUBST([LUA_SUBDIRS])
 
 AC_CHECK_FUNCS([strerror_r fsync])
 
@@ -118,6 +143,7 @@ AC_OUTPUT(Makefile \
           gnulib/lib/Makefile \
           gnulib/tests/Makefile \
           src/Makefile \
+	  $LUA_MAKEFILES \
           man/Makefile \
           tests/Makefile \
           examples/Makefile \
