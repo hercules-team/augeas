@@ -21,6 +21,7 @@
  * Author: Raphaël Pinson <raphael.pinson@camptocamp.com>
  */
 
+#include <config.h>
 #include "internal.h"
 #include "augeas.h"
 #include "luamod.h"
