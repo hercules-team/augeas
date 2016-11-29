@@ -11,6 +11,8 @@
  * Copyright (C) 2015 Raphaël Pinson
  */
 
+#include <config.h>
+
 #include <assert.h>
 #include <stdlib.h>
 
