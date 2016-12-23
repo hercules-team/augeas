@@ -1020,3 +1020,12 @@ default_ccache_name = KEYRING:persistent:%{uid}\n" =
   { "libdefaults"
     {  }
     { "default_ccache_name" = "KEYRING:persistent:%{uid}" } }
+
+(* Include(dir) test *)
+let include_test = "include /etc/krb5.other_conf.d/other.conf
+includedir /etc/krb5.conf.d/
+"
+
+test Krb5.lns get include_test =
+  { "include" = "/etc/krb5.other_conf.d/other.conf" }
+  { "includedir" = "/etc/krb5.conf.d/" }

@@ -151,8 +151,13 @@ let kdc =
 let pam =
   simple_section "pam" name_re
 
-let lns = (comment|empty)* .
+let includes = Build.key_value_line /include(dir)?/ Sep.space (store Rx.fspath)
+
+let lns = (comment|empty|includes)* .
   (libdefaults|login|appdefaults|realms|domain_realm
   |logging|capaths|dbdefaults|dbmodules|instance_mapping|kdc|pam)*
 
-let xfm = transform lns (incl "/etc/krb5.conf")
+let filter = (incl "/etc/krb5.conf.d/*.conf")
+           . (incl "/etc/krb5.conf")
+
+let xfm = transform lns filter
