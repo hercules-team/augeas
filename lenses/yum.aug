@@ -53,6 +53,9 @@ let lns    = (empty | comment)* . record*
       . (incl "/etc/yum/yum-cron*.conf") 
       . (incl "/etc/yum/pluginconf.d/*")
       . (excl "/etc/yum/pluginconf.d/versionlock.list")
+      . (incl "/etc/dnf/dnf.conf")
+      . (incl "/etc/dnf/automatic.conf")
+      . (incl "/etc/dnf/plugins/*.conf")
       . Util.stdexcl
 
   let xfm = transform lns filter
