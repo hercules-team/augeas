@@ -58,7 +58,7 @@ module Chrony =
  * Group: Create required expressions
  ************************************************************************)
     (* Variable: number *)
-    let number = integer | decimal
+    let number = integer | decimal | decimal . /[eE]/ . integer
 
     (* Variable: address_re *)
     let address_re = Rx.ip | Rx.hostname
@@ -169,7 +169,7 @@ module Chrony =
     (* View: host_flags *)
     let host_flags = [ space . key cmd_flags ]
     (* View: host_options *)
-    let host_options = [ space . key cmd_options . space . store integer ]
+    let host_options = [ space . key cmd_options . space . store number ]
     (* View: log_flag_list *)
     let log_flag_list = [ space . key log_flags ]
     (* View: store_address *)
