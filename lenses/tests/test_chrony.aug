@@ -19,7 +19,7 @@ server ntp2.example.com iburst
 server ntp3.example.com presend 2
 server ntp4.example.com offline polltarget 4
 server ntp5.example.com maxdelay 2 offline
-server ntp6.example.com maxdelay 2 iburst presend 2
+server ntp6.example.com maxdelay 2 iburst presend 2 xleave offset 1e-4
 server ntp7.example.com iburst presend 2 offline prefer trust require
 server ntp8.example.com minsamples 8 maxsamples 16 version 3
 peer ntpc1.example.com
@@ -44,7 +44,7 @@ manual
 noclientlog
 logchange 0.5
 logdir /var/log/chrony
-log rtc measurements
+log rtc measurements rawmeasurements statistics tracking refclocks tempcomp
 leapsectz right/UTC
 broadcast 10 192.168.1.255
 broadcast 10 192.168.100.255 123
@@ -53,6 +53,7 @@ mailonchange root@localhost 0.5
 maxchange 1000 1 2
 maxdistance 1.0
 maxdrift 100
+hwtimestamp eth0 minpoll -2 txcomp 300e-9 rxcomp 645e-9 nocrossts
 initstepslew 30 foo.bar.com
 initstepslew 30 foo.bar.com baz.quz.com
 ratelimit interval 4 burst 16 leak 2
@@ -62,6 +63,7 @@ refclock PPS /dev/pps0 dpoll 2 poll 3 lock SHM0 rate 5 minsamples 8
 smoothtime 400 0.001 leaponly
 tempcomp /sys/class/hwmon/hwmon0/temp2_input 30 26000 0.0 0.000183 0.0
 tempcomp /sys/class/hwmon/hwmon0/temp2_input 30 /etc/chrony.tempcomp
+ntpsigndsocket /var/lib/samba/ntp_signd
 "
 
   test Chrony.lns get exampleconf =
@@ -93,6 +95,8 @@ tempcomp /sys/class/hwmon/hwmon0/temp2_input 30 /etc/chrony.tempcomp
     { "maxdelay" = "2" }
     { "iburst" }
     { "presend" = "2" }
+    { "xleave" }
+    { "offset" = "1e-4" }
   }
   { "server" = "ntp7.example.com"
     { "iburst" }
@@ -147,6 +151,11 @@ tempcomp /sys/class/hwmon/hwmon0/temp2_input 30 /etc/chrony.tempcomp
   { "log"
     { "rtc" }
     { "measurements" }
+    { "rawmeasurements" }
+    { "statistics" }
+    { "tracking" }
+    { "refclocks" }
+    { "tempcomp" }
   }
   { "leapsectz" = "right/UTC" }
   { "broadcast"
@@ -173,6 +182,13 @@ tempcomp /sys/class/hwmon/hwmon0/temp2_input 30 /etc/chrony.tempcomp
   }
   { "maxdistance" = "1.0" }
   { "maxdrift" = "100" }
+  { "hwtimestamp"
+    { "interface" = "eth0" }
+    { "minpoll" = "-2" }
+    { "txcomp" = "300e-9" }
+    { "rxcomp" = "645e-9" }
+    { "nocrossts" }
+  }
   { "initstepslew"
     { "threshold" = "30" }
     { "address" = "foo.bar.com" }
@@ -223,6 +239,7 @@ tempcomp /sys/class/hwmon/hwmon0/temp2_input 30 /etc/chrony.tempcomp
     { "interval" = "30" }
     { "pointfile" = "/etc/chrony.tempcomp" }
   }
+  { "ntpsigndsocket" = "/var/lib/samba/ntp_signd" }
 
 
 (* Local Variables: *)

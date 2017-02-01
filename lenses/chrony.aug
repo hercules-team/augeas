@@ -83,6 +83,7 @@ module Chrony =
                     | /(min|max)poll/
                     | /(min|max)samples/
                     | "maxsources"
+                    | "offset"
                     | "polltarget"
                     | "port"
                     | "presend"
@@ -92,7 +93,7 @@ module Chrony =
          Server/Peer/Pool options without values
     *)
     let cmd_flags = "auto_offline"|"iburst"|"noselect"|"offline"|"prefer"
-                    |"require"|"trust"
+                  |"require"|"trust"|"xleave"
 
     (* Variable: ntp_source
          Server/Peer/Pool key names
@@ -103,6 +104,16 @@ module Chrony =
          Key names for access configuration
     *)
     let allowdeny_types = "allow"|"deny"|"cmdallow"|"cmddeny"
+
+    (* Variable: hwtimestamp_options
+         HW timestamping options with values
+    *)
+    let hwtimestamp_options = "minpoll"|"precision"|"rxcomp"|"txcomp"
+
+    (* Variable: hwtimestamp_flags
+         HW timestamping options without values
+    *)
+    let hwtimestamp_flags = "nocrossts"
 
     (* Variable: local_options
          local options with values
@@ -145,7 +156,8 @@ module Chrony =
     (* Variable: log_flags
         log has a specific options list
     *)
-    let log_flags = /measurements|statistics|tracking|rtc|refclocks|tempcomp/
+    let log_flags = "measurements"|"rawmeasurements"|"refclocks"|"rtc"
+                  |"statistics"|"tempcomp"|"tracking"
 
     (* Variable: simple_keys
          Options with single values
@@ -157,9 +169,10 @@ module Chrony =
                     | "dumpdir" | "hwclockfile" | "include" | "keyfile"
                     | "leapsecmode" | "leapsectz" | "linux_freq_scale"
                     | "linux_hz" | "logbanner" | "logchange" | "logdir"
-                    | "maxdistance" | "maxdrift"
-                    | "maxclockerror" | "maxsamples" | "maxslewrate"
-                    | "maxupdateskew" | "minsamples" | "minsources" | "pidfile"
+                    | "maxclockerror" | "maxdistance" | "maxdrift"
+                    | "maxjitter" | "maxsamples" | "maxslewrate"
+                    | "maxupdateskew" | "minsamples" | "minsources"
+                    | "ntpsigndsocket" | "pidfile"
                     | "port" | "reselectdist" | "rtcautotrim" | "rtcdevice"
                     | "rtcfile" | "sched_priority" | "stratumweight" | "user"
 
@@ -196,6 +209,7 @@ module Chrony =
       - log <options>
       - broadcast <interval> <address> <optional port>
       - fallbackdrift <min> <max>
+      - hwtimestamp <interface> <options>
       - initstepslew <threshold> <addr> <optional extra addrs>
       - local <options>
       - mailonchange <emailaddress> <threshold>
@@ -245,6 +259,15 @@ module Chrony =
                       . space . [ label "max" . store integer ]
                       . eol ]
 
+    (* View: hwtimestamp
+         hwtimestamp has specific syntax
+    *)
+    let hwtimestamp = [ Util.indent . key "hwtimestamp"
+                      . space . [ label "interface" . store no_space ]
+                      . ( space . ( [ key hwtimestamp_flags ]
+                         | [ key hwtimestamp_options . space . store number ] )
+                        )*
+                      . eol ]
     (* View: istepslew
          initstepslew has specific syntax
     *)
@@ -348,7 +371,7 @@ module Chrony =
  *)
 let settings = host_list | allowdeny | log_list | bcast | fdrift | istepslew
              | local | email | makestep | maxchange | refclock | smoothtime
-             | ratelimit | tempcomp | kv | all_flags
+             | hwtimestamp | ratelimit | tempcomp | kv | all_flags
 
 (*
  * View: lns
