@@ -92,6 +92,10 @@ module Test_krb5 =
                         }
                 }
 	}
+    1TS.ORG = {
+        kdc = kerberos.1ts.org
+        admin_server = kerberos.1ts.org
+    }
         stanford.edu = {
                 kdc = krb5auth1.stanford.edu
                 kdc = krb5auth2.stanford.edu
@@ -366,6 +370,10 @@ test Krb5.lns get fermi_str =
           { "rcmd" = "host" }
         }
       }
+    }
+    { "realm" = "1TS.ORG"
+      { "kdc" = "kerberos.1ts.org" }
+      { "admin_server" = "kerberos.1ts.org" }
     }
     { "realm" = "stanford.edu"
       { "kdc" = "krb5auth1.stanford.edu" }
