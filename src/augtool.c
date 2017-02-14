@@ -65,8 +65,10 @@ char *history_file = NULL;
  * General utilities
  */
 
-/* Not static, since prototype is in internal.h */
-int xasprintf(char **strp, const char *format, ...) {
+/* Private copy of xasprintf from internal to avoid Multiple definition in
+ * static builds.
+ */
+static int _xasprintf(char **strp, const char *format, ...) {
   va_list args;
   int result;
 
@@ -268,13 +270,13 @@ static void readline_init(void) {
     if (home_dir == NULL)
         goto done;
 
-    if (xasprintf(&history_dir, "%s/.augeas", home_dir) < 0)
+    if (_xasprintf(&history_dir, "%s/.augeas", home_dir) < 0)
         goto done;
 
     if (mkdir(history_dir, 0755) < 0 && errno != EEXIST)
         goto done;
 
-    if (xasprintf(&history_file, "%s/history", history_dir) < 0)
+    if (_xasprintf(&history_file, "%s/history", history_dir) < 0)
         goto done;
 
     stifle_history(500);
@@ -639,7 +641,7 @@ static void add_transforms(char *ts, size_t tslen) {
     bool added_transform = false;
 
     while ((t = argz_next(ts, tslen, t))) {
-        r = xasprintf(&command, "transform %s", t);
+        r = _xasprintf(&command, "transform %s", t);
         if (r < 0)
             fprintf(stderr, "error: Failed to add transform %s: could not allocate memory\n", t);
 
@@ -664,7 +666,7 @@ static void load_files(char *ts, size_t tslen) {
     char *t = NULL;
 
     while ((t = argz_next(ts, tslen, t))) {
-        r = xasprintf(&command, "load-file %s", t);
+        r = _xasprintf(&command, "load-file %s", t);
         if (r < 0)
             fprintf(stderr, "error: Failed to load file %s: could not allocate memory\n", t);
 
