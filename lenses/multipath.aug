@@ -37,58 +37,64 @@ let wwid = kv "wwid" (Rx.word|"*")
 
 (* Settings that can be changed in various places *)
 let common_setting =
-  kv "path_grouping_policy"
-    /failover|multibus|group_by_(serial|prio|node_name)/
- |qstr /(getuid|prio)_callout/
- |qstr /path_(selector|checker)|features/
- |kv "failback" (Rx.integer | /immediate|manual/)
- |kv "rr_weight" /priorities|uniform/
- |kv "no_path_retry" (Rx.integer | /fail|queue/)
- |kv /rr_min_io(_rq)?/ Rx.integer
- |kv "flush_on_last_del" /yes|no/
- |kv "reservation_key" Rx.word
- |kv "delay_watch_checks" (Rx.integer|"no")
- |kv "delay_wait_checks" (Rx.integer|"no")
-
-let default_setting =
-  kv "polling_interval" Rx.integer
+   qstr "path_selector"
+  |kv "path_grouping_policy" /failover|multibus|group_by_(serial|prio|node_name)/
+  |kv "path_checker" /tur|emc_clariion|hp_sw|rdac|directio|rdb/
+  |kv "prio" /const|emc|alua|ontap|rdac|hp_sw|hds|random|weightedpath/
+  |qstr "prio_args"
+  |kv "failback" (Rx.integer|/immediate|manual|followover/)
+  |kv "rr_weight" /priorities|uniform/
+  |kv "flush_on_last_del" /yes|no/
+  |kv "user_friendly_names" /yes|no/
+  |kv "no_path_retry" (Rx.integer|/fail|queue/)
+  |kv /rr_min_io(_q)?/ Rx.integer
+  |qstr "features"
+  |kv "reservation_key" Rx.word
+  |kv "deferred_remove" /yes|no/
+  |kv "delay_watch_checks" (Rx.integer|"no")
+  |kv "delay_wait_checks" (Rx.integer|"no")
+  |kv "skip_kpartx" /yes|no/
+  (* Deprecated or undocumentated settings - for backwards compatibility *)
+  |qstr /(getuid|prio)_callout/
+  |kv /rr_min_io_rq/ Rx.integer
   |kv "udev_dir" Rx.fspath
   |qstr "selector"
-  |kv "user_friendly_names" /yes|no/
-  |kv "dev_loss_tmo" Rx.integer
-  |kv "fast_io_fail_tmo" Rx.integer
+  |kv "async_timeout" Rx.integer
+  |kv "pg_timeout" Rx.word
+  |kv "h_on_last_deleassign_maps" /yes|no/
+  |qstr "uid_attribute"
+
+let default_setting =
+   kv "polling_interval" Rx.integer
+  |kv "max_polling_interval" Rx.integer
+  |kv "multipath_dir" Rx.fspath
+  |kv "find_multipaths" /yes|no/
   |kv "verbosity" /[0-6]/
   |kv "reassign_maps" /yes|no/
-  |kv "prio" Rx.word
-  |kv "max_fds" Rx.integer
-  |kv "find_multipaths" /yes|no/
+  |kv "uid_attrribute" Rx.word
+  |kv "max_fds" (Rx.integer|"max")
   |kv "checker_timeout" Rx.integer
-  |kv "hwtable_regex_match" /yes|no/
-  |kv "reload_readwrite" /yes|no/
-  |kv "replace_wwid_whitespace" /yes|no/
-  |kv "force_sync" /yes|no/
-  |kv "config_dir" Rx.fspath
-  (* SUSE extensions *)
-  |kv "async_timeout" Rx.integer
-  |kv "max_polling_interval" Rx.integer
-  |kv "pg_timeout" Rx.word
-  |kv "bindings_file" Rx.fspath
-  |kv "multipath_dir" Rx.fspath
-  |kv "alias_prefix" Rx.word
+  |kv "fast_io_fail_tmo" (Rx.integer|"off")
+  |kv "dev_loss_tmo" (Rx.integer|"infinity")
   |kv "queue_without_daemon" /yes|no/
-  |kv "h_on_last_deleassign_maps" /yes|no/
-  |qstr "prio_args"
-  (* SUSE extensions SP3 *)
-  |qstr "uid_attribute"
+  |kv "bindings_file" Rx.fspath
   |kv "wwids_file" Rx.fspath
-  |kv "log_checker_err" Rx.word
+  |kv "log_checker_err" /once|always/
   |kv "retain_attached_hw_handler" /yes|no/
   |kv "detect_prio" /yes|no/
+  |kv "hw_str_match" /yes|no/
+  |kv "force_sync" /yes|no/
+  |kv "config_dir" Rx.fspath
+  |kv "missing_uev_wait_timeout" Rx.integer
+  |kv "ignore_new_boot_devs" /yes|no/
+  |kv "retrigger_tries" Rx.integer
+  |kv "retrigger_delay" Rx.integer
+  |kv "new_bindings_in_boot" /yes|no/
 
 (* A device subsection *)
 let device =
   let setting =
-    qstr /vendor|product|product_blacklist|hardware_handler/
+    qstr /vendor|product|product_blacklist|hardware_handler|alias_prefix/
    |common_setting
    |default_setting in
   section "device" setting
