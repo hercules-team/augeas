@@ -1,4 +1,4 @@
-(* Intefraces module for Augeas
+(* Interfaces module for Augeas
  Author: Free Ekanayaka <free@64studio.com>
 
  Reference: man interfaces
@@ -36,7 +36,7 @@ let empty      = Util.empty
 let stanza_id    (t:string) = key t . sep_spc . sto_to_spc
 let stanza_param (l:string) = [ sep_spc . label l . sto_to_spc ]
 
-(* Define reseverved words and multi-value options*)
+(* Define reserved words and multi-value options *)
 let stanza_word =
    /(source(-directory)?|iface|auto|allow-[a-z-]+|mapping|bond-slaves|bridge-ports)/
 
@@ -113,7 +113,7 @@ let source_directory = [ key "source-directory" . sep_spc . sto_to_eol ]
    iface and mapping can spand along more lines. Comment nodes are
    inserted in the tree as direct children of the root node only when they
    come after an auto or hotplug stanza, otherwise they are considered part
-   of a iface or mapping block *)
+   of an iface or mapping block *)
 
 let stanza_single = (auto|allow|source|source_directory) . (comment|empty)*
 let stanza_multi  = iface|mapping
