@@ -39,23 +39,24 @@ let wwid = kv "wwid" (Rx.word|"*")
 let common_setting =
    qstr "path_selector"
   |kv "path_grouping_policy" /failover|multibus|group_by_(serial|prio|node_name)/
-  |kv "path_checker" /tur|emc_clariion|hp_sw|rdac|directio|rdb/
+  |kv "path_checker" /tur|emc_clariion|hp_sw|rdac|directio|rdb|readsector0/
   |kv "prio" /const|emc|alua|ontap|rdac|hp_sw|hds|random|weightedpath/
   |qstr "prio_args"
-  |kv "failback" (Rx.integer|/immediate|manual|followover/)
+  |kv "failback" (Rx.integer | /immediate|manual|followover/)
   |kv "rr_weight" /priorities|uniform/
   |kv "flush_on_last_del" /yes|no/
   |kv "user_friendly_names" /yes|no/
-  |kv "no_path_retry" (Rx.integer|/fail|queue/)
+  |kv "no_path_retry" (Rx.integer | /fail|queue/)
   |kv /rr_min_io(_q)?/ Rx.integer
   |qstr "features"
   |kv "reservation_key" Rx.word
   |kv "deferred_remove" /yes|no/
-  |kv "delay_watch_checks" (Rx.integer|"no")
-  |kv "delay_wait_checks" (Rx.integer|"no")
+  |kv "delay_watch_checks" (Rx.integer | "no")
+  |kv "delay_wait_checks" (Rx.integer | "no")
   |kv "skip_kpartx" /yes|no/
-  (* Deprecated or undocumentated settings - for backwards compatibility *)
+  (* Deprecated settings for backwards compatibility *)
   |qstr /(getuid|prio)_callout/
+  (* Settings not documented in `man multipath.conf` *)
   |kv /rr_min_io_rq/ Rx.integer
   |kv "udev_dir" Rx.fspath
   |qstr "selector"
@@ -63,9 +64,12 @@ let common_setting =
   |kv "pg_timeout" Rx.word
   |kv "h_on_last_deleassign_maps" /yes|no/
   |qstr "uid_attribute"
+  |kv "hwtable_regex_match" /yes|no|on|off/
+  |kv "reload_readwrite" /yes|no/
 
 let default_setting =
-   kv "polling_interval" Rx.integer
+   common_setting
+  |kv "polling_interval" Rx.integer
   |kv "max_polling_interval" Rx.integer
   |kv "multipath_dir" Rx.fspath
   |kv "find_multipaths" /yes|no/
@@ -95,16 +99,12 @@ let default_setting =
 let device =
   let setting =
     qstr /vendor|product|product_blacklist|hardware_handler|alias_prefix/
-   |common_setting
    |default_setting in
   section "device" setting
 
 (* The defaults section *)
 let defaults =
-  let setting =
-    common_setting
-   |default_setting
-  in section "defaults" setting
+  section "defaults" default_setting
 
 (* The blacklist and blacklist_exceptions sections *)
 let blacklist =
