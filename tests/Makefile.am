@@ -168,6 +168,7 @@ lens_tests =			\
   lens-qpid.sh		\
   lens-quote.sh		\
   lens-rabbitmq.sh		\
+  lens-radicale.sh		\
   lens-redis.sh		\
   lens-reprepro_uploaders.sh		\
   lens-resolv.sh		\
