@@ -182,7 +182,7 @@ static char *readline_command_generator(const char *text, int state) {
         "get", "label", "ins", "load", "ls", "match",
         "mv", "cp", "rename", "print", "dump-xml", "rm", "save", "set", "setm",
         "clearm", "span", "store", "retrieve", "transform", "load-file",
-        "help", "touch", "insert", "move", "copy", "errors", NULL };
+        "help", "touch", "insert", "move", "copy", "errors", "schema", NULL };
 
     static int current = 0;
     const char *name;
