@@ -380,8 +380,10 @@ void api_exit(const struct augeas *aug);
  * file should have a need to mark nodes as dirty)
  *
  * The FILE flag is set for entries underneath /augeas/files that hold the
- * metadata for a file. It is only set by ADD_FILE_INFO and can not be set
- * by the user.
+ * metadata for a file by ADD_FILE_INFO. The FILE flag is set for entries
+ * underneath /files for the toplevel node corresponding to a file by
+ * TREE_FREPLACE and is used by AUG_SOURCE to find the file to which a node
+ * belongs.
  */
 struct tree {
     struct tree *next;

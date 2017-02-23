@@ -2086,6 +2086,41 @@ int aug_print(const struct augeas *aug, FILE *out, const char *pathin) {
     return result;
 }
 
+int aug_source(const augeas *aug, const char *path, char **file_path) {
+    int result = -1, r;
+    struct pathx *p = NULL;
+    struct tree *match;
+
+    api_entry(aug);
+
+    ARG_CHECK(file_path == NULL, aug,
+              "aug_source_file: FILE_PATH must not be NULL");
+    *file_path = NULL;
+
+    p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), path, true);
+    ERR_BAIL(aug);
+
+    r = pathx_find_one(p, &match);
+    ERR_BAIL(aug);
+    ERR_THROW(r > 1, aug, AUG_EMMATCH, "There are %d nodes matching %s",
+              r, path);
+    ERR_THROW(r == 0, aug, AUG_ENOMATCH, "There is no node matching %s",
+              path);
+    while (!(ROOT_P(match) || match->file))
+        match = match->parent;
+
+    if (match->file) {
+        *file_path = path_of_tree(match);
+        ERR_NOMEM(file_path == NULL, aug);
+    }
+
+    result = 0;
+ error:
+    free_pathx(p);
+    api_exit(aug);
+    return result;
+}
+
 void aug_close(struct augeas *aug) {
     if (aug == NULL)
         return;

@@ -935,6 +935,32 @@ static const struct command_def cmd_print_def = {
     .help = "Print entries in the tree.  If PATH is given, printing starts there,\n otherwise the whole tree is printed"
 };
 
+static void cmd_source(struct command *cmd) {
+    const char *path = arg_value(cmd, "path");
+    char *file_path = NULL;
+
+    aug_source(cmd->aug, path, &file_path);
+    ERR_RET(cmd);
+    if (file_path != NULL) {
+        fprintf(cmd->out, "%s\n", file_path);
+    }
+    free(file_path);
+}
+
+static const struct command_opt_def cmd_source_opts[] = {
+    { .type = CMD_PATH, .name = "path", .optional = false,
+      .help = "path to a single node" },
+    CMD_OPT_DEF_LAST
+};
+
+static const struct command_def cmd_source_def = {
+    .name = "source",
+    .opts = cmd_source_opts,
+    .handler = cmd_source,
+    .synopsis = "print the file to which a node belongs",
+    .help = "Print the file to which the node for PATH belongs. PATH must match\n a single node coming from some file. In particular, that means\n it must be underneath /files."
+};
+
 static void cmd_dump_xml(struct command *cmd) {
     const char *path = arg_value(cmd, "path");
     xmlNodePtr xmldoc;
@@ -1324,6 +1350,7 @@ static const struct command_grp_def cmd_grp_admin_def = {
         &cmd_store_def,
         &cmd_transform_def,
         &cmd_load_file_def,
+        &cmd_source_def,
         &cmd_def_last
     }
 };

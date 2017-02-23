@@ -396,6 +396,19 @@ int aug_escape_name(augeas *aug, const char *in, char **out);
  */
 int aug_print(const augeas *aug, FILE *out, const char *path);
 
+/* Function: aug_source
+ *
+ * For the node matching PATH, return the path to the node representing the
+ * file to which PATH belongs. If PATH belongs to a file, *FILE_PATH will
+ * contain the path to the toplevel node of that file underneath /files. If
+ * it does not, *FILE_PATH will be NULL.
+ *
+ * Returns:
+ * 0 on success, or a negative value on failure. It is an error if PATH
+ * matches more than one node.
+ */
+int aug_source(const augeas *aug, const char *path, char **file_path);
+
 /* Function: aug_to_xml
  *
  * Turn the Augeas tree(s) matching PATH into an XML tree XMLDOC. The

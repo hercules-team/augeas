@@ -540,6 +540,7 @@ static void tree_freplace(struct augeas *aug, const char *fpath,
     parent = tree_fpath_cr(aug, fpath);
     ERR_RET(aug);
 
+    parent->file = true;
     tree_unlink_children(aug, parent);
     list_append(parent->children, sub);
     list_for_each(s, sub) {

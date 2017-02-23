@@ -1,4 +1,8 @@
 1.8.0 - ???
+  - General changes/additions
+    * augtool: add a 'source' command exposing the aug_source API call
+  - API changes
+    * add aug_source to find the source file for a particular node
   - Lens changes/additions
     * Tmpfiles: parse 'q'/'Q' modes, parse two-character arguments,
                 parse three-digit file modes
