@@ -1,7 +1,7 @@
 /*
  * internal.h: Useful definitions
  *
- * Copyright (C) 2007-2016 David Lutterkort
+ * Copyright (C) 2007-2017 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -406,6 +406,8 @@ struct tree {
 struct pathx;
 
 #define ROOT_P(t) ((t) != NULL && (t)->parent == (t)->parent->parent)
+
+#define TREE_HIDDEN(tree) ((tree)->label == NULL)
 
 /* Function: make_tree
  * Allocate a new tree node with the given LABEL, VALUE, and CHILDREN,

@@ -1,7 +1,7 @@
 /*
  * augeas.c: the core data structure for storing key/value pairs
  *
- * Copyright (C) 2007-2016 David Lutterkort
+ * Copyright (C) 2007-2017 David Lutterkort
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,7 +33,6 @@
 #include <string.h>
 #include <stdarg.h>
 #include <locale.h>
-#include <libxml/tree.h>
 
 /* Some popular labels that we use in /augeas */
 static const char *const s_augeas = "augeas";
@@ -46,8 +45,6 @@ static const char *const s_vars   = "variables";
 static const char *const s_lens   = "lens";
 static const char *const s_excl   = "excl";
 static const char *const s_incl   = "incl";
-
-#define TREE_HIDDEN(tree) ((tree)->label == NULL)
 
 #define AUGEAS_META_PATHX_FUNC AUGEAS_META_TREE "/version/pathx/functions"
 
@@ -1718,147 +1715,6 @@ int dump_tree(FILE *out, struct tree *tree) {
     return result;
 }
 
-static int to_xml_span(xmlNodePtr elem, const char *pfor, int start, int end) {
-    int r;
-    char *buf;
-    xmlAttrPtr prop;
-    xmlNodePtr span_elem;
-
-    span_elem = xmlNewChild(elem, NULL, BAD_CAST "span", NULL);
-    if (span_elem == NULL)
-        return -1;
-
-    prop = xmlSetProp(span_elem, BAD_CAST "for", BAD_CAST pfor);
-    if (prop == NULL)
-        return -1;
-
-    /* Format and set the start property */
-    r = xasprintf(&buf, "%d", start);
-    if (r < 0)
-        return -1;
-
-    prop = xmlSetProp(span_elem, BAD_CAST "start", BAD_CAST buf);
-    FREE(buf);
-    if (prop == NULL)
-        return -1;
-
-    /* Format and set the end property */
-    r = xasprintf(&buf, "%d", end);
-    if (r < 0)
-        return -1;
-
-    prop = xmlSetProp(span_elem, BAD_CAST "end", BAD_CAST buf);
-    FREE(buf);
-    if (prop == NULL)
-        return -1;
-
-    return 0;
-}
-
-static int to_xml_one(xmlNodePtr elem, const struct tree *tree,
-                      const char *pathin) {
-    xmlNodePtr value;
-    xmlAttrPtr prop;
-    int r;
-
-    prop = xmlSetProp(elem, BAD_CAST "label", BAD_CAST tree->label);
-    if (prop == NULL)
-        goto error;
-
-    if (tree->span) {
-        struct span *span = tree->span;
-
-        prop = xmlSetProp(elem, BAD_CAST "file",
-                          BAD_CAST span->filename->str);
-        if (prop == NULL)
-            goto error;
-
-        r = to_xml_span(elem, "label", span->label_start, span->label_end);
-        if (r < 0)
-            goto error;
-
-        r = to_xml_span(elem, "value", span->value_start, span->value_end);
-        if (r < 0)
-            goto error;
-
-        r = to_xml_span(elem, "node", span->span_start, span->span_end);
-        if (r < 0)
-            goto error;
-    }
-
-    if (pathin != NULL) {
-        prop = xmlSetProp(elem, BAD_CAST "path", BAD_CAST pathin);
-        if (prop == NULL)
-            goto error;
-    }
-    if (tree->value != NULL) {
-        value = xmlNewTextChild(elem, NULL, BAD_CAST "value",
-                                BAD_CAST tree->value);
-        if (value == NULL)
-            goto error;
-    }
-    return 0;
- error:
-    return -1;
-}
-
-static int to_xml_rec(xmlNodePtr pnode, struct tree *start,
-                      const char *pathin) {
-    int r;
-    xmlNodePtr elem;
-
-    elem = xmlNewChild(pnode, NULL, BAD_CAST "node", NULL);
-    if (elem == NULL)
-        goto error;
-    r = to_xml_one(elem, start, pathin);
-    if (r < 0)
-        goto error;
-
-    list_for_each(tree, start->children) {
-        if (TREE_HIDDEN(tree))
-            continue;
-        r = to_xml_rec(elem, tree, NULL);
-        if (r < 0)
-            goto error;
-    }
-
-    return 0;
- error:
-    return -1;
-}
-
-static int tree_to_xml(struct pathx *p, xmlNode **xml, const char *pathin) {
-    char *path = NULL;
-    struct tree *tree;
-    xmlAttrPtr expr;
-    int r;
-
-    *xml = xmlNewNode(NULL, BAD_CAST "augeas");
-    if (*xml == NULL)
-        goto error;
-    expr = xmlSetProp(*xml, BAD_CAST "match", BAD_CAST pathin);
-    if (expr == NULL)
-        goto error;
-
-    for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
-        if (TREE_HIDDEN(tree))
-            continue;
-        path = path_of_tree(tree);
-        if (path == NULL)
-            goto error;
-        r = to_xml_rec(*xml, tree, path);
-        if (r < 0)
-            goto error;
-        FREE(path);
-    }
-    return 0;
- error:
-    free(path);
-    xmlFree(*xml);
-    *xml = NULL;
-    return -1;
-}
-
 int aug_text_store(augeas *aug, const char *lens, const char *node,
                    const char *path) {
 
@@ -1922,33 +1778,6 @@ int aug_text_retrieve(struct augeas *aug, const char *lens,
     free(out);
     api_exit(aug);
     return -1;
-}
-
-int aug_to_xml(const struct augeas *aug, const char *pathin,
-               xmlNode **xmldoc, unsigned int flags) {
-    struct pathx *p = NULL;
-    int result = -1;
-
-    api_entry(aug);
-
-    ARG_CHECK(flags != 0, aug, "aug_to_xml: FLAGS must be 0");
-    ARG_CHECK(xmldoc == NULL, aug, "aug_to_xml: XMLDOC must be non-NULL");
-
-    *xmldoc = NULL;
-
-    if (pathin == NULL || strlen(pathin) == 0 || strcmp(pathin, "/") == 0) {
-        pathin = "/*";
-    }
-
-    p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), pathin, true);
-    ERR_BAIL(aug);
-    result = tree_to_xml(p, xmldoc, pathin);
-    ERR_THROW(result < 0, aug, AUG_ENOMEM, NULL);
-error:
-    free_pathx(p);
-    api_exit(aug);
-
-    return result;
 }
 
 int aug_transform(struct augeas *aug, const char *lens,
