@@ -1,8 +1,16 @@
 1.8.0 - ???
   - General changes/additions
     * augtool: add a 'source' command exposing the aug_source API call
+    * augtool: dramatically reduce memory consumption when all lenses are
+      loaded by more aggressively releasing temporary data structures.  On
+      my machine, maximum memory usage of 'augtool -L' drops from roughly
+      90MB to about 20MB. This will not change the amount of memory used
+      when only specific lenses are used, only the default behavior of
+      loading all lenses, i.e., when -A is not passed.
   - API changes
     * add aug_source to find the source file for a particular node
+    * reduce memory consumption when AUG_NO_MODL_AUTOLOAD is _not_ passed;
+      exact same details as described above for augtool
   - Lens changes/additions
     * Ssh: also look for files in in /etc/ssh/ssh_config.d (Ian Mortimer)
     * Tmpfiles: parse 'q'/'Q' modes, parse two-character arguments,

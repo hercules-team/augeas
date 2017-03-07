@@ -2002,9 +2002,14 @@ int load_module_file(struct augeas *aug, const char *filename,
          */
         module = module_create(name);
     }
-    if (module != NULL)
+    if (module != NULL) {
         list_append(aug->modules, module);
-
+        list_for_each(bnd, module->bindings) {
+            if (bnd->value->tag == V_LENS) {
+                lens_release(bnd->value->lens);
+            }
+        }
+    }
     ERR_THROW(bad_module, aug, AUG_ESYNTAX, "Failed to load %s", filename);
 
     result = 0;

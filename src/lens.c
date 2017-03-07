@@ -1056,6 +1056,10 @@ void lens_release(struct lens *lens) {
         }
     }
 
+    if (lens->tag == L_REC && !lens->rec_internal) {
+        lens_release(lens->body);
+    }
+
     jmt_free(lens->jmt);
     lens->jmt = NULL;
 }
