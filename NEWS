@@ -4,6 +4,7 @@
   - API changes
     * add aug_source to find the source file for a particular node
   - Lens changes/additions
+    * Ssh: also look for files in in /etc/ssh/ssh_config.d (Ian Mortimer)
     * Tmpfiles: parse 'q'/'Q' modes, parse two-character arguments,
                 parse three-digit file modes
     * Xml: support external entity declarations in the doctype (Issue #142)
