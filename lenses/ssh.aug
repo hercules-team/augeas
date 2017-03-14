@@ -108,4 +108,4 @@ module Ssh =
 
     let xfm = transform lns (incl "/etc/ssh/ssh_config" .
                              incl (Sys.getenv("HOME") . "/.ssh/config") .
-                             incl "/etc/ssh/ssh_config.d/*")
+                             incl "/etc/ssh/ssh_config.d/*.conf")
