@@ -1,6 +1,7 @@
 (* Radicale module for Augeas
  Based on Puppet lens.
 
+ Manage config file for http://radicale.org/
  /etc/radicale/config is a standard INI File.
 *)
 
