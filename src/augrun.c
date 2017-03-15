@@ -961,6 +961,37 @@ static const struct command_def cmd_source_def = {
     .help = "Print the file to which the node for PATH belongs. PATH must match\n a single node coming from some file. In particular, that means\n it must be underneath /files."
 };
 
+static void cmd_context(struct command *cmd) {
+    const char *path = arg_value(cmd, "path");
+
+    if (path == NULL) {
+        aug_get(cmd->aug, "/augeas/context", &path);
+        ERR_RET(cmd);
+        if (path == NULL) {
+            fprintf(cmd->out, "/\n");
+        } else {
+            fprintf(cmd->out, "%s\n", path);
+        }
+    } else {
+        aug_set(cmd->aug, "/augeas/context", path);
+        ERR_RET(cmd);
+    }
+}
+
+static const struct command_opt_def cmd_context_opts[] = {
+    { .type = CMD_PATH, .name = "path", .optional = true,
+      .help = "new context for relative paths" },
+    CMD_OPT_DEF_LAST
+};
+
+static const struct command_def cmd_context_def = {
+    .name = "context",
+    .opts = cmd_context_opts,
+    .handler = cmd_context,
+    .synopsis = "change how relative paths are interpreted",
+    .help = "Relative paths are interpreted relative to a context path which\n is stored in /augeas/context.\n\n When no PATH is given, this command prints the current context path\n and is equivalent to 'get /augeas/context'\n\n When PATH is given, this command changes that context, and has a\n similar effect to 'cd' in a shell and and is the same as running\n the command 'set /augeas/context PATH'."
+};
+
 static void cmd_dump_xml(struct command *cmd) {
     const char *path = arg_value(cmd, "path");
     xmlNodePtr xmldoc;
@@ -1351,6 +1382,7 @@ static const struct command_grp_def cmd_grp_admin_def = {
         &cmd_transform_def,
         &cmd_load_file_def,
         &cmd_source_def,
+        &cmd_context_def,
         &cmd_def_last
     }
 };

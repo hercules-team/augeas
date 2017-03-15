@@ -1,6 +1,8 @@
 1.8.0 - ???
   - General changes/additions
     * augtool: add a 'source' command exposing the aug_source API call
+    * augtool: add a 'context' command to make changing into a node more
+      discoverable
     * augtool: dramatically reduce memory consumption when all lenses are
       loaded by more aggressively releasing temporary data structures.  On
       my machine, maximum memory usage of 'augtool -L' drops from roughly
