@@ -1431,17 +1431,25 @@ static const struct command_def cmd_errors_def = {
 static const struct command_grp_def cmd_grp_admin_def = {
     .name = "Admin",
     .commands = {
-        &cmd_help_def,
+        &cmd_context_def,
         &cmd_load_def,
-        &cmd_quit_def,
-        &cmd_retrieve_def,
         &cmd_save_def,
-        &cmd_store_def,
         &cmd_transform_def,
         &cmd_load_file_def,
-        &cmd_source_def,
-        &cmd_context_def,
+        &cmd_retrieve_def,
+        &cmd_store_def,
+        &cmd_quit_def,
+        &cmd_def_last
+    }
+};
+
+static const struct command_grp_def cmd_grp_info_def = {
+    .name = "Informational",
+    .commands = {
+        &cmd_errors_def,
         &cmd_info_def,
+        &cmd_help_def,
+        &cmd_source_def,
         &cmd_def_last
     }
 };
@@ -1455,7 +1463,6 @@ static const struct command_grp_def cmd_grp_read_def = {
         &cmd_ls_def,
         &cmd_match_def,
         &cmd_print_def,
-        &cmd_errors_def,
         &cmd_span_def,
         &cmd_def_last
     }
@@ -1492,6 +1499,7 @@ static const struct command_grp_def cmd_grp_pathx_def = {
 
 static const struct command_grp_def const *cmd_groups[] = {
     &cmd_grp_admin_def,
+    &cmd_grp_info_def,
     &cmd_grp_read_def,
     &cmd_grp_write_def,
     &cmd_grp_pathx_def,
