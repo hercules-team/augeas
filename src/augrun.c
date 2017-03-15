@@ -28,6 +28,7 @@
 
 #include <ctype.h>
 #include <libxml/tree.h>
+#include <argz.h>
 
 /*
  * Command handling infrastructure
@@ -1147,6 +1148,63 @@ static const struct command_def cmd_load_def = {
     "is an  error if one file\n can be processed by multiple transforms."
 };
 
+static void cmd_info(struct command *cmd) {
+    const char *v;
+    int n;
+
+    aug_get(cmd->aug, "/augeas/version", &v);
+    ERR_RET(cmd);
+    if (v != NULL) {
+        fprintf(cmd->out, "version = %s\n", v);
+    }
+
+    aug_get(cmd->aug, "/augeas/root", &v);
+    ERR_RET(cmd);
+    if (v != NULL) {
+        fprintf(cmd->out, "root = %s\n", v);
+    }
+
+    fprintf(cmd->out, "loadpath = ");
+    for (char *entry = cmd->aug->modpathz;
+         entry != NULL;
+         entry = argz_next(cmd->aug->modpathz, cmd->aug->nmodpath, entry)) {
+        if (entry != cmd->aug->modpathz) {
+            fprintf(cmd->out, ":");
+        }
+        fprintf(cmd->out, "%s", entry);
+    }
+    fprintf(cmd->out, "\n");
+
+    aug_get(cmd->aug, "/augeas/context", &v);
+    ERR_RET(cmd);
+    if (v == NULL) {
+        v = "/";
+    }
+    fprintf(cmd->out, "context = %s\n", v);
+
+    n = aug_match(cmd->aug, "/augeas/files//path", NULL);
+    fprintf(cmd->out, "num_files = %d\n", n);
+}
+
+static const struct command_opt_def cmd_info_opts[] = {
+    CMD_OPT_DEF_LAST
+};
+
+static const struct command_def cmd_info_def = {
+    .name = "info",
+    .opts = cmd_info_opts,
+    .handler = cmd_info,
+    .synopsis = "print runtime information",
+    .help = "Print information about Augeas. The output contains:\n"
+            "    version   : the version number from /augeas/version\n"
+            "    root      : what Augeas considers the filesystem root\n"
+            "                from /augeas/root\n"
+            "    loadpath  : the paths from which Augeas loads modules\n"
+            "    context   : the context path (see context command)\n"
+            "    num_files : the number of files currently loaded (based on\n"
+            "                the number of /augeas/files//path nodes)"
+};
+
 static void cmd_ins(struct command *cmd) {
     const char *label = arg_value(cmd, "label");
     const char *where = arg_value(cmd, "where");
@@ -1383,6 +1441,7 @@ static const struct command_grp_def cmd_grp_admin_def = {
         &cmd_load_file_def,
         &cmd_source_def,
         &cmd_context_def,
+        &cmd_info_def,
         &cmd_def_last
     }
 };
