@@ -26,10 +26,10 @@ autoload xfm
 let macro_rx = /[^,# \n\t][^#\n]*[^,# \n\t]|[^,# \n\t]/
 let macro = [ key /$[A-Za-z0-9]+/ . Sep.space . store macro_rx . Util.comment_or_eol ]
 
-let config_object_param = [ key /[A-Za-z]+/ . Sep.equal . Quote.dquote
-                          . store /[^"]+/ . Quote.dquote . Sep.opt_space ]
+let config_object_param = [ key /[A-Za-z.]+/ . Sep.equal . Quote.dquote
+                          . store /[^"]+/ . Quote.dquote ]
 let config_object = [ key /action|global|input|module|parser|timezone/ . Sep.lbracket
-                    . config_object_param+ . Sep.rbracket . Util.comment_or_eol ]
+                    . config_object_param . ( Sep.space . config_object_param )* . Sep.rbracket . Util.comment_or_eol ]
 
 (* View: users
    Map :omusrmsg: and a list of users, or a single *

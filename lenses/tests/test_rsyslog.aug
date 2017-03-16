@@ -10,7 +10,7 @@ let conf = "# rsyslog v5 configuration file
 
 $ModLoad imuxsock # provides support for local system logging (e.g. via logger command)
 $ModLoad imklog   # provides kernel logging support (previously done by rklogd)
-module(load=\"immark\") #provides --MARK-- message capability
+module(load=\"immark\" markmessageperiod=\"60\" fakeoption=\"bar\") #provides --MARK-- message capability
 
 timezone(id=\"CET\" offset=\"+01:00\")
 
@@ -42,6 +42,8 @@ test Rsyslog.lns get conf =
   }
   { "module"
     { "load" = "immark" }
+    { "markmessageperiod" = "60" }
+    { "fakeoption" = "bar" }
     { "#comment" = "provides --MARK-- message capability" }
   }
   {  }
@@ -172,3 +174,18 @@ test Rsyslog.lns get ":msg,!contains,\"garbage\" ~\n" =
     { "value" = "garbage" }
     { "action"
       { "discard" } } }
+
+test Rsyslog.lns put "" after
+  set "/module[1]/load" "imuxsock"
+  = "module(load=\"imuxsock\")\n"
+
+test Rsyslog.lns put "" after
+  set "/module[1]/load" "imuxsock" ;
+  set "/module[1]/SysSock.RateLimit.Interval" "0"
+  = "module(load=\"imuxsock\" SysSock.RateLimit.Interval=\"0\")\n"
+
+test Rsyslog.lns put "" after
+  set "/module[1]/load" "imuxsock" ;
+  set "/module[1]/SysSock.RateLimit.Interval" "0" ;
+  set "/module[1]/SysSock.RateLimit.Burst" "1"
+  = "module(load=\"imuxsock\" SysSock.RateLimit.Interval=\"0\" SysSock.RateLimit.Burst=\"1\")\n"
