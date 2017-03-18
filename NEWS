@@ -1,4 +1,4 @@
-1.8.0 - ???
+1.8.0 - 2017-03-20
   - General changes/additions
     * augtool: add a 'source' command exposing the aug_source API call
     * augtool: add a 'context' command to make changing into a node more
@@ -10,16 +10,30 @@
       90MB to about 20MB. This will not change the amount of memory used
       when only specific lenses are used, only the default behavior of
       loading all lenses, i.e., when -A is not passed.
+    * make building augtool statically possible (Jörg Krause)
+    * split aug_to_xml into its own source file, so that statically linking
+      against libaugeas.a doesn't require also linking against libXml2 and
+      its dependencies, provided aug_to_xml is not needed.
   - API changes
     * add aug_source to find the source file for a particular node
     * reduce memory consumption when AUG_NO_MODL_AUTOLOAD is _not_ passed;
       exact same details as described above for augtool
   - Lens changes/additions
+    * Chrony: allow floating point numbers (Miroslav Lichvar)
+              add new directives from chrony 3.0 and 3.1 (Miroslav Lichvar)
+    * Krb5: support include/includedir directives (Jason Smith) (Issue #430)
+            support realms that start with numbers (Dustin Wheeler) (Issue #437)
+    * Multipath: update to multipath-0.4.9-99.el7 (Xavier Mol)
+    * Php: also look for FPM files in /etc/php/*/fpm/pool.d (Daniel Dico)
+    * Postfix_virtual: allow underscores in e-mail addresses (Jason Lingohr)
+                       (Issue #439)
     * Radicale: new lens for config of http://radicale.org/ (James Valleroy)
+    * Rsyslog: support multiple options in module statements (Craig Miskell)
     * Ssh: also look for files in in /etc/ssh/ssh_config.d (Ian Mortimer)
     * Tmpfiles: parse 'q'/'Q' modes, parse two-character arguments,
                 parse three-digit file modes
     * Xml: support external entity declarations in the doctype (Issue #142)
+    * Yum: also read DNF files from /etc/dnf (Pat Riehecky) (Issue #434)
 
 1.7.0 - 2016-11-08
   - General changes/additions
