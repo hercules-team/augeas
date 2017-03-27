@@ -91,9 +91,10 @@ Banner /etc/welcome.txt\n"
 
 
 (* Test: Sshd.lns
-     Parse Ciphers and KexAlgorithms as lists (GH issue #69) *)
+     Parse Ciphers, KexAlgorithms, HostKeyAlgorithms as lists (GH issue #69) *)
 test Sshd.lns get "Ciphers aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes128-ctr
-KexAlgorithms diffie-hellman-group-exchange-sha256,diffie-hellman-group14-sha1,diffie-hellman-group-exchange-sha1\n" =
+KexAlgorithms diffie-hellman-group-exchange-sha256,diffie-hellman-group14-sha1,diffie-hellman-group-exchange-sha1
+HostKeyAlgorithms ssh-ed25519-cert-v01@openssh.com,ssh-rsa-cert-v01@openssh.com,ssh-ed25519,ssh-rsa\n" =
   { "Ciphers"
     { "1" = "aes256-gcm@openssh.com" }
     { "2" = "aes128-gcm@openssh.com" }
@@ -104,6 +105,12 @@ KexAlgorithms diffie-hellman-group-exchange-sha256,diffie-hellman-group14-sha1,d
     { "1" = "diffie-hellman-group-exchange-sha256" }
     { "2" = "diffie-hellman-group14-sha1" }
     { "3" = "diffie-hellman-group-exchange-sha1" }
+  }
+  { "HostKeyAlgorithms"
+    { "1" = "ssh-ed25519-cert-v01@openssh.com" }
+    { "2" = "ssh-rsa-cert-v01@openssh.com" }
+    { "3" = "ssh-ed25519" }
+    { "4" = "ssh-rsa" }
   }
 
 (* Test: Sshd.lns
