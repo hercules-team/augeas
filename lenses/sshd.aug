@@ -73,7 +73,7 @@ module Sshd =
    let indent = del /[ \t]*/ "  "
 
    let key_re = /[A-Za-z0-9]+/
-         - /MACs|Match|AcceptEnv|Subsystem|Ciphers|KexAlgorithms|(Allow|Deny)(Groups|Users)/i
+         - /MACs|Match|AcceptEnv|Subsystem|Ciphers|(Kex|HostKey)Algorithms|(Allow|Deny)(Groups|Users)/i
 
    let comment = Util.comment
    let comment_noindent = Util.comment_noindent
@@ -114,9 +114,11 @@ module Sshd =
 
    let kexalgorithms = list /KexAlgorithms/i "KexAlgorithms"
 
+   let hostkeyalgorithms = list /HostKeyAlgorithms/i "HostKeyAlgorithms"
+
    let entry = accept_env | allow_groups | allow_users
              | deny_groups | subsystem | deny_users
-             | macs | ciphers | kexalgorithms
+             | macs | ciphers | kexalgorithms | hostkeyalgorithms
              | other_entry
 
    let condition_entry =

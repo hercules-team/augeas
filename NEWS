@@ -4,6 +4,8 @@
       back to text fails. They now make it clearer what part of the tree
       was problematic, and what the tree should have looked like.
     * Fixed the pkg-config file, which should now be usable
+  - Lens changes/additions
+    * Sshd: split HostKeyAlgorithms into list of values
 
 1.8.1 - 2017-08-17
   - General changes/addition
