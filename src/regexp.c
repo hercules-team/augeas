@@ -55,8 +55,31 @@ char *regexp_escape(const struct regexp *r) {
     }
 #endif
 
-    if (pat == NULL)
-        pat = escape(r->pattern->str, -1, RX_ESCAPES);
+    if (pat == NULL) {
+        /* simplify the regexp by removing some artifacts of reserving
+           chanaracters for internal purposes */
+        if (index(r->pattern->str, RESERVED_FROM_CH)) {
+            char *s = strdup(r->pattern->str);
+            char *t = s;
+            for (char *p = s; *p; p++) {
+                if (STREQLEN(p, RESERVED_RANGE_RX, strlen(RESERVED_RANGE_RX))) {
+                    /* Completely eliminate mentions of the reserved range */
+                    p += strlen(RESERVED_RANGE_RX);
+                } else if (STREQLEN(p,
+                                    RESERVED_DOT_RX, strlen(RESERVED_DOT_RX))) {
+                    /* Replace what amounts to a '.' by one */
+                    p += strlen(RESERVED_DOT_RX);
+                    *t++ = '.';
+                }
+                *t++ = *p;
+            }
+            *t = '\0';
+            pat = escape(s, -1, RX_ESCAPES);
+            free(s);
+        } else {
+            pat = escape(r->pattern->str, -1, RX_ESCAPES);
+        }
+    }
 
     if (pat == NULL)
         return NULL;

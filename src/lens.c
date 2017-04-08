@@ -542,7 +542,7 @@ static struct regexp *restrict_regexp(struct regexp *r) {
 
     ret = fa_restrict_alphabet(r->pattern->str, strlen(r->pattern->str),
                                &nre, &nre_len,
-                               RESERVED_FROM, RESERVED_TO);
+                               RESERVED_FROM_CH, RESERVED_TO_CH);
     ERR_NOMEM(ret == REG_ESPACE || ret < 0, r->info);
     BUG_ON(ret != 0, r->info, NULL);
     ensure(nre_len == strlen(nre), r->info);

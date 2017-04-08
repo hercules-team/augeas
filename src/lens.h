@@ -234,8 +234,14 @@ void free_lens(struct lens *lens);
 
    This range must include the ENC_* characters
 */
-#define RESERVED_FROM '\001'
-#define RESERVED_TO   ENC_SLASH_CH
+#define RESERVED_FROM "\001"
+#define RESERVED_TO   ENC_SLASH
+#define RESERVED_FROM_CH (RESERVED_FROM[0])
+#define RESERVED_TO_CH   ENC_SLASH_CH
+/* The range of reserved chars as it appears in a regex */
+#define RESERVED_RANGE_RX RESERVED_FROM "-" RESERVED_TO
+/* The equivalent of "." in a regexp for display */
+#define RESERVED_DOT_RX "[^" RESERVED_RANGE_RX "\n]"
 
 /* The length of the string S encoded */
 #define ENCLEN(s) ((s) == NULL ? strlen(ENC_NULL) : strlen(s))
