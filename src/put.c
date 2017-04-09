@@ -121,15 +121,15 @@ static void regexp_match_error(struct state *state, struct lens *lens,
 
     if (count == -1) {
         put_error(state, lens,
-                  "Failed to match tree\n\n%s\n  with pattern\n   %s",
-                  text, pat);
+                  "Failed to match tree under %s\n\n%s\n  with pattern\n   %s\n",
+                  state->path, text, pat);
     } else if (count == -2) {
         put_error(state, lens,
-                  "Internal error matching\n    %s\n  with tree\n   %s",
+                  "Internal error matching\n    %s\n  with tree\n   %s\n",
                   pat, text);
     } else if (count == -3) {
         /* Should have been caught by the typechecker */
-        put_error(state, lens, "Syntax error in tree schema\n    %s", pat);
+        put_error(state, lens, "Syntax error in tree schema\n    %s\n", pat);
     }
     free(pat);
     free(text);
