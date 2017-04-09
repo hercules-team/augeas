@@ -437,14 +437,14 @@ static void put_subtree(struct lens *lens, struct state *state) {
     assert(lens->tag == L_SUBTREE);
     struct state oldstate = *state;
     struct split oldsplit = *state->split;
-    size_t oldpathlen = strlen(state->path);
+    char *       oldpath = state->path;
 
     struct tree *tree = state->split->tree;
     struct split *split = NULL;
 
     state->key = tree->label;
     state->value = tree->value;
-    pathjoin(&state->path, 1, state->key);
+    state->path = path_of_tree(tree);
 
     split = make_split(tree->children);
     set_split(state, split);
@@ -462,7 +462,8 @@ static void put_subtree(struct lens *lens, struct state *state) {
     *state = oldstate;
     *state->split= oldsplit;
     free_split(split);
-    state->path[oldpathlen] = '\0';
+    free(state->path);
+    state->path = oldpath;
 }
 
 static void put_del(ATTRIBUTE_UNUSED struct lens *lens, struct state *state) {
@@ -843,7 +844,7 @@ void lns_put(FILE *out, struct lens *lens, struct tree *tree,
         return;
 
     MEMZERO(&state, 1);
-    state.path = strdup("");
+    state.path = strdup("/");
     state.skel = lns_parse(lens, text, &state.dict, &err1);
 
     if (err1 != NULL) {
