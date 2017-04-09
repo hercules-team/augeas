@@ -519,7 +519,7 @@ static void put_concat(struct lens *lens, struct state *state) {
 }
 
 static void error_quant_star(struct split *last_split, struct lens *lens,
-                             struct state *state) {
+                             struct state *state, const char *enc) {
     struct tree *child = NULL;
     if (last_split != NULL) {
         if (last_split->follow != NULL) {
@@ -530,11 +530,25 @@ static void error_quant_star(struct split *last_split, struct lens *lens,
                  child = child->next);
         }
     }
+    char *text = NULL;
+    char *pat = NULL;
+
+    lns_format_atype(lens, &pat);
+    text = enc_format_indent(enc, strlen(enc), 4);
+
     if (child == NULL) {
-        put_error(state, lens, "Malformed child node");
+        put_error(state, lens,
+             "Missing a node: can not match tree\n\n%s\n with pattern\n   %s\n",
+                  text, pat);
     } else {
-        put_error(state, lens, "Malformed child node '%s'", child->label);
+        char *s = path_of_tree(child);
+        put_error(state, lens,
+          "Unexpected node '%s': can not match tree\n\n%s\n with pattern\n   %s\n",
+                  s, text, pat);
+        free(s);
     }
+    free(pat);
+    free(text);
 }
 
 static void put_quant_star(struct lens *lens, struct state *state) {
@@ -560,7 +574,7 @@ static void put_quant_star(struct lens *lens, struct state *state) {
         next_split(state);
     }
     if (state->pos != oldsplit->end)
-        error_quant_star(last_split, lens, state);
+        error_quant_star(last_split, lens, state, oldsplit->enc + state->pos);
     list_free(split);
     set_split(state, oldsplit);
     state->skel = oldskel;
@@ -766,7 +780,7 @@ static void create_quant_star(struct lens *lens, struct state *state) {
         next_split(state);
     }
     if (state->pos != oldsplit->end)
-        error_quant_star(last_split, lens, state);
+        error_quant_star(last_split, lens, state, oldsplit->enc + state->pos);
     list_free(split);
     set_split(state, oldsplit);
 }
