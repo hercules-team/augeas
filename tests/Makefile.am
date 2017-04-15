@@ -34,6 +34,7 @@ lens_tests =			\
   lens-automounter.sh	\
   lens-avahi.sh	\
   lens-backuppchosts.sh		\
+  lens-bacula.sh		\
   lens-bbhosts.sh		\
   lens-bootconf.sh		\
   lens-build.sh		\
