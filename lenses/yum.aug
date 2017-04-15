@@ -6,7 +6,7 @@ module Yum =
  * INI File settings
  *************************************************************************)
 
-let comment  = IniFile.comment "#" "#"
+let comment  = IniFile.comment / *# */ "#"
 let sep      = IniFile.sep "=" "="
 let empty    = Util.empty
 let eol      = IniFile.eol
