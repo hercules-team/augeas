@@ -73,7 +73,7 @@ let keys = Rx.word - (commands | block_names)
 
 (* View: entry
 Map simple "key = value" entries including "key =" entries with empty value. *)
-let entry = [ indent . key keys. eq . (Sep.opt_space . store value)? . eol ]
+let entry = [ indent . key keys. eq . (Sep.space . store value)? . eol ]
 
 (* View: command
 Map commands started with "!". *)
