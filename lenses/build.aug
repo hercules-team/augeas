@@ -14,7 +14,8 @@ About: Reference
 
 module Build =
 
-let eol = Util.eol
+let eol     = Util.eol
+let indent  = Util.indent
 
 (************************************************************************
  * Group:               GENERIC CONSTRUCTIONS
@@ -105,6 +106,19 @@ let key_value_line (kw:regexp) (sep:lens) (sto:lens) =
                                    [ key kw . sep . sto . eol ]
 
 (************************************************************************
+ * View: key_value_indented_line
+ *   A subnode with any kind of indentation or none, keyword, a separator and
+ *   a storing lens, and an end of line
+ *
+ *   Parameters:
+ *     kw:regexp - the pattern to match as key
+ *     sep:lens  - the separator lens, which can be taken from the <Sep> module
+ *     sto:lens  - the storing lens
+ ************************************************************************)
+let key_value_indented_line (kw:regexp) (sep:lens) (sto:lens) =
+                                   [ indent . key kw . sep . sto . eol ]
+
+(************************************************************************
  * View: key_value_line_comment
  *   Same as <key_value_line>, but allows to have a comment in the end of a line
  *   and an end of line
@@ -117,6 +131,20 @@ let key_value_line (kw:regexp) (sep:lens) (sto:lens) =
  ************************************************************************)
 let key_value_line_comment (kw:regexp) (sep:lens) (sto:lens) (comment:lens) =
                                    [ key kw . sep . sto . (eol|comment) ]
+
+(************************************************************************
+ * View: key_value_indented_line_comment
+ *   Same as <key_value_indented_line>, but allows to have a comment in the
+ *   end of a line and an end of line
+ *
+ *   Parameters:
+ *     kw:regexp    - the pattern to match as key
+ *     sep:lens     - the separator lens, which can be taken from the <Sep> module
+ *     sto:lens     - the storing lens
+ *     comment:lens - the comment lens, which can be taken from <Util>
+ ************************************************************************)
+let key_value_indented_line_comment (kw:regexp) (sep:lens) (sto:lens) (comment:lens) =
+                                   [ indent . key kw . sep . sto . (eol|comment) ]
 
 (************************************************************************
  * View: key_value

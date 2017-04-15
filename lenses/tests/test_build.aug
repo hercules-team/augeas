@@ -64,12 +64,26 @@ let key_value_line = Build.key_value_line Rx.word Sep.equal (store Rx.word)
 (* Test: key_value_line *)
 test key_value_line get "foo=bar\n" = { "foo" = "bar" }
 
+(* View: key_value_indented_line *)
+let key_value_indented_line = Build.key_value_indented_line Rx.word Sep.equal (store Rx.word)
+
+(* Test: key_value_indented_line *)
+test key_value_indented_line get "      foo=bar\n" = { "foo" = "bar" }
+
 (* View: key_value_line_comment *)
 let key_value_line_comment = Build.key_value_line_comment Rx.word
                              Sep.equal (store Rx.word) Util.comment
 
 (* Test: key_value_line_comment *)
 test key_value_line_comment get "foo=bar # comment\n" =
+    { "foo" = "bar" { "#comment" = "comment" } }
+
+(* View: key_value_line_indented_comment *)
+let key_value_indented_line_comment = Build.key_value_indented_line_comment Rx.word
+                             Sep.equal (store Rx.word) Util.comment
+
+(* Test: key_value_line_indented_comment *)
+test key_value_indented_line_comment get "      foo=bar # comment\n" =
     { "foo" = "bar" { "#comment" = "comment" } }
 
 (* View: key_value *)
