@@ -54,7 +54,7 @@ redis-server.
 *)
 let standard_entry =
      let reserved_k = "save" | "rename-command" | "slaveof"
-                    | "client-output-buffer-limit"
+                    | "bind" | "client-output-buffer-limit"
   in let entry_noempty = [ indent . key k . del_ws_spc
                          . Quote.do_quote_opt_nil (store v) . eol ]
   in let entry_empty = [ indent . key (k - reserved_k) . del_ws_spc
@@ -81,6 +81,12 @@ port number. The same rules as standard_entry apply for quoting, comments and
 whitespaces.
 *)
 let slaveof_entry = [ indent . key slaveof . del_ws_spc . ip . del_ws_spc . port . eol ]
+
+(* View: bind_entry
+The "bind" entry can be passed one or several ip addresses
+*)
+let bind = /bind/
+let bind_entry = [ indent . key bind . [ label "ip" . del_ws_spc . store Rx.ip ]+ . eol ]
 
 let renamecmd = /rename-command/
 let from = [ label "from" . Quote.do_quote_opt_nil (store Rx.word) ]
@@ -112,6 +118,7 @@ let entry = standard_entry
           | save_entry
 	  | renamecmd_entry
 	  | slaveof_entry
+	  | bind_entry
 	  | client_output_buffer_limit_entry
 
 (* View: lns
