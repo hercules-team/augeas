@@ -80,6 +80,7 @@ struct lens {
     struct regexp            *ktype;
     struct regexp            *vtype;
     struct jmt               *jmt;    /* When recursive == 1, might have jmt */
+    struct lens              *sub;
     unsigned int              value : 1;
     unsigned int              key : 1;
     unsigned int              recursive : 1;

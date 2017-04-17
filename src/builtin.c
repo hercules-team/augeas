@@ -526,12 +526,20 @@ static struct value *lns_atype(struct info *info, struct value *l) {
 
 /* V_LENS -> V_REGEXP */
 static struct value *lns_vtype(struct info *info, struct value *l) {
-    return lns_value_of_type(info, l->lens->vtype);
+    if (l->lens->tag == L_SUBTREE) {
+        return lns_value_of_type(info, l->lens->sub->vtype);
+    } else {
+        return lns_value_of_type(info, l->lens->vtype);
+    }
 }
 
 /* V_LENS -> V_REGEXP */
 static struct value *lns_ktype(struct info *info, struct value *l) {
-    return lns_value_of_type(info, l->lens->ktype);
+    if (l->lens->tag == L_SUBTREE) {
+        return lns_value_of_type(info, l->lens->sub->ktype);
+    } else {
+      return lns_value_of_type(info, l->lens->ktype);
+    }
 }
 
 /* V_LENS -> V_STRING */
