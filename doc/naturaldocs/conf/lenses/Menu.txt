@@ -282,6 +282,7 @@ Group: Tests and Examples  {
    File: Test_Simplelines  (tests/test_simplelines.aug)
    File: Test_Simplevars  (tests/test_simplevars.aug)
    File: Test_SmbUsers  (tests/test_smbusers.aug)
+   File: Test_Star  (tests/test_star.aug)
    File: Test_Subversion  (tests/test_subversion.aug)
    File: Test_Sysconfig_Route  (tests/test_sysconfig_route.aug)
    File: Test_Sysctl  (tests/test_sysctl.aug)
