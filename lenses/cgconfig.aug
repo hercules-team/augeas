@@ -23,8 +23,9 @@ module Cgconfig =
 
    let indent  = Util.indent
    let eol     = Util.eol
-   let comment = Util.comment
+   let comment = eol . Util.comment_eol
    let empty   = Util.empty
+   let optional_eol = del /[ \t]*\n*/ "\n"
 
    let id        = /[a-zA-Z0-9_\/.-]+/
    let name      = /[^#= \n\t{}\/]+/
@@ -43,7 +44,7 @@ module Cgconfig =
  ******************************************)
 
    let key_value (key_rx:regexp) (val_rx:regexp) =
-     [ indent . key key_rx . eq . store val_rx
+     [ optional_eol . indent . key key_rx . eq . store val_rx
          . indent . Util.del_str ";" ]
 
    (* Function to deal with bracketted entries *)

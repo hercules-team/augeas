@@ -1,6 +1,8 @@
 Introduction
 ------------
 
+[![Join the chat at https://gitter.im/hercules-team/augeas](https://badges.gitter.im/hercules-team/augeas.svg)](https://gitter.im/hercules-team/augeas?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
   Augeas is a library and command line tool that focuses on the most basic
   problem in handling Linux configurations programmatically: editing actual
   configuration files in a controlled manner.
