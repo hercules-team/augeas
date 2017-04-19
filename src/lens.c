@@ -1563,6 +1563,8 @@ static struct prod *make_prod(struct rtn *rtn, struct lens *l) {
     ERR_BAIL(l->info);
 
     result->end->next = rtn->states;
+    if (result->end == NULL)
+        goto error;
     rtn->states = result->start;
 
     return result;
