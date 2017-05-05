@@ -28,6 +28,7 @@
 #include "internal.h"
 
 #include <unistd.h>
+#include <libgen.h>
 
 #include <libxml/tree.h>
 
