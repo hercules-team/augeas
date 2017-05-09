@@ -134,6 +134,7 @@ lens_tests =			\
   lens-ntpd.sh			\
   lens-nrpe.sh          \
   lens-nsswitch.sh		\
+  lens-nslcd.sh			\
   lens-odbc.sh          \
   lens-opendkim.sh          \
   lens-openshift_config.sh	\
