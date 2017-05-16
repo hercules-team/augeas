@@ -20,7 +20,7 @@ gid nslcd
 log syslog info
 
 # The location at which the LDAP server(s) should be reachable.
-uri ldaps://XXX.XXX.XXX
+uri ldaps://XXX.XXX.XXX ldaps://YYY.YYY.YYY
 
 # The search base that will be used for all queries.
 base dc=XXX,dc=XXX
@@ -150,7 +150,10 @@ test Nslcd.lns get real_file =
   { "log" = "syslog info" }
   {  }
   { "#comment" = "The location at which the LDAP server(s) should be reachable." }
-  { "uri" = "ldaps://XXX.XXX.XXX" }
+  { "uri"
+    { "1" = "ldaps://XXX.XXX.XXX" }
+    { "2" = "ldaps://YYY.YYY.YYY" }
+  }
   {  }
   { "#comment" = "The search base that will be used for all queries." }
   { "base" = "dc=XXX,dc=XXX" }
@@ -277,7 +280,11 @@ test Nslcd.lns get real_file =
   {  }
   { "#comment" = "Other options" }
   { "pagesize" = "100" }
-  { "nss_initgroups_ignoreusers" = "user1,user2,user3" }
+  { "nss_initgroups_ignoreusers"
+    { "1" =  "user1" }
+    { "2" =  "user2" }
+    { "3" =  "user3" }
+  }
   { "nss_min_uid" = "1000" }
   { "nss_nested_groups" = "yes" }
   { "nss_getgrent_skipmembers" = "yes" }
@@ -286,7 +293,7 @@ test Nslcd.lns get real_file =
   { "ignorecase" = "yes" }
   { "pam_authc_ppolicy" = "yes" }
   { "pam_authz_search" = "(&(objectClass=posixAccount)(uid=$username)(|(authorizedService=$service)(!(authorizedService=*))))" }
-  { "pam_password_prohibit_message" = "\"MESSAGE LONG AND WITH SPACES\"" }
+  { "pam_password_prohibit_message" = "MESSAGE LONG AND WITH SPACES" }
   { "reconnect_invalidate" = "nfsidmap,db2,db3" }
   { "cache" = "dn2uid 1s 2h" }
   {  }

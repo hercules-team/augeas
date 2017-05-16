@@ -106,8 +106,14 @@ let eol                       = Util.eol
 let empty                     = Util.empty
 (* View: spc *)
 let spc                       = Util.del_ws_spc
+(* View: comma *)
+let comma                     = Sep.comma
 (* View: comment *)
 let comment                   = Util.comment
+(* View: do_dquote *)
+let do_dquote                 = Quote.do_dquote
+(* View: opt_list *)
+let opt_list                  = Build.opt_list
 
 (* Group: Ldap related values
 Values that need to be parsed.
@@ -148,6 +154,15 @@ The simplest configuration option a key spc value. As in `gid id`
 *)
 let simple_entry  (kw:string) = Build.key_ws_value kw
 
+(* View: simple_entry_quoted_value
+Simple entry with quoted value
+*)
+let simple_entry_quoted_value (kw:string) = Build.key_value_line kw spc (do_dquote (store /.*/))
+
+(* View simple_entry_opt_list_comma_value
+Simple entry that contains a optional list separated by commas
+*)
+let simple_entry_opt_list_value (kw:string) (lsep:lens) = Build.key_value_line kw spc (opt_list [ seq kw . store /[^, \t\n\r]+/ ] (lsep))
 (* View: key_value_line_regexp
 A simple configuration option but specifying the regex for the value.
 *)
@@ -195,7 +210,7 @@ let entries                   = map_entry
                               | simple_entry "threads"
                               | simple_entry "uid"
                               | simple_entry "gid"
-                              | simple_entry "uri"
+                              | simple_entry_opt_list_value "uri" spc
                               | simple_entry "ldap_version"
                               | simple_entry "binddn"
                               | simple_entry "bindpw"
@@ -224,7 +239,7 @@ let entries                   = map_entry
                               | simple_entry "tls_cert"
                               | simple_entry "tls_key"
                               | simple_entry "pagesize"
-                              | simple_entry "nss_initgroups_ignoreusers"
+                              | simple_entry_opt_list_value "nss_initgroups_ignoreusers" comma
                               | simple_entry "nss_min_uid"
                               | simple_entry "nss_nested_groups"
                               | simple_entry "nss_getgrent_skipmembers"
@@ -232,7 +247,7 @@ let entries                   = map_entry
                               | simple_entry "validnames"
                               | simple_entry "ignorecase"
                               | simple_entry "pam_authz_search"
-                              | simple_entry "pam_password_prohibit_message"
+                              | simple_entry_quoted_value "pam_password_prohibit_message"
                               | simple_entry "reconnect_invalidate"
                               | simple_entry "cache"
                               | simple_entry "log"

@@ -31,22 +31,22 @@ Don't Index: Properties
 
 
 # --------------------------------------------------------------------------
-# 
+#
 # Cut and paste the lines below to change the order in which your files
 # appear on the menu.  Don't worry about adding or removing files, Natural
 # Docs will take care of that.
-# 
+#
 # You can further organize the menu by grouping the entries.  Add a
 # "Group: [name] {" line to start a group, and add a "}" to end it.
-# 
+#
 # You can add text and web links to the menu by adding "Text: [text]" and
 # "Link: [name] ([URL])" lines, respectively.
-# 
+#
 # The formatting and comments are auto-generated, so don't worry about
 # neatness when editing the file.  Natural Docs will clean it up the next
 # time it is run.  When working with groups, just deal with the braces and
 # forget about the indentation and comments.
-# 
+#
 # --------------------------------------------------------------------------
 
 
@@ -134,6 +134,7 @@ Group: Specific Modules  {
    File: Networks  (networks.aug)
    File: Nginx  (nginx.aug)
    File: Nrpe  (nrpe.aug)
+   File: Nslcd  (nslcd.aug)
    File: Nsswitch  (nsswitch.aug)
    File: Ntpd  (ntpd.aug)
    File: OpenShift_Config  (openshift_config.aug)
@@ -261,6 +262,7 @@ Group: Tests and Examples  {
    File: Test_NagiosCfg  (tests/test_nagioscfg.aug)
    File: Test_NetworkManager  (tests/test_networkmanager.aug)
    File: Test_Nginx  (tests/test_nginx.aug)
+   File: Test_Nslcd  (tests/test_nslcd
    File: Test_Ntpd  (tests/test_ntpd.aug)
    File: Test_OpenShift_Config  (tests/test_openshift_config.aug)
    File: Test_OpenShift_Http  (tests/test_openshift_http.aug)
@@ -319,4 +321,3 @@ Group: Index  {
    File Index: Files
    Variable Index: Variables
    }  # Group: Index
-
