@@ -262,7 +262,7 @@ Group: Tests and Examples  {
    File: Test_NagiosCfg  (tests/test_nagioscfg.aug)
    File: Test_NetworkManager  (tests/test_networkmanager.aug)
    File: Test_Nginx  (tests/test_nginx.aug)
-   File: Test_Nslcd  (tests/test_nslcd
+   File: Test_Nslcd  (tests/test_nslcd.aug)
    File: Test_Ntpd  (tests/test_ntpd.aug)
    File: Test_OpenShift_Config  (tests/test_openshift_config.aug)
    File: Test_OpenShift_Http  (tests/test_openshift_http.aug)
