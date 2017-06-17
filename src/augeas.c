@@ -836,7 +836,7 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
     return -1;
 }
 
-int aug_get_nodes(const struct augeas *aug, const char *pathin, struct aug_node ***nodes) {
+int aug_get_nodes(const struct augeas *aug, const char *pathin, struct aug_node **nodes) {
     struct pathx *p = NULL;
     struct tree *tree;
     int cnt = 0;
@@ -874,9 +874,10 @@ int aug_get_nodes(const struct augeas *aug, const char *pathin, struct aug_node 
         if (node_path == NULL) {
             goto error;
         }
-        (*nodes)[i]->path = node_path;
-        (*nodes)[i]->label = tree->label;
-        (*nodes)[i]->value = tree->value;
+        
+        nodes[i]->path = node_path;
+        nodes[i]->label = tree->label;
+        nodes[i]->value = tree->value;
         i += 1;
     }
     ERR_BAIL(aug);
@@ -889,8 +890,8 @@ int aug_get_nodes(const struct augeas *aug, const char *pathin, struct aug_node 
     if (nodes != NULL) {
         if (*nodes != NULL) {
             for (i=0; i < cnt; i++)
-                free((*nodes)[i]);
-            free(*nodes);
+                free(nodes[i]);
+            free(nodes);
         }
     }
     free_pathx(p);

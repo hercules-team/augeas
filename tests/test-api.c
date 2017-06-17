@@ -747,8 +747,8 @@ static void testGetNodes(CuTest *tc) {
   r = aug_set(aug, "/files/1/2/3/4/6", "2");
   CuAssertRetSuccess(tc, r);
 
-  struct aug_node **nodes;
-  r = aug_get_nodes(aug, "/files//*", &nodes);
+  struct aug_node *nodes;
+  r = aug_get_nodes(aug, "/files//*", &nodes); // /files/1/2/3/4/5|/files/1/2/3/4/6
   CuAssertRetSuccess(tc, r);
 
   aug_close(aug);
