@@ -747,9 +747,27 @@ static void testGetNodes(CuTest *tc) {
   r = aug_set(aug, "/files/1/2/3/4/6", "2");
   CuAssertRetSuccess(tc, r);
 
-  struct aug_node *nodes;
+  struct aug_node **nodes;
   r = aug_get_nodes(aug, "/files//*", &nodes); // /files/1/2/3/4/5|/files/1/2/3/4/6
-  CuAssertRetSuccess(tc, r);
+  CuAssertIntEquals(tc, 6, r);
+  CuAssertStrEquals(tc, "/files/1", nodes[0]->path);
+  CuAssertStrEquals(tc, "1", nodes[0]->label);
+  CuAssertStrEquals(tc, NULL, nodes[0]->value);
+  CuAssertStrEquals(tc, "/files/1/2", nodes[1]->path);
+  CuAssertStrEquals(tc, "2", nodes[1]->label);
+  CuAssertStrEquals(tc, NULL, nodes[1]->value);
+  CuAssertStrEquals(tc, "/files/1/2/3", nodes[2]->path);
+  CuAssertStrEquals(tc, "3", nodes[2]->label);
+  CuAssertStrEquals(tc, NULL, nodes[2]->value);
+  CuAssertStrEquals(tc, "/files/1/2/3/4", nodes[3]->path);
+  CuAssertStrEquals(tc, "4", nodes[3]->label);
+  CuAssertStrEquals(tc, NULL, nodes[3]->value);
+  CuAssertStrEquals(tc, "/files/1/2/3/4/5", nodes[4]->path);
+  CuAssertStrEquals(tc, "5", nodes[4]->label);
+  CuAssertStrEquals(tc, "1", nodes[4]->value);
+  CuAssertStrEquals(tc, "/files/1/2/3/4/6", nodes[5]->path);
+  CuAssertStrEquals(tc, "6", nodes[5]->label);
+  CuAssertStrEquals(tc, "2", nodes[5]->value);
 
   aug_close(aug);
 }
