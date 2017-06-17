@@ -735,6 +735,25 @@ static void testLoadBadPath(CuTest *tc) {
     aug_close(aug);
 }
 
+static void testGetNodes(CuTest *tc) {
+  struct augeas *aug;
+  int r;
+
+  aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_MODL_AUTOLOAD);
+  CuAssertPtrNotNull(tc, aug);
+
+  r = aug_set(aug, "/files/1/2/3/4/5", "1");
+  CuAssertRetSuccess(tc, r);
+  r = aug_set(aug, "/files/1/2/3/4/6", "2");
+  CuAssertRetSuccess(tc, r);
+
+  struct aug_node **nodes;
+  r = aug_get_nodes(aug, "/files//*", &nodes);
+  CuAssertRetSuccess(tc, r);
+
+  aug_close(aug);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -757,6 +776,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testRm);
     SUITE_ADD_TEST(suite, testLoadFile);
     SUITE_ADD_TEST(suite, testLoadBadPath);
+    SUITE_ADD_TEST(suite, testGetNodes);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)

@@ -27,6 +27,11 @@
 #define AUGEAS_H_
 
 typedef struct augeas augeas;
+typedef struct aug_node {
+  char *path;
+  char *label;
+  char *value;
+} aug_node;
 
 /* Enum: aug_flags
  *
@@ -142,6 +147,33 @@ int aug_defnode(augeas *aug, const char *name, const char *expr,
  * PATH is not a legal path expression.
  */
 int aug_get(const augeas *aug, const char *path, const char **value);
+
+/* Function: aug_get_nodes
+*
+* Matches all augeas nodes and returns all the relevant data about them.
+*
+* Returns:
+* the number of matches of the path expression PATH in AUG. If
+* NODES is non-NULL, an array with the returned number of elements will
+* be allocated and filled with the matching nodes. The caller must
+* free both the array and the entries in it.
+*
+* Returns -1 on error, or the total number of matches (which might be 0).
+*
+* Path expressions:
+* Path expressions use a very simple subset of XPath: the path PATH
+* consists of a number of segments, separated by '/'; each segment can
+* either be a '*', matching any tree node, or a string, optionally
+* followed by an index in brackets, matching tree nodes labelled with
+* exactly that string. If no index is specified, the expression matches
+* all nodes with that label; the index can be a positive number N, which
+* matches exactly the Nth node with that label (counting from 1), or the
+* special expression 'last()' which matches the last node with the given
+* label. All matches are done in fixed positions in the tree, and nothing
+* matches more than one path segment.
+*
+*/
+int aug_get_nodes(const augeas *aug, const char *path, struct aug_node ***nodes);
 
 /* Function: aug_label
  *

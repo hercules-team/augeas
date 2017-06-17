@@ -836,6 +836,68 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
     return -1;
 }
 
+int aug_get_nodes(const struct augeas *aug, const char *pathin, struct aug_node ***nodes) {
+    struct pathx *p = NULL;
+    struct tree *tree;
+    int cnt = 0;
+
+    api_entry(aug);
+
+    if (nodes != NULL)
+        *nodes = NULL;
+
+    if (STREQ(pathin, "/")) {
+        pathin = "/*";
+    }
+
+    p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), pathin, true);
+    ERR_BAIL(aug);
+
+    for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
+        if (! TREE_HIDDEN(tree))
+            cnt += 1;
+    }
+    ERR_BAIL(aug);
+
+    if (nodes == NULL)
+        goto done;
+
+    if (ALLOC_N(*nodes, cnt) < 0)
+        goto error;
+
+    int i = 0;
+    char *node_path;
+    for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
+        if (TREE_HIDDEN(tree))
+            continue;
+        node_path = path_of_tree(tree);
+        if (node_path == NULL) {
+            goto error;
+        }
+        (*nodes)[i]->path = node_path;
+        (*nodes)[i]->label = tree->label;
+        (*nodes)[i]->value = tree->value;
+        i += 1;
+    }
+    ERR_BAIL(aug);
+ done:
+    free_pathx(p);
+    api_exit(aug);
+    return cnt;
+
+ error:
+    if (nodes != NULL) {
+        if (*nodes != NULL) {
+            for (i=0; i < cnt; i++)
+                free((*nodes)[i]);
+            free(*nodes);
+        }
+    }
+    free_pathx(p);
+    api_exit(aug);
+    return -1;
+}
+
 int aug_label(const struct augeas *aug, const char *path, const char **label) {
     struct pathx *p = NULL;
     struct tree *match;
