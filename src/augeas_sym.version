@@ -85,4 +85,5 @@ AUGEAS_0.22.0 {
 AUGEAS_0.23.0 {
     global:
       aug_get_nodes;
+      aug_free_nodes;
 } AUGEAS_0.22.0;

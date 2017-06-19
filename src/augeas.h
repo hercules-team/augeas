@@ -39,6 +39,8 @@ typedef struct aug_node {
   uint span_end;
   const char *filename;
   int has_span_info;
+
+  struct aug_node *next;
 } aug_node;
 
 /* Enum: aug_flags
@@ -181,7 +183,13 @@ int aug_get(const augeas *aug, const char *path, const char **value);
 * matches more than one path segment.
 *
 */
-int aug_get_nodes(const augeas *aug, const char *path, struct aug_node ***nodes);
+int aug_get_nodes(const augeas *aug, const char *path, struct aug_node *node);
+
+/* Function: aug_free_nodes
+*
+*  Frees the node linked list fetched by aug_get_nodes.
+*/
+void aug_free_nodes(struct aug_node *node);
 
 /* Function: aug_label
  *

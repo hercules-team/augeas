@@ -836,15 +836,21 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
     return -1;
 }
 
-int aug_get_nodes(const struct augeas *aug, const char *pathin, struct aug_node ***nodes) {
+int aug_get_nodes(const struct augeas *aug, const char *pathin, struct aug_node *node) {
     struct pathx *p = NULL;
     struct tree *tree;
+    struct aug_node *current_node = node;
     int cnt = 0;
+    char *node_path;
 
     api_entry(aug);
 
-    if (nodes != NULL)
-        *nodes = NULL;
+    if (node == NULL)
+        goto error;
+
+    if (current_node->next != NULL) {
+      current_node->next = NULL;
+    }
 
     if (STREQ(pathin, "/")) {
         pathin = "/*";
@@ -853,70 +859,70 @@ int aug_get_nodes(const struct augeas *aug, const char *pathin, struct aug_node 
     p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), pathin, true);
     ERR_BAIL(aug);
 
-    for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
-        if (! TREE_HIDDEN(tree))
-            cnt += 1;
-    }
-    ERR_BAIL(aug);
-
-    if (nodes == NULL)
-        goto done;
-
-    if (ALLOC_N(*nodes, cnt) < 0)
-        goto error;
-
-    int i = 0;
-    char *node_path;
-    for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p)) {
+    tree = pathx_first(p);
+    while(true) {
         if (TREE_HIDDEN(tree))
-            continue;
+          continue;
+
+        cnt += 1;
         node_path = path_of_tree(tree);
         if (node_path == NULL) {
             goto error;
         }
 
-        (*nodes)[i] = malloc(sizeof(aug_node));
-        (*nodes)[i]->path = node_path;
-        (*nodes)[i]->label = tree->label;
-        (*nodes)[i]->value = tree->value;
+        current_node->path = node_path;
+        current_node->label = tree->label;
+        current_node->value = tree->value;
 
         struct span *span = tree->span;
         if (span != NULL) {
-          (*nodes)[i]->span_label_start = span->label_start;
-          (*nodes)[i]->span_label_end = span->label_end;
-          (*nodes)[i]->span_value_start = span->value_start;
-          (*nodes)[i]->span_value_end = span->value_end;
-          (*nodes)[i]->span_start = span->span_start;
-          (*nodes)[i]->span_end = span->span_end;
+          current_node->span_label_start = span->label_start;
+          current_node->span_label_end = span->label_end;
+          current_node->span_value_start = span->value_start;
+          current_node->span_value_end = span->value_end;
+          current_node->span_start = span->span_start;
+          current_node->span_end = span->span_end;
 
           if (span->filename != NULL || span->filename->str != NULL) {
-              (*nodes)[i]->filename = span->filename->str;
+              current_node->filename = span->filename->str;
           }
-          (*nodes)[i]->has_span_info = true;
+          current_node->has_span_info = true;
         }
         else {
-          (*nodes)[i]->has_span_info = false;
+          current_node->has_span_info = false;
         }
 
-        i += 1;
+        tree = pathx_next(p);
+        if (tree != NULL) {
+          current_node->next = malloc(sizeof(aug_node));
+          current_node = current_node->next;
+        }
+        else {
+          current_node->next = NULL;
+          break;
+        }
     }
     ERR_BAIL(aug);
- done:
+
     free_pathx(p);
     api_exit(aug);
     return cnt;
 
  error:
-    if (nodes != NULL) {
-        if (*nodes != NULL) {
-            for (i=0; i < cnt; i++)
-                free((*nodes)[i]);
-            free(*nodes);
-        }
-    }
+    aug_free_nodes(node);
     free_pathx(p);
     api_exit(aug);
     return -1;
+}
+
+void aug_free_nodes(struct aug_node *node) {
+  struct aug_node *current_node = node;
+  struct aug_node *next_node;
+  while (current_node->next != NULL) {
+    next_node = current_node->next;
+    free(current_node);
+    current_node = next_node;
+  }
 }
 
 int aug_label(const struct augeas *aug, const char *path, const char **label) {
