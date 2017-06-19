@@ -879,6 +879,25 @@ int aug_get_nodes(const struct augeas *aug, const char *pathin, struct aug_node 
         (*nodes)[i]->path = node_path;
         (*nodes)[i]->label = tree->label;
         (*nodes)[i]->value = tree->value;
+
+        struct span *span = tree->span;
+        if (span != NULL) {
+          (*nodes)[i]->span_label_start = span->label_start;
+          (*nodes)[i]->span_label_end = span->label_end;
+          (*nodes)[i]->span_value_start = span->value_start;
+          (*nodes)[i]->span_value_end = span->value_end;
+          (*nodes)[i]->span_start = span->span_start;
+          (*nodes)[i]->span_end = span->span_end;
+
+          if (span->filename != NULL || span->filename->str != NULL) {
+              (*nodes)[i]->filename = span->filename->str;
+          }
+          (*nodes)[i]->has_span_info = true;
+        }
+        else {
+          (*nodes)[i]->has_span_info = false;
+        }
+
         i += 1;
     }
     ERR_BAIL(aug);
