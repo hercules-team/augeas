@@ -28,16 +28,16 @@
 
 typedef struct augeas augeas;
 typedef struct aug_node {
-  char *path;
-  char *label;
-  char *value;
+  const char *path;
+  const char *label;
+  const char *value;
   uint span_label_start;
   uint span_label_end;
   uint span_value_start;
   uint span_value_end;
   uint span_start;
   uint span_end;
-  char *filename;
+  const char *filename;
   int has_span_info;
 } aug_node;
 
