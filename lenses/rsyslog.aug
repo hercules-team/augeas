@@ -68,6 +68,8 @@ let entries = ( Syslog.empty | Syslog.comment | entry | macro | config_object | 
 let lns = entries . ( Syslog.program | Syslog.hostname )*
 
 let filter = incl "/etc/rsyslog.conf"
+           . incl "/etc/rsyslog.d/*"
+           . Util.stdexcl
 
 let xfm = transform lns filter
 
