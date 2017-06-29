@@ -735,6 +735,63 @@ static void testLoadBadPath(CuTest *tc) {
     aug_close(aug);
 }
 
+static void testGetNodes(CuTest *tc) {
+  struct augeas *aug;
+  int r;
+
+  aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_MODL_AUTOLOAD);
+  CuAssertPtrNotNull(tc, aug);
+
+  r = aug_set(aug, "/files/1/2/3/4/5", "1");
+  CuAssertRetSuccess(tc, r);
+  r = aug_set(aug, "/files/1/2/3/4/6", "2");
+  CuAssertRetSuccess(tc, r);
+
+  struct aug_node *node = malloc(sizeof(aug_node));
+  struct aug_node *current_node = node;
+  r = aug_get_nodes(aug, "/files//*", node);
+  CuAssertIntEquals(tc, 6, r);
+
+  CuAssertStrEquals(tc, "/files/1", current_node->path);
+  CuAssertStrEquals(tc, "1", current_node->label);
+  CuAssertStrEquals(tc, NULL, current_node->value);
+  current_node = current_node->next;
+  CuAssertPtrNotNull(tc, current_node);
+
+  CuAssertStrEquals(tc, "/files/1/2", current_node->path);
+  CuAssertStrEquals(tc, "2", current_node->label);
+  CuAssertStrEquals(tc, NULL, current_node->value);
+  current_node = current_node->next;
+  CuAssertPtrNotNull(tc, current_node);
+
+  CuAssertStrEquals(tc, "/files/1/2/3", current_node->path);
+  CuAssertStrEquals(tc, "3", current_node->label);
+  CuAssertStrEquals(tc, NULL, current_node->value);
+  current_node = current_node->next;
+  CuAssertPtrNotNull(tc, current_node);
+
+  CuAssertStrEquals(tc, "/files/1/2/3/4", current_node->path);
+  CuAssertStrEquals(tc, "4", current_node->label);
+  CuAssertStrEquals(tc, NULL, current_node->value);
+  current_node = current_node->next;
+  CuAssertPtrNotNull(tc, current_node);
+
+  CuAssertStrEquals(tc, "/files/1/2/3/4/5", current_node->path);
+  CuAssertStrEquals(tc, "5", current_node->label);
+  CuAssertStrEquals(tc, "1", current_node->value);
+  current_node = current_node->next;
+  CuAssertPtrNotNull(tc, current_node);
+
+  CuAssertStrEquals(tc, "/files/1/2/3/4/6", current_node->path);
+  CuAssertStrEquals(tc, "6", current_node->label);
+  CuAssertStrEquals(tc, "2", current_node->value);
+  CuAssertPtrEquals(tc, NULL, current_node->next);
+
+  aug_free_nodes(node);
+
+  aug_close(aug);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -757,6 +814,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testRm);
     SUITE_ADD_TEST(suite, testLoadFile);
     SUITE_ADD_TEST(suite, testLoadBadPath);
+    SUITE_ADD_TEST(suite, testGetNodes);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)
