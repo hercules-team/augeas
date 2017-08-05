@@ -6,6 +6,6 @@ includedir=@includedir@
 Name: augeas
 Version: @VERSION@
 Description: Augeas configuration editing library
-Requires.private: libxml-2.0
-Libs: -L${libdir} -laugeas @LIBS@
+Requires.private: libxml-2.0 @PC_SELINUX@
+Libs: -L${libdir} -laugeas -lfa @LIBS@
 Cflags: -I${includedir}

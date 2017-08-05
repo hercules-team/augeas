@@ -3,6 +3,7 @@
     * several improvements to the error messages when transforming a tree
       back to text fails. They now make it clearer what part of the tree
       was problematic, and what the tree should have looked like.
+    * Fixed the pkg-config file, which should now be usable
 
 1.8.1 - 2017-08-17
   - General changes/addition
