@@ -65,7 +65,7 @@ if test x"$enable_debug" = x"yes"; then
 fi
 
 dnl Version info in libtool's notation
-AC_SUBST([LIBAUGEAS_VERSION_INFO], [22:0:22])
+AC_SUBST([LIBAUGEAS_VERSION_INFO], [23:0:23])
 AC_SUBST([LIBFA_VERSION_INFO], [5:4:4])
 
 AC_GNU_SOURCE

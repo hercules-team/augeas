@@ -473,6 +473,34 @@ int aug_srun(augeas *aug, FILE *out, const char *text);
  */
 void aug_close(augeas *aug);
 
+// We can't put //* into the examples in these comments since the C
+// preprocessor complains about that. So we'll resort to the equivalent but
+// more wordy notation /descendant::*
+
+/*
+ * Function: aug_ns_get
+ *
+ * Look up the ith node in the variable VAR and retrieve information about
+ * it. Set *VALUE to the value of the node, *LABEL to its label, and
+ * *FILE_PATH to the path of the file it belongs to, or to NULL if that
+ * node does not belong to a file. It is permissible to pass NULL for any
+ * of these variables to indicate that the caller is not interested in that
+ * attribute.
+
+ * It is assumed that VAR was defined with a path expression evaluating to
+ * a nodeset, like '/files/etc/hosts/descendant::*'. This function is
+ * equivalent to, but faster than, aug_get(aug, "$VAR[I]", value),
+ * respectively the corresponding calls to aug_label and aug_source.
+ *
+ * If VAR does not exist, or is not a nodeset, or if it has fewer than I
+ * nodes, this call fails.
+ *
+ * Returns:
+ * 1 on success (for consistency with aug_get), a negative value on failure
+ */
+int aug_ns_attr(const augeas* aug, const char *var, int i,
+                const char **value, const char **label, char **file_path);
+
 /*
  * Error reporting
  */

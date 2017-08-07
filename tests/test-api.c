@@ -735,6 +735,47 @@ static void testLoadBadPath(CuTest *tc) {
     aug_close(aug);
 }
 
+/* Test the aug_ns_* functions */
+static void testAugNs(CuTest *tc) {
+    struct augeas *aug;
+    int r;
+    const char *v, *l;
+    char *s;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    r = aug_load_file(aug, "/etc/hosts");
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_defvar(aug, "matches",
+                   "/files/etc/hosts/*[label() != '#comment']/ipaddr");
+    CuAssertIntEquals(tc, 2, r);
+
+    r = aug_ns_attr(aug, "matches", 0, &v, &l, &s);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertStrEquals(tc, "127.0.0.1", v);
+    CuAssertStrEquals(tc, "ipaddr", l);
+    CuAssertStrEquals(tc, "/files/etc/hosts", s);
+    free(s);
+    s = NULL;
+
+    r = aug_ns_attr(aug, "matches", 0, NULL, NULL, NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    r = aug_ns_attr(aug, "matches", 1, &v, NULL, &s);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertStrEquals(tc, "172.31.122.14", v);
+    CuAssertStrEquals(tc, "/files/etc/hosts", s);
+
+    r = aug_ns_attr(aug, "matches", 2, &v, &l, &s);
+    CuAssertIntEquals(tc, -1, r);
+    CuAssertPtrEquals(tc, NULL, v);
+    CuAssertPtrEquals(tc, NULL, l);
+    CuAssertPtrEquals(tc, NULL, s);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -757,6 +798,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testRm);
     SUITE_ADD_TEST(suite, testLoadFile);
     SUITE_ADD_TEST(suite, testLoadBadPath);
+    SUITE_ADD_TEST(suite, testAugNs);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)

@@ -1915,6 +1915,28 @@ int aug_print(const struct augeas *aug, FILE *out, const char *pathin) {
     return result;
 }
 
+static char *
+tree_source(const augeas *aug, struct tree *tree) {
+    char *result = NULL;
+
+    while (!(ROOT_P(tree) || tree->file))
+        tree = tree->parent;
+
+    if (tree->file) {
+        if (tree->span == NULL) {
+            int r;
+            r = ALLOC(tree->span);
+            ERR_NOMEM(r < 0, aug);
+            tree->span->filename = make_string(path_of_tree(tree));
+            ERR_NOMEM(tree->span->filename == NULL, aug);
+        }
+        result = strdup(tree->span->filename->str);
+        ERR_NOMEM(result == NULL, aug);
+    }
+ error:
+    return result;
+}
+
 int aug_source(const augeas *aug, const char *path, char **file_path) {
     int result = -1, r;
     struct pathx *p = NULL;
@@ -1935,13 +1957,9 @@ int aug_source(const augeas *aug, const char *path, char **file_path) {
               r, path);
     ERR_THROW(r == 0, aug, AUG_ENOMATCH, "There is no node matching %s",
               path);
-    while (!(ROOT_P(match) || match->file))
-        match = match->parent;
 
-    if (match->file) {
-        *file_path = path_of_tree(match);
-        ERR_NOMEM(file_path == NULL, aug);
-    }
+    tree_source(aug, match);
+    ERR_BAIL(aug);
 
     result = 0;
  error:
@@ -1990,6 +2008,43 @@ int tree_equal(const struct tree *t1, const struct tree *t2) {
         t2 = t2->next;
     }
     return t1 == t2;
+}
+
+int aug_ns_attr(const augeas* aug, const char *var, int i,
+                const char **value, const char **label, char **file_path) {
+    int result = -1;
+
+    if (value != NULL)
+        *value = NULL;
+
+    if (label != NULL)
+        *label = NULL;
+
+    if (file_path != NULL)
+        *file_path = NULL;
+
+    api_entry(aug);
+
+    struct tree *tree = pathx_symtab_get_tree(aug->symtab, var, i);
+    ERR_THROW(tree == NULL, aug, AUG_ENOMATCH,
+              "Node %s[%d] does not exist", var, i);
+
+    if (file_path != NULL) {
+        *file_path = tree_source(aug, tree);
+        ERR_BAIL(aug);
+    }
+
+    if (value != NULL)
+        *value = tree->value;
+
+    if (label != NULL)
+        *label = tree->label;
+
+    result = 1;
+
+ error:
+    api_exit(aug);
+    return result;
 }
 
 /*
