@@ -606,6 +606,12 @@ int pathx_symtab_assign_tree(struct pathx_symtab **symtab, const char *name,
 int pathx_symtab_undefine(struct pathx_symtab **symtab, const char *name);
 void pathx_symtab_remove_descendants(struct pathx_symtab *symtab,
                                      const struct tree *tree);
+/* Return the tree stored in the variable NAME at position I, which is the
+   same as evaluating the path expression '$NAME[I]'. If the variable NAME
+   does not exist, or does not contain a nodeset, or if I is bigger than
+   the size of the nodeset, return NULL */
+struct tree *pathx_symtab_get_tree(struct pathx_symtab *symtab,
+                                   const char *name, int i);
 void free_symtab(struct pathx_symtab *symtab);
 
 /* Escape a name so that it is safe to pass to parse_name and have it

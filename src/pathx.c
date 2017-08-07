@@ -1361,8 +1361,9 @@ static void eval_filter(struct expr *expr, struct state *state) {
     }
 }
 
-static struct value *lookup_var(const char *ident, struct state *state) {
-    list_for_each(tab, state->symtab) {
+static struct value *lookup_var(const char *ident,
+                                struct pathx_symtab *symtab) {
+    list_for_each(tab, symtab) {
         if (STREQ(ident, tab->name))
             return tab->value;
     }
@@ -1370,7 +1371,7 @@ static struct value *lookup_var(const char *ident, struct state *state) {
 }
 
 static void eval_var(struct expr *expr, struct state *state) {
-    struct value *v = lookup_var(expr->ident, state);
+    struct value *v = lookup_var(expr->ident, state->symtab);
     value_ind_t vind = clone_value(v, state);
     RET_ON_ERROR;
     push_value(vind, state);
@@ -1565,7 +1566,7 @@ static void check_binary(struct expr *expr, struct state *state) {
 }
 
 static void check_var(struct expr *expr, struct state *state) {
-    struct value *v = lookup_var(expr->ident, state);
+    struct value *v = lookup_var(expr->ident, state->symtab);
     if (v == NULL) {
         STATE_ERROR(state, PATHX_ENOVAR);
         return;
@@ -3015,6 +3016,19 @@ int pathx_symtab_assign_tree(struct pathx_symtab **symtab,
     release_value(v);
     free(v);
     return -1;
+}
+
+struct tree *
+pathx_symtab_get_tree(struct pathx_symtab *symtab,
+                      const char *name, int i) {
+    struct value *v = lookup_var(name, symtab);
+    if (v == NULL)
+        return NULL;
+    if (v->tag != T_NODESET)
+        return NULL;
+    if (i >= v->nodeset->used)
+        return NULL;
+    return v->nodeset->nodes[i];
 }
 
 void pathx_symtab_remove_descendants(struct pathx_symtab *symtab,
