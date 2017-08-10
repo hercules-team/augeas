@@ -52,7 +52,6 @@ struct info {
     uint16_t last_line;
     uint16_t last_column;
     ref_t    ref;
-    int flags;
 };
 
 struct span {

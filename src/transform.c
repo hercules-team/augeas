@@ -569,7 +569,6 @@ make_lns_info(struct augeas *aug, const char *filename,
         info->last_column = text_len;
     }
 
-    info->flags = aug->flags;
     info->error = aug->error;
 
     return info;

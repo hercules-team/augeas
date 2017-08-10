@@ -1600,7 +1600,7 @@ static int init_regs(struct state *state, struct lens *lens, uint size) {
 }
 
 struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
-                     struct lns_error **err) {
+                     int enable_span, struct lns_error **err) {
     struct state state;
     struct tree *tree = NULL;
     uint size = strlen(text);
@@ -1615,7 +1615,7 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
 
     state.text = text;
 
-    state.enable_span = info->flags & AUG_ENABLE_SPAN;
+    state.enable_span = enable_span;
 
     /* We are probably being overly cautious here: if the lens can't process
      * all of TEXT, we should really fail somewhere in one of the sublenses.
