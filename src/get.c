@@ -51,6 +51,7 @@ struct state {
     char             *key;
     char             *value;     /* GET_STORE leaves a value here */
     struct lns_error *error;
+    int               enable_span;
     /* We use the registers from a regular expression match to keep track
      * of the substring we are currently looking at. REGS are the registers
      * from the last regexp match; NREG is the number of the register
@@ -899,7 +900,7 @@ static struct tree *get_subtree(struct lens *lens, struct state *state) {
 
     state->key = NULL;
     state->value = NULL;
-    if (state->info->flags & AUG_ENABLE_SPAN) {
+    if (state->enable_span) {
         state->span = make_span(state->info);
         ERR_NOMEM(state->span == NULL, state->info);
     }
@@ -1158,8 +1159,7 @@ static void visit_terminal(struct lens *lens, size_t start, size_t end,
 }
 
 static bool rec_gen_span(struct rec_state *rec_state) {
-    return ((rec_state->mode == M_GET)
-            && (rec_state->state->info->flags & AUG_ENABLE_SPAN));
+    return ((rec_state->mode == M_GET) && (rec_state->state->enable_span));
 }
 
 static void visit_enter(struct lens *lens,
@@ -1614,6 +1614,8 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
     state.info->ref = UINT_MAX;
 
     state.text = text;
+
+    state.enable_span = info->flags & AUG_ENABLE_SPAN;
 
     /* We are probably being overly cautious here: if the lens can't process
      * all of TEXT, we should really fail somewhere in one of the sublenses.

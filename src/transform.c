@@ -606,7 +606,7 @@ static void lens_get(struct augeas *aug,
         ERR_NOMEM(span == NULL, info);
     }
 
-    tree = lns_get(info, lens, text, err);
+    tree = lns_get(info, lens, text, aug->flags & AUG_ENABLE_SPAN, err);
 
     if (*err == NULL) {
         // Successful get
