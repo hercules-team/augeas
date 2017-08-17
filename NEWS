@@ -4,6 +4,11 @@
       back to text fails. They now make it clearer what part of the tree
       was problematic, and what the tree should have looked like.
 
+1.8.1 - 2017-08-17
+  - General changes/addition
+    * Fix error in handling escaped whitespace at the end of path expressions
+      (addresses CVE-2017-7555)
+
 1.8.0 - 2017-03-20
   - General changes/additions
     * augtool: add a 'source' command exposing the aug_source API call
