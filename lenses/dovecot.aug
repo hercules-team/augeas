@@ -128,6 +128,8 @@ let lns = (comment|empty|entry|command|block)*
 (* Variable: filter *)
 let filter = incl "/etc/dovecot/dovecot.conf"
            . (incl "/etc/dovecot/conf.d/*.conf")
+           . incl "/usr/local/etc/dovecot/dovecot.conf"
+           . (incl "/usr/local/etc/dovecot/conf.d/*.conf")
            . Util.stdexcl
 
 let xfm = transform lns filter
