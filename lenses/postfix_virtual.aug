@@ -52,5 +52,6 @@ let lns = (Util.empty | Util.comment | record)*
 
 (* Variable: filter *)
 let filter = incl "/etc/postfix/virtual"
+           . incl "/usr/local/etc/postfix/virtual"
 
 let xfm = transform lns filter

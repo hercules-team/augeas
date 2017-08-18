@@ -45,5 +45,6 @@ let entry     = [ key word . eq . (indent . value)? . eol ]
 let lns        = (comment|empty|entry) *
 
 let filter     = incl "/etc/postfix/main.cf"
+               . incl "/usr/local/etc/postfix/main.cf"
 
 let xfm        = transform lns filter
