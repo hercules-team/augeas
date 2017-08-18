@@ -26,4 +26,4 @@ module Postfix_Access =
 
   let lns = ( empty | comment | record )*
 
-  let xfm = transform lns (incl "/etc/postfix/access")
+  let xfm = transform lns (incl "/etc/postfix/access" . incl "/usr/local/etc/postfix/access")

@@ -47,5 +47,6 @@ let lns = (Util.empty | Util.comment | record)*
 
 (* Variable: filter *)
 let filter = incl "/etc/postfix/*passwd"
+           . incl "/usr/local/etc/postfix/*passwd"
 
 let xfm = transform lns filter

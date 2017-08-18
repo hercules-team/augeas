@@ -56,5 +56,6 @@ let lns = (Util.empty | Util.comment | record)*
 
 (* Variable: filter *)
 let filter = incl "/etc/postfix/transport"
+           . incl "/usr/local/etc/postfix/transport"
 
 let xfm = transform lns filter
