@@ -98,6 +98,10 @@ AC_MSG_CHECKING([how to pass version script to the linker ($LD)])
 VERSION_SCRIPT_FLAGS=none
 if $LD --help 2>&1 | grep "version-script" >/dev/null 2>/dev/null; then
     VERSION_SCRIPT_FLAGS=-Wl,--version-script=
+    # Solaris needs gnu-version-script-compat to use version-script
+    if test x"$host_os" = x"solaris2.11"; then
+      VERSION_SCRIPT_FLAGS="-z gnu-version-script-compat,${VERSION_SCRIPT_FLAGS}"
+    fi
 elif $LD --help 2>&1 | grep "M mapfile" >/dev/null 2>/dev/null; then
     VERSION_SCRIPT_FLAGS="-Wl,-M -Wl,"
 fi
