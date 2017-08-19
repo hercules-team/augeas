@@ -311,6 +311,7 @@ module Shellvars =
                      . incl "/etc/periodic.conf"
                      . incl "/etc/popularity-contest.conf"
                      . incl "/etc/rc.conf"
+                     . incl "/etc/rc.conf.d/*"
                      . incl "/etc/rc.conf.local"
                      . incl "/etc/selinux/config"
                      . incl "/etc/ucf.conf"
