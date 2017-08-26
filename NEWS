@@ -22,7 +22,7 @@
       90MB to about 20MB. This will not change the amount of memory used
       when only specific lenses are used, only the default behavior of
       loading all lenses, i.e., when -A is not passed.
-    * make building augtool statically possible (Jörg Krause)
+    * make building augtool statically possible (JÃ¶rg Krause)
     * split aug_to_xml into its own source file, so that statically linking
       against libaugeas.a doesn't require also linking against libXml2 and
       its dependencies, provided aug_to_xml is not needed.
@@ -317,7 +317,7 @@
                  handle associative arrays; add /etc/periodic.conf for
                  FreeBSD (Michael Moll)
     * Shellvars_list: support double-quoted continued lines
-    * Sudoers: allow '+' in user/groupnames (Andreas Grüninger)
+    * Sudoers: allow '+' in user/groupnames (Andreas GrÃ¼ninger)
     * Sysctl: add /boot/loader.conf for FreeBSD (Michael Moll)
     * Sysconfig: handle leading whitespace at beginning of a line,
                  RHBZ#761246
@@ -366,7 +366,7 @@
     * NagiosConfig and NagiosObjects: Fix documentation (Simon Sehier)
     * NetworkManager: Use the Quote module, support # in values (no eol comments)
     * OpenVPN: Add support for fragment, mssfix, and script-security
-               (Frank Grötzner)
+               (Frank GrÃ¶tzner)
     * Pagekite: New lens (Michael Pimmer)
     * Pam: Add partial support for arguments enclosed in [] (Vincent Brillault)
     * Passwd: Refactor lens (Lorenzo Catucci)
@@ -426,7 +426,7 @@
              booting and bootp (Yanis Guenane)
              Support a wider variety of DHCP allow/deny/ignore statements
              (Yanis Guenane)
-    * Dovecot: Various enhancements and bug fixes (Michael Haslgrübler):
+    * Dovecot: Various enhancements and bug fixes (Michael HaslgrÃ¼bler):
                add mailbox to block_names, fix for block_args in quotes,
                fix for block's brackets upon write,
                fixes broken tests for mailbox,
@@ -476,7 +476,7 @@
     * Sysconfig: Permit empty comments after comment lines, RHBZ#1043636
     * Sysconfig_Route: New lens for RedHat's route configs
     * Syslog: Accept UDP(@) and TCP(@@) protocol, bug #364 (Yanis Guenane)
-    * Xymon_Alerting: New lens for Xymon alerting files (François Maillard)
+    * Xymon_Alerting: New lens for Xymon alerting files (FranÃ§ois Maillard)
     * Yum: Add yum-cron*.conf files (Pat Riehecky)
            Include only *.repo files from yum.repos.d (Andrew N Golovkov)
            Permit spaces after equals sign in list options, GH issue #45
@@ -644,7 +644,7 @@
     * src/pathx.c: match functions by name and arity
     * src/pathx.c: pass the number of actual arguments to the func
       implementation
-    * correctly parse escaped string literals in vim syntax file (Domen Ko¿ar)
+    * correctly parse escaped string literals in vim syntax file (Domen KoÂ¿ar)
   - API changes/additions
     * add aug_text_store to write string to tree
     * add aug_text_retrieve to turn tree into text
@@ -980,7 +980,7 @@
     * Access: support the format @netgroup@@nisdomain, bug #190
     * Fstab: fix parsing of SELinux labels in the fscontext option (Matt Booth)
     * Grub: support 'device' directive for UEFI boot, bug #189; support
-      'configfile' and 'background' (Onur Küçük)
+      'configfile' and 'background' (Onur KÃ¼Ã§Ã¼k)
     * Httpd: handle continuation lines (Bill Pemberton); autoload
       httpd.conf on Fedora/RHEL, BZ 688149; fix support for single-quoted
       strings
