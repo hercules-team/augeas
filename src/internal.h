@@ -138,6 +138,26 @@
 #endif
 
 /**
+* AUGEAS_LIKELY:
+*
+* Macro to flag a code branch as a likely branch
+*
+* AUGEAS_UNLIKELY:
+*
+* Macro to flag a code branch as an unlikely branch
+*/
+#ifndef __has_builtin
+#   define __has_builtin(x) (0)
+#endif
+#if defined(__builtin_expect) || __has_builtin(__builtin_expect)
+#   define AUGEAS_LIKELY(x)        (__builtin_expect(!!(x), 1))
+#   define AUGEAS_UNLIKELY(x)      (__builtin_expect(!!(x), 0))
+#else
+#   define AUGEAS_LIKELY(x)        (x)
+#   define AUGEAS_UNLIKELY(x)      (x)
+#endif
+
+/**
  * ATTRIBUTE_UNUSED:
  *
  * Macro to flag conciously unused parameters to functions
