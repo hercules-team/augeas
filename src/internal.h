@@ -168,6 +168,16 @@
 #endif
 #endif
 
+/* Allow falling through in switch statements for the few cases where that
+   is needed */
+#ifndef ATTRIBUTE_FALLTHROUGH
+#  if __GNUC_PREREQ (7, 0)
+#    define ATTRIBUTE_FALLTHROUGH __attribute__ ((fallthrough))
+#  else
+#    define ATTRIBUTE_FALLTHROUGH
+#  endif
+#endif
+
 /* A poor man's macro to get some move semantics: return the value of P but
    set P itself to NULL. This has the effect that if you say 'x = move(y)'
    that there is still only one pointer pointing to the memory Y pointed to
@@ -180,6 +190,7 @@
 #define ATTRIBUTE_FORMAT(...)
 #define ATTRIBUTE_PURE
 #define ATTRIBUTE_RETURN_CHECK
+#define ATTRIBUTE_FALLTHROUGH
 #define move(p) p
 #endif                                   /* __GNUC__ */
 

@@ -150,9 +150,11 @@ static char *nexttoken(struct command *cmd, char **line, bool path) {
                 case ' ':
                 case '\t': /* pass both through if quoted, else fall */
                     if (quot) break;
+                    ATTRIBUTE_FALLTHROUGH;
                 case '\'':
                 case '"':  /* pass both through if opposite quote, else fall */
                     if (quot && quot != *(s+1)) break;
+                    ATTRIBUTE_FALLTHROUGH;
                 case '\\': /* pass next character through */
                     nescaped = 1;
                     s += 1;
