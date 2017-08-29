@@ -33,7 +33,7 @@ enum lens_type {
     CTYPE, ATYPE, KTYPE, VTYPE
 };
 
-static const int const type_offs[] = {
+static const int type_offs[] = {
     offsetof(struct lens, ctype),
     offsetof(struct lens, atype),
     offsetof(struct lens, ktype),

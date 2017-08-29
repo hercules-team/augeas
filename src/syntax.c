@@ -68,7 +68,7 @@ static const char *const type_names[] = {
 };
 
 /* The anonymous identifier which we will never bind */
-static const char const anon_ident[] = "_";
+static const char anon_ident[] = "_";
 
 static void print_value(FILE *out, struct value *v);
 

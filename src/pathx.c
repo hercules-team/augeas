@@ -128,7 +128,7 @@ static const char *const axis_names[] = {
  *
  * See parse_name for the gory details
  */
-static const char const name_follow[] = "][|/=()!,";
+static const char name_follow[] = "][|/=()!,";
 
 /* Doubly linked list of location steps. Besides the information from the
  * path expression, also contains information to iterate over a node set,
@@ -295,11 +295,11 @@ static void func_regexp_flag(struct state *state, int nargs);
 static void func_glob(struct state *state, int nargs);
 static void func_int(struct state *state, int nargs);
 
-static const enum type const arg_types_nodeset[] = { T_NODESET };
-static const enum type const arg_types_string[] = { T_STRING };
-static const enum type const arg_types_bool[] = { T_BOOLEAN };
-static const enum type const arg_types_string_string[] = { T_STRING, T_STRING };
-static const enum type const arg_types_nodeset_string[] = { T_NODESET, T_STRING };
+static const enum type arg_types_nodeset[] = { T_NODESET };
+static const enum type arg_types_string[] = { T_STRING };
+static const enum type arg_types_bool[] = { T_BOOLEAN };
+static const enum type arg_types_string_string[] = { T_STRING, T_STRING };
+static const enum type arg_types_nodeset_string[] = { T_NODESET, T_STRING };
 
 static const struct func builtin_funcs[] = {
     { .name = "last", .arity = 0, .type = T_NUMBER, .arg_types = NULL,

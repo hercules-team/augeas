@@ -80,7 +80,7 @@ struct command_opt {
 
 struct command_grp_def {
     const char                     *name;
-    const struct command_def const *commands[];
+    const struct command_def       *commands[];
 };
 
 static const struct command_grp_def cmd_grp_def_last =
@@ -517,7 +517,7 @@ static const struct command_opt_def cmd_mv_opts[] = {
     CMD_OPT_DEF_LAST
 };
 
-static const char const cmd_mv_help[] =
+static const char cmd_mv_help[] =
     "Move node  SRC to DST.  SRC must match  exactly one node in  "
     "the tree.\n DST  must either  match  exactly one  node  in the  tree,  "
     "or may  not\n exist  yet. If  DST exists  already, it  and all  its  "
@@ -559,7 +559,7 @@ static const struct command_opt_def cmd_cp_opts[] = {
     CMD_OPT_DEF_LAST
 };
 
-static const char const cmd_cp_help[] =
+static const char cmd_cp_help[] =
     "Copy node  SRC to DST.  SRC must match  exactly one node in  "
     "the tree.\n DST  must either  match  exactly one  node  in the  tree,  "
     "or may  not\n exist  yet. If  DST exists  already, it  and all  its  "
@@ -603,7 +603,7 @@ static const struct command_opt_def cmd_rename_opts[] = {
     CMD_OPT_DEF_LAST
 };
 
-static const char const cmd_rename_help[] =
+static const char cmd_rename_help[] =
     "Rename the label of all nodes matching SRC to LBL.";
 
 static const struct command_def cmd_rename_def = {
@@ -1055,7 +1055,7 @@ static const struct command_opt_def cmd_transform_opts[] = {
     CMD_OPT_DEF_LAST
 };
 
-static const char const cmd_transform_help[] =
+static const char cmd_transform_help[] =
     "Add a transform for FILE using LENS. The LENS may be a module name or a\n"
     " full lens name.  If a module name is given, then \"lns\" will be the lens\n"
     " assumed.  The FILTER must be either \"incl\" or \"excl\".  If the filter is\n"
@@ -1086,7 +1086,7 @@ static const struct command_opt_def cmd_load_file_opts[] = {
     CMD_OPT_DEF_LAST
 };
 
-static const char const cmd_load_file_help[] =
+static const char cmd_load_file_help[] =
     "Load a specific FILE, using autoload statements.\n";
 
 static const struct command_def cmd_load_file_def = {
@@ -1236,7 +1236,7 @@ static const struct command_opt_def cmd_ins_opts[] = {
     CMD_OPT_DEF_LAST
 };
 
-static const char const cmd_ins_help[] =
+static const char cmd_ins_help[] =
     "Insert a new node with label LABEL right before or after "
     "PATH into the\n tree. WHERE must be either 'before' or 'after'.";
 
@@ -1274,7 +1274,7 @@ static const struct command_opt_def cmd_store_opts[] = {
     CMD_OPT_DEF_LAST
 };
 
-static const char const cmd_store_help[] =
+static const char cmd_store_help[] =
     "Parse NODE using LENS and store the resulting tree at PATH.";
 
 static const struct command_def cmd_store_def = {
@@ -1306,7 +1306,7 @@ static const struct command_opt_def cmd_retrieve_opts[] = {
     CMD_OPT_DEF_LAST
 };
 
-static const char const cmd_retrieve_help[] =
+static const char cmd_retrieve_help[] =
     "Transform tree at PATH back into text using lens LENS and store the\n"
     " resulting string at NODE_OUT. Assume that the tree was initially read in\n"
     " with the same lens and the string stored at NODE_IN as input.";
@@ -1411,7 +1411,7 @@ static const struct command_opt_def cmd_errors_opts[] = {
     CMD_OPT_DEF_LAST
 };
 
-static const char const cmd_errors_help[] =
+static const char cmd_errors_help[] =
     "Show all the errors encountered in processing files. For each error,\n"
     " print detailed information about where it happened and how. The same\n"
     " information can be retrieved by running 'print /augeas//error'\n\n"
@@ -1499,7 +1499,7 @@ static const struct command_grp_def cmd_grp_pathx_def = {
     }
 };
 
-static const struct command_grp_def const *cmd_groups[] = {
+static const struct command_grp_def *const cmd_groups[] = {
     &cmd_grp_admin_def,
     &cmd_grp_info_def,
     &cmd_grp_read_def,
