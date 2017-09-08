@@ -667,6 +667,7 @@ int text_store(struct augeas *aug, const char *lens_path,
     info->last_line = 1;
     info->first_column = 1;
     info->last_column = strlen(text);
+    info->flags = aug->flags;
 
     tree = lns_get(info, lens, text, &err);
     if (err != NULL) {
