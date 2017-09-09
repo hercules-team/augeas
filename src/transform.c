@@ -578,16 +578,62 @@ make_lns_info(struct augeas *aug, const char *filename,
     return NULL;
 }
 
+/*
+ * Do the bookkeeping around calling lns_get that is common to load_file
+ * and text_store, in particular, make sure the tree we read gets put into
+ * the right place in AUG and that the span for that tree gets set.
+ *
+ * Transform TEXT using LENS and put the resulting tree at PATH. Use
+ * FILENAME in error messages to indicate where the TEXT came from.
+ */
+static void lens_get(struct augeas *aug,
+                     struct lens *lens,
+                     const char *filename,
+                     const char *text, int text_len,
+                     const char *path,
+                     struct lns_error **err) {
+    struct info *info = NULL;
+    struct span *span = NULL;
+    struct tree *tree = NULL;
+
+    info = make_lns_info(aug, filename, text, text_len);
+    ERR_BAIL(aug);
+
+    if (aug->flags & AUG_ENABLE_SPAN) {
+        /* Allocate the span already to capture a reference to
+           info->filename */
+        span = make_span(info);
+        ERR_NOMEM(span == NULL, info);
+    }
+
+    tree = lns_get(info, lens, text, err);
+
+    if (*err == NULL) {
+        // Successful get
+        tree_freplace(aug, path, tree);
+        ERR_BAIL(aug);
+
+        /* top level node span entire file length */
+        if (span != NULL && tree != NULL) {
+            tree->parent->span = move(span);
+            tree->parent->span->span_start = 0;
+            tree->parent->span->span_end = text_len;
+        }
+        tree = NULL;
+    }
+ error:
+    free_span(span);
+    unref(info, info);
+    free_tree(tree);
+}
+
 static int load_file(struct augeas *aug, struct lens *lens,
                      const char *lens_name, char *filename) {
     char *text = NULL;
     const char *err_status = NULL;
-    struct tree *tree = NULL;
     char *path = NULL;
     struct lns_error *err = NULL;
-    struct span *span = NULL;
     int result = -1, r, text_len = 0;
-    struct info *info = NULL;
 
     path = file_name_path(aug, filename);
     ERR_NOMEM(path == NULL, aug);
@@ -604,46 +650,20 @@ static int load_file(struct augeas *aug, struct lens *lens,
     text_len = strlen(text);
     text = append_newline(text, text_len);
 
-    info = make_lns_info(aug, filename, text, text_len);
-    ERR_BAIL(aug);
-
-    if (aug->flags & AUG_ENABLE_SPAN) {
-        /* Allocate the span already to capture a reference to
-           info->filename */
-        span = make_span(info);
-        ERR_NOMEM(span == NULL, info);
-    }
-
-    tree = lns_get(info, lens, text, &err);
-
+    lens_get(aug, lens, filename, text, text_len, path, &err);
     if (err != NULL) {
         err_status = "parse_failed";
         goto done;
     }
-
-    tree_freplace(aug, path, tree);
     ERR_BAIL(aug);
-
-    /* top level node span entire file length */
-    if (span != NULL && tree != NULL) {
-        tree->parent->span = span;
-        span = NULL;
-        tree->parent->span->span_start = 0;
-        tree->parent->span->span_end = text_len;
-    }
-
-    tree = NULL;
 
     result = 0;
  done:
     store_error(aug, filename + strlen(aug->root) - 1, path, err_status,
                 errno, err, text);
  error:
-    unref(info, info);
     free_lns_error(err);
     free(path);
-    free_span(span);
-    free_tree(tree);
     free(text);
     return result;
 }
@@ -678,9 +698,7 @@ static struct lens *lens_from_name(struct augeas *aug, const char *name) {
 
 int text_store(struct augeas *aug, const char *lens_path,
                const char *path, const char *text) {
-    struct info *info = NULL;
     struct lns_error *err = NULL;
-    struct tree *tree = NULL;
     int result = -1;
     const char *err_status = NULL;
     struct lens *lens = NULL;
@@ -688,25 +706,16 @@ int text_store(struct augeas *aug, const char *lens_path,
     lens = lens_from_name(aug, lens_path);
     ERR_BAIL(aug);
 
-    info = make_lns_info(aug, path, text, strlen(text));
-    ERR_BAIL(aug);
-
-    tree = lns_get(info, lens, text, &err);
+    lens_get(aug, lens, path, text, strlen(text), path, &err);
     if (err != NULL) {
         err_status = "parse_failed";
         goto error;
     }
-
-    tree_freplace(aug, path, tree);
     ERR_BAIL(aug);
-
-    tree = NULL;
 
     result = 0;
  error:
-    unref(info, info);
     store_error(aug, NULL, path, err_status, errno, err, text);
-    free_tree(tree);
     free_lns_error(err);
     return result;
 }
