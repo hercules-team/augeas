@@ -64,6 +64,7 @@ struct state {
     struct skel      *skel;
     char             *path;   /* Position in the tree, for errors */
     size_t            pos;
+    bool              with_span;
     struct lns_error *error;
 };
 
@@ -847,7 +848,7 @@ static void create_lens(struct lens *lens, struct state *state) {
     }
 }
 
-void lns_put(FILE *out, struct lens *lens, struct tree *tree,
+void lns_put(struct info *info, FILE *out, struct lens *lens, struct tree *tree,
              const char *text, struct lns_error **err) {
     struct state state;
     struct lns_error *err1;
@@ -859,6 +860,7 @@ void lns_put(FILE *out, struct lens *lens, struct tree *tree,
 
     MEMZERO(&state, 1);
     state.path = strdup("/");
+    state.with_span = info->flags & AUG_ENABLE_SPAN;
     state.skel = lns_parse(lens, text, &state.dict, &err1);
 
     if (err1 != NULL) {

@@ -185,7 +185,7 @@ void free_skel(struct skel *skel);
 void free_dict(struct dict *dict);
 void free_lns_error(struct lns_error *err);
 
-/* Parse text TEXT with LENS. INFO indicats where TEXT was read from.
+/* Parse text TEXT with LENS. INFO indicates where TEXT was read from.
  *
  * If ERR is non-NULL, *ERR is set to NULL on success, and to an error
  * message on failure; the constructed tree is always returned. If ERR is
@@ -198,7 +198,17 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
                      struct lns_error **err);
 struct skel *lns_parse(struct lens *lens, const char *text,
                        struct dict **dict, struct lns_error **err);
-void lns_put(FILE *out, struct lens *lens, struct tree *tree,
+
+/* Write tree TREE that was initially read from TEXT (but might have been
+ * modified) into file OUT using LENS.
+ *
+ * If ERR is non-NULL, *ERR is set to NULL on success, and to an error
+ * message on failure.
+ *
+ * INFO indicates where we are writing to, and its flags indicate whether
+ * to update spans or not.
+ */
+void lns_put(struct info *info, FILE *out, struct lens *lens, struct tree *tree,
              const char *text, struct lns_error **err);
 
 /* Free up temporary data structures, most importantly compiled

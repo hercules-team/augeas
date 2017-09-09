@@ -1126,6 +1126,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
     struct lens *lens = xfm_lens(aug, xfm, &lens_name);
     int result = -1, r;
     bool force_reload;
+    struct info *info = NULL;
 
     errno = 0;
 
@@ -1215,8 +1216,12 @@ int transform_save(struct augeas *aug, struct tree *xfm,
         }
     }
 
-    if (tree != NULL)
-        lns_put(fp, lens, tree->children, text, &err);
+    if (tree != NULL) {
+        info = make_lns_info(aug, augorig_canon, text, strlen(text));
+        ERR_BAIL(aug);
+
+        lns_put(info, fp, lens, tree->children, text, &err);
+    }
 
     if (ferror(fp)) {
         err_status = "error_augtemp";
@@ -1310,6 +1315,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
             dyn_err_status == NULL ? err_status : dyn_err_status;
         store_error(aug, filename, path, emsg, errno, err, text);
     }
+ error:
     free(dyn_err_status);
     lens_release(lens);
     free(text);
@@ -1320,6 +1326,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
     free(augorig);
     free(augsave);
     free_lns_error(err);
+    unref(info, info);
 
     if (fp != NULL)
         fclose(fp);
@@ -1337,6 +1344,7 @@ int text_retrieve(struct augeas *aug, const char *lens_name,
     struct lns_error *err = NULL;
     struct lens *lens = NULL;
     int result = -1, r;
+    struct info *info = NULL;
 
     MEMZERO(&ms, 1);
     errno = 0;
@@ -1354,8 +1362,12 @@ int text_retrieve(struct augeas *aug, const char *lens_name,
     }
     ms_open = true;
 
-    if (tree != NULL)
-        lns_put(ms.stream, lens, tree->children, text_in, &err);
+    if (tree != NULL) {
+        info = make_lns_info(aug, path, text_in, strlen(text_in));
+        ERR_BAIL(aug);
+
+        lns_put(info, ms.stream, lens, tree->children, text_in, &err);
+    }
 
     r = close_memstream(&ms);
     ms_open = false;
@@ -1376,12 +1388,14 @@ int text_retrieve(struct augeas *aug, const char *lens_name,
 
  done:
     store_error(aug, NULL, path, err_status, errno, err, text_in);
+ error:
     lens_release(lens);
     if (result < 0) {
         free(*text_out);
         *text_out = NULL;
     }
     free_lns_error(err);
+    unref(info, info);
 
     if (ms_open)
         close_memstream(&ms);
