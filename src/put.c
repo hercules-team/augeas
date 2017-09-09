@@ -57,14 +57,14 @@ struct split {
 struct state {
     FILE             *out;
     struct split     *split;
-    const char       *key;
-    const char       *value;
+    const struct tree *tree;
     const char       *override;
     struct dict      *dict;
     struct skel      *skel;
     char             *path;   /* Position in the tree, for errors */
     size_t            pos;
     bool              with_span;
+    struct info      *info;
     struct lns_error *error;
 };
 
@@ -308,7 +308,7 @@ static int applies(struct lens *lens, struct state *state) {
     if (count != split->end - split->start)
         return 0;
     if (count == 0 && lens->value)
-        return state->value != NULL;
+        return state->tree->value != NULL;
     return 1;
 }
 
@@ -431,6 +431,30 @@ static int skel_instance_of(struct lens *lens, struct skel *skel) {
     return 0;
 }
 
+enum span_kind { S_NONE, S_LABEL, S_VALUE };
+
+static void emit(struct state *state, const char *text, enum span_kind kind) {
+    struct span* span = state->tree->span;
+
+    if (span != NULL) {
+        long start = ftell(state->out);
+        if (kind == S_LABEL) {
+            span->label_start = start;
+        } else if (kind == S_VALUE) {
+            span->value_start = start;
+        }
+    }
+    fprintf(state->out, "%s", text);
+    if (span != NULL) {
+        long end = ftell(state->out);
+        if (kind == S_LABEL) {
+            span->label_end = end;
+        } else if (kind == S_VALUE) {
+            span->value_end = end;
+        }
+    }
+}
+
 /*
  * put
  */
@@ -443,20 +467,28 @@ static void put_subtree(struct lens *lens, struct state *state) {
     struct tree *tree = state->split->tree;
     struct split *split = NULL;
 
-    state->key = tree->label;
-    state->value = tree->value;
+    state->tree = tree;
     state->path = path_of_tree(tree);
 
     split = make_split(tree->children);
     set_split(state, split);
 
     dict_lookup(tree->label, state->dict, &state->skel, &state->dict);
+    if (state->with_span) {
+        if (tree->span == NULL) {
+            tree->span = make_span(state->info);
+        }
+        tree->span->span_start = ftell(state->out);
+    }
     if (state->skel == NULL || ! skel_instance_of(lens->child, state->skel)) {
         create_lens(lens->child, state);
     } else {
         put_lens(lens->child, state);
     }
     assert(state->error != NULL || state->split->next == NULL);
+    if (tree->span != NULL) {
+        tree->span->span_end = ftell(state->out);
+    }
 
     oldstate.error = state->error;
     oldstate.path = state->path;
@@ -472,9 +504,9 @@ static void put_del(ATTRIBUTE_UNUSED struct lens *lens, struct state *state) {
     assert(state->skel != NULL);
     assert(state->skel->tag == L_DEL);
     if (state->override != NULL) {
-        fprintf(state->out, "%s", state->override);
+        emit(state, state->override, S_NONE);
     } else {
-        fprintf(state->out, "%s", state->skel->text);
+        emit(state, state->skel->text, S_NONE);
     }
 }
 
@@ -594,18 +626,20 @@ static void put_quant_maybe(struct lens *lens, struct state *state) {
 }
 
 static void put_store(struct lens *lens, struct state *state) {
-    if (state->value == NULL) {
+    const char *value = state->tree->value;
+
+    if (value == NULL) {
         put_error(state, lens,
                   "Can not store a nonexistent (NULL) value");
-    } else if (regexp_match(lens->regexp, state->value, strlen(state->value),
-                            0, NULL) != strlen(state->value)) {
+    } else if (regexp_match(lens->regexp, value, strlen(value),
+                            0, NULL) != strlen(value)) {
         char *pat = regexp_escape(lens->regexp);
         put_error(state, lens,
                   "Value '%s' does not match regexp /%s/ in store lens",
-                  state->value, pat);
+                  value, pat);
         free(pat);
     } else {
-        fprintf(state->out, "%s", state->value);
+        emit(state, value, S_VALUE);
     }
 }
 
@@ -632,7 +666,7 @@ static void put_square(struct lens *lens, struct state *state) {
         }
         struct lens *curr = concat->children[i];
         if (i == (concat->nchildren - 1) && left->tag == L_KEY)
-            state->override = state->key;
+            state->override = state->tree->label;
         put_lens(curr, state);
         state->override = NULL;
         state->skel = state->skel->next;
@@ -655,7 +689,7 @@ static void put_lens(struct lens *lens, struct state *state) {
         put_store(lens, state);
         break;
     case L_KEY:
-        fprintf(state->out, "%s", state->key);
+        emit(state, state->tree->label, S_LABEL);
         break;
     case L_LABEL:
     case L_VALUE:
@@ -757,7 +791,7 @@ static void create_square(struct lens *lens, struct state *state) {
         }
         struct lens *curr = concat->children[i];
         if (i == (concat->nchildren - 1) && left->tag == L_KEY)
-            state->override = state->key;
+            state->override = state->tree->label;
         create_lens(curr, state);
         state->override = NULL;
         next_split(state);
@@ -809,7 +843,7 @@ static void create_lens(struct lens *lens, struct state *state) {
         put_store(lens, state);
         break;
     case L_KEY:
-        fprintf(state->out, "%s", state->key);
+        emit(state, state->tree->label, S_LABEL);
         break;
     case L_LABEL:
     case L_VALUE:
@@ -860,7 +894,6 @@ void lns_put(struct info *info, FILE *out, struct lens *lens, struct tree *tree,
 
     MEMZERO(&state, 1);
     state.path = strdup("/");
-    state.with_span = info->flags & AUG_ENABLE_SPAN;
     state.skel = lns_parse(lens, text, &state.dict, &err1);
 
     if (err1 != NULL) {
@@ -872,8 +905,19 @@ void lns_put(struct info *info, FILE *out, struct lens *lens, struct tree *tree,
     }
     state.out = out;
     state.split = make_split(tree);
-    state.key = tree->label;
+    state.with_span = info->flags & AUG_ENABLE_SPAN;
+    state.tree = tree;
+    state.info = info;
+    if (state.with_span) {
+        if (tree->span == NULL) {
+            tree->span = make_span(info);
+        }
+        tree->span->span_start = ftell(out);
+    }
     put_lens(lens, &state);
+    if (state.with_span) {
+        tree->span->span_end = ftell(out);
+    }
     if (err != NULL) {
         *err = state.error;
     } else {
