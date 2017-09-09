@@ -548,6 +548,36 @@ static void tree_freplace(struct augeas *aug, const char *fpath,
     }
 }
 
+static struct info*
+make_lns_info(struct augeas *aug, const char *filename,
+              const char *text, int text_len) {
+    struct info *info = NULL;
+
+    make_ref(info);
+    ERR_NOMEM(info == NULL, aug);
+
+    if (filename != NULL) {
+        make_ref(info->filename);
+        ERR_NOMEM(info->filename == NULL, aug);
+        info->filename->str = strdup(filename);
+    }
+
+    info->first_line = 1;
+    info->last_line = 1;
+    info->first_column = 1;
+    if (text != NULL) {
+        info->last_column = text_len;
+    }
+
+    info->flags = aug->flags;
+    info->error = aug->error;
+
+    return info;
+ error:
+    unref(info, info);
+    return NULL;
+}
+
 static int load_file(struct augeas *aug, struct lens *lens,
                      const char *lens_name, char *filename) {
     char *text = NULL;
@@ -574,12 +604,8 @@ static int load_file(struct augeas *aug, struct lens *lens,
     text_len = strlen(text);
     text = append_newline(text, text_len);
 
-    make_ref(info);
-    make_ref(info->filename);
-    info->filename->str = strdup(filename);
-    info->error = aug->error;
-    info->flags = aug->flags;
-    info->first_line = 1;
+    info = make_lns_info(aug, filename, text, text_len);
+    ERR_BAIL(aug);
 
     if (aug->flags & AUG_ENABLE_SPAN) {
         /* Allocate the span already to capture a reference to
@@ -662,12 +688,8 @@ int text_store(struct augeas *aug, const char *lens_path,
     lens = lens_from_name(aug, lens_path);
     ERR_BAIL(aug);
 
-    make_ref(info);
-    info->first_line = 1;
-    info->last_line = 1;
-    info->first_column = 1;
-    info->last_column = strlen(text);
-    info->flags = aug->flags;
+    info = make_lns_info(aug, path, text, strlen(text));
+    ERR_BAIL(aug);
 
     tree = lns_get(info, lens, text, &err);
     if (err != NULL) {
