@@ -227,7 +227,8 @@ static int run_one_test(struct test *test) {
 
     MEMZERO(&ms, 1);
 
-    aug = aug_init("/dev/null", lensdir, AUG_NO_STDINC|AUG_NO_MODL_AUTOLOAD);
+    aug = aug_init("/dev/null", lensdir,
+                   AUG_NO_STDINC|AUG_NO_MODL_AUTOLOAD|AUG_ENABLE_SPAN);
     fail(aug == NULL, "aug_init");
     fail(aug_error(aug) != AUG_NOERROR, "aug_init: errcode was %d",
          aug_error(aug));

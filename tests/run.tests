@@ -58,7 +58,7 @@ test two-commands 2
   get /augeas/span
 prints
   /augeas/root = /dev/null/
-  /augeas/span = disable
+  /augeas/span = enable
 
 test comment 1
   :# Get /augeas
@@ -802,3 +802,47 @@ test retrieve_null -1 ENOMATCH
  use Hosts
   set /text/1 "192.168.0.1 toto\n"
   retrieve Hosts.lns /text /hosts /out
+
+# Change 'var=val' to 'variable=value' and check that the span gets updated
+test span_updates_lv 9
+  set /in "var=val\n"
+  store Cron.lns /in /cron
+  span /cron/var
+  span /cron
+  mv /cron/var /cron/variable
+  set /cron/variable value
+  retrieve Cron.lns /in /cron /out
+  span /cron/variable
+  span /cron
+prints
+  /cron label=(0:3) value=(4:7) span=(0,8)
+  /cron label=(0:0) value=(0:0) span=(0,8)
+  /cron label=(0:8) value=(9:14) span=(0,15)
+  /cron label=(0:0) value=(0:0) span=(0,15)
+
+# Make a change and check that the parents' span gets updated
+test span_updates_parent 8
+  set /in "10.0.0.1 gw.example.com\n"
+  store Hosts.lns /in /host
+  span /host/1
+  span /host
+  set /host/1/canonical gateway.example.com
+  retrieve Hosts.lns /in /host /out
+  span /host/1
+  span /host
+prints
+  /host label=(0:0) value=(0:0) span=(0,24)
+  /host label=(0:0) value=(0:0) span=(0,24)
+  /host label=(0:0) value=(0:0) span=(0,29)
+  /host label=(0:0) value=(0:0) span=(0,29)
+
+# Check that creating nodes sets spans
+test span_updates_on_create 5
+  set /in ""
+  set /cron/var val
+  retrieve Cron.lns /in /cron /out
+  span /cron/var
+  span /cron
+prints
+  /cron label=(0:3) value=(4:7) span=(0,8)
+  /cron label=(0:0) value=(0:0) span=(0,8)
