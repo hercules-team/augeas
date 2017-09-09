@@ -1088,6 +1088,37 @@ static int file_saved_event(struct augeas *aug, const char *path) {
 }
 
 /*
+ * Do the bookkeeping around calling LNS_PUT that's needed to update the
+ * span after writing a tree to file
+ */
+static void lens_put(struct augeas *aug, const char *filename,
+                     struct lens *lens, const char *text, struct tree *tree,
+                     FILE *out, struct lns_error **err) {
+    struct info *info = NULL;
+    size_t text_len = strlen(text);
+    bool with_span = aug->flags & AUG_ENABLE_SPAN;
+
+    info = make_lns_info(aug, filename, text, text_len);
+    ERR_BAIL(aug);
+
+    if (with_span) {
+        if (tree->span == NULL) {
+            tree->span = make_span(info);
+            ERR_NOMEM(tree->span == NULL, aug);
+        }
+        tree->span->span_start = ftell(out);
+    }
+
+    lns_put(info, out, lens, tree->children, text, err);
+
+    if (with_span) {
+        tree->span->span_end = ftell(out);
+    }
+ error:
+    unref(info, info);
+}
+
+/*
  * Save TREE->CHILDREN into the file PATH using the lens from XFORM. Errors
  * are noted in the /augeas/files hierarchy in AUG->ORIGIN under
  * PATH/error.
@@ -1226,10 +1257,8 @@ int transform_save(struct augeas *aug, struct tree *xfm,
     }
 
     if (tree != NULL) {
-        info = make_lns_info(aug, augorig_canon, text, strlen(text));
+        lens_put(aug, augorig_canon, lens, text, tree, fp, &err);
         ERR_BAIL(aug);
-
-        lns_put(info, fp, lens, tree->children, text, &err);
     }
 
     if (ferror(fp)) {
@@ -1372,10 +1401,8 @@ int text_retrieve(struct augeas *aug, const char *lens_name,
     ms_open = true;
 
     if (tree != NULL) {
-        info = make_lns_info(aug, path, text_in, strlen(text_in));
+        lens_put(aug, path, lens, text_in, tree, ms.stream, &err);
         ERR_BAIL(aug);
-
-        lns_put(info, ms.stream, lens, tree->children, text_in, &err);
     }
 
     r = close_memstream(&ms);
