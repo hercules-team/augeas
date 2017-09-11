@@ -1328,6 +1328,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
 
     r = clone_file(augtemp, augdest, &err_status, copy_if_rename_fails, 0);
     if (r != 0) {
+        unlink(augtemp);
         dyn_err_status = strappend(err_status, "_augtemp");
         goto done;
     }
