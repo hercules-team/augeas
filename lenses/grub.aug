@@ -148,6 +148,7 @@ module Grub =
                      | kw_menu_arg "foreground"
                      | kw_menu_arg "background"
                      | kw_menu_arg "verbose"
+                     | kw_menu_arg "boot" (* only for CLI, ignored in conf *)
                      | serial
                      | terminal
                      | password_arg

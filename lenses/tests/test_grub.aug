@@ -8,7 +8,7 @@ module Test_grub =
 #          root (hd0,0)
 #          kernel /vmlinuz-version ro root=/dev/vg00/lv00
 #          initrd /initrd-version.img
-#boot=/dev/sda
+boot=/dev/sda
 device (hd0) HD(1,800,64000,9895c137-d4b2-4e3b-a93b-dc9ac4)
 password --md5 $1$M9NLj$p2gs87vwNv48BUu.wAfVw0
 default=0
@@ -53,7 +53,7 @@ title othermenu
     { "#comment" = "root (hd0,0)" }
     { "#comment" = "kernel /vmlinuz-version ro root=/dev/vg00/lv00" }
     { "#comment" = "initrd /initrd-version.img" }
-    { "#comment" = "boot=/dev/sda" }
+    { "boot" = "/dev/sda" }
     { "device"   = "(hd0)"
         { "file" = "HD(1,800,64000,9895c137-d4b2-4e3b-a93b-dc9ac4)" } }
     { "password" = "$1$M9NLj$p2gs87vwNv48BUu.wAfVw0"
