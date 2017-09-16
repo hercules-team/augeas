@@ -4,6 +4,9 @@
       back to text fails. They now make it clearer what part of the tree
       was problematic, and what the tree should have looked like.
     * Fixed the pkg-config file, which should now be usable
+    * Fix handling of backslash-escaping in strings and regular expressions
+      in the lens language. We used to handle constructs like "\\" and
+      /\\\\/ incorrectly. (Issue #495)
   - API changes
     * add function aug_ns_attr to allow iterating through a nodeset
       quickly. See examples/dump.c for an example of how to use them

@@ -156,10 +156,10 @@ test Httpd.lns get c5 =
     { "arg" = "agent" }
   }
 
-let c7 = "LogFormat \"%v:%p %h %l %u %t \\"%r\\" %>s %O \\"%{Referer}i\\" \\"%{User-Agent}i\\"\" vhost_combined\n"
+let c7 = "LogFormat \"%v:%p %h %l %u %t \\\"%r\\\" %>s %O \\\"%{Referer}i\\\" \\\"%{User-Agent}i\\\"\" vhost_combined\n"
 test Httpd.lns get c7 =
   { "directive" = "LogFormat"
-    { "arg" = "\"%v:%p %h %l %u %t \\"%r\\" %>s %O \\"%{Referer}i\\" \\"%{User-Agent}i\\"\"" }
+    { "arg" = "\"%v:%p %h %l %u %t \\\"%r\\\" %>s %O \\\"%{Referer}i\\\" \\\"%{User-Agent}i\\\"\"" }
     { "arg" = "vhost_combined" }
   }
 

@@ -489,8 +489,8 @@ test lns get s_commented =
 
 (* Test lns
      Allow escaped quotes, backslashes and tabs/newlines *)
-test lns get "{ \"filesystem\": \"ext3\\" \\\\ \t \r\n SEC_TYPE=\\"ext2\" }\n" =
+test lns get "{ \"filesystem\": \"ext3\\\" \\\\ \t \r\n SEC_TYPE=\\\"ext2\" }\n" =
   { "dict"
     { "entry" = "filesystem"
-      { "string" = "ext3\\" \\\\ \t \r\n SEC_TYPE=\\"ext2" } }
+      { "string" = "ext3\\\" \\\\ \t \r\n SEC_TYPE=\\\"ext2" } }
     {  } }

@@ -87,20 +87,20 @@ ARROW  ->
 
 <INITIAL>
 {
-  \"([^\"]|\\\")*\"   {
+  \"([^\\\"]|\\(.|\n))*\"   {
                loc_update(yylloc, yytext, yyleng);
                yylval->string = unescape(yytext+1, yyleng-2, STR_ESCAPES);
                return DQUOTED;
   }
 
-  \/([^/]|\\\/)*\/i {
+  \/([^\\\/]|\\(.|\n))*\/i {
                loc_update(yylloc, yytext, yyleng);
                yylval->regexp.nocase = 1;
                yylval->regexp.pattern = regexp_literal(yytext+1, yyleng-3);
                return REGEXP;
   }
 
-  \/([^/]|\\\/)*\/ {
+  \/([^\\\/]|\\(.|\n))*\/ {
                loc_update(yylloc, yytext, yyleng);
                yylval->regexp.nocase = 0;
                yylval->regexp.pattern = regexp_literal(yytext+1, yyleng-2);
