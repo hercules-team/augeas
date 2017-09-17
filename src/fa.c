@@ -1795,8 +1795,12 @@ static struct fa *fa_make_empty(void) {
         fa_free(fa);
         return NULL;
     }
-    fa->deterministic = 1;
-    fa->minimal = 1;
+    /* Even though, technically, this fa is both minimal and deterministic,
+     * this function is also used to allocate new fa's which are then modified
+     * further. Rather than risk erroneously marking such an fa as minimal
+     * and deterministic, we do not do that here and take the minor hit if
+     * that should ever need to be determined for an actual empty fa
+     */
     return fa;
 }
 
