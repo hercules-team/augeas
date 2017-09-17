@@ -98,4 +98,6 @@ $gnulib_tool                    \
   --aux-dir=build/ac-aux        \
   --libtool                     \
   --quiet                       \
+  --update                      \
+  --no-vc-files                 \
   --import $modules
