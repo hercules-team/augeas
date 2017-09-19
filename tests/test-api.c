@@ -768,12 +768,18 @@ static void testAugNs(CuTest *tc) {
     CuAssertIntEquals(tc, 1, r);
     CuAssertStrEquals(tc, "172.31.122.14", v);
     CuAssertStrEquals(tc, "/files/etc/hosts", s);
+    free(s);
+    s = NULL;
 
     r = aug_ns_attr(aug, "matches", 2, &v, &l, &s);
     CuAssertIntEquals(tc, -1, r);
     CuAssertPtrEquals(tc, NULL, v);
     CuAssertPtrEquals(tc, NULL, l);
     CuAssertPtrEquals(tc, NULL, s);
+    free(s);
+    s = NULL;
+
+    aug_close(aug);
 }
 
 int main(void) {
