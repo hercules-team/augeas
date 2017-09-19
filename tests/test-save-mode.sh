@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/sh
 
 # Test manipulating the save flags in /augeas/save
 

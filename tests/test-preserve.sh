@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/sh
 
 # Check that saving preserves mode and ownership; for this test to make
 # much sense (if any) the user running it should have at least one

@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/sh
 
 # Test that we report an error when writing to nonexistant dirs
 # but that we do create new files correctly

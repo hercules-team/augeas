@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/sh
 
 TOP_DIR=$(cd $(dirname $0)/.. && pwd)
 TOP_BUILDDIR="$abs_top_builddir"

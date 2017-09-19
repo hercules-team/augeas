@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/sh
 
 # Test that we don't follow .augnew symlinks (regression test)
 

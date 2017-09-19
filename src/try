@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/usr/bin/env bash
 
 topdir=$(cd $(dirname $0)/.. && pwd)
 export AUGEAS_LENS_LIB=${topdir}/lenses

@@ -1,10 +1,10 @@
-#! /bin/bash
+#!/bin/sh
 
 # Test that an attempt to save into a non-writable file does not leave a
 # temporary file behind.
 # See https://github.com/hercules-team/augeas/issues/479
 
-if [ $UID -ne 0 -o "$(uname -s)" != "Linux" ]; then
+if [ "$UID" != 0 -o "$(uname -s)" != "Linux" ]; then
     echo "Test can only be run as root on Linux as it uses chattr"
     exit 77
 fi

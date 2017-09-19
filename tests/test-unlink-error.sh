@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/sh
 
 # Make sure we don't delete files simply because there was an error reading
 # them in

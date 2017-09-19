@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/sh
 
 # Test for bug https://fedorahosted.org/augeas/ticket/1
 #
