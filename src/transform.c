@@ -734,6 +734,9 @@ struct lens *xfm_lens(struct augeas *aug,
                       struct tree *xfm, const char **lens_name) {
     struct tree *l = NULL;
 
+    if (lens_name != NULL)
+        *lens_name = NULL;
+
     for (l = xfm->children;
          l != NULL && !streqv("lens", l->label);
          l = l->next);
