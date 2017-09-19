@@ -130,6 +130,7 @@ int main(int argc, char **argv) {
 
     if (print_version) {
         print_version_info(aug);
+        aug_close(aug);
         return EXIT_SUCCESS;
     }
 
