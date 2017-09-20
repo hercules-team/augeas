@@ -53,5 +53,6 @@ tests/*.trs
 man/*.1
 doc/naturaldocs/output
 doc/naturaldocs/conf/*/Data/*.nd
+examples/dump
 examples/fadot
 .settings
