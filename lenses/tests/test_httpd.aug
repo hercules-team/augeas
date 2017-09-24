@@ -593,3 +593,37 @@ test Httpd.lns get "# \\\n\n" = { }
 test Httpd.comment get "# a\\\n\n" = { "#comment" = "a" }
 test Httpd.comment get "# \\\na\\\n\n" = { "#comment" = "a" }
 test Httpd.comment get "# \\\n\\\na \\\n\\\n\n" = { "#comment" = "a" }
+
+(* Comparison with empty string did not work. Issue #429 *)
+test Httpd.dir_args get ">\"a\"" = { "arg" = ">\"a\"" }
+test Httpd.dir_args get ">\"\"" = { "arg" = ">\"\"" }
+test Httpd.directive get "RewriteCond ${movedPageMap:$1}  >\"a\"\n" =
+  { "directive" = "RewriteCond"
+    { "arg" = "${movedPageMap:$1}" }
+    { "arg" = ">\"a\"" }}
+test Httpd.directive get "RewriteCond ${movedPageMap:$1}  >\"\"\n" =
+  { "directive" = "RewriteCond"
+    { "arg" = "${movedPageMap:$1}" }
+    { "arg" = ">\"\"" }}
+
+(* Quoted arguments may or may not have space spearating them. Issue #435 *)
+test Httpd.directive get
+    "ProxyPassReverse \"/js\" \"http://127.0.0.1:8123/js\"\n" =
+  { "directive" = "ProxyPassReverse"
+    { "arg" = "\"/js\"" }
+    { "arg" = "\"http://127.0.0.1:8123/js\"" } }
+
+test Httpd.directive get
+    "ProxyPassReverse \"/js\"\"http://127.0.0.1:8123/js\"\n" =
+  { "directive" = "ProxyPassReverse"
+    { "arg" = "\"/js\"" }
+    { "arg" = "\"http://127.0.0.1:8123/js\"" } }
+
+(* Don't get confused by quoted strings inside bare arguments. Issue #470 *)
+test Httpd.directive get
+    "RequestHeader set X-Forwarded-Proto https expr=(%{HTTP:CF-Visitor}='{\"scheme\":\"https\"}')\n" =
+  { "directive" = "RequestHeader"
+    { "arg" = "set" }
+    { "arg" = "X-Forwarded-Proto" }
+    { "arg" = "https" }
+    { "arg" = "expr=(%{HTTP:CF-Visitor}='{\"scheme\":\"https\"}')" } }

@@ -103,7 +103,6 @@ let comment =
   [ label "#comment" . comment_start . store line . eol ]
 
 (* borrowed from shellvars.aug *)
-let char_arg_dir  = /([^\\ '"{\t\r\n]|[^ '"{\t\r\n]+[^\\ \t\r\n])|\\\\"|\\\\'|\\\\ /
 let char_arg_sec  = /([^\\ '"\t\r\n>]|[^ '"\t\r\n>]+[^\\ \t\r\n>])|\\\\"|\\\\'|\\\\ /
 let char_arg_wl   = /([^\\ '"},\t\r\n]|[^ '"},\t\r\n]+[^\\ '"},\t\r\n])/
 
@@ -123,25 +122,52 @@ let comp = /[<>=]?=/
  *                            Attributes
  *****************************************************************)
 
-let arg_dir = [ label "arg" . store (char_arg_dir+|dquot|squot) ]
+(* The arguments for a directive come in two flavors: quoted with single or
+ * double quotes, or bare. Bare arguments may not start with a single or
+ * double quote; since we also treat "word lists" special, i.e. lists
+ * enclosed in curly braces, bare arguments may not start with those,
+ * either.
+ *
+ * Bare arguments may not contain unescaped spaces, but we allow escaping
+ * with '\\'. Quoted arguments can contain anything, though the quote must
+ * be escaped with '\\'.
+ *)
+let bare = /([^{"' \t\n\r]|\\\\.)([^ \t\n\r]|\\\\.)*[^ \t\n\r\\]|[^{"' \t\n\r\\]/
+
+let arg_quoted = [ label "arg" . store (dquot|squot) ]
+let arg_bare = [ label "arg" . store bare ]
+
 (* message argument starts with " but ends at EOL *)
 let arg_dir_msg = [ label "arg" . store dquot_msg ]
-let arg_sec = [ label "arg" . store (char_arg_sec+|comp|dquot|squot) ]
 let arg_wl  = [ label "arg" . store (char_arg_wl+|dquot|squot) ]
 
 (* comma-separated wordlist as permitted in the SSLRequire directive *)
 let arg_wordlist =
-     let wl_start = Util.del_str "{" in
-     let wl_end   = Util.del_str "}" in
+     let wl_start = dels "{" in
+     let wl_end   = dels "}" in
      let wl_sep   = del /[ \t]*,[ \t]*/ ", "
   in [ label "wordlist" . wl_start . arg_wl . (wl_sep . arg_wl)* . wl_end ]
 
 let argv (l:lens) = l . (sep_spc . l)*
 
+(* the arguments of a directive. We use this once we have parsed the name
+ * of the directive, and the space right after it. When dir_args is used,
+ * we also know that we have at least one argument. We need to be careful
+ * with the spacing between arguments: quoted arguments and word lists do
+ * not need to have space between them, but bare arguments do.
+ *
+ * Apache apparently is also happy if the last argument starts with a double
+ * quote, but has no corresponding closing duoble quote, which is what
+ * arg_dir_msg handles
+ *)
+let dir_args =
+  let arg_nospc = arg_quoted|arg_wordlist in
+  (arg_bare . sep_spc | arg_nospc . sep_osp)* . (arg_bare|arg_nospc|arg_dir_msg)
+
 let directive =
-    (* arg_dir_msg may be the last or only argument *)
-     let dir_args = (argv (arg_dir|arg_wordlist) . (sep_spc . arg_dir_msg)?) | arg_dir_msg
-  in [ indent . label "directive" . store word .  (sep_spc . dir_args)? . eol ]
+  [ indent . label "directive" . store word .  (sep_spc . dir_args)? . eol ]
+
+let arg_sec = [ label "arg" . store (char_arg_sec+|comp|dquot|squot) ]
 
 let section (body:lens) =
     (* opt_eol includes empty lines *)

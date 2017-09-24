@@ -15,7 +15,10 @@
   - Lens changes/additions
     * Exports: relax the rules for the path at the beginning of a line so
       that double-quoted paths are legal, too
-    * Httpd: handle empty comments with a continuation line (Issue #423)
+    * Httpd: handle empty comments with a continuation line (Issue #423);
+      handle '>""' in a directive properly (Issue #429); make space between
+      quoted arguments optional (Issue #435); accept quoted strings as part
+      of bare arguments (Issue #470)
     * Oz: New lense for /etc/oz/oz.cnf
     * Rsyslog: allow spaces before the # starting a comment; allow comments
       inside config statements like 'module'
