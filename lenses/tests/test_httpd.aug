@@ -587,3 +587,9 @@ test Httpd.lns get "<FilesMatch \ test\.php$></FilesMatch>\n" =
 (* Continuations in comments cause the comment to be continued without a new comment character *)
 test Httpd.lns get "#ServerRoot \\\n  /var/www\n" =
   { "#comment" = "ServerRoot \\\n  /var/www" }
+
+(* Empty comments can contain continuations, too. Issue #423 *)
+test Httpd.lns get "# \\\n\n" = { }
+test Httpd.comment get "# a\\\n\n" = { "#comment" = "a" }
+test Httpd.comment get "# \\\na\\\n\n" = { "#comment" = "a" }
+test Httpd.comment get "# \\\n\\\na \\\n\\\n\n" = { "#comment" = "a" }

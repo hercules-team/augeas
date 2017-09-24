@@ -44,38 +44,79 @@ autoload xfm
  *****************************************************************)
 let dels (s:string)     = del s s
 
+(* The continuation sequence that indicates that we should consider the
+ * next line part of the current line *)
+let cont = /\\\\\r?\n/
+
+(* Whitespace within a line: space, tab, and the continuation sequence *)
+let ws = /[ \t]/ | cont
+
+(* Any possible character - '.' does not match \n *)
+let any = /(.|\n)/
+
+(* Any character preceded by a backslash *)
+let esc_any = /\\\\(.|\n)/
+
+(* Newline sequence - both for Unix and DOS newlines *)
+let nl = /\r?\n/
+
+(* Whitespace at the end of a line *)
+let eol = del (ws* . nl) "\n"
+
 (* deal with continuation lines *)
-let sep_spc             = del /([ \t]+|[ \t]*\\\\\r?\n[ \t]*)+/ " "
-let sep_osp             = del /([ \t]*|[ \t]*\\\\\r?\n[ \t]*)*/ ""
-let sep_eq              = del /[ \t]*=[ \t]*/ "="
+let sep_spc             = del ws+ " "
+let sep_osp             = del ws* ""
+let sep_eq              = del (ws* . "=" . ws*) "="
 
 let nmtoken             = /[a-zA-Z:_][a-zA-Z0-9:_.-]*/
 let word                = /[a-z][a-z0-9._-]*/i
 
-let eol                 = Util.doseol
-let empty               = Util.empty_dos
+(* A complete line that is either just whitespace or a comment that only
+ * contains whitespace *)
+let empty = [ del (ws* . /#?/ . ws* . nl) "\n" ]
+
 let indent              = Util.indent
 
-let comment_val_re      = /([^ \t\r\n](.|\\\\\r?\n)*[^ \\\t\r\n]|[^ \t\r\n])/
-let comment             = [ label "#comment" . del /[ \t]*#[ \t]*/ "# "
-                          . store comment_val_re . eol ]
+(* A comment that is not just whitespace. We define it in terms of the
+ * things that are not allowed as part of such a comment:
+ *   1) Starts with whitespace
+ *   2) Ends with whitespace, a backslash or \r
+ *   3) Unescaped newlines
+ *)
+let comment =
+  let comment_start = del (ws* . "#" . ws* ) "# " in
+  let unesc_eol = /[^\]?/ . nl in
+  let w = /[^\t\n\r \\]/ in
+  let r = /[\r\\]/ in
+  let s = /[\t\r ]/ in
+  (*
+   * we'd like to write
+   * let b = /\\\\/ in
+   * let t = /[\t\n\r ]/ in
+   * let x = b . (t? . (s|w)* ) in
+   * but the definition of b depends on commit 244c0edd in 1.9.0 and
+   * would make the lens unusable with versions before 1.9.0. So we write
+   * x out which works in older versions, too
+   *)
+  let x = /\\\\[\t\n\r ]?[^\n\\]*/ in
+  let line = ((r . s* . w|w|r) . (s|w)* . x*|(r.s* )?).w.(s*.w)* in
+  [ label "#comment" . comment_start . store line . eol ]
 
 (* borrowed from shellvars.aug *)
 let char_arg_dir  = /([^\\ '"{\t\r\n]|[^ '"{\t\r\n]+[^\\ \t\r\n])|\\\\"|\\\\'|\\\\ /
 let char_arg_sec  = /([^\\ '"\t\r\n>]|[^ '"\t\r\n>]+[^\\ \t\r\n>])|\\\\"|\\\\'|\\\\ /
 let char_arg_wl   = /([^\\ '"},\t\r\n]|[^ '"},\t\r\n]+[^\\ '"},\t\r\n])/
 
-let cdot = /\\\\./
-let cl = /\\\\\n/
 let dquot =
      let no_dquot = /[^"\\\r\n]/
-  in /"/ . (no_dquot|cdot|cl)* . /"/
+  in /"/ . (no_dquot|esc_any)* . /"/
 let dquot_msg =
      let no_dquot = /([^ \t"\\\r\n]|[^"\\\r\n]+[^ \t"\\\r\n])/
-  in /"/ . (no_dquot|cdot|cl)*
+  in /"/ . (no_dquot|esc_any)* . no_dquot
+
 let squot =
      let no_squot = /[^'\\\r\n]/
-  in /'/ . (no_squot|cdot|cl)* . /'/
+  in /'/ . (no_squot|esc_any)* . /'/
 let comp = /[<>=]?=/
 
 (******************************************************************
