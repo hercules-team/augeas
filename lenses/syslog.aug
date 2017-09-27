@@ -45,7 +45,8 @@ module Syslog =
      *)
 
 	let comment_gen (space:regexp) (sto:regexp) =
-          [ label "#comment" . del ("#" . space) "# " . store sto . eol ]
+      [ label "#comment" . del (Rx.opt_space . "#" . space) "# "
+        . store sto . eol ]
 
 	let comment =
 		let comment_withsign = comment_gen Rx.space /([!+-].*[^ \t\n]|[!+-])/
@@ -263,4 +264,3 @@ module Syslog =
         let filter = incl "/etc/syslog.conf"
 
         let xfm = transform lns filter
-

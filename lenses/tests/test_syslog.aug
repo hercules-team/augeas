@@ -1,7 +1,7 @@
 module Test_syslog =
 
 	let conf="# $FreeBSD: src/etc/syslog.conf,v 1.30.2.1 2009/08/03 08:13:06 kensmith Exp $
-# 
+#
 
 daemon.info                                     /var/log/cvsupd.log
 security.*					-/var/log/security
@@ -347,3 +347,7 @@ daemon.info                                     /var/log/cvsupd.log
     (* test for commented out statements *)
     test Syslog.lns put "" after
        set "#comment" "!pppd" = "# !pppd\n"
+
+    (* allow space before comments *)
+    test Syslog.lns get "  \t# space comment\n" =
+      { "#comment" = "space comment" }

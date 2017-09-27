@@ -13,8 +13,9 @@
       instead of aug_get, aug_label etc. and for a way to measure
       performance gains.
   - Lens changes/additions
-    * Sshd: split HostKeyAlgorithms into list of values
     * Oz: New lense for /etc/oz/oz.cnf
+    * Sshd: split HostKeyAlgorithms into list of values
+    * Syslog: allow spaces before the # starting a comment
 
 1.8.1 - 2017-08-17
   - General changes/addition
