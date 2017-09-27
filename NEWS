@@ -13,6 +13,8 @@
       instead of aug_get, aug_label etc. and for a way to measure
       performance gains.
   - Lens changes/additions
+    * Exports: relax the rules for the path at the beginning of a line so
+      that double-quoted paths are legal, too
     * Oz: New lense for /etc/oz/oz.cnf
     * Rsyslog: allow spaces before the # starting a comment; allow comments
       inside config statements like 'module'
