@@ -189,3 +189,13 @@ test Rsyslog.lns put "" after
   set "/module[1]/SysSock.RateLimit.Interval" "0" ;
   set "/module[1]/SysSock.RateLimit.Burst" "1"
   = "module(load=\"imuxsock\" SysSock.RateLimit.Interval=\"0\" SysSock.RateLimit.Burst=\"1\")\n"
+
+(* On Fedora 26, there are comments in module statements *)
+test Rsyslog.lns get "module(load=\"imuxsock\" 	  # provides support for local system logging (e.g. via logger command)
+       SysSock.Use=\"off\") # Turn off message reception via local log socket;
+			  # local messages are retrieved through imjournal now.\n" =
+  { "module"
+    { "load" = "imuxsock" }
+    { "SysSock.Use" = "off" }
+    { "#comment" = "Turn off message reception via local log socket;" } }
+  { "#comment" = "local messages are retrieved through imjournal now." }

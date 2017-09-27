@@ -27,9 +27,16 @@ let macro_rx = /[^,# \n\t][^#\n]*[^,# \n\t]|[^,# \n\t]/
 let macro = [ key /$[A-Za-z0-9]+/ . Sep.space . store macro_rx . Util.comment_or_eol ]
 
 let config_object_param = [ key /[A-Za-z.]+/ . Sep.equal . Quote.dquote
-                          . store /[^"]+/ . Quote.dquote ]
-let config_object = [ key /action|global|input|module|parser|timezone/ . Sep.lbracket
-                    . config_object_param . ( Sep.space . config_object_param )* . Sep.rbracket . Util.comment_or_eol ]
+                            . store /[^"]+/ . Quote.dquote ]
+(* Inside config objects, we allow embedded comments; we don't surface them
+ * in the tree though *)
+let config_sep = del /[ \t]+|[ \t]*#.*\n[ \t]*/ " "
+
+let config_object =
+  [ key /action|global|input|module|parser|timezone/ .
+    Sep.lbracket .
+    config_object_param . ( config_sep . config_object_param )* .
+    Sep.rbracket . Util.comment_or_eol ]
 
 (* View: users
    Map :omusrmsg: and a list of users, or a single *
@@ -72,4 +79,3 @@ let filter = incl "/etc/rsyslog.conf"
            . Util.stdexcl
 
 let xfm = transform lns filter
-

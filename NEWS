@@ -14,6 +14,8 @@
       performance gains.
   - Lens changes/additions
     * Oz: New lense for /etc/oz/oz.cnf
+    * Rsyslog: allow spaces before the # starting a comment; allow comments
+      inside config statements like 'module'
     * Sshd: split HostKeyAlgorithms into list of values
     * Syslog: allow spaces before the # starting a comment
 
