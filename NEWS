@@ -12,6 +12,8 @@
       quickly. See examples/dump.c for an example of how to use them
       instead of aug_get, aug_label etc. and for a way to measure
       performance gains.
+    * do not unescape the default value of a del on create; otherwise we are
+      double unescaping these strings (Issue #507)
   - Lens changes/additions
     * Exports: relax the rules for the path at the beginning of a line so
       that double-quoted paths are legal, too

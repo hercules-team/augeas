@@ -312,49 +312,6 @@ static int applies(struct lens *lens, struct state *state) {
     return 1;
 }
 
-/* Print TEXT to OUT, translating common escapes like \n */
-static void print_escaped_chars(FILE *out, const char *text) {
-    for (const char *c = text; *c != '\0'; c++) {
-        if (*c == '\\') {
-            char x;
-            c += 1;
-            if (*c == '\0') {
-                fputc(*c, out);
-                break;
-            }
-            switch(*c) {
-            case 'a':
-                x = '\a';
-                break;
-            case 'b':
-                x = '\b';
-                break;
-            case 'f':
-                x = '\f';
-                break;
-            case 'n':
-                x = '\n';
-                break;
-            case 'r':
-                x = '\r';
-                break;
-            case 't':
-                x = '\t';
-                break;
-            case 'v':
-                x = '\v';
-                break;
-            default:
-                x = *c;
-                break;
-            }
-            fputc(x, out);
-        } else {
-            fputc(*c, out);
-        }
-    }
-}
-
 /*
  * Check whether SKEL has the skeleton type required by LENS
  */
@@ -735,9 +692,9 @@ static void create_subtree(struct lens *lens, struct state *state) {
 static void create_del(struct lens *lens, struct state *state) {
     assert(lens->tag == L_DEL);
     if (state->override != NULL) {
-        print_escaped_chars(state->out, state->override);
+        emit(state, state->override, S_NONE);
     } else {
-        print_escaped_chars(state->out, lens->string->str);
+        emit(state, lens->string->str, S_NONE);
     }
 }
 
