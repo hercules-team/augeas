@@ -15,6 +15,7 @@
     * do not unescape the default value of a del on create; otherwise we are
       double unescaping these strings (Issue #507)
   - Lens changes/additions
+    * Ceph: new lens for /etc/ceph/ceph.conf
     * Exports: relax the rules for the path at the beginning of a line so
       that double-quoted paths are legal, too
     * Httpd: handle empty comments with a continuation line (Issue #423);
