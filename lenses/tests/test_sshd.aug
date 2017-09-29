@@ -134,9 +134,32 @@ maTcH User foo
 (* Test: Sshd.lns
      Allow AllowGroups in Match groups (GH issue #75) *)
 test Sshd.lns get "Match User foo
-AllowGroups users\n" =
+  AllowGroups users\n" =
   { "Match" { "Condition" { "User" = "foo" } }
     { "Settings" { "AllowGroups" { "1" = "users" } } } }
+
+(* Test: Sshd.lns
+     Recognize quoted group names with spaces in AllowGroups and similar
+     (Issue #477) *)
+test Sshd.lns get "Match User foo
+    AllowGroups math-domain-users \"access admins\"\n" =
+  { "Match" { "Condition" { "User" = "foo" } }
+    { "Settings"
+      { "AllowGroups"
+        { "1" = "math-domain-users" }
+        { "2" = "access admins" } } } }
+
+test Sshd.lns put "Match User foo\nAllowGroups users\n" after
+  set "/Match/Settings/AllowGroups/1" "all people" =
+    "Match User foo\nAllowGroups \"all people\"\n"
+
+test Sshd.lns put "Match User foo\nAllowGroups users\n" after
+  set "/Match/Settings/AllowGroups/01" "all people" =
+    "Match User foo\nAllowGroups users \"all people\"\n"
+
+test Sshd.lns put "Match User foo\nAllowGroups users\n" after
+  set "/Match/Settings/AllowGroups/01" "people" =
+    "Match User foo\nAllowGroups users people\n"
 
 (* Local Variables: *)
 (* mode: caml       *)

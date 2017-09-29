@@ -80,8 +80,11 @@ module Sshd =
    let empty = Util.empty
 
    let array_entry (kw:regexp) (sq:string) =
-     let value = store /[^ \t\n]+/ in
-     [ key kw . [ sep . seq sq . value]* . eol ]
+     let bare = Quote.do_quote_opt_nil (store /[^"' \t\n]+/) in
+     let quoted = Quote.do_quote (store /[^"'\n]*[ \t]+[^"'\n]*/) in
+     [ key kw
+       . ( [ sep . seq sq . bare ] | [ sep . seq sq . quoted ] )*
+       . eol ]
 
    let other_entry =
      let value = store /[^ \t\n]+([ \t]+[^ \t\n]+)*/ in
@@ -129,14 +132,14 @@ module Sshd =
      [ label "Condition" . condition_entry+ . eol ]
 
    let match_entry = indent . (entry | comment_noindent)
-                   | empty 
+                   | empty
 
    let match =
      [ key /Match/i . match_cond
         . [ label "Settings" .  match_entry+ ]
      ]
 
-  let lns = (entry | comment | empty)* . match* 
+  let lns = (entry | comment | empty)* . match*
 
   let xfm = transform lns (incl "/etc/ssh/sshd_config")
 
