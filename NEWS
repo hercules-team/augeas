@@ -22,6 +22,7 @@
       quoted arguments optional (Issue #435); accept quoted strings as part
       of bare arguments (Issue #470)
     * Oz: New lense for /etc/oz/oz.cnf
+    * Properties: accept DOS line endings (Issue #468)
     * Rsyslog: allow spaces before the # starting a comment; allow comments
       inside config statements like 'module'
     * Sshd: split HostKeyAlgorithms into list of values

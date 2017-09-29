@@ -160,3 +160,8 @@ bootstrap.jar,commons-daemon.jar,tomcat-juli.jar\n" =
     { "tomcat.util.scan.DefaultJarScanner.jarsToSkip" = " < multi > "
       { } { = "bootstrap.jar,commons-daemon.jar,tomcat-juli.jar" } }
 
+
+test lns get "# comment\r\na.b=val\r\nx=\r\n" =
+  { "#comment" = "comment" }
+  { "a.b" = "val" }
+  { "x" }

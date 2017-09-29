@@ -13,20 +13,20 @@
 module Properties =
   (* Define some basic primitives *)
   let empty            = Util.empty
-  let eol              = Util.eol
-  let hard_eol         = del "\n" "\n"
+  let eol              = Util.doseol
+  let hard_eol         = del /\r?\n/ "\n"
   let sepch            = del /([ \t]*(=|:)|[ \t])/ "="
   let sepspc           = del /[ \t]/ " "
   let sepch_ns         = del /[ \t]*(=|:)/ "="
   let sepch_opt        = del /[ \t]*(=|:)?[ \t]*/ "="
-  let value_to_eol_ws  = store /(:|=)[^\n]*[^ \t\n\\]/
+  let value_to_eol_ws  = store /(:|=)[^\r\n]*[^ \t\r\n\\]/
   let value_to_bs_ws   = store /(:|=)[^\n]*[^\\\n]/
-  let value_to_eol     = store /([^ \t\n:=][^\n]*[^ \t\n\\]|[^ \t\n\\:=])/
+  let value_to_eol     = store /([^ \t\n:=][^\n]*[^ \t\r\n\\]|[^ \t\r\n\\:=])/
   let value_to_bs      = store /([^ \t\n:=][^\n]*[^\\\n]|[^ \t\n\\:=])/
   let indent           = Util.indent
   let backslash        = del /[\\][ \t]*\n/ "\\\n"
   let opt_backslash    = del /([\\][ \t]*\n)?/ ""
-  let entry            = /([^ \t\n:=\/!#\\]|[\\]:|[\\]=|[\\][\t ]|[\\][^\/\n])+/
+  let entry            = /([^ \t\r\n:=\/!#\\]|[\\]:|[\\]=|[\\][\t ]|[\\][^\/\r\n])+/
 
   let multi_line_entry =
       [ indent . value_to_bs? . backslash ] .
@@ -39,7 +39,7 @@ module Properties =
       [ indent . value_to_eol . eol ] . value " < multi_ws > "
 
   (* define comments and properties*)
-  let bang_comment     = [ label "!comment" . del /[ \t]*![ \t]*/ "! " . store /([^ \t\n].*[^ \t\n]|[^ \t\n])/ . eol ]
+  let bang_comment     = [ label "!comment" . del /[ \t]*![ \t]*/ "! " . store /([^ \t\n].*[^ \t\r\n]|[^ \t\r\n])/ . eol ]
   let comment          = ( Util.comment | bang_comment )
   let property         = [ indent . key entry . sepch . ( multi_line_entry | indent . value_to_eol . eol ) ]
   let property_ws         = [ indent . key entry . sepch_ns . ( multi_line_entry_ws | indent . value_to_eol_ws . eol ) ]
