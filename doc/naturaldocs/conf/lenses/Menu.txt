@@ -31,22 +31,22 @@ Don't Index: Properties
 
 
 # --------------------------------------------------------------------------
-#
+# 
 # Cut and paste the lines below to change the order in which your files
 # appear on the menu.  Don't worry about adding or removing files, Natural
 # Docs will take care of that.
-#
+# 
 # You can further organize the menu by grouping the entries.  Add a
 # "Group: [name] {" line to start a group, and add a "}" to end it.
-#
+# 
 # You can add text and web links to the menu by adding "Text: [text]" and
 # "Link: [name] ([URL])" lines, respectively.
-#
+# 
 # The formatting and comments are auto-generated, so don't worry about
 # neatness when editing the file.  Natural Docs will clean it up the next
 # time it is run.  When working with groups, just deal with the braces and
 # forget about the indentation and comments.
-#
+# 
 # --------------------------------------------------------------------------
 
 
@@ -203,6 +203,7 @@ Group: Specific Modules  {
    File: Xymon_Alerting  (xymon_alerting.aug)
    File: Yaml  (yaml.aug)
    File: Cron_User  (cron_user.aug)
+   File: Oz  (oz.aug)
    }  # Group: Specific Modules
 
 Group: Generic Modules  {
@@ -321,3 +322,4 @@ Group: Index  {
    File Index: Files
    Variable Index: Variables
    }  # Group: Index
+

@@ -1,5 +1,5 @@
 (*
-Module: nslcd
+Module: Nslcd
   Parses /etc/nslcd.conf
 
 Author: Jose Plana <jplana@gmail.com>
