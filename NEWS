@@ -26,6 +26,7 @@
     * Properties: accept DOS line endings (Issue #468)
     * Rsyslog: allow spaces before the # starting a comment; allow comments
       inside config statements like 'module'
+    * Ssh: accept '=' to separate keyword from arguments
     * Sshd: split HostKeyAlgorithms into list of values; recognize quoted
       group names with spaces in them (Issue #477)
     * Syslog: allow spaces before the # starting a comment

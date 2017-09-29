@@ -31,14 +31,14 @@ module Ssh =
 
     let eol = Util.doseol
     let spc = Util.del_ws_spc
-
+    let spc_eq = del /[ \t]+|[ \t]*=[ \t]*/ " "
     let comment = Util.comment
     let empty = Util.empty
     let comma = Util.del_str ","
     let indent = Util.indent
     let value_to_eol = store Rx.space_in
-    let value_to_spc = store Rx.no_spaces
-    let value_to_comma = store /[^, \t\r\n]+/
+    let value_to_spc = store /[^ \t\r\n=][^ \t\r\n]*/
+    let value_to_comma = store /[^, \t\r\n=][^, \t\r\n]*/
 
 
 (************************************************************************
@@ -51,16 +51,16 @@ module Ssh =
 
     let commas_entry (k:regexp) =
          let value = [ seq "commas_entry" . value_to_comma]
-      in [ indent . key k . counter "commas_entry" . spc .
+      in [ indent . key k . counter "commas_entry" . spc_eq .
            Build.opt_list value comma . eol ]
 
     let spaces_entry (k:regexp) =
          let value = [ seq "spaces_entry" . value_to_spc ]
-      in [ indent . key k . counter "spaces_entry" . spc .
+      in [ indent . key k . counter "spaces_entry" . spc_eq .
            Build.opt_list value spc . eol ]
 
-    let fw_entry (k:regexp) = [ indent . key k . spc .
-	    [ key /[^ \t\r\n\/]+/ . spc . value_to_eol . eol ]]
+    let fw_entry (k:regexp) = [ indent . key k . spc_eq .
+	    [ key /[^ \t\r\n\/=][^ \t\r\n\/]*/ . spc . value_to_eol . eol ]]
 
     let send_env = array_entry /SendEnv/i
 
@@ -91,7 +91,7 @@ module Ssh =
 
 
     let other_entry = [ indent . key key_re
-                    . spc . value_to_spc . eol ]
+                    . spc_eq . value_to_spc . eol ]
 
     let entry = comment | empty
               | special_entry

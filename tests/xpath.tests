@@ -106,6 +106,8 @@ test abbrev-descendants /files/etc/pam.d//1
 
 test descendant-or-self /files/descendant-or-self :: 4
      /files/etc/ssh/sshd_config/AcceptEnv[1]/4 = LC_TIME
+     /files/etc/ssh/ssh_config/Host/SendEnv[1]/4 = LC_TIME
+     /files/etc/ssh/ssh_config/Host/SendEnv[2]/4 = LC_TELEPHONE
      /files/etc/aliases/4
      /files/etc/fstab/4
      /files/etc/pam.d/login/4

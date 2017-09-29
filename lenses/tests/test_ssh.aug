@@ -96,3 +96,15 @@ test Ssh.lns get "GlobalKnownHostsFile /etc/ssh/ssh_known_hosts /etc/ssh/ssh_kno
     { "2" = "/etc/ssh/ssh_known_hosts2" }
   }
 
+(* Keywords can be separated from their arguments with '=', too *)
+test Ssh.lns get "Host mail.watzmann.net
+  LocalForward=11111 mail.watzmann.net:110\n" =
+  { "Host" = "mail.watzmann.net"
+    { "LocalForward"
+      { "11111" = "mail.watzmann.net:110" } } }
+
+test Ssh.lns get "ForwardAgent=yes\n" =
+ { "ForwardAgent" = "yes" }
+
+test Ssh.lns get "ForwardAgent =\tyes\n" =
+ { "ForwardAgent" = "yes" }
