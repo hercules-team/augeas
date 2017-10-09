@@ -4513,6 +4513,95 @@ void fa_dot(FILE *out, struct fa *fa) {
     fprintf(out, "}\n");
 }
 
+void fa_json(FILE *out, struct fa *fa) {
+    int *list_hashes = NULL;
+    int list_size = 100;
+    int num_states = 0;
+    int it;
+    char first = true;
+
+    fprintf(out,"{\n\t\"final\": [");
+
+    F(ALLOC_N(list_hashes, list_size));
+    // list_hashes = (int *)malloc(sizeof(int) * list_size);
+
+    list_for_each(s, fa->initial) {
+        if (num_states == list_size - 1){
+            list_size += list_size;
+            F(REALLOC_N(list_hashes, list_size));
+            // list_hashes = realloc(list_hashes, list_size);
+        }
+        // Store hash value
+        list_hashes[num_states] = s->hash;
+        // We use the hashes to map states to Z_{num_states}
+        s->hash = num_states++;
+        if (s->accept) {
+            if (!first) fprintf(out, ", %ld", s->hash);
+            else fprintf(out,"%ld", s->hash);
+            first = false;
+        }
+    }
+
+    fprintf(out, "],\n\t\"deterministic\": %d,\n\t\"transitions\": [\n", fa->deterministic ? 1 : 0);
+
+    first = true;
+    list_for_each(s, fa->initial) {
+        for_each_trans(t, s) {
+            if (!first) fprintf(out, ",\n");
+            first = false;
+            fprintf(out, "\t\t{ \"from\": %ld, \"to\": %ld, \"on\": \"",s->hash, t->to->hash);
+            print_char(out, t->min);
+            if (t->min != t->max) {
+                fputc('-', out);
+                print_char(out, t->max);
+            }
+            fprintf(out, "\" }");
+        }
+    }
+
+    fprintf(out,"\n\t]\n}");
+
+error:
+    // Restoring hash values to leave the FA structure untouched
+    it = 0;
+    list_for_each(s, fa->initial) {
+        if (it == num_states) break;
+        s->hash = list_hashes[it++];
+    }
+    free(list_hashes);
+}
+
+int fa_is_deterministic(struct fa *fa) {
+    return fa->deterministic;
+}
+
+struct state *fa_state_initial(struct fa *fa) {
+    return fa->initial;
+}
+
+bool fa_state_is_accepting(struct state *st) {
+    return st->accept;
+}
+
+struct state* fa_state_next(struct state *st) {
+    return st->next;
+}
+
+size_t fa_state_num_trans(struct state *st) {
+    return st->tused;
+}
+
+int fa_state_trans(struct state *st, size_t i,
+                   struct state **to, unsigned char *min, unsigned char *max) {
+    if (st->tused <= i)
+        return -1;
+
+    (*to) = st->trans[i].to;
+    (*min) = st->trans[i].min;
+    (*max) = st->trans[i].max;
+    return 0;
+}
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil
