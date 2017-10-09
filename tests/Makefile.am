@@ -257,6 +257,7 @@ check-lens-tests:
 
 DISTCLEANFILES = $(lens_tests)
 $(lens_tests): lens-test-1
+	rm -f $@
 	$(LN_S) $< $@
 
 check_SCRIPTS = \
