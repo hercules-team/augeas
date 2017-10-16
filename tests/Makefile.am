@@ -173,6 +173,7 @@ lens_tests =			\
   lens-quote.sh		\
   lens-rabbitmq.sh		\
   lens-radicale.sh		\
+  lens-rancid.sh		\
   lens-redis.sh		\
   lens-reprepro_uploaders.sh		\
   lens-resolv.sh		\
