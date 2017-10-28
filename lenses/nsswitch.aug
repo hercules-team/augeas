@@ -69,7 +69,7 @@ let database =
        . (Build.opt_list
             (service|reaction)
             Sep.space)
-       . Util.eol ]
+       . Util.comment_or_eol ]
 
 (* View: lns *)
 let lns = ( empty | comment | database )*

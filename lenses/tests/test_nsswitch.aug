@@ -8,6 +8,7 @@ networks:       nis [!UNAVAIL=return success=continue] files
 protocols:      db files
 netgroup:       nis
 bootparams: nisplus [NOTFOUND=return] files
+aliases:        files # uses by mail
 sudoers:        files ldap
 "
 
@@ -44,6 +45,9 @@ test Nsswitch.lns get conf =
            { "status" = "NOTFOUND"
                { "action" = "return" } } }
       { "service" = "files" } }
+   { "database" = "aliases"
+      { "service" = "files" }
+      { "#comment" = "uses by mail" } }
    { "database" = "sudoers"
       { "service" = "files" }
       { "service" = "ldap" } }
