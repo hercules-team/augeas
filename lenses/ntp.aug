@@ -61,7 +61,8 @@ module Ntp =
         kv "broadcastdelay" Rx.decimal
       | flags
       | simple_setting /driftfile|leapfile|logfile|includefile/
-	  | simple_setting "statsdir"
+      | simple_setting "statsdir"
+      | simple_setting "ntpsigndsocket"
 
     (* Misc commands, see miscopt.html in ntp docs *)
 

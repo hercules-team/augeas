@@ -19,6 +19,7 @@ restrict 127.0.0.1
 
 logfile /var/log/ntpd
 statsdir /var/log/ntpstats/
+ntpsigndsocket /var/lib/samba/ntp_signd
 
 statistics loopstats peerstats clockstats
 filegen loopstats file loopstats type day enable link
@@ -53,6 +54,7 @@ interface listen 127.0.0.1
       {}
       { "logfile"  = "/var/log/ntpd" }
       { "statsdir" = "/var/log/ntpstats/" }
+      { "ntpsigndsocket" = "/var/lib/samba/ntp_signd" }
       {}
       { "statistics"
          { "loopstats" }
