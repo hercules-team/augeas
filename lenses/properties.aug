@@ -12,7 +12,7 @@
 
 module Properties =
   (* Define some basic primitives *)
-  let empty            = Util.empty
+  let empty            = Util.empty_generic_dos /[ \t]*[#!]?[ \t]*/
   let eol              = Util.doseol
   let hard_eol         = del /\r?\n/ "\n"
   let sepch            = del /([ \t]*(=|:)|[ \t])/ "="

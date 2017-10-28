@@ -165,3 +165,5 @@ test lns get "# comment\r\na.b=val\r\nx=\r\n" =
   { "#comment" = "comment" }
   { "a.b" = "val" }
   { "x" }
+
+test lns get "# \r\n! \r\n" = { } { }
