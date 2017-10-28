@@ -1,3 +1,8 @@
+1.10.0 - ????-??-??
+  - Lens changes/additions
+    * Nsswitch: allow comments at the end of a line (Philip Hahn) (Issue #517)
+    * Ntp: accept 'ntpsigndsocket' statement (Philip Hahn) (Issue #516)
+
 1.9.0 - 2017-10-06
   - General changes/additions
     * several improvements to the error messages when transforming a tree
