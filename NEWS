@@ -1,6 +1,7 @@
 1.12.0 - ????-??-??
   - Lens changes/additions
     * Multipath: accept values enclosed in quotes (Issue #583)
+    * Syslog: accept 'include' directive (Issue #486)
 
 1.11.0 - 2018-08-24
   - General changes/additions
