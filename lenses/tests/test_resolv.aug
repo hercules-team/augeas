@@ -56,4 +56,4 @@ test Resolv.ip6_dotint
    put "ip6-dotint"
    after set "/ip6-dotint/negate" "" = "no-ip6-dotint"
 
-
+test Resolv.lns get ";  \r\n; \t \n" = { } { }

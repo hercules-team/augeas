@@ -30,7 +30,7 @@ let comment = Util.comment_generic /[ \t]*[;#][ \t]*/ "# "
 let comment_eol = Util.comment_generic /[ \t]*[;#][ \t]*/ " # "
 
 (* View: empty *)
-let empty = Util.empty
+let empty = Util.empty_generic_dos /[ \t]*[#;]?[ \t]*/
 
 
 (************************************************************************

@@ -3,6 +3,7 @@
     * Nsswitch: allow comments at the end of a line (Philip Hahn) (Issue #517)
     * Ntp: accept 'ntpsigndsocket' statement (Philip Hahn) (Issue #516)
     * Properties: accept empty comments with DOS line endings (Issue #161)
+    * Resolv: accept empty comments with DOS line endings (Issue #161)
 
 1.9.0 - 2017-10-06
   - General changes/additions
