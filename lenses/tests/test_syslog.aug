@@ -351,3 +351,6 @@ daemon.info                                     /var/log/cvsupd.log
     (* allow space before comments *)
     test Syslog.lns get "  \t# space comment\n" =
       { "#comment" = "space comment" }
+
+    test Syslog.lns get "include /etc/syslog.d\n" =
+      { "include" = "/etc/syslog.d" }
