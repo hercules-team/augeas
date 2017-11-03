@@ -31,8 +31,11 @@
 #include <string.h>
 #include <getopt.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "fa.h"
+
+#define UCHAR_NUM (UCHAR_MAX+1)
 
 const char *progname;
 
@@ -45,8 +48,8 @@ static void usage(void) {
   fprintf(stderr, "\nCompile REGEXP and apply operation to them. By default, just print\n");
   fprintf(stderr, "the minimized regexp.\n");
   fprintf(stderr, "\nOptions:\n\n");
-  fprintf(stderr, "  -o OPERATION       one of : show concat union intersect\n");
-  fprintf(stderr, "                              complement minus example\n");
+  fprintf(stderr, "  -o OPERATION       one of : show concat union intersect json\n");
+  fprintf(stderr, "                              complement minus example print\n");
   fprintf(stderr, "  -f DOT_FILE        Path of output .dot file\n");
   fprintf(stderr, "  -n                 do not minimize resulting finite automaton\n");
 
@@ -193,10 +196,74 @@ int main (int argc, char **argv) {
     char* word = NULL;
     size_t word_len = 0;
     fa_compile(argv[optind], strlen(argv[optind]), &fa_result);
+
     fa_example(fa_result, &word, &word_len);
     printf("Example word = %s\n", word);
 
-  }
+  } else if (!strcmp(operation, "json")) {
+    if (nb_regexp != 1) {
+      fprintf(stderr,"Please specify one regexp for operation example");
+      return 1;
+    }
+
+    fa_compile(argv[optind], strlen(argv[optind]), &fa_result);
+
+    if (reduce) {
+      fa_minimize(fa_result);
+    }
+
+    if (file_output != NULL) {
+      if ((fd = fopen(file_output, "w")) == NULL) {
+        fprintf(stderr, "Error while opening file %s \n", file_output);
+        return 1;
+      }
+
+      fa_json(fd, fa_result);
+      fclose(fd);
+    } else {
+      fa_json(stdout, fa_result);
+    }
+
+    return 0;
+
+  } else if (!strcmp(operation, "print")) { 
+    if (nb_regexp != 1) {
+      fprintf(stderr,"Please specify one regexp for operation example");
+      return 1;
+    }
+
+    fa_compile(argv[optind], strlen(argv[optind]), &fa_result);
+
+    if (reduce) {
+      fa_minimize(fa_result);
+    }
+
+    struct state *st, *st2;
+    uint32_t num_trans, i;
+    unsigned char begin, end;
+
+    st = fa_state_initial(fa_result);
+
+    printf("%s. Initial state: %p", fa_is_deterministic(fa_result) ? "DFA" : "NFA", fa_result);
+
+    while (st != NULL) {
+      num_trans = fa_state_num_trans(st);
+      printf("\nFrom state %p (final = %s):\n", st, fa_state_is_accepting(st) == 1 ? "true" : "false");
+      for (i = 0; i < num_trans; i++) {
+        if (-1 == fa_state_trans(st, i, &st2, &begin, &end)) {
+          printf("Some error occur. \n");
+        }
+        if (begin == end)
+          printf("     to: %p, label: %d\n", st2, begin);
+        else
+          printf("     to: %p, label: %d-%d\n", st2, begin, end);
+      }
+      st = fa_state_next(st);
+    }
+
+    return 0;
+
+  } 
 
   if (reduce) {
     fa_minimize(fa_result);
@@ -210,6 +277,7 @@ int main (int argc, char **argv) {
 
     fa_dot(fd, fa_result);
     fclose(fd);
+
   } else {
     int r;
     char *rx;
