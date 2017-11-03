@@ -1,4 +1,8 @@
 1.10.0 - ????-??-??
+  - API changes
+    * libfa has now a function fa_json to export an FA as a JSON file, and
+      fa_state_* functions that make it possible to iterate over the FA's
+      states and transitions. (Pedro Valero Mejia)
   - Lens changes/additions
     * Nsswitch: allow comments at the end of a line (Philip Hahn) (Issue #517)
     * Ntp: accept 'ntpsigndsocket' statement (Philip Hahn) (Issue #516)
