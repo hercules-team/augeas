@@ -277,8 +277,10 @@ int fa_expand_nocase(const char *regexp, size_t regexp_len,
  */
 int fa_enumerate(struct fa *fa, int limit, char ***words);
 
-/* Print FA to OUT as a JSON file. State 0 is always the initial one */
-void fa_json(FILE *out, struct fa *fa);
+/* Print FA to OUT as a JSON file. State 0 is always the initial one.
+ * Returns 0 on success, and -1 on failure.
+ */
+int fa_json(FILE *out, struct fa *fa);
 
 /* Returns 1 if the FA is deterministic and 0 otherwise */
 int fa_is_deterministic(struct fa *fa);
