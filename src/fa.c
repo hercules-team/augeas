@@ -2958,6 +2958,12 @@ int fa_ambig_example(struct fa *fa1, struct fa *fa2,
         goto error;
     if (concat_in_place(b1, &ms) < 0)
         goto error;
+    if (fa_is_basic(b1, FA_EMPTY)) {
+        /* We are done - amb which we take an example from below
+         * will be empty, and there can therefore not be an ambiguity */
+        ret = 0;
+        goto done;
+    }
 
     /* Compute b2 = ss . ((sp . a2f) & a2t) */
     if (concat_in_place(sp, &a2f) < 0)
