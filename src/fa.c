@@ -4581,7 +4581,7 @@ error:
     return result;
 }
 
-int fa_is_deterministic(struct fa *fa) {
+bool fa_is_deterministic(struct fa *fa) {
     return fa->deterministic;
 }
 

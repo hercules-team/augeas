@@ -31,7 +31,17 @@
 /* The type for a finite automaton. */
 struct fa;
 
-/* The type of a state of a finite automaton */
+/* The type of a state of a finite automaton. The fa_state functions return
+ * pointers to this struct. Those pointers are only valid as long as the
+ * only fa_* functions that are called are fa_state_* functions. For
+ * example, the following code will almost certainly result in a crash (or
+ * worse):
+ *
+ *     struct state *s = fa_state_initial(fa);
+ *     fa_minimize(fa);
+ *     // Crashes as S will likely have been freed
+ *     s = fa_state_next(s)
+ */
 struct state;
 
 /* Denote some basic automata, used by fa_is_basic and fa_make_basic */
@@ -282,8 +292,8 @@ int fa_enumerate(struct fa *fa, int limit, char ***words);
  */
 int fa_json(FILE *out, struct fa *fa);
 
-/* Returns 1 if the FA is deterministic and 0 otherwise */
-int fa_is_deterministic(struct fa *fa);
+/* Returns true if the FA is deterministic and 0 otherwise */
+bool fa_is_deterministic(struct fa *fa);
 
 /* Return the initial state */
 struct state *fa_state_initial(struct fa *fa);
@@ -304,7 +314,9 @@ size_t fa_state_num_trans(struct state *st);
  *
  * On failure, *to, min and max are not modified.
  *
- * Return 0 on success and -1 otherwise */
+ * Return 0 on success and -1 when I is larger than the number of
+ * transitions of ST.
+ */
 int fa_state_trans(struct state *st, size_t i,
                    struct state **to, unsigned char *min, unsigned char *max);
 
