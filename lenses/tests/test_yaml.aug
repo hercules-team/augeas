@@ -73,3 +73,11 @@ test YAML.lns get "abc:
       { "@mval"
         { "@line" = "ghi" } } } }
 
+test YAML.lns get "abc:
+  def: |
+  ghi
+\n" =
+  { "abc"
+    { "def"
+      { "@mlitclip"
+        { "@line" = "ghi" } } } }

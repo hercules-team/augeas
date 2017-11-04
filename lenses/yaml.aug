@@ -28,8 +28,18 @@ View: indent
 *)
 let indent = del /[ \t]+/ "  "
 
-let mval = [ label "@mval" . Util.del_str "|-" . eol
-           . [ label "@line" . indent . store Rx.space_in . eol ]+ ]
+let mline = [ label "@line" . indent . store Rx.space_in . eol ]+
+
+let m_literal_clip = [ label "@mlitclip" . Util.del_str "|" . eol . mline ]
+let m_literal_strip = [ label "@mval" . Util.del_str "|-" . eol . mline ]
+let m_literal_keep = [ label "@mlitkeep" . Util.del_str "|+" . eol . mline ]
+
+let m_fold_clip = [ label "@mfoldclip" . Util.del_str ">" . eol . mline ]
+let m_fold_strip = [ label "@mfoldstrip" . Util.del_str ">-" . eol . mline ]
+let m_fold_keep = [ label "@mfoldkeep" . Util.del_str ">+" . eol . mline ]
+
+let mval = (m_literal_clip | m_literal_strip | m_literal_keep
+           | m_fold_clip | m_fold_strip | m_fold_keep)
 
 (*
 View: inherit
