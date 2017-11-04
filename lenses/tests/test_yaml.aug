@@ -7,6 +7,25 @@ test YAML.lns get "host1:
   { "<<" = "production" }
 }
 
+(* top level sequence *)
+test YAML.lns get "
+- foo: 1
+  bar: 2
+
+- baz: 3
+  gee: 4
+" =
+{  }
+{ "@sequence"
+  { "foo" = "1" }
+  { "bar" = "2" }
+}
+{  }
+{ "@sequence"
+  { "baz" = "3" }
+  { "gee" = "4" }
+}
+
 test YAML.lns get "
 defaults: &defaults
   repo1: master
