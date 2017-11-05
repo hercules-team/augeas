@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Test that we report an error when writing to nonexistant dirs
+# Test that we report an error when writing to nonexistent dirs
 # but that we do create new files correctly
 
 save_hosts() {

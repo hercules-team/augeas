@@ -171,7 +171,7 @@ struct fa *fa_overlap(struct fa *fa1, struct fa *fa2);
 
 /* Produce an example for the language of FA. The example is not
  * necessarily the shortest possible. The implementation works very hard to
- * have printable characters (preferrably alphanumeric) in the example, and
+ * have printable characters (preferably alphanumeric) in the example, and
  * to avoid just an empty word.
  *
  * *EXAMPLE will be the example, which may be NULL. If it is non-NULL,

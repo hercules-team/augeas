@@ -56,7 +56,7 @@ e.g. C<-t 'Fstab incl /etc/fstab.bak'>.
 
 =item B<-l>, B<--load-file>=I<FILE>
 
-Load an invididual FILE into the tree. The lens to use is determined
+Load an individual FILE into the tree. The lens to use is determined
 automatically (based on autoload information in the lenses) and will be the
 same that is used for this file when the entire tree is loaded. The option
 can be specified multiple times to load several files, e.g. C<-l /etc/fstab

@@ -518,7 +518,7 @@ typedef enum {
     AUG_ENOSPAN,        /* No span for this node */
     AUG_EMVDESC,        /* Cannot move node into its descendant */
     AUG_ECMDRUN,        /* Failed to execute command */
-    AUG_EBADARG,        /* Invalid argument in funcion call */
+    AUG_EBADARG,        /* Invalid argument in function call */
     AUG_ELABEL,         /* Invalid label */
     AUG_ECPDESC         /* Cannot copy node into its descendant */
 } aug_errcode_t;

@@ -1672,7 +1672,7 @@ static int minimize_hopcroft(struct fa *fa) {
             struct state *qs = partn->states[q];
             int qnum = state_set_index(states, qs);
             if (qs == fa->initial)
-                s->live = 1;     /* Abuse live to flag the new intial state */
+                s->live = 1;     /* Abuse live to flag the new initial state */
             nsnum[n] = qnum;     /* select representative */
             nsind[qnum] = n;     /* and point from partition to new state */
         }

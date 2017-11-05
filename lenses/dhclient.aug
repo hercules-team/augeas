@@ -6,7 +6,7 @@
    that statements end with a new line, while the reference syntax allows
    new statements to be started right after the trailing ";" of the
    previous statement. This should not be a problem in real-life
-   configuration files as statements get usually splitted across several
+   configuration files as statements get usually split across several
    lines, rather than merged in a single one.
 
 *)

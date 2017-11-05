@@ -37,7 +37,7 @@ static void usage(void) {
     fprintf(stderr, "Usage: %s [OPTIONS] MODULE\n", progname);
     fprintf(stderr, "Evaluate MODULE. Generally, MODULE should contain unit tests.\n");
     fprintf(stderr, "\nOptions:\n\n");
-    fprintf(stderr, "  -I, --include DIR  search DIR for modules; can be given mutiple times\n");
+    fprintf(stderr, "  -I, --include DIR  search DIR for modules; can be given multiple times\n");
     fprintf(stderr, "  -t, --trace        trace module loading\n");
     fprintf(stderr, "  --nostdinc         do not search the builtin default directories for modules\n");
     fprintf(stderr, "  --notypecheck      do not typecheck lenses\n");

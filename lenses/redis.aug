@@ -99,7 +99,7 @@ let soft_limit = [ label "soft_limit" . Quote.do_quote_opt_nil (store Rx.word) ]
 let soft_seconds = [ label "soft_seconds" . Quote.do_quote_opt_nil (store Rx.integer) ]
 (* View: client_output_buffer_limit_entry
 Entries identified by the "client-output-buffer-limit" keyword can be found
-more than once. They have four mandatory paramters, of which the first is a
+more than once. They have four mandatory parameters, of which the first is a
 string, the last one is an integer and the others are either integers or words,
 although redis is very liberal and takes "4242yadayadabytes" as a valid limit.
 The same rules as standard_entry apply for quoting, comments and whitespaces.

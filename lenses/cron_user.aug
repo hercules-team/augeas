@@ -6,7 +6,7 @@ Author: David Lutterkort <lutter@watzmann.net>
 
 About: Reference
  This lens parses the user crontab files in /var/spool/cron. It produces
- almost the same tree as teh Cron.lns, except that it never contains a user
+ almost the same tree as the Cron.lns, except that it never contains a user
  field.
 
 About: License

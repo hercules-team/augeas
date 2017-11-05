@@ -2,7 +2,7 @@
     Parse the /etc/cobbler/settings file  which is in
     YAML 1.0 format.
 
-    The lens can handle the following contructs
+    The lens can handle the following constructs
     * key: value
     * key: "value"
     * key: 'value'
@@ -23,7 +23,7 @@ module CobblerSettings =
     autoload xfm
 
     let kw = /[a-zA-Z0-9_]+/
-    (* TODO Would be better if this stripped off the "" and '' chracters *)
+    (* TODO Would be better if this stripped off the "" and '' characters *)
     let kv = /([^]['", \t\n#:@-]+|"[^"\n]*"|'[^'\n]*')/
 
     let lbr = del /\[/ "["

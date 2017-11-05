@@ -18,7 +18,7 @@ MOUNTD_PORT=892
 #RQUOTAD="/usr/sbin/rpc.rquotad"
 # Port rquotad should listen on.
 #RQUOTAD_PORT=875
-# Optinal options passed to rquotad
+# Optional options passed to rquotad
 #RPCRQUOTADOPTS=""
 #
 #
