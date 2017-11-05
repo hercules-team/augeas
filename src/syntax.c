@@ -308,7 +308,7 @@ void free_value(struct value *v) {
 
 /*
  * Creation of (some) terms. Others are in parser.y
- * Refernce counted arguments are now owned by the returned object, i.e.
+ * Reference counted arguments are now owned by the returned object, i.e.
  * the make_* functions do not increment the count.
  * Returned objects have a referece count of 1.
  */

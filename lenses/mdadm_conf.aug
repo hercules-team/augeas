@@ -149,7 +149,7 @@ let array  = [ del array_re "ARRAY" . label "array" . arr_options . eol ]
 
 let mailaddr_re = /mai(l(a(d(dr?)?)?)?)?/i
 
-(* We intentially allow multiple mailaddr values here, even though this is
+(* We intentionally allow multiple mailaddr values here, even though this is
 invalid and would produce a warning. This is better than not parsing the file.
 *)
 let mailaddr = simplevalue mailaddr_re "mailaddr" "MAILADDR"

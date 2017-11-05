@@ -76,7 +76,7 @@ test Redis.lns get extra_whitespace_comment = { "#comment" = "another comment" }
 
 let redis_conf = "# Redis configuration file example
 
-# Note on units: when memory size is needed, it is possible to specifiy
+# Note on units: when memory size is needed, it is possible to specify
 # it in the usual form of 1k 5GB 4M and so forth:
 #
 # 1k => 1000 bytes
@@ -123,7 +123,7 @@ include /path/to/other.conf
 test Redis.lns get redis_conf =
   { "#comment" = "Redis configuration file example" }
   { }
-  { "#comment" = "Note on units: when memory size is needed, it is possible to specifiy" }
+  { "#comment" = "Note on units: when memory size is needed, it is possible to specify" }
   { "#comment" = "it in the usual form of 1k 5GB 4M and so forth:" }
   { }
   { "#comment" = "1k => 1000 bytes" }

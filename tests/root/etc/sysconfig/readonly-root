@@ -13,5 +13,5 @@ RW_OPTIONS=
 STATE_LABEL=stateless-state
 # Where to mount to the persistent data
 STATE_MOUNT=/var/lib/stateless/state
-# Options to use for peristent mount
+# Options to use for persistent mount
 STATE_OPTIONS=

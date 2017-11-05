@@ -705,7 +705,7 @@ static void testLoadFile(CuTest *tc) {
     CuAssertIntEquals(tc, AUG_ENOLENS, aug_error(aug));
 
     /* augeas should return without an error when trying to load a
-       nonexistant file that would be handled by a lens */
+       nonexistent file that would be handled by a lens */
     r = aug_load_file(aug, "/etc/mtab");
     CuAssertRetSuccess(tc, r);
     r = aug_match(aug, "/files/etc/mtab", NULL);

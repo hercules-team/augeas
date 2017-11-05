@@ -55,7 +55,7 @@ static const int glob_flags = GLOB_NOSORT;
  *   lens/id   : unique hexadecimal id of the lens
  *   error     : indication of errors during processing FNAME, or NULL
  *               if processing succeeded
- *   error/pos : position in file where error occured (for get errors)
+ *   error/pos : position in file where error occurred (for get errors)
  *   error/path: path to tree node where error occurred (for put errors)
  *   error/message : human-readable error message
  */

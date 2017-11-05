@@ -32,7 +32,7 @@ module Shellvars_list =
   let squote_arr = [ label "quote" . store /'/ ]
                    . (list sqword space_or_nl)? . del /'/ "'"
 
-  (* similarly handle double qouted lists *)
+  (* similarly handle double quoted lists *)
   let dquote_arr = [ label "quote" . store /"/ ]
                    . (list dqword space_or_cl)? . del /"/ "\""
 

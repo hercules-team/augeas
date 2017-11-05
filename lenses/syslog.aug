@@ -101,7 +101,7 @@ module Syslog =
 	let word      = /[A-Za-z0-9][A-Za-z0-9_.-]*/
 
 	(* Variable: comparison
-	  a comparison is an optional ! with optionaly some of [<=>]
+	  a comparison is an optional ! with optionally some of [<=>]
 	  *)
         let comparison = /(!|[<=>]+|![<=>]+)/
 
