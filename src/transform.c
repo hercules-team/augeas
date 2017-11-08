@@ -800,6 +800,9 @@ int transform_validate(struct augeas *aug, struct tree *xfm) {
     return 0;
  error:
     xfm_error(xfm, aug->error->details);
+    /* We recorded this error in the tree, clear it so that future
+     * operations report this exact same error (against the wrong lens) */
+    reset_error(aug->error);
     return -1;
 }
 

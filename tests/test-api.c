@@ -735,6 +735,40 @@ static void testLoadBadPath(CuTest *tc) {
     aug_close(aug);
 }
 
+/* If a lens is set to a partial path which happens to actually resolve to
+   a file when appended to the loadpath, we went into an infinite loop of
+   loading a module, but then not realizing that it had actually been
+   loaded, reloading it over and over again.
+   See https://github.com/hercules-team/augeas/issues/522
+*/
+static void testLoadBadLens(CuTest *tc) {
+    struct augeas *aug;
+    int r;
+    char *lp;
+
+    // This setup depends on the fact that
+    //   loadpath == abs_top_srcdir + "/lenses"
+    r = asprintf(&lp, "%s:%s", loadpath, abs_top_srcdir);
+    CuAssert(tc, "failed to allocate loadpath", (r >= 0));
+
+    aug = aug_init(root, lp, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    r = aug_set(aug, "/augeas/load/Fstab/lens", "lenses/Fstab.lns");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    // We used to record the error to load the lens above against every
+    // lens that we tried to load after it.
+    r = aug_match(aug, "/augeas//error", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    free(lp);
+}
+
 /* Test the aug_ns_* functions */
 static void testAugNs(CuTest *tc) {
     struct augeas *aug;
@@ -804,6 +838,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testRm);
     SUITE_ADD_TEST(suite, testLoadFile);
     SUITE_ADD_TEST(suite, testLoadBadPath);
+    SUITE_ADD_TEST(suite, testLoadBadLens);
     SUITE_ADD_TEST(suite, testAugNs);
 
     abs_top_srcdir = getenv("abs_top_srcdir");

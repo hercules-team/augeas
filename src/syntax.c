@@ -1962,6 +1962,13 @@ static char *module_filename(struct augeas *aug, const char *modname) {
     char *filename = NULL;
     char *name = module_basename(modname);
 
+    /* Module names that contain slashes can fool us into finding and
+     * loading a module in another directory, but once loaded we won't find
+     * it under MODNAME so that we will later try and load it over and
+     * over */
+    if (index(modname, '/') != NULL)
+        goto error;
+
     while ((dir = argz_next(aug->modpathz, aug->nmodpath, dir)) != NULL) {
         int len = strlen(name) + strlen(dir) + 2;
         struct stat st;
