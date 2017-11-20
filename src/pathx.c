@@ -1153,6 +1153,8 @@ static bool eval_pred(struct expr *expr, struct state *state) {
         return (state->ctx_pos == v->number);
     case T_NODESET:
         return v->nodeset->used > 0;
+    case T_STRING:
+        return streqv(state->ctx->value, v->string);
     default:
         assert(0);
         return false;
@@ -1434,7 +1436,7 @@ static void check_preds(struct pred *pred, struct state *state) {
         check_expr(e, state);
         RET_ON_ERROR;
         if (e->type != T_NODESET && e->type != T_NUMBER &&
-            e->type != T_BOOLEAN) {
+            e->type != T_BOOLEAN && e->type != T_STRING) {
             STATE_ERROR(state, PATHX_ETYPE);
             return;
         }

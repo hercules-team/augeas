@@ -2,6 +2,8 @@
   - General changes/additions
     * New command 'count' in augtool
     * New function 'not(bool) -> bool' for path expressions
+    * The path expression 'label[. = "value"]' can now be written more
+      concisely as 'label["value"]'
   - API changes
     * libfa has now a function fa_json to export an FA as a JSON file, and
       fa_state_* functions that make it possible to iterate over the FA's
