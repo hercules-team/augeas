@@ -33,6 +33,7 @@ ylwrap
 src/datadir.h
 src/parser.[ch]
 src/lexer.[ch]
+src/augmatch
 src/augtool
 src/augparse
 src/callgrind.*

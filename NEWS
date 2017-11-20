@@ -1,5 +1,7 @@
 1.10.0 - ????-??-??
   - General changes/additions
+    * New CLI utility 'augmatch' to print the tree for a file and select
+      some of its contents
     * New command 'count' in augtool
     * New function 'not(bool) -> bool' for path expressions
     * The path expression 'label[. = "value"]' can now be written more

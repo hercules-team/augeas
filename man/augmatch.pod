@@ -1,0 +1,119 @@
+=head1 NAME
+
+augmatch - inspect and match contents of configuration files
+
+=head1 SYNOPSIS
+
+augmatch [OPTIONS] FILE
+
+=head1 DESCRIPTION
+
+B<augmatch> prints the tree that Augeas generates by parsing a
+configuration file, or only those parts of the tree that match a certain
+path expression. Parsing is controlled by lenses, many of which ship with
+Augeas. B<augmatch> to select the correct lens for a given file
+automatically unless one is specified with the B<--lens> option.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-a>, B<--all>
+
+Print all tree nodes, even ones without an associated value. Without this
+flag, augmatch omits these nodes from the output as they are usually
+uninteresting.
+
+=item B<-e>, B<--exact>
+
+Only print the parts of the tree that exactly match the expression provided
+with B<--match> and not any of the descendants of matching nodes.
+
+=item B<-I>, B<--include>=I<DIR>
+
+Add DIR to the module loadpath. Can be given multiple times. The
+directories set here are searched before any directories specified in the
+AUGEAS_LENS_LIB environment variable, and before the default directories
+F</usr/share/augeas/lenses> and F</usr/share/augeas/lenses/dist>.
+
+=item B<-l>, B<--lens>=I<LENS>
+
+Use LENS for the given file; without this option, B<augmatch> tries to
+guess the lens for the file based on the file's name and path which only
+works for files in standard locations.
+
+=item B<-L>, B<--print-lens>
+
+Print the name of the lens that will be used with the given file and exit.
+
+=item B<-m>, B<--match>=I<EXPR>
+
+Only print the parts of the tree that match the path expression EXPR. All
+nodes that match EXPR and their descendants will be printed. Use L<--exact>
+to print only matching nodes but no descendants.
+
+=item B<-r>, B<--root>=I<ROOT>
+
+Use directory ROOT as the root of the filesystem. Takes precedence over a
+root set with the AUGEAS_ROOT environment variable.
+
+=item B<-S>, B<--nostdinc>
+
+Do not search any of the default directories for lenses. When this option
+is set, only directories specified explicitly with B<-I> or specified in
+B<AUGEAS_LENS_LIB> will be searched for modules.
+
+=item B<-o>, B<--only-value>
+
+Print only the value and not the label or the path of nodes.
+
+=back
+
+=head1 ENVIRONMENT VARIABLES
+
+=over 4
+
+=item B<AUGEAS_ROOT>
+
+The file system root, defaults to '/'. Can be overridden with
+the B<-r> command line option
+
+=item B<AUGEAS_LENS_LIB>
+
+Colon separated list of directories with lenses. Directories specified here
+are searched after any directories set with the B<-I> command line option,
+but before the default directories F</usr/share/augeas/lenses> and
+F</usr/share/augeas/lenses/dist>
+
+=back
+
+=head1 EXAMPLES
+
+  # print the tree for /etc/exports
+  augmatch /etc/exports
+
+  # show only the entry for a specific mount
+  augmatch -m 'dir["/home"]' /etc/exports
+
+  # show all the clients to which we are exporting /home
+  augmatch -eom 'dir["/home"]/client' /etc/exports
+
+=head1 FILES
+
+Lenses and schema definitions in F</usr/share/augeas/lenses> and
+F</usr/share/augeas/lenses/dist>
+
+=head1 AUTHOR
+
+David Lutterkort <lutter@watzmann.net>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2007-2018 David Lutterkort
+
+Augeas (and augmatch) are distributed under the GNU Lesser General Public
+License (LGPL)
+
+=head1 SEE ALSO
+
+B<Augeas> project homepage L<http://www.augeas.net/>
