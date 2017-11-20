@@ -92,7 +92,7 @@ static struct value *lns_square(struct info *info, struct value *l1,
     assert(l1->tag == V_LENS);
     assert(l2->tag == V_LENS);
     assert(l3->tag == V_LENS);
-    int check = info->error->aug->flags & AUG_TYPE_CHECK;
+    int check = typecheck_p(info);
 
     return lns_make_square(ref(info), ref(l1->lens), ref(l2->lens), ref(l3->lens), check);
 }
@@ -467,7 +467,7 @@ static struct value *lns_check_rec_glue(struct info *info,
                                         struct value *l, struct value *r) {
     assert(l->tag == V_LENS);
     assert(r->tag == V_LENS);
-    int check = info->error->aug->flags & AUG_TYPE_CHECK;
+    int check = typecheck_p(info);
 
     return lns_check_rec(info, l->lens, r->lens, check);
 }

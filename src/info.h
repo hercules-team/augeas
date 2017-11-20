@@ -68,6 +68,10 @@ char *format_info(struct info *info);
 
 void print_info(FILE *out, struct info *info);
 
+/* Return true if typechecking is turned on. (This uses the somewhat gross
+ * fact that we can get at the augeas flags through error->aug) */
+bool typecheck_p(const struct info *info);
+
 /* Do not call directly, use UNREF instead */
 void free_info(struct info *info);
 
