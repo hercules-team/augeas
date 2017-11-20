@@ -463,6 +463,9 @@ int tree_insert(struct pathx *p, const char *label, int before);
 int free_tree(struct tree *tree);
 int dump_tree(FILE *out, struct tree *tree);
 int tree_equal(const struct tree *t1, const struct tree *t2);
+/* Return the 1-based index of TREE amongst its siblings with the same
+ * label or 0 if none of TREE's siblings have the same label */
+int tree_sibling_index(struct tree *tree);
 char *path_expand(struct tree *tree, const char *ppath);
 char *path_of_tree(struct tree *tree);
 /* Clear the dirty flag in the whole TREE */
