@@ -840,7 +840,7 @@ static void create_lens(struct lens *lens, struct state *state) {
 }
 
 void lns_put(struct info *info, FILE *out, struct lens *lens, struct tree *tree,
-             const char *text, struct lns_error **err) {
+             const char *text, int enable_span, struct lns_error **err) {
     struct state state;
     struct lns_error *err1;
 
@@ -862,7 +862,7 @@ void lns_put(struct info *info, FILE *out, struct lens *lens, struct tree *tree,
     }
     state.out = out;
     state.split = make_split(tree);
-    state.with_span = info->flags & AUG_ENABLE_SPAN;
+    state.with_span = enable_span;
     state.tree = tree;
     state.info = info;
     if (state.with_span) {

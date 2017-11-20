@@ -1115,7 +1115,8 @@ static void lens_put(struct augeas *aug, const char *filename,
         tree->span->span_start = ftell(out);
     }
 
-    lns_put(info, out, lens, tree->children, text, err);
+    lns_put(info, out, lens, tree->children, text,
+            aug->flags & AUG_ENABLE_SPAN, err);
 
     if (with_span) {
         tree->span->span_end = ftell(out);

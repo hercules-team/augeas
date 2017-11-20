@@ -209,7 +209,7 @@ struct skel *lns_parse(struct lens *lens, const char *text,
  * to update spans or not.
  */
 void lns_put(struct info *info, FILE *out, struct lens *lens, struct tree *tree,
-             const char *text, struct lns_error **err);
+             const char *text, int enable_span, struct lns_error **err);
 
 /* Free up temporary data structures, most importantly compiled
    regular expressions */

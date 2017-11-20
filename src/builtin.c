@@ -222,7 +222,7 @@ static struct value *lens_put(struct info *info, struct value *l,
 
     init_memstream(&ms);
     lns_put(info, ms.stream, l->lens, tree->origin->children,
-            str->string->str, &err);
+            str->string->str, 0, &err);
     close_memstream(&ms);
 
     if (err == NULL && ! HAS_ERR(info)) {
