@@ -1,4 +1,6 @@
 1.10.0 - ????-??-??
+  - General changes/additions
+    * New function 'not(bool) -> bool' for path expressions
   - API changes
     * libfa has now a function fa_json to export an FA as a JSON file, and
       fa_state_* functions that make it possible to iterate over the FA's

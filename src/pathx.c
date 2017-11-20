@@ -294,6 +294,7 @@ static void func_regexp(struct state *state, int nargs);
 static void func_regexp_flag(struct state *state, int nargs);
 static void func_glob(struct state *state, int nargs);
 static void func_int(struct state *state, int nargs);
+static void func_not(struct state *state, int nargs);
 
 static const enum type arg_types_nodeset[] = { T_NODESET };
 static const enum type arg_types_string[] = { T_STRING };
@@ -334,7 +335,9 @@ static const struct func builtin_funcs[] = {
     { .name = "int", .arity = 1, .type = T_NUMBER,
       .arg_types = arg_types_nodeset, .impl = func_int },
     { .name = "int", .arity = 1, .type = T_NUMBER,
-      .arg_types = arg_types_bool, .impl = func_int }
+      .arg_types = arg_types_bool, .impl = func_int },
+    { .name = "not", .arity = 1, .type = T_BOOLEAN,
+      .arg_types = arg_types_bool, .impl = func_not }
 };
 
 #define RET_ON_ERROR                                                    \
@@ -714,6 +717,16 @@ static void func_int(struct state *state, int nargs) {
     }
     state->value_pool[vind].number = i;
     push_value(vind, state);
+}
+
+static void func_not(struct state *state, int nargs) {
+    ensure_arity(1, 1);
+    RET_ON_ERROR;
+
+    struct value *v = pop_value(state);
+    if (v->tag == T_BOOLEAN) {
+        push_boolean_value(! v->boolval, state);
+    }
 }
 
 static struct regexp *
