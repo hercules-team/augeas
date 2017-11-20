@@ -8,6 +8,10 @@
     * libfa has now a function fa_json to export an FA as a JSON file, and
       fa_state_* functions that make it possible to iterate over the FA's
       states and transitions. (Pedro Valero Mejia)
+    * Add functions aug_ns_label, aug_ns_value, aug_ns_count, and
+      aug_ns_path to get the label (with index), the value, the number of
+      nodes, and the fully qualified path for nodes stored in a nodeset in
+      a variable efficiently
   - Lens changes/additions
     * Nsswitch: allow comments at the end of a line (Philip Hahn) (Issue #517)
     * Ntp: accept 'ntpsigndsocket' statement (Philip Hahn) (Issue #516)

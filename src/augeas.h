@@ -478,7 +478,7 @@ void aug_close(augeas *aug);
 // more wordy notation /descendant::*
 
 /*
- * Function: aug_ns_get
+ * Function: aug_ns_attr
  *
  * Look up the ith node in the variable VAR and retrieve information about
  * it. Set *VALUE to the value of the node, *LABEL to its label, and
@@ -486,20 +486,85 @@ void aug_close(augeas *aug);
  * node does not belong to a file. It is permissible to pass NULL for any
  * of these variables to indicate that the caller is not interested in that
  * attribute.
-
+ *
  * It is assumed that VAR was defined with a path expression evaluating to
  * a nodeset, like '/files/etc/hosts/descendant::*'. This function is
- * equivalent to, but faster than, aug_get(aug, "$VAR[I]", value),
- * respectively the corresponding calls to aug_label and aug_source.
+ * equivalent to, but faster than, aug_get(aug, "$VAR[I+1]", value),
+ * respectively the corresponding calls to aug_label and aug_source. Note
+ * that the index is 0-based, not 1-based.
  *
  * If VAR does not exist, or is not a nodeset, or if it has fewer than I
  * nodes, this call fails.
+ *
+ * The caller is responsible for freeing *FILE_PATH, but must not free
+ * *VALUE or *LABEL. Those pointers are only valid up to the next call to a
+ * function in this API that might modify the tree.
  *
  * Returns:
  * 1 on success (for consistency with aug_get), a negative value on failure
  */
 int aug_ns_attr(const augeas* aug, const char *var, int i,
                 const char **value, const char **label, char **file_path);
+
+/*
+ * Function: aug_ns_label
+ *
+ * Look up the LABEL and its INDEX amongst its siblings for the ith node in
+ * variable VAR. (See aug_ns_attr for details of what is expected of VAR)
+ *
+ * Either of LABEL and INDEX may be NULL. The *INDEX will be set to the
+ * number of siblings + 1 of the node $VAR[I+1] that precede it and have
+ * the same label if there are at least two siblings with that label. If
+ * the node $VAR[I+1] does not have any siblings with the same label as
+ * itself, *INDEX will be set to 0.
+ *
+ * The caller must not free *LABEL. The pointer is only valid up to the
+ * next call to a function in this API that might modify the tree.
+ *
+ * Returns:
+ * 1 on success (for consistency with aug_get), a negative value on failure
+ */
+int aug_ns_label(const augeas *aug, const char *var, int i,
+                 const char **label, int *index);
+
+/*
+ * Function: aug_ns_value
+ *
+ * Look up the VALUE of the ith node in variable VAR. (See aug_ns_attr for
+ * details of what is expected of VAR)
+ *
+ * The caller must not free *VALUE. The pointer is only valid up to the
+ * next call to a function in this API that might modify the tree.
+ *
+ * Returns:
+ * 1 on success (for consistency with aug_get), a negative value on failure
+ */
+int aug_ns_value(const augeas *aug, const char *var, int i,
+                 const char **value);
+
+/*
+ * Function: aug_ns_count
+ *
+ * Return the number of nodes in variable VAR. (See aug_ns_attr for details
+ * of what is expected of VAR)
+ *
+ * Returns: the number of nodes in VAR, or a negative value on failure
+ */
+int aug_ns_count(const augeas *aug, const char *var);
+
+/*
+ * Function: aug_ns_count
+ *
+ * Put the fully qualified path to the ith node in VAR into *PATH. (See
+ * aug_ns_attr for details of what is expected of VAR)
+ *
+ * The caller is responsible for freeing *PATH, which is allocated by this
+ * function.
+ *
+ * Returns: 1 on success (for consistency with aug_get), a negative value
+ * on failure
+ */
+int aug_ns_path(const augeas *aug, const char *var, int i, char **path);
 
 /*
  * Error reporting
