@@ -1377,7 +1377,7 @@ static void eval_filter(struct expr *expr, struct state *state) {
 }
 
 static struct value *lookup_var(const char *ident,
-                                struct pathx_symtab *symtab) {
+                                const struct pathx_symtab *symtab) {
     list_for_each(tab, symtab) {
         if (STREQ(ident, tab->name))
             return tab->value;
@@ -3031,6 +3031,16 @@ int pathx_symtab_assign_tree(struct pathx_symtab **symtab,
     release_value(v);
     free(v);
     return -1;
+}
+
+int
+pathx_symtab_count(const struct pathx_symtab *symtab, const char *name) {
+    struct value *v = lookup_var(name, symtab);
+
+    if (v == NULL || v->tag != T_NODESET)
+        return -1;
+
+    return v->nodeset->used;
 }
 
 struct tree *
