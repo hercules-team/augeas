@@ -572,25 +572,27 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
 
     /* Typecheck */
     if (tag == L_KEY) {
-        exn = str_to_fa(info, "(.|\n)*/(.|\n)*", &fa_slash, regexp->nocase);
-        if (exn != NULL)
-            goto error;
+        if (typecheck_p(info)) {
+            exn = str_to_fa(info, "(.|\n)*/(.|\n)*", &fa_slash, regexp->nocase);
+            if (exn != NULL)
+                goto error;
 
-        exn = regexp_to_fa(regexp, &fa_key);
-        if (exn != NULL)
-            goto error;
+            exn = regexp_to_fa(regexp, &fa_key);
+            if (exn != NULL)
+                goto error;
 
-        fa_isect = fa_intersect(fa_slash, fa_key);
-        if (! fa_is_basic(fa_isect, FA_EMPTY)) {
-            exn = make_exn_value(info,
-                                 "The key regexp /%s/ matches a '/'",
-                                 regexp->pattern->str);
-            goto error;
+            fa_isect = fa_intersect(fa_slash, fa_key);
+            if (! fa_is_basic(fa_isect, FA_EMPTY)) {
+                exn = make_exn_value(info,
+                    "The key regexp /%s/ matches a '/'",
+                    regexp->pattern->str);
+                goto error;
+            }
+            fa_free(fa_isect);
+            fa_free(fa_key);
+            fa_free(fa_slash);
+            fa_isect = fa_key = fa_slash = NULL;
         }
-        fa_free(fa_isect);
-        fa_free(fa_key);
-        fa_free(fa_slash);
-        fa_isect = fa_key = fa_slash = NULL;
     } else if (tag == L_LABEL) {
         if (strchr(string->str, SEP) != NULL) {
             exn = make_exn_value(info,
