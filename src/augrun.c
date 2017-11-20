@@ -476,6 +476,40 @@ static const struct command_def cmd_match_def = {
             "VALUE are printed"
 };
 
+static void cmd_count(struct command *cmd) {
+    int cnt = 0;
+    const char *pattern = arg_value(cmd, "path");
+
+    cnt = aug_match(cmd->aug, pattern, NULL);
+    ERR_BAIL(cmd);
+    ERR_THROW(cnt < 0, cmd->aug, AUG_ECMDRUN,
+              "  (error matching %s)\n", pattern);
+    if (cnt == 0) {
+        fprintf(cmd->out, "  no matches\n");
+    } else if (cnt == 1) {
+        fprintf(cmd->out, "  1 match\n");
+    } else {
+        fprintf(cmd->out, "  %d matches\n", cnt);
+    }
+
+ error:
+    return;
+}
+
+static const struct command_opt_def cmd_count_opts[] = {
+    { .type = CMD_PATH, .name = "path", .optional = false,
+      .help = "the path expression to match" },
+    CMD_OPT_DEF_LAST
+};
+
+static const struct command_def cmd_count_def = {
+    .name = "count",
+    .opts = cmd_count_opts,
+    .handler = cmd_count,
+    .synopsis = "print the number of matches for a path expression",
+    .help = "Print how many paths match the the path expression PATH"
+};
+
 static void cmd_rm(struct command *cmd) {
     int cnt;
     const char *path = arg_value(cmd, "path");
@@ -1464,6 +1498,7 @@ static const struct command_grp_def cmd_grp_read_def = {
         &cmd_label_def,
         &cmd_ls_def,
         &cmd_match_def,
+        &cmd_count_def,
         &cmd_print_def,
         &cmd_span_def,
         &cmd_def_last
