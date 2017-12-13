@@ -76,6 +76,7 @@ lens_tests =			\
   lens-gdm.sh			\
   lens-getcap.sh		\
   lens-group.sh			\
+  lens-grubenv.sh			\
   lens-gshadow.sh			\
   lens-gtkbookmarks.sh			\
   lens-json.sh          \
