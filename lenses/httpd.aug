@@ -200,6 +200,7 @@ let filter = (incl "/etc/apache2/apache2.conf") .
              (incl "/etc/httpd/conf.d/*.conf") .
              (incl "/etc/httpd/httpd.conf") .
              (incl "/etc/httpd/conf/httpd.conf") .
+             (incl "/etc/httpd/conf.modules.d/*.conf") .
              Util.stdexcl
 
 let xfm = transform lns filter
