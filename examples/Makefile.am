@@ -12,6 +12,5 @@ fadot_SOURCES = fadot.c
 fadot_LDADD = $(top_builddir)/src/libfa.la $(GNULIB)
 
 dump_sources = dump.c
-dump_LDFLAGS = -static
 dump_LDADD =  $(top_builddir)/src/libaugeas.la $(top_builddir)/src/libfa.la \
 	          $(GNULIB)
