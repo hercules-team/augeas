@@ -15,6 +15,8 @@
       nodes, and the fully qualified path for nodes stored in a nodeset in
       a variable efficiently
   - Lens changes/additions
+    * Httpd: also read files from /etc/httpd/conf.modules.d/*.conf
+             (Tomas Meszaros) (Issue #537)
     * Nsswitch: allow comments at the end of a line (Philip Hahn) (Issue #517)
     * Ntp: accept 'ntpsigndsocket' statement (Philip Hahn) (Issue #516)
     * Properties: accept empty comments with DOS line endings (Issue #161)
