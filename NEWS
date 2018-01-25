@@ -1,4 +1,4 @@
-1.10.0 - ????-??-??
+1.10.0 - 2018-01-25
   - General changes/additions
     * New CLI utility 'augmatch' to print the tree for a file and select
       some of its contents
@@ -15,13 +15,16 @@
       nodes, and the fully qualified path for nodes stored in a nodeset in
       a variable efficiently
   - Lens changes/additions
+    * Grubenv: new lens to process /boot/grub/grubenv (omgold)
     * Httpd: also read files from /etc/httpd/conf.modules.d/*.conf
              (Tomas Meszaros) (Issue #537)
     * Nsswitch: allow comments at the end of a line (Philip Hahn) (Issue #517)
     * Ntp: accept 'ntpsigndsocket' statement (Philip Hahn) (Issue #516)
     * Properties: accept empty comments with DOS line endings (Issue #161)
+    * Rancid: new lens for RANCiD router databases (Matt Dainty)
     * Resolv: accept empty comments with DOS line endings (Issue #161)
     * Systemd: also process /etc/systemd/logind.conf (Pat Riehecky)
+    * YAML: process a document that is just a sequence (John Vandenberg)
 
 1.9.0 - 2017-10-06
   - General changes/additions
