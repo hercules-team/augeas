@@ -1958,7 +1958,7 @@ int aug_source(const augeas *aug, const char *path, char **file_path) {
     ERR_THROW(r == 0, aug, AUG_ENOMATCH, "There is no node matching %s",
               path);
 
-    tree_source(aug, match);
+    *file_path = tree_source(aug, match);
     ERR_BAIL(aug);
 
     result = 0;
