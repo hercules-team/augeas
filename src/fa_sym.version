@@ -30,8 +30,11 @@ FA_1.2.0 {
       fa_expand_nocase;
 } FA_1.0.0;
 
-FA_1.5.0 {
+FA_1.4.0 {
       fa_enumerate;
+} FA_1.2.0;
+
+FA_1.5.0 {
       fa_json;
       fa_state_initial;
       fa_state_is_accepting;
@@ -39,4 +42,4 @@ FA_1.5.0 {
       fa_state_num_trans;
       fa_state_trans;
       fa_is_deterministic;
-} FA_1.2.0;
+} FA_1.4.0;
