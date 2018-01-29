@@ -1,4 +1,10 @@
+1.10.1 - 2018-01-29
+  - API changes
+    * Fix a symbol versioning mistake in libfa that unnecessarily broke ABI
+
 1.10.0 - 2018-01-25
+  DO NOT USE THIS RELEASE, USE 1.10.1 INSTEAD
+
   - General changes/additions
     * New CLI utility 'augmatch' to print the tree for a file and select
       some of its contents
