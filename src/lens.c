@@ -583,7 +583,7 @@ typecheck_prim(enum lens_tag tag, struct info *info,
         fa_isect = fa_intersect(fa_slash, fa_key);
         if (! fa_is_basic(fa_isect, FA_EMPTY)) {
             exn = make_exn_value(info,
-                  "The key regexp /%s/ matches a '/'", regexp->pattern->str);
+                  "The key regexp /%s/ matches a '/' which is used to separate nodes.", regexp->pattern->str);
             goto error;
         }
         fa_free(fa_isect);
