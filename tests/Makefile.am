@@ -205,6 +205,7 @@ lens_tests =			\
   lens-sshd.sh			\
   lens-sssd.sh			\
   lens-star.sh          \
+  lens-strongswan.sh \
   lens-stunnel.sh			\
   lens-subversion.sh		\
   lens-sysconfig.sh		\
