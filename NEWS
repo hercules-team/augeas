@@ -7,6 +7,8 @@
       NULL for that. That has been fixed.
   - Lens changes/additions
     * Chrony: add new options supported in chrony 3.2 and 3.3 (Miroslav Lichvar)
+    * Dhclient: fix parsing of append/prepend and similar directives
+                (John Morrissey)
     * Grub: tolerate some invalid entries. Those invalid entries
             get mapped to '#error' nodes
     * Json: allow escaped slashes in strings (Issue #557)

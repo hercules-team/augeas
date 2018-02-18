@@ -93,19 +93,23 @@ let stmt_array        = [ key stmt_array_re
 let stmt_hash_re      = "send"
                       | "option"
 
-let stmt_hash         = [ key stmt_hash_re
-                        . sep_spc
-                        . ( [ key word . sep_spc . sto_to_spc_noeval ]
+let stmt_args         = ( [ key word . sep_spc . sto_to_spc_noeval ]
                           | [ key word . sep_spc . (rfc_code|eval) ] )
                         . sep_scl
-                        . comment_or_eol ]
+                        . comment_or_eol
+
+let stmt_hash         = [ key stmt_hash_re
+                        . sep_spc
+                        . stmt_args ]
 
 let stmt_opt_mod_re   = "append"
                       | "prepend"
                       | "default"
                       | "supersede"
 
-let stmt_opt_mod      = [ key stmt_opt_mod_re . sep_spc . stmt_hash ]
+let stmt_opt_mod      = [ key stmt_opt_mod_re
+                        . sep_spc
+                        . stmt_args ]
 
 (************************************************************************
  *                         BLOCK STATEMENTS
