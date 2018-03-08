@@ -914,6 +914,7 @@ static struct tree *get_subtree(struct lens *lens, struct state *state) {
     tree = make_tree(state->key, state->value, NULL, children);
     ERR_NOMEM(tree == NULL, state->info);
     tree->span = move(state->span);
+    tree->pos = REG_START(state) + 1;
 
     if (tree->span != NULL) {
         update_span(span, tree->span->span_start, tree->span->span_end);
@@ -937,43 +938,12 @@ static struct skel *parse_subtree(struct lens *lens, struct state *state,
 
     state->key = NULL;
     skel = parse_lens(lens->child, state, &di);
-    *dict = make_dict(state->key, skel, di);
+    if (getenv("AUGEAS_NO_SHIFT") == NULL) {
+        *dict = make_dict(state->key, skel, di);
+    } else {
+        *dict = make_dictz(REG_START(state) + 1, skel, di);
+    }
     state->key = key;
-    return make_skel(lens);
-}
-
-static struct tree *get_region(struct lens *lens, struct state *state) {
-    struct span *span = state->span;
-
-    struct tree *tree;
-
-    if (state->info->flags & AUG_ENABLE_SPAN) {
-        state->span = make_span(state->info);
-        ERR_NOMEM(state->span == NULL, state->info);
-    }
-
-    tree = get_lens(lens->child, state);
-
-    tree->span = state->span;
-    tree->pos = REG_START(state) + 1;
-
-    if (state->span != NULL) {
-        update_span(span, state->span->span_start, state->span->span_end);
-    }
-
-    state->span = span;
-    return tree;
- error:
-    return NULL;
-}
-
-static struct skel *parse_region(struct lens *lens, struct state *state,
-                                 struct dict **dict) {
-    struct skel *skel;
-    struct dict *di = NULL;
-
-    skel = parse_lens(lens->child, state, &di);
-    *dict = make_dictz(REG_START(state) + 1, skel, di);
     return make_skel(lens);
 }
 
@@ -1310,14 +1280,19 @@ static void parse_combine(struct rec_state *rec_state,
 
 static void visit_exit_put_subtree(struct lens *lens,
                                    struct rec_state *rec_state,
-                                   struct frame *top) {
+                                   struct frame *top,
+                                   size_t start) {
     struct state *state = rec_state->state;
     struct skel *skel = NULL;
     struct dict *dict = NULL;
 
     skel = make_skel(lens);
     ERR_NOMEM(skel == NULL, lens->info);
-    dict = make_dict(top->key, top->skel, top->dict);
+    if (getenv("AUGEAS_NO_SHIFT") == NULL) {
+        dict = make_dict(top->key, top->skel, top->dict);
+    } else {
+        dict = make_dictz(start, top->skel, top->dict);
+    }
     ERR_NOMEM(dict == NULL, lens->info);
 
     top = pop_frame(rec_state);
@@ -1334,7 +1309,7 @@ static void visit_exit_put_subtree(struct lens *lens,
 }
 
 static void visit_exit(struct lens *lens,
-                       ATTRIBUTE_UNUSED size_t start,
+                       size_t start,
                        ATTRIBUTE_UNUSED size_t end,
                        void *data) {
     struct rec_state *rec_state = data;
@@ -1350,7 +1325,7 @@ static void visit_exit(struct lens *lens,
 
     ERR_BAIL(lens->info);
 
-    if (lens->tag == L_SUBTREE) {
+    if (lens->tag == L_SUBTREE || lens->tag == L_REGION) {
         /* Get the result of parsing lens->child */
         struct frame *top = pop_frame(rec_state);
         ERR_BAIL(state->info);
@@ -1371,24 +1346,7 @@ static void visit_exit(struct lens *lens,
             ERR_BAIL(state->info);
             top->tree = move(tree);
         } else {
-            visit_exit_put_subtree(lens, rec_state, top);
-        }
-    } else if (lens->tag == L_REGION) {
-        if (rec_state->mode == M_PARSE) {
-            struct frame *top = top_frame(rec_state);
-            struct skel *skel;
-            struct dict *dict;
-            skel = make_skel(lens);
-            ERR_NOMEM(skel == NULL, lens->info);
-            dict = make_dictz(start, top->skel, top->dict);
-            ERR_NOMEM(dict == NULL, lens->info);
-            top = pop_frame(rec_state);
-            ensure(lens == top->lens, state->info);
-            state->key = top->key;
-            pop_frame(rec_state);
-            top = push_frame(rec_state, lens);
-            top->skel = skel;
-            top->dict = dict;
+            visit_exit_put_subtree(lens, rec_state, top, start);
         }
     } else if (lens->tag == L_CONCAT) {
         ensure(rec_state->fused >= lens->nchildren, state->info);
@@ -1609,10 +1567,8 @@ static struct tree *get_lens(struct lens *lens, struct state *state) {
         tree = get_union(lens, state);
         break;
     case L_SUBTREE:
-        tree = get_subtree(lens, state);
-        break;
     case L_REGION:
-        tree = get_region(lens, state);
+        tree = get_subtree(lens, state);
         break;
     case L_STAR:
         tree = get_quant_star(lens, state);
@@ -1753,10 +1709,8 @@ static struct skel *parse_lens(struct lens *lens, struct state *state,
         skel = parse_union(lens, state, dict);
         break;
     case L_SUBTREE:
-        skel = parse_subtree(lens, state, dict);
-        break;
     case L_REGION:
-        skel = parse_region(lens, state,dict);
+        skel = parse_subtree(lens, state, dict);
         break;
     case L_STAR:
         skel = parse_quant_star(lens, state, dict);

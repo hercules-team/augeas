@@ -433,7 +433,11 @@ static void put_subtree(struct lens *lens, struct state *state) {
     split = make_split(tree->children);
     set_split(state, split);
 
-    dict_lookup(tree->label, state->dict, &state->skel, &state->dict);
+    if (getenv("AUGEAS_NO_SHIFT") == NULL) {
+        dict_lookup(tree->label, state->dict, &state->skel, &state->dict);
+    } else {
+        dict_lookupz(tree->pos, state->dict, &state->skel, &state->dict);
+    }
     if (state->with_span) {
         if (tree->span == NULL) {
             tree->span = make_span(state->info);
@@ -457,22 +461,6 @@ static void put_subtree(struct lens *lens, struct state *state) {
     free_split(split);
     free(state->path);
     state->path = oldpath;
-}
-
-static void put_region(struct lens *lens, struct state *state) {
-    assert(lens->tag == L_REGION);
-    struct skel *oldskel = state->skel;
-    struct dict *olddict = state->dict;
-    struct tree *tree = state->split->tree;
-
-    dict_lookupz(tree->pos, state->dict, &state->skel, &state->dict);
-    if (state->skel == NULL || ! skel_instance_of(lens->child, state->skel)) {
-        create_lens(lens->child, state);
-    } else {
-        put_lens(lens->child, state);
-    }
-    state->skel = oldskel;
-    state->dict = olddict;
 }
 
 static void put_del(ATTRIBUTE_UNUSED struct lens *lens, struct state *state) {
@@ -684,10 +672,8 @@ static void put_lens(struct lens *lens, struct state *state) {
         put_union(lens, state);
         break;
     case L_SUBTREE:
-        put_subtree(lens, state);
-        break;
     case L_REGION:
-        put_region(lens, state);
+        put_subtree(lens, state);
         break;
     case L_STAR:
         put_quant_star(lens, state);
@@ -709,10 +695,6 @@ static void put_lens(struct lens *lens, struct state *state) {
 
 static void create_subtree(struct lens *lens, struct state *state) {
     put_subtree(lens, state);
-}
-
-static void create_region(struct lens *lens, struct state *state) {
-    put_region(lens, state);
 }
 
 static void create_del(struct lens *lens, struct state *state) {
@@ -845,10 +827,8 @@ static void create_lens(struct lens *lens, struct state *state) {
         create_union(lens, state);
         break;
     case L_SUBTREE:
-        create_subtree(lens, state);
-        break;
     case L_REGION:
-        create_region(lens, state);
+        create_subtree(lens, state);
         break;
     case L_STAR:
         create_quant_star(lens, state);
