@@ -390,7 +390,19 @@ ticket_243 = \"value1;value2#value3\" # end of line comment
     { "#comment" = "comment with colon" }
     {  }
   }
-  
+
   test IniFile.lns_loose_multiline get multiline_test =
       { "section" = ".anon" { "test_ace" = "val1\n  val2\n   val3" } }
 
+
+let simpler_lens = (IniFile.empty | IniFile.comment IniFile.comment_re IniFile.comment_default)*
+
+test simpler_lens put "## Default value: /etc/zypp
+##
+# configdir = /etc/zypp
+
+##\n" after rm "/#comment[2]" =
+  "## Default value: /etc/zypp
+# configdir = /etc/zypp
+
+##\n"
