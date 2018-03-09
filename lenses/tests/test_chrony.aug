@@ -22,6 +22,7 @@ server ntp5.example.com maxdelay 2 offline
 server ntp6.example.com maxdelay 2 iburst presend 2 xleave offset 1e-4
 server ntp7.example.com iburst presend 2 offline prefer trust require
 server ntp8.example.com minsamples 8 maxsamples 16 version 3
+server ntp9.example.com burst mindelay 0.1 asymmetry 0.5
 peer ntpc1.example.com
 pool pool1.example.com iburst maxsources 3
 allow
@@ -53,12 +54,13 @@ mailonchange root@localhost 0.5
 maxchange 1000 1 2
 maxdistance 1.0
 maxdrift 100
-hwtimestamp eth0 minpoll -2 txcomp 300e-9 rxcomp 645e-9 nocrossts
+hwtimestamp eth0 minpoll -2 txcomp 300e-9 rxcomp 645e-9 nocrossts rxfilter all
 initstepslew 30 foo.bar.com
 initstepslew 30 foo.bar.com baz.quz.com
 ratelimit interval 4 burst 16 leak 2
 cmdratelimit
-refclock SHM 0 refid SHM0 delay 0.1 offset 0.2 noselect
+refclock SHM 0 refid SHM0 delay 0.1 offset 0.2 noselect tai stratum 3
+refclock SOCK /var/run/chrony-GPS.sock pps width 0.1
 refclock PPS /dev/pps0 dpoll 2 poll 3 lock SHM0 rate 5 minsamples 8
 smoothtime 400 0.001 leaponly
 tempcomp /sys/class/hwmon/hwmon0/temp2_input 30 26000 0.0 0.000183 0.0
@@ -110,6 +112,11 @@ ntpsigndsocket /var/lib/samba/ntp_signd
     { "minsamples" = "8" }
     { "maxsamples" = "16" }
     { "version" = "3" }
+  }
+  { "server" = "ntp9.example.com"
+    { "burst" }
+    { "mindelay" = "0.1" }
+    { "asymmetry" = "0.5" }
   }
   { "peer" = "ntpc1.example.com" }
   { "pool" = "pool1.example.com"
@@ -188,6 +195,7 @@ ntpsigndsocket /var/lib/samba/ntp_signd
     { "txcomp" = "300e-9" }
     { "rxcomp" = "645e-9" }
     { "nocrossts" }
+    { "rxfilter" = "all" }
   }
   { "initstepslew"
     { "threshold" = "30" }
@@ -211,6 +219,14 @@ ntpsigndsocket /var/lib/samba/ntp_signd
     { "delay" = "0.1" }
     { "offset" = "0.2" }
     { "noselect" }
+    { "tai" }
+    { "stratum" = "3" }
+  }
+  { "refclock"
+    { "driver" = "SOCK" }
+    { "parameter" = "/var/run/chrony-GPS.sock" }
+    { "pps" }
+    { "width" = "0.1" }
   }
   { "refclock"
     { "driver" = "PPS" }

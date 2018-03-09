@@ -78,11 +78,13 @@ module Chrony =
     (* Variable: cmd_options
          Server/Peer/Pool options with values
     *)
-    let cmd_options = "key"
+    let cmd_options = "asymmetry"
+                    | "key"
                     | /maxdelay((dev)?ratio)?/
                     | /(min|max)poll/
                     | /(min|max)samples/
                     | "maxsources"
+                    | "mindelay"
                     | "offset"
                     | "polltarget"
                     | "port"
@@ -93,7 +95,7 @@ module Chrony =
          Server/Peer/Pool options without values
     *)
     let cmd_flags = "auto_offline"|"iburst"|"noselect"|"offline"|"prefer"
-                  |"require"|"trust"|"xleave"
+                  |"require"|"trust"|"xleave"|"burst"
 
     (* Variable: ntp_source
          Server/Peer/Pool key names
@@ -109,6 +111,7 @@ module Chrony =
          HW timestamping options with values
     *)
     let hwtimestamp_options = "minpoll"|"precision"|"rxcomp"|"txcomp"
+                            |"rxfilter"
 
     (* Variable: hwtimestamp_flags
          HW timestamping options without values
@@ -135,12 +138,12 @@ module Chrony =
     *)
     let refclock_options = "refid"|"lock"|"poll"|"dpoll"|"filter"|"rate"
                             |"minsamples"|"maxsamples"|"offset"|"delay"
-                            |"precision"|"maxdispersion"
+                            |"precision"|"maxdispersion"|"stratum"|"width"
 
     (* Variable: refclock_flags
          refclock options without values
     *)
-    let refclock_flags = "noselect"|"prefer"|"require"|"trust"
+    let refclock_flags = "noselect"|"pps"|"prefer"|"require"|"tai"|"trust"
 
     (* Variable: flags
          Options without values
@@ -265,7 +268,8 @@ module Chrony =
     let hwtimestamp = [ Util.indent . key "hwtimestamp"
                       . space . [ label "interface" . store no_space ]
                       . ( space . ( [ key hwtimestamp_flags ]
-                         | [ key hwtimestamp_options . space . store number ] )
+                         | [ key hwtimestamp_options . space
+                             . store no_space ] )
                         )*
                       . eol ]
     (* View: istepslew
