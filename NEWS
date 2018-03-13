@@ -1,3 +1,7 @@
+1.11.0 - ????-??-??
+  - Lens changes/additions
+    * Chrony: add new options supported in chrony 3.2 and 3.3 (Miroslav Lichvar)
+
 1.10.1 - 2018-01-29
   - API changes
     * Fix a symbol versioning mistake in libfa that unnecessarily broke ABI
