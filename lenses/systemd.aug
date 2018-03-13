@@ -172,6 +172,10 @@ let filter = incl "/lib/systemd/system/*"
            . incl "/etc/systemd/system/*/*"
            . incl "/etc/systemd/logind.conf"
            . incl "/etc/sysconfig/*.systemd"
+           . excl "/lib/systemd/system/*.d"
+           . excl "/etc/systemd/system/*.d"
+           . excl "/lib/systemd/system/*.wants"
+           . excl "/etc/systemd/system/*.wants"
            . Util.stdexcl
 
 let xfm = transform lns filter
