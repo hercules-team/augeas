@@ -131,6 +131,7 @@ static void check_load_error(struct augeas *aug, const char *file) {
     const char *msg, *line, *col;
 
     aug_defvar(aug, "info", info);
+    free(info);
     die(aug_ns_count(aug, "info") == 0, "file %s does not exist\n", file);
 
     aug_defvar(aug, "error", "$info/error");
@@ -240,7 +241,7 @@ static void print_tree(struct augeas *aug, int level,
 static void print(struct augeas *aug, const char *path, const char *match) {
     static const char *const match_var = "match";
 
-    cleanup(freep) struct node *nodes = NULL;
+    struct node *nodes = NULL;
 
     nodes = calloc(max_nodes, sizeof(struct node));
     oom_when(nodes == NULL);
@@ -265,6 +266,10 @@ static void print(struct augeas *aug, const char *path, const char *match) {
         aug_defvar(aug, nodes[0].var, prefix);
         print_tree(aug, 0, prefix + strlen(path) + 1, nodes);
     }
+    for (int i=0; i < max_nodes; i++) {
+        free(nodes[i].var);
+    }
+    free(nodes);
 }
 
 /* Look at the filename and try to guess based on the extension. The
@@ -421,6 +426,7 @@ int main(int argc, char **argv) {
     }
 
     print(aug, path, match);
+    free(path);
 }
 
 /*
