@@ -25,6 +25,7 @@
 #include <getopt.h>
 #include <stdbool.h>
 #include <ctype.h>
+#include <libgen.h>
 
 #include "memory.h"
 #include "augeas.h"
