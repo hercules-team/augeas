@@ -23,7 +23,10 @@ let rbrace = Util.del_str "}"
 let lbrack = Util.del_str "[" . comments
 let rbrack = Util.del_str "]"
 
-let str_store = Quote.dquote . store /([^\\\\"]|\\\\("|n|r|t|\\\\))*/ . Quote.dquote  (* " Emacs, relax *)
+(* This follows the definition of 'string' at https://www.json.org/
+   It's a little wider than what's allowed there as it would accept
+   nonsensical \u escapes *)
+let str_store = Quote.dquote . store /([^\\"]|\\\\["\/bfnrtu\\])*/ . Quote.dquote
 
 let number = [ label "number" . store /-?[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?/
              . comments ]
