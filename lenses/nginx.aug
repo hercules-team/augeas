@@ -120,9 +120,11 @@ let lns = ( Util.comment | Util.empty | directive )*
 let filter = incl "/etc/nginx/nginx.conf"
            . incl "/etc/nginx/conf.d/*.conf"
            . incl "/etc/nginx/sites-available/*"
+           . incl "/etc/nginx/sites-enabled/*"
            . incl "/usr/portage/www-servers/nginx/files/nginx.conf"
            . incl "/usr/local/etc/nginx/nginx.conf"
            . incl "/usr/local/etc/nginx/conf.d/*.conf"
            . incl "/usr/local/etc/nginx/sites-available/*"
+           . incl "/usr/local/etc/nginx/sites-enabled/*"
 
 let xfm = transform lns filter
