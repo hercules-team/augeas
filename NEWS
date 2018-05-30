@@ -2,6 +2,7 @@
   - Lens changes/additions
     * Chrony: add new options supported in chrony 3.2 and 3.3 (Miroslav Lichvar)
     * Json: allow escaped slashes in strings (Issue #557)
+    * Nginx: parse /etc/nginx/sites-enabled (plumbeo)
     * Systemd: do not try to treat *.d or *.wants directories as
                configuration files (Issue #548)
 
