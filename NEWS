@@ -1,6 +1,8 @@
 1.11.0 - ????-??-??
   - Lens changes/additions
     * Chrony: add new options supported in chrony 3.2 and 3.3 (Miroslav Lichvar)
+    * Grub: tolerate some invalid entries. Those invalid entries
+            get mapped to '#error' nodes
     * Json: allow escaped slashes in strings (Issue #557)
     * Nginx: parse /etc/nginx/sites-enabled (plumbeo)
     * Systemd: do not try to treat *.d or *.wants directories as

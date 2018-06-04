@@ -257,3 +257,28 @@ password --encrypted ^9^32kwzzX./3WISQ0C /boot/grub/custom.lst
     { "password" = "secret"
       { "md5" }
     } }
+
+  (* Test parsing of invalid entries via menu_error *)
+  test Grub.lns get "default=0\ncrud=no\n" =
+  { "default" = "0" }
+  { "#error" = "crud=no" }
+
+  (* We handle some pretty bizarre bad syntax *)
+  test Grub.lns get "default=0
+crud no
+valid:nope
+nonsense  =   yes
+bad arg1 arg2 arg3=v\n" =
+  { "default" = "0" }
+  { "#error" = "crud no" }
+  { "#error" = "valid:nope" }
+  { "#error" = "nonsense  =   yes" }
+  { "#error" = "bad arg1 arg2 arg3=v" }
+
+  (* Test parsing of invalid entries via boot_error *)
+  test Grub.lns get "title test
+    root (hd0,0)
+    crud foo\n" =
+  { "title" = "test"
+    { "root" = "(hd0,0)" }
+    { "#error" = "crud foo" } }
