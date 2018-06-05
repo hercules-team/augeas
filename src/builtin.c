@@ -42,8 +42,10 @@
  */
 
 /* V_REGEXP -> V_STRING -> V_LENS */
-static struct value *lns_del(struct info *info,
-                             struct value *rxp, struct value *dflt) {
+static struct value *lns_del(struct info *info, struct value **argv) {
+    struct value *rxp = argv[0];
+    struct value *dflt = argv[1];
+
     assert(rxp->tag == V_REGEXP);
     assert(dflt->tag == V_STRING);
     return lns_make_prim(L_DEL, ref(info),
@@ -51,44 +53,59 @@ static struct value *lns_del(struct info *info,
 }
 
 /* V_REGEXP -> V_LENS */
-static struct value *lns_store(struct info *info, struct value *rxp) {
+static struct value *lns_store(struct info *info, struct value **argv) {
+    struct value *rxp = argv[0];
+
     assert(rxp->tag == V_REGEXP);
     return lns_make_prim(L_STORE, ref(info), ref(rxp->regexp), NULL);
 }
 
 /* V_STRING -> V_LENS */
-static struct value *lns_value(struct info *info, struct value *str) {
+static struct value *lns_value(struct info *info, struct value **argv) {
+    struct value *str = argv[0];
+
     assert(str->tag == V_STRING);
     return lns_make_prim(L_VALUE, ref(info), NULL, ref(str->string));
 }
 
 /* V_REGEXP -> V_LENS */
-static struct value *lns_key(struct info *info, struct value *rxp) {
+static struct value *lns_key(struct info *info, struct value **argv) {
+    struct value *rxp = argv[0];
+
     assert(rxp->tag == V_REGEXP);
     return lns_make_prim(L_KEY, ref(info), ref(rxp->regexp), NULL);
 }
 
 /* V_STRING -> V_LENS */
-static struct value *lns_label(struct info *info, struct value *str) {
+static struct value *lns_label(struct info *info, struct value **argv) {
+    struct value *str = argv[0];
+
     assert(str->tag == V_STRING);
     return lns_make_prim(L_LABEL, ref(info), NULL, ref(str->string));
 }
 
 /* V_STRING -> V_LENS */
-static struct value *lns_seq(struct info *info, struct value *str) {
+static struct value *lns_seq(struct info *info, struct value **argv) {
+    struct value *str = argv[0];
+
     assert(str->tag == V_STRING);
     return lns_make_prim(L_SEQ, ref(info), NULL, ref(str->string));
 }
 
 /* V_STRING -> V_LENS */
-static struct value *lns_counter(struct info *info, struct value *str) {
+static struct value *lns_counter(struct info *info, struct value **argv) {
+    struct value *str = argv[0];
+
     assert(str->tag == V_STRING);
     return lns_make_prim(L_COUNTER, ref(info), NULL, ref(str->string));
 }
 
 /* V_LENS -> V_LENS -> V_LENS -> V_LENS */
-static struct value *lns_square(struct info *info, struct value *l1,
-                                struct value *l2, struct value *l3) {
+static struct value *lns_square(struct info *info, struct value **argv) {
+    struct value *l1 = argv[0];
+    struct value *l2 = argv[1];
+    struct value *l3 = argv[2];
+
     assert(l1->tag == V_LENS);
     assert(l2->tag == V_LENS);
     assert(l3->tag == V_LENS);
@@ -179,8 +196,10 @@ static struct value *pathx_parse_glue(struct info *info, struct value *tree,
 }
 
 /* V_LENS -> V_STRING -> V_TREE */
-static struct value *lens_get(struct info *info, struct value *l,
-                              struct value *str) {
+static struct value *lens_get(struct info *info, struct value **argv) {
+    struct value *l = argv[0];
+    struct value *str = argv[1];
+
     assert(l->tag == V_LENS);
     assert(str->tag == V_STRING);
     struct lns_error *err;
@@ -210,8 +229,11 @@ static struct value *lens_get(struct info *info, struct value *l,
 
 
 /* V_LENS -> V_TREE -> V_STRING -> V_STRING */
-static struct value *lens_put(struct info *info, struct value *l,
-                              struct value *tree, struct value *str) {
+static struct value *lens_put(struct info *info, struct value **argv) {
+    struct value *l    = argv[0];
+    struct value *tree = argv[1];
+    struct value *str  = argv[2];
+
     assert(l->tag == V_LENS);
     assert(tree->tag == V_TREE);
     assert(str->tag == V_STRING);
@@ -237,11 +259,14 @@ static struct value *lens_put(struct info *info, struct value *l,
 }
 
 /* V_STRING -> V_STRING -> V_TREE -> V_TREE */
-static struct value *tree_set_glue(struct info *info, struct value *path,
-                                   struct value *val, struct value *tree) {
+static struct value *tree_set_glue(struct info *info, struct value **argv) {
     // FIXME: This only works if TREE is not referenced more than once;
     // otherwise we'll have some pretty weird semantics, and would really
     // need to copy TREE first
+    struct value *path = argv[0];
+    struct value *val  = argv[1];
+    struct value *tree = argv[2];
+
     assert(path->tag == V_STRING);
     assert(val->tag == V_STRING);
     assert(tree->tag == V_TREE);
@@ -277,11 +302,13 @@ static struct value *tree_set_glue(struct info *info, struct value *path,
 }
 
 /* V_STRING -> V_TREE -> V_TREE */
-static struct value *tree_clear_glue(struct info *info, struct value *path,
-                                     struct value *tree) {
+static struct value *tree_clear_glue(struct info *info, struct value **argv) {
     // FIXME: This only works if TREE is not referenced more than once;
     // otherwise we'll have some pretty weird semantics, and would really
     // need to copy TREE first
+    struct value *path = argv[0];
+    struct value *tree = argv[1];
+
     assert(path->tag == V_STRING);
     assert(tree->tag == V_TREE);
 
@@ -349,25 +376,32 @@ static struct value *tree_insert_glue(struct info *info, struct value *label,
 
 /* Insert after */
 /* V_STRING -> V_STRING -> V_TREE -> V_TREE */
-static struct value *tree_insa_glue(struct info *info, struct value *label,
-                                    struct value *path, struct value *tree) {
+static struct value *tree_insa_glue(struct info *info, struct value **argv) {
+    struct value *label = argv[0];
+    struct value *path  = argv[1];
+    struct value *tree  = argv[2];
+
     return tree_insert_glue(info, label, path, tree, 0);
 }
 
 /* Insert before */
 /* V_STRING -> V_STRING -> V_TREE -> V_TREE */
-static struct value *tree_insb_glue(struct info *info, struct value *label,
-                                    struct value *path, struct value *tree) {
+static struct value *tree_insb_glue(struct info *info, struct value **argv) {
+    struct value *label = argv[0];
+    struct value *path  = argv[1];
+    struct value *tree  = argv[2];
+
     return tree_insert_glue(info, label, path, tree, 1);
 }
 
 /* V_STRING -> V_TREE -> V_TREE */
-static struct value *tree_rm_glue(struct info *info,
-                                  struct value *path,
-                                  struct value *tree) {
+static struct value *tree_rm_glue(struct info *info, struct value **argv) {
     // FIXME: This only works if TREE is not referenced more than once;
     // otherwise we'll have some pretty weird semantics, and would really
     // need to copy TREE first
+    struct value *path  = argv[0];
+    struct value *tree  = argv[1];
+
     assert(path->tag == V_STRING);
     assert(tree->tag == V_TREE);
 
@@ -390,7 +424,9 @@ static struct value *tree_rm_glue(struct info *info,
 }
 
 /* V_STRING -> V_STRING */
-static struct value *gensym(struct info *info, struct value *prefix) {
+static struct value *gensym(struct info *info, struct value **argv) {
+    struct value *prefix = argv[0];
+
     assert(prefix->tag == V_STRING);
     static unsigned int count = 0;
     struct value *v;
@@ -406,7 +442,9 @@ static struct value *gensym(struct info *info, struct value *prefix) {
 }
 
 /* V_STRING -> V_FILTER */
-static struct value *xform_incl(struct info *info, struct value *s) {
+static struct value *xform_incl(struct info *info, struct value **argv) {
+    struct value *s = argv[0];
+
     assert(s->tag == V_STRING);
     struct value *v = make_value(V_FILTER, ref(info));
     v->filter = make_filter(ref(s->string), 1);
@@ -414,7 +452,9 @@ static struct value *xform_incl(struct info *info, struct value *s) {
 }
 
 /* V_STRING -> V_FILTER */
-static struct value *xform_excl(struct info *info, struct value *s) {
+static struct value *xform_excl(struct info *info, struct value **argv) {
+    struct value *s = argv[0];
+
     assert(s->tag == V_STRING);
     struct value *v = make_value(V_FILTER, ref(info));
     v->filter = make_filter(ref(s->string), 0);
@@ -422,8 +462,10 @@ static struct value *xform_excl(struct info *info, struct value *s) {
 }
 
 /* V_LENS -> V_FILTER -> V_TRANSFORM */
-static struct value *xform_transform(struct info *info, struct value *l,
-                                     struct value *f) {
+static struct value *xform_transform(struct info *info, struct value **argv) {
+    struct value *l = argv[0];
+    struct value *f = argv[1];
+
     assert(l->tag == V_LENS);
     assert(f->tag == V_FILTER);
     if (l->lens->value || l->lens->key) {
@@ -436,14 +478,16 @@ static struct value *xform_transform(struct info *info, struct value *l,
     return v;
 }
 
-static struct value *sys_getenv(struct info *info, struct value *n) {
-    assert(n->tag == V_STRING);
+static struct value *sys_getenv(struct info *info, struct value **argv) {
+    assert(argv[0]->tag == V_STRING);
     struct value *v = make_value(V_STRING, ref(info));
-    v->string = dup_string(getenv(n->string->str));
+    v->string = dup_string(getenv(argv[0]->string->str));
     return v;
 }
 
-static struct value *sys_read_file(struct info *info, struct value *n) {
+static struct value *sys_read_file(struct info *info, struct value **argv) {
+    struct value *n = argv[0];
+
     assert(n->tag == V_STRING);
     char *str = NULL;
 
@@ -464,7 +508,10 @@ static struct value *sys_read_file(struct info *info, struct value *n) {
 
 /* V_LENS -> V_LENS */
 static struct value *lns_check_rec_glue(struct info *info,
-                                        struct value *l, struct value *r) {
+                                        struct value **argv) {
+    struct value *l = argv[0];
+    struct value *r = argv[1];
+
     assert(l->tag == V_LENS);
     assert(r->tag == V_LENS);
     int check = typecheck_p(info);
@@ -477,28 +524,28 @@ static struct value *lns_check_rec_glue(struct info *info,
  */
 
 /* V_STRING -> V_UNIT */
-static struct value *pr_string(struct info *info, struct value *s) {
-    printf("%s", s->string->str);
+static struct value *pr_string(struct info *info, struct value **argv) {
+    printf("%s", argv[0]->string->str);
     return make_unit(ref(info));
 }
 
 /* V_REGEXP -> V_UNIT */
-static struct value *pr_regexp(struct info *info, struct value *r) {
-    print_regexp(stdout, r->regexp);
+static struct value *pr_regexp(struct info *info, struct value **argv) {
+    print_regexp(stdout, argv[0]->regexp);
     return make_unit(ref(info));
 }
 
 /* V_STRING -> V_UNIT */
-static struct value *pr_endline(struct info *info, struct value *s) {
-    printf("%s\n", s->string->str);
+static struct value *pr_endline(struct info *info, struct value **argv) {
+    printf("%s\n", argv[0]->string->str);
     return make_unit(ref(info));
 }
 
 /* V_TREE -> V_TREE */
 static struct value *pr_tree(ATTRIBUTE_UNUSED struct info *info,
-                             struct value *t) {
-    print_tree_braces(stdout, 0, t->origin);
-    return ref(t);
+                             struct value **argv) {
+    print_tree_braces(stdout, 0, argv[0]->origin);
+    return ref(argv[0]);
 }
 
 /*
@@ -515,27 +562,29 @@ static struct value *lns_value_of_type(struct info *info, struct regexp *rx) {
 }
 
 /* V_LENS -> V_REGEXP */
-static struct value *lns_ctype(struct info *info, struct value *l) {
-    return lns_value_of_type(info, l->lens->ctype);
+static struct value *lns_ctype(struct info *info, struct value **argv) {
+    return lns_value_of_type(info, argv[0]->lens->ctype);
 }
 
 /* V_LENS -> V_REGEXP */
-static struct value *lns_atype(struct info *info, struct value *l) {
-    return lns_value_of_type(info, l->lens->atype);
+static struct value *lns_atype(struct info *info, struct value **argv) {
+    return lns_value_of_type(info, argv[0]->lens->atype);
 }
 
 /* V_LENS -> V_REGEXP */
-static struct value *lns_vtype(struct info *info, struct value *l) {
-    return lns_value_of_type(info, l->lens->vtype);
+static struct value *lns_vtype(struct info *info, struct value **argv) {
+    return lns_value_of_type(info, argv[0]->lens->vtype);
 }
 
 /* V_LENS -> V_REGEXP */
-static struct value *lns_ktype(struct info *info, struct value *l) {
-    return lns_value_of_type(info, l->lens->ktype);
+static struct value *lns_ktype(struct info *info, struct value **argv) {
+    return lns_value_of_type(info, argv[0]->lens->ktype);
 }
 
 /* V_LENS -> V_STRING */
-static struct value *lns_fmt_atype(struct info *info, struct value *l) {
+static struct value *lns_fmt_atype(struct info *info, struct value **argv) {
+    struct value *l = argv[0];
+
     struct value *result = NULL;
     char *s = NULL;
     int r;
@@ -549,8 +598,10 @@ static struct value *lns_fmt_atype(struct info *info, struct value *l) {
 }
 
 /* V_REGEXP -> V_STRING -> V_STRING */
-static struct value *rx_match(struct info *info,
-                              struct value *rx, struct value *s) {
+static struct value *rx_match(struct info *info, struct value **argv) {
+    struct value *rx = argv[0];
+    struct value *s  = argv[1];
+
     struct value *result = NULL;
     const char *str = s->string->str;
     struct re_registers regs;

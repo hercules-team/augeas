@@ -1028,42 +1028,16 @@ typedef struct value *(*impl5)(struct info *, struct value *, struct value *,
 
 static struct value *native_call(struct info *info,
                                  struct native *func, struct ctx *ctx) {
-    struct value *argv[func->argc];
+    struct value *argv[func->argc + 1];
     struct binding *b = ctx->local;
-    struct value *result;
 
     for (int i = func->argc - 1; i >= 0; i--) {
         argv[i] = b->value;
         b = b->next;
     }
+    argv[func->argc] = NULL;
 
-    switch(func->argc) {
-    case 0:
-        result = ((impl0) *func->impl)(info);
-        break;
-    case 1:
-        result = ((impl1) *func->impl)(info, argv[0]);
-        break;
-    case 2:
-        result = ((impl2) *func->impl)(info, argv[0], argv[1]);
-        break;
-    case 3:
-        result = ((impl3) *func->impl)(info, argv[0], argv[1], argv[2]);
-        break;
-    case 4:
-        result = ((impl4) *func->impl)(info, argv[0], argv[1], argv[2], argv[3]);
-        break;
-    case 5:
-        result = ((impl5) *func->impl)(info, argv[0], argv[1], argv[2], argv[3],
-                                       argv[4]);
-        break;
-    default:
-        assert(0);
-        abort();
-        break;
-    }
-
-    return result;
+    return func->impl(info, argv);
 }
 
 static void type_error1(struct info *info, const char *msg, struct type *type) {
@@ -1865,7 +1839,7 @@ make_native_info(struct error *error, const char *fname, int line) {
 int define_native_intl(const char *file, int line,
                        struct error *error,
                        struct module *module, const char *name,
-                       int argc, void *impl, ...) {
+                       int argc, func_impl impl, ...) {
     assert(argc > 0);  /* We have no unit type */
     assert(argc <= 5);
     va_list ap;

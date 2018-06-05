@@ -112,10 +112,17 @@ struct param {
     struct type   *type;
 };
 
+/* The protoype for the implementation of a native/builtin function in the
+ * interpreter.
+ *
+ * The arguments are passed as a NULL-terminated array of values.
+ */
+typedef struct value *(*func_impl)(struct info *, struct value *argv[]);
+
 struct native {
     unsigned int argc;
     struct type *type;
-    struct value *(*impl)(void);
+    func_impl    impl;
 };
 
 /* An exception in the interpreter. Some exceptions are reported directly
@@ -270,7 +277,7 @@ ATTRIBUTE_RETURN_CHECK
 int define_native_intl(const char *fname, int line,
                        struct error *error,
                        struct module *module, const char *name,
-                       int argc, void *impl, ...);
+                       int argc, func_impl impl, ...);
 
 struct module *builtin_init(struct error *);
 
