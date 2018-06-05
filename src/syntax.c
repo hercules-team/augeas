@@ -414,7 +414,8 @@ struct value *make_exn_value(struct info *info,
         return NULL;
 
     v = make_value(V_EXN, ref(info));
-    CALLOC(v->exn, 1);
+    if (ALLOC(v->exn) < 0)
+        return info->error->exn;
     v->exn->info = info;
     v->exn->message = message;
 
@@ -954,6 +955,9 @@ static struct value *coerce(struct value *v, struct type *t) {
     if (vt->tag == T_STRING && t->tag == T_REGEXP) {
         struct value *rxp = make_value(V_REGEXP, ref(v->info));
         rxp->regexp = make_regexp_literal(v->info, v->string->str);
+        if (rxp->regexp == NULL) {
+            report_error(v->info->error, AUG_ENOMEM, NULL);
+        };
         unref(v, value);
         unref(vt, type);
         return rxp;
@@ -982,7 +986,8 @@ static struct type *expect_types_arr(struct info *info,
         }
         len += (ntypes - 1) * 4 + 1;
         char *allowed_names;
-        CALLOC(allowed_names, len);
+        if (ALLOC_N(allowed_names, len) < 0)
+            return NULL;
         for (int i=0; i < ntypes; i++) {
             if (i > 0)
                 strcat(allowed_names, (i == ntypes - 1) ? ", or " : ", ");
@@ -1535,7 +1540,8 @@ static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
         const char *s2 = v2->string->str;
         v = make_value(V_STRING, ref(info));
         make_ref(v->string);
-        CALLOC(v->string->str, strlen(s1) + strlen(s2) + 1);
+        if (ALLOC_N(v->string->str, strlen(s1) + strlen(s2) + 1) < 0)
+            goto error;
         char *s = v->string->str;
         strcpy(s, s1);
         strcat(s, s2);
@@ -1574,6 +1580,8 @@ static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
     unref(v1, value);
     unref(v2, value);
     return v;
+ error:
+    return exp->info->error->exn;
 }
 
 static struct value *apply(struct term *app, struct ctx *ctx) {

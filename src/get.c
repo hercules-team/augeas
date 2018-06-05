@@ -288,7 +288,8 @@ static void get_error(struct state *state, struct lens *lens,
 static struct skel *make_skel(struct lens *lens) {
     struct skel *skel;
     enum lens_tag tag = lens->tag;
-    CALLOC(skel, 1);
+    if (ALLOC(skel) < 0)
+        return NULL;
     skel->tag = tag;
     return skel;
 }
@@ -487,7 +488,8 @@ static struct seq *find_seq(const char *name, struct state *state) {
          seq = seq->next);
 
     if (seq == NULL) {
-        CALLOC(seq, 1);
+        if (ALLOC(seq) < 0)
+            return NULL;
         seq->name = name;
         seq->value = 1;
         list_append(state->seqs, seq);

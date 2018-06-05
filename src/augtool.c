@@ -112,8 +112,7 @@ static char *readline_path_generator(const char *text, int state) {
             if ((path = strdup("*")) == NULL)
                 return NULL;
         } else {
-            CALLOC(path, end - text + 2);
-            if (path == NULL)
+            if (ALLOC_N(path, end - text + 2) < 0)
                 return NULL;
             strncpy(path, text, end - text);
             strcat(path, "*");

@@ -670,6 +670,8 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
         lens->vtype = restrict_regexp(lens->regexp);
     } else if (tag == L_VALUE) {
         lens->vtype = make_regexp_literal(info, lens->string->str);
+        if (lens->vtype == NULL)
+            goto error;
     }
 
     return make_lens_value(lens);
