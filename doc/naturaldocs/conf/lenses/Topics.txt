@@ -17,7 +17,7 @@ Ignore Keywords:
 # Alter Topic Type: [name]
 #    Creates a new topic type or alters one from the main file.  Each type gets
 #    its own index and behavior settings.  Its name can have letters, numbers,
-#    spaces, and these characters: - / . '
+#    spaces, and these charaters: - / . '
 #
 # Plural: [name]
 #    Sets the plural name of the topic type, if different.

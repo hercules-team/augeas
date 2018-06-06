@@ -204,6 +204,11 @@ Group: Specific Modules  {
    File: Yaml  (yaml.aug)
    File: Cron_User  (cron_user.aug)
    File: Oz  (oz.aug)
+   File: Getcap  (getcap.aug)
+   File: Rancid  (rancid.aug)
+   File: Rtadvd  (rtadvd.aug)
+   File: Strongswan  (strongswan.aug)
+   File: Termcap  (termcap.aug)
    }  # Group: Specific Modules
 
 Group: Generic Modules  {
