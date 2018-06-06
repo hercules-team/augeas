@@ -102,6 +102,11 @@ F</usr/share/augeas/lenses/dist>
   # show all the clients to which we are exporting /home
   augmatch -eom 'dir["/home"]/client' /etc/exports
 
+=head1 EXIT STATUS
+
+The exit status is 0 when there was at least one match, 1 if there was no
+match, and 2 if an error occurred.
+
 =head1 FILES
 
 Lenses and schema definitions in F</usr/share/augeas/lenses> and
