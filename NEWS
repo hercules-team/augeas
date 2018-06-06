@@ -1,4 +1,7 @@
 1.11.0 - ????-??-??
+  - General changes/additions
+    * augmatch: add a --quiet option; make the exit status useful to tell
+                whether there was a match or not
   - Lens changes/additions
     * Chrony: add new options supported in chrony 3.2 and 3.3 (Miroslav Lichvar)
     * Grub: tolerate some invalid entries. Those invalid entries
