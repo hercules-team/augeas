@@ -33,11 +33,22 @@ act=$(augmatch -eom 'dir["/home"]/client' /etc/exports)
 exp=$(printf "207.46.0.0/16\n192.168.50.2/32\n")
 assert_eq "$exp" "$act" "t3: expected '$exp'"
 
-# report error on invalid path expression
+# report errors with exit code 2
 augmatch -m '**' /etc/exports >/dev/null 2>&1
 ret=$?
 assert_eq 2 $ret "t4: expected exit code 2 but got $ret"
 
-augmatch /etc
+augmatch /etc >/dev/null 2>&1
 ret=$?
 assert_eq 2 $ret "t5: expected exit code 2 but got $ret"
+
+# test --quiet
+act=$(augmatch -q -m "dir['/local']" /etc/exports)
+ret=$?
+assert_eq '' "$act" "t6: expected no output"
+assert_eq 0 $ret "t6: expected exit code 0 but got $ret"
+
+act=$(augmatch -q -m "dir['/not_there']" /etc/exports)
+ret=$?
+assert_eq '' "$act" "t7: expected no output"
+assert_eq 1 $ret "t7: expected exit code 1 but got $ret"

@@ -67,6 +67,10 @@ B<AUGEAS_LENS_LIB> will be searched for modules.
 
 Print only the value and not the label or the path of nodes.
 
+=item B<-q>, B<--quiet>
+
+Do not print anything. Exit with zero status if a match was found
+
 =back
 
 =head1 ENVIRONMENT VARIABLES

@@ -61,6 +61,8 @@ static void usage(void) {
 "  -e, --exact        print only exact matches instead of the entire tree\n"
 "                     starting at a match\n"
 "  -o, --only-value   print only the values of tree nodes, but no path\n"
+"  -q, --quiet        do not print anything. Exit with zero status if a\n"
+"                     match was found\n"
 "  -r, --root ROOT    use ROOT as the root of the filesystem\n"
 "  -I, --include DIR  search DIR for modules; can be given mutiple times\n"
 "  -S, --nostdinc     do not search the builtin default directories\n"
@@ -240,16 +242,18 @@ static void print_tree(struct augeas *aug, int level,
 }
 
 /* Print the tree for file PATH (which must already start with /files), but
- * only the nodes matching MATCH */
-static void print(struct augeas *aug, const char *path, const char *match) {
+ * only the nodes matching MATCH.
+ *
+ * Return EXIT_SUCCESS if there was at least one match, and EXIT_FAILURE
+ * if there was none.
+ */
+static int print(struct augeas *aug, const char *path, const char *match) {
     static const char *const match_var = "match";
 
     struct node *nodes = NULL;
 
     nodes = calloc(max_nodes, sizeof(struct node));
     oom_when(nodes == NULL);
-
-    aug_set(aug, "/augeas/context", path);
 
     for (int i=0; i < max_nodes; i++) {
         nodes[i].var = format("var%d", i);
@@ -273,6 +277,8 @@ static void print(struct augeas *aug, const char *path, const char *match) {
         free(nodes[i].var);
     }
     free(nodes);
+
+    return (count == 0) ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
 /* Look at the filename and try to guess based on the extension. The
@@ -305,6 +311,8 @@ int main(int argc, char **argv) {
     size_t matches_len = 0;
     const char *match = "*";
     bool print_lens = false;
+    bool quiet = false;
+    int result = EXIT_SUCCESS;
 
     struct option options[] = {
         { "help",       0, 0, 'h' },
@@ -318,13 +326,14 @@ int main(int argc, char **argv) {
         { "root",       1, 0, 'r' },
         { "print-lens", 0, 0, 'L' },
         { "exact",      0, 0, 'e' },
+        { "quiet",      0, 0, 'q' },
         { 0, 0, 0, 0}
     };
     unsigned int flags = AUG_NO_LOAD|AUG_NO_ERR_CLOSE;
     progname = basename(argv[0]);
 
     setlocale(LC_ALL, "");
-    while ((opt = getopt_long(argc, argv, "ahI:l:m:oSr:eL", options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "ahI:l:m:oSr:eLq", options, NULL)) != -1) {
         switch(opt) {
         case 'I':
             argz_add(&loadpath, &loadpath_len, optarg);
@@ -360,6 +369,9 @@ int main(int argc, char **argv) {
             break;
         case 'e':
             print_exact = true;
+            break;
+        case 'q':
+            quiet = true;
             break;
         default:
             fprintf(stderr, "Try '%s --help' for more information.\n",
@@ -422,14 +434,24 @@ int main(int argc, char **argv) {
     check_load_error(aug, file);
 
     char *path = format("/files%s", file);
+    aug_set(aug, "/augeas/context", path);
+
 
     if (matches_len > 0) {
         argz_stringify(matches, matches_len, '|');
         match = matches;
     }
 
-    print(aug, path, match);
+    if (quiet) {
+        int n = aug_match(aug, match, NULL);
+        check_error(aug);
+        result = (n == 0) ? EXIT_FAILURE : EXIT_SUCCESS;
+    } else {
+        result = print(aug, path, match);
+    }
     free(path);
+
+    return result;
 }
 
 /*
