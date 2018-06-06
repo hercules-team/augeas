@@ -273,7 +273,7 @@ check_SCRIPTS = \
   test-save-empty.sh test-bug-1.sh test-idempotent.sh test-preserve.sh \
   test-events-saved.sh test-save-mode.sh test-unlink-error.sh \
   test-augtool-empty-line.sh test-augtool-modify-root.sh \
-  test-span-rec-lens.sh test-nonwritable.sh
+  test-span-rec-lens.sh test-nonwritable.sh test-augmatch.sh
 
 EXTRA_DIST = \
   test-augtool root lens-test-1 \

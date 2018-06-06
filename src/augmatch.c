@@ -31,6 +31,8 @@
 #include "augeas.h"
 #include <locale.h>
 
+#define EXIT_TROUBLE 2
+
 #define cleanup(_x) __attribute__((__cleanup__(_x)))
 
 const char *progname;
@@ -83,7 +85,7 @@ static void die(bool cond, const char *format, ...) {
         va_start(args, format);
         vfprintf(stderr, format, args);
         va_end(args);
-        exit(EXIT_FAILURE);
+        exit(EXIT_TROUBLE);
     }
 }
 
@@ -120,7 +122,7 @@ static void check_error(struct augeas *aug) {
         if (msg != NULL) {
             fprintf(stderr, "%s\n", msg);
         }
-        exit(EXIT_FAILURE);
+        exit(EXIT_TROUBLE);
     }
 }
 
@@ -155,7 +157,7 @@ static void check_load_error(struct augeas *aug, const char *file) {
     } else {
         fprintf(stderr, "error reading %s: %s\n", file, msg);
     }
-    exit(EXIT_FAILURE);
+    exit(EXIT_TROUBLE);
 }
 
 /* We keep track of where we are in the tree when we are printing it by
@@ -362,7 +364,7 @@ int main(int argc, char **argv) {
         default:
             fprintf(stderr, "Try '%s --help' for more information.\n",
                     progname);
-            exit(EXIT_FAILURE);
+            exit(EXIT_TROUBLE);
             break;
         }
     }
@@ -371,7 +373,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Expected an input file\n");
         fprintf(stderr, "Try '%s --help' for more information.\n",
                 progname);
-        exit(EXIT_FAILURE);
+        exit(EXIT_TROUBLE);
     }
 
     const char *file = argv[optind];
