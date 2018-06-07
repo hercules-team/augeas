@@ -33,8 +33,6 @@ let qstr (k:regexp) =
   [ ikey k . ws . bare . eol ]
  |[ ikey k . ws . quoted . eol ]
 
-let wwid = kv "wwid" (Rx.word|"*")
-
 (* Settings that can be changed in various places *)
 let common_setting =
    qstr "path_selector"
@@ -109,15 +107,14 @@ let defaults =
 (* The blacklist and blacklist_exceptions sections *)
 let blacklist =
   let setting =
-    wwid
-   |qstr "devnode"
+    qstr /devnode|wwid|property/
    |device in
   section /blacklist(_exceptions)?/ setting
 
 (* A multipath subsection *)
 let multipath =
   let setting =
-    wwid
+    kv "wwid" (Rx.word|"*")
    |qstr "alias"
    |common_setting in
   section "multipath" setting

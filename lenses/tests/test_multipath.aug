@@ -193,3 +193,27 @@ test Multipath.lns get conf =
       { "polling_interval" = "9" }
       { "delay_watch_checks" = "10" }
       { "delay_wait_checks" = "10" } } }
+
+test Multipath.lns get "blacklist {
+        devnode \".*\"
+        wwid \"([a-z]+|ab?c).*\"
+}\n" =
+  { "blacklist"
+    { "devnode" = ".*" }
+    { "wwid" = "([a-z]+|ab?c).*" } }
+
+test Multipath.lns get "blacklist {\n property \"[a-z]+\"\n}\n" =
+  { "blacklist"
+    { "property" = "[a-z]+" } }
+
+(* Check that '""' inside a string works *)
+test Multipath.lns get "blacklist {
+  device {
+    vendor SomeCorp
+    product \"2.5\"\" SSD\"
+  }
+}\n" =
+  { "blacklist"
+    { "device"
+      { "vendor" = "SomeCorp" }
+      { "product" = "2.5"" SSD" } } }

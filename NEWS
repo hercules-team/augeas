@@ -4,6 +4,8 @@
     * Grub: tolerate some invalid entries. Those invalid entries
             get mapped to '#error' nodes
     * Json: allow escaped slashes in strings (Issue #557)
+    * Multipath: accept regular expressions for devnode, wwid, and property
+      in blacklist and blacklist_exceptions sections (Issue #564)
     * Nginx: parse /etc/nginx/sites-enabled (plumbeo)
     * Systemd: do not try to treat *.d or *.wants directories as
                configuration files (Issue #548)
