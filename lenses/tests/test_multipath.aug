@@ -216,4 +216,4 @@ test Multipath.lns get "blacklist {
   { "blacklist"
     { "device"
       { "vendor" = "SomeCorp" }
-      { "product" = "2.5"" SSD" } } }
+      { "product" = "2.5\"\" SSD" } } }
