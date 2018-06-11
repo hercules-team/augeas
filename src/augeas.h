@@ -403,6 +403,8 @@ int aug_print(const augeas *aug, FILE *out, const char *path);
  * contain the path to the toplevel node of that file underneath /files. If
  * it does not, *FILE_PATH will be NULL.
  *
+ * The caller is responsible for freeing *FILE_PATH
+ *
  * Returns:
  * 0 on success, or a negative value on failure. It is an error if PATH
  * matches more than one node.

@@ -816,6 +816,41 @@ static void testAugNs(CuTest *tc) {
     aug_close(aug);
 }
 
+/* Test aug_source */
+static void testAugSource(CuTest *tc) {
+    struct augeas *aug;
+    int r;
+    char *s;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    r = aug_load_file(aug, "/etc/hosts");
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_source(aug, "/files/etc/hosts/1", &s);
+    CuAssertIntEquals(tc, 0, r);
+    CuAssertStrEquals(tc, "/files/etc/hosts", s);
+    free(s);
+
+    r = aug_source(aug, "/files/etc/fstab", &s);
+    CuAssertIntEquals(tc, -1, r);
+    CuAssertIntEquals(tc, AUG_ENOMATCH, aug_error(aug));
+    CuAssertPtrEquals(tc, NULL, s);
+
+    r = aug_source(aug, "/files[", &s);
+    CuAssertIntEquals(tc, -1, r);
+    CuAssertIntEquals(tc, AUG_EPATHX, aug_error(aug));
+    CuAssertPtrEquals(tc, NULL, s);
+
+    r = aug_source(aug, "/files/etc/hosts/*", &s);
+    CuAssertIntEquals(tc, -1, r);
+    CuAssertIntEquals(tc, AUG_EMMATCH, aug_error(aug));
+    CuAssertPtrEquals(tc, NULL, s);
+
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -840,6 +875,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testLoadBadPath);
     SUITE_ADD_TEST(suite, testLoadBadLens);
     SUITE_ADD_TEST(suite, testAugNs);
+    SUITE_ADD_TEST(suite, testAugSource);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)
