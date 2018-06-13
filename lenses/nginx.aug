@@ -47,8 +47,11 @@ let block_re_all = block_re | "if" | "location" | "geo" | "map"
 let simple =
      let kw = word - block_re_all
   in let mask = [ label "mask" . Util.del_str "/" . store Rx.integer ]
-  in let sto = store /[^ \t\n;][^;]*/ . Sep.semicolon
-  in [ Util.indent . key kw . mask? . Sep.space . sto . (Util.eol|Util.comment_eol) ]
+  in let sto = store /[^ \t\n;#]([^";#]|"[^"]*\")*/
+  in [ Util.indent .
+       key kw . mask? .
+       (Sep.space . sto)? . Sep.semicolon .
+       (Util.eol|Util.comment_eol) ]
 
 (* View: server
      A simple server entry *)
