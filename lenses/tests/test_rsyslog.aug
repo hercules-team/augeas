@@ -199,3 +199,9 @@ test Rsyslog.lns get "module(load=\"imuxsock\" 	  # provides support for local s
     { "SysSock.Use" = "off" }
     { "#comment" = "Turn off message reception via local log socket;" } }
   { "#comment" = "local messages are retrieved through imjournal now." }
+
+(* Added in rsyslog 8.33 *)
+test Rsyslog.lns get "include(file=\"/etc/rsyslog.d/*.conf\" mode=\"optional\")\n" =
+  { "include"
+    { "file" = "/etc/rsyslog.d/*.conf" }
+    { "mode" = "optional" } }

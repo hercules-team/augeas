@@ -13,6 +13,7 @@
     * Multipath: accept regular expressions for devnode, wwid, and property
       in blacklist and blacklist_exceptions sections (Issue #564)
     * Nginx: parse /etc/nginx/sites-enabled (plumbeo)
+    * Rsyslog: support include() directive introduced in rsyslog 8.33
     * Systemd: do not try to treat *.d or *.wants directories as
                configuration files (Issue #548)
 
