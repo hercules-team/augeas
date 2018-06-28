@@ -208,6 +208,10 @@ struct expr {
         struct {                       /* E_APP */
             const struct func *func;
             struct expr       **args;
+            /* If fold is true, replace this function invocation
+             * with its value after the first time we evaluate this
+             * expression */
+            bool              fold;
         };
     };
 };
@@ -282,6 +286,7 @@ struct func {
     const char      *name;
     unsigned int     arity;
     enum type        type;
+    bool             pure;      /* Result only depends on args */
     const enum type *arg_types;
     func_impl_t      impl;
 };
@@ -304,40 +309,40 @@ static const enum type arg_types_nodeset_string[] = { T_NODESET, T_STRING };
 
 static const struct func builtin_funcs[] = {
     { .name = "last", .arity = 0, .type = T_NUMBER, .arg_types = NULL,
-      .impl = func_last },
+      .impl = func_last, .pure = false },
     { .name = "position", .arity = 0, .type = T_NUMBER, .arg_types = NULL,
-      .impl = func_position },
+      .impl = func_position, .pure = false },
     { .name = "label", .arity = 0, .type = T_STRING, .arg_types = NULL,
-      .impl = func_label },
+      .impl = func_label, .pure = false },
     { .name = "count", .arity = 1, .type = T_NUMBER,
       .arg_types = arg_types_nodeset,
-      .impl = func_count },
+      .impl = func_count, .pure = false },
     { .name = "regexp", .arity = 1, .type = T_REGEXP,
       .arg_types = arg_types_string,
-      .impl = func_regexp },
+      .impl = func_regexp, .pure = true },
     { .name = "regexp", .arity = 1, .type = T_REGEXP,
       .arg_types = arg_types_nodeset,
-      .impl = func_regexp },
+      .impl = func_regexp, .pure = true },
     { .name = "regexp", .arity = 2, .type = T_REGEXP,
       .arg_types = arg_types_string_string,
-      .impl = func_regexp_flag },
+      .impl = func_regexp_flag, .pure = true },
     { .name = "regexp", .arity = 2, .type = T_REGEXP,
       .arg_types = arg_types_nodeset_string,
-      .impl = func_regexp_flag },
+      .impl = func_regexp_flag, .pure = true },
     { .name = "glob", .arity = 1, .type = T_REGEXP,
       .arg_types = arg_types_string,
-      .impl = func_glob },
+      .impl = func_glob, .pure = true },
     { .name = "glob", .arity = 1, .type = T_REGEXP,
       .arg_types = arg_types_nodeset,
-      .impl = func_glob },
+      .impl = func_glob, .pure = true },
     { .name = "int", .arity = 1, .type = T_NUMBER,
-      .arg_types = arg_types_string, .impl = func_int },
+      .arg_types = arg_types_string, .impl = func_int, .pure = false },
     { .name = "int", .arity = 1, .type = T_NUMBER,
-      .arg_types = arg_types_nodeset, .impl = func_int },
+      .arg_types = arg_types_nodeset, .impl = func_int, .pure = false },
     { .name = "int", .arity = 1, .type = T_NUMBER,
-      .arg_types = arg_types_bool, .impl = func_int },
+      .arg_types = arg_types_bool, .impl = func_int, .pure = false },
     { .name = "not", .arity = 1, .type = T_BOOLEAN,
-      .arg_types = arg_types_bool, .impl = func_not }
+      .arg_types = arg_types_bool, .impl = func_not, .pure = true }
 };
 
 #define RET_ON_ERROR                                                    \
@@ -1409,6 +1414,16 @@ static void eval_expr(struct expr *expr, struct state *state) {
         break;
     case E_APP:
         eval_app(expr, state);
+        if (expr->fold) {
+            /* Do constant folding: replace the function application with
+             * a reference to the value that resulted from evaluating it */
+            for (int i=0; i < expr->func->arity; i++)
+                free_expr(expr->args[i]);
+            free(expr->args);
+            value_ind_t vind = state->values_used - 1;
+            expr->tag = E_VALUE;
+            expr->value_ind = state->values[vind];
+        }
         break;
     default:
         assert(0);
@@ -1493,6 +1508,18 @@ static void check_app(struct expr *expr, struct state *state) {
     if (f < ARRAY_CARDINALITY(builtin_funcs)) {
         expr->func = builtin_funcs + f;
         expr->type = expr->func->type;
+        expr->fold = expr->func->pure;
+        if (expr->fold) {
+            /* We only do constant folding for invocations of pure functions
+             * whose arguments are literal values. That misses opportunities
+             * for constant folding, e.g., "regexp('foo' + 'bar')" but is
+             * a bit simpler than doing full tracking of constants
+             */
+            for (int i=0; i < expr->func->arity; i++) {
+                if (expr->args[i]->tag != E_VALUE)
+                    expr->fold = false;
+            }
+        }
     } else {
         STATE_ERROR(state, PATHX_ETYPE);
     }

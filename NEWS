@@ -2,6 +2,8 @@
   - General changes/additions
     * augmatch: add a --quiet option; make the exit status useful to tell
                 whether there was a match or not
+    * Drastically reduce the amount of memory needed to evaluate complex
+      path expressions against large files (Issue #569)
   - API changes
     * aug_source did not in fact return the source; and always returned
       NULL for that. That has been fixed.
