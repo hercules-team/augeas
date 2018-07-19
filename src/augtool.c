@@ -152,15 +152,13 @@ static char *readline_path_generator(const char *text, int state) {
 
             /* strip off context if the user didn't give it */
             if (ctx != NULL) {
-                char *c = realloc(child, strlen(child)-strlen(ctx)+1);
-                if (c == NULL) {
-                    free(child);
-                    return NULL;
-                }
                 int ctxidx = strlen(ctx);
                 if (child[ctxidx] == SEP)
                     ctxidx++;
-                strcpy(c, &child[ctxidx]);
+                char *c = strdup(&child[ctxidx]);
+                free(child);
+                if (c == NULL)
+                    return NULL;
                 child = c;
             }
 
