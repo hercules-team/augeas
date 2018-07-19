@@ -286,6 +286,11 @@ static void fa_dot_debug(struct fa *fa, const char *tag) {
         return;
 
     fp = fopen(fname, "w");
+    if (fp == NULL) {
+        free(fname);
+        return;
+    }
+
     fa_dot(fp, fa);
     fclose(fp);
     free(fname);
