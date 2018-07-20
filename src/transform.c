@@ -1258,7 +1258,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
 
         if (fchmod(fileno(fp), 0666 & ~curumsk) < 0) {
             err_status = "create_chmod";
-            return -1;
+            goto done;
         }
     }
 
