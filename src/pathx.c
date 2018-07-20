@@ -1971,7 +1971,7 @@ static void parse_location_path(struct state *state) {
             state->pos += 1;
             locpath = parse_relative_location_path(state);
             if (HAS_ERROR(state))
-                return;
+                goto error;
             struct step *step = make_step(DESCENDANT_OR_SELF, state);
             if (HAS_ERROR(state))
                 goto error;
