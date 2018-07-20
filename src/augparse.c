@@ -140,6 +140,7 @@ int main(int argc, char **argv) {
         if (s != NULL) {
             fprintf(stderr, "%s\n", s);
         }
+        aug_close(aug);
         exit(EXIT_FAILURE);
     }
 
