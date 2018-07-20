@@ -6,7 +6,7 @@ AM_CFLAGS = $(AUGEAS_CFLAGS) $(WARN_CFLAGS) $(GNULIB_CFLAGS) \
 
 VALGRIND=libtool --mode=execute valgrind --quiet --leak-check=full
 valgrind:
-	make check \
+	$(MAKE) $(MAKEFLAGS) check \
 	  VALGRIND="$(VALGRIND)" \
 	  AUGPARSE=$(abs_top_builddir)/src/augparse \
 	  AUGTOOL=$(abs_top_builddir)/src/augtool
