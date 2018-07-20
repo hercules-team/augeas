@@ -1109,16 +1109,20 @@ static ind_t add_lens(struct jmt *jmt, struct lens *lens) {
 
     if (debugging("cf.jmt")) {
         if (sA == NULL) {
+            char *s = format_lens(lens);
             printf("add_lens: ");
             print_regexp(stdout, lens->ctype);
-            printf(" %s\n", format_lens(lens));
+            printf(" %s\n", s);
+            free(s);
         } else {
+            char *s = format_lens(lens);
             printf("add_lens: ");
             flens(stdout, l);
-            printf(" %u %s\n", sA->num, format_lens(lens));
+            printf(" %u %s\n", sA->num, s);
             if (nullable) {
-                printf("add_lens: // %s\n", format_lens(lens));
+                printf("add_lens: // %s\n", s);
             }
+            free(s);
         }
     }
 
