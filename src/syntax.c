@@ -2068,6 +2068,7 @@ int interpreter_init(struct augeas *aug) {
 
     for (int i=0; i < globbuf.gl_pathc; i++) {
         char *name, *p, *q;
+        int res;
         p = strrchr(globbuf.gl_pathv[i], SEP);
         if (p == NULL)
             p = globbuf.gl_pathv[i];
@@ -2076,9 +2077,10 @@ int interpreter_init(struct augeas *aug) {
         q = strchr(p, '.');
         name = strndup(p, q - p);
         name[0] = toupper(name[0]);
-        if (load_module(aug, name) == -1)
-            goto error;
+        res = load_module(aug, name);
         free(name);
+        if (res == -1)
+            goto error;
     }
     globfree(&globbuf);
     return 0;
