@@ -627,3 +627,22 @@ test Httpd.directive get
     { "arg" = "X-Forwarded-Proto" }
     { "arg" = "https" }
     { "arg" = "expr=(%{HTTP:CF-Visitor}='{\"scheme\":\"https\"}')" } }
+
+(* Issue #577: we make the newline starting a section optional, including
+   an empty comment at the end of the line. This used to miss empty comments
+   with whitespace *)
+test Httpd.lns get "<If cond>#\n</If>\n" = { "If" { "arg" = "cond" } }
+
+test Httpd.lns get "<If cond># \n</If>\n" = { "If" { "arg" = "cond" } }
+
+test Httpd.lns get "<If cond>\n# \n</If>\n" =  { "If" { "arg" = "cond" } }
+
+test Httpd.lns get "<If cond># text\n</If>\n" =
+  { "If"
+    { "arg" = "cond" }
+    { "#comment" = "text" } }
+
+test Httpd.lns get "<If cond>\n\t# text\n</If>\n" =
+  { "If"
+    { "arg" = "cond" }
+    { "#comment" = "text" } }

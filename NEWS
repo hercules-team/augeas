@@ -11,6 +11,8 @@
                 (John Morrissey)
     * Grub: tolerate some invalid entries. Those invalid entries
             get mapped to '#error' nodes
+    * Httpd: accept comments with whitespace right after a tag
+             opening a section (Issue #577)
     * Json: allow escaped slashes in strings (Issue #557)
     * Multipath: accept regular expressions for devnode, wwid, and property
       in blacklist and blacklist_exceptions sections (Issue #564)
