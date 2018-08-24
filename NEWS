@@ -1,9 +1,11 @@
-1.11.0 - ????-??-??
+1.11.0 - 2018-08-24
   - General changes/additions
     * augmatch: add a --quiet option; make the exit status useful to tell
                 whether there was a match or not
     * Drastically reduce the amount of memory needed to evaluate complex
       path expressions against large files (Issue #569)
+    * Fix a segfault on OSX when 'augmatch' is run without any
+      arguments (Issue #556)
   - API changes
     * aug_source did not in fact return the source; and always returned
       NULL for that. That has been fixed.
@@ -11,6 +13,8 @@
     * Chrony: add new options supported in chrony 3.2 and 3.3 (Miroslav Lichvar)
     * Dhclient: fix parsing of append/prepend and similar directives
                 (John Morrissey)
+    * Fstab: allow leading whitespace in mount entry lines
+             (Pino Toscano) (Issue #544)
     * Grub: tolerate some invalid entries. Those invalid entries
             get mapped to '#error' nodes
     * Httpd: accept comments with whitespace right after a tag
@@ -25,6 +29,7 @@
     * Redis: accept the 'bind' statement with multiple IP addresses
              (yannh) (Issue #194)
     * Rsyslog: support include() directive introduced in rsyslog 8.33
+    * Strongswan: new lens (Kaarle Ritvanen)
     * Systemd: do not try to treat *.d or *.wants directories as
                configuration files (Issue #548)
 
