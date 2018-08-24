@@ -62,12 +62,12 @@ void reset_error(struct error *err);
 
 #define HAS_ERR(obj) ((obj)->error->code != AUG_NOERROR)
 
-#define ERR_BAIL(obj) if ((obj)->error->code != AUG_NOERROR) goto error;
+#define ERR_BAIL(obj) if (AUGEAS_UNLIKELY((obj)->error->code != AUG_NOERROR)) goto error;
 
-#define ERR_RET(obj) if ((obj)->error->code != AUG_NOERROR) return;
+#define ERR_RET(obj) if (AUGEAS_UNLIKELY((obj)->error->code != AUG_NOERROR)) return;
 
 #define ERR_NOMEM(cond, obj)                             \
-    if (cond) {                                          \
+    if (AUGEAS_UNLIKELY(cond)) {                         \
         report_error((obj)->error, AUG_ENOMEM, NULL);    \
         goto error;                                      \
     }
@@ -77,7 +77,7 @@ void reset_error(struct error *err);
 
 #define ERR_THROW(cond, obj, code, fmt ...)             \
     do {                                                \
-        if (cond) {                                     \
+        if (AUGEAS_UNLIKELY(cond)) {                    \
             report_error((obj)->error, code, ## fmt);   \
             goto error;                                 \
         }                                               \
@@ -85,7 +85,7 @@ void reset_error(struct error *err);
 
 #define ARG_CHECK(cond, obj, fmt ...)                           \
     do {                                                        \
-        if (cond) {                                             \
+        if (AUGEAS_UNLIKELY(cond)) {                            \
             report_error((obj)->error, AUG_EBADARG, ## fmt);    \
             goto error;                                         \
         }                                                       \

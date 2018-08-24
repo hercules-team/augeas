@@ -554,20 +554,20 @@ struct augeas *aug_init(const char *root, const char *loadpath,
     if (tree_root == NULL)
         return NULL;
 
-    if (ALLOC(result) < 0)
+    if (AUGEAS_UNLIKELY(ALLOC(result) < 0))
         goto error;
-    if (ALLOC(result->error) < 0)
+    if (AUGEAS_UNLIKELY(ALLOC(result->error) < 0))
         goto error;
-    if (make_ref(result->error->info) < 0)
+    if (AUGEAS_UNLIKELY(make_ref(result->error->info) < 0))
         goto error;
     result->error->info->error = result->error;
     result->error->info->filename = dup_string("(unknown file)");
-    if (result->error->info->filename == NULL)
+    if (AUGEAS_UNLIKELY(result->error->info->filename == NULL))
         goto error;
     result->error->aug = result;
 
     result->origin = make_tree_origin(tree_root);
-    if (result->origin == NULL) {
+    if (AUGEAS_UNLIKELY(result->origin == NULL)) {
         free_tree(tree_root);
         goto error;
     }
@@ -621,7 +621,7 @@ struct augeas *aug_init(const char *root, const char *loadpath,
         ERR_BAIL(result);
     }
     if (!(result->flags & AUG_NO_LOAD))
-        if (aug_load(result) < 0)
+        if (AUGEAS_UNLIKELY(aug_load(result) < 0))
             goto error;
 
     api_exit(result);
@@ -793,7 +793,7 @@ static int find_one_node(struct pathx *p, struct tree **match) {
     struct error *err = err_of_pathx(p);
     int r = pathx_find_one(p, match);
 
-    if (r == 1)
+    if (AUGEAS_LIKELY(r == 1))
         return 0;
 
     if (r == 0) {
@@ -824,7 +824,7 @@ int aug_get(const struct augeas *aug, const char *path, const char **value) {
     ERR_THROW(r > 1, aug, AUG_EMMATCH, "There are %d nodes matching %s",
               r, path);
 
-    if (r == 1 && value != NULL)
+    if (AUGEAS_LIKELY(r == 1 && value != NULL))
         *value = match->value;
     free_pathx(p);
 
@@ -854,7 +854,7 @@ int aug_label(const struct augeas *aug, const char *path, const char **label) {
     ERR_THROW(r > 1, aug, AUG_EMMATCH, "There are %d nodes matching %s",
               r, path);
 
-    if (r == 1 && label != NULL)
+    if (AUGEAS_LIKELY(r == 1 && label != NULL))
         *label = match->label;
     free_pathx(p);
 
@@ -914,7 +914,7 @@ int aug_defnode(augeas *aug, const char *name, const char *expr,
 
     api_entry(aug);
 
-    if (expr == NULL)
+    if (AUGEAS_UNLIKELY(expr == NULL))
         goto error;
     if (created == NULL)
         created = &cr;
@@ -959,11 +959,11 @@ struct tree *tree_set(struct pathx *p, const char *value) {
     int r;
 
     r = pathx_expand_tree(p, &tree);
-    if (r == -1)
+    if (AUGEAS_UNLIKELY(r == -1))
         return NULL;
 
     r = tree_set_value(tree, value);
-    if (r < 0)
+    if (AUGEAS_UNLIKELY(r < 0))
         return NULL;
     return tree;
 }
@@ -1048,10 +1048,10 @@ int aug_setm(struct augeas *aug, const char *base,
 int tree_insert(struct pathx *p, const char *label, int before) {
     struct tree *new = NULL, *match;
 
-    if (strchr(label, SEP) != NULL)
+    if (AUGEAS_UNLIKELY(strchr(label, SEP) != NULL))
         return -1;
 
-    if (find_one_node(p, &match) < 0)
+    if (AUGEAS_UNLIKELY(find_one_node(p, &match) < 0))
         goto error;
 
     new = make_tree(strdup(label), NULL, match->parent, NULL);
@@ -1090,7 +1090,7 @@ int aug_insert(struct augeas *aug, const char *path, const char *label,
 struct tree *make_tree(char *label, char *value, struct tree *parent,
                        struct tree *children) {
     struct tree *tree;
-    if (ALLOC(tree) < 0)
+    if (AUGEAS_UNLIKELY(ALLOC(tree) < 0))
         return NULL;
 
     tree->label = label;
@@ -1110,7 +1110,7 @@ struct tree *make_tree_origin(struct tree *root) {
     struct tree *origin = NULL;
 
     origin = make_tree(NULL, NULL, NULL, root);
-    if (origin == NULL)
+    if (AUGEAS_UNLIKELY(origin == NULL))
         return NULL;
 
     origin->parent = origin;
@@ -1274,11 +1274,11 @@ int aug_mv(struct augeas *aug, const char *src, const char *dst) {
     ERR_BAIL(aug);
 
     r = find_one_node(s, &ts);
-    if (r < 0)
+    if (AUGEAS_UNLIKELY(r < 0))
         goto error;
 
     r = pathx_expand_tree(d, &td);
-    if (r == -1)
+    if (AUGEAS_UNLIKELY(r == -1))
         goto error;
 
     /* Don't move SRC into its own descendent */
@@ -1370,12 +1370,10 @@ int aug_cp(struct augeas *aug, const char *src, const char *dst) {
 int aug_rename(struct augeas *aug, const char *src, const char *lbl) {
     struct pathx *s = NULL;
     struct tree *ts;
-    int ret;
     int count = 0;
 
     api_entry(aug);
 
-    ret = -1;
     ERR_THROW(strchr(lbl, '/') != NULL, aug, AUG_ELABEL,
               "Label %s contains a /", lbl);
 
@@ -1395,7 +1393,7 @@ int aug_rename(struct augeas *aug, const char *src, const char *lbl) {
  error:
     free_pathx(s);
     api_exit(aug);
-    return ret;
+    return -1;
 }
 
 int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
@@ -1424,7 +1422,7 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
     if (matches == NULL)
         goto done;
 
-    if (ALLOC_N(*matches, cnt) < 0)
+    if (AUGEAS_UNLIKELY(ALLOC_N(*matches, cnt) < 0))
         goto error;
 
     int i = 0;
@@ -1487,7 +1485,7 @@ static int tree_save(struct augeas *aug, struct tree *tree,
 
     // FIXME: We need to detect subtrees that aren't saved by anything
 
-    if (load == NULL)
+    if (AUGEAS_UNLIKELY(load == NULL))
         return -1;
 
     list_for_each(t, tree) {
@@ -1526,7 +1524,7 @@ static int update_save_flags(struct augeas *aug) {
     const char *savemode ;
 
     aug_get(aug, AUGEAS_META_SAVE_MODE, &savemode);
-    if (savemode == NULL)
+    if (AUGEAS_UNLIKELY(savemode == NULL))
         return -1;
 
     aug->flags &= ~(AUG_SAVE_BACKUP|AUG_SAVE_NEWFILE|AUG_SAVE_NOOP);
@@ -1536,7 +1534,7 @@ static int update_save_flags(struct augeas *aug) {
         aug->flags |= AUG_SAVE_BACKUP;
     } else if (STREQ(savemode, AUG_SAVE_NOOP_TEXT)) {
         aug->flags |= AUG_SAVE_NOOP ;
-    } else if (STRNEQ(savemode, AUG_SAVE_OVERWRITE_TEXT)) {
+    } else if (AUGEAS_UNLIKELY(STRNEQ(savemode, AUG_SAVE_OVERWRITE_TEXT))) {
         return -1;
     }
 
@@ -1563,8 +1561,8 @@ static int unlink_removed_files(struct augeas *aug,
         if (tf == NULL) {
             /* Unlink all files in tm */
             struct pathx *px = NULL;
-            if (pathx_parse(tm, err_of_aug(aug), file_nodes, true,
-                            aug->symtab, NULL, &px) != PATHX_NOERROR) {
+            if (AUGEAS_UNLIKELY(pathx_parse(tm, err_of_aug(aug), file_nodes, true,
+                                aug->symtab, NULL, &px) != PATHX_NOERROR)) {
                 result = -1;
                 free_pathx(px);
                 continue;
@@ -1572,12 +1570,12 @@ static int unlink_removed_files(struct augeas *aug,
             for (struct tree *t = pathx_first(px);
                  t != NULL;
                  t = pathx_next(px)) {
-                if (remove_file(aug, t) < 0)
+                if (AUGEAS_UNLIKELY(remove_file(aug, t) < 0))
                     result = -1;
             }
             free_pathx(px);
         } else if (tf->dirty && ! tree_child(tm, "path")) {
-            if (unlink_removed_files(aug, tf, tm) < 0)
+            if (AUGEAS_UNLIKELY(unlink_removed_files(aug, tf, tm) < 0))
                 result = -1;
         }
         tm = next;
@@ -1594,10 +1592,10 @@ int aug_save(struct augeas *aug) {
 
     api_entry(aug);
 
-    if (update_save_flags(aug) < 0)
+    if (AUGEAS_UNLIKELY(update_save_flags(aug)) < 0)
         goto error;
 
-    if (files == NULL || meta == NULL || load == NULL)
+    if (AUGEAS_UNLIKELY(files == NULL || meta == NULL || load == NULL))
         goto error;
 
     aug_rm(aug, AUGEAS_EVENTS_SAVED);
@@ -1606,12 +1604,12 @@ int aug_save(struct augeas *aug) {
         transform_validate(aug, xfm);
 
     if (files->dirty) {
-        if (tree_save(aug, files->children, AUGEAS_FILES_TREE) == -1)
+        if (AUGEAS_UNLIKELY(tree_save(aug, files->children, AUGEAS_FILES_TREE) == -1))
             ret = -1;
 
         /* Remove files whose entire subtree was removed. */
         if (meta_files != NULL) {
-            if (unlink_removed_files(aug, files, meta_files) < 0)
+            if (AUGEAS_UNLIKELY(unlink_removed_files(aug, files, meta_files) < 0))
                 ret = -1;
         }
     }
@@ -1640,7 +1638,7 @@ static int print_one(FILE *out, const char *path, const char *value) {
             return -1;
     }
     r = fputc('\n', out);
-    if (r == EOF)
+    if (AUGEAS_UNLIKELY(r == EOF))
         return -1;
     return 0;
 }
@@ -1656,7 +1654,7 @@ static int print_rec(FILE *out, struct tree *start, const char *ppath,
             continue;
 
         path = path_expand(tree, ppath);
-        if (path == NULL)
+        if (AUGEAS_UNLIKELY(path == NULL))
             goto error;
 
         r = print_one(out, path, tree->value);
@@ -1665,7 +1663,7 @@ static int print_rec(FILE *out, struct tree *start, const char *ppath,
         r = print_rec(out, tree->children, path, pr_hidden);
         free(path);
         path = NULL;
-        if (r < 0)
+        if (AUGEAS_UNLIKELY(r < 0))
             goto error;
     }
     return 0;
@@ -1684,13 +1682,13 @@ static int print_tree(FILE *out, struct pathx *p, int pr_hidden) {
             continue;
 
         path = path_of_tree(tree);
-        if (path == NULL)
+        if (AUGEAS_UNLIKELY(path == NULL))
             goto error;
         r = print_one(out, path, tree->value);
-        if (r < 0)
+        if (AUGEAS_UNLIKELY(r < 0))
             goto error;
         r = print_rec(out, tree->children, path, pr_hidden);
-        if (r < 0)
+        if (AUGEAS_UNLIKELY(r < 0))
             goto error;
         free(path);
         path = NULL;
@@ -1705,7 +1703,7 @@ int dump_tree(FILE *out, struct tree *tree) {
     struct pathx *p;
     int result;
 
-    if (pathx_parse(tree, NULL, "/*", true, NULL, NULL, &p) != PATHX_NOERROR) {
+    if (AUGEAS_UNLIKELY(pathx_parse(tree, NULL, "/*", true, NULL, NULL, &p) != PATHX_NOERROR)) {
         free_pathx(p);
         return -1;
     }
@@ -1764,7 +1762,7 @@ int aug_text_retrieve(struct augeas *aug, const char *lens,
               "Source node %s has a NULL value", node_in);
 
     r = text_retrieve(aug, lens, path, tree, src, &out);
-    if (r < 0)
+    if (AUGEAS_UNLIKELY(r < 0))
         goto error;
 
     tree_out = tree_find_cr(aug, node_out);
