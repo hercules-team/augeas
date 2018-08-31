@@ -177,7 +177,9 @@ module Shellvars =
   let generic_cond_start (start_kw:string) (lbl:string)
                          (then_kw:string) (contents:lens) =
       keyword_label start_kw lbl . Sep.space
-      . sto_to_semicol . semicol_eol
+      . sto_to_semicol
+      . ( action_and sto_to_semicol | action_or sto_to_semicol )*
+      . semicol_eol
       . keyword then_kw . eol
       . contents
 
