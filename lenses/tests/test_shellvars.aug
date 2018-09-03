@@ -450,7 +450,7 @@ esac\n" =
 
   (* Make sure to support empty comments *)
   test lns get "# foo
-  # 
+  #
   #
   foo=bar
   #\n" =
@@ -724,13 +724,27 @@ test Shellvars.lns get "{ echo
 }\n" =
   { "@subshell"
     { "@command" = "echo" }
-  } 
+  }
 
 (* One-liner function *)
 test Shellvars.lns get "MyFunc() { echo; }\n" =
   { "@function" = "MyFunc"
     { "@command" = "echo" }
   }
+
+(* Support and/or in if conditions *)
+test Shellvars.lns get "if [ -f /tmp/file1 ] && [ -f /tmp/file2 ] || [ -f /tmp/file3 ]; then
+  echo foo
+fi
+" =
+  { "@if" = "[ -f /tmp/file1 ]"
+      { "@and" = "[ -f /tmp/file2 ]" }
+      { "@or" = "[ -f /tmp/file3 ]" }
+      { "@command" = "echo"
+          { "@arg" = "foo" }
+      }
+  }
+
 
 
 (*********************************************************
