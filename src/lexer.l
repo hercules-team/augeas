@@ -4,6 +4,7 @@
 %option reentrant noyywrap
 %option warn nodefault
 %option outfile="lex.yy.c" prefix="augl_"
+%option noinput nounput
 
 %top{
 /* config.h must precede flex's inclusion of <stdio.h>
