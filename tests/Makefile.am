@@ -58,6 +58,7 @@ lens_tests =			\
   lens-darkice.sh		\
   lens-debctrl.sh		\
   lens-desktop.sh	\
+  lens-devfsrules.sh \
   lens-device_map.sh    \
   lens-dhclient.sh		\
   lens-dhcpd.sh		\

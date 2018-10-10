@@ -1,5 +1,6 @@
 1.12.0 - ????-??-??
   - Lens changes/additions
+    * DevfsRules: add lens for FreeBSD devfs.rules files
     * Multipath: accept values enclosed in quotes (Issue #583)
     * Pam: accept continuation lines (Issue #590)
     * Syslog: accept 'include' directive (Issue #486)
