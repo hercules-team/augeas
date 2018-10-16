@@ -44,7 +44,7 @@ let eol = Util.eol
 (* Group: value entries *)
 
 let bare_re_noquot = (/[^][", \t\r\n]/ - "#")
-let bare_re = (/[^][=,\r]/ - "#")+
+let bare_re = (/[^][,\r=]/ - "#")+
 let no_quot = /[^]["\r\n]*/
 let bare = Quote.do_dquote_opt_nil (store (bare_re_noquot . (bare_re* . bare_re_noquot)?))
 let quoted = Quote.do_dquote (store (no_quot . "#"+ . no_quot))
