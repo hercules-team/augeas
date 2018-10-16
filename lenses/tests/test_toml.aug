@@ -181,6 +181,23 @@ color = \"gray\"\n" =
       { "string" = "gray" } }
   }
 
+(* Test: Toml.entry
+     Empty inline table *)
+test Toml.entry get "name = { }\n" =
+  { "entry" = "name"
+    { "inline_table"
+      {  } } }
+
+(* Test: Toml.entry
+     Inline table *)
+test Toml.entry get "name = { first = \"Tom\", last = \"Preston-Werner\" }\n" =
+  { "entry" = "name"
+    { "inline_table" {}
+      { "entry" = "first"
+        { "string" = "Tom"  } } {}
+      { "entry" = "last"
+        { "string" = "Preston-Werner"  } } {} } }
+
 (* Variable: example
      The example from https://github.com/mojombo/toml *)
 let example = "# This is a TOML document. Boom.

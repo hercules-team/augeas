@@ -50,7 +50,7 @@ let ws = del /[ \t\n]*/ ""
 let space_or_empty = [ del /[ \t\n]+/ " " ]
 
 let comma = Util.del_str "," . (space_or_empty | comment)?
-let lbrace = Util.del_str "{" . comment?
+let lbrace = Util.del_str "{" . (space_or_empty | comment)?
 let rbrace = Util.del_str "}"
 let lbrack = Util.del_str "[" . (space_or_empty | comment)?
 let rbrack = Util.del_str "]"
@@ -113,8 +113,14 @@ let array_norec = array norec
 
 let rec array_rec = array (norec | array_rec)
 
+let entry_base (value:lens) = [ label "entry" . store Rx.word . Sep.space_equal . value ]
+
+let inline_table (value:lens) = [ label "inline_table" . lbrace
+                   . ( (Build.opt_list (entry_base value) comma . space_or_empty? . rbrace)
+                      | rbrace ) ]
+
 let entry = [ label "entry" . Util.indent . store Rx.word . Sep.space_equal
-                        . (norec | array_rec) . (eol | comment) ]
+            . (norec | array_rec | inline_table norec) . (eol | comment) ]
 
 (* Group: tables *)
 
