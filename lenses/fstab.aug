@@ -23,6 +23,7 @@ module Fstab =
          Build.opt_list lns comma
 
   let record = [ seq "mntent" .
+                   Util.indent .
                    [ label "spec" . store spec ] . sep_tab .
                    [ label "file" . store file ] . sep_tab .
                    comma_sep_list "vfstype" .

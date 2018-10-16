@@ -6,7 +6,7 @@ AM_CFLAGS = $(AUGEAS_CFLAGS) $(WARN_CFLAGS) $(GNULIB_CFLAGS) \
 
 VALGRIND=libtool --mode=execute valgrind --quiet --leak-check=full
 valgrind:
-	make check \
+	$(MAKE) $(MAKEFLAGS) check \
 	  VALGRIND="$(VALGRIND)" \
 	  AUGPARSE=$(abs_top_builddir)/src/augparse \
 	  AUGTOOL=$(abs_top_builddir)/src/augtool
@@ -76,6 +76,7 @@ lens_tests =			\
   lens-gdm.sh			\
   lens-getcap.sh		\
   lens-group.sh			\
+  lens-grubenv.sh			\
   lens-gshadow.sh			\
   lens-gtkbookmarks.sh			\
   lens-json.sh          \
@@ -204,6 +205,7 @@ lens_tests =			\
   lens-sshd.sh			\
   lens-sssd.sh			\
   lens-star.sh          \
+  lens-strongswan.sh \
   lens-stunnel.sh			\
   lens-subversion.sh		\
   lens-sysconfig.sh		\
@@ -271,7 +273,7 @@ check_SCRIPTS = \
   test-save-empty.sh test-bug-1.sh test-idempotent.sh test-preserve.sh \
   test-events-saved.sh test-save-mode.sh test-unlink-error.sh \
   test-augtool-empty-line.sh test-augtool-modify-root.sh \
-  test-span-rec-lens.sh test-nonwritable.sh
+  test-span-rec-lens.sh test-nonwritable.sh test-augmatch.sh
 
 EXTRA_DIST = \
   test-augtool root lens-test-1 \

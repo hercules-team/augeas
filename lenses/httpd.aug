@@ -171,7 +171,7 @@ let arg_sec = [ label "arg" . store (char_arg_sec+|comp|dquot|squot) ]
 
 let section (body:lens) =
     (* opt_eol includes empty lines *)
-    let opt_eol = del /([ \t]*#?\r?\n)*/ "\n" in
+    let opt_eol = del /([ \t]*#?[ \t]*\r?\n)*/ "\n" in
     let inner = (sep_spc . argv arg_sec)? . sep_osp .
              dels ">" . opt_eol . ((body|comment) . (body|empty|comment)*)? .
              indent . dels "</" in
@@ -200,6 +200,7 @@ let filter = (incl "/etc/apache2/apache2.conf") .
              (incl "/etc/httpd/conf.d/*.conf") .
              (incl "/etc/httpd/httpd.conf") .
              (incl "/etc/httpd/conf/httpd.conf") .
+             (incl "/etc/httpd/conf.modules.d/*.conf") .
              Util.stdexcl
 
 let xfm = transform lns filter

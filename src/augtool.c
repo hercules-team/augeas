@@ -112,8 +112,7 @@ static char *readline_path_generator(const char *text, int state) {
             if ((path = strdup("*")) == NULL)
                 return NULL;
         } else {
-            CALLOC(path, end - text + 2);
-            if (path == NULL)
+            if (ALLOC_N(path, end - text + 2) < 0)
                 return NULL;
             strncpy(path, text, end - text);
             strcat(path, "*");
@@ -153,15 +152,13 @@ static char *readline_path_generator(const char *text, int state) {
 
             /* strip off context if the user didn't give it */
             if (ctx != NULL) {
-                char *c = realloc(child, strlen(child)-strlen(ctx)+1);
-                if (c == NULL) {
-                    free(child);
-                    return NULL;
-                }
                 int ctxidx = strlen(ctx);
                 if (child[ctxidx] == SEP)
                     ctxidx++;
-                strcpy(c, &child[ctxidx]);
+                char *c = strdup(&child[ctxidx]);
+                free(child);
+                if (c == NULL)
+                    return NULL;
                 child = c;
             }
 
@@ -183,7 +180,7 @@ static char *readline_command_generator(const char *text, int state) {
         "mv", "cp", "rename", "print", "dump-xml", "rm", "save", "set", "setm",
         "clearm", "span", "store", "retrieve", "transform", "load-file",
         "help", "touch", "insert", "move", "copy", "errors", "source", "context",
-        "info",
+        "info", "count",
         NULL };
 
     static int current = 0;

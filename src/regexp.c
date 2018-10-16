@@ -234,7 +234,8 @@ struct regexp *make_regexp_literal(struct info *info, const char *text) {
 
     /* Escape special characters in text since it should be taken
        literally */
-    CALLOC(pattern, 2*strlen(text)+1);
+    if (ALLOC_N(pattern, 2*strlen(text)+1) < 0)
+        return NULL;
     p = pattern;
     for (const char *t = text; *t != '\0'; t++) {
         if ((*t == '\\') && t[1]) {
@@ -544,8 +545,10 @@ static int regexp_compile_internal(struct regexp *r, const char **c) {
 
     *c = NULL;
 
-    if (r->re == NULL)
-        CALLOC(r->re, 1);
+    if (r->re == NULL) {
+        if (ALLOC(r->re) < 0)
+            return -1;
+    }
 
     re_syntax_options = syntax;
     if (r->nocase)

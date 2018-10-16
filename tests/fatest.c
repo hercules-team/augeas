@@ -661,7 +661,8 @@ static void testEnumerate(CuTest *tc) {
         }
         if (!found) {
             char *msg;
-            asprintf(&msg, "Generated word %s not expected", words[i]);
+            /* Ignore return of asprintf intentionally */
+            r = asprintf(&msg, "Generated word %s not expected", words[i]);
             CuFail(tc, msg);
         }
     }

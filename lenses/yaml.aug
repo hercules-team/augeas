@@ -15,6 +15,7 @@ Author: Dimitar Dimitrov <mitkofr@yahoo.fr>
 module YAML =
 
 (* Group: helpers *)
+let dash = Util.del_str "-"
 let colon = Sep.colon
 let space = Sep.space
 let val = store Rx.word
@@ -63,6 +64,9 @@ let entry = [ key Rx.word . colon . (space . anchor)? . eol
             . ((inherit . (repo+)?) | repo+)
             ]
 
+(* View: top level sequence *)
+let sequence = [ label "@sequence" . counter "sequence" . dash . repo+ ]
+
 (* View: header *)
 let header = [ label "@yaml" . Util.del_str "---"
              . (Sep.space . store Rx.space_in)? . eol ]
@@ -71,4 +75,4 @@ let header = [ label "@yaml" . Util.del_str "---"
 View: lns
   The yaml lens
 *)
-let lns = ((empty|comment)* . header)? . (entry | comment | empty)*
+let lns = ((empty|comment)* . header)? . (sequence | entry | comment | empty)*

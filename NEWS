@@ -1,10 +1,74 @@
-1.10.0 - ????-??-??
+1.12.0 - ????-??-??
   - Lens changes/additions
+    * Multipath: accept values enclosed in quotes (Issue #583)
+    * Syslog: accept 'include' directive (Issue #486)
+
+1.11.0 - 2018-08-24
+  - General changes/additions
+    * augmatch: add a --quiet option; make the exit status useful to tell
+                whether there was a match or not
+    * Drastically reduce the amount of memory needed to evaluate complex
+      path expressions against large files (Issue #569)
+    * Fix a segfault on OSX when 'augmatch' is run without any
+      arguments (Issue #556)
+  - API changes
+    * aug_source did not in fact return the source; and always returned
+      NULL for that. That has been fixed.
+  - Lens changes/additions
+    * Chrony: add new options supported in chrony 3.2 and 3.3 (Miroslav Lichvar)
+    * Dhclient: fix parsing of append/prepend and similar directives
+                (John Morrissey)
+    * Fstab: allow leading whitespace in mount entry lines
+             (Pino Toscano) (Issue #544)
+    * Grub: tolerate some invalid entries. Those invalid entries
+            get mapped to '#error' nodes
+    * Httpd: accept comments with whitespace right after a tag
+             opening a section (Issue #577)
+    * Json: allow escaped slashes in strings (Issue #557)
+    * Multipath: accept regular expressions for devnode, wwid, and property
+      in blacklist and blacklist_exceptions sections (Issue #564)
+    * Nginx: parse /etc/nginx/sites-enabled (plumbeo)
+             allow semicolons inside double quoted strings in
+             simple directives, and allow simple directives without
+             an argument (Issue #566)
+    * Redis: accept the 'bind' statement with multiple IP addresses
+             (yannh) (Issue #194)
+    * Rsyslog: support include() directive introduced in rsyslog 8.33
+    * Strongswan: new lens (Kaarle Ritvanen)
+    * Systemd: do not try to treat *.d or *.wants directories as
+               configuration files (Issue #548)
+
+1.10.1 - 2018-01-29
+  - API changes
+    * Fix a symbol versioning mistake in libfa that unnecessarily broke ABI
+
+1.10.0 - 2018-01-25
+  DO NOT USE THIS RELEASE, USE 1.10.1 INSTEAD
+
+  - General changes/additions
+    * New CLI utility 'augmatch' to print the tree for a file and select
+      some of its contents
+    * New command 'count' in augtool
+    * New function 'not(bool) -> bool' for path expressions
+    * The path expression 'label[. = "value"]' can now be written more
+      concisely as 'label["value"]'
+  - API changes
+    * libfa has now a function fa_json to export an FA as a JSON file, and
+      fa_state_* functions that make it possible to iterate over the FA's
+      states and transitions. (Pedro Valero Mejia)
+    * Add functions aug_ns_label, aug_ns_value, aug_ns_count, and
+      aug_ns_path to get the label (with index), the value, the number of
+      nodes, and the fully qualified path for nodes stored in a nodeset in
+      a variable efficiently
+  - Lens changes/additions
+    * Grubenv: new lens to process /boot/grub/grubenv (omgold)
+    * Httpd: also read files from /etc/httpd/conf.modules.d/*.conf
+             (Tomas Meszaros) (Issue #537)
     * Nsswitch: allow comments at the end of a line (Philip Hahn) (Issue #517)
     * Ntp: accept 'ntpsigndsocket' statement (Philip Hahn) (Issue #516)
     * Properties: accept empty comments with DOS line endings (Issue #161)
+    * Rancid: new lens for RANCiD router databases (Matt Dainty)
     * Resolv: accept empty comments with DOS line endings (Issue #161)
-    * Syslog: accept 'include' directive (Issue #486)
 
 1.9.0 - 2017-10-06
   - General changes/additions

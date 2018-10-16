@@ -98,7 +98,7 @@ typedef int (*hash_comp_t)(const void *, const void *);
  * particular, the most significant bits of hash_val_t are most significant to
  * the hash module. Only as the hash table expands are less significant bits
  * examined. Thus a function that has good distribution in its upper bits but
- * not lower is preferrable to one that has poor distribution in the upper bits
+ * not lower is preferable to one that has poor distribution in the upper bits
  * but not the lower ones.
  */
 

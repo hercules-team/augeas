@@ -1958,7 +1958,7 @@ int aug_source(const augeas *aug, const char *path, char **file_path) {
     ERR_THROW(r == 0, aug, AUG_ENOMATCH, "There is no node matching %s",
               path);
 
-    tree_source(aug, match);
+    *file_path = tree_source(aug, match);
     ERR_BAIL(aug);
 
     result = 0;
@@ -2041,6 +2041,91 @@ int aug_ns_attr(const augeas* aug, const char *var, int i,
         *label = tree->label;
 
     result = 1;
+
+ error:
+    api_exit(aug);
+    return result;
+}
+
+int aug_ns_label(const augeas* aug, const char *var, int i,
+                 const char **label, int *index) {
+    int result = -1;
+
+    if (label != NULL)
+        *label = NULL;
+
+    if (index != NULL)
+        *index = -1;
+
+    api_entry(aug);
+
+    struct tree *tree = pathx_symtab_get_tree(aug->symtab, var, i);
+    ERR_THROW(tree == NULL, aug, AUG_ENOMATCH,
+              "Node %s[%d] does not exist", var, i);
+
+    if (label != NULL)
+        *label = tree->label;
+
+    if (index != NULL) {
+        *index = tree_sibling_index(tree);
+    }
+
+    result = 1;
+
+ error:
+    api_exit(aug);
+    return result;
+}
+
+int aug_ns_value(const augeas* aug, const char *var, int i,
+                 const char **value) {
+    int result = -1;
+
+    if (value != NULL)
+        *value = NULL;
+
+    api_entry(aug);
+
+    struct tree *tree = pathx_symtab_get_tree(aug->symtab, var, i);
+    ERR_THROW(tree == NULL, aug, AUG_ENOMATCH,
+              "Node %s[%d] does not exist", var, i);
+
+    if (value != NULL)
+        *value = tree->value;
+
+    result = 1;
+
+ error:
+    api_exit(aug);
+    return result;
+}
+
+int aug_ns_count(const augeas *aug, const char *var) {
+    int result = -1;
+
+    api_entry(aug);
+
+    result = pathx_symtab_count(aug->symtab, var);
+
+    api_exit(aug);
+
+    return result;
+}
+
+int aug_ns_path(const augeas *aug, const char *var, int i, char **path) {
+    int result = -1;
+
+    *path = NULL;
+
+    api_entry(aug);
+
+    struct tree *tree = pathx_symtab_get_tree(aug->symtab, var, i);
+    ERR_THROW(tree == NULL, aug, AUG_ENOMATCH,
+              "Node %s[%d] does not exist", var, i);
+
+    *path = path_of_tree(tree);
+
+    result = 0;
 
  error:
     api_exit(aug);

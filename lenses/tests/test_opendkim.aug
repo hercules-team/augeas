@@ -95,7 +95,7 @@ UMask     002
 
 # Always oversign From (sign using actual From and a null From to prevent
 # malicious signatures header fields (From and/or others) between the signer
-# and the verifier.  From is oversigned by default in the Debian pacakge
+# and the verifier.  From is oversigned by default in the Debian package
 # because it is often the identity key used by reputation systems and thus
 # somewhat security sensitive.
 OversignHeaders   From
@@ -130,7 +130,7 @@ OversignHeaders   From
   {  }
   { "#comment" = "Always oversign From (sign using actual From and a null From to prevent" }
   { "#comment" = "malicious signatures header fields (From and/or others) between the signer" }
-  { "#comment" = "and the verifier.  From is oversigned by default in the Debian pacakge" }
+  { "#comment" = "and the verifier.  From is oversigned by default in the Debian package" }
   { "#comment" = "because it is often the identity key used by reputation systems and thus" }
   { "#comment" = "somewhat security sensitive." }
   { "OversignHeaders" = "From" }

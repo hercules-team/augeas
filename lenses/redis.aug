@@ -54,8 +54,8 @@ redis-server.
 *)
 let standard_entry =
      let reserved_k = "save" | "rename-command" | "slaveof"
-                    | "client-output-buffer-limit"
-  in let entry_noempty = [ indent . key k . del_ws_spc
+                    | "bind" | "client-output-buffer-limit"
+  in let entry_noempty = [ indent . key (k - reserved_k) . del_ws_spc
                          . Quote.do_quote_opt_nil (store v) . eol ]
   in let entry_empty = [ indent . key (k - reserved_k) . del_ws_spc
                          . dquote . store "" . dquote . eol ]
@@ -82,6 +82,15 @@ whitespaces.
 *)
 let slaveof_entry = [ indent . key slaveof . del_ws_spc . ip . del_ws_spc . port . eol ]
 
+(* View: bind_entry
+The "bind" entry can be passed one or several ip addresses. A bind
+statement "bind ip1 ip2 .. ipn" results in a tree
+{ "bind" { "ip" = ip1 } { "ip" = ip2 } ... { "ip" = ipn } }
+*)
+let bind_entry =
+  let ip = del_ws_spc . Quote.do_quote_opt_nil (store Rx.ip) in
+  indent . [ key "bind" . [ label "ip" . ip ]+ ] . eol
+
 let renamecmd = /rename-command/
 let from = [ label "from" . Quote.do_quote_opt_nil (store Rx.word) ]
 let to = [ label "to" . Quote.do_quote_opt_nil (store Rx.word) ]
@@ -99,7 +108,7 @@ let soft_limit = [ label "soft_limit" . Quote.do_quote_opt_nil (store Rx.word) ]
 let soft_seconds = [ label "soft_seconds" . Quote.do_quote_opt_nil (store Rx.integer) ]
 (* View: client_output_buffer_limit_entry
 Entries identified by the "client-output-buffer-limit" keyword can be found
-more than once. They have four mandatory paramters, of which the first is a
+more than once. They have four mandatory parameters, of which the first is a
 string, the last one is an integer and the others are either integers or words,
 although redis is very liberal and takes "4242yadayadabytes" as a valid limit.
 The same rules as standard_entry apply for quoting, comments and whitespaces.
@@ -112,6 +121,7 @@ let entry = standard_entry
           | save_entry
 	  | renamecmd_entry
 	  | slaveof_entry
+	  | bind_entry
 	  | client_output_buffer_limit_entry
 
 (* View: lns

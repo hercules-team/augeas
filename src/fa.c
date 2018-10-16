@@ -286,6 +286,11 @@ static void fa_dot_debug(struct fa *fa, const char *tag) {
         return;
 
     fp = fopen(fname, "w");
+    if (fp == NULL) {
+        free(fname);
+        return;
+    }
+
     fa_dot(fp, fa);
     fclose(fp);
     free(fname);
@@ -1672,7 +1677,7 @@ static int minimize_hopcroft(struct fa *fa) {
             struct state *qs = partn->states[q];
             int qnum = state_set_index(states, qs);
             if (qs == fa->initial)
-                s->live = 1;     /* Abuse live to flag the new intial state */
+                s->live = 1;     /* Abuse live to flag the new initial state */
             nsnum[n] = qnum;     /* select representative */
             nsind[qnum] = n;     /* and point from partition to new state */
         }
@@ -2958,6 +2963,12 @@ int fa_ambig_example(struct fa *fa1, struct fa *fa2,
         goto error;
     if (concat_in_place(b1, &ms) < 0)
         goto error;
+    if (fa_is_basic(b1, FA_EMPTY)) {
+        /* We are done - amb which we take an example from below
+         * will be empty, and there can therefore not be an ambiguity */
+        ret = 0;
+        goto done;
+    }
 
     /* Compute b2 = ss . ((sp . a2f) & a2t) */
     if (concat_in_place(sp, &a2f) < 0)
@@ -4511,6 +4522,105 @@ void fa_dot(FILE *out, struct fa *fa) {
         }
     }
     fprintf(out, "}\n");
+}
+
+int fa_json(FILE *out, struct fa *fa) {
+    hash_val_t *list_hashes = NULL;
+    int list_size = 100;
+    int num_states = 0;
+    int it;
+    char first = true;
+    int result = -1;
+
+    fprintf(out,"{\n\t\"final\": [");
+
+    F(ALLOC_N(list_hashes, list_size));
+
+    list_for_each(s, fa->initial) {
+        if (num_states == list_size - 1){
+            list_size += list_size;
+            F(REALLOC_N(list_hashes, list_size));
+        }
+        // Store hash value
+        list_hashes[num_states] = s->hash;
+        // We use the hashes to map states to Z_{num_states}
+        s->hash = num_states++;
+        if (s->accept) {
+            if (first) {
+                fprintf(out,"%ld", s->hash);
+                first = false;
+            } else {
+                fprintf(out, ", %ld", s->hash);
+            }
+        }
+    }
+
+    fprintf(out, "],\n\t\"deterministic\": %d,\n\t\"transitions\": [\n",
+            fa->deterministic ? 1 : 0);
+
+    first = true;
+    list_for_each(s, fa->initial) {
+        for_each_trans(t, s) {
+            if (!first)
+                fprintf(out, ",\n");
+            first = false;
+            fprintf(out, "\t\t{ \"from\": %ld, \"to\": %ld, \"on\": \"",
+                    s->hash, t->to->hash);
+            print_char(out, t->min);
+            if (t->min != t->max) {
+                fputc('-', out);
+                print_char(out, t->max);
+            }
+            fprintf(out, "\" }");
+        }
+    }
+
+    fprintf(out,"\n\t]\n}");
+    result = 0;
+
+error:
+    // Restoring hash values to leave the FA structure untouched. That is
+    // only needed if we actually copied hashes, indicated by num_states
+    // being non-zero
+    if (num_states > 0) {
+        it = 0;
+        list_for_each(s, fa->initial) {
+            s->hash = list_hashes[it++];
+        }
+    }
+    free(list_hashes);
+    return result;
+}
+
+bool fa_is_deterministic(struct fa *fa) {
+    return fa->deterministic;
+}
+
+struct state *fa_state_initial(struct fa *fa) {
+    return fa->initial;
+}
+
+bool fa_state_is_accepting(struct state *st) {
+    return st->accept;
+}
+
+struct state* fa_state_next(struct state *st) {
+    return st->next;
+}
+
+size_t fa_state_num_trans(struct state *st) {
+    return st->tused;
+}
+
+int fa_state_trans(struct state *st, size_t i,
+                   struct state **to, unsigned char *min, unsigned char *max) {
+    if (st->tused <= i)
+        return -1;
+
+    (*to) = st->trans[i].to;
+    (*min) = st->trans[i].min;
+    (*max) = st->trans[i].max;
+    return 0;
 }
 
 /*

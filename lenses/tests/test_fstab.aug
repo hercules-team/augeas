@@ -11,6 +11,8 @@ module Test_fstab =
         { "dump" = "1" }
         { "passno" = "1" } }
 
+  let leading_ws = "   /dev/vg00/lv00\t /\t ext3\t    defaults        1 1\n"
+
   let trailing_ws = "/dev/vg00/lv00\t /\t ext3\t    defaults        1 1  \t\n"
 
   let gen_no_passno(passno:string) =
@@ -59,6 +61,8 @@ module Test_fstab =
         { "passno" = "0" } }
 
   test Fstab.lns get simple = simple_tree
+
+  test Fstab.lns get leading_ws = simple_tree
 
   test Fstab.lns get trailing_ws = simple_tree
 

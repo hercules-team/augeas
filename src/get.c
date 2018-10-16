@@ -51,6 +51,7 @@ struct state {
     char             *key;
     char             *value;     /* GET_STORE leaves a value here */
     struct lns_error *error;
+    int               enable_span;
     /* We use the registers from a regular expression match to keep track
      * of the substring we are currently looking at. REGS are the registers
      * from the last regexp match; NREG is the number of the register
@@ -287,7 +288,8 @@ static void get_error(struct state *state, struct lens *lens,
 static struct skel *make_skel(struct lens *lens) {
     struct skel *skel;
     enum lens_tag tag = lens->tag;
-    CALLOC(skel, 1);
+    if (ALLOC(skel) < 0)
+        return NULL;
     skel->tag = tag;
     return skel;
 }
@@ -486,7 +488,8 @@ static struct seq *find_seq(const char *name, struct state *state) {
          seq = seq->next);
 
     if (seq == NULL) {
-        CALLOC(seq, 1);
+        if (ALLOC(seq) < 0)
+            return NULL;
         seq->name = name;
         seq->value = 1;
         list_append(state->seqs, seq);
@@ -899,7 +902,7 @@ static struct tree *get_subtree(struct lens *lens, struct state *state) {
 
     state->key = NULL;
     state->value = NULL;
-    if (state->info->flags & AUG_ENABLE_SPAN) {
+    if (state->enable_span) {
         state->span = make_span(state->info);
         ERR_NOMEM(state->span == NULL, state->info);
     }
@@ -1158,8 +1161,7 @@ static void visit_terminal(struct lens *lens, size_t start, size_t end,
 }
 
 static bool rec_gen_span(struct rec_state *rec_state) {
-    return ((rec_state->mode == M_GET)
-            && (rec_state->state->info->flags & AUG_ENABLE_SPAN));
+    return ((rec_state->mode == M_GET) && (rec_state->state->enable_span));
 }
 
 static void visit_enter(struct lens *lens,
@@ -1600,7 +1602,7 @@ static int init_regs(struct state *state, struct lens *lens, uint size) {
 }
 
 struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
-                     struct lns_error **err) {
+                     int enable_span, struct lns_error **err) {
     struct state state;
     struct tree *tree = NULL;
     uint size = strlen(text);
@@ -1614,6 +1616,8 @@ struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
     state.info->ref = UINT_MAX;
 
     state.text = text;
+
+    state.enable_span = enable_span;
 
     /* We are probably being overly cautious here: if the lens can't process
      * all of TEXT, we should really fail somewhere in one of the sublenses.

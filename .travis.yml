@@ -14,4 +14,4 @@ notifications:
   irc:
     channels:
       - "irc.freenode.org#augeas"
-script: ./configure && make && make check && ./src/try valgrind
+script: ./configure && make && make check VERBOSE=1 && ./src/try valgrind

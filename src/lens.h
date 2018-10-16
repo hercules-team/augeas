@@ -191,11 +191,10 @@ void free_lns_error(struct lns_error *err);
  * message on failure; the constructed tree is always returned. If ERR is
  * NULL, return the tree on success, and NULL on failure.
  *
- * FLAGS controls what is printed and should be a set of flags from enum
- * parse_flags
+ * ENABLE_SPAN indicates whether span information should be collected or not
  */
 struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
-                     struct lns_error **err);
+                     int enable_span, struct lns_error **err);
 struct skel *lns_parse(struct lens *lens, const char *text,
                        struct dict **dict, struct lns_error **err);
 
@@ -209,7 +208,7 @@ struct skel *lns_parse(struct lens *lens, const char *text,
  * to update spans or not.
  */
 void lns_put(struct info *info, FILE *out, struct lens *lens, struct tree *tree,
-             const char *text, struct lns_error **err);
+             const char *text, int enable_span, struct lns_error **err);
 
 /* Free up temporary data structures, most importantly compiled
    regular expressions */

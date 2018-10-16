@@ -268,12 +268,7 @@ static inline int pathendswith(const char *path, const char *basenam) {
    Allocate as needed. Return 0 on success, -1 on failure */
 int pathjoin(char **path, int nseg, ...);
 
-/* Call calloc to allocate an array of N instances of *VAR */
-#define CALLOC(Var,N) do { (Var) = calloc ((N), sizeof (*(Var))); } while (0)
-
 #define MEMZERO(ptr, n) memset((ptr), 0, (n) * sizeof(*(ptr)));
-
-#define MEMCPY(dest, src, n) memcpy((dest), (src), (n) * sizeof(*(src)))
 
 #define MEMMOVE(dest, src, n) memmove((dest), (src), (n) * sizeof(*(src)))
 
@@ -463,6 +458,9 @@ int tree_insert(struct pathx *p, const char *label, int before);
 int free_tree(struct tree *tree);
 int dump_tree(FILE *out, struct tree *tree);
 int tree_equal(const struct tree *t1, const struct tree *t2);
+/* Return the 1-based index of TREE amongst its siblings with the same
+ * label or 0 if none of TREE's siblings have the same label */
+int tree_sibling_index(struct tree *tree);
 char *path_expand(struct tree *tree, const char *ppath);
 char *path_of_tree(struct tree *tree);
 /* Clear the dirty flag in the whole TREE */
@@ -610,7 +608,7 @@ int pathx_parse(const struct tree *origin,
 struct error *err_of_pathx(struct pathx *px);
 struct tree *pathx_first(struct pathx *path);
 struct tree *pathx_next(struct pathx *path);
-/* Return -1 if evalutating PATH runs into trouble, otherwise return the
+/* Return -1 if evaluating PATH runs into trouble, otherwise return the
  * number of nodes matching PATH and set MATCH to the first matching
  * node */
 int pathx_find_one(struct pathx *path, struct tree **match);
@@ -626,6 +624,11 @@ int pathx_symtab_assign_tree(struct pathx_symtab **symtab, const char *name,
 int pathx_symtab_undefine(struct pathx_symtab **symtab, const char *name);
 void pathx_symtab_remove_descendants(struct pathx_symtab *symtab,
                                      const struct tree *tree);
+
+/* Return the number of nodes in the nodeset NAME. If the variable NAME
+ * does not exist, or is not a nodeset, return -1 */
+int pathx_symtab_count(const struct pathx_symtab *symtab, const char *name);
+
 /* Return the tree stored in the variable NAME at position I, which is the
    same as evaluating the path expression '$NAME[I]'. If the variable NAME
    does not exist, or does not contain a nodeset, or if I is bigger than

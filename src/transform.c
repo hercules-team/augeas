@@ -55,7 +55,7 @@ static const int glob_flags = GLOB_NOSORT;
  *   lens/id   : unique hexadecimal id of the lens
  *   error     : indication of errors during processing FNAME, or NULL
  *               if processing succeeded
- *   error/pos : position in file where error occured (for get errors)
+ *   error/pos : position in file where error occurred (for get errors)
  *   error/path: path to tree node where error occurred (for put errors)
  *   error/message : human-readable error message
  */
@@ -569,7 +569,6 @@ make_lns_info(struct augeas *aug, const char *filename,
         info->last_column = text_len;
     }
 
-    info->flags = aug->flags;
     info->error = aug->error;
 
     return info;
@@ -606,7 +605,7 @@ static void lens_get(struct augeas *aug,
         ERR_NOMEM(span == NULL, info);
     }
 
-    tree = lns_get(info, lens, text, err);
+    tree = lns_get(info, lens, text, aug->flags & AUG_ENABLE_SPAN, err);
 
     if (*err == NULL) {
         // Successful get
@@ -800,6 +799,9 @@ int transform_validate(struct augeas *aug, struct tree *xfm) {
     return 0;
  error:
     xfm_error(xfm, aug->error->details);
+    /* We recorded this error in the tree, clear it so that future
+     * operations report this exact same error (against the wrong lens) */
+    reset_error(aug->error);
     return -1;
 }
 
@@ -1112,7 +1114,8 @@ static void lens_put(struct augeas *aug, const char *filename,
         tree->span->span_start = ftell(out);
     }
 
-    lns_put(info, out, lens, tree->children, text, err);
+    lns_put(info, out, lens, tree->children, text,
+            aug->flags & AUG_ENABLE_SPAN, err);
 
     if (with_span) {
         tree->span->span_end = ftell(out);
@@ -1255,7 +1258,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
 
         if (fchmod(fileno(fp), 0666 & ~curumsk) < 0) {
             err_status = "create_chmod";
-            return -1;
+            goto done;
         }
     }
 

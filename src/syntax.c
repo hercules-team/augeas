@@ -308,7 +308,7 @@ void free_value(struct value *v) {
 
 /*
  * Creation of (some) terms. Others are in parser.y
- * Refernce counted arguments are now owned by the returned object, i.e.
+ * Reference counted arguments are now owned by the returned object, i.e.
  * the make_* functions do not increment the count.
  * Returned objects have a referece count of 1.
  */
@@ -414,7 +414,8 @@ struct value *make_exn_value(struct info *info,
         return NULL;
 
     v = make_value(V_EXN, ref(info));
-    CALLOC(v->exn, 1);
+    if (ALLOC(v->exn) < 0)
+        return info->error->exn;
     v->exn->info = info;
     v->exn->message = message;
 
@@ -954,6 +955,9 @@ static struct value *coerce(struct value *v, struct type *t) {
     if (vt->tag == T_STRING && t->tag == T_REGEXP) {
         struct value *rxp = make_value(V_REGEXP, ref(v->info));
         rxp->regexp = make_regexp_literal(v->info, v->string->str);
+        if (rxp->regexp == NULL) {
+            report_error(v->info->error, AUG_ENOMEM, NULL);
+        };
         unref(v, value);
         unref(vt, type);
         return rxp;
@@ -982,7 +986,8 @@ static struct type *expect_types_arr(struct info *info,
         }
         len += (ntypes - 1) * 4 + 1;
         char *allowed_names;
-        CALLOC(allowed_names, len);
+        if (ALLOC_N(allowed_names, len) < 0)
+            return NULL;
         for (int i=0; i < ntypes; i++) {
             if (i > 0)
                 strcat(allowed_names, (i == ntypes - 1) ? ", or " : ", ");
@@ -1023,42 +1028,16 @@ typedef struct value *(*impl5)(struct info *, struct value *, struct value *,
 
 static struct value *native_call(struct info *info,
                                  struct native *func, struct ctx *ctx) {
-    struct value *argv[func->argc];
+    struct value *argv[func->argc + 1];
     struct binding *b = ctx->local;
-    struct value *result;
 
     for (int i = func->argc - 1; i >= 0; i--) {
         argv[i] = b->value;
         b = b->next;
     }
+    argv[func->argc] = NULL;
 
-    switch(func->argc) {
-    case 0:
-        result = ((impl0) *func->impl)(info);
-        break;
-    case 1:
-        result = ((impl1) *func->impl)(info, argv[0]);
-        break;
-    case 2:
-        result = ((impl2) *func->impl)(info, argv[0], argv[1]);
-        break;
-    case 3:
-        result = ((impl3) *func->impl)(info, argv[0], argv[1], argv[2]);
-        break;
-    case 4:
-        result = ((impl4) *func->impl)(info, argv[0], argv[1], argv[2], argv[3]);
-        break;
-    case 5:
-        result = ((impl5) *func->impl)(info, argv[0], argv[1], argv[2], argv[3],
-                                       argv[4]);
-        break;
-    default:
-        assert(0);
-        abort();
-        break;
-    }
-
-    return result;
+    return func->impl(info, argv);
 }
 
 static void type_error1(struct info *info, const char *msg, struct type *type) {
@@ -1535,7 +1514,8 @@ static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
         const char *s2 = v2->string->str;
         v = make_value(V_STRING, ref(info));
         make_ref(v->string);
-        CALLOC(v->string->str, strlen(s1) + strlen(s2) + 1);
+        if (ALLOC_N(v->string->str, strlen(s1) + strlen(s2) + 1) < 0)
+            goto error;
         char *s = v->string->str;
         strcpy(s, s1);
         strcat(s, s2);
@@ -1574,6 +1554,8 @@ static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
     unref(v1, value);
     unref(v2, value);
     return v;
+ error:
+    return exp->info->error->exn;
 }
 
 static struct value *apply(struct term *app, struct ctx *ctx) {
@@ -1857,7 +1839,7 @@ make_native_info(struct error *error, const char *fname, int line) {
 int define_native_intl(const char *file, int line,
                        struct error *error,
                        struct module *module, const char *name,
-                       int argc, void *impl, ...) {
+                       int argc, func_impl impl, ...) {
     assert(argc > 0);  /* We have no unit type */
     assert(argc <= 5);
     va_list ap;
@@ -1961,6 +1943,13 @@ static char *module_filename(struct augeas *aug, const char *modname) {
     char *dir = NULL;
     char *filename = NULL;
     char *name = module_basename(modname);
+
+    /* Module names that contain slashes can fool us into finding and
+     * loading a module in another directory, but once loaded we won't find
+     * it under MODNAME so that we will later try and load it over and
+     * over */
+    if (index(modname, '/') != NULL)
+        goto error;
 
     while ((dir = argz_next(aug->modpathz, aug->nmodpath, dir)) != NULL) {
         int len = strlen(name) + strlen(dir) + 2;
@@ -2079,6 +2068,7 @@ int interpreter_init(struct augeas *aug) {
 
     for (int i=0; i < globbuf.gl_pathc; i++) {
         char *name, *p, *q;
+        int res;
         p = strrchr(globbuf.gl_pathv[i], SEP);
         if (p == NULL)
             p = globbuf.gl_pathv[i];
@@ -2087,9 +2077,10 @@ int interpreter_init(struct augeas *aug) {
         q = strchr(p, '.');
         name = strndup(p, q - p);
         name[0] = toupper(name[0]);
-        if (load_module(aug, name) == -1)
-            goto error;
+        res = load_module(aug, name);
         free(name);
+        if (res == -1)
+            goto error;
     }
     globfree(&globbuf);
     return 0;

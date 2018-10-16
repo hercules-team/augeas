@@ -193,3 +193,55 @@ test Multipath.lns get conf =
       { "polling_interval" = "9" }
       { "delay_watch_checks" = "10" }
       { "delay_wait_checks" = "10" } } }
+
+test Multipath.lns get "blacklist {
+        devnode \".*\"
+        wwid \"([a-z]+|ab?c).*\"
+}\n" =
+  { "blacklist"
+    { "devnode" = ".*" }
+    { "wwid" = "([a-z]+|ab?c).*" } }
+
+test Multipath.lns get "blacklist {\n property \"[a-z]+\"\n}\n" =
+  { "blacklist"
+    { "property" = "[a-z]+" } }
+
+(* Check that '""' inside a string works *)
+test Multipath.lns get "blacklist {
+  device {
+    vendor SomeCorp
+    product \"2.5\"\" SSD\"
+  }
+}\n" =
+  { "blacklist"
+    { "device"
+      { "vendor" = "SomeCorp" }
+      { "product" = "2.5\"\" SSD" } } }
+
+(* Issue #583 - allow optional quotes around values and strip them *)
+test Multipath.lns get "devices {
+  device {
+    vendor \"COMPELNT\"
+    product \"Compellent Vol\"
+    path_grouping_policy \"multibus\"
+    path_checker \"tur\"
+    features \"0\"
+    hardware_handler \"0\"
+    prio \"const\"
+    failback \"immediate\"
+    rr_weight \"uniform\"
+    no_path_retry \"queue\"
+  }
+}\n" =
+  { "devices"
+    { "device"
+      { "vendor" = "COMPELNT" }
+      { "product" = "Compellent Vol" }
+      { "path_grouping_policy" = "multibus" }
+      { "path_checker" = "tur" }
+      { "features" = "0" }
+      { "hardware_handler" = "0" }
+      { "prio" = "const" }
+      { "failback" = "immediate" }
+      { "rr_weight" = "uniform" }
+      { "no_path_retry" = "queue" } } }

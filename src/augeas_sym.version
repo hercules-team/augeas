@@ -85,3 +85,11 @@ AUGEAS_0.23.0 {
     global:
       aug_ns_attr;
 } AUGEAS_0.22.0;
+
+AUGEAS_0.24.0 {
+    global:
+      aug_ns_label;
+      aug_ns_value;
+      aug_ns_count;
+      aug_ns_path;
+} AUGEAS_0.23.0;

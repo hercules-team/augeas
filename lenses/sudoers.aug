@@ -29,7 +29,7 @@ About: Lens Usage
 
     * Set first Defaults to apply to the "LOCALNET" network alias
       > set /files/etc/sudoers/Defaults[1]/type "@LOCALNET"
-    * List all user specifications applying explicitely to the "admin" Unix group
+    * List all user specifications applying explicitly to the "admin" Unix group
       > match /files/etc/sudoers/spec/user "%admin"
     * Remove the full 3rd user specification
       > rm /files/etc/sudoers/spec[3]

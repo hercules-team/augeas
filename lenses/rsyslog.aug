@@ -33,7 +33,7 @@ let config_object_param = [ key /[A-Za-z.]+/ . Sep.equal . Quote.dquote
 let config_sep = del /[ \t]+|[ \t]*#.*\n[ \t]*/ " "
 
 let config_object =
-  [ key /action|global|input|module|parser|timezone/ .
+  [ key /action|global|input|module|parser|timezone|include/ .
     Sep.lbracket .
     config_object_param . ( config_sep . config_object_param )* .
     Sep.rbracket . Util.comment_or_eol ]

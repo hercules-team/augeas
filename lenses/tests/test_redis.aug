@@ -76,7 +76,7 @@ test Redis.lns get extra_whitespace_comment = { "#comment" = "another comment" }
 
 let redis_conf = "# Redis configuration file example
 
-# Note on units: when memory size is needed, it is possible to specifiy
+# Note on units: when memory size is needed, it is possible to specify
 # it in the usual form of 1k 5GB 4M and so forth:
 #
 # 1k => 1000 bytes
@@ -123,7 +123,7 @@ include /path/to/other.conf
 test Redis.lns get redis_conf =
   { "#comment" = "Redis configuration file example" }
   { }
-  { "#comment" = "Note on units: when memory size is needed, it is possible to specifiy" }
+  { "#comment" = "Note on units: when memory size is needed, it is possible to specify" }
   { "#comment" = "it in the usual form of 1k 5GB 4M and so forth:" }
   { }
   { "#comment" = "1k => 1000 bytes" }
@@ -150,7 +150,7 @@ test Redis.lns get redis_conf =
   { "#comment" = "If you want you can bind a single interface, if the bind option is not" }
   { "#comment" = "specified all the interfaces will listen for incoming connections." }
   { }
-  { "bind" = "127.0.0.1" }
+  { "bind" { "ip" = "127.0.0.1" } }
   { }
   { "#comment" = "Note: you can disable saving at all commenting all the \"save\" lines." }
   { }
@@ -179,3 +179,17 @@ test Redis.lns get redis_conf =
      Empty value (GH issue #115) *)
 test Redis.lns get "notify-keyspace-events \"\"\n" =
   { "notify-keyspace-events" = "" }
+
+(* Test: Redis.lns
+     Multiple bind IP addresses (GH issue #194) *)
+test Redis.lns get "bind 127.0.0.1 \"::1\" 192.168.1.1\n" =
+  { "bind"
+      { "ip" = "127.0.0.1" }
+      { "ip" = "::1" }
+      { "ip" = "192.168.1.1" } }
+
+test Redis.lns get "bind 127.0.0.1\n bind 192.168.1.1\n" =
+  { "bind"
+    { "ip" = "127.0.0.1" } }
+  { "bind"
+    { "ip" = "192.168.1.1" } }

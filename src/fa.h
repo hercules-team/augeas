@@ -25,9 +25,24 @@
 
 #include <stdio.h>
 #include <regex.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 /* The type for a finite automaton. */
 struct fa;
+
+/* The type of a state of a finite automaton. The fa_state functions return
+ * pointers to this struct. Those pointers are only valid as long as the
+ * only fa_* functions that are called are fa_state_* functions. For
+ * example, the following code will almost certainly result in a crash (or
+ * worse):
+ *
+ *     struct state *s = fa_state_initial(fa);
+ *     fa_minimize(fa);
+ *     // Crashes as S will likely have been freed
+ *     s = fa_state_next(s)
+ */
+struct state;
 
 /* Denote some basic automata, used by fa_is_basic and fa_make_basic */
 enum fa_basic {
@@ -156,7 +171,7 @@ struct fa *fa_overlap(struct fa *fa1, struct fa *fa2);
 
 /* Produce an example for the language of FA. The example is not
  * necessarily the shortest possible. The implementation works very hard to
- * have printable characters (preferrably alphanumeric) in the example, and
+ * have printable characters (preferably alphanumeric) in the example, and
  * to avoid just an empty word.
  *
  * *EXAMPLE will be the example, which may be NULL. If it is non-NULL,
@@ -271,6 +286,39 @@ int fa_expand_nocase(const char *regexp, size_t regexp_len,
  * memory, and -2 if FA has more than LIMIT words.
  */
 int fa_enumerate(struct fa *fa, int limit, char ***words);
+
+/* Print FA to OUT as a JSON file. State 0 is always the initial one.
+ * Returns 0 on success, and -1 on failure.
+ */
+int fa_json(FILE *out, struct fa *fa);
+
+/* Returns true if the FA is deterministic and 0 otherwise */
+bool fa_is_deterministic(struct fa *fa);
+
+/* Return the initial state */
+struct state *fa_state_initial(struct fa *fa);
+
+/* Return true if this is an accepting state */
+bool fa_state_is_accepting(struct state *st);
+
+/* Return the next state; return NULL if there are no more states */
+struct state* fa_state_next(struct state *st);
+
+/* Return the number of transitions for a state */
+size_t fa_state_num_trans(struct state *st);
+
+/* Produce details about the i-th transition.
+ *
+ * On success, *to points to the destination state of the transition and
+ * the interval [min-max] is the label of the transition.
+ *
+ * On failure, *to, min and max are not modified.
+ *
+ * Return 0 on success and -1 when I is larger than the number of
+ * transitions of ST.
+ */
+int fa_state_trans(struct state *st, size_t i,
+                   struct state **to, unsigned char *min, unsigned char *max);
 
 #endif
 

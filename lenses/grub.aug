@@ -29,9 +29,6 @@ module Grub =
     (* View: eol *)
     let eol = Util.eol
 
-    (* View: del_to_eol *)
-    let del_to_eol = del /[^ \t\n]*/ ""
-
     (* View: spc *)
     let spc = Util.del_ws_spc
 
@@ -92,7 +89,22 @@ module Grub =
       eol ]
 
     (* View: kw_pres *)
-    let kw_pres (kw:string) = [ opt_ws . key kw . del_to_eol . eol ]
+    let kw_pres (kw:string) = [ opt_ws . key kw . eol ]
+
+    (* View: error
+     *   Parse a line that looks almost like a valid setting, but isn't,
+     *   into an '#error' node. Any line that starts with letters, but not
+     *   anything matching kw, is considered an error line.
+     *
+     *   Parameters:
+     *     kw:regexp - the valid keywords that are _not_ considered an
+     *                 error
+     *)
+    let error (kw:regexp) =
+      let not_kw = /[a-zA-Z]+/ - kw in
+      [ label "#error" . Util.del_opt_ws "\t"
+        . store (not_kw . /([^a-zA-Z\n].*[^ \t\n])?/) . eol ]
+
 
 (************************************************************************
  * Group:                 BOOT ENTRIES
@@ -138,8 +150,8 @@ module Grub =
         spc . [ label "from" . store Rx.no_spaces ] )? .
       eol ]
 
-    (* View: menu_setting *)
-    let menu_setting = kw_menu_arg "default"
+    (* View: menu_entry *)
+    let menu_entry = kw_menu_arg "default"
                      | kw_menu_arg "fallback"
                      | kw_pres "hiddenmenu"
                      | kw_menu_arg "timeout"
@@ -155,6 +167,21 @@ module Grub =
                      | color
                      | device
                      | setkey
+
+    (* View: menu_error
+     *   Accept lines not matching menu_entry and stuff them into
+     *   '#error' nodes
+     *)
+    let menu_error =
+      let kw = /default|fallback|hiddenmenu|timeout|splashimage|gfxmenu/
+             |/foreground|background|verbose|boot|password|title/
+             |/serial|setkey|terminal|color|device/ in
+      error kw
+
+    (* View: menu_setting
+     *   a valid menu setting or a line that looks like one but is an #error
+     *)
+    let menu_setting = menu_entry | menu_error
 
     (* View: title *)
     let title = del /title[ \t=]+/ "title " . value_to_eol . eol
@@ -206,9 +233,9 @@ module Grub =
     let configfile =
       [ command "configfile" "\t" . spc . store Rx.no_spaces . eol ]
 
-    (* View: boot_setting
+    (* View: boot_entry
         <boot> entries *)
-    let boot_setting =
+    let boot_entry =
           let boot_arg_re = "root" | "initrd" | "rootnoverify" | "uuid"
                           | "findroot" | "bootfs" (* Solaris extensions *)
        in kw_boot_arg boot_arg_re
@@ -222,6 +249,21 @@ module Grub =
         | kw_pres "lock"
         | kw_pres "makeactive"
         | password_arg
+
+    (* View: boot_error
+     *   Accept lines not matching boot_entry and stuff them into
+     *   '#error' nodes
+     *)
+    let boot_error =
+      let kw = /lock|uuid|password|root|initrd|rootnoverify|findroot|bootfs/
+             |/configfile|chainloader|title|boot|quiet|kernel|module/
+             |/makeactive|savedefault|map/ in
+      error kw
+
+    (* View: boot_setting
+     *   a valid boot setting or a line that looks like one but is an #error
+     *)
+    let boot_setting = boot_entry | boot_error
 
     (* View: boot *)
     let boot =
