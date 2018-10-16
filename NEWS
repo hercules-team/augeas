@@ -69,8 +69,6 @@
     * Properties: accept empty comments with DOS line endings (Issue #161)
     * Rancid: new lens for RANCiD router databases (Matt Dainty)
     * Resolv: accept empty comments with DOS line endings (Issue #161)
-    * Systemd: also process /etc/systemd/logind.conf (Pat Riehecky)
-    * YAML: process a document that is just a sequence (John Vandenberg)
 
 1.9.0 - 2017-10-06
   - General changes/additions
