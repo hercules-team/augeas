@@ -68,7 +68,7 @@ module Sshd =
 
    let eol = del /[ \t]*\n/ "\n"
 
-   let sep = Util.del_ws_spc
+   let sep = del /[ \t=]+/ " "
 
    let indent = del /[ \t]*/ "  "
 
@@ -80,14 +80,14 @@ module Sshd =
    let empty = Util.empty
 
    let array_entry (kw:regexp) (sq:string) =
-     let bare = Quote.do_quote_opt_nil (store /[^"' \t\n]+/) in
+     let bare = Quote.do_quote_opt_nil (store /[^"' \t\n=]+/) in
      let quoted = Quote.do_quote (store /[^"'\n]*[ \t]+[^"'\n]*/) in
      [ key kw
        . ( [ sep . seq sq . bare ] | [ sep . seq sq . quoted ] )*
        . eol ]
 
    let other_entry =
-     let value = store /[^ \t\n]+([ \t]+[^ \t\n]+)*/ in
+     let value = store /[^ \t\n=]+([ \t=]+[^ \t\n=]+)*/ in
      [ key key_re . sep . value . eol ]
 
    let accept_env = array_entry /AcceptEnv/i "AcceptEnv"
@@ -98,14 +98,14 @@ module Sshd =
    let deny_users = array_entry /DenyUsers/i "DenyUsers"
 
    let subsystemvalue =
-     let value = store (/[^ \t\n](.*[^ \t\n])?/) in
+     let value = store (/[^ \t\n=](.*[^ \t\n=])?/) in
      [ key /[A-Za-z0-9\-]+/ . sep . value . eol ]
 
    let subsystem =
      [ key /Subsystem/i .  sep .  subsystemvalue ]
 
    let list (kw:regexp) (sq:string) =
-     let value = store /[^, \t\n]+/ in
+     let value = store /[^, \t\n=]+/ in
      [ key kw . sep .
          [ seq sq . value ] .
          ([ seq sq . Util.del_str "," . value])* .
@@ -125,7 +125,7 @@ module Sshd =
              | other_entry
 
    let condition_entry =
-    let value = store  /[^ \t\n]+/ in
+    let value = store  /[^ \t\n=]+/ in
     [ sep . key /[A-Za-z0-9]+/ . sep . value ]
 
    let match_cond =
