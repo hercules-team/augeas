@@ -14,7 +14,7 @@ module DevfsRules =
             . Util.del_str "]" . eol
             . counter "entry"
 
-  let record = IniFile.record title entry
+  let record = IniFile.record title (entry | comment)
 
   let lns = IniFile.lns record comment
 
