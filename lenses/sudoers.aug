@@ -316,6 +316,7 @@ let parameter_flag_kw    = "always_set_home" | "authenticate" | "env_editor"
                          | "closefrom_override" | "compress_io" | "fast_glob"
                          | "log_input" | "log_output" | "pwfeedback"
                          | "umask_override" | "use_pty" | "match_group_by_gid"
+                         | "always_query_group_plugin"
 
 let parameter_flag       = [ del_negate . negate_node?
                                . key parameter_flag_kw ]
