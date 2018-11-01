@@ -66,9 +66,10 @@ extern "C" {
  * Use ROOT as the filesystem root. If ROOT is NULL, use the value of the
  * environment variable AUGEAS_ROOT. If that doesn't exist eitehr, use "/".
  *
- * LOADPATH is a colon-spearated list of directories that modules should be
+ * LOADPATH is a colon-separated list of directories that modules should be
  * searched in. This is in addition to the standard load path and the
- * directories in AUGEAS_LENS_LIB
+ * directories in AUGEAS_LENS_LIB. LOADPATH can be NULL, indicating that
+ * nothing should be added to the load path.
  *
  * FLAGS is a bitmask made up of values from AUG_FLAGS. The flag
  * AUG_NO_ERR_CLOSE can be used to get more information on why
