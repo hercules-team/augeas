@@ -237,16 +237,26 @@ static char *get_home_dir(uid_t uid) {
     struct passwd pwbuf;
     struct passwd *pw = NULL;
     long val = sysconf(_SC_GETPW_R_SIZE_MAX);
-    size_t strbuflen = val;
 
-    if (val < 0)
-        return NULL;
+    if (val < 0) {
+        // The libc won't tell us how big a buffer to reserve.
+        // Let's hope that 16k is enough (it really should be).
+        val = 16*1024;
+    }
+
+    size_t strbuflen = (size_t) val;
 
     if (ALLOC_N(strbuf, strbuflen) < 0)
         return NULL;
 
     if (getpwuid_r(uid, &pwbuf, strbuf, strbuflen, &pw) != 0 || pw == NULL) {
         free(strbuf);
+
+        // Try to get the user's home dir from the environment
+        char *env = getenv("HOME");
+        if (env != NULL) {
+            return strdup(env);
+        }
         return NULL;
     }
 
