@@ -49,6 +49,25 @@ session    optional     pam_keyinit.so force revoke
       { "argument" = "[motd=/etc/bad example]" }
     }
 
+(* Multiline PAM entries; issue #590 *)
+test Pam.lns get "account \\\ninclude \\\n    system-auth\n" =
+  { "1"
+    { "type" = "account" }
+    { "control" = "include" }
+    { "module" = "system-auth" } }
+
+test Pam.lns get "account\\\n[success=1 default=ignore] \\
+				pam_succeed_if.so\\\nuser\\\n =\\\nvagrant\\\nuse_uid\\\nquiet\n" =
+ { "1"
+    { "type" = "account" }
+    { "control" = "[success=1 default=ignore]" }
+    { "module" = "pam_succeed_if.so" }
+    { "argument" = "user" }
+    { "argument" = "=" }
+    { "argument" = "vagrant" }
+    { "argument" = "use_uid" }
+    { "argument" = "quiet" } }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
