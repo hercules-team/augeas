@@ -53,6 +53,16 @@ let namedpipe = Syslog.pipe . Sep.space . [ label "pipe" . store Syslog.file_r ]
 
 let action = Syslog.action | omusrmsg | file_tmpl | namedpipe
 
+(* Cannot use syslog program because rsyslog does not suppport #! *)
+let program = [ label "program" . Syslog.bang .
+    ( Syslog.opt_plus | [ Build.xchgs "-" "reverse" ] ) .
+    Syslog.programs . Util.eol .  Syslog.entries ]
+
+(* Cannot use syslog hostname because rsyslog does not suppport #+/- *)
+let hostname = [ label "hostname" .
+      ( Syslog.plus | [ Build.xchgs "-" "reverse" ] ) .
+      Syslog.hostnames . Util.eol .  Syslog.entries ]
+
 (* View: entry
    An entry contains selectors and an action
 *)
@@ -70,9 +80,9 @@ let prop_filter =
   in [ label "filter" . prop_name . sep . prop_oper . sep . prop_val .
        Sep.space . prop_act . Util.eol ]
 
-let entries = ( Syslog.empty | Syslog.comment | entry | macro | config_object | prop_filter )*
+let entries = ( Syslog.empty | Util.comment | entry | macro | config_object | prop_filter )*
 
-let lns = entries . ( Syslog.program | Syslog.hostname )*
+let lns = entries . ( program | hostname )*
 
 let filter = incl "/etc/rsyslog.conf"
            . incl "/etc/rsyslog.d/*"

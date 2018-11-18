@@ -200,6 +200,11 @@ test Rsyslog.lns get "module(load=\"imuxsock\" 	  # provides support for local s
     { "#comment" = "Turn off message reception via local log socket;" } }
   { "#comment" = "local messages are retrieved through imjournal now." }
 
+(* rsyslog doesn't use bsd-like #! or #+/- specifications *)
+test Rsyslog.lns get "#!prog\n" = { "#comment" = "!prog" }
+test Rsyslog.lns get "#+host\n" = { "#comment" = "+host" }
+test Rsyslog.lns get "#-host\n" = { "#comment" = "-host" }
+
 (* Added in rsyslog 8.33 *)
 test Rsyslog.lns get "include(file=\"/etc/rsyslog.d/*.conf\" mode=\"optional\")\n" =
   { "include"
