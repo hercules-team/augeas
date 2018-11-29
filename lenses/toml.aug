@@ -30,11 +30,11 @@ let comment  = IniFile.comment "#" "#"
 
 (* View: empty
      An empty line *)
-let empty = Util.empty
+let empty = Util.empty_dos
 
 (* View: eol
      An end of line *)
-let eol = Util.eol
+let eol = Util.doseol
 
 
 (* Group: value entries *)
