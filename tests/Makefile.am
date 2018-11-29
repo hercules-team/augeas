@@ -218,6 +218,7 @@ lens_tests =			\
   lens-thttpd.sh		\
   lens-tmpfiles.sh		\
   lens-trapperkeeper.sh		\
+  lens-toml.sh		\
   lens-tuned.sh			\
   lens-up2date.sh		\
   lens-updatedb.sh		\
