@@ -46,6 +46,5 @@ let filter = incl "/etc/kernel-img.conf"
            . incl "/etc/audit/auditd.conf"
            . incl "/etc/mixerctl.conf"
            . incl "/etc/wsconsctlctl.conf"
-           . incl "/etc/selinux/semanage.conf"
 
 let xfm = transform lns filter
