@@ -95,7 +95,7 @@ let bool (r:regexp) = [ label "bool" . store r ]
 
 
 let date_re = /[0-9]{4}-[0-9]{2}-[0-9]{2}/
-let time_re = /[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?[A-Z]*/
+let time_re = /[0-9]{1,2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?[A-Z]*/
 
 let datetime = [ label "datetime" . store (date_re . /[T ]/ . time_re) ]
 let date = [ label "date" . store date_re ]
