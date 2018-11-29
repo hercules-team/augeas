@@ -186,6 +186,7 @@ lens_tests =			\
   lens-rx.sh			\
   lens-samba.sh			\
   lens-securetty.sh     \
+  lens-semanage.sh		\
   lens-services.sh		\
   lens-shadow.sh		\
   lens-shells.sh		\
