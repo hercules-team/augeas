@@ -22,6 +22,7 @@ lens_tests =			\
   lens-activemq_xml.sh		\
   lens-afs_cellalias.sh			\
   lens-aliases.sh		\
+  lens-anaconda.sh		\
   lens-anacron.sh		\
   lens-approx.sh		\
   lens-apt_update_manager.sh		\
