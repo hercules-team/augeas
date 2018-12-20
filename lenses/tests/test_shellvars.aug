@@ -611,6 +611,9 @@ esac\n" =
   test lns get "alias ls='ls $LS_OPTIONS'\n" =
     { "@alias" = "ls" { "value" = "'ls $LS_OPTIONS'" } }
 
+  test lns get "alias ls-options='ls $LS_OPTIONS'\n" =
+    { "@alias" = "ls-options" { "value" = "'ls $LS_OPTIONS'" } }
+
   (* Allow && and || constructs after condition *)
   test Shellvars.lns get "[ -f $FILENAME ] && do this || or that\n" =
   { "@condition" = "-f $FILENAME"
