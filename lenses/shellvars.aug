@@ -226,13 +226,13 @@ module Shellvars =
     . entry+
     . Util.indent . Util.del_str "}" . eol ]
 
-  let function (entry:lens) =
+  let function (entry:lens) (start_kw:string) (end_kw:string) =
     [ Util.indent . label "@function"
     . del /(function[ \t]+)?/ ""
     . store Rx.word . del /[ \t]*\(\)/ "()"
-    . (comment_eol|brace_eol) . Util.del_str "{" . brace_eol
+    . (comment_eol|brace_eol) . Util.del_str start_kw . brace_eol
     . entry+
-    . Util.indent . Util.del_str "}" . eol ]
+    . Util.indent . Util.del_str end_kw . eol ]
 
   let rec rec_entry =
     let entry = comment | entry_eol | rec_entry in
@@ -242,7 +242,8 @@ module Shellvars =
       | loop_while entry
       | loop_until entry
       | case entry entry_noeol
-      | function entry
+      | function entry "{" "}"
+      | function entry "(" ")"
       | subshell entry
 
   let lns_norec = del_empty* . (comment | entry_eol) *

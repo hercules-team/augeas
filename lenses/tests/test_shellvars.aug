@@ -299,6 +299,13 @@ esac\n" =
     { ".source" = "/tmp/bar" }
   }
 
+  test Shellvars.lns get "foo() (
+  . /tmp/bar
+  )\n" =
+  { "@function" = "foo"
+    { ".source" = "/tmp/bar" }
+  }
+
   (* Dollar assignment *)
   test Shellvars.lns get "FOO=$(bar arg)\n" =
   { "FOO" = "$(bar arg)" }
