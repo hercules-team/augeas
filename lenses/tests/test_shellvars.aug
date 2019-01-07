@@ -624,13 +624,13 @@ esac\n" =
 (* Test: Shellvars.lns
      Parse (almost) any command *)
 test Shellvars.lns get "echo foobar 'and this is baz'
-/usr/local/bin/myscript.sh with args
+/usr/local/bin/myscript-with-dash_and_underscore.sh with args
 echo foo \
 bar\n" =
   { "@command" = "echo"
     { "@arg" = "foobar 'and this is baz'" }
   }
-  { "@command" = "/usr/local/bin/myscript.sh"
+  { "@command" = "/usr/local/bin/myscript-with-dash_and_underscore.sh"
     { "@arg" = "with args" }
   }
   { "@command" = "echo"
