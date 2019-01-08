@@ -1,13 +1,18 @@
 1.12.0 - ????-??-??
   - Lens changes/additions
     * Anaconda: new lens to process /etc/sysconfig/anaconda instead of
-                Shellvars (Pino Toscano)
+                Shellvars (Pino Toscano) (Issue #597)
     * DevfsRules: add lens for FreeBSD devfs.rules files
     * Multipath: accept values enclosed in quotes (Issue #583)
     * Pam: accept continuation lines (Issue #590)
     * Syslog: accept 'include' directive (Issue #486)
     * Semanage: new lens to process /etc/selinux/semanage.conf instead of
-                Simplevars (Pino Toscano)
+                Simplevars (Pino Toscano) (Issue #594)
+    * Shellvars: accept functions wrapped in round brackets,
+                 accept variables with a dash in their name,
+                 exclude csh/tcsh profile scripts (Pino Toscano) (Issue #600)
+
+
 
 1.11.0 - 2018-08-24
   - General changes/additions
