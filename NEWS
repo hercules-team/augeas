@@ -12,8 +12,7 @@
     * Shellvars: accept functions wrapped in round brackets,
                  accept variables with a dash in their name,
                  exclude csh/tcsh profile scripts (Pino Toscano) (Issue #600)
-
-
+    * Ssh: accept RekeyLimit (Issue #605)
 
 1.11.0 - 2018-08-24
   - General changes/additions

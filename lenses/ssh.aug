@@ -76,6 +76,10 @@ module Ssh =
 
     let global_knownhosts_file = spaces_entry /GlobalKnownHostsFile/i
 
+    let rekey_limit = [ indent . key /RekeyLimit/i . spc_eq .
+                        [ label "amount" . value_to_spc ] .
+                        [ spc . label "duration" . value_to_spc ]? . eol ]
+
     let special_entry = send_env
 	                    | proxy_command
 	                    | remote_fw
@@ -84,10 +88,11 @@ module Ssh =
 	                    | ciphers
 	                    | algorithms
 	                    | pubkey_accepted_key_types
-                      | global_knownhosts_file
+                        | global_knownhosts_file
+                        | rekey_limit
 
     let key_re = /[A-Za-z0-9]+/
-               - /SendEnv|Host|ProxyCommand|RemoteForward|LocalForward|MACs|Ciphers|(HostKey|Kex)Algorithms|PubkeyAcceptedKeyTypes|GlobalKnownHostsFile/i
+               - /SendEnv|Host|ProxyCommand|RemoteForward|LocalForward|MACs|Ciphers|(HostKey|Kex)Algorithms|PubkeyAcceptedKeyTypes|GlobalKnownHostsFile|RekeyLimit/i
 
 
     let other_entry = [ indent . key key_re

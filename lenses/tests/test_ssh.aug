@@ -108,3 +108,13 @@ test Ssh.lns get "ForwardAgent=yes\n" =
 
 test Ssh.lns get "ForwardAgent =\tyes\n" =
  { "ForwardAgent" = "yes" }
+
+(* Issue #605 *)
+test Ssh.lns get "RekeyLimit 1G 1h\n" =
+  { "RekeyLimit"
+    { "amount" = "1G" }
+    { "duration" = "1h" } }
+
+test Ssh.lns get "RekeyLimit 1G\n" =
+  { "RekeyLimit"
+    { "amount" = "1G" } }
