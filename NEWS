@@ -3,6 +3,7 @@
     * Anaconda: new lens to process /etc/sysconfig/anaconda instead of
                 Shellvars (Pino Toscano) (Issue #597)
     * DevfsRules: add lens for FreeBSD devfs.rules files
+    * Dovecot: permit ! in block titles (Nathan Ward) (Issue #599)
     * Hostname: Allow creation of hostname when file is missing
     *           (David Farrell) (Issue #606)
     * Krb5: add more pkinit_* options (Issue #603)
