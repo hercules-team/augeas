@@ -3,6 +3,8 @@
     * Anaconda: new lens to process /etc/sysconfig/anaconda instead of
                 Shellvars (Pino Toscano) (Issue #597)
     * DevfsRules: add lens for FreeBSD devfs.rules files
+    * Hostname: Allow creation of hostname when file is missing
+    *           (David Farrell) (Issue #606)
     * Krb5: add more pkinit_* options (Issue #603)
     * Multipath: accept values enclosed in quotes (Issue #583)
     * Pam: accept continuation lines (Issue #590)
