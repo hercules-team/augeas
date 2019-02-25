@@ -15,6 +15,7 @@
     * Shellvars: accept functions wrapped in round brackets,
                  accept variables with a dash in their name,
                  exclude csh/tcsh profile scripts (Pino Toscano) (Issue #600)
+                 accept variable as command (Issue #601)
 
 
 
