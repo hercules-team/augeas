@@ -114,7 +114,7 @@ let block_newlines (entry:lens) (comment:lens) =
 Map block enclosed in brackets recursively.
 Block may be indented and have optional argument.
 Block body may have entries, comments, empty lines, and nested blocks recursively. *)
-let rec block = [ indent . key block_names . (Sep.space . Quote.do_dquote_opt (store /[\/A-Za-z0-9_-]+/))? . block_newlines (entry|block|mailbox) comment . eol ]
+let rec block = [ indent . key block_names . (Sep.space . Quote.do_dquote_opt (store /!?[\/A-Za-z0-9_-]+/))? . block_newlines (entry|block|mailbox) comment . eol ]
 
 
 (******************************************************************

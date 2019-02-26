@@ -13,7 +13,7 @@ module Hostname =
 autoload xfm
 
 (* View: lns *)
-let lns = [ label "hostname" . store Rx.word . Util.eol ]
+let lns = [ label "hostname" . store Rx.word . Util.eol ] | Util.empty
 
 (* View: filter *)
 let filter = incl "/etc/hostname"

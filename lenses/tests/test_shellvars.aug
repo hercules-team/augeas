@@ -755,6 +755,11 @@ fi
       }
   }
 
+(* Support variable as command *)
+test Shellvars.lns get "$FOO bar\n" =
+  { "@command" = "$FOO"
+      { "@arg" = "bar" }
+  }
 
 
 (*********************************************************
