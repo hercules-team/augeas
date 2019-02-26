@@ -8,6 +8,7 @@
     *           (David Farrell) (Issue #606)
     * Krb5: add more pkinit_* options (Issue #603)
     * Multipath: accept values enclosed in quotes (Issue #583)
+    * Nsswitch: add merge action (Issue #609)
     * Pam: accept continuation lines (Issue #590)
     * Syslog: accept 'include' directive (Issue #486)
     * Semanage: new lens to process /etc/selinux/semanage.conf instead of
