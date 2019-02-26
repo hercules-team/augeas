@@ -52,6 +52,7 @@ let reaction =
                 | /[Tt][Rr][Yy][Aa][Gg][Aa][Ii][Nn]/
     in let action_kw = /[Rr][Ee][Tt][Uu][Rr][Nn]/
                      | /[Cc][Oo][Nn][Tt][Ii][Nn][Uu][Ee]/
+                     | /[Mm][Ee][Rr][Gg][Ee]/
       in let negate = [ Util.del_str "!" . label "negate" ]
         in let reaction_entry = [ label "status" . negate?
                                 . store status_kw
