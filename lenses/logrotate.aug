@@ -19,7 +19,7 @@ module Logrotate =
    let eol = Util.eol
    let num = Rx.relinteger
    let word = /[^,#= \n\t{}]+/
-   let filename = /\/[^,#= \n\t{}]+/
+   let filename = /(\/[^,#= \n\t{}]+|"\/[^,#= \n\t{}]+")/
    let size = num . /[kMG]?/
 
    let indent = del Rx.opt_space "\t"
