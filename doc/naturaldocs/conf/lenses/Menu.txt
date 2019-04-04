@@ -209,6 +209,9 @@ Group: Specific Modules  {
    File: Rtadvd  (rtadvd.aug)
    File: Strongswan  (strongswan.aug)
    File: Termcap  (termcap.aug)
+   File: Anaconda  (anaconda.aug)
+   File: Semanage  (semanage.aug)
+   File: Toml  (toml.aug)
    }  # Group: Specific Modules
 
 Group: Generic Modules  {
@@ -315,6 +318,9 @@ Group: Tests and Examples  {
    File: test_slapd.aug  (tests/test_slapd.aug)
    File: test_trapperkeeper.aug  (tests/test_trapperkeeper.aug)
    File: Test_Xymon_Alerting  (tests/test_xymon_alerting.aug)
+   File: Test_Anaconda  (tests/test_anaconda.aug)
+   File: Test_Semanage  (tests/test_semanage.aug)
+   File: test_toml.aug  (tests/test_toml.aug)
    }  # Group: Tests and Examples
 
 Group: Index  {
