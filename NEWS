@@ -7,6 +7,7 @@
     * Hostname: Allow creation of hostname when file is missing
     *           (David Farrell) (Issue #606)
     * Krb5: add more pkinit_* options (Issue #603)
+    * Logrotate: fix missing recognition of double quoted filenames (Issue #611)
     * Multipath: accept values enclosed in quotes (Issue #583)
     * Nsswitch: add merge action (Issue #609)
     * Pam: accept continuation lines (Issue #590)
