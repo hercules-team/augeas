@@ -63,3 +63,20 @@ test Puppetfile.lns get "mod 'stdlib',
   :git => \"git://github.com/puppetlabs/puppetlabs-stdlib.git\"\n" =
   { "1" = "stdlib"
     { "git" = "git://github.com/puppetlabs/puppetlabs-stdlib.git" } }
+
+
+(* Issue #427 *)
+test Puppetfile.lns get "mod 'puppetlabs/apache', :latest\n" =
+  { "1" = "puppetlabs/apache"
+    { "latest" } }
+
+test Puppetfile.lns get "mod 'data',
+  :git    => 'ssh://git@stash.example.com/bp/puppet-hiera.git',
+  :branch => :control_branch,
+  :default_branch => 'development',
+  :install_path   => '.'\n" =
+  { "1" = "data"
+    { "git" = "ssh://git@stash.example.com/bp/puppet-hiera.git" }
+    { "branch" = ":control_branch" }
+    { "default_branch" = "development" }
+    { "install_path" = "." } }

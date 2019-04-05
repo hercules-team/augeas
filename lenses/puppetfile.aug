@@ -43,13 +43,16 @@ let metadata = [ Util.indent . key "metadata" . Util.eol ]
 let mod =
      let mod_name = Quote.do_quote (store ((Rx.word . /[\/-]/)? . Rx.word))
   in let version = [ label "@version" . Quote.do_quote (store /[^:\n]+/) ]
-  in let opt = [ Util.del_str ":" . key Rx.word . del /[ \t]*=>[ \t]*/ " => "
-               . Quote.do_quote (store /[^,\n]*/) ]
+  in let sto_opt_val = store /[^"', \t\n][^"',\n]*[^"', \t\n]|[^"', \t\n]/
+  in let opt = [
+                 Util.del_str ":" . key Rx.word
+                 . (del /[ \t]*=>[ \t]*/ " => " . Quote.do_quote_opt sto_opt_val)?
+               ]
   in let opts = Build.opt_list opt comma
   in [ Util.indent . Util.del_str "mod" . seq "mod" . Sep.space . mod_name
      . (comma . version)?
      . (comma . opts)?
-     . Util.eol ] 
+     . Util.eol ]
 
 (* View: lns
      the Puppetfile lens *)
