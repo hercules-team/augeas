@@ -16,7 +16,7 @@ test Logrotate.rule get "/var/log/foo /var/log/bar\n{\n monthly\n}\n" =
 
 test Logrotate.rule get "\"/var/log/foo\"\n{\n monthly\n}\n" =
   { "rule"
-    { "file" = "\"/var/log/foo\"" }
+    { "file" = "/var/log/foo" }
     { "schedule" = "monthly" } }
 
 let conf = "# see man logrotate for details

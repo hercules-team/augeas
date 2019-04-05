@@ -19,7 +19,7 @@ module Logrotate =
    let eol = Util.eol
    let num = Rx.relinteger
    let word = /[^,#= \n\t{}]+/
-   let filename = /(\/[^,#= \n\t{}]+|"\/[^,#= \n\t{}]+")/
+   let filename = Quote.do_quote_opt (store /\/[^"',#= \n\t{}]+/)
    let size = num . /[kMG]?/
 
    let indent = del Rx.opt_space "\t"
@@ -112,7 +112,7 @@ module Logrotate =
                  Util.comment
 
    let rule =
-     let filename_entry = [ label "file" . store filename ] in
+     let filename_entry = [ label "file" . filename ] in
      let filename_sep = del /[ \t\n]+/ " " in
      let filenames = Build.opt_list filename_entry filename_sep in
      [ label "rule" . Util.indent . filenames . body . eol ]
