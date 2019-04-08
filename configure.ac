@@ -2,7 +2,7 @@ AC_INIT(augeas, 1.11.0)
 AC_CONFIG_SRCDIR([src/augeas.c])
 AC_CONFIG_AUX_DIR([build/ac-aux])
 AM_CONFIG_HEADER([config.h])
-AM_INIT_AUTOMAKE([-Wno-portability 1.11 color-tests parallel-tests])
+AM_INIT_AUTOMAKE([-Wno-portability color-tests parallel-tests])
 AM_SILENT_RULES([yes]) # make --enable-silent-rules the default.
 
 
