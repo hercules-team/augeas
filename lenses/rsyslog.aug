@@ -49,9 +49,11 @@ let omusrmsg = Util.del_str ":omusrmsg:" .
    File action with a specified template *)
 let file_tmpl = Syslog.file . [ label "template" . Util.del_str ";" . store Rx.word ]
 
+let dynamic = [ Util.del_str "?" . label "dynamic" . store Rx.word ]
+
 let namedpipe = Syslog.pipe . Sep.space . [ label "pipe" . store Syslog.file_r ]
 
-let action = Syslog.action | omusrmsg | file_tmpl | namedpipe
+let action = Syslog.action | omusrmsg | file_tmpl | dynamic | namedpipe
 
 (* Cannot use syslog program because rsyslog does not suppport #! *)
 let program = [ label "program" . Syslog.bang .
