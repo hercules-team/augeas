@@ -7,9 +7,12 @@
     * Hostname: Allow creation of hostname when file is missing
     *           (David Farrell) (Issue #606)
     * Krb5: add more pkinit_* options (Issue #603)
+    * Logrotate: fix missing recognition of double quoted filenames (Issue #611)
     * Multipath: accept values enclosed in quotes (Issue #583)
     * Nsswitch: add merge action (Issue #609)
     * Pam: accept continuation lines (Issue #590)
+    * Puppetfile: allow symbols as (optional) values (Issue #619)
+                  allow comments in entries (Issue #620)
     * Syslog: accept 'include' directive (Issue #486)
     * Semanage: new lens to process /etc/selinux/semanage.conf instead of
                 Simplevars (Pino Toscano) (Issue #594)
