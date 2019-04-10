@@ -56,8 +56,9 @@ let simple =
 (* View: server
      A simple server entry *)
 let server =
-  [ Util.indent . label "@server" . Util.del_str "server"
-  . [ Sep.space . label "@address" . store word ]
+  let address = /[A-Za-z0-9_.:\/-]+/
+  in [ Util.indent . label "@server" . Util.del_str "server"
+  . [ Sep.space . label "@address" . store address ]
   . [ Sep.space . key word . (Sep.equal . store word)? ]*
   . Sep.semicolon
   . (Util.eol|Util.comment_eol) ]
