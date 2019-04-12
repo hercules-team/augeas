@@ -16,6 +16,7 @@
     * Pam: accept continuation lines (Issue #590)
     * Puppetfile: allow symbols as (optional) values (Issue #619)
                   allow comments in entries (Issue #620)
+    * Rsyslog: support dynamic file paths (Issue #622)
     * Syslog: accept 'include' directive (Issue #486)
     * Semanage: new lens to process /etc/selinux/semanage.conf instead of
                 Simplevars (Pino Toscano) (Issue #594)
