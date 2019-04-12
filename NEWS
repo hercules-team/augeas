@@ -1,4 +1,6 @@
 1.12.0 - ????-??-??
+  - General changes/additions
+    * update gnulib to 91584ed6
   - Lens changes/additions
     * Anaconda: new lens to process /etc/sysconfig/anaconda instead of
                 Shellvars (Pino Toscano) (Issue #597)
@@ -9,6 +11,7 @@
     * Krb5: add more pkinit_* options (Issue #603)
     * Logrotate: fix missing recognition of double quoted filenames (Issue #611)
     * Multipath: accept values enclosed in quotes (Issue #583)
+    * Nginx: support unix sockets as server address (Issue #618)
     * Nsswitch: add merge action (Issue #609)
     * Pam: accept continuation lines (Issue #590)
     * Puppetfile: allow symbols as (optional) values (Issue #619)

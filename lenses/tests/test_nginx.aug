@@ -288,3 +288,12 @@ test lns get "location /foo {
     { "root" = "/var/www/html" }
     { "internal"
       { "#comment" = "only valid in location blocks" } } }
+
+test lns get "upstream php-handler {
+    server unix:/var/run/php/php7.3-fpm.sock;
+}\n" =
+  { "upstream"
+    { "#name" = "php-handler" }
+    { "@server"
+      { "@address" = "unix:/var/run/php/php7.3-fpm.sock" } } }
+
