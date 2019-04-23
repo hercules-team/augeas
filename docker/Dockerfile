@@ -10,6 +10,7 @@ RUN set -xe ; \
     cd - \
  && rm -fr /augeas ; \
     apk del .build
+
 RUN set -x ; \
     cd /usr/local/bin \
  && for TOOL in augcheck auggrep augload augloadone augparsediff augsed ; \
