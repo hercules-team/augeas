@@ -36,10 +36,8 @@
  *    dump '//descendant::*'
  *
  */
-#define _GNU_SOURCE
 
-#include "config.h"
-#include "augeas.h"
+#include <augeas.h>
 
 #include <stdio.h>
 #include <stdlib.h>

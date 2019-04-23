@@ -210,3 +210,15 @@ test Rsyslog.lns get "include(file=\"/etc/rsyslog.d/*.conf\" mode=\"optional\")\
   { "include"
     { "file" = "/etc/rsyslog.d/*.conf" }
     { "mode" = "optional" } }
+
+(* Dynamic file name template *)
+test Rsyslog.lns get "*.* ?DynamicFile\n" =
+  { "entry"
+    { "selector"
+      { "facility" = "*" }
+      { "level" = "*" }
+    }
+    { "action"
+      { "dynamic" = "DynamicFile" }
+    }
+  }

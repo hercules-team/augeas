@@ -24,16 +24,14 @@
  * The purpose of this example is to show the usage of libfa
  */
 
-#include <config.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <string.h>
-#include <getopt.h>
 #include <stdlib.h>
 #include <limits.h>
 
-#include "fa.h"
+#include <fa.h>
 
 #define UCHAR_NUM (UCHAR_MAX+1)
 

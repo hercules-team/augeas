@@ -1,4 +1,4 @@
-1.12.0 - ????-??-??
+1.12.0 - 2019-04-13
   - General changes/additions
     * update gnulib to 91584ed6
   - Lens changes/additions
@@ -16,14 +16,25 @@
     * Pam: accept continuation lines (Issue #590)
     * Puppetfile: allow symbols as (optional) values (Issue #619)
                   allow comments in entries (Issue #620)
+    * Rsyslog: support dynamic file paths (Issue #622)
+               treat #!/+/- as comment (arnolda, PR #595)
     * Syslog: accept 'include' directive (Issue #486)
     * Semanage: new lens to process /etc/selinux/semanage.conf instead of
                 Simplevars (Pino Toscano) (Issue #594)
-    * Shellvars: accept functions wrapped in round brackets,
+    * Shellvars: allow and/or in @if conditions (#582)
+                 accept functions wrapped in round brackets,
                  accept variables with a dash in their name,
                  exclude csh/tcsh profile scripts (Pino Toscano) (Issue #600)
                  accept variable as command (Issue #601)
     * Ssh: accept RekeyLimit (Issue #605)
+    * Sshd: accept '=' to separate option names from their values
+            (Emil Dragu, #587)
+    * Sudoers: support 'always_query_group_plugin' flag (Steve Traylen, #588)
+    * Strongswan: parse lists. This is a backwards-incompatible change
+                  since list entries that were parsed into a single string
+                  are now split into a list of entries (Kaarle Ritvanen)
+    * Toml: new lens to parse .toml files (PR #91)
+    * Xorg: accept empty values for options (arnolda, PR #596)
 
 1.11.0 - 2018-08-24
   - General changes/additions
