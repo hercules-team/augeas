@@ -1,22 +1,22 @@
+FROM alpine AS build
+
+RUN apk add --no-cache --virtual=.build gcc libc-dev make bison flex readline-dev libxml2-dev git automake autoconf libtool pkgconf coreutils
+COPY . /augeas
+RUN set -ex ; \
+    cd augeas \
+ && ./autogen.sh --prefix=/opt/augeas \
+ && make \
+ && make install
+
 FROM alpine
-
 RUN apk add --no-cache libgcc libxml2 readline bash
-
-RUN set -xe ; \
-    apk add --no-cache --virtual=.build gcc libc-dev make bison flex readline-dev libxml2-dev git automake autoconf libtool pkgconf coreutils \
- && git clone git://github.com/hercules-team/augeas \
- && cd augeas \
- && ./autogen.sh && make && make install ; \
-    cd - \
- && rm -fr /augeas ; \
-    apk del .build
-
+COPY --from=build /opt/augeas /opt/augeas
+ENV PATH=$PATH:/opt/augeas/bin
 RUN set -x ; \
-    cd /usr/local/bin \
+    cd /opt/augeas/bin \
  && for TOOL in augcheck auggrep augload augloadone augparsediff augsed ; \
     do \
       wget https://raw.githubusercontent.com/raphink/augeas-sandbox/master/"$TOOL" ; \
       chmod +x "$TOOL" ; \
     done
-
 CMD augtool
