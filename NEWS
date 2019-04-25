@@ -7,7 +7,7 @@
     * DevfsRules: add lens for FreeBSD devfs.rules files
     * Dovecot: permit ! in block titles (Nathan Ward) (Issue #599)
     * Hostname: Allow creation of hostname when file is missing
-    *           (David Farrell) (Issue #606)
+                (David Farrell) (Issue #606)
     * Krb5: add more pkinit_* options (Issue #603)
     * Logrotate: fix missing recognition of double quoted filenames (Issue #611)
     * Multipath: accept values enclosed in quotes (Issue #583)
