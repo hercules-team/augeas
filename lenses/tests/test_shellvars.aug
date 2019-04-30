@@ -774,6 +774,10 @@ echo foo || { echo bar; }
 echo FOO | myfunc() { echo bar; }\n" = *
 
 
+(* Stream redirections (Issue #626 *)
+test Shellvars.lns get "echo foo 2>&1 >/dev/null\n" = *
+
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
