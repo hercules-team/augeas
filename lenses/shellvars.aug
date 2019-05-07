@@ -297,6 +297,7 @@ module Shellvars =
                      . incl "/etc/profile"
                      . incl "/etc/profile.d/*"
                      . excl "/etc/profile.d/*.csh"
+                     . excl "/etc/profile.d/*.tcsh"
                      . excl "/etc/profile.d/csh.local"
   let filter_misc    = incl "/etc/arno-iptables-firewall/debconf.cfg"
                      . incl "/etc/conf.d/*"
