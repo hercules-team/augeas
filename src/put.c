@@ -212,6 +212,8 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
     struct split *split = NULL, *tail = NULL;
     struct regexp *atype = lens->atype;
 
+    MEMZERO(&regs, 1);
+
     /* Fast path for leaf nodes, which will always lead to an empty split */
     // FIXME: This doesn't match the empty encoding
     if (outer->tree == NULL && strlen(outer->enc) == 0
@@ -225,7 +227,6 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
         return split;
     }
 
-    MEMZERO(&regs, 1);
     count = regexp_match(atype, outer->enc, outer->end,
                          outer->start, &regs);
     if (count >= 0 && count != outer->end - outer->start)
