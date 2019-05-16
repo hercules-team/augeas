@@ -21,10 +21,11 @@ let closebr = del /[ \t]*\}/ "}"
    and realms in the [appdefaults] section.
 *)
 
+let include_re = /include(dir)?/
 let realm_re = /[A-Z0-9][.a-zA-Z0-9-]*/
 let realm_anycase_re = /[A-Za-z0-9][.a-zA-Z0-9-]*/
 let app_re = /[a-z][a-zA-Z0-9_]*/
-let name_re = /[.a-zA-Z0-9_-]+/
+let name_re = /[.a-zA-Z0-9_-]+/ - include_re
 
 let value_br = store /[^;# \t\r\n{}]+/
 let value = store /[^;# \t\r\n]+/
@@ -161,11 +162,12 @@ let kdc =
 let pam =
   simple_section "pam" name_re
 
-let includes = Build.key_value_line /include(dir)?/ Sep.space (store Rx.fspath)
+let includes = Build.key_value_line include_re Sep.space (store Rx.fspath)
+let include_lines = includes . (comment|empty)*
 
-let lns = (comment|empty|includes)* .
+let lns = (comment|empty)* .
   (libdefaults|login|appdefaults|realms|domain_realm
-  |logging|capaths|dbdefaults|dbmodules|instance_mapping|kdc|pam)*
+  |logging|capaths|dbdefaults|dbmodules|instance_mapping|kdc|pam|include_lines)*
 
 let filter = (incl "/etc/krb5.conf.d/*.conf")
            . (incl "/etc/krb5.conf")

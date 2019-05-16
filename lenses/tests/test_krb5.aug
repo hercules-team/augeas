@@ -1029,13 +1029,31 @@ default_ccache_name = KEYRING:persistent:%{uid}\n" =
     {  }
     { "default_ccache_name" = "KEYRING:persistent:%{uid}" } }
 
-(* Include(dir) test *)
+(* Include(dir) tests *)
 let include_test = "include /etc/krb5.other_conf.d/other.conf
 includedir /etc/krb5.conf.d/
 "
 
 test Krb5.lns get include_test =
   { "include" = "/etc/krb5.other_conf.d/other.conf" }
+  { "includedir" = "/etc/krb5.conf.d/" }
+
+let include2_test = "[logging]
+ default = FILE:/var/log/krb5libs.log
+
+include /etc/krb5.other_conf.d/other.conf
+
+includedir /etc/krb5.conf.d/
+"
+
+test Krb5.lns get include2_test =
+  { "logging"
+    { "default"
+      { "file" = "/var/log/krb5libs.log" } }
+    {  }
+  }
+  { "include" = "/etc/krb5.other_conf.d/other.conf" }
+  {  }
   { "includedir" = "/etc/krb5.conf.d/" }
 
 (* [dbmodules] test *)
