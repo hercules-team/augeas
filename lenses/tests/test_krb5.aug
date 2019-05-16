@@ -1037,3 +1037,19 @@ includedir /etc/krb5.conf.d/
 test Krb5.lns get include_test =
   { "include" = "/etc/krb5.other_conf.d/other.conf" }
   { "includedir" = "/etc/krb5.conf.d/" }
+
+(* [dbmodules] test *)
+let dbmodules_test = "[dbmodules]
+    ATHENA.MIT.EDU = {
+        disable_last_success = true
+    }
+    db_module_dir = /some/path
+"
+
+test Krb5.lns get dbmodules_test =
+  { "dbmodules"
+    { "realm" = "ATHENA.MIT.EDU"
+      { "disable_last_success" = "true" }
+    }
+    { "db_module_dir" = "/some/path" }
+  }

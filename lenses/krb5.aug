@@ -130,10 +130,19 @@ let dbdefaults =
     simple_section "dbdefaults" keys
 
 let dbmodules =
-  let keys = /db_library|ldap_kerberos_container_dn|ldap_kdc_dn/
-    |/ldap_kadmind_dn|ldap_service_password_file|ldap_servers/
-    |/ldap_conns_per_server/ in
-    simple_section "dbmodules" keys
+  let subsec_key = /database_name|db_library|disable_last_success/
+    |/disable_lockout|ldap_conns_per_server|ldap_(kdc|kadmind)_dn/
+    |/ldap_(kdc|kadmind)_sasl_mech|ldap_(kdc|kadmind)_sasl_authcid/
+    |/ldap_(kdc|kadmind)_sasl_authzid|ldap_(kdc|kadmind)_sasl_realm/
+    |/ldap_kerberos_container_dn|ldap_servers/
+    |/ldap_service_password_file|mapsize|max_readers|nosync/
+    |/unlockiter/ in
+  let subsec_option = subsec_entry subsec_key eq comment in
+  let key = /db_module_dir/ in
+  let option = entry key eq value comment in
+  let realm = [ indent . label "realm" . store realm_re .
+                  eq_openbr . (subsec_option)* . closebr . eol ] in
+    record "dbmodules" (option|realm)
 
 (* This section is not documented in the krb5.conf manpage,
    but the Fermi example uses it. *)
