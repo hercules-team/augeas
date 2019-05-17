@@ -160,7 +160,7 @@ static char *nexttoken(struct command *cmd, char **line, bool path) {
                     s += 1;
                     break;
                 default:
-                    ERR_REPORT(cmd, AUG_ECMDRUN, "unknown escape sequence");
+                    ERR_REPORT(cmd, AUG_ECMDRUN, "unknown escape sequence: %c", *(s+1));
                     return NULL;
             }
         }
