@@ -267,10 +267,22 @@ static char *get_home_dir(uid_t uid) {
     return result;
 }
 
+/* Inspired from:
+ * https://thoughtbot.com/blog/tab-completion-in-gnu-readline
+ */
+static int quote_detector(char *str, int index) {
+    return index > 0
+           && str[index - 1] == '\\'
+           && quote_detector(str, index - 1) == 0;
+}
+
 static void readline_init(void) {
     rl_readline_name = "augtool";
     rl_attempted_completion_function = readline_completion;
     rl_completion_entry_function = readline_path_generator;
+    rl_completer_quote_characters = "\"'";
+    rl_completer_word_break_characters = (char *) " ";
+    rl_char_is_quoted_p = &quote_detector;
 
     /* Set up persistent history */
     char *home_dir = get_home_dir(getuid());
