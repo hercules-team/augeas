@@ -133,8 +133,16 @@ static char *nexttoken(struct command *cmd, char **line, bool path) {
         copy = true;
         if (*s == '\\') {
             switch (*(s+1)) {
+                case ']':
                 case '[':
-                case ']':  /* pass both literally */
+                case '|':
+                case '/':
+                case '=':
+                case '(':
+                case ')':
+                case '!':
+                case ',':  /* pass them literally;
+                            * see 'name_follow' in pathx.c */
                     nescaped = 2;
                     break;
                 case 't':  /* insert tab */
