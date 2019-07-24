@@ -46,5 +46,6 @@ let filter = incl "/etc/kernel-img.conf"
            . incl "/etc/audit/auditd.conf"
            . incl "/etc/mixerctl.conf"
            . incl "/etc/wsconsctlctl.conf"
+           . incl "/etc/ocsinventory/ocsinventory-agent.cfg"
 
 let xfm = transform lns filter
