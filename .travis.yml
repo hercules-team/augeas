@@ -5,6 +5,7 @@ addons:
       - libxml2-dev
       - libreadline-dev
       - valgrind
+      - libtool-bin
 install:
   - ./autogen.sh
   - sed -i '41s/ENOENT/ENOENT || errno == EINVAL/' gnulib/tests/test-readlink.h
