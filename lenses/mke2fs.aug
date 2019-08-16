@@ -73,20 +73,33 @@ let common_entries_list = ("base_features"|"default_features"|"default_mntopts")
 
 (* View: common_entries_int
     Entries with an integer value *)
-let common_entries_int = ("enable_periodic_fsck"|"flex_bg_size"|"force_undo"
-                         |"inode_ratio"|"inode_size")
+let common_entries_int = ("cluster_size"|"flex_bg_size"|"force_undo"
+                         |"inode_ratio"|"inode_size"|"num_backup_sb")
 
 (* View: common_entries_bool
     Entries with a boolean value *)
-let common_entries_bool = ("lazy_itable_init"|"auto_64-bit_support")
+let common_entries_bool = ("auto_64-bit_support"|"discard"
+                          |"enable_periodic_fsck"|"lazy_itable_init"
+                          |"lazy_journal_init"|"packed_meta_blocks")
+
+(* View: common_entries_string
+    Entries with a string value *)
+let common_entries_string = ("encoding"|"journal_location")
+
+(* View: common_entries_double
+    Entries with a double value *)
+let common_entries_double = ("reserved_ratio")
 
 (* View: common_entry
      Entries shared between <defaults> and <fs_types> sections *)
 let common_entry   = list_sto common_entries_list (key Rx.word)
                    | entry_sto common_entries_int Rx.integer
                    | entry_sto common_entries_bool boolean
+                   | entry_sto common_entries_string Rx.word
+                   | entry_sto common_entries_double Rx.decimal
                    | entry_sto "blocksize" ("-"? . Rx.integer)
                    | entry_sto "hash_alg" ("legacy"|"half_md4"|"tea")
+                   | entry_sto "errors" ("continue"|"remount-ro"|"panic")
                    | list_sto "features"
                         ([del /\^/ "^" . label "disable"]?
                                            . key Rx.word)
