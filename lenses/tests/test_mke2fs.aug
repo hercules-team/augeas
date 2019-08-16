@@ -33,6 +33,10 @@ module Test_mke2fs =
 		inode_ratio = 1048576
 		blocksize = -1
 	}
+
+[options]
+	proceed_delay = 1
+	sync_kludge = 1
 "
 
    test Mke2fs.lns get conf =
@@ -74,7 +78,11 @@ module Test_mke2fs =
              { "inode_ratio" = "4096" } }
         { "filesystem" = "largefile"
              { "inode_ratio" = "1048576" }
-             { "blocksize" = "-1" } } }
+             { "blocksize" = "-1" } }
+        {} }
+     { "options"
+        { "proceed_delay" = "1" }
+        { "sync_kludge" = "1" } }
 
 
 test Mke2fs.common_entry

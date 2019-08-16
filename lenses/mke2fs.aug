@@ -149,13 +149,35 @@ let fs_types = IniFile.record fs_types_title
 
 
 (************************************************************************
+ * Group:                 OPTIONS SECTION
+ *************************************************************************)
+
+(* View: options_entries_int
+    Entries with an integer value *)
+let options_entries_int = ("proceed_delay"|"sync_kludge")
+
+(* View: options_entry
+    Possible entries under the <options> section *)
+let options_entry = entry_sto options_entries_int Rx.integer
+
+(* View: defaults_title
+    Title for the <options> section *)
+let options_title  = IniFile.title "options"
+
+(* View: options
+    A options section *)
+let options = IniFile.record options_title
+                  ((Util.indent . options_entry) | comment)
+
+
+(************************************************************************
  * Group:                 LENS AND FILTER
  *************************************************************************)
 
 (* View: lns
      The mke2fs lens
 *)
-let lns = (empty|comment)* . (defaults|fs_types)*
+let lns = (empty|comment)* . (defaults|fs_types|options)*
 
 (* Variable: filter *)
 let filter = incl "/etc/mke2fs.conf"
