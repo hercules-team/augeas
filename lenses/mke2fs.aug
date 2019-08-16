@@ -34,6 +34,11 @@ let sep = IniFile.sep /=[ \t]*/ "="
 (* View: empty *)
 let empty = IniFile.empty
 
+(* View: boolean
+    The configuration parser of e2fsprogs recognizes different values
+    for booleans, so list all the recognized values *)
+let boolean = ("y"|"yes"|"true"|"t"|"1"|"on"|"n"|"no"|"false"|"nil"|"0"|"off")
+
 
 (************************************************************************
  * Group:                 RECORD TYPES
@@ -103,8 +108,9 @@ let fs_types_entry =list_sto "features"
                    | list_sto "options"
                         (key Rx.word . Util.del_str "="
                        . store Rx.word)
-                   | entry_sto "lazy_itable_init" ("true"|"false")
-                   | entry_sto ("flex_bg_size"|"auto_64-bit_support")
+                   | entry_sto ("lazy_itable_init"|"auto_64-bit_support")
+                      boolean
+                   | entry_sto "flex_bg_size"
                        Rx.integer
 
 (* View: fs_types_record
