@@ -77,7 +77,7 @@ module Test_mke2fs =
              { "blocksize" = "-1" } } }
 
 
-test Mke2fs.fs_types_entry
+test Mke2fs.common_entry
    put "features = has_journal,^extent\n"
    after set "/features/has_journal/disable" "";
    rm "/features/extent/disable" = "features = ^has_journal,extent\n"

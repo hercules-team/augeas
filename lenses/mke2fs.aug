@@ -66,13 +66,33 @@ let entry_sto (kw:regexp) (val:regexp) = entry kw (store val)
 (************************************************************************
  * Group:                 COMMON ENTRIES
  *************************************************************************)
+
+(* View: common_entries_list
+    Entries with a list value *)
+let common_entries_list = ("base_features"|"default_features"|"default_mntopts")
+
+(* View: common_entries_int
+    Entries with an integer value *)
+let common_entries_int = ("enable_periodic_fsck"|"flex_bg_size"|"force_undo"
+                         |"inode_ratio"|"inode_size")
+
+(* View: common_entries_bool
+    Entries with a boolean value *)
+let common_entries_bool = ("lazy_itable_init"|"auto_64-bit_support")
+
 (* View: common_entry
      Entries shared between <defaults> and <fs_types> sections *)
-let common_entry   = list_sto ("base_features"|"default_features")
-                        (key Rx.word)
+let common_entry   = list_sto common_entries_list (key Rx.word)
+                   | entry_sto common_entries_int Rx.integer
+                   | entry_sto common_entries_bool boolean
                    | entry_sto "blocksize" ("-"? . Rx.integer)
                    | entry_sto "hash_alg" ("legacy"|"half_md4"|"tea")
-                   | entry_sto ("inode_ratio"|"inode_size") Rx.integer
+                   | list_sto "features"
+                        ([del /\^/ "^" . label "disable"]?
+                                           . key Rx.word)
+                   | list_sto "options"
+                        (key Rx.word . Util.del_str "="
+                       . store Rx.word)
 
 (************************************************************************
  * Group:                 DEFAULTS SECTION
@@ -80,11 +100,8 @@ let common_entry   = list_sto ("base_features"|"default_features")
 
 (* View: defaults_entry
     Possible entries under the <defaults> section *)
-let defaults_entry = entry_sto "force_undo" ("true"|"false")
-                   | entry_sto "fs_type" Rx.word
+let defaults_entry = entry_sto "fs_type" Rx.word
                    | entry_sto "undo_dir" Rx.fspath
-                   | list_sto "default_mntopts" (key Rx.word)
-                   | entry_sto "enable_periodic_fsck" Rx.integer
                    
 (* View: defaults_title
     Title for the <defaults> section *)
@@ -100,25 +117,12 @@ let defaults = IniFile.record defaults_title
  * Group:                 FS_TYPES SECTION
  *************************************************************************)
 
-(* View: fs_types_entry
-    Possible entries under a <fs_types_record> group *)
-let fs_types_entry =list_sto "features"
-                        ([del /\^/ "^" . label "disable"]?
-                                           . key Rx.word)
-                   | list_sto "options"
-                        (key Rx.word . Util.del_str "="
-                       . store Rx.word)
-                   | entry_sto ("lazy_itable_init"|"auto_64-bit_support")
-                      boolean
-                   | entry_sto "flex_bg_size"
-                       Rx.integer
-
 (* View: fs_types_record
      Fs group records under the <fs_types> section *)
 let fs_types_record = [ label "filesystem"
                      . Util.indent . store Rx.word
                      . del /[ \t]*=[ \t]*\{[ \t]*\n/ " = {\n"
-                     . ((Util.indent . (fs_types_entry|common_entry)) | empty | comment)*
+                     . ((Util.indent . common_entry) | empty | comment)*
                      . del /[ \t]*\}[ \t]*\n/ " }\n" ]
 
 (* View: fs_types_title
