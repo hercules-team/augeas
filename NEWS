@@ -1,6 +1,9 @@
 1.13.0 - XXXX-XX-XX
 
   - Lens changes/additions
+    * Mke2fs: parse more common entries between [defaults] and the tags
+              in [fs_types], fix the type of few entries, handle the [options]
+              stanza (Pino Toscano) (Issue #642)
     * Simplevars: add ocsinventory-agent.cfg (Issue #637)
 
 1.12.0 - 2019-04-13
