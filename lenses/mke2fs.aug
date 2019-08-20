@@ -34,6 +34,11 @@ let sep = IniFile.sep /=[ \t]*/ "="
 (* View: empty *)
 let empty = IniFile.empty
 
+(* View: boolean
+    The configuration parser of e2fsprogs recognizes different values
+    for booleans, so list all the recognized values *)
+let boolean = ("y"|"yes"|"true"|"t"|"1"|"on"|"n"|"no"|"false"|"nil"|"0"|"off")
+
 
 (************************************************************************
  * Group:                 RECORD TYPES
@@ -61,13 +66,46 @@ let entry_sto (kw:regexp) (val:regexp) = entry kw (store val)
 (************************************************************************
  * Group:                 COMMON ENTRIES
  *************************************************************************)
+
+(* View: common_entries_list
+    Entries with a list value *)
+let common_entries_list = ("base_features"|"default_features"|"default_mntopts")
+
+(* View: common_entries_int
+    Entries with an integer value *)
+let common_entries_int = ("cluster_size"|"flex_bg_size"|"force_undo"
+                         |"inode_ratio"|"inode_size"|"num_backup_sb")
+
+(* View: common_entries_bool
+    Entries with a boolean value *)
+let common_entries_bool = ("auto_64-bit_support"|"discard"
+                          |"enable_periodic_fsck"|"lazy_itable_init"
+                          |"lazy_journal_init"|"packed_meta_blocks")
+
+(* View: common_entries_string
+    Entries with a string value *)
+let common_entries_string = ("encoding"|"journal_location")
+
+(* View: common_entries_double
+    Entries with a double value *)
+let common_entries_double = ("reserved_ratio")
+
 (* View: common_entry
      Entries shared between <defaults> and <fs_types> sections *)
-let common_entry   = list_sto ("base_features"|"default_features")
-                        (key Rx.word)
+let common_entry   = list_sto common_entries_list (key Rx.word)
+                   | entry_sto common_entries_int Rx.integer
+                   | entry_sto common_entries_bool boolean
+                   | entry_sto common_entries_string Rx.word
+                   | entry_sto common_entries_double Rx.decimal
                    | entry_sto "blocksize" ("-"? . Rx.integer)
                    | entry_sto "hash_alg" ("legacy"|"half_md4"|"tea")
-                   | entry_sto ("inode_ratio"|"inode_size") Rx.integer
+                   | entry_sto "errors" ("continue"|"remount-ro"|"panic")
+                   | list_sto "features"
+                        ([del /\^/ "^" . label "disable"]?
+                                           . key Rx.word)
+                   | list_sto "options"
+                        (key Rx.word . Util.del_str "="
+                       . store Rx.word)
 
 (************************************************************************
  * Group:                 DEFAULTS SECTION
@@ -75,11 +113,8 @@ let common_entry   = list_sto ("base_features"|"default_features")
 
 (* View: defaults_entry
     Possible entries under the <defaults> section *)
-let defaults_entry = entry_sto "force_undo" ("true"|"false")
-                   | entry_sto "fs_type" Rx.word
+let defaults_entry = entry_sto "fs_type" Rx.word
                    | entry_sto "undo_dir" Rx.fspath
-                   | list_sto "default_mntopts" (key Rx.word)
-                   | entry_sto "enable_periodic_fsck" Rx.integer
                    
 (* View: defaults_title
     Title for the <defaults> section *)
@@ -95,24 +130,12 @@ let defaults = IniFile.record defaults_title
  * Group:                 FS_TYPES SECTION
  *************************************************************************)
 
-(* View: fs_types_entry
-    Possible entries under a <fs_types_record> group *)
-let fs_types_entry =list_sto "features"
-                        ([del /\^/ "^" . label "disable"]?
-                                           . key Rx.word)
-                   | list_sto "options"
-                        (key Rx.word . Util.del_str "="
-                       . store Rx.word)
-                   | entry_sto "lazy_itable_init" ("true"|"false")
-                   | entry_sto ("flex_bg_size"|"auto_64-bit_support")
-                       Rx.integer
-
 (* View: fs_types_record
      Fs group records under the <fs_types> section *)
 let fs_types_record = [ label "filesystem"
                      . Util.indent . store Rx.word
                      . del /[ \t]*=[ \t]*\{[ \t]*\n/ " = {\n"
-                     . ((Util.indent . (fs_types_entry|common_entry)) | empty | comment)*
+                     . ((Util.indent . common_entry) | empty | comment)*
                      . del /[ \t]*\}[ \t]*\n/ " }\n" ]
 
 (* View: fs_types_title
@@ -126,13 +149,35 @@ let fs_types = IniFile.record fs_types_title
 
 
 (************************************************************************
+ * Group:                 OPTIONS SECTION
+ *************************************************************************)
+
+(* View: options_entries_int
+    Entries with an integer value *)
+let options_entries_int = ("proceed_delay"|"sync_kludge")
+
+(* View: options_entry
+    Possible entries under the <options> section *)
+let options_entry = entry_sto options_entries_int Rx.integer
+
+(* View: defaults_title
+    Title for the <options> section *)
+let options_title  = IniFile.title "options"
+
+(* View: options
+    A options section *)
+let options = IniFile.record options_title
+                  ((Util.indent . options_entry) | comment)
+
+
+(************************************************************************
  * Group:                 LENS AND FILTER
  *************************************************************************)
 
 (* View: lns
      The mke2fs lens
 *)
-let lns = (empty|comment)* . (defaults|fs_types)*
+let lns = (empty|comment)* . (defaults|fs_types|options)*
 
 (* Variable: filter *)
 let filter = incl "/etc/mke2fs.conf"
