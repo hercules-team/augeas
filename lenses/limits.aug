@@ -25,7 +25,7 @@ let sto_to_eol = store /([^ \t\n].*[^ \t\n]|[^ \t\n])/
  *                               ENTRIES
  *************************************************************************)
 
-let domain     = label "domain" . store /[%@]?[A-Za-z0-9_.-]+|\*/
+let domain     = label "domain" . store /[%@]?[A-Za-z0-9_.:-]+|\*/
 
 let type_re    = "soft"
                | "hard"
