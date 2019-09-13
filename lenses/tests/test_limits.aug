@@ -14,6 +14,10 @@ ftp hard nproc /ftp
       { "type" = "hard" }
       { "item" = "nproc" }
       { "value" = "/ftp" } }
+    { "domain" = "1200:2000"
+      { "type" = "-" }
+      { "item" = "as" }
+      { "value" = "1024" } }
     { "domain" = "*"
       { "type" = "soft" }
       { "item" = "core" }
