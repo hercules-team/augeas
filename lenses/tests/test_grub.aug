@@ -258,6 +258,23 @@ password --encrypted ^9^32kwzzX./3WISQ0C /boot/grub/custom.lst
       { "md5" }
     } }
 
+    (* Test kernel options with different special characters. *)
+    test Grub.lns get "title Fedora (2.6.24.4-64.fc8)
+        root (hd0,0)
+        kernel /vmlinuz-2.6.24.4-64.fc8 ro root=/dev/vg00/lv00 with.dot=1 with-dash=1 with_underscore=1 with+plus=1
+        initrd /initrd-2.6.24.4-64.fc8.img\n" =
+  { "title" = "Fedora (2.6.24.4-64.fc8)"
+    { "root" = "(hd0,0)" }
+    { "kernel" = "/vmlinuz-2.6.24.4-64.fc8"
+      { "ro" }
+      { "root" = "/dev/vg00/lv00" }
+      { "with.dot" = "1" }
+      { "with-dash" = "1" }
+      { "with_underscore" = "1" }
+      { "with+plus" = "1" }
+    }
+    { "initrd" = "/initrd-2.6.24.4-64.fc8.img" } }
+
   (* Test parsing of invalid entries via menu_error *)
   test Grub.lns get "default=0\ncrud=no\n" =
   { "default" = "0" }
