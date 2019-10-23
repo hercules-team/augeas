@@ -1,6 +1,8 @@
 1.13.0 - XXXX-XX-XX
 
   - Lens changes/additions
+    * Grunb: support '+' in kernel command line option names
+             (Pino Toscano) (Issue #647)
     * Mke2fs: parse more common entries between [defaults] and the tags
               in [fs_types], fix the type of few entries, handle the [options]
               stanza (Pino Toscano) (Issue #642)
