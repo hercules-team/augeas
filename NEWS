@@ -1,3 +1,14 @@
+1.13.0 - XXXX-XX-XX
+
+  - Lens changes/additions
+    * Grunb: support '+' in kernel command line option names
+             (Pino Toscano) (Issue #647)
+    * Mke2fs: parse more common entries between [defaults] and the tags
+              in [fs_types], fix the type of few entries, handle the [options]
+              stanza (Pino Toscano) (Issue #642)
+    * Opendkim: update to match current conffile format (Issue #644)
+    * Simplevars: add ocsinventory-agent.cfg (Issue #637)
+
 1.12.0 - 2019-04-13
   - General changes/additions
     * update gnulib to 91584ed6
@@ -7,7 +18,7 @@
     * DevfsRules: add lens for FreeBSD devfs.rules files
     * Dovecot: permit ! in block titles (Nathan Ward) (Issue #599)
     * Hostname: Allow creation of hostname when file is missing
-    *           (David Farrell) (Issue #606)
+                (David Farrell) (Issue #606)
     * Krb5: add more pkinit_* options (Issue #603)
     * Logrotate: fix missing recognition of double quoted filenames (Issue #611)
     * Multipath: accept values enclosed in quotes (Issue #583)

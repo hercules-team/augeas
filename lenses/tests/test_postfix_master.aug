@@ -31,7 +31,7 @@ cyrus     unix  -       n       n       -       -       pipe
   flags=R user=cyrus argv=/usr/sbin/cyrdeliver -e -m \"${extension}\" ${user}
 "
 
-test Postfix_Master.lns get conf2 = 
+test Postfix_Master.lns get conf2 =
   { "#comment" = "The Cyrus deliver program has changed incompatibly, multiple times." }
   { "cyrus"
     { "type" = "unix" }
@@ -125,3 +125,17 @@ test Postfix_Master.lns get conf7 =
      { "wakeup" = "-" }
      { "limit" = "-" }
      { "command" = "smtpd\n  -o mynetworks=127.0.0.1/8,[::1]" } }
+
+(* Ticket #635 *)
+let conf8 = "postlog   unix-dgram n  -       n       -       1       postlogd\n"
+
+test Postfix_Master.lns get conf8 =
+  { "postlog"
+    { "type" = "unix-dgram" }
+    { "private" = "n" }
+    { "unprivileged" = "-" }
+    { "chroot" = "n" }
+    { "wakeup" = "-" }
+    { "limit" = "1" }
+    { "command" = "postlogd" } }
+

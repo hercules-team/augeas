@@ -196,7 +196,7 @@ module Grub =
     (* View: kernel_args
         Parse the file name and args on a kernel or module line. *)
     let kernel_args =
-      let arg = /[A-Za-z0-9_.$-]+/ - /type|no-mem-option/  in
+      let arg = /[A-Za-z0-9_.$\+-]+/ - /type|no-mem-option/  in
       store /(\([a-z0-9,]+\))?\/[^ \t\n]*/ .
             (spc . multiboot_arg)? .
             (spc . [ key arg . (eq. store /([^ \t\n])*/)?])* . eol
