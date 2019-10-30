@@ -1,6 +1,9 @@
 1.13.0 - XXXX-XX-XX
+  - General changes/additions
+    * Add Dockerfile (Nicolas Gif) (Issue #650)
 
   - Lens changes/additions
+    * Authinfo2: new lens to parse Authinfo2 format (Nicolas Gif) (Issue #649)
     * Grunb: support '+' in kernel command line option names
              (Pino Toscano) (Issue #647)
     * Limits: support colons in the domain pattern of the limits lens
