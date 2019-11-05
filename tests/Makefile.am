@@ -73,6 +73,7 @@ lens_tests =			\
   lens-ethers.sh		\
   lens-exports.sh		\
   lens-fai_diskconfig.sh	\
+  lens-fail2ban.sh	\
   lens-fonts.sh	\
   lens-fstab.sh			\
   lens-fuse.sh			\
