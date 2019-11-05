@@ -4,6 +4,7 @@
 
   - Lens changes/additions
     * Authinfo2: new lens to parse Authinfo2 format (Nicolas Gif) (Issue #649)
+    * Fail2ban: new lens to parse Fail2ban format (Nicolas Gif) (Issue #651)
     * Grunb: support '+' in kernel command line option names
              (Pino Toscano) (Issue #647)
     * Limits: support colons in the domain pattern of the limits lens
