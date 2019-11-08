@@ -223,17 +223,39 @@ test Rsyslog.lns get "*.* ?DynamicFile\n" =
     }
   }
 
-(* Multiple actions in filter *)
-test Rsyslog.lns get ":msg, startswith, \"iptables:\" -/var/log/iptables.log\n& ~\n" =
+(* Multiple actions in filters and selectors *)
+test Rsyslog.lns get ":msg, startswith, \"iptables:\" -/var/log/iptables.log
+& ~
+# Save boot messages also to boot.log
+local7.*                                                /var/log/boot.log
+local3.err                                              /var/log/nfsen/nfsenlog
+& /var/log/also.log
+\n" =
   { "filter"
     { "property" = "msg" }
     { "operation" = "startswith" }
     { "value" = "iptables:" }
     { "action"
       { "no_sync" }
-      { "file" = "/var/log/iptables.log" }
-    }
+      { "file" = "/var/log/iptables.log" } }
     { "action"
-      { "discard" }
-    }
+      { "discard" } }
   }
+  { "#comment" = "Save boot messages also to boot.log" }
+  { "entry"
+    { "selector"
+      { "facility" = "local7" }
+      { "level" = "*" } }
+    { "action"
+      { "file" = "/var/log/boot.log" } }
+  }
+  { "entry"
+    { "selector"
+      { "facility" = "local3" }
+      { "level" = "err" } }
+    { "action"
+      { "file" = "/var/log/nfsen/nfsenlog" } }
+    { "action"
+      { "file" = "/var/log/also.log" } } }
+  {  }
+

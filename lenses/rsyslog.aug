@@ -65,11 +65,17 @@ let hostname = [ label "hostname" .
       ( Syslog.plus | [ Build.xchgs "-" "reverse" ] ) .
       Syslog.hostnames . Util.eol .  Syslog.entries ]
 
+(* View: actions *)
+let actions =
+     let prop_act  = [ label "action" . action ]
+  in let act_sep = del /[ \t]*\n&[ \t]*/ "\n& "
+  in Build.opt_list prop_act act_sep
+
 (* View: entry
    An entry contains selectors and an action
 *)
 let entry = [ label "entry" . Syslog.selectors . Syslog.sep_tab .
-              [ label "action" . action ] . Util.eol ]
+              actions . Util.eol ]
 
 (* View: prop_filter
    Parses property-based filters, which start with ":" and the property name *)
@@ -78,9 +84,6 @@ let prop_filter =
   in let prop_name = [ Util.del_str ":" . label "property" . store Rx.word ]
   in let prop_oper = [ label "operation" . store /[A-Za-z!-]+/ ]
   in let prop_val  = [ label "value" . Quote.do_dquote (store /[^\n"]*/) ]
-  in let prop_act  = [ label "action" . action ]
-  in let act_sep = del /[ \t]*\n&[ \t]*/ "\n& "
-  in let actions = Build.opt_list prop_act act_sep
   in [ label "filter" . prop_name . sep . prop_oper . sep . prop_val .
        Sep.space . actions . Util.eol ]
 
