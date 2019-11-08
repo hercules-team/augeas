@@ -79,8 +79,10 @@ let prop_filter =
   in let prop_oper = [ label "operation" . store /[A-Za-z!-]+/ ]
   in let prop_val  = [ label "value" . Quote.do_dquote (store /[^\n"]*/) ]
   in let prop_act  = [ label "action" . action ]
+  in let act_sep = del /[ \t]*\n&[ \t]*/ "\n& "
+  in let actions = Build.opt_list prop_act act_sep
   in [ label "filter" . prop_name . sep . prop_oper . sep . prop_val .
-       Sep.space . prop_act . Util.eol ]
+       Sep.space . actions . Util.eol ]
 
 let entries = ( Syslog.empty | Util.comment | entry | macro | config_object | prop_filter )*
 

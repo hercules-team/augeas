@@ -222,3 +222,18 @@ test Rsyslog.lns get "*.* ?DynamicFile\n" =
       { "dynamic" = "DynamicFile" }
     }
   }
+
+(* Multiple actions in filter *)
+test Rsyslog.lns get ":msg, startswith, \"iptables:\" -/var/log/iptables.log\n& ~\n" =
+  { "filter"
+    { "property" = "msg" }
+    { "operation" = "startswith" }
+    { "value" = "iptables:" }
+    { "action"
+      { "no_sync" }
+      { "file" = "/var/log/iptables.log" }
+    }
+    { "action"
+      { "discard" }
+    }
+  }
