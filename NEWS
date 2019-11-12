@@ -13,6 +13,7 @@
               in [fs_types], fix the type of few entries, handle the [options]
               stanza (Pino Toscano) (Issue #642)
     * Opendkim: update to match current conffile format (Issue #644)
+    * Rsyslog: support multiple actions in filters and selectors (Issue #653)
     * Simplevars: add ocsinventory-agent.cfg (Issue #637)
 
 1.12.0 - 2019-04-13
