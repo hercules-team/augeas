@@ -55,7 +55,7 @@ module Logrotate =
 
    let tabooext = [ key "tabooext" . ( sep_spc . store /\+/ )? . list_item+ ]
 
-   let attrs = select_to_eol "schedule" /(daily|weekly|monthly|yearly)/
+   let attrs = select_to_eol "schedule" /(hourly|daily|weekly|monthly|yearly)/
                 | value_to_eol "rotate" num
         | create
         | flag_to_eol "nocreate"
