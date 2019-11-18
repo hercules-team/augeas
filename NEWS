@@ -9,6 +9,7 @@
              (Pino Toscano) (Issue #647)
     * Limits: support colons in the domain pattern of the limits lens
               (Xavier Mol) (Issue #645)
+    * Logrotate: add hourly schedule (Jason A. Smith) (Issue #655)
     * Mke2fs: parse more common entries between [defaults] and the tags
               in [fs_types], fix the type of few entries, handle the [options]
               stanza (Pino Toscano) (Issue #642)
