@@ -47,6 +47,7 @@ lens_tests =			\
   lens-chrony.sh  		\
   lens-ceph.sh  		\
   lens-clamav.sh        \
+  lens-cmdline.sh	\
   lens-cobblersettings.sh	\
   lens-cobblermodules.sh	\
   lens-collectd.sh	\
