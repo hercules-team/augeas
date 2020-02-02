@@ -1,12 +1,14 @@
 1.13.0 - XXXX-XX-XX
   - General changes/additions
     * Add Dockerfile (Nicolas Gif) (Issue #650)
-
+    * augtool: Improved readline integration to handle quoting issues
+               (Pino Toscano)
   - Lens changes/additions
     * Authinfo2: new lens to parse Authinfo2 format (Nicolas Gif) (Issue #649)
+    * Cmdline: New lens to parse /proc/cmdline (Thomas Weißschuh)
     * Fail2ban: new lens to parse Fail2ban format (Nicolas Gif) (Issue #651)
-    * Grunb: support '+' in kernel command line option names
-             (Pino Toscano) (Issue #647)
+    * Grub: support '+' in kernel command line option names
+            (Pino Toscano) (Issue #647)
     * Limits: support colons in the domain pattern of the limits lens
               (Xavier Mol) (Issue #645)
     * Logrotate: add hourly schedule (Jason A. Smith) (Issue #655)
@@ -14,7 +16,9 @@
               in [fs_types], fix the type of few entries, handle the [options]
               stanza (Pino Toscano) (Issue #642)
     * Opendkim: update to match current conffile format (Issue #644)
+    * Postfix_Master: Allow unix-dgram as type (Issue #635)
     * Rsyslog: support multiple actions in filters and selectors (Issue #653)
+    * Shellvars: exclude more tcsh profile scripts (Pino Toscano) (Issue #627)
     * Simplevars: add ocsinventory-agent.cfg (Issue #637)
 
 1.12.0 - 2019-04-13
