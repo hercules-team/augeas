@@ -206,6 +206,8 @@ FOO=BAR
 Environment=\"LANG=foo bar\" FOO=BAR
 Environment=OPTIONS=\"-LS0-6d\"
 Environment=OPTIONS='-LS0-6d'
+Environment=VAR=\"with some spaces\" VAR2='more spaces'
+Environment=VAR='with some spaces'
 "
 (* Test: Systemd.lns *)
 test Systemd.lns get env =
@@ -246,6 +248,13 @@ test Systemd.lns get env =
     }
     { "Environment"
       { "OPTIONS" = "'-LS0-6d'" }
+    }
+    { "Environment"
+      { "VAR" = "\"with some spaces\"" }
+      { "VAR2" = "'more spaces'" }
+    }
+    { "Environment"
+      { "VAR" = "'with some spaces'" }
     }
   }
 
