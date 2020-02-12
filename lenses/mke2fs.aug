@@ -156,9 +156,14 @@ let fs_types = IniFile.record fs_types_title
     Entries with an integer value *)
 let options_entries_int = ("proceed_delay"|"sync_kludge")
 
+(* View: options_entries_bool
+    Entries with a boolean value *)
+let options_entries_bool = ("old_bitmaps")
+
 (* View: options_entry
     Possible entries under the <options> section *)
 let options_entry = entry_sto options_entries_int Rx.integer
+                  | entry_sto options_entries_bool boolean
 
 (* View: defaults_title
     Title for the <options> section *)
