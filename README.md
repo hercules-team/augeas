@@ -11,7 +11,7 @@ Introduction
   all the ones it knows about) and a simple local API for manipulating the
   tree. Augeas then modifies underlying configuration files according to
   the changes that have been made to the tree; it does as little modeling
-  of configurations as possible, and focuses exclusivley on transforming
+  of configurations as possible, and focuses exclusively on transforming
   the tree-oriented syntax of its public API to the myriad syntaxes of
   individual configuration files.
 
