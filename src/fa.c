@@ -3445,10 +3445,8 @@ static int parse_int(struct re_parse *parse) {
         free(s);
     }
 
-    if (used == 0) {
-        parse->error = REG_BADBR;
+    if (used == 0)
         return -1;
-    }
     parse->rx += used;
     if ((l<0) || (l > INT_MAX)) {
         parse->error = REG_BADBR;
@@ -4449,7 +4447,7 @@ int fa_expand_nocase(const char *regexp, size_t regexp_len,
     parse.rend = regexp + regexp_len;
     parse.error = REG_NOERROR;
     re = parse_regexp(&parse);
-    if (parse.error != REG_NOERROR)
+    if (re == NULL)
         return parse.error;
 
     r = re_case_expand(re);
