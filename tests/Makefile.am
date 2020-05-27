@@ -51,6 +51,7 @@ lens_tests =			\
   lens-cmdline.sh	\
   lens-cobblersettings.sh	\
   lens-cobblermodules.sh	\
+  lens-cockpit.sh	\
   lens-collectd.sh	\
   lens-cpanel.sh	\
   lens-cron.sh			\
