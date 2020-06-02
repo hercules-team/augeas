@@ -161,3 +161,7 @@ let time =
   in let zone = "Z" | /[-+]?[0-9]{2}(:?[0-9]{2})?/
   in sep . digits . precis? . zone?
 let iso_8601 = year . ("-"? . monthday . time?)?
+
+(* Variable: url_3986
+   A valid RFC 3986 url - See Appendix B *)
+let url_3986 = /(([^:\/?#]+):)?(\/\/([^\/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/
