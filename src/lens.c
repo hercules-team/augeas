@@ -571,32 +571,7 @@ typecheck_prim(enum lens_tag tag, struct info *info,
     struct value *exn = NULL;
 
     /* Typecheck */
-    if (tag == L_KEY) {
-        exn = str_to_fa(info, "(.|\n)*/(.|\n)*", &fa_slash, regexp->nocase);
-        if (exn != NULL)
-            goto error;
-
-        exn = regexp_to_fa(regexp, &fa_key);
-        if (exn != NULL)
-            goto error;
-
-        fa_isect = fa_intersect(fa_slash, fa_key);
-        if (! fa_is_basic(fa_isect, FA_EMPTY)) {
-            exn = make_exn_value(info,
-                  "The key regexp /%s/ matches a '/' which is used to separate nodes.", regexp->pattern->str);
-            goto error;
-        }
-        fa_free(fa_isect);
-        fa_free(fa_key);
-        fa_free(fa_slash);
-        fa_isect = fa_key = fa_slash = NULL;
-    } else if (tag == L_LABEL) {
-        if (strchr(string->str, SEP) != NULL) {
-            exn = make_exn_value(info,
-                  "The label string \"%s\" contains a '/'", string->str);
-            goto error;
-        }
-    } else if (tag == L_DEL && string != NULL) {
+    if (tag == L_DEL && string != NULL) {
         int cnt;
         const char *dflt = string->str;
         cnt = regexp_match(regexp, dflt, strlen(dflt), 0, NULL);

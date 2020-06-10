@@ -3,6 +3,9 @@
     * Add Dockerfile (Nicolas Gif) (Issue #650)
     * augtool: Improved readline integration to handle quoting issues
                (Pino Toscano)
+    * typechecker: Allow including '/' in keys and labels. Thanks to
+                   felixdoerre for pointing out that this restriction was
+                   unnecessary. See issue #668 for the discussion.
   - Lens changes/additions
     * Authinfo2: new lens to parse Authinfo2 format (Nicolas Gif) (Issue #649)
     * Cmdline: New lens to parse /proc/cmdline (Thomas Weißschuh)
