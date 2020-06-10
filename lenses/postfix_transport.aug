@@ -47,7 +47,7 @@ let nexthop_smtp =
      . [ label "port" . store Rx.integer ]
 
 (* View: record *)
-let record = [ label "pattern" . store /[A-Za-z0-9@\*.-]+/
+let record = [ label "pattern" . store /[A-Za-z0-9@\*._-]+/
              . space_or_eol . (transport | nexthop_smtp)
              . Util.eol ]
 
