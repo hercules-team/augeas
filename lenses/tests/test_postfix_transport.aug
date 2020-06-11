@@ -15,6 +15,7 @@ example.com      slow:
 example.com      :[gateway.example.com]
 user.foo@example.com  
     smtp:bar.example:2025
+firstname_lastname@example.com discard:
 .example.com     error:mail for *.example.com is not deliverable
 "
 
@@ -42,6 +43,9 @@ test Postfix_Transport.lns get conf =
   { "pattern" = "user.foo@example.com"
     { "transport" = "smtp" }
     { "nexthop" = "bar.example:2025" } }
+  { "pattern" = "firstname_lastname@example.com"
+    { "transport" = "discard" }
+    { "nexthop" } }
   { "pattern" = ".example.com"
     { "transport" = "error" }
     { "nexthop" = "mail for *.example.com is not deliverable" } }
