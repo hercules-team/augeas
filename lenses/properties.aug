@@ -26,7 +26,7 @@ module Properties =
   let indent           = Util.indent
   let backslash        = del /[\\][ \t]*\n/ "\\\n"
   let opt_backslash    = del /([\\][ \t]*\n)?/ ""
-  let entry            = /([^ \t\r\n:=\/!#\\]|[\\]:|[\\]=|[\\][\t ]|[\\][^\/\r\n])+/
+  let entry            = /([^ \t\r\n:=!#\\]|[\\]:|[\\]=|[\\][\t ]|[\\][^\/\r\n])+/
 
   let multi_line_entry =
       [ indent . value_to_bs? . backslash ] .
