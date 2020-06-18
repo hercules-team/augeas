@@ -14,6 +14,8 @@ key: value
 key2:value2
 key3 :value3
 key4:=value4
+key5\"=value5
+key6/c=value6
 
 long.description=this is a description that happens to span \
 	more than one line with a combination of tabs and \
@@ -66,6 +68,8 @@ test lns get conf =
     { "key2" = "value2" }
     { "key3" = "value3" }
     { "key4" = "=value4" }
+    { "key5\"" = "value5" }
+    { "key6/c" = "value6" }
     {}
     { "long.description" = " < multi > "
         { = "this is a description that happens to span " }
@@ -118,6 +122,8 @@ key: value
 key2:value2
 key3 :value3
 key4:=value4
+key5\"=value5
+key6/c=value6
 
 long.description=this is a description that happens to span \
 	more than one line with a combination of tabs and \
