@@ -86,6 +86,7 @@ enum binary_op {
     OP_STAR,       /* '*'  */
     OP_AND,        /* 'and' */
     OP_OR,         /* 'or' */
+    OP_ELSE,       /* 'else' */
     OP_RE_MATCH,   /* '=~' */
     OP_RE_NOMATCH, /* '!~' */
     OP_UNION       /* '|' */
@@ -204,6 +205,7 @@ struct expr {
             enum binary_op op;
             struct expr *left;
             struct expr *right;
+            bool   left_matched;
         };
         value_ind_t      value_ind;    /* E_VALUE */
         char            *ident;        /* E_VAR */
@@ -268,6 +270,10 @@ struct state {
     /* Error structure, used to communicate errors to struct augeas;
      * we never own this structure, and therefore never free it */
     struct error        *error;
+    /* If a filter-expression contains the 'else' operator, we need
+     * we need to evaluate the filter twice. The has_else flag
+     * means we don't do this unless we really need to */
+    bool                 has_else;
 };
 
 /* We consider NULL and the empty string to be equal */
@@ -996,6 +1002,23 @@ static void eval_and_or(struct state *state, enum binary_op op) {
         push_boolean_value(left || right, state);
 }
 
+static void eval_else(struct state *state, struct expr *expr) {
+    struct value *r = pop_value(state);
+    struct value *l = pop_value(state);
+    bool left = coerce_to_bool(l);
+    bool right = coerce_to_bool(r);
+
+    expr->left_matched = expr->left_matched || left;
+    if (expr->left_matched)
+        /* One or more LHS have matched, so we're not interested in the right expr */
+        push_boolean_value(left, state);
+    else
+        /* no LHS has matched (yet), so keep the right expr */
+        /* If this is the 2nd pass, and expr->left_matched is true, no RHS nodes will be included */
+        push_boolean_value(right, state);
+
+}
+
 static bool eval_re_match_str(struct state *state, struct regexp *rx,
                               const char *str) {
     int r;
@@ -1135,6 +1158,9 @@ static void eval_binary(struct expr *expr, struct state *state) {
     case OP_OR:
         eval_and_or(state, expr->op);
         break;
+    case OP_ELSE:
+        eval_else(state, expr);
+        break;
     case OP_UNION:
         eval_union(state);
         break;
@@ -1200,6 +1226,14 @@ static void ns_filter(struct nodeset *ns, struct pred *predicates,
     uint old_ctx_pos = state->ctx_pos;
 
     for (int p=0; p < predicates->nexpr; p++) {
+        if ( state->has_else) {
+            for (int i=0; i < ns->used; i++) {
+                /* 1st pass, check if any else statements have match on the left */
+                /* Don't delete any nodes (yet) */
+                state->ctx = ns->nodes[i];
+                eval_pred(predicates->exprs[p], state);
+            }
+        }
         int first_bad = -1;  /* The index of the first non-matching node */
         state->ctx_len = ns->used;
         state->ctx_pos = 1;
@@ -1600,6 +1634,7 @@ static void check_binary(struct expr *expr, struct state *state) {
         break;
     case OP_AND:
     case OP_OR:
+    case OP_ELSE:
         ok = 1;
         res = T_BOOLEAN;
         break;
@@ -1734,6 +1769,7 @@ static void push_new_binary_op(enum binary_op op, struct state *state) {
     expr->op  = op;
     expr->right = pop_expr(state);
     expr->left = pop_expr(state);
+    expr->left_matched = false;  /* for 'else' operator only, true if any matches on LHS */
     push_expr(expr, state);
 }
 
@@ -1792,7 +1828,8 @@ static char *parse_name(struct state *state) {
          * y' as one name, but for 'x or y', we consider 'x' a name in its
          * own right. */
         if (STREQLEN(state->pos, " or ", strlen(" or ")) ||
-            STREQLEN(state->pos, " and ", strlen(" and ")))
+            STREQLEN(state->pos, " and ", strlen(" and ")) ||
+            STREQLEN(state->pos, " else ", strlen(" else ")))
             break;
 
         if (*state->pos == '\\') {
@@ -2467,11 +2504,28 @@ static void parse_or_expr(struct state *state) {
 }
 
 /*
- * Expr ::= OrExpr
+ * ElseExpr ::= OrExpr ('else' OrExpr)*
+ */
+static void parse_else_expr(struct state *state) {
+    parse_or_expr(state);
+    RET_ON_ERROR;
+    while (*state->pos == 'e' && state->pos[1] == 'l'
+        && state->pos[2] == 's' && state->pos[3] == 'e' ) {
+        state->pos += 4;
+        skipws(state);
+        parse_or_expr(state);
+        RET_ON_ERROR;
+        push_new_binary_op(OP_ELSE, state);
+        state->has_else = 1;
+    }
+}
+
+/*
+ * Expr ::= ElseExpr
  */
 static void parse_expr(struct state *state) {
     skipws(state);
-    parse_or_expr(state);
+    parse_else_expr(state);
 }
 
 static void store_error(struct pathx *pathx) {
