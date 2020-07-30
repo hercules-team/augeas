@@ -598,6 +598,16 @@ struct augeas *aug_init(const char *root, const char *loadpath,
     aug_set(result, AUGEAS_CONTEXT, AUG_CONTEXT_DEFAULT);
     ERR_BAIL(result);
 
+    /* Test AUGEAS_CREATEIFNOMATCH_ENV, and set flags accoringly */
+    char *createifnomatch_env = getenv(AUGEAS_CREATEIFNOMATCH_ENV);
+    if (createifnomatch_env!=NULL && STRNEQ(createifnomatch_env,"0") )
+        result->flags |= AUG_CREATE_IF_NO_MATCH;
+
+    if ( result->flags & AUG_CREATE_IF_NO_MATCH ) {
+        aug_set(result, AUGEAS_META_CREATEIFNOMATCH, NULL);
+        ERR_BAIL(result);
+    }
+
     for (int i=0; i < ARRAY_CARDINALITY(static_nodes); i++) {
         aug_set(result, static_nodes[i][0], static_nodes[i][1]);
         ERR_BAIL(result);
@@ -981,6 +991,9 @@ int aug_set(struct augeas *aug, const char *path, const char *value) {
 
     p = pathx_aug_parse(aug, aug->origin, root_ctx, path, true);
     ERR_BAIL(aug);
+
+    if (aug->flags & AUG_CREATE_IF_NO_MATCH)
+       pathx_auto_name_predicates(p);
 
     result = tree_set(p, value) == NULL ? -1 : 0;
  error:

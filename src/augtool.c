@@ -335,6 +335,7 @@ static void help(void) {
                     "                         for modules\n");
     fprintf(stderr, "  -L, --noload           do not load any files into the tree on startup\n");
     fprintf(stderr, "  -A, --noautoload       do not autoload modules from the search path\n");
+    fprintf(stderr, "  -C, --createifnomatch  set command will create a new node if a path-filter does not match\n");
     fprintf(stderr, "  --span                 load span positions for nodes related to a file\n");
     fprintf(stderr, "  --timing               after executing each command, show how long it took\n");
     fprintf(stderr, "  --version              print version information and exit.\n");
@@ -366,6 +367,7 @@ static void parse_opts(int argc, char **argv) {
         { "nostdinc",    0, 0, 'S' },
         { "noload",      0, 0, 'L' },
         { "noautoload",  0, 0, 'A' },
+        { "createifnomatch", 0, 0, 'C' },
         { "span",        0, 0, VAL_SPAN },
         { "timing",      0, 0, VAL_TIMING },
         { "version",     0, 0, VAL_VERSION },
@@ -373,7 +375,7 @@ static void parse_opts(int argc, char **argv) {
     };
     int idx;
 
-    while ((opt = getopt_long(argc, argv, "hnbcr:I:t:l:ef:siSLA", options, &idx)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hnbcr:I:t:l:ef:siSLAC", options, &idx)) != -1) {
         switch(opt) {
         case 'c':
             flags |= AUG_TYPE_CHECK;
@@ -421,6 +423,9 @@ static void parse_opts(int argc, char **argv) {
             break;
         case 'A':
             flags |= AUG_NO_MODL_AUTOLOAD;
+            break;
+        case 'C':
+            flags |= AUG_CREATE_IF_NO_MATCH;
             break;
         case VAL_VERSION:
             flags |= AUG_NO_MODL_AUTOLOAD;

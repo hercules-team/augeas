@@ -101,6 +101,18 @@ creates no entries under C</augeas/load> whatsoever; to read any files,
 they need to be set up manually and loading must be initiated with a
 C<load> command. Using this option gives the fastest startup.
 
+=item B<-C>, B<--createifnomatch>
+
+This flag affects the behaviour of the 'set' command.
+If a set-command includes a path-expression which matches nothing, a new
+node will be created at that position. The node-label will be a number,
+one greater than the highest number of it's siblings. eg.
+
+set /files/etc/hosts/*[ipaddr='::1']/ipaddr '::1'
+
+will create the a node C</files/etc/hosts/4/ipaddr> if there is no matching
+node, and a node already exists named C</files/etc/hosts/3>
+
 =item B<--span>
 
 Load span positions for nodes in the tree, as they relate to the original
@@ -337,6 +349,11 @@ Colon separated list of directories with lenses. Directories specified here
 are searched after any directories set with the B<-I> command line option,
 but before the default directories F</usr/share/augeas/lenses> and
 F</usr/share/augeas/lenses/dist>
+
+=item B<AUGEAS_CREATEIFNOMATCH>
+
+If set to anything but "0", this is equivalent to using the command-line
+option C<--createifnomatch>
 
 =back
 

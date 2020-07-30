@@ -54,6 +54,11 @@
  * Mostly useful for testing */
 #define AUGEAS_ROOT_ENV "AUGEAS_ROOT"
 
+/* Define: AUGEAS_CREATEIFNOMATCH_ENV
+ * The env var that changes 'set' to create a new node if a path-filter
+ * does not match.  Equivalent to --createifnomatch */
+#define AUGEAS_CREATEIFNOMATCH_ENV "AUGEAS_CREATEIFNOMATCH"
+
 /* Define: AUGEAS_FILES_TREE
  * The root for actual file contents */
 #define AUGEAS_FILES_TREE "/files"
@@ -102,6 +107,10 @@
 /* Define: AUGEAS_SPAN_OPTION
  * Enable or disable node indexes */
 #define AUGEAS_SPAN_OPTION AUGEAS_META_TREE "/span"
+
+/* Define: AUGEAS_META_CREATEIFNOMATCH
+ * Indicates that --createifnomatch was used on the command-line */
+#define AUGEAS_META_CREATEIFNOMATCH AUGEAS_META_PATHX "/createifnomatch"
 
 /* Define: AUGEAS_LENS_ENV
  * Name of env var that contains list of paths to search for additional
@@ -646,6 +655,8 @@ void free_symtab(struct pathx_symtab *symtab);
  * Returns -1 if it failed to allocate memory for *OUT, 0 on success
  */
 int pathx_escape_name(const char *in, char **out);
+
+void pathx_auto_name_predicates(struct pathx *path);
 
 /* Debug helpers, all defined in internal.c. When ENABLE_DEBUG is not
  * set, they compile to nothing.

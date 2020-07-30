@@ -140,6 +140,7 @@ struct step {
     enum axis    axis;
     char        *name;              /* NULL to match any name */
     struct pred *predicates;
+    bool         auto_name;
 };
 
 /* Initialise the root nodeset with the first step */
@@ -1888,6 +1889,7 @@ static struct step *parse_step(struct state *state) {
     }
 
     step->axis = CHILD;
+    step->auto_name = false;
     for (int i = 0; i < ARRAY_CARDINALITY(axis_names); i++) {
         if (looking_at(state, axis_names[i], "::")) {
             step->axis = i;
@@ -2809,6 +2811,8 @@ static int locpath_search(struct locpath_trace *lpt,
     return result;
 }
 
+static char *step_auto_name(struct tree *tree);
+
 /* Expand the tree ROOT so that it contains all components of PATH. PATH
  * must have been initialized against ROOT by a call to PATH_FIND_ONE.
  *
@@ -2855,6 +2859,9 @@ int pathx_expand_tree(struct pathx *path, struct tree **tree) {
         parent = path->origin;
 
     list_for_each(s, step) {
+        if (s->name == NULL && s->auto_name) {
+            s->name = step_auto_name(parent);
+        }
         if (s->name == NULL || s->axis != CHILD)
             goto error;
         struct tree *t = make_tree(strdup(s->name), NULL, parent, NULL);
@@ -2880,6 +2887,44 @@ int pathx_expand_tree(struct pathx *path, struct tree **tree) {
     *tree = NULL;
     store_error(path);
     return -1;
+}
+
+void pathx_auto_name_predicates(struct pathx *path) {
+    struct step *step = NULL;
+    struct locpath *lp;
+
+    if ( path->state->exprs_used==1 ) {
+        if ( path->state->exprs[0]->tag  == E_FILTER &&
+             path->state->exprs[0]->type == T_NODESET ) {
+            lp = path->state->exprs[0]->locpath;
+            step = lp->steps;
+            list_for_each(s, step) {
+                if (s->name == NULL && s->predicates != NULL ) {
+                    s->auto_name = true;
+                }
+            }
+        }
+    }
+    return;
+}
+
+/* Generate a numeric string to use for step->name
+ * Scan tree->children for the highest numbered label, and add 1 to that
+ */
+static char *step_auto_name(struct tree *tree) {
+    int max_node_n=0;
+    char *step_name;
+    for(tree=tree->children; tree!=NULL; tree=tree->next) {
+        if ( tree->label == NULL)
+          continue;
+        int node_n=atoi(tree->label);
+        if( node_n > max_node_n )
+            max_node_n = node_n;
+    }
+    if (asprintf(&step_name,"%d",max_node_n+1) >= 0)
+        return step_name;
+    else
+        return NULL;
 }
 
 int pathx_find_one(struct pathx *path, struct tree **tree) {

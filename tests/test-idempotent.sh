@@ -31,3 +31,29 @@ save
 EOF
 
 [ $hosts -nt $hosts.stamp ] || exit 1
+
+# Test that --createifnomatch allows /*[expr]/ to create a node, and is idempotent
+touch -r $0 $hosts
+
+# Add a new ip+host to $hosts using --createifnomatch
+augtool --nostdinc -r $root -I $abs_top_srcdir/lenses --createifnomatch > /dev/null <<EOF
+set /files/etc/hosts/*[ipaddr='8.8.8.8']/ipaddr 8.8.8.8
+set /files/etc/hosts/*[ipaddr='8.8.8.8']/canonical dns1
+save
+EOF
+
+[ $hosts -nt $hosts.stamp ] || exit 1
+[ $(grep -E -c '8.8.8.8\s+dns1' $hosts) = 1 ] || exit 1
+
+touch -r $0 $hosts
+
+# Test that --createifnomatch is idempotent
+augtool --nostdinc -r $root -I $abs_top_srcdir/lenses --createifnomatch > /dev/null <<EOF
+set /files/etc/hosts/*[ipaddr='8.8.8.8']/ipaddr 8.8.8.8
+set /files/etc/hosts/*[ipaddr='8.8.8.8']/canonical dns1
+save
+EOF
+
+[ $hosts -nt $hosts.stamp ] && exit 1
+
+[ $(grep -E -c '8.8.8.8\s+dns1' $hosts) = 1 ] || exit 1

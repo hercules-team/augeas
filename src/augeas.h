@@ -52,7 +52,10 @@ enum aug_flags {
     AUG_ENABLE_SPAN  = (1 << 7),  /* Track the span in the input of nodes */
     AUG_NO_ERR_CLOSE = (1 << 8),  /* Do not close automatically when
                                      encountering error during aug_init */
-    AUG_TRACE_MODULE_LOADING = (1 << 9) /* For use by augparse -t */
+    AUG_TRACE_MODULE_LOADING = (1 << 9), /* For use by augparse -t */
+    AUG_CREATE_IF_NO_MATCH = (1 << 10) /* Change default 'set' behaviour
+                                     to create a new, numbered node if a filter
+                                     does not match any existing node */
 };
 
 #ifdef __cplusplus
