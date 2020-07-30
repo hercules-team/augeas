@@ -31,3 +31,29 @@ save
 EOF
 
 [ $hosts -nt $hosts.stamp ] || exit 1
+
+# Test that /path/seq::*[expr] can create a node, and is idempotent
+touch -r $0 $hosts
+
+# Add a new ip+host to $hosts using seq::*[expr]
+augtool --nostdinc -r $root -I $abs_top_srcdir/lenses > /dev/null <<EOF
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.0']/ipaddr 192.0.2.0
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.0']/canonical dns1
+save
+EOF
+
+[ $hosts -nt $hosts.stamp ] || exit 1
+[ "$(grep -E -c '192.0.2.0\s+dns1' $hosts)" = 1 ] || exit 1
+
+touch -r $0 $hosts
+
+# Test that seq::*[expr] is idempotent
+augtool --nostdinc -r $root -I $abs_top_srcdir/lenses > /dev/null <<EOF
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.0']/ipaddr 192.0.2.0
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.0']/canonical dns1
+save
+EOF
+
+[ "$?" != 0 -o $hosts -nt $hosts.stamp ] && exit 1
+
+[ "$(grep -E -c '192.0.2.0\s+dns1' $hosts)" = 1 ] || exit 1

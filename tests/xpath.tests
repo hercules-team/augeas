@@ -335,3 +335,16 @@ test escape3 /files/etc/sysconfig/network-scripts/*[DEVICE = 'weird']
 # Test matching in the presence of hidden nodes
 test hidden1 /files/etc/security/limits.conf/*[label() != '#comment'][1]
      /files/etc/security/limits.conf/domain[1] = @jackuser
+
+test seqaxismatchall /files/etc/hosts/seq::*
+     /files/etc/hosts/1
+     /files/etc/hosts/2
+
+test seqaxismatchpos /files/etc/hosts/seq::*[2]
+     /files/etc/hosts/2
+
+test seqaxismatchlabel /files/etc/hosts/seq::2
+     /files/etc/hosts/2
+
+test seqaxismatchregexp /files/etc/hosts/seq::*[canonical =~ regexp('.*orange.*')]
+     /files/etc/hosts/2
