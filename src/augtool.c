@@ -180,7 +180,7 @@ static char *readline_command_generator(const char *text, int state) {
         "mv", "cp", "rename", "print", "dump-xml", "rm", "save", "set", "setm",
         "clearm", "span", "store", "retrieve", "transform", "load-file",
         "help", "touch", "insert", "move", "copy", "errors", "source", "context",
-        "info", "count",
+        "info", "count", "preview",
         NULL };
 
     static int current = 0;

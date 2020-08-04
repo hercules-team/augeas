@@ -93,3 +93,8 @@ AUGEAS_0.24.0 {
       aug_ns_count;
       aug_ns_path;
 } AUGEAS_0.23.0;
+
+AUGEAS_0.25.0 {
+    global:
+      aug_preview;
+} AUGEAS_0.24.0;

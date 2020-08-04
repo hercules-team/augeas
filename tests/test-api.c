@@ -851,6 +851,45 @@ static void testAugSource(CuTest *tc) {
 
 }
 
+static void testAugPreview(CuTest *tc) {
+    struct augeas *aug;
+    int r;
+    char *s;
+    char *etc_hosts_fn = NULL;
+    FILE *hosts_fp = NULL;
+    char *hosts_txt = NULL;
+    int readsz = 0;
+
+    /* Read the original contents of the etc/hosts file */
+    if (asprintf(&etc_hosts_fn,"%s/etc/hosts",root) >=0 ) {
+        hosts_fp = fopen(etc_hosts_fn,"r");
+        if ( hosts_fp ) {
+            hosts_txt = calloc(sizeof(char),4096);
+            if ( hosts_txt ) {
+							  readsz = fread(hosts_txt,sizeof(char),4096,hosts_fp);
+                *(hosts_txt+readsz) = '\0';
+            }
+            fclose(hosts_fp);
+        }
+        free(etc_hosts_fn);
+    }
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    r = aug_load_file(aug, "/etc/hosts");
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_preview(aug, "/files/etc/hosts/1", &s);
+    CuAssertIntEquals(tc, 0, r);
+    CuAssertStrEquals(tc, hosts_txt, s);
+
+    free(hosts_txt);
+    free(s);
+    aug_close(aug);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -876,6 +915,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testLoadBadLens);
     SUITE_ADD_TEST(suite, testAugNs);
     SUITE_ADD_TEST(suite, testAugSource);
+    SUITE_ADD_TEST(suite, testAugPreview);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)
