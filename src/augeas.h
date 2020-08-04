@@ -412,6 +412,17 @@ int aug_print(const augeas *aug, FILE *out, const char *path);
  */
 int aug_source(const augeas *aug, const char *path, char **file_path);
 
+/* Function: aug_preview
+ *
+ * Return the contents of the file that would be written for the file associated with path
+ * If there is no file corresponfing to PATH, *OUT will be NULL.
+ * The caller is responsible for freeing *OUT
+ *
+ * Returns:
+ * 0 on success, -1 on error
+ */
+int aug_preview(augeas *aug, const char *path, char **out);
+
 /* Function: aug_to_xml
  *
  * Turn the Augeas tree(s) matching PATH into an XML tree XMLDOC. The

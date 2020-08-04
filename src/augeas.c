@@ -1973,6 +1973,77 @@ int aug_source(const augeas *aug, const char *path, char **file_path) {
     return result;
 }
 
+int aug_preview(struct augeas *aug, const char *path, char **out) {
+    struct tree *tree = NULL;
+    struct pathx *p;
+    int r;
+    char *lens_path = NULL;
+    char *lens_name = NULL;
+    char *file_path = NULL;
+    char *source_filename = NULL;
+    char *source_text = NULL;
+
+    *out = NULL;
+
+    api_entry(aug);
+
+    p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), path, true);
+    ERR_BAIL(aug);
+
+    tree = pathx_first(p);
+    ERR_BAIL(aug);
+    ERR_THROW(tree == NULL, aug, AUG_ENOMATCH, "No node matching %s", path);
+
+    file_path = tree_source(aug, tree);
+
+    ERR_THROW(file_path == NULL, aug, AUG_EBADARG, "Path %s is not associated with a file", path);
+
+    if ( file_path == NULL ) {
+        file_path = strdup(path);
+        ERR_NOMEM(file_path == NULL, aug);
+    } else {
+        tree = tree_find(aug, file_path);
+    }
+
+    r = xasprintf(&lens_path, "%s%s/%s", AUGEAS_META_TREE, file_path, s_lens);
+    if ( r>= 0 ) {
+        r = aug_get(aug,lens_path,(const char **) &lens_name);
+        ERR_BAIL(aug);
+    }
+
+    ERR_THROW(lens_name == NULL, aug, AUG_ENOLENS, "No lens found for path %s", path);
+
+    if ( STREQLEN(file_path, AUGEAS_FILES_TREE, strlen(AUGEAS_FILES_TREE) ) ) {
+        xasprintf(&source_filename, "%s%s",aug->root, file_path + strlen(AUGEAS_FILES_TREE));
+        ERR_NOMEM(source_filename == NULL, aug);
+        source_text = xread_file(source_filename);
+    }
+    if ( source_text == NULL ) {
+        source_text = strdup("");
+    }
+
+    r = text_retrieve(aug, lens_name, file_path, tree, source_text, out);
+    if (r < 0)
+        goto error;
+
+
+    free(p);
+    free(file_path);
+    free(lens_path);
+    free(source_filename);
+    free(source_text);
+    api_exit(aug);
+    return 0;
+ error:
+    free(p);
+    free(file_path);
+    free(lens_path);
+    free(source_filename);
+    free(source_text);
+    api_exit(aug);
+    return -1;
+}
+
 void aug_close(struct augeas *aug) {
     if (aug == NULL)
         return;
