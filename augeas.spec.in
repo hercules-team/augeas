@@ -99,6 +99,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %{_bindir}/augtool
 %{_bindir}/augparse
+%{_bindir}/augmatch
 %{_bindir}/fadot
 %doc %{_mandir}/man1/*
 %{_datadir}/vim/vimfiles/syntax/augeas.vim
