@@ -61,6 +61,7 @@ static const char *const static_nodes[][2] = {
     { AUGEAS_META_PATHX_FUNC "/glob", NULL },
     { AUGEAS_META_PATHX_FUNC "/label", NULL },
     { AUGEAS_META_PATHX_FUNC "/last", NULL },
+    { AUGEAS_META_PATHX_FUNC "/modified", NULL },
     { AUGEAS_META_PATHX_FUNC "/position", NULL },
     { AUGEAS_META_PATHX_FUNC "/regexp", NULL }
 };
@@ -84,18 +85,21 @@ static const char *const errcodes[] = {
 };
 
 static void tree_mark_dirty(struct tree *tree) {
-    do {
-        tree->dirty = 1;
-        tree = tree->parent;
-    } while (tree != tree->parent && !tree->dirty);
     tree->dirty = 1;
+    while (tree != tree->parent ) {
+        if ( tree->file ) {
+           tree->dirty = 1;
+           break;
+        }
+        tree = tree->parent;
+    }
 }
 
 void tree_clean(struct tree *tree) {
-    if (tree->dirty) {
-        list_for_each(c, tree->children)
-            tree_clean(c);
-    }
+    if ( tree->file && ! tree->dirty )
+        return;
+    list_for_each(c, tree->children)
+        tree_clean(c);
     tree->dirty = 0;
 }
 
@@ -691,10 +695,9 @@ static void tree_mark_files(struct tree *tree) {
 static void tree_rm_dirty_files(struct augeas *aug, struct tree *tree) {
     struct tree *p;
 
-    if (!tree->dirty)
+    if (tree->file && !tree->dirty) {
         return;
-
-    if (tree->file && ((p = tree_child(tree, "path")) != NULL)) {
+    } else if (tree->file && tree->dirty && ((p = tree_child(tree, "path")) != NULL)) {
         tree_unlink(aug, tree_fpath(aug, p->value));
         tree_unlink(aug, tree);
     } else {
@@ -709,7 +712,7 @@ static void tree_rm_dirty_files(struct augeas *aug, struct tree *tree) {
 
 static void tree_rm_dirty_leaves(struct augeas *aug, struct tree *tree,
                                  struct tree *protect) {
-    if (! tree->dirty)
+    if (tree->file && !tree->dirty)
         return;
 
     struct tree *c = tree->children;
@@ -1491,19 +1494,23 @@ static int tree_save(struct augeas *aug, struct tree *tree,
         return -1;
 
     list_for_each(t, tree) {
-        if (t->dirty) {
+        if (t->file && ! t->dirty) {
+            continue;
+        } else {
             char *tpath = NULL;
             struct tree *transform = NULL;
             if (asprintf(&tpath, "%s/%s", path, t->label) == -1) {
                 result = -1;
                 continue;
             }
-            list_for_each(xfm, load->children) {
-                if (transform_applies(xfm, tpath)) {
-                    if (transform == NULL || transform == xfm) {
-                        transform = xfm;
-                    } else {
-                        result = check_save_dup(aug, tpath, transform, xfm);
+            if ( t->dirty ) {
+                list_for_each(xfm, load->children) {
+                    if (transform_applies(xfm, tpath)) {
+                        if (transform == NULL || transform == xfm) {
+                            transform = xfm;
+                        } else {
+                            result = check_save_dup(aug, tpath, transform, xfm);
+                        }
                     }
                 }
             }
@@ -1554,7 +1561,7 @@ static int unlink_removed_files(struct augeas *aug,
 
     int result = 0;
 
-    if (! files->dirty)
+    if (files->file)
         return 0;
 
     for (struct tree *tm = meta->children; tm != NULL;) {
@@ -1576,7 +1583,7 @@ static int unlink_removed_files(struct augeas *aug,
                     result = -1;
             }
             free_pathx(px);
-        } else if (tf->dirty && ! tree_child(tm, "path")) {
+        } else if (! tree_child(tm, "path")) {
             if (unlink_removed_files(aug, tf, tm) < 0)
                 result = -1;
         }
@@ -1605,15 +1612,13 @@ int aug_save(struct augeas *aug) {
     list_for_each(xfm, load->children)
         transform_validate(aug, xfm);
 
-    if (files->dirty) {
-        if (tree_save(aug, files->children, AUGEAS_FILES_TREE) == -1)
-            ret = -1;
+    if (tree_save(aug, files->children, AUGEAS_FILES_TREE) == -1)
+        ret = -1;
 
-        /* Remove files whose entire subtree was removed. */
-        if (meta_files != NULL) {
-            if (unlink_removed_files(aug, files, meta_files) < 0)
-                ret = -1;
-        }
+    /* Remove files whose entire subtree was removed. */
+    if (meta_files != NULL) {
+        if (unlink_removed_files(aug, files, meta_files) < 0)
+            ret = -1;
     }
     if (!(aug->flags & AUG_SAVE_NOOP)) {
         tree_clean(aug->origin);
