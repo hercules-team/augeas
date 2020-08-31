@@ -160,13 +160,13 @@ static void bitset_negate(bitset *bs, size_t nbits) {
  *              | simple_exp '*'
  *              | simple_exp '+'
  *              | simple_exp '?'
- *              | simple_exp '{' INT (',' INT '}')?
+ *              | simple_exp '{' INT (',' INT)? '}'
  * simple_exp:  char_class
  *            | '.'
  *            |  '(' regexp ')'
  *            |  CHAR
- * char_class: '[' char_exp ']'
- *           | '[' '^' char_exp ']'
+ * char_class: '[' char_exp+ ']'
+ *           | '[' '^' char_exp+ ']'
  * char_exp:   CHAR '-' CHAR
  *           | CHAR
  */
