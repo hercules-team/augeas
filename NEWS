@@ -12,6 +12,7 @@
     * Fail2ban: new lens to parse Fail2ban format (Nicolas Gif) (Issue #651)
     * Grub: support '+' in kernel command line option names
             (Pino Toscano) (Issue #647)
+    * Krb5: handle [plugins] subsection (Pino Toscano) (Issue #663)
     * Limits: support colons in the domain pattern of the limits lens
               (Xavier Mol) (Issue #645)
     * Logrotate: add hourly schedule (Jason A. Smith) (Issue #655)
