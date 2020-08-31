@@ -300,6 +300,7 @@ static void func_regexp_flag(struct state *state, int nargs);
 static void func_glob(struct state *state, int nargs);
 static void func_int(struct state *state, int nargs);
 static void func_not(struct state *state, int nargs);
+static void func_modified(struct state *state, int nargs);
 
 static const enum type arg_types_nodeset[] = { T_NODESET };
 static const enum type arg_types_string[] = { T_STRING };
@@ -341,6 +342,8 @@ static const struct func builtin_funcs[] = {
       .arg_types = arg_types_nodeset, .impl = func_int, .pure = false },
     { .name = "int", .arity = 1, .type = T_NUMBER,
       .arg_types = arg_types_bool, .impl = func_int, .pure = false },
+    { .name = "modified", .arity = 0, .type = T_BOOLEAN,
+      .arg_types = NULL, .impl = func_modified, .pure = false },
     { .name = "not", .arity = 1, .type = T_BOOLEAN,
       .arg_types = arg_types_bool, .impl = func_not, .pure = true }
 };
@@ -722,6 +725,12 @@ static void func_int(struct state *state, int nargs) {
     }
     state->value_pool[vind].number = i;
     push_value(vind, state);
+}
+
+static void func_modified(struct state *state, int nargs) {
+    ensure_arity(0, 0);
+
+    push_boolean_value(state->ctx->dirty , state);
 }
 
 static void func_not(struct state *state, int nargs) {
