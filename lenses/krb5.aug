@@ -162,12 +162,19 @@ let kdc =
 let pam =
   simple_section "pam" name_re
 
+let plugins =
+  let interface_option = subsec_entry name_re eq comment in
+  let interface = [ indent . key name_re .
+                  eq_openbr . (interface_option)* . closebr . eol ] in
+    record "plugins" (interface|comment)
+
 let includes = Build.key_value_line include_re Sep.space (store Rx.fspath)
 let include_lines = includes . (comment|empty)*
 
 let lns = (comment|empty)* .
   (libdefaults|login|appdefaults|realms|domain_realm
-  |logging|capaths|dbdefaults|dbmodules|instance_mapping|kdc|pam|include_lines)*
+  |logging|capaths|dbdefaults|dbmodules|instance_mapping|kdc|pam|include_lines
+  |plugins)*
 
 let filter = (incl "/etc/krb5.conf.d/*.conf")
            . (incl "/etc/krb5.conf")

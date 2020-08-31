@@ -1071,3 +1071,37 @@ test Krb5.lns get dbmodules_test =
     }
     { "db_module_dir" = "/some/path" }
   }
+
+(* [plugins] test *)
+let plugins_test = "[plugins]
+    clpreauth = {
+        module = mypreauth:/path/to/mypreauth.so
+    }
+    ccselect = {
+        disable = k5identity
+    }
+    pwqual = {
+        module = mymodule:/path/to/mymodule.so
+        module = mymodule2:/path/to/mymodule2.so
+        enable_only = mymodule
+    }
+    kadm5_hook = {
+    }
+"
+
+test Krb5.lns get plugins_test =
+  { "plugins"
+    { "clpreauth"
+      { "module" = "mypreauth:/path/to/mypreauth.so" }
+    }
+    { "ccselect"
+      { "disable" = "k5identity" }
+    }
+    { "pwqual"
+      { "module" = "mymodule:/path/to/mymodule.so" }
+      { "module" = "mymodule2:/path/to/mymodule2.so" }
+      { "enable_only" = "mymodule" }
+    }
+    { "kadm5_hook"
+    }
+  }
