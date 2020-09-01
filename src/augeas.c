@@ -80,7 +80,8 @@ static const char *const errcodes[] = {
     "Failed to execute command",                        /* AUG_ECMDRUN */
     "Invalid argument in function call",                /* AUG_EBADARG */
     "Invalid label",                                    /* AUG_ELABEL */
-    "Cannot copy node into its descendant"              /* AUG_ECPDESC */
+    "Cannot copy node into its descendant",             /* AUG_ECPDESC */
+    "Cannot access file"                                /* AUG_EFILEACCESS */
 };
 
 static void tree_mark_dirty(struct tree *tree) {
@@ -1972,6 +1973,7 @@ int aug_preview(struct augeas *aug, const char *path, char **out) {
     struct tree *tree = NULL;
     struct pathx *p;
     int r;
+    int result=-1;
     char *lens_path = NULL;
     char *lens_name = NULL;
     char *file_path = NULL;
@@ -1993,42 +1995,29 @@ int aug_preview(struct augeas *aug, const char *path, char **out) {
 
     ERR_THROW(file_path == NULL, aug, AUG_EBADARG, "Path %s is not associated with a file", path);
 
-    if ( file_path == NULL ) {
-        file_path = strdup(path);
-        ERR_NOMEM(file_path == NULL, aug);
-    } else {
-        tree = tree_find(aug, file_path);
-    }
+    tree = tree_find(aug, file_path);
 
-    r = xasprintf(&lens_path, "%s%s/%s", AUGEAS_META_TREE, file_path, s_lens);
-    if ( r>= 0 ) {
-        r = aug_get(aug,lens_path,(const char **) &lens_name);
-        ERR_BAIL(aug);
-    }
+    xasprintf(&lens_path, "%s%s/%s", AUGEAS_META_TREE, file_path, s_lens);
+    ERR_NOMEM(lens_path == NULL, aug);
+
+    aug_get(aug,lens_path,(const char **) &lens_name);
+    ERR_BAIL(aug);
 
     ERR_THROW(lens_name == NULL, aug, AUG_ENOLENS, "No lens found for path %s", path);
 
-    if ( STREQLEN(file_path, AUGEAS_FILES_TREE, strlen(AUGEAS_FILES_TREE) ) ) {
-        xasprintf(&source_filename, "%s%s",aug->root, file_path + strlen(AUGEAS_FILES_TREE));
-        ERR_NOMEM(source_filename == NULL, aug);
-        source_text = xread_file(source_filename);
-    }
-    if ( source_text == NULL ) {
-        source_text = strdup("");
-    }
+    xasprintf(&source_filename, "%s%s",aug->root, file_path + strlen(AUGEAS_FILES_TREE) + 1);
+    ERR_NOMEM(source_filename == NULL, aug);
+
+    source_text = xread_file(source_filename);
+
+    ERR_THROW(source_text == NULL, aug, AUG_EFILEACCESS, "Cannot read file %s", source_filename);
 
     r = text_retrieve(aug, lens_name, file_path, tree, source_text, out);
     if (r < 0)
         goto error;
 
+    result = 0;
 
-    free(p);
-    free(file_path);
-    free(lens_path);
-    free(source_filename);
-    free(source_text);
-    api_exit(aug);
-    return 0;
  error:
     free(p);
     free(file_path);
@@ -2036,7 +2025,7 @@ int aug_preview(struct augeas *aug, const char *path, char **out) {
     free(source_filename);
     free(source_text);
     api_exit(aug);
-    return -1;
+    return result;
 }
 
 void aug_close(struct augeas *aug) {

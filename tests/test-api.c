@@ -866,7 +866,7 @@ static void testAugPreview(CuTest *tc) {
         if ( hosts_fp ) {
             hosts_txt = calloc(sizeof(char),4096);
             if ( hosts_txt ) {
-							  readsz = fread(hosts_txt,sizeof(char),4096,hosts_fp);
+                readsz = fread(hosts_txt,sizeof(char),4096,hosts_fp);
                 *(hosts_txt+readsz) = '\0';
             }
             fclose(hosts_fp);
