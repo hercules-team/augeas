@@ -599,7 +599,8 @@ typedef enum {
     AUG_ECMDRUN,        /* Failed to execute command */
     AUG_EBADARG,        /* Invalid argument in function call */
     AUG_ELABEL,         /* Invalid label */
-    AUG_ECPDESC         /* Cannot copy node into its descendant */
+    AUG_ECPDESC,        /* Cannot copy node into its descendant */
+    AUG_EFILEACCESS     /* Cannot open or read a file */
 } aug_errcode_t;
 
 /* Return the error code from the last API call */
