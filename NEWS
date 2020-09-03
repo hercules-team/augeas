@@ -6,12 +6,16 @@
     * typechecker: Allow including '/' in keys and labels. Thanks to
                    felixdoerre for pointing out that this restriction was
                    unnecessary. See issue #668 for the discussion.
+    * Add function modified() to select nodes which are marked as dirty
+      (George Hansper) (Issue #691)
+
   - Lens changes/additions
     * Authinfo2: new lens to parse Authinfo2 format (Nicolas Gif) (Issue #649)
     * Cmdline: New lens to parse /proc/cmdline (Thomas Weißschuh)
     * Fail2ban: new lens to parse Fail2ban format (Nicolas Gif) (Issue #651)
     * Grub: support '+' in kernel command line option names
             (Pino Toscano) (Issue #647)
+    * Krb5: handle [plugins] subsection (Pino Toscano) (Issue #663)
     * Limits: support colons in the domain pattern of the limits lens
               (Xavier Mol) (Issue #645)
     * Logrotate: add hourly schedule (Jason A. Smith) (Issue #655)

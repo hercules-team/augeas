@@ -7,6 +7,6 @@ Name: augeas
 Version: @VERSION@
 Description: Augeas configuration editing library
 Requires.private: libxml-2.0 @PC_SELINUX@
-Libs: -L${libdir} -laugeas @LIBS@
+Libs: -L${libdir} -laugeas
 Libs.private: -lfa
 Cflags: -I${includedir}
