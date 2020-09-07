@@ -1002,21 +1002,52 @@ static void eval_and_or(struct state *state, enum binary_op op) {
         push_boolean_value(left || right, state);
 }
 
-static void eval_else(struct state *state, struct expr *expr) {
+static void eval_else(struct state *state, struct expr *expr, struct locpath_trace *lpt_right) {
     struct value *r = pop_value(state);
     struct value *l = pop_value(state);
-    bool left = coerce_to_bool(l);
-    bool right = coerce_to_bool(r);
 
-    expr->left_matched = expr->left_matched || left;
-    if (expr->left_matched)
-        /* One or more LHS have matched, so we're not interested in the right expr */
-        push_boolean_value(left, state);
-    else
-        /* no LHS has matched (yet), so keep the right expr */
-        /* If this is the 2nd pass, and expr->left_matched is true, no RHS nodes will be included */
-        push_boolean_value(right, state);
+    if ( l->tag == T_NODESET && r->tag == T_NODESET ) {
+        int discard_maxns=0;
+        struct nodeset **discard_ns=NULL;
+        struct locpath_trace *lpt = state->locpath_trace;
+        value_ind_t vind = make_value(T_NODESET, state);
+        if (l->nodeset->used >0 || expr->left_matched) {
+            expr->left_matched = 1;
+            state->value_pool[vind].nodeset = clone_nodeset(l->nodeset, state);
+            if( lpt_right != NULL ) {
+                discard_maxns = lpt_right->maxns;
+                discard_ns    = lpt_right->ns;
+            }
+        } else {
+            state->value_pool[vind].nodeset = clone_nodeset(r->nodeset, state);
+            if( lpt != NULL && lpt_right != NULL ) {
+                discard_maxns = lpt->maxns;
+                discard_ns    = lpt->ns;
+                lpt->maxns = lpt_right->maxns;
+                lpt->ns    = lpt_right->ns;
+                lpt->lp    = lpt_right->lp;
+            }
+        }
+        push_value(vind, state);
+        if ( lpt != NULL && lpt_right != NULL ) {
+            for (int i=0; i < discard_maxns; i++)
+                free_nodeset(discard_ns[i]);
+            FREE(discard_ns);
+        }
+    } else {
+        bool left = coerce_to_bool(l);
+        bool right = coerce_to_bool(r);
 
+        expr->left_matched = expr->left_matched || left;
+        if (expr->left_matched) {
+            /* One or more LHS have matched, so we're not interested in the right expr */
+            push_boolean_value(left, state);
+        } else {
+            /* no LHS has matched (yet), so keep the right expr */
+            /* If this is the 2nd pass, and expr->left_matched is true, no RHS nodes will be included */
+            push_boolean_value(right, state);
+        }
+    }
 }
 
 static bool eval_re_match_str(struct state *state, struct regexp *rx,
@@ -1037,11 +1068,12 @@ static bool eval_re_match_str(struct state *state, struct regexp *rx,
     return r == strlen(str);
 }
 
-static void eval_union(struct state *state) {
+static void eval_union(struct state *state, struct locpath_trace *lpt_right) {
     value_ind_t vind = make_value(T_NODESET, state);
     struct value *r = pop_value(state);
     struct value *l = pop_value(state);
     struct nodeset *res = NULL;
+    struct locpath_trace *lpt = state->locpath_trace;
 
     assert(l->tag == T_NODESET);
     assert(r->tag == T_NODESET);
@@ -1057,6 +1089,13 @@ static void eval_union(struct state *state) {
     }
     state->value_pool[vind].nodeset = res;
     push_value(vind, state);
+
+    if( lpt != NULL && lpt_right != NULL ) {
+        STATE_ERROR(state, PATHX_EMMATCH);
+        for (int i=0; i < lpt_right->maxns; i++)
+            free_nodeset(lpt_right->ns[i]);
+        FREE(lpt_right->ns);
+    }
  error:
     ns_clear_added(res);
 }
@@ -1119,8 +1158,16 @@ static void eval_re_match(struct state *state, enum binary_op op) {
 }
 
 static void eval_binary(struct expr *expr, struct state *state) {
+    struct locpath_trace *lpt = state->locpath_trace;
+    struct locpath_trace lpt_right;
+
     eval_expr(expr->left, state);
+    if ( lpt != NULL && expr->type == T_NODESET ) {
+       MEMZERO(&lpt_right, 1);
+       state->locpath_trace = &lpt_right;
+    }
     eval_expr(expr->right, state);
+    state->locpath_trace = lpt;
     RET_ON_ERROR;
 
     switch (expr->op) {
@@ -1159,10 +1206,10 @@ static void eval_binary(struct expr *expr, struct state *state) {
         eval_and_or(state, expr->op);
         break;
     case OP_ELSE:
-        eval_else(state, expr);
+        eval_else(state, expr, &lpt_right);
         break;
     case OP_UNION:
-        eval_union(state);
+        eval_union(state, &lpt_right);
         break;
     case OP_RE_MATCH:
     case OP_RE_NOMATCH:
@@ -1634,9 +1681,16 @@ static void check_binary(struct expr *expr, struct state *state) {
         break;
     case OP_AND:
     case OP_OR:
-    case OP_ELSE:
         ok = 1;
         res = T_BOOLEAN;
+        break;
+    case OP_ELSE:
+        if (l == T_NODESET && r == T_NODESET) {
+            res = T_NODESET;
+        } else {
+            res = T_BOOLEAN;
+        }
+        ok = 1;
         break;
     case OP_RE_MATCH:
     case OP_RE_NOMATCH:
