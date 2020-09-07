@@ -296,6 +296,36 @@ test set-args 2
   get /files
 prints
   /files (none)
+
+test set-union-not-there -1 EMMATCH
+  set (/files/left|/files/right) 1
+
+test set-union-existing -1 EMMATCH
+  set /files/left value1
+  set /files/right value2
+  set (/files/left|/files/right) 1
+
+test set-else-not-there 2
+  set '(/files/not-there else /files/not-there-yet)' value
+  get /files/not-there-yet
+prints
+  /files/not-there-yet = value
+
+test set-else-existing 3
+  set /files/existing value
+  set '(/files/existing else /files/not-there)' new_value
+  get /files/existing
+prints
+  /files/existing = new_value
+
+test set-else-update 3
+  set /files/existing value
+  set '(/files/not-there else /files/existing)' value3
+  get /files/existing
+prints
+  /files/existing = value3
+
+
 #
 # test clear
 #

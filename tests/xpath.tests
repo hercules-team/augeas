@@ -278,6 +278,16 @@ test union (/files/etc/yum.conf | /files/etc/yum.repos.d/*)/*/gpgcheck
      /files/etc/yum.repos.d/remi.repo/remi/gpgcheck = 1
      /files/etc/yum.repos.d/remi.repo/remi-test/gpgcheck = 1
 
+test else_nodeset_lhs (/files/etc/yum.conf else /files/etc/yum.repos.d/*)/*/gpgcheck
+     /files/etc/yum.conf/main/gpgcheck = 1
+
+test else_nodeset_rhs (/files/etc/yum.conf.missing else /files/etc/yum.repos.d/fedora.repo)/*/gpgcheck
+     /files/etc/yum.repos.d/fedora.repo/fedora/gpgcheck = 1
+     /files/etc/yum.repos.d/fedora.repo/fedora-debuginfo/gpgcheck = 1
+     /files/etc/yum.repos.d/fedora.repo/fedora-source/gpgcheck = 1
+
+test else_nodeset_nomatch (/files/left else /files/right)
+
 # Paths with whitespace in them
 test php1 $php/mail function
      /files/etc/php.ini/mail\ function
