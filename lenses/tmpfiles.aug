@@ -49,11 +49,12 @@ Empty lines *)
 (* Group: Lense-specific primitives *)
 
   (* View: type
-One letter. Some of them can have a "+" and all can have a "!".
+One letter. Some of them can have a "+" and all can have an
+exclamation mark ("!") and/or minus sign ("-").
 
 Not all letters are valid.
 *)
-  let type     = /([fFwdDevqQpLcbCxXrRzZtThHaAm]|[fFwpLcbaA]\+)!?/
+  let type     = /([fFwdDevqQpLcbCxXrRzZtThHaAm]|[fFwpLcbaA]\+)!?-?/
 
   (* View: mode
 "-", or 3-4 bytes. Optionally starts with a "~". *)
