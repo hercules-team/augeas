@@ -53,7 +53,7 @@ One letter. Some of them can have a "+" and all can have a "!".
 
 Not all letters are valid.
 *)
-  let type     = /([fFwdDvqQpLcbCxXrRzZtThHaAm]|[AabcLp]\+)!?/
+  let type     = /([fFwdDevqQpLcbCxXrRzZtThHaAm]|[fFwpLcbaA]\+)!?/
 
   (* View: mode
 "-", or 3-4 bytes. Optionally starts with a "~". *)
