@@ -713,6 +713,36 @@ static const struct command_def cmd_setm_def = {
     "BASE will be modified."
 };
 
+static void cmd_update(struct command *cmd) {
+    const char *path = arg_value(cmd, "path");
+    const char *val = arg_value(cmd, "value");
+    int r;
+
+    r = aug_update(cmd->aug, path, val);
+    if (r == 0) {
+        fprintf(cmd->out, "%s (o)\n", path);
+    } else if (r < 0) {
+        ERR_REPORT(cmd, AUG_ECMDRUN, "Setting %s failed", path);
+    }
+}
+
+static const struct command_opt_def cmd_update_opts[] = {
+    { .type = CMD_PATH, .name = "path", .optional = false,
+      .help = "set the value of this node" },
+    { .type = CMD_STR, .name = "value", .optional = true,
+      .help = "the value for the node" },
+    CMD_OPT_DEF_LAST
+};
+
+static const struct command_def cmd_update_def = {
+    .name = "update",
+    .opts = cmd_update_opts,
+    .handler = cmd_update,
+    .synopsis = "set the value an existing node, but don't create a new node if the node does already exist",
+    .help = "Change the value of an single, existing node."
+    " Exactly one node must match the path"
+};
+
 static void cmd_clearm(struct command *cmd) {
     const char *base = arg_value(cmd, "base");
     const char *sub  = arg_value(cmd, "sub");
@@ -1558,6 +1588,7 @@ static const struct command_grp_def cmd_grp_write_def = {
         &cmd_rm_def,
         &cmd_set_def,
         &cmd_setm_def,
+        &cmd_update_def,
         &cmd_touch_def,
         &cmd_def_last
     }

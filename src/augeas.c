@@ -1049,6 +1049,43 @@ int aug_setm(struct augeas *aug, const char *base,
     goto done;
 }
 
+int aug_update(struct augeas *aug, const char *path, const char *value) {
+    struct pathx *p = NULL;
+    int result = -1;
+    int matches;
+    struct tree *tree;
+
+    api_entry(aug);
+
+    /* Get-out clause, in case context is broken */
+    struct tree *root_ctx = NULL;
+    if (STRNEQ(path, AUGEAS_CONTEXT))
+        root_ctx = tree_root_ctx(aug);
+
+    p = pathx_aug_parse(aug, aug->origin, root_ctx, path, true);
+    ERR_BAIL(aug);
+
+    matches = pathx_find_one(p,&tree);
+
+    if (matches==1) {
+        /* Exactly one match */
+        result = tree_set_value(tree, value); /* 0=success, -1=fail */
+        result = result==0 ? 1 : -1;
+    } else if (matches==0) {
+        result=0;
+    } else {
+        /* Multiple matches */
+        ERR_REPORT(aug, AUG_EMMATCH, "There are %d nodes matching %s, expected only one",
+                   matches, path);
+        result=-1;
+    }
+
+ error:
+    free_pathx(p);
+    api_exit(aug);
+    return result;
+}
+
 int tree_insert(struct pathx *p, const char *label, int before) {
     struct tree *new = NULL, *match;
 

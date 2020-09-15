@@ -298,6 +298,11 @@ Create PATH with the value NULL if it is not in the tree yet.  All its
 ancestors will also be created.  These new tree entries will appear
 last amongst their siblings.
 
+=item B<update> E<lt>PATHE<gt> E<lt>VALUEE<gt>
+
+Associate VALUE with PATH. PATH must refer to an existing node in the tree already.
+No new nodes are created.
+
 =back
 
 =head2 PATH EXPRESSION COMMANDS

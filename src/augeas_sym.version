@@ -97,4 +97,5 @@ AUGEAS_0.24.0 {
 AUGEAS_0.25.0 {
     global:
       aug_preview;
+      aug_update;
 } AUGEAS_0.24.0;

@@ -217,6 +217,53 @@ static void testSetM(CuTest *tc) {
     aug_close(aug);
 }
 
+static void testUpdate(CuTest *tc) {
+    int r;
+    struct augeas *aug;
+    const char *value;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    /* load the /etc/hosts file */
+    r = aug_load_file(aug, "/etc/hosts");
+    CuAssertRetSuccess(tc, r);
+    /* Update a value */
+    r = aug_update(aug, "/files/etc/hosts/*/alias[.='orange']", "apple");
+    CuAssertIntEquals(tc, 1, r);
+    r = aug_get(aug, "/files/etc/hosts/*/alias[.='apple']", &value);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertStrEquals(tc, "apple", value);
+
+    /* Remove a value */
+    r = aug_update(aug, "/files/etc/hosts/1/alias[1]", NULL);
+    CuAssertIntEquals(tc, 1, r);
+    r = aug_get(aug, "/files/etc/hosts/1/alias[1]", &value);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertPtrEquals(tc, NULL, value);
+
+    /* Return 0, and no change if the path does not exist already */
+    r = aug_update(aug, "/files/etc/hosts/00/alias", "pear");
+    CuAssertIntEquals(tc, 0, r);
+    r = aug_label(aug, "/files/etc/hosts/00/alias", &value);
+    CuAssertIntEquals(tc, 0, r);
+    CuAssertPtrEquals(tc, NULL, value);
+
+    /* Return -1, and no change if the multiple paths match */
+    r = aug_update(aug, "/files/etc/hosts/*/ipaddr", "1.2.3.4");
+    CuAssertIntEquals(tc, -1, r);
+    r = aug_get(aug, "/files/etc/hosts/1/ipaddr", &value);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertStrEquals(tc, "127.0.0.1", value);
+
+    aug_close(aug);
+}
+
 /* Check that defining a variable leads to a corresponding entry in
  * /augeas/variables and that that entry disappears when the variable is
  * undefined */
@@ -898,6 +945,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testGet);
     SUITE_ADD_TEST(suite, testSet);
     SUITE_ADD_TEST(suite, testSetM);
+    SUITE_ADD_TEST(suite, testUpdate);
     SUITE_ADD_TEST(suite, testDefVarMeta);
     SUITE_ADD_TEST(suite, testDefNodeExistingMeta);
     SUITE_ADD_TEST(suite, testDefNodeCreateMeta);

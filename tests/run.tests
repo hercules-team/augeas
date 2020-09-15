@@ -340,6 +340,31 @@ test get-bad-pathx -1 EPATHX
   get /files[]
 
 #
+# test update
+#
+test update-existing 3
+  set /files/existing value
+  update /files/existing new_value
+  get /files/existing
+prints
+  /files/existing = new_value
+
+test update-not-there 1
+  update /files/not-there value
+prints
+  /files/not-there (o)
+
+test update-multiple1 -1 EMMATCH
+  set /files/existing value1
+  set /files/existing[2] value2
+  update /files/existing new-value
+
+test update-multiple2 -1 EMMATCH
+  set /files/existing1 value1
+  set /files/existing2 value2
+  update /files/* new-value
+
+#
 # test transform
 #
 test transform-1 3

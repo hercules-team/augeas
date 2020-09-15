@@ -185,6 +185,17 @@ int aug_set(augeas *aug, const char *path, const char *value);
  */
 int aug_setm(augeas *aug, const char *base, const char *sub, const char *value);
 
+/* Function: aug_update
+ *
+ * Similar to set, except that the node specified by PATH must already exist.
+ * No new nodes are created by this function
+ *
+ * Returns:
+ * 1 on success, 0 if no existing node matches PATH (this is an error)
+ * -1 on error, or if multiple nodes matched PATH (this is an error)
+ */
+int aug_update(augeas *aug, const char *path, const char *value);
+
 /* Function: aug_span
  *
  * Get the span according to input file of the node associated with PATH. If
