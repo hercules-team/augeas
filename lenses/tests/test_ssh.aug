@@ -5,6 +5,9 @@ module Test_ssh =
 "# start
 IdentityFile /etc/ssh/identity.asc
 
+Match final all
+   GSSAPIAuthentication yes
+
 Host suse.cz
    ForwardAgent yes
 SendEnv LC_LANG
@@ -30,6 +33,15 @@ PubkeyAcceptedKeyTypes ssh-ed25519-cert-v01@openssh.com,ssh-ed25519,ssh-rsa-cert
     { "#comment" = "start" }
     { "IdentityFile" = "/etc/ssh/identity.asc" }
     { }
+    { "Match"
+      { "Condition"
+        { "final" = "all" }
+      }
+      { "Settings"
+        { "GSSAPIAuthentication" = "yes" }
+        {  }
+      }
+    }
     { "Host"	= "suse.cz"
 	{ "ForwardAgent"  = "yes" }
 	{ "SendEnv"
