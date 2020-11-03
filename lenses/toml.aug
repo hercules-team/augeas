@@ -120,7 +120,7 @@ let inline_table (value:lens) = [ label "inline_table" . lbrace
                       | rbrace ) ]
 
 let entry = [ label "entry" . Util.indent . store Rx.word . Sep.space_equal
-            . (norec | array_rec | inline_table norec) . (eol | comment) ]
+            . (norec | array_rec | inline_table (norec|array_norec)) . (eol | comment) ]
 
 (* Group: tables *)
 

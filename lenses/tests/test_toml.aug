@@ -198,6 +198,16 @@ test Toml.entry get "name = { first = \"Tom\", last = \"Preston-Werner\" }\n" =
       { "entry" = "last"
         { "string" = "Preston-Werner"  } } {} } }
 
+(* Test: Toml.entry
+    Array value in inline_table *)
+test Toml.entry get "foo = { bar = [\"baz\"] }\n" =
+  { "entry" = "foo"
+    { "inline_table" {}
+      { "entry" = "bar"
+        { "array"
+          { "string" = "baz" } } } {} } }
+
+
 (* Variable: example
      The example from https://github.com/mojombo/toml *)
 let example = "# This is a TOML document. Boom.
