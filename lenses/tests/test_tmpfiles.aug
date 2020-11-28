@@ -79,6 +79,24 @@ Tree for <exclamation_mark> *)
         { "argument" = "-" }
     }
 
+  (* Variable: minus
+Example with an minus mark in the type *)
+  let minus = "D- /tmp/foo - - - - -\n"
+
+  (* Variable: minus_tree
+Tree for <minus_tree> *)
+  let minus_tree =
+    {
+        "1"
+        { "type" = "D-" }
+        { "path" = "/tmp/foo" }
+        { "mode" = "-" }
+        { "uid" = "-" }
+        { "gid" = "-" }
+        { "age" = "-" }
+        { "argument" = "-" }
+    }
+
   (* Variable: short
 Example with only type and path *)
   let short = "A+ /tmp/foo\n"
@@ -333,7 +351,7 @@ Invalid example that contain invalid age  *)
 
   (* Variable: invalid_type
 Invalid example that contain invalid type (bad letter) *)
-  let invalid_type = "e /var/tmp/js 0000 jonhsmith 60 1s foo\n"
+  let invalid_type = "i /var/tmp/js 0000 jonhsmith 60 1s foo\n"
 
   (* Variable: invalid_type_num
  Invalid example that contain invalid type (numeric) *)
@@ -356,6 +374,8 @@ Invalid example that contain invalid mode (letter) *)
   test Tmpfiles.lns get empty = {}{}{}
 
   test Tmpfiles.lns get exclamation_mark = exclamation_mark_tree
+
+  test Tmpfiles.lns get minus = minus_tree
 
   test Tmpfiles.lns get short = short_tree
 
