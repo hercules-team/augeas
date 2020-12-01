@@ -108,7 +108,8 @@ let options =
                                           (Util.del_str ":") (store Rx.integer)
                         | Build.flag ("debug"|"rotate"|"no-check-names"
                                      |"inet6"|"ip6-bytestring"|"edns0"
-				     |"single-request-reopen")
+                                     |"single-request"|"single-request-reopen"
+                                     |"no-tld-query"|"use-vc"|"no-reload")
                         | ip6_dotint
 
             in Build.key_value_line_comment
