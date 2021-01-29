@@ -58,7 +58,7 @@ module Crypttab =
   let word    = Rx.word
 
    (* Variable: optval *)
-  let optval  = /[A-Za-z0-9_.:-]+/
+  let optval  = /[A-Za-z0-9\/_.:-]+/
 
   (* Variable: target *)
   let target  = Rx.device_name
