@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@master
 
       - name: Install deps
-        run: sudo apt-get -y install libxml2-dev libreadline-dev valgrind libtool-bin
+        run: sudo apt-get update && sudo apt-get -y install libxml2-dev libreadline-dev valgrind libtool-bin
 
       - name: Autogen
         run: ./autogen.sh
