@@ -37,6 +37,18 @@ module Test_crypttab =
             { "value" = "aes-cbc-essiv:sha256" } }
         { "opt" = "verify" } }
 
+  let uuid = "sda3_crypt UUID=5b8b6e72-acf9-43bc-bd2d-8dbcaee82f99 none luks,keyscript=/usr/share/yubikey-luks/ykluks-keyscript,discard\n"
+
+  let uuid_tree =
+    { "1"
+        { "target" = "sda3_crypt" }
+        { "device" = "UUID=5b8b6e72-acf9-43bc-bd2d-8dbcaee82f99" }
+        { "password" = "none" }
+        { "opt" = "luks" }
+        { "opt" = "keyscript"
+            { "value" = "/usr/share/yubikey-luks/ykluks-keyscript" } }
+        { "opt" = "discard" } }
+
   test Crypttab.lns get simple = simple_tree
 
   test Crypttab.lns get trailing_ws = simple_tree
@@ -46,3 +58,5 @@ module Test_crypttab =
   test Crypttab.lns get no_password = no_password_tree
 
   test Crypttab.lns get multi_opts = multi_opts_tree
+
+  test Crypttab.lns get uuid = uuid_tree
