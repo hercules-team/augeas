@@ -39,6 +39,9 @@ let empty = IniFile.empty
     for booleans, so list all the recognized values *)
 let boolean = ("y"|"yes"|"true"|"t"|"1"|"on"|"n"|"no"|"false"|"nil"|"0"|"off")
 
+(* View: fspath *)
+let fspath = /[^ \t\n"]+/
+
 
 (************************************************************************
  * Group:                 RECORD TYPES
@@ -52,15 +55,14 @@ let entry (kw:regexp) (lns:lens) = Build.key_value_line kw sep lns
 
 (* View: list_sto
     A list of values with given lens *)
-let list_sto (kw:regexp) (lns:lens) = counter "item" .
-                                          entry kw
-                                            (Build.opt_list 
-                                              [lns]
-                                              Sep.comma)
+let list_sto (kw:regexp) (lns:lens) =
+  entry kw (Quote.do_dquote_opt_nil (Build.opt_list [lns] Sep.comma))
 
 (* View: entry_sto
     Store a regexp as entry value *)
-let entry_sto (kw:regexp) (val:regexp) = entry kw (store val)
+let entry_sto (kw:regexp) (val:regexp) =
+  entry kw (Quote.do_dquote_opt_nil (store val))
+  | entry kw (Util.del_str "\"\"")
 
 
 (************************************************************************
@@ -114,7 +116,7 @@ let common_entry   = list_sto common_entries_list (key Rx.word)
 (* View: defaults_entry
     Possible entries under the <defaults> section *)
 let defaults_entry = entry_sto "fs_type" Rx.word
-                   | entry_sto "undo_dir" Rx.fspath
+                   | entry_sto "undo_dir" fspath
                    
 (* View: defaults_title
     Title for the <defaults> section *)
