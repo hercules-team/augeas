@@ -21,6 +21,7 @@
  */
 
 #include <stdio.h>
+#include <json-c/json.h>
 #include <libxml/tree.h>
 
 #ifndef AUGEAS_H_
@@ -422,6 +423,19 @@ int aug_source(const augeas *aug, const char *path, char **file_path);
  * 0 on success, -1 on error
  */
 int aug_preview(augeas *aug, const char *path, char **out);
+
+/* Function: aug_to_jsonl
+ *
+ * Turn the Augeas tree(s) matching PATH into a json-object. The
+ * parameter FLAGS is currently unused and must be set to 0.
+ *
+ * Returns:
+ * 0 on success, or a negative value on failure
+ *
+ * In case of failure, *root is set to NULL
+ */
+int aug_to_jsonl(const struct augeas *aug, const char *pathin,
+                 json_object **root, unsigned int flags);
 
 /* Function: aug_to_xml
  *

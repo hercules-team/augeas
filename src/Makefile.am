@@ -1,7 +1,7 @@
 GNULIB= ../gnulib/lib/libgnu.la
 GNULIB_CFLAGS= -I $(top_builddir)/gnulib/lib -I $(top_srcdir)/gnulib/lib
 
-AM_CFLAGS = @AUGEAS_CFLAGS@ @WARN_CFLAGS@ $(GNULIB_CFLAGS) $(LIBXML_CFLAGS)
+AM_CFLAGS = @AUGEAS_CFLAGS@ @WARN_CFLAGS@ $(GNULIB_CFLAGS) $(LIBXML_CFLAGS) $(LIBJSON_CFLAGS)
 
 AM_YFLAGS=-d -p spec_
 
@@ -23,7 +23,7 @@ libaugeas_la_SOURCES = augeas.h augeas.c augrun.c pathx.c \
 	memory.h memory.c ref.h ref.c \
     syntax.c syntax.h parser.y builtin.c lens.c lens.h regexp.c regexp.h \
 	transform.h transform.c ast.c get.c put.c list.h \
-    info.c info.h errcode.c errcode.h jmt.h jmt.c xml.c
+    info.c info.h errcode.c errcode.h jmt.h jmt.c xml.c jsonl.c
 
 if USE_VERSION_SCRIPT
   AUGEAS_VERSION_SCRIPT = $(VERSION_SCRIPT_FLAGS)$(srcdir)/augeas_sym.version
@@ -35,16 +35,16 @@ endif
 
 libaugeas_la_LDFLAGS = $(AUGEAS_VERSION_SCRIPT) \
     -version-info $(LIBAUGEAS_VERSION_INFO)
-libaugeas_la_LIBADD = liblexer.la libfa.la $(LIB_SELINUX) $(LIBXML_LIBS) $(GNULIB)
+libaugeas_la_LIBADD = liblexer.la libfa.la $(LIB_SELINUX) $(LIBXML_LIBS) $(LIBJSON_LIBS) $(GNULIB)
 
 augtool_SOURCES = augtool.c
-augtool_LDADD = libaugeas.la $(READLINE_LIBS) $(LIBXML_LIBS) $(GNULIB)
+augtool_LDADD = libaugeas.la $(READLINE_LIBS) $(LIBXML_LIBS) $(LIBJSON_LIBS) $(GNULIB)
 
 augparse_SOURCES = augparse.c
-augparse_LDADD = libaugeas.la $(LIBXML_LIBS) $(GNULIB)
+augparse_LDADD = libaugeas.la $(LIBXML_LIBS) $(LIBJSON_LIBS) $(GNULIB)
 
 augmatch_SOURCES = augmatch.c
-augmatch_LDADD = libaugeas.la $(LIBXML_LIBS) $(GNULIB)
+augmatch_LDADD = libaugeas.la $(LIBXML_LIBS) $(LIBJSON_LIBS) $(GNULIB)
 
 libfa_la_SOURCES = fa.c fa.h hash.c hash.h memory.c memory.h ref.h ref.c
 libfa_la_LIBADD = $(LIB_SELINUX) $(GNULIB)

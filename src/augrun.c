@@ -28,6 +28,7 @@
 
 #include <ctype.h>
 #include <libxml/tree.h>
+#include <json-c/json.h>
 #include <argz.h>
 
 /*
@@ -1066,6 +1067,23 @@ static const struct command_def cmd_context_def = {
     .help = "Relative paths are interpreted relative to a context path which\n is stored in /augeas/context.\n\n When no PATH is given, this command prints the current context path\n and is equivalent to 'get /augeas/context'\n\n When PATH is given, this command changes that context, and has a\n similar effect to 'cd' in a shell and and is the same as running\n the command 'set /augeas/context PATH'."
 };
 
+static void cmd_dump_jsonl(struct command *cmd)
+{
+    const char *path = arg_value(cmd, "path");
+    json_object *root;
+    int r;
+
+    r = aug_to_jsonl(cmd->aug, path, &root, 0);
+    if (r < 0)
+        ERR_REPORT(cmd, AUG_ECMDRUN,
+                   "JSONL export of path %s failed", path);
+
+    puts(json_object_to_json_string_ext(root, JSON_C_TO_STRING_PRETTY));
+    printf("\n");
+
+    json_object_put(root);
+}
+
 static void cmd_dump_xml(struct command *cmd) {
     const char *path = arg_value(cmd, "path");
     xmlNodePtr xmldoc;
@@ -1081,6 +1099,17 @@ static void cmd_dump_xml(struct command *cmd) {
 
     xmlFreeNode(xmldoc);
 }
+
+static const struct command_opt_def cmd_dump_jsonl_opts[] = {
+    {.type = CMD_PATH, .name = "path", .optional = true, .help = "print this subtree"},
+    CMD_OPT_DEF_LAST};
+
+static const struct command_def cmd_dump_jsonl_def = {
+    .name = "dump-jsonl",
+    .opts = cmd_dump_jsonl_opts,
+    .handler = cmd_dump_jsonl,
+    .synopsis = "print a subtree as JSONL",
+    .help = "Export entries in the tree as JSONL. If PATH is given, printing starts there,\n otherwise the whole tree is printed."};
 
 static const struct command_opt_def cmd_dump_xml_opts[] = {
     { .type = CMD_PATH, .name = "path", .optional = true,
@@ -1532,6 +1561,7 @@ static const struct command_grp_def cmd_grp_read_def = {
     .name = "Read",
     .commands = {
         &cmd_dump_xml_def,
+        &cmd_dump_jsonl_def,
         &cmd_get_def,
         &cmd_label_def,
         &cmd_ls_def,
