@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <libgen.h>
 
+#include <json-c/json.h>
 #include <libxml/tree.h>
 
 static const char *abs_top_srcdir;
@@ -512,6 +513,56 @@ static void testRename(CuTest *tc) {
     aug_close(aug);
 }
 
+static void testToJSONL(CuTest *tc) {
+    struct augeas *aug;
+    int r;
+    json_object *top;
+    json_object *pwnode;
+    json_object *augnode;
+    json_object *node;
+    const char *value;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_to_jsonl(aug, "/files/etc/passwd", &top, 0);
+    CuAssertRetSuccess(tc, r);
+
+    augnode = json_object_object_get(top, "augeas");
+    CuAssertPtrNotNull(tc, augnode);
+
+    node = json_object_object_get(augnode, "match");
+    CuAssertPtrNotNull(tc, node);
+
+    value = json_object_get_string(node);
+    CuAssertStrEquals(tc, "/files/etc/passwd", value);
+
+    pwnode = json_object_object_get(augnode, "passwd");
+    CuAssertPtrNotNull(tc, pwnode);
+
+    node = json_object_object_get(pwnode, "path");
+    CuAssertPtrNotNull(tc, node);
+
+    value = json_object_get_string(node);
+    CuAssertStrEquals(tc, "/files/etc/passwd", value);
+
+    node = json_object_object_get(pwnode, "root");
+    CuAssertPtrNotNull(tc, node);
+
+    node = json_object_object_get(node, "password");
+    CuAssertPtrNotNull(tc, node);
+
+    node = json_object_object_get(node, "value");
+    CuAssertPtrNotNull(tc, node);
+
+    value = json_object_get_string(node);
+    CuAssertStrEquals(tc, "x", value);
+
+    json_object_put(top);
+    aug_close(aug);
+}
+
 static void testToXml(CuTest *tc) {
     struct augeas *aug;
     int r;
@@ -906,6 +957,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testCp);
     SUITE_ADD_TEST(suite, testRename);
     SUITE_ADD_TEST(suite, testToXml);
+    SUITE_ADD_TEST(suite, testToJSONL);
     SUITE_ADD_TEST(suite, testTextStore);
     SUITE_ADD_TEST(suite, testTextRetrieve);
     SUITE_ADD_TEST(suite, testAugEscape);

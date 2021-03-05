@@ -187,6 +187,11 @@ The following commands are used to retrieve data from the Augeas tree.
 
 =over 4
 
+=item B<dump-jsonl> I<[E<lt>PATHE<gt>]>
+
+Print entries in the tree as JSONL. If PATH is given, printing starts there,
+otherwise the whole tree is printed.
+
 =item B<dump-xml> I<[E<lt>PATHE<gt>]>
 
 Print entries in the tree as XML. If PATH is given, printing starts there,

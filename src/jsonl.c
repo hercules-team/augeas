@@ -27,7 +27,7 @@
 #include "info.h"
 #include "errcode.h"
 
-static int to_xml_span(json_object *elem, const char *pfor, int start, int end)
+static int to_jsonl_span(json_object *elem, const char *pfor, int start, int end)
 {
     int r;
     char *buf;
@@ -97,15 +97,15 @@ static int to_jsonl_one(json_object *elem, const struct tree *tree,
         if (r)
             goto error;
 
-        r = to_xml_span(elem, "label", span->label_start, span->label_end);
+        r = to_jsonl_span(elem, "label", span->label_start, span->label_end);
         if (r < 0)
             goto error;
 
-        r = to_xml_span(elem, "value", span->value_start, span->value_end);
+        r = to_jsonl_span(elem, "value", span->value_start, span->value_end);
         if (r < 0)
             goto error;
 
-        r = to_xml_span(elem, "node", span->span_start, span->span_end);
+        r = to_jsonl_span(elem, "node", span->span_start, span->span_end);
         if (r < 0)
             goto error;
     }

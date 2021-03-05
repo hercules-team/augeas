@@ -3,6 +3,7 @@ addons:
   apt:
     packages:
       - libxml2-dev
+      - libjson-c-dev
       - libreadline-dev
       - valgrind
       - libtool-bin

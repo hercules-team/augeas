@@ -10,7 +10,7 @@ Source0:        http://download.augeas.net/%{name}-%{version}.tar.gz
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-BuildRequires:  readline-devel libselinux-devel libxml2-devel
+BuildRequires:  readline-devel libselinux-devel libxml2-devel libjson-c-devel
 Requires:       %{name}-libs = %{version}-%{release}
 
 %description

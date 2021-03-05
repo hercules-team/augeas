@@ -17,6 +17,7 @@ following tools and libraries to build Augeas:
 * Flex
 * readline-devel
 * libxml2-devel
+* libjson-c-devel
 * libselinux-devel (optional)
 
 Augeas uses gnulib, and you need a checkout of gnulib. The build scripts

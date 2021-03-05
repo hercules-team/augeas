@@ -98,3 +98,8 @@ AUGEAS_0.25.0 {
     global:
       aug_preview;
 } AUGEAS_0.24.0;
+
+AUGEAS_0.26.0 {
+    global:
+      aug_to_jsonl;
+} AUGEAS_0.25.0;
