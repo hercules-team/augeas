@@ -37,17 +37,13 @@ static int to_jsonl_span(json_object *elem, const char *pfor, int start, int end
     if (jspan == NULL)
         return -1;
 
-    r = json_object_object_add(elem, "span", jspan);
-    if (r)
-        return -1;
+    json_object_object_add(elem, "span", jspan);
 
     jprop = json_object_new_string(pfor);
     if (jprop == NULL)
         return -1;
 
-    r = json_object_object_add(jspan, "for", jprop);
-    if (r)
-        return -1;
+    json_object_object_add(jspan, "for", jprop);
 
     /* Format and set the start property */
     r = xasprintf(&buf, "%d", start);
@@ -59,9 +55,7 @@ static int to_jsonl_span(json_object *elem, const char *pfor, int start, int end
     if (jprop == NULL)
         return -1;
 
-    r = json_object_object_add(jspan, "start", jprop);
-    if (r)
-        return -1;
+    json_object_object_add(jspan, "start", jprop);
 
     /* Format and set the end property */
     r = xasprintf(&buf, "%d", end);
@@ -73,9 +67,7 @@ static int to_jsonl_span(json_object *elem, const char *pfor, int start, int end
     if (jprop == NULL)
         return -1;
 
-    r = json_object_object_add(jspan, "end", jprop);
-    if (r)
-        return -1;
+    json_object_object_add(jspan, "end", jprop);
 
     return 0;
 }
@@ -93,9 +85,7 @@ static int to_jsonl_one(json_object *elem, const struct tree *tree,
         if (jpath == NULL)
             goto error;
 
-        r = json_object_object_add(elem, "file", jpath);
-        if (r)
-            goto error;
+        json_object_object_add(elem, "file", jpath);
 
         r = to_jsonl_span(elem, "label", span->label_start, span->label_end);
         if (r < 0)
@@ -116,9 +106,7 @@ static int to_jsonl_one(json_object *elem, const struct tree *tree,
         if (jpath == NULL)
             goto error;
 
-        r = json_object_object_add(elem, "path", jpath);
-        if (r)
-            goto error;
+        json_object_object_add(elem, "path", jpath);
     }
     if (tree->value != NULL)
     {
@@ -126,9 +114,7 @@ static int to_jsonl_one(json_object *elem, const struct tree *tree,
         if (jvalue == NULL)
             goto error;
 
-        r = json_object_object_add(elem, "value", jvalue);
-        if (r)
-            goto error;
+        json_object_object_add(elem, "value", jvalue);
     }
     return 0;
 error:
@@ -148,9 +134,7 @@ static int to_jsonl_rec(json_object *pnode, struct tree *start,
     if (r < 0)
         goto error;
 
-    r = json_object_object_add(pnode, start->label, elem);
-    if (r)
-        goto error;
+    json_object_object_add(pnode, start->label, elem);
 
     list_for_each(tree, start->children)
     {
@@ -180,17 +164,13 @@ static int tree_to_jsonl(struct pathx *p, json_object **node, const char *pathin
     if (jroot == NULL)
         goto error;
 
-    r = json_object_object_add(*node, "augeas", jroot);
-    if (r)
-        goto error;
+    json_object_object_add(*node, "augeas", jroot);
 
     json_object *jmatch = json_object_new_string(pathin);
     if (jmatch == NULL)
         goto error;
 
-    r = json_object_object_add(jroot, "match", jmatch);
-    if (r)
-        goto error;
+    json_object_object_add(jroot, "match", jmatch);
 
     for (tree = pathx_first(p); tree != NULL; tree = pathx_next(p))
     {
