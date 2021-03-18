@@ -58,13 +58,16 @@ module Crypttab =
   let word    = Rx.word
 
    (* Variable: optval *)
-  let optval  = /[A-Za-z0-9_.:-]+/
+  let optval  = /[A-Za-z0-9\/_.:-]+/
 
   (* Variable: target *)
   let target  = Rx.device_name
 
   (* Variable: fspath *)
   let fspath  = Rx.fspath
+
+  (* Variable: uuid *)
+  let uuid = /UUID=[0-9a-f-]+/
 
   (************************************************************************
    * Group:                       ENTRIES
@@ -86,7 +89,7 @@ module Crypttab =
 
   let record = [ seq "entry" .
                    [ label "target" . store target ] . sep_tab .
-                   [ label "device" . store fspath ] .
+                   [ label "device" . store (fspath|uuid) ] .
                    (sep_tab . [ label "password" . store fspath ] .
                     ( sep_tab . comma_sep_list "opt")? )?
                  . eol ]

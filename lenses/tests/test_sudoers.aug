@@ -9,6 +9,7 @@ test test_user get "root
 +secre-taries
 @my\ admin\ group
 EXAMPLE\\\\cslack
+%ad.domain.com\\\\sudo-users
 MY\ EX-AMPLE\ 9\\\\cslack\ group
 " =
   { "user" = "root" }
@@ -16,6 +17,7 @@ MY\ EX-AMPLE\ 9\\\\cslack\ group
   { "user" = "+secre-taries" }
   { "user" = "@my\\ admin\\ group" }
   { "user" = "EXAMPLE\\\\cslack" }
+  { "user" = "%ad.domain.com\\\\sudo-users" }
   { "user" = "MY\\ EX-AMPLE\\ 9\\\\cslack\\ group" }
 
 let conf = "
@@ -64,6 +66,8 @@ www-data +biglab=(rpinson)NOEXEC: ICAL \
 @my\ admin\ group ALL=(root) NOPASSWD: /usr/bin/python /usr/local/sbin/filterlog -iu\\=www /var/log/something.log
 #includedir /etc/sudoers.d
 #include /etc/sudoers.d
+@includedir /etc/sudoers.d
+@include /etc/sudoers.file
 "
 
    test Sudoers.lns get conf =
@@ -198,6 +202,8 @@ www-data +biglab=(rpinson)NOEXEC: ICAL \
       }
       { "#includedir" = "/etc/sudoers.d" }
       { "#include" = "/etc/sudoers.d" }
+      { "@includedir" = "/etc/sudoers.d" }
+      { "@include" = "/etc/sudoers.file" }
 
 test Sudoers.parameter_integer_bool
     put "umask = 022"
@@ -298,6 +304,18 @@ test Sudoers.spec get "user.one somehost = ALL\n" =
 test Sudoers.spec get "%sudo_users ALL=(ALL) ALL\n" =
   { "spec"
     { "user" = "%sudo_users" }
+    { "host_group"
+      { "host" = "ALL" }
+      { "command" = "ALL"
+        { "runas_user" = "ALL" } }
+    }
+  }
+
+(* Test: Sudoers.spec
+     allow ad group names with backslashes *)
+test Sudoers.spec get "%ad.domain.com\\\\sudo-users ALL=(ALL) ALL\n" =
+  { "spec"
+    { "user" = "%ad.domain.com\\\\sudo-users" }
     { "host_group"
       { "host" = "ALL" }
       { "command" = "ALL"
