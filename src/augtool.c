@@ -51,7 +51,7 @@ char *loadonly = NULL;
 size_t transformslen = 0;
 size_t loadonlylen = 0;
 const char *inputfile = NULL;
-int echo_commands = 0;         /* Gets also changed in main_loop */
+int echo_commands = 0; /* Gets also changed in main_loop */
 bool print_version = false;
 bool auto_save = false;
 bool interactive = false;
@@ -68,23 +68,25 @@ char *history_file = NULL;
 /* Private copy of xasprintf from internal to avoid Multiple definition in
  * static builds.
  */
-static int _xasprintf(char **strp, const char *format, ...) {
-  va_list args;
-  int result;
+static int _xasprintf(char **strp, const char *format, ...)
+{
+    va_list args;
+    int result;
 
-  va_start (args, format);
-  result = vasprintf (strp, format, args);
-  va_end (args);
-  if (result < 0)
-      *strp = NULL;
-  return result;
+    va_start(args, format);
+    result = vasprintf(strp, format, args);
+    va_end(args);
+    if (result < 0)
+        *strp = NULL;
+    return result;
 }
 
-static int child_count(const char *path) {
+static int child_count(const char *path)
+{
     char *pat = NULL;
     int r;
 
-    if (path[strlen(path)-1] == SEP)
+    if (path[strlen(path) - 1] == SEP)
         r = asprintf(&pat, "%s*", path);
     else
         r = asprintf(&pat, "%s/*", path);
@@ -96,7 +98,8 @@ static int child_count(const char *path) {
     return r;
 }
 
-static char *readline_path_generator(const char *text, int state) {
+static char *readline_path_generator(const char *text, int state)
+{
     static int current = 0;
     static char **children = NULL;
     static int nchildren = 0;
@@ -106,43 +109,51 @@ static char *readline_path_generator(const char *text, int state) {
     if (end != NULL)
         end += 1;
 
-    if (state == 0) {
+    if (state == 0)
+    {
         char *path;
-        if (end == NULL) {
+        if (end == NULL)
+        {
             if ((path = strdup("*")) == NULL)
                 return NULL;
-        } else {
+        }
+        else
+        {
             if (ALLOC_N(path, end - text + 2) < 0)
                 return NULL;
             strncpy(path, text, end - text);
             strcat(path, "*");
         }
 
-        for (;current < nchildren; current++)
-            free((void *) children[current]);
-        free((void *) children);
+        for (; current < nchildren; current++)
+            free((void *)children[current]);
+        free((void *)children);
         nchildren = aug_match(aug, path, &children);
         current = 0;
 
         ctx = NULL;
         if (path[0] != SEP)
-            aug_get(aug, AUGEAS_CONTEXT, (const char **) &ctx);
+            aug_get(aug, AUGEAS_CONTEXT, (const char **)&ctx);
 
         free(path);
     }
 
     if (end == NULL)
-        end = (char *) text;
+        end = (char *)text;
 
-    while (current < nchildren) {
+    while (current < nchildren)
+    {
         char *child = children[current];
         current += 1;
 
         char *chend = strrchr(child, SEP) + 1;
-        if (STREQLEN(chend, end, strlen(end))) {
-            if (child_count(child) > 0) {
-                char *c = realloc(child, strlen(child)+2);
-                if (c == NULL) {
+        if (STREQLEN(chend, end, strlen(end)))
+        {
+            if (child_count(child) > 0)
+            {
+                char *c = realloc(child, strlen(child) + 2);
+                if (c == NULL)
+                {
                     free(child);
                     return NULL;
                 }
@@ -151,7 +162,8 @@ static char *readline_path_generator(const char *text, int state) {
             }
 
             /* strip off context if the user didn't give it */
-            if (ctx != NULL) {
+            if (ctx != NULL)
+            {
                 int ctxidx = strlen(ctx);
                 if (child[ctxidx] == SEP)
                     ctxidx++;
@@ -165,23 +177,26 @@ static char *readline_path_generator(const char *text, int state) {
             rl_filename_completion_desired = 1;
             rl_completion_append_character = '\0';
             return child;
-        } else {
+        }
+        else
+        {
             free(child);
         }
     }
     return NULL;
 }
 
-static char *readline_command_generator(const char *text, int state) {
+static char *readline_command_generator(const char *text, int state)
+{
     // FIXME: expose somewhere under /augeas
     static const char *const commands[] = {
         "quit", "clear", "defnode", "defvar",
         "get", "label", "ins", "load", "ls", "match",
-        "mv", "cp", "rename", "print", "dump-xml", "dump-jsonl", "rm", "save", "set", "setm",
+        "mv", "cp", "rename", "print", "dump-xml", "dump-json", "rm", "save", "set", "setm",
         "clearm", "span", "store", "retrieve", "transform", "load-file",
         "help", "touch", "insert", "move", "copy", "errors", "source", "context",
         "info", "count", "preview",
-        NULL };
+        NULL};
 
     static int current = 0;
     const char *name;
@@ -190,7 +205,8 @@ static char *readline_command_generator(const char *text, int state) {
         current = 0;
 
     rl_completion_append_character = ' ';
-    while ((name = commands[current]) != NULL) {
+    while ((name = commands[current]) != NULL)
+    {
         current += 1;
         if (STREQLEN(text, name, strlen(text)))
             return strdup(name);
@@ -201,13 +217,15 @@ static char *readline_command_generator(const char *text, int state) {
 #ifndef HAVE_RL_COMPLETION_MATCHES
 typedef char *rl_compentry_func_t(const char *, int);
 static char **rl_completion_matches(ATTRIBUTE_UNUSED const char *text,
-                           ATTRIBUTE_UNUSED rl_compentry_func_t *func) {
+                                    ATTRIBUTE_UNUSED rl_compentry_func_t *func)
+{
     return NULL;
 }
 #endif
 
 #ifndef HAVE_RL_CRLF
-static int rl_crlf(void) {
+static int rl_crlf(void)
+{
     if (rl_outstream != NULL)
         putc('\n', rl_outstream);
     return 0;
@@ -216,13 +234,15 @@ static int rl_crlf(void) {
 
 #ifndef HAVE_RL_REPLACE_LINE
 static void rl_replace_line(ATTRIBUTE_UNUSED const char *text,
-                              ATTRIBUTE_UNUSED int clear_undo) {
+                            ATTRIBUTE_UNUSED int clear_undo)
+{
     return;
 }
 #endif
 
 static char **readline_completion(const char *text, int start,
-                                  ATTRIBUTE_UNUSED int end) {
+                                  ATTRIBUTE_UNUSED int end)
+{
     if (start == 0)
         return rl_completion_matches(text, readline_command_generator);
     else
@@ -231,30 +251,34 @@ static char **readline_completion(const char *text, int start,
     return NULL;
 }
 
-static char *get_home_dir(uid_t uid) {
+static char *get_home_dir(uid_t uid)
+{
     char *strbuf;
     char *result;
     struct passwd pwbuf;
     struct passwd *pw = NULL;
     long val = sysconf(_SC_GETPW_R_SIZE_MAX);
 
-    if (val < 0) {
+    if (val < 0)
+    {
         // The libc won't tell us how big a buffer to reserve.
         // Let's hope that 16k is enough (it really should be).
-        val = 16*1024;
+        val = 16 * 1024;
     }
 
-    size_t strbuflen = (size_t) val;
+    size_t strbuflen = (size_t)val;
 
     if (ALLOC_N(strbuf, strbuflen) < 0)
         return NULL;
 
-    if (getpwuid_r(uid, &pwbuf, strbuf, strbuflen, &pw) != 0 || pw == NULL) {
+    if (getpwuid_r(uid, &pwbuf, strbuf, strbuflen, &pw) != 0 || pw == NULL)
+    {
         free(strbuf);
 
         // Try to get the user's home dir from the environment
         char *env = getenv("HOME");
-        if (env != NULL) {
+        if (env != NULL)
+        {
             return strdup(env);
         }
         return NULL;
@@ -270,18 +294,18 @@ static char *get_home_dir(uid_t uid) {
 /* Inspired from:
  * https://thoughtbot.com/blog/tab-completion-in-gnu-readline
  */
-static int quote_detector(char *str, int index) {
-    return index > 0
-           && str[index - 1] == '\\'
-           && quote_detector(str, index - 1) == 0;
+static int quote_detector(char *str, int index)
+{
+    return index > 0 && str[index - 1] == '\\' && quote_detector(str, index - 1) == 0;
 }
 
-static void readline_init(void) {
+static void readline_init(void)
+{
     rl_readline_name = "augtool";
     rl_attempted_completion_function = readline_completion;
     rl_completion_entry_function = readline_path_generator;
     rl_completer_quote_characters = "\"'";
-    rl_completer_word_break_characters = (char *) " ";
+    rl_completer_word_break_characters = (char *)" ";
     rl_char_is_quoted_p = &quote_detector;
 
     /* Set up persistent history */
@@ -304,13 +328,13 @@ static void readline_init(void) {
 
     read_history(history_file);
 
- done:
+done:
     free(home_dir);
     free(history_dir);
 }
 
-__attribute__((noreturn))
-static void help(void) {
+__attribute__((noreturn)) static void help(void)
+{
     fprintf(stderr, "Usage: %s [OPTIONS] [COMMAND]\n", progname);
     fprintf(stderr, "Load the Augeas tree and modify it. If no COMMAND is given, run interactively\n");
     fprintf(stderr, "Run '%s help' to get a list of possible commands.\n",
@@ -342,39 +366,42 @@ static void help(void) {
     exit(EXIT_FAILURE);
 }
 
-static void parse_opts(int argc, char **argv) {
+static void parse_opts(int argc, char **argv)
+{
     int opt;
     size_t loadpathlen = 0;
-    enum {
+    enum
+    {
         VAL_VERSION = CHAR_MAX + 1,
         VAL_SPAN = VAL_VERSION + 1,
         VAL_TIMING = VAL_SPAN + 1
     };
     struct option options[] = {
-        { "help",        0, 0, 'h' },
-        { "typecheck",   0, 0, 'c' },
-        { "backup",      0, 0, 'b' },
-        { "new",         0, 0, 'n' },
-        { "root",        1, 0, 'r' },
-        { "include",     1, 0, 'I' },
-        { "transform",   1, 0, 't' },
-        { "load-file",   1, 0, 'l' },
-        { "echo",        0, 0, 'e' },
-        { "file",        1, 0, 'f' },
-        { "autosave",    0, 0, 's' },
-        { "interactive", 0, 0, 'i' },
-        { "nostdinc",    0, 0, 'S' },
-        { "noload",      0, 0, 'L' },
-        { "noautoload",  0, 0, 'A' },
-        { "span",        0, 0, VAL_SPAN },
-        { "timing",      0, 0, VAL_TIMING },
-        { "version",     0, 0, VAL_VERSION },
-        { 0, 0, 0, 0}
-    };
+        {"help", 0, 0, 'h'},
+        {"typecheck", 0, 0, 'c'},
+        {"backup", 0, 0, 'b'},
+        {"new", 0, 0, 'n'},
+        {"root", 1, 0, 'r'},
+        {"include", 1, 0, 'I'},
+        {"transform", 1, 0, 't'},
+        {"load-file", 1, 0, 'l'},
+        {"echo", 0, 0, 'e'},
+        {"file", 1, 0, 'f'},
+        {"autosave", 0, 0, 's'},
+        {"interactive", 0, 0, 'i'},
+        {"nostdinc", 0, 0, 'S'},
+        {"noload", 0, 0, 'L'},
+        {"noautoload", 0, 0, 'A'},
+        {"span", 0, 0, VAL_SPAN},
+        {"timing", 0, 0, VAL_TIMING},
+        {"version", 0, 0, VAL_VERSION},
+        {0, 0, 0, 0}};
     int idx;
 
-    while ((opt = getopt_long(argc, argv, "hnbcr:I:t:l:ef:siSLA", options, &idx)) != -1) {
-        switch(opt) {
+    while ((opt = getopt_long(argc, argv, "hnbcr:I:t:l:ef:siSLA", options, &idx)) != -1)
+    {
+        switch (opt)
+        {
         case 'c':
             flags |= AUG_TYPE_CHECK;
             break;
@@ -442,7 +469,8 @@ static void parse_opts(int argc, char **argv) {
     argz_stringify(loadpath, loadpathlen, PATH_SEP_CHAR);
 }
 
-static void print_version_info(void) {
+static void print_version_info(void)
+{
     const char *version;
     int r;
 
@@ -458,25 +486,27 @@ static void print_version_info(void) {
     fprintf(stderr, "There is NO WARRANTY, to the extent permitted by law.\n\n");
     fprintf(stderr, "Written by David Lutterkort\n");
     return;
- error:
+error:
     fprintf(stderr, "Something went terribly wrong internally - please file a bug\n");
 }
 
 static void print_time_taken(const struct timeval *start,
-                             const struct timeval *stop) {
-    time_t elapsed = (stop->tv_sec - start->tv_sec)*1000
-                   + (stop->tv_usec - start->tv_usec)/1000;
+                             const struct timeval *stop)
+{
+    time_t elapsed = (stop->tv_sec - start->tv_sec) * 1000 + (stop->tv_usec - start->tv_usec) / 1000;
     printf("Time: %ld ms\n", elapsed);
 }
 
-static int run_command(const char *line, bool with_timing) {
+static int run_command(const char *line, bool with_timing)
+{
     int result;
     struct timeval stop, start;
 
     gettimeofday(&start, NULL);
     result = aug_srun(aug, stdout, line);
     gettimeofday(&stop, NULL);
-    if (with_timing && result >= 0) {
+    if (with_timing && result >= 0)
+    {
         print_time_taken(&start, &stop);
     }
 
@@ -485,24 +515,29 @@ static int run_command(const char *line, bool with_timing) {
     return result;
 }
 
-static void print_aug_error(void) {
-    if (aug_error(aug) == AUG_ENOMEM) {
+static void print_aug_error(void)
+{
+    if (aug_error(aug) == AUG_ENOMEM)
+    {
         fprintf(stderr, "Out of memory.\n");
         return;
     }
-    if (aug_error(aug) != AUG_NOERROR) {
+    if (aug_error(aug) != AUG_NOERROR)
+    {
         fprintf(stderr, "error: %s\n", aug_error_message(aug));
         if (aug_error_minor_message(aug) != NULL)
             fprintf(stderr, "error: %s\n",
                     aug_error_minor_message(aug));
-        if (aug_error_details(aug) != NULL) {
+        if (aug_error_details(aug) != NULL)
+        {
             fputs(aug_error_details(aug), stderr);
             fprintf(stderr, "\n");
         }
     }
 }
 
-static void sigint_handler(ATTRIBUTE_UNUSED int signum) {
+static void sigint_handler(ATTRIBUTE_UNUSED int signum)
+{
     // Cancel the current line of input, along with undo info for that line.
     rl_replace_line("", 1);
 
@@ -511,7 +546,8 @@ static void sigint_handler(ATTRIBUTE_UNUSED int signum) {
     rl_forced_update_display();
 }
 
-static void install_signal_handlers(void) {
+static void install_signal_handlers(void)
+{
     // On Ctrl-C, cancel the current line (rather than exit the program).
     struct sigaction sigint_action;
     MEMZERO(&sigint_action, 1);
@@ -521,17 +557,20 @@ static void install_signal_handlers(void) {
     sigaction(SIGINT, &sigint_action, NULL);
 }
 
-static int main_loop(void) {
+static int main_loop(void)
+{
     char *line = NULL;
     int ret = 0;
-    char inputline [128];
+    char inputline[128];
     int code;
     bool end_reached = false;
     bool get_line = true;
     bool in_interactive = false;
 
-    if (inputfile) {
-        if (freopen(inputfile, "r", stdin) == NULL) {
+    if (inputfile)
+    {
+        if (freopen(inputfile, "r", stdin) == NULL)
+        {
             char *msg = NULL;
             if (asprintf(&msg, "Failed to open %s", inputfile) < 0)
                 perror("Failed to open input file");
@@ -550,22 +589,29 @@ static int main_loop(void) {
     else
         rl_outstream = fopen("/dev/null", "w");
 
-    while(1) {
-        if (get_line) {
+    while (1)
+    {
+        if (get_line)
+        {
             line = readline(AUGTOOL_PROMPT);
-        } else {
+        }
+        else
+        {
             line = NULL;
         }
 
-        if (line == NULL) {
-            if (!isatty(fileno(stdin)) && interactive && !in_interactive) {
+        if (line == NULL)
+        {
+            if (!isatty(fileno(stdin)) && interactive && !in_interactive)
+            {
                 in_interactive = true;
                 if (echo_commands)
                     printf("\n");
                 echo_commands = true;
 
                 // reopen in stream
-                if (freopen("/dev/tty", "r", stdin) == NULL) {
+                if (freopen("/dev/tty", "r", stdin) == NULL)
+                {
                     perror("Failed to open terminal for reading");
                     return -1;
                 }
@@ -573,12 +619,15 @@ static int main_loop(void) {
 
                 // reopen stdout and stream to a tty if originally silenced or
                 // not connected to a tty, for full interactive mode
-                if (rl_outstream == NULL || !isatty(fileno(rl_outstream))) {
-                    if (rl_outstream != NULL) {
+                if (rl_outstream == NULL || !isatty(fileno(rl_outstream)))
+                {
+                    if (rl_outstream != NULL)
+                    {
                         fclose(rl_outstream);
                         rl_outstream = NULL;
                     }
-                    if (freopen("/dev/tty", "w", stdout) == NULL) {
+                    if (freopen("/dev/tty", "w", stdout) == NULL)
+                    {
                         perror("Failed to reopen stdout");
                         return -1;
                     }
@@ -587,36 +636,43 @@ static int main_loop(void) {
                 continue;
             }
 
-            if (auto_save) {
+            if (auto_save)
+            {
                 strncpy(inputline, "save", sizeof(inputline));
                 line = inputline;
                 if (echo_commands)
                     printf("%s\n", line);
                 auto_save = false;
-            } else {
+            }
+            else
+            {
                 end_reached = true;
             }
             get_line = false;
         }
 
-        if (end_reached) {
+        if (end_reached)
+        {
             if (echo_commands)
                 printf("\n");
             return ret;
         }
 
-        if (*line == '\0' || *line == '#') {
+        if (*line == '\0' || *line == '#')
+        {
             free(line);
             continue;
         }
 
         code = run_command(line, timing);
-        if (code == -2) {
+        if (code == -2)
+        {
             free(line);
             return ret;
         }
 
-        if (code < 0) {
+        if (code < 0)
+        {
             ret = -1;
             print_aug_error();
         }
@@ -626,16 +682,18 @@ static int main_loop(void) {
     }
 }
 
-static int run_args(int argc, char **argv) {
+static int run_args(int argc, char **argv)
+{
     size_t len = 0;
     char *line = NULL;
-    int   code;
+    int code;
 
-    for (int i=0; i < argc; i++)
+    for (int i = 0; i < argc; i++)
         len += strlen(argv[i]) + 1;
     if (ALLOC_N(line, len + 1) < 0)
         return -1;
-    for (int i=0; i < argc; i++) {
+    for (int i = 0; i < argc; i++)
+    {
         strcat(line, argv[i]);
         strcat(line, " ");
     }
@@ -648,20 +706,23 @@ static int run_args(int argc, char **argv) {
             printf("%ssave\n", AUGTOOL_PROMPT);
     code = run_command("save", false);
 
-    if (code < 0) {
+    if (code < 0)
+    {
         code = -1;
         print_aug_error();
     }
     return (code >= 0 || code == -2) ? 0 : -1;
 }
 
-static void add_transforms(char *ts, size_t tslen) {
+static void add_transforms(char *ts, size_t tslen)
+{
     char *command;
     int r;
     char *t = NULL;
     bool added_transform = false;
 
-    while ((t = argz_next(ts, tslen, t))) {
+    while ((t = argz_next(ts, tslen, t)))
+    {
         r = _xasprintf(&command, "transform %s", t);
         if (r < 0)
             fprintf(stderr, "error: Failed to add transform %s: could not allocate memory\n", t);
@@ -674,19 +735,22 @@ static void add_transforms(char *ts, size_t tslen) {
         added_transform = true;
     }
 
-    if (added_transform) {
+    if (added_transform)
+    {
         r = aug_load(aug);
         if (r < 0)
             fprintf(stderr, "error: Failed to load with new transforms: %s\n", aug_error_message(aug));
     }
 }
 
-static void load_files(char *ts, size_t tslen) {
+static void load_files(char *ts, size_t tslen)
+{
     char *command;
     int r;
     char *t = NULL;
 
-    while ((t = argz_next(ts, tslen, t))) {
+    while ((t = argz_next(ts, tslen, t)))
+    {
         r = _xasprintf(&command, "load-file %s", t);
         if (r < 0)
             fprintf(stderr, "error: Failed to load file %s: could not allocate memory\n", t);
@@ -699,7 +763,8 @@ static void load_files(char *ts, size_t tslen) {
     }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     int r;
     struct timeval start, stop;
 
@@ -707,21 +772,24 @@ int main(int argc, char **argv) {
 
     parse_opts(argc, argv);
 
-    if (timing) {
+    if (timing)
+    {
         printf("Initializing augeas ... ");
         fflush(stdout);
     }
     gettimeofday(&start, NULL);
 
-    aug = aug_init(root, loadpath, flags|AUG_NO_ERR_CLOSE);
+    aug = aug_init(root, loadpath, flags | AUG_NO_ERR_CLOSE);
 
     gettimeofday(&stop, NULL);
-    if (timing) {
+    if (timing)
+    {
         printf("done\n");
         print_time_taken(&start, &stop);
     }
 
-    if (aug == NULL || aug_error(aug) != AUG_NOERROR) {
+    if (aug == NULL || aug_error(aug) != AUG_NOERROR)
+    {
         fprintf(stderr, "Failed to initialize Augeas\n");
         if (aug != NULL)
             print_aug_error();
@@ -729,15 +797,19 @@ int main(int argc, char **argv) {
     }
     load_files(loadonly, loadonlylen);
     add_transforms(transforms, transformslen);
-    if (print_version) {
+    if (print_version)
+    {
         print_version_info();
         return EXIT_SUCCESS;
     }
     readline_init();
-    if (optind < argc) {
+    if (optind < argc)
+    {
         // Accept one command from the command line
-        r = run_args(argc - optind, argv+optind);
-    } else {
+        r = run_args(argc - optind, argv + optind);
+    }
+    else
+    {
         r = main_loop();
     }
     if (history_file != NULL)
@@ -746,7 +818,6 @@ int main(int argc, char **argv) {
     aug_close(aug);
     return r == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
-
 
 /*
  * Local variables:

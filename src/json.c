@@ -1,5 +1,5 @@
 /*
- * jsonl.c: the implementation of aug_to_jsonl and supporting functions
+ * json.c: the implementation of aug_to_json and supporting functions
  *
  * Copyright (C) 2017 David Lutterkort
  *
@@ -27,7 +27,7 @@
 #include "info.h"
 #include "errcode.h"
 
-static int to_jsonl_span(json_object *elem, const char *pfor, int start, int end)
+static int to_json_span(json_object *elem, const char *pfor, int start, int end)
 {
     int r;
     char *buf;
@@ -72,7 +72,7 @@ static int to_jsonl_span(json_object *elem, const char *pfor, int start, int end
     return 0;
 }
 
-static int to_jsonl_one(json_object *elem, const struct tree *tree,
+static int to_json_one(json_object *elem, const struct tree *tree,
                         const char *pathin)
 {
     int r;
@@ -87,15 +87,15 @@ static int to_jsonl_one(json_object *elem, const struct tree *tree,
 
         json_object_object_add(elem, "file", jpath);
 
-        r = to_jsonl_span(elem, "label", span->label_start, span->label_end);
+        r = to_json_span(elem, "label", span->label_start, span->label_end);
         if (r < 0)
             goto error;
 
-        r = to_jsonl_span(elem, "value", span->value_start, span->value_end);
+        r = to_json_span(elem, "value", span->value_start, span->value_end);
         if (r < 0)
             goto error;
 
-        r = to_jsonl_span(elem, "node", span->span_start, span->span_end);
+        r = to_json_span(elem, "node", span->span_start, span->span_end);
         if (r < 0)
             goto error;
     }
@@ -121,7 +121,7 @@ error:
     return -1;
 }
 
-static int to_jsonl_rec(json_object *pnode, struct tree *start,
+static int to_json_rec(json_object *pnode, struct tree *start,
                         const char *pathin)
 {
     int r;
@@ -130,7 +130,7 @@ static int to_jsonl_rec(json_object *pnode, struct tree *start,
     if (elem == NULL)
         goto error;
 
-    r = to_jsonl_one(elem, start, pathin);
+    r = to_json_one(elem, start, pathin);
     if (r < 0)
         goto error;
 
@@ -140,7 +140,7 @@ static int to_jsonl_rec(json_object *pnode, struct tree *start,
     {
         if (TREE_HIDDEN(tree))
             continue;
-        r = to_jsonl_rec(elem, tree, NULL);
+        r = to_json_rec(elem, tree, NULL);
         if (r < 0)
             goto error;
     }
@@ -150,7 +150,7 @@ error:
     return -1;
 }
 
-static int tree_to_jsonl(struct pathx *p, json_object **node, const char *pathin)
+static int tree_to_json(struct pathx *p, json_object **node, const char *pathin)
 {
     char *path = NULL;
     struct tree *tree;
@@ -179,7 +179,7 @@ static int tree_to_jsonl(struct pathx *p, json_object **node, const char *pathin
         path = path_of_tree(tree);
         if (path == NULL)
             goto error;
-        r = to_jsonl_rec(jroot, tree, path);
+        r = to_json_rec(jroot, tree, path);
         if (r < 0)
             goto error;
         FREE(path);
@@ -192,16 +192,16 @@ error:
     return -1;
 }
 
-int aug_to_jsonl(const struct augeas *aug, const char *pathin,
-                 json_object **root, unsigned int flags)
+int aug_to_json(const struct augeas *aug, const char *pathin,
+                json_object **root, unsigned int flags)
 {
     struct pathx *p = NULL;
     int result = -1;
 
     api_entry(aug);
 
-    ARG_CHECK(flags != 0, aug, "aug_to_jsonl: FLAGS must be 0");
-    ARG_CHECK(root == NULL, aug, "aug_to_jsonl: json_object must be non-NULL");
+    ARG_CHECK(flags != 0, aug, "aug_to_json: FLAGS must be 0");
+    ARG_CHECK(root == NULL, aug, "aug_to_json: json_object must be non-NULL");
 
     if (pathin == NULL || strlen(pathin) == 0 || strcmp(pathin, "/") == 0)
     {
@@ -210,7 +210,7 @@ int aug_to_jsonl(const struct augeas *aug, const char *pathin,
 
     p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), pathin, true);
     ERR_BAIL(aug);
-    result = tree_to_jsonl(p, root, pathin);
+    result = tree_to_json(p, root, pathin);
     ERR_THROW(result < 0, aug, AUG_ENOMEM, NULL);
 error:
     free_pathx(p);

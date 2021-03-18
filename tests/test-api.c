@@ -37,19 +37,21 @@ static const char *abs_top_srcdir;
 static char *root;
 static char *loadpath;
 
-#define die(msg)                                                    \
-    do {                                                            \
-        fprintf(stderr, "%d: Fatal error: %s\n", __LINE__, msg);    \
-        exit(EXIT_FAILURE);                                         \
-    } while(0)
+#define die(msg)                                                 \
+    do                                                           \
+    {                                                            \
+        fprintf(stderr, "%d: Fatal error: %s\n", __LINE__, msg); \
+        exit(EXIT_FAILURE);                                      \
+    } while (0)
 
-static void testGet(CuTest *tc) {
+static void testGet(CuTest *tc)
+{
     int r;
     const char *value;
     const char *label;
     struct augeas *aug;
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD);
     CuAssertPtrNotNull(tc, aug);
     CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
 
@@ -125,7 +127,7 @@ static void testGet(CuTest *tc) {
 
     /* aug_get should set VALUE to NULL even if the path expression is invalid
        Issue #372 */
-    value = (const char *) 7;
+    value = (const char *)7;
     r = aug_get(aug, "[invalid path]", &value);
     CuAssertIntEquals(tc, -1, r);
     CuAssertPtrEquals(tc, NULL, value);
@@ -133,12 +135,13 @@ static void testGet(CuTest *tc) {
     aug_close(aug);
 }
 
-static void testSet(CuTest *tc) {
+static void testSet(CuTest *tc)
+{
     int r;
     const char *value;
     struct augeas *aug;
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD);
     CuAssertPtrNotNull(tc, aug);
     CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
 
@@ -166,11 +169,12 @@ static void testSet(CuTest *tc) {
     aug_close(aug);
 }
 
-static void testSetM(CuTest *tc) {
+static void testSetM(CuTest *tc)
+{
     int r;
     struct augeas *aug;
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD);
     CuAssertPtrNotNull(tc, aug);
     CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
 
@@ -221,13 +225,14 @@ static void testSetM(CuTest *tc) {
 /* Check that defining a variable leads to a corresponding entry in
  * /augeas/variables and that that entry disappears when the variable is
  * undefined */
-static void testDefVarMeta(CuTest *tc) {
+static void testDefVarMeta(CuTest *tc)
+{
     int r;
     struct augeas *aug;
     static const char *const expr = "/augeas/version/save/mode";
     const char *value;
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD);
     CuAssertPtrNotNull(tc, aug);
     CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
 
@@ -253,13 +258,14 @@ static void testDefVarMeta(CuTest *tc) {
  * entry in /augeas/variables and that that entry disappears when the
  * variable is undefined
  */
-static void testDefNodeExistingMeta(CuTest *tc) {
+static void testDefNodeExistingMeta(CuTest *tc)
+{
     int r, created;
     struct augeas *aug;
     static const char *const expr = "/augeas/version/save/mode";
     const char *value;
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD);
     CuAssertPtrNotNull(tc, aug);
     CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
 
@@ -286,14 +292,15 @@ static void testDefNodeExistingMeta(CuTest *tc) {
  * entry in /augeas/variables and that that entry disappears when the
  * variable is undefined
  */
-static void testDefNodeCreateMeta(CuTest *tc) {
+static void testDefNodeCreateMeta(CuTest *tc)
+{
     int r, created;
     struct augeas *aug;
     static const char *const expr = "/augeas/version/save/mode[last()+1]";
     static const char *const expr_can = "/augeas/version/save/mode[5]";
     const char *value;
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD);
     CuAssertPtrNotNull(tc, aug);
     CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
 
@@ -316,14 +323,24 @@ static void testDefNodeCreateMeta(CuTest *tc) {
     aug_close(aug);
 }
 
-static void reset_indexes(uint *a, uint *b, uint *c, uint *d, uint *e, uint *f) {
-    *a = 0; *b = 0; *c = 0; *d = 0; *e = 0; *f = 0;
+static void reset_indexes(uint *a, uint *b, uint *c, uint *d, uint *e, uint *f)
+{
+    *a = 0;
+    *b = 0;
+    *c = 0;
+    *d = 0;
+    *e = 0;
+    *f = 0;
 }
 
-#define SPAN_TEST_DEF_LAST { .expr = NULL, .ls = 0, .le = 0, \
-        .vs = 0, .ve = 0, .ss = 0, .se = 0 }
+#define SPAN_TEST_DEF_LAST                 \
+    {                                      \
+        .expr = NULL, .ls = 0, .le = 0,    \
+        .vs = 0, .ve = 0, .ss = 0, .se = 0 \
+    }
 
-struct span_test_def {
+struct span_test_def
+{
     const char *expr;
     const char *f;
     int ret;
@@ -336,17 +353,17 @@ struct span_test_def {
 };
 
 static const struct span_test_def span_test[] = {
-    { .expr = "/files/etc/hosts/1/ipaddr", .f = "hosts", .ret = 0, .ls = 0, .le = 0, .vs = 104, .ve = 113, .ss = 104, .se = 113 },
-    { .expr = "/files/etc/hosts/1", .f = "hosts", .ret = 0, .ls = 0, .le = 0, .vs = 0, .ve = 0, .ss = 104, .se = 171 },
-    { .expr = "/files/etc/hosts/*[last()]", .f = "hosts", .ret = 0, .ls = 0, .le = 0, .vs = 0, .ve = 0, .ss = 266, .se = 309 },
-    { .expr = "/files/etc/hosts/#comment[2]", .f = "hosts", .ret = 0, .ls = 0, .le = 0, .vs = 58, .ve = 103, .ss = 56, .se = 104 },
-    { .expr = "/files/etc/hosts", .f = "hosts", .ret = 0, .ls = 0, .le = 0, .vs = 0, .ve = 0, .ss = 0, .se = 309 },
-    { .expr = "/files", .f = NULL, .ret = -1, .ls = 0, .le = 0, .vs = 0, .ve = 0, .ss = 0, .se = 0 },
-    { .expr = "/random", .f = NULL, .ret = -1, .ls = 0, .le = 0, .vs = 0, .ve = 0, .ss = 0, .se = 0 },
-    SPAN_TEST_DEF_LAST
-};
+    {.expr = "/files/etc/hosts/1/ipaddr", .f = "hosts", .ret = 0, .ls = 0, .le = 0, .vs = 104, .ve = 113, .ss = 104, .se = 113},
+    {.expr = "/files/etc/hosts/1", .f = "hosts", .ret = 0, .ls = 0, .le = 0, .vs = 0, .ve = 0, .ss = 104, .se = 171},
+    {.expr = "/files/etc/hosts/*[last()]", .f = "hosts", .ret = 0, .ls = 0, .le = 0, .vs = 0, .ve = 0, .ss = 266, .se = 309},
+    {.expr = "/files/etc/hosts/#comment[2]", .f = "hosts", .ret = 0, .ls = 0, .le = 0, .vs = 58, .ve = 103, .ss = 56, .se = 104},
+    {.expr = "/files/etc/hosts", .f = "hosts", .ret = 0, .ls = 0, .le = 0, .vs = 0, .ve = 0, .ss = 0, .se = 309},
+    {.expr = "/files", .f = NULL, .ret = -1, .ls = 0, .le = 0, .vs = 0, .ve = 0, .ss = 0, .se = 0},
+    {.expr = "/random", .f = NULL, .ret = -1, .ls = 0, .le = 0, .vs = 0, .ve = 0, .ss = 0, .se = 0},
+    SPAN_TEST_DEF_LAST};
 
-static void testNodeInfo(CuTest *tc) {
+static void testNodeInfo(CuTest *tc)
+{
     int ret;
     int i = 0;
     struct augeas *aug;
@@ -358,15 +375,16 @@ static void testNodeInfo(CuTest *tc) {
     char *filename_ac;
     uint label_start, label_end, value_start, value_end, span_start, span_end;
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD|AUG_ENABLE_SPAN);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD | AUG_ENABLE_SPAN);
     ret = aug_load(aug);
     CuAssertRetSuccess(tc, ret);
 
-    while(span_test[i].expr != NULL) {
+    while (span_test[i].expr != NULL)
+    {
         test = span_test[i];
         i++;
         ret = aug_span(aug, test.expr, &filename_ac, &label_start, &label_end,
-                     &value_start, &value_end, &span_start, &span_end);
+                       &value_start, &value_end, &span_start, &span_end);
         sprintf(msg, "span_test %d ret\n", i);
         CuAssertIntEquals_Msg(tc, msg, test.ret, ret);
         sprintf(msg, "span_test %d label_start\n", i);
@@ -381,9 +399,12 @@ static void testNodeInfo(CuTest *tc) {
         CuAssertIntEquals_Msg(tc, msg, test.ss, span_start);
         sprintf(msg, "span_test %d span_end\n", i);
         CuAssertIntEquals_Msg(tc, msg, test.se, span_end);
-        if (filename_ac != NULL) {
+        if (filename_ac != NULL)
+        {
             fbase = basename(filename_ac);
-        } else {
+        }
+        else
+        {
             fbase = NULL;
         }
         sprintf(msg, "span_test %d filename\n", i);
@@ -396,27 +417,27 @@ static void testNodeInfo(CuTest *tc) {
 
     /* aug_span returns -1 and when no node matches */
     ret = aug_span(aug, "/files/etc/hosts/*[ last() + 1 ]", &filename_ac,
-            &label_start, &label_end, &value_start, &value_end,
-            &span_start, &span_end);
+                   &label_start, &label_end, &value_start, &value_end,
+                   &span_start, &span_end);
     CuAssertIntEquals(tc, -1, ret);
     CuAssertPtrEquals(tc, NULL, filename_ac);
     CuAssertIntEquals(tc, AUG_ENOMATCH, aug_error(aug));
 
     /* aug_span should return an error when multiple nodes match */
     ret = aug_span(aug, "/files/etc/hosts/*", &filename_ac,
-            &label_start, &label_end, &value_start, &value_end,
-            &span_start, &span_end);
+                   &label_start, &label_end, &value_start, &value_end,
+                   &span_start, &span_end);
     CuAssertIntEquals(tc, -1, ret);
     CuAssertPtrEquals(tc, NULL, filename_ac);
     CuAssertIntEquals(tc, AUG_EMMATCH, aug_error(aug));
 
     /* aug_span returns -1 if nodes span are not loaded */
     aug_close(aug);
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD);
     ret = aug_load(aug);
     CuAssertRetSuccess(tc, ret);
     ret = aug_span(aug, expr, &filename_ac, &label_start, &label_end,
-                 &value_start, &value_end, &span_start, &span_end);
+                   &value_start, &value_end, &span_start, &span_end);
     CuAssertIntEquals(tc, -1, ret);
     CuAssertPtrEquals(tc, NULL, filename_ac);
     CuAssertIntEquals(tc, AUG_ENOSPAN, aug_error(aug));
@@ -426,11 +447,12 @@ static void testNodeInfo(CuTest *tc) {
     aug_close(aug);
 }
 
-static void testMv(CuTest *tc) {
+static void testMv(CuTest *tc)
+{
     struct augeas *aug;
     int r;
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD);
     CuAssertPtrNotNull(tc, aug);
 
     r = aug_set(aug, "/a/b/c", "value");
@@ -443,12 +465,13 @@ static void testMv(CuTest *tc) {
     aug_close(aug);
 }
 
-static void testCp(CuTest *tc) {
+static void testCp(CuTest *tc)
+{
     struct augeas *aug;
     int r;
     const char *value;
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD);
     CuAssertPtrNotNull(tc, aug);
     r = aug_load(aug);
     CuAssertRetSuccess(tc, r);
@@ -484,12 +507,12 @@ static void testCp(CuTest *tc) {
     aug_close(aug);
 }
 
-
-static void testRename(CuTest *tc) {
+static void testRename(CuTest *tc)
+{
     struct augeas *aug;
     int r;
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD);
     CuAssertPtrNotNull(tc, aug);
 
     r = aug_set(aug, "/a/b/c", "value");
@@ -513,7 +536,8 @@ static void testRename(CuTest *tc) {
     aug_close(aug);
 }
 
-static void testToJSONL(CuTest *tc) {
+static void testToJSON(CuTest *tc)
+{
     struct augeas *aug;
     int r;
     json_object *top;
@@ -522,11 +546,11 @@ static void testToJSONL(CuTest *tc) {
     json_object *node;
     const char *value;
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD);
     r = aug_load(aug);
     CuAssertRetSuccess(tc, r);
 
-    r = aug_to_jsonl(aug, "/files/etc/passwd", &top, 0);
+    r = aug_to_json(aug, "/files/etc/passwd", &top, 0);
     CuAssertRetSuccess(tc, r);
 
     augnode = json_object_object_get(top, "augeas");
@@ -563,13 +587,14 @@ static void testToJSONL(CuTest *tc) {
     aug_close(aug);
 }
 
-static void testToXml(CuTest *tc) {
+static void testToXml(CuTest *tc)
+{
     struct augeas *aug;
     int r;
     xmlNodePtr xmldoc, xmlnode;
     xmlChar *value;
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD);
     r = aug_load(aug);
     CuAssertRetSuccess(tc, r);
 
@@ -577,21 +602,21 @@ static void testToXml(CuTest *tc) {
     CuAssertRetSuccess(tc, r);
 
     value = xmlGetProp(xmldoc, BAD_CAST "match");
-    CuAssertStrEquals(tc, "/files/etc/passwd", (const char *) value);
+    CuAssertStrEquals(tc, "/files/etc/passwd", (const char *)value);
     xmlFree(value);
 
     xmlnode = xmlFirstElementChild(xmldoc);
     value = xmlGetProp(xmlnode, BAD_CAST "label");
-    CuAssertStrEquals(tc, "passwd", (const char *) value);
+    CuAssertStrEquals(tc, "passwd", (const char *)value);
     xmlFree(value);
 
     value = xmlGetProp(xmlnode, BAD_CAST "path");
-    CuAssertStrEquals(tc, "/files/etc/passwd", (const char *) value);
+    CuAssertStrEquals(tc, "/files/etc/passwd", (const char *)value);
     xmlFree(value);
 
     xmlnode = xmlFirstElementChild(xmlnode);
     value = xmlGetProp(xmlnode, BAD_CAST "label");
-    CuAssertStrEquals(tc, "root", (const char *) value);
+    CuAssertStrEquals(tc, "root", (const char *)value);
     xmlFree(value);
     xmlFreeNode(xmldoc);
 
@@ -602,14 +627,15 @@ static void testToXml(CuTest *tc) {
     CuAssertRetSuccess(tc, r);
     xmlnode = xmlFirstElementChild(xmldoc);
     value = xmlGetProp(xmlnode, BAD_CAST "label");
-    CuAssertStrEquals(tc, "passwd", (const char *) value);
+    CuAssertStrEquals(tc, "passwd", (const char *)value);
     xmlFree(value);
 
     xmlFreeNode(xmldoc);
     aug_close(aug);
 }
 
-static void testTextStore(CuTest *tc) {
+static void testTextStore(CuTest *tc)
+{
     static const char *const hosts = "192.168.0.1 rtr.example.com router\n";
     /* Not acceptable for Hosts.lns - missing canonical and \n */
     static const char *const hosts_bad = "192.168.0.1";
@@ -618,7 +644,7 @@ static void testTextStore(CuTest *tc) {
     struct augeas *aug;
     int r;
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD);
     CuAssertPtrNotNull(tc, aug);
 
     r = aug_set(aug, "/raw/hosts", hosts);
@@ -669,13 +695,14 @@ static void testTextStore(CuTest *tc) {
     aug_close(aug);
 }
 
-static void testTextRetrieve(CuTest *tc) {
+static void testTextRetrieve(CuTest *tc)
+{
     static const char *const hosts = "192.168.0.1 rtr.example.com router\n";
     const char *hosts_out;
     struct augeas *aug;
     int r;
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD);
     CuAssertPtrNotNull(tc, aug);
 
     r = aug_set(aug, "/raw/hosts", hosts);
@@ -695,14 +722,15 @@ static void testTextRetrieve(CuTest *tc) {
     aug_close(aug);
 }
 
-static void testAugEscape(CuTest *tc) {
-    static const char *const in  = "a/[]b|=c()!, \td";
+static void testAugEscape(CuTest *tc)
+{
+    static const char *const in = "a/[]b|=c()!, \td";
     static const char *const exp = "a\\/\\[\\]b\\|\\=c\\(\\)\\!\\,\\ \\\td";
     char *out;
     struct augeas *aug;
     int r;
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD);
     CuAssertPtrNotNull(tc, aug);
 
     r = aug_escape_name(aug, in, &out);
@@ -714,11 +742,12 @@ static void testAugEscape(CuTest *tc) {
     aug_close(aug);
 }
 
-static void testRm(CuTest *tc) {
+static void testRm(CuTest *tc)
+{
     struct augeas *aug;
     int r;
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_MODL_AUTOLOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_MODL_AUTOLOAD);
     CuAssertPtrNotNull(tc, aug);
 
     r = aug_set(aug, "/files/1/2/3/4/5", "1");
@@ -730,12 +759,13 @@ static void testRm(CuTest *tc) {
     aug_close(aug);
 }
 
-static void testLoadFile(CuTest *tc) {
+static void testLoadFile(CuTest *tc)
+{
     struct augeas *aug;
     const char *value;
     int r;
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD);
     CuAssertPtrNotNull(tc, aug);
     CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
 
@@ -769,11 +799,12 @@ static void testLoadFile(CuTest *tc) {
    /augeas/files/path, we do not corrupt the tree. It used to be that
    having such a node would free /augeas/files
 */
-static void testLoadBadPath(CuTest *tc) {
+static void testLoadBadPath(CuTest *tc)
+{
     struct augeas *aug;
     int r;
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD);
     CuAssertPtrNotNull(tc, aug);
     CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
 
@@ -792,7 +823,8 @@ static void testLoadBadPath(CuTest *tc) {
    loaded, reloading it over and over again.
    See https://github.com/hercules-team/augeas/issues/522
 */
-static void testLoadBadLens(CuTest *tc) {
+static void testLoadBadLens(CuTest *tc)
+{
     struct augeas *aug;
     int r;
     char *lp;
@@ -802,7 +834,7 @@ static void testLoadBadLens(CuTest *tc) {
     r = asprintf(&lp, "%s:%s", loadpath, abs_top_srcdir);
     CuAssert(tc, "failed to allocate loadpath", (r >= 0));
 
-    aug = aug_init(root, lp, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, lp, AUG_NO_STDINC | AUG_NO_LOAD);
     CuAssertPtrNotNull(tc, aug);
     CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
 
@@ -821,13 +853,14 @@ static void testLoadBadLens(CuTest *tc) {
 }
 
 /* Test the aug_ns_* functions */
-static void testAugNs(CuTest *tc) {
+static void testAugNs(CuTest *tc)
+{
     struct augeas *aug;
     int r;
     const char *v, *l;
     char *s;
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD);
     CuAssertPtrNotNull(tc, aug);
     CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
 
@@ -868,12 +901,13 @@ static void testAugNs(CuTest *tc) {
 }
 
 /* Test aug_source */
-static void testAugSource(CuTest *tc) {
+static void testAugSource(CuTest *tc)
+{
     struct augeas *aug;
     int r;
     char *s;
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD);
     CuAssertPtrNotNull(tc, aug);
     CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
 
@@ -899,10 +933,10 @@ static void testAugSource(CuTest *tc) {
     CuAssertIntEquals(tc, -1, r);
     CuAssertIntEquals(tc, AUG_EMMATCH, aug_error(aug));
     CuAssertPtrEquals(tc, NULL, s);
-
 }
 
-static void testAugPreview(CuTest *tc) {
+static void testAugPreview(CuTest *tc)
+{
     struct augeas *aug;
     int r;
     char *s;
@@ -912,20 +946,23 @@ static void testAugPreview(CuTest *tc) {
     int readsz = 0;
 
     /* Read the original contents of the etc/hosts file */
-    if (asprintf(&etc_hosts_fn,"%s/etc/hosts",root) >=0 ) {
-        hosts_fp = fopen(etc_hosts_fn,"r");
-        if ( hosts_fp ) {
-            hosts_txt = calloc(sizeof(char),4096);
-            if ( hosts_txt ) {
-                readsz = fread(hosts_txt,sizeof(char),4096,hosts_fp);
-                *(hosts_txt+readsz) = '\0';
+    if (asprintf(&etc_hosts_fn, "%s/etc/hosts", root) >= 0)
+    {
+        hosts_fp = fopen(etc_hosts_fn, "r");
+        if (hosts_fp)
+        {
+            hosts_txt = calloc(sizeof(char), 4096);
+            if (hosts_txt)
+            {
+                readsz = fread(hosts_txt, sizeof(char), 4096, hosts_fp);
+                *(hosts_txt + readsz) = '\0';
             }
             fclose(hosts_fp);
         }
         free(etc_hosts_fn);
     }
 
-    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    aug = aug_init(root, loadpath, AUG_NO_STDINC | AUG_NO_LOAD);
     CuAssertPtrNotNull(tc, aug);
     CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
 
@@ -941,9 +978,10 @@ static void testAugPreview(CuTest *tc) {
     aug_close(aug);
 }
 
-int main(void) {
+int main(void)
+{
     char *output = NULL;
-    CuSuite* suite = CuSuiteNew();
+    CuSuite *suite = CuSuiteNew();
     CuSuiteSetup(suite, NULL, NULL);
 
     SUITE_ADD_TEST(suite, testGet);
@@ -957,7 +995,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testCp);
     SUITE_ADD_TEST(suite, testRename);
     SUITE_ADD_TEST(suite, testToXml);
-    SUITE_ADD_TEST(suite, testToJSONL);
+    SUITE_ADD_TEST(suite, testToJSON);
     SUITE_ADD_TEST(suite, testTextStore);
     SUITE_ADD_TEST(suite, testTextRetrieve);
     SUITE_ADD_TEST(suite, testAugEscape);
@@ -973,11 +1011,13 @@ int main(void) {
     if (abs_top_srcdir == NULL)
         die("env var abs_top_srcdir must be set");
 
-    if (asprintf(&root, "%s/tests/root", abs_top_srcdir) < 0) {
+    if (asprintf(&root, "%s/tests/root", abs_top_srcdir) < 0)
+    {
         die("failed to set root");
     }
 
-    if (asprintf(&loadpath, "%s/lenses", abs_top_srcdir) < 0) {
+    if (asprintf(&loadpath, "%s/lenses", abs_top_srcdir) < 0)
+    {
         die("failed to set loadpath");
     }
 

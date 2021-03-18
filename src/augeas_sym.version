@@ -101,5 +101,5 @@ AUGEAS_0.25.0 {
 
 AUGEAS_0.26.0 {
     global:
-      aug_to_jsonl;
+      aug_to_json;
 } AUGEAS_0.25.0;

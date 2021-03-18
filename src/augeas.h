@@ -424,7 +424,7 @@ int aug_source(const augeas *aug, const char *path, char **file_path);
  */
 int aug_preview(augeas *aug, const char *path, char **out);
 
-/* Function: aug_to_jsonl
+/* Function: aug_to_json
  *
  * Turn the Augeas tree(s) matching PATH into a json-object. The
  * parameter FLAGS is currently unused and must be set to 0.
@@ -434,7 +434,7 @@ int aug_preview(augeas *aug, const char *path, char **out);
  *
  * In case of failure, *root is set to NULL
  */
-int aug_to_jsonl(const struct augeas *aug, const char *pathin,
+int aug_to_json(const struct augeas *aug, const char *pathin,
                  json_object **root, unsigned int flags);
 
 /* Function: aug_to_xml
