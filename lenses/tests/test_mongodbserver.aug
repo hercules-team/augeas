@@ -8,8 +8,8 @@ module Test_MongoDBServer =
 (* Variable: conf *)
 let conf = "port = 27017
 fork = true
-pidfilepath = /var/run/mongodb/mongodb.pid
-logpath = /var/log/mongodb/mongodb.log
+pidfilepath = /var/run/mongodb/mongod.pid
+logpath = /var/log/mongodb/mongod.log
 dbpath =/var/lib/mongodb
 journal = true
 nohttpinterface = true
@@ -19,8 +19,8 @@ nohttpinterface = true
 test MongoDBServer.lns get conf =
   { "port" = "27017" }
   { "fork" = "true" }
-  { "pidfilepath" = "/var/run/mongodb/mongodb.pid" }
-  { "logpath" = "/var/log/mongodb/mongodb.log" }
+  { "pidfilepath" = "/var/run/mongodb/mongod.pid" }
+  { "logpath" = "/var/log/mongodb/mongod.log" }
   { "dbpath" = "/var/lib/mongodb" }
   { "journal" = "true" }
   { "nohttpinterface" = "true" }
