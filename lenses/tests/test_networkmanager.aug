@@ -90,6 +90,7 @@ test NetworkManager.lns get conf_psk =
     { "psk" = "\"#weird but valid psk!\"" }
   }
 
+(* Test: NetworkManager.lns - write new values unquoted *)
 test NetworkManager.lns put conf_empty after
     insa "wifi-security" "/";
     set "wifi-security/psk" "#the key"
