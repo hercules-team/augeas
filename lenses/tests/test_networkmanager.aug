@@ -32,6 +32,15 @@ method=auto
 NAT Traversal Mode=natt
 DPD idle timeout (our side)=0\n"
 
+let conf_psk = "[wifi]
+ssid=TEST
+mode=infrastructure
+
+[wifi-security]
+key-mgmt=wpa-psk
+auth-alg=open
+psk=\"#weird but valid psk!\"\n"
+
 let conf_empty = ""
 
 (* Test: NetworkManager.lns *)
@@ -66,6 +75,19 @@ test NetworkManager.lns get conf =
   { "vpn"
     { "NAT Traversal Mode" = "natt" }
     { "DPD idle timeout (our side)" = "0" }
+  }
+
+(* Test: NetworkManager.lns - nontrivial WPA-PSK *)
+test NetworkManager.lns get conf_psk =
+  { "wifi"
+    { "ssid" = "TEST" }
+    { "mode" = "infrastructure" }
+    {  }
+  }
+  { "wifi-security"
+    { "key-mgmt" = "wpa-psk" }
+    { "auth-alg" = "open" }
+    { "psk" = "\"#weird but valid psk!\"" }
   }
 
 test NetworkManager.lns put conf_empty after
