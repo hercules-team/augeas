@@ -32,6 +32,8 @@ method=auto
 NAT Traversal Mode=natt
 DPD idle timeout (our side)=0\n"
 
+let conf_empty = ""
+
 (* Test: NetworkManager.lns *)
 test NetworkManager.lns get conf =
   { "connection"
@@ -66,3 +68,8 @@ test NetworkManager.lns get conf =
     { "DPD idle timeout (our side)" = "0" }
   }
 
+test NetworkManager.lns put conf_empty after
+    insa "wifi-security" "/";
+    set "wifi-security/psk" "#the key"
+  = "[wifi-security]
+psk=#the key\n"
