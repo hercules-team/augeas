@@ -153,7 +153,7 @@ let sto_to_spc = store /[^", \t\n\\]+|"[^", \t\n\\]+"/
 let sto_to_spc_no_dquote = store /[^",# \t\n\\]+/ (* " relax emacs *)
 
 (* Variable: sto_integer *)
-let sto_integer = store /[0-9]+/
+let sto_integer = store /-?[0-9]+/
 
 
 (* Group: Comments and empty lines *)
