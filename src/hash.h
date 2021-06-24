@@ -35,7 +35,8 @@ extern "C" {
 #endif
 
 typedef unsigned long hashcount_t;
-#define HASHCOUNT_T_MAX ULONG_MAX
+//Decrease the value of HASHCOUNT_T_MAX to avoid the OOM during the Fuzz test
+#define HASHCOUNT_T_MAX 819200
 
 typedef unsigned long hash_val_t;
 #define HASH_VAL_T_MAX ULONG_MAX
