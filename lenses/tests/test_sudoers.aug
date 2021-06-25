@@ -225,6 +225,14 @@ test Sudoers.lns get s =
   { "Defaults"
     { "secure_path" = "/sbin:/bin:/usr/sbin:/usr/bin" } }
 
+(* #724 - check timestamp_timeout is extracted OK if unsigned OR negative (-1) *)
+test Sudoers.lns get "Defaults    timestamp_timeout = 3\n" =
+  { "Defaults"
+    { "timestamp_timeout" = "3" } }
+test Sudoers.lns get "Defaults    timestamp_timeout = -1\n" =
+  { "Defaults"
+    { "timestamp_timeout" = "-1" } }
+
 (* Ticket #206, comments at end of lines *)
 let commenteol = "#
 Defaults targetpw    # ask for
