@@ -31,12 +31,14 @@ test Redis.lns get save_entry_quotes =
   { "keys" = "10000" }
 }
 
-let slaveof_entry = "slaveof 192.168.0.10 6379\n"
-test Redis.lns get slaveof_entry =
+let replicaof_entry = "slaveof 192.168.0.10 6379\nreplicaof 192.168.0.11 6380\n"
+test Redis.lns get replicaof_entry =
 { "slaveof"
   { "ip" = "192.168.0.10" }
-  { "port" = "6379" }
-}
+  { "port" = "6379" } }
+{ "replicaof"
+  { "ip" = "192.168.0.11" }
+  { "port" = "6380" } }
 
 let rename_command_entry = "rename-command CONFIG CONFIG2\n"
 test Redis.lns get rename_command_entry =
