@@ -129,6 +129,8 @@ The Redis lens
 *)
 let lns = (comment | empty | entry )*
 
-let filter = incl "/etc/redis/redis.conf"
+let filter =
+    incl "/etc/redis.conf"
+  . incl "/etc/redis/redis.conf"
 
 let xfm = transform lns filter
