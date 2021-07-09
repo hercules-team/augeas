@@ -53,7 +53,7 @@ in single or double quotes. Comments at end-of-line ar NOT allowed by
 redis-server.
 *)
 let standard_entry =
-     let reserved_k = "save" | "rename-command" | "slaveof"
+     let reserved_k = "save" | "rename-command" | "replicaof" | "slaveof"
                     | "bind" | "client-output-buffer-limit"
   in let entry_noempty = [ indent . key (k - reserved_k) . del_ws_spc
                          . Quote.do_quote_opt_nil (store v) . eol ]
@@ -71,16 +71,16 @@ for quoting, comments and whitespaces.
 *)
 let save_entry = [ indent . key save . del_ws_spc . seconds . del_ws_spc . keys . eol ]
 
-let slaveof = /slaveof/
+let replicaof = /replicaof|slaveof/
 let ip = [ label "ip" . Quote.do_quote_opt_nil (store Rx.ip) ]
 let port = [ label "port" . Quote.do_quote_opt_nil (store Rx.integer) ]
-(* View: slaveof_entry
-Entries identified by the "slaveof" keyword can be found more than once. They
+(* View: replicaof_entry
+Entries identified by the "replicaof" keyword can be found more than once. They
 have 2 mandatory parameters, the 1st one is an IP address, the 2nd one is a
 port number. The same rules as standard_entry apply for quoting, comments and
 whitespaces.
 *)
-let slaveof_entry = [ indent . key slaveof . del_ws_spc . ip . del_ws_spc . port . eol ]
+let replicaof_entry = [ indent . key replicaof . del_ws_spc . ip . del_ws_spc . port . eol ]
 
 (* View: bind_entry
 The "bind" entry can be passed one or several ip addresses. A bind
@@ -120,7 +120,7 @@ let client_output_buffer_limit_entry =
 let entry = standard_entry
           | save_entry
 	  | renamecmd_entry
-	  | slaveof_entry
+	  | replicaof_entry
 	  | bind_entry
 	  | client_output_buffer_limit_entry
 
