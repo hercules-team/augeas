@@ -195,3 +195,70 @@ test Redis.lns get "bind 127.0.0.1\n bind 192.168.1.1\n" =
     { "ip" = "127.0.0.1" } }
   { "bind"
     { "ip" = "192.168.1.1" } }
+
+let sentinel_conf = "sentinel myid ccae7d051dfaa62078cb3ac3dec100240e637d5a
+sentinel deny-scripts-reconfig yes
+sentinel monitor Master 8.8.8.8 6379 2
+sentinel monitor Othercluster 1.1.1.1 6380 4
+sentinel config-epoch Master 693
+sentinel leader-epoch Master 691
+sentinel known-replica Master 4.4.4.4 6379
+sentinel known-replica Master 1.1.1.1 6379
+sentinel known-sentinel Master 4.4.4.4 26379 9bbd89f3846b5366f7da4d20b516fdc3f5c3a993
+sentinel known-sentinel Master 1.1.1.1 26379 f435adae0efeb9d5841712d05d7399f7584f333b
+sentinel known-sentinel Othercluster 4.4.4.4 26379 9bbd89f3846b5366f7da4d20b516fdc3f5c3a993
+sentinel known-sentinel Othercluster 1.1.1.1 26379 f435adae0efeb9d5841712d05d7399f7584f333b
+sentinel current-epoch 693
+"
+
+test Redis.lns get sentinel_conf =
+  { "sentinel" = "myid"
+    { "value" = "ccae7d051dfaa62078cb3ac3dec100240e637d5a" } }
+  { "sentinel" = "deny-scripts-reconfig"
+     { "value" = "yes" } }
+  { "sentinel" = "monitor"
+      { "cluster" = "Master" }
+      { "ip" = "8.8.8.8" }
+      { "port" = "6379" }
+      { "quorum" = "2" } }
+  { "sentinel" = "monitor"
+      { "cluster" = "Othercluster" }
+      { "ip" = "1.1.1.1" }
+      { "port" = "6380" }
+      { "quorum" = "4" } }
+  { "sentinel" = "config-epoch"
+      { "cluster" = "Master" }
+      { "epoch" = "693" } }
+  { "sentinel" = "leader-epoch"
+      { "cluster" = "Master" }
+      { "epoch" = "691" } }
+  { "sentinel" = "known-replica"
+      { "cluster" = "Master" }
+      { "ip" = "4.4.4.4" }
+      { "port" = "6379" } }
+  { "sentinel" = "known-replica"
+      { "cluster" = "Master" }
+      { "ip" = "1.1.1.1" }
+      { "port" = "6379" } }
+  { "sentinel" = "known-sentinel"
+      { "cluster" = "Master" }
+      { "ip" = "4.4.4.4" }
+      { "port" = "26379" }
+      { "id"   = "9bbd89f3846b5366f7da4d20b516fdc3f5c3a993" } }
+  { "sentinel" = "known-sentinel"
+      { "cluster" = "Master" }
+      { "ip" = "1.1.1.1" }
+      { "port" = "26379" }
+      { "id"   = "f435adae0efeb9d5841712d05d7399f7584f333b" } }
+  { "sentinel" = "known-sentinel"
+      { "cluster" = "Othercluster" }
+      { "ip" = "4.4.4.4" }
+      { "port" = "26379" }
+      { "id"   = "9bbd89f3846b5366f7da4d20b516fdc3f5c3a993" } }
+  { "sentinel" = "known-sentinel"
+      { "cluster" = "Othercluster" }
+      { "ip" = "1.1.1.1" }
+      { "port" = "26379" }
+      { "id"   = "f435adae0efeb9d5841712d05d7399f7584f333b" } }
+  { "sentinel" = "current-epoch"
+      { "value" = "693" } }
