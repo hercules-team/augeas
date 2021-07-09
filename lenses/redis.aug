@@ -55,6 +55,7 @@ redis-server.
 let standard_entry =
      let reserved_k = "save" | "rename-command" | "replicaof" | "slaveof"
                     | "bind" | "client-output-buffer-limit"
+                    | "sentinel"
   in let entry_noempty = [ indent . key (k - reserved_k) . del_ws_spc
                          . Quote.do_quote_opt_nil (store v) . eol ]
   in let entry_empty = [ indent . key (k - reserved_k) . del_ws_spc
@@ -81,6 +82,40 @@ port number. The same rules as standard_entry apply for quoting, comments and
 whitespaces.
 *)
 let replicaof_entry = [ indent . key replicaof . del_ws_spc . ip . del_ws_spc . port . eol ]
+
+let sentinel_global_entry =
+     let keys  = "deny-scripts-reconfig" | "current-epoch" | "myid"
+  in store keys .
+       del_ws_spc . [ label "value" . store ( Rx.word | Rx.integer ) ]
+
+let sentinel_cluster_setup =
+     let keys = "config-epoch" | "leader-epoch"
+  in store keys .
+       del_ws_spc . [ label "cluster" . store Rx.word ] .
+       del_ws_spc . [ label "epoch" . store Rx.integer ]
+
+let sentinel_cluster_instance_setup = 
+     let keys = "monitor" | "known-replica"
+  in store keys .
+       del_ws_spc . [ label "cluster" . store Rx.word ] .
+       del_ws_spc. [ label "ip" . store Rx.ip ] .
+       del_ws_spc . [ label "port" . store Rx.integer ] .
+       (del_ws_spc .  [ label "quorum" . store Rx.integer ])?
+
+let sentinel_clustering =
+     let keys = "known-sentinel"
+  in store keys .
+       del_ws_spc . [ label "cluster" . store Rx.word ] .
+       del_ws_spc . [ label "ip" . store Rx.ip ] .
+       del_ws_spc . [ label "port" . store Rx.integer ] .
+       del_ws_spc . [ label "id" . store Rx.word ]
+
+(* View: sentinel_entry
+*)
+let sentinel_entry =
+  indent . [ key "sentinel" . del_ws_spc .
+    (sentinel_global_entry | sentinel_cluster_setup | sentinel_cluster_instance_setup | sentinel_clustering)
+  ] . eol
 
 (* View: bind_entry
 The "bind" entry can be passed one or several ip addresses. A bind
@@ -122,6 +157,7 @@ let entry = standard_entry
 	  | renamecmd_entry
 	  | replicaof_entry
 	  | bind_entry
+    | sentinel_entry
 	  | client_output_buffer_limit_entry
 
 (* View: lns
