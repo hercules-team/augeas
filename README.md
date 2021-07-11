@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/hercules-team/augeas.svg?branch=master)](https://travis-ci.org/hercules-team/augeas)
+[![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/augeas.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:augeas)
 
 Introduction
 ------------
