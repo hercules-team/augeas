@@ -9,6 +9,7 @@ test test_user get "root
 +secre-taries
 @my\ admin\ group
 EXAMPLE\\\\cslack
+%ad.domain.com\\\\sudo-users
 MY\ EX-AMPLE\ 9\\\\cslack\ group
 " =
   { "user" = "root" }
@@ -16,6 +17,7 @@ MY\ EX-AMPLE\ 9\\\\cslack\ group
   { "user" = "+secre-taries" }
   { "user" = "@my\\ admin\\ group" }
   { "user" = "EXAMPLE\\\\cslack" }
+  { "user" = "%ad.domain.com\\\\sudo-users" }
   { "user" = "MY\\ EX-AMPLE\\ 9\\\\cslack\\ group" }
 
 let conf = "
@@ -223,6 +225,14 @@ test Sudoers.lns get s =
   { "Defaults"
     { "secure_path" = "/sbin:/bin:/usr/sbin:/usr/bin" } }
 
+(* #724 - check timestamp_timeout is extracted OK if unsigned OR negative (-1) *)
+test Sudoers.lns get "Defaults    timestamp_timeout = 3\n" =
+  { "Defaults"
+    { "timestamp_timeout" = "3" } }
+test Sudoers.lns get "Defaults    timestamp_timeout = -1\n" =
+  { "Defaults"
+    { "timestamp_timeout" = "-1" } }
+
 (* Ticket #206, comments at end of lines *)
 let commenteol = "#
 Defaults targetpw    # ask for
@@ -302,6 +312,18 @@ test Sudoers.spec get "user.one somehost = ALL\n" =
 test Sudoers.spec get "%sudo_users ALL=(ALL) ALL\n" =
   { "spec"
     { "user" = "%sudo_users" }
+    { "host_group"
+      { "host" = "ALL" }
+      { "command" = "ALL"
+        { "runas_user" = "ALL" } }
+    }
+  }
+
+(* Test: Sudoers.spec
+     allow ad group names with backslashes *)
+test Sudoers.spec get "%ad.domain.com\\\\sudo-users ALL=(ALL) ALL\n" =
+  { "spec"
+    { "user" = "%ad.domain.com\\\\sudo-users" }
     { "host_group"
       { "host" = "ALL" }
       { "command" = "ALL"

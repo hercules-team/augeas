@@ -221,6 +221,7 @@ lens_tests =			\
   lens-systemd.sh		\
   lens-termcap.sh		\
   lens-thttpd.sh		\
+  lens-tinc.sh		\
   lens-tmpfiles.sh		\
   lens-trapperkeeper.sh		\
   lens-toml.sh		\

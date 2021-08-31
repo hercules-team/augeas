@@ -127,7 +127,7 @@ let sto_to_com_host = store /[^,=:#() \t\n\\]+/
 Escaped spaces and NIS domains and allowed*)
 let sto_to_com_user =
       let nis_re = /([A-Z]([-A-Z0-9]|(\\\\[ \t]))*+\\\\\\\\)/
-   in let user_re = /[%+@a-z]([-A-Za-z0-9._+]|(\\\\[ \t]))*/ - /@include(dir)?/
+   in let user_re = /[%+@a-z]([-A-Za-z0-9._+]|(\\\\[ \t])|\\\\\\\\[A-Za-z0-9])*/ - /@include(dir)?/
    in let alias_re = /[A-Z_]+/
    in store ((nis_re? . user_re) | alias_re)
 
@@ -153,7 +153,7 @@ let sto_to_spc = store /[^", \t\n\\]+|"[^", \t\n\\]+"/
 let sto_to_spc_no_dquote = store /[^",# \t\n\\]+/ (* " relax emacs *)
 
 (* Variable: sto_integer *)
-let sto_integer = store /[0-9]+/
+let sto_integer = store /-?[0-9]+/
 
 
 (* Group: Comments and empty lines *)
