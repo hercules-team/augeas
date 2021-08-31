@@ -35,7 +35,7 @@ static const char *const errcodes[] = {
     "no error",
     "empty name",
     "illegal string literal",
-    "illegal number",
+    "illegal number",                             /* PATHX_ENUMBER */
     "string missing ending ' or \"",
     "expected '='",
     "allocation failed",
@@ -99,6 +99,7 @@ struct pred {
 enum axis {
     SELF,
     CHILD,
+    SEQ,
     DESCENDANT,
     DESCENDANT_OR_SELF,
     PARENT,
@@ -112,6 +113,7 @@ enum axis {
 static const char *const axis_names[] = {
     "self",
     "child",
+    "seq",        /* Like child, but only selects node-names which are integers */
     "descendant",
     "descendant-or-self",
     "parent",
@@ -2607,7 +2609,16 @@ int pathx_parse(const struct tree *tree,
  *************************************************************************/
 
 static bool step_matches(struct step *step, struct tree *tree) {
-    if (step->name == NULL) {
+    if ( step->axis == SEQ && step->name == NULL ) {
+        if ( tree->label == NULL )
+            return false;
+        /* label matches if it consists of numeric digits only */
+        for( char *s = tree->label; *s ; s++) {
+            if ( ! isdigit(*s) )
+                return false;
+        }
+        return true;
+    } else if (step->name == NULL) {
         return step->axis == ROOT || tree->label != NULL;
     } else {
         return streqx(step->name, tree->label);
@@ -2632,6 +2643,7 @@ static struct tree *step_root(struct step *step, struct tree *ctx,
     switch (step->axis) {
     case SELF:
     case CHILD:
+    case SEQ:
     case DESCENDANT:
     case PARENT:
     case ANCESTOR:
@@ -2663,6 +2675,7 @@ static struct tree *step_first(struct step *step, struct tree *ctx) {
         node = ctx;
         break;
     case CHILD:
+    case SEQ:
     case DESCENDANT:
         node = ctx->children;
         break;
@@ -2698,6 +2711,7 @@ static struct tree *step_next(struct step *step, struct tree *ctx,
         case SELF:
             node = NULL;
             break;
+        case SEQ:
         case CHILD:
             node = node->next;
             break;
@@ -2818,6 +2832,8 @@ static int locpath_search(struct locpath_trace *lpt,
     return result;
 }
 
+static char *step_seq_choose_name(struct pathx *path, struct tree *tree);
+
 /* Expand the tree ROOT so that it contains all components of PATH. PATH
  * must have been initialized against ROOT by a call to PATH_FIND_ONE.
  *
@@ -2864,7 +2880,12 @@ int pathx_expand_tree(struct pathx *path, struct tree **tree) {
         parent = path->origin;
 
     list_for_each(s, step) {
-        if (s->name == NULL || s->axis != CHILD)
+        if (s->axis != CHILD && s->axis != SEQ)
+            goto error;
+        if (s->axis==SEQ && s->name == NULL) {
+            s->name = step_seq_choose_name(path, parent);
+        }
+        if (s->name == NULL )
             goto error;
         struct tree *t = make_tree(strdup(s->name), NULL, parent, NULL);
         if (first_child == NULL)
@@ -2889,6 +2910,35 @@ int pathx_expand_tree(struct pathx *path, struct tree **tree) {
     *tree = NULL;
     store_error(path);
     return -1;
+}
+
+/* Generate a numeric string to use for step->name
+ * Scan tree->children for the highest numbered label, and add 1 to that
+ * numeric labels may be interspersed with #comment or other labels
+ */
+static char *step_seq_choose_name(struct pathx *path, struct tree *tree) {
+    unsigned long int max_node_n=0;
+    unsigned long int node_n;
+    char *step_name;
+    char *label_end;
+    for(tree=tree->children; tree!=NULL; tree=tree->next) {
+        if ( tree->label == NULL)
+          continue;
+        node_n=strtoul(tree->label, &label_end, 10);
+        if ( label_end == tree->label || *label_end != '\0' )
+          /* label is not a number - ignore it */
+          continue;
+        if ( node_n >= ULONG_MAX ) {
+          STATE_ERROR(path->state, PATHX_ENUMBER);
+          return NULL;
+        }
+        if( node_n > max_node_n )
+            max_node_n = node_n;
+    }
+    if (asprintf(&step_name,"%lu",max_node_n+1) >= 0)
+        return step_name;
+    else
+        return NULL;
 }
 
 int pathx_find_one(struct pathx *path, struct tree **tree) {
