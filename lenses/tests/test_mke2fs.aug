@@ -85,6 +85,40 @@ module Test_mke2fs =
         { "sync_kludge" = "1" } }
 
 
+   let quoted_conf = "[defaults]
+	base_features = \"sparse_super,filetype,resize_inode,dir_index,ext_attr\"
+
+[fs_types]
+	ext4dev = {
+		features = \"has_journal,^extent\"
+		default_mntopts = \"user_xattr\"
+		encoding = \"utf8\"
+		encoding = \"\"
+	}
+"
+
+   test Mke2fs.lns get quoted_conf =
+     { "defaults"
+        { "base_features"
+             { "sparse_super" }
+             { "filetype" }
+             { "resize_inode" }
+             { "dir_index" }
+             { "ext_attr" } }
+        {} }
+     { "fs_types"
+        { "filesystem" = "ext4dev"
+             { "features"
+                { "has_journal" }
+                { "extent"
+                   { "disable" } } }
+             { "default_mntopts"
+                { "user_xattr" } }
+             { "encoding" = "utf8" }
+             { "encoding" }
+             } }
+
+
 test Mke2fs.common_entry
    put "features = has_journal,^extent\n"
    after set "/features/has_journal/disable" "";

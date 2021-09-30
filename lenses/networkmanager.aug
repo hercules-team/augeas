@@ -34,13 +34,17 @@ let eol        = Util.eol
  *                        ENTRY
  * GLib entries can contain semicolons, entry names can contain spaces and
  * brackets
+ *
+ * At least entry for WPA-PSK definition can contain all printable ASCII
+ * characters including '#', ' ' and others. Comments following the entry
+ * are no option for this reason.
  *************************************************************************)
 (* Variable: entry_re *)
 let entry_re   = /[A-Za-z][A-Za-z0-9:._\(\) \t-]+/
 
 (* Lens: entry *)
 let entry   = [ key entry_re . sep
-                . Quote.double_opt? . eol ]
+                . IniFile.sto_to_eol? . eol ]
               | comment
 
 (************************************************************************

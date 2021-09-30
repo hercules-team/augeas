@@ -53,8 +53,9 @@ in single or double quotes. Comments at end-of-line ar NOT allowed by
 redis-server.
 *)
 let standard_entry =
-     let reserved_k = "save" | "rename-command" | "slaveof"
+     let reserved_k = "save" | "rename-command" | "replicaof" | "slaveof"
                     | "bind" | "client-output-buffer-limit"
+                    | "sentinel"
   in let entry_noempty = [ indent . key (k - reserved_k) . del_ws_spc
                          . Quote.do_quote_opt_nil (store v) . eol ]
   in let entry_empty = [ indent . key (k - reserved_k) . del_ws_spc
@@ -71,16 +72,50 @@ for quoting, comments and whitespaces.
 *)
 let save_entry = [ indent . key save . del_ws_spc . seconds . del_ws_spc . keys . eol ]
 
-let slaveof = /slaveof/
+let replicaof = /replicaof|slaveof/
 let ip = [ label "ip" . Quote.do_quote_opt_nil (store Rx.ip) ]
 let port = [ label "port" . Quote.do_quote_opt_nil (store Rx.integer) ]
-(* View: slaveof_entry
-Entries identified by the "slaveof" keyword can be found more than once. They
+(* View: replicaof_entry
+Entries identified by the "replicaof" keyword can be found more than once. They
 have 2 mandatory parameters, the 1st one is an IP address, the 2nd one is a
 port number. The same rules as standard_entry apply for quoting, comments and
 whitespaces.
 *)
-let slaveof_entry = [ indent . key slaveof . del_ws_spc . ip . del_ws_spc . port . eol ]
+let replicaof_entry = [ indent . key replicaof . del_ws_spc . ip . del_ws_spc . port . eol ]
+
+let sentinel_global_entry =
+     let keys  = "deny-scripts-reconfig" | "current-epoch" | "myid"
+  in store keys .
+       del_ws_spc . [ label "value" . store ( Rx.word | Rx.integer ) ]
+
+let sentinel_cluster_setup =
+     let keys = "config-epoch" | "leader-epoch"
+  in store keys .
+       del_ws_spc . [ label "cluster" . store Rx.word ] .
+       del_ws_spc . [ label "epoch" . store Rx.integer ]
+
+let sentinel_cluster_instance_setup = 
+     let keys = "monitor" | "known-replica"
+  in store keys .
+       del_ws_spc . [ label "cluster" . store Rx.word ] .
+       del_ws_spc. [ label "ip" . store Rx.ip ] .
+       del_ws_spc . [ label "port" . store Rx.integer ] .
+       (del_ws_spc .  [ label "quorum" . store Rx.integer ])?
+
+let sentinel_clustering =
+     let keys = "known-sentinel"
+  in store keys .
+       del_ws_spc . [ label "cluster" . store Rx.word ] .
+       del_ws_spc . [ label "ip" . store Rx.ip ] .
+       del_ws_spc . [ label "port" . store Rx.integer ] .
+       del_ws_spc . [ label "id" . store Rx.word ]
+
+(* View: sentinel_entry
+*)
+let sentinel_entry =
+  indent . [ key "sentinel" . del_ws_spc .
+    (sentinel_global_entry | sentinel_cluster_setup | sentinel_cluster_instance_setup | sentinel_clustering)
+  ] . eol
 
 (* View: bind_entry
 The "bind" entry can be passed one or several ip addresses. A bind
@@ -120,8 +155,9 @@ let client_output_buffer_limit_entry =
 let entry = standard_entry
           | save_entry
 	  | renamecmd_entry
-	  | slaveof_entry
+	  | replicaof_entry
 	  | bind_entry
+    | sentinel_entry
 	  | client_output_buffer_limit_entry
 
 (* View: lns
@@ -129,6 +165,8 @@ The Redis lens
 *)
 let lns = (comment | empty | entry )*
 
-let filter = incl "/etc/redis/redis.conf"
+let filter =
+    incl "/etc/redis.conf"
+  . incl "/etc/redis/redis.conf"
 
 let xfm = transform lns filter
