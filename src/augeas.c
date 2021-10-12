@@ -1452,7 +1452,7 @@ int aug_match(const struct augeas *aug, const char *pathin, char ***matches) {
         if (*matches != NULL) {
             for (i=0; i < cnt; i++)
                 free((*matches)[i]);
-            free(*matches);
+            FREE(*matches);
         }
     }
     free_pathx(p);
