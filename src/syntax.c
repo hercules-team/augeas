@@ -2078,6 +2078,7 @@ int interpreter_init(struct augeas *aug) {
             p += 1;
         q = strchr(p, '.');
         name = strndup(p, q - p);
+        ERR_NOMEM(name == NULL, aug);
         name[0] = toupper(name[0]);
         res = load_module(aug, name);
         free(name);
