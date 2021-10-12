@@ -134,7 +134,7 @@ void syntax_error(struct info *info, const char *format, ...) {
     if (error->code != AUG_NOERROR && error->code != AUG_ESYNTAX)
         return;
 
-	va_start(ap, format);
+    va_start(ap, format);
     format_error(info, AUG_ESYNTAX, format, ap);
     va_end(ap);
 }
@@ -146,7 +146,7 @@ void fatal_error(struct info *info, const char *format, ...) {
     if (error->code == AUG_EINTERNAL)
         return;
 
-	va_start(ap, format);
+    va_start(ap, format);
     format_error(info, AUG_EINTERNAL, format, ap);
     va_end(ap);
 }
