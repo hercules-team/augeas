@@ -651,6 +651,7 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
 
     return make_lens_value(lens);
  error:
+    unref(lens, lens);
     return exn;
 }
 
