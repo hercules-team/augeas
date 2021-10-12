@@ -414,8 +414,10 @@ struct value *make_exn_value(struct info *info,
         return NULL;
 
     v = make_value(V_EXN, ref(info));
-    if (ALLOC(v->exn) < 0)
+    if (ALLOC(v->exn) < 0) {
+        unref(v, value);
         return info->error->exn;
+    }
     v->exn->info = info;
     v->exn->message = message;
 
@@ -1505,7 +1507,7 @@ static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
 
     struct type *t = exp->type;
     struct info *info = exp->info;
-    struct value *v;
+    struct value *v = NULL;
 
     v1 = coerce(v1, t);
     v2 = coerce(v2, t);
@@ -1514,8 +1516,11 @@ static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
         const char *s2 = v2->string->str;
         v = make_value(V_STRING, ref(info));
         make_ref(v->string);
-        if (ALLOC_N(v->string->str, strlen(s1) + strlen(s2) + 1) < 0)
-            goto error;
+        if (ALLOC_N(v->string->str, strlen(s1) + strlen(s2) + 1) < 0) {
+            unref(v->string, string);
+            unref(v, value);
+            return exp->info->error->exn;
+        }
         char *s = v->string->str;
         strcpy(s, s1);
         strcat(s, s2);
@@ -1546,7 +1551,6 @@ static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
         struct lens *l2 = v2->lens;
         v = lns_make_concat(ref(info), ref(l1), ref(l2), LNS_TYPE_CHECK(ctx));
     } else {
-        v = NULL;
         fatal_error(info, "Tried to concat a %s and a %s to yield a %s",
                     type_name(exp->left->type), type_name(exp->right->type),
                     type_name(t));
@@ -1554,8 +1558,6 @@ static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
     unref(v1, value);
     unref(v2, value);
     return v;
- error:
-    return exp->info->error->exn;
 }
 
 static struct value *apply(struct term *app, struct ctx *ctx) {
