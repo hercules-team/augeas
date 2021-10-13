@@ -31,6 +31,9 @@ test Redis.lns get save_entry_quotes =
   { "keys" = "10000" }
 }
 
+let save_entry_empty = "save \"\"\n"
+test Redis.lns get save_entry_empty = { "save" = "" }
+
 let replicaof_entry = "slaveof 192.168.0.10 6379\nreplicaof 192.168.0.11 6380\n"
 test Redis.lns get replicaof_entry =
 { "slaveof"
