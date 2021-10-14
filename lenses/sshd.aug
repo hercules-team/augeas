@@ -125,8 +125,11 @@ module Sshd =
              | other_entry
 
    let condition_entry =
-    let value = store  /[^ \t\n=]+/ in
-    [ sep . key /[A-Za-z0-9]+/ . sep . value ]
+    let k = /[A-Za-z0-9]+/ in
+    let no_spc = Quote.do_dquote_opt (store  /[^"' \t\n=]+/) in
+    let spc = Quote.do_quote (store /[^"'\t\n]* [^"'\t\n]*/) in
+      [ sep . key k . sep . no_spc ]
+    | [ sep . key k . sep . spc ]
 
    let match_cond =
      [ label "Condition" . condition_entry+ . eol ]

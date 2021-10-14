@@ -106,8 +106,11 @@ module Ssh =
 
 
    let condition_entry =
-    let value = store  /[^ \t\r\n=]+/ in
-    [ spc . key /[A-Za-z0-9]+/ . spc . value ]
+    let k = /[A-Za-z0-9]+/ in
+    let no_spc = Quote.do_dquote_opt (store  /[^"' \t\r\n=]+/) in
+    let with_spc = Quote.do_quote (store /[^"'\t\r\n]* [^"'\t\r\n]*/) in
+      [ spc . key k . spc . no_spc ]
+    | [ spc . key k . spc . with_spc ]
 
    let match_cond =
      [ label "Condition" . condition_entry+ . eol ]
