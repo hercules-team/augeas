@@ -50,6 +50,8 @@ Match User sarko Group pres.*
   X11Forwarding no
 Match User bush Group pres.* Host white.house.*
 Banner /etc/welcome.txt
+Match Group \"Domain users\"
+  X11Forwarding yes
 "
   test Sshd.lns get match_blocks =
     { "X11Forwarding" = "yes"}
@@ -63,6 +65,9 @@ Banner /etc/welcome.txt
 	                { "Group" = "pres.*" }
 	                { "Host"  = "white.house.*" } }
 	  { "Settings"  { "Banner" = "/etc/welcome.txt" } } }
+      { "Match"
+	  { "Condition" { "Group" = "Domain users" } }
+	  { "Settings"  { "X11Forwarding" = "yes" } } }
 
   test Sshd.lns put match_blocks after
     insb "Subsystem" "/Match[1]";
@@ -73,7 +78,9 @@ Match User sarko Group pres.*
   Banner /etc/bienvenue.txt
   X11Forwarding no
 Match User bush Group pres.* Host white.house.*
-Banner /etc/welcome.txt\n"
+Banner /etc/welcome.txt
+Match Group \"Domain users\"
+  X11Forwarding yes\n"
 
 (* Test: Sshd.lns
    Indent when adding to a Match group *)
@@ -87,7 +94,9 @@ Match User sarko Group pres.*
   PermitRootLogin yes
   # a comment
 Match User bush Group pres.* Host white.house.*
-Banner /etc/welcome.txt\n"
+Banner /etc/welcome.txt
+Match Group \"Domain users\"
+  X11Forwarding yes\n"
 
 
 (* Test: Sshd.lns
