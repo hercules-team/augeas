@@ -111,7 +111,9 @@ let array (value:lens) = [ label "array" . lbrack
 
 let array_norec = array norec
 
-let rec array_rec = array (norec | array_rec)
+(* This is actually no real recursive array, instead it is one or two dimensional
+   For more info on this see https://github.com/hercules-team/augeas/issues/715 *)
+let array_rec = array (norec | array_norec)
 
 let entry_base (value:lens) = [ label "entry" . store Rx.word . Sep.space_equal . value ]
 
