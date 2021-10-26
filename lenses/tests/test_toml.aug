@@ -331,3 +331,14 @@ Likes tater tots and beer." }
     { "entry" = "color"
       { "string" = "gray" } } }
 
+(* Variable: minimal_toml *)
+let minimal_toml = "[root]
+foo = \"bar\"
+"
+
+(* Test: minimal write *)
+test Toml.lns put minimal_toml after
+    set "/table[1]/entry[1]/string" "foo"
+  = "[root]
+foo = \"foo\"
+"
