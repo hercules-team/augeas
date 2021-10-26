@@ -104,16 +104,14 @@ test Toml.array_norec get "[ \"foo\", \"bar\" ]" =
     { "string" = "foo" } {}
     { "string" = "bar" } {} }
 
-(* Test: Toml.array_norec
+(* Test: Toml.array_rec
      Array of arrays *)
-test Toml.array_rec get "[ [ \"foo\", [ 42, 43 ] ], \"bar\" ]" =
+test Toml.array_rec get "[ [ \"foo\", \"bar\" ], 42 ]" =
   { "array" {}
     { "array" {}
       { "string" = "foo" } {}
-      { "array" {}
-        { "integer" = "42" } {}
-        { "integer" = "43" } {} } {} } {}
-    { "string" = "bar" } {} }
+      { "string" = "bar" } {} } {}
+    { "integer" = "42" } {} }
 
 (* Test: Toml.lns
      Global parameters *)
