@@ -5,7 +5,7 @@ Module: Toml
 Author: Raphael Pinson <raphael.pinson@camptocamp.com>
 
 About: Reference
-  https://github.com/mojombo/toml/blob/master/README.md
+  https://toml.io/en/v1.0.0
 
 About: License
    This file is licenced under the LGPL v2+, like the rest of Augeas.
