@@ -32,6 +32,7 @@ lens_tests =			\
   lens-aptsources.sh		\
   lens-authinfo2.sh	\
   lens-authorized_keys.sh	\
+  lens-authselectpam.sh \
   lens-automaster.sh	\
   lens-automounter.sh	\
   lens-avahi.sh	\
