@@ -17,8 +17,8 @@ module Test_Chrony =
 server ntp1.example.com
 server ntp2.example.com iburst
 server ntp3.example.com presend 2
-server ntp4.example.com offline polltarget 4
-server ntp5.example.com maxdelay 2 offline
+server ntp4.example.com offline polltarget 4 extfield F323 copy
+server ntp5.example.com maxdelay 2 offline certset 1
 server ntp6.example.com maxdelay 2 iburst presend 2 xleave offset 1e-4
 server ntp7.example.com iburst presend 2 offline prefer trust require
 server ntp8.example.com minsamples 8 maxsamples 16 version 3
@@ -88,6 +88,7 @@ ntsport 123
 ntsprocesses 2
 ntsrefresh 86400
 ntsrotate 86400
+ptpport 319
 "
 
   test Chrony.lns get exampleconf =
@@ -110,10 +111,13 @@ ntsrotate 86400
   { "server" = "ntp4.example.com"
     { "offline" }
     { "polltarget" = "4" }
+    { "extfield" = "F323" }
+    { "copy" }
   }
   { "server" = "ntp5.example.com"
     { "maxdelay" = "2" }
     { "offline" }
+    { "certset" = "1" }
   }
   { "server" = "ntp6.example.com"
     { "maxdelay" = "2" }
@@ -312,6 +316,7 @@ ntsrotate 86400
   { "ntsprocesses" = "2" }
   { "ntsrefresh" = "86400" }
   { "ntsrotate" = "86400" }
+  { "ptpport" = "319" }
 
 
 (* Local Variables: *)

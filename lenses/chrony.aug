@@ -57,8 +57,11 @@ module Chrony =
 (************************************************************************
  * Group: Create required expressions
  ************************************************************************)
+    (* Variable: hex *)
+    let hex = /[0-9a-fA-F]+/
+
     (* Variable: number *)
-    let number = integer | decimal | decimal . /[eE]/ . integer
+    let number = integer | decimal | decimal . /[eE]/ . integer | hex
 
     (* Variable: address_re *)
     let address_re = Rx.ip | Rx.hostname
@@ -79,6 +82,8 @@ module Chrony =
          Server/Peer/Pool options with values
     *)
     let cmd_options = "asymmetry"
+                    | "certset"
+                    | "extfield"
                     | "filter"
                     | "key"
                     | /maxdelay((dev)?ratio)?/
@@ -96,7 +101,7 @@ module Chrony =
          Server/Peer/Pool options without values
     *)
     let cmd_flags = "auto_offline"|"iburst"|"noselect"|"offline"|"prefer"
-                  |"require"|"trust"|"xleave"|"burst"|"nts"
+                  |"copy"|"require"|"trust"|"xleave"|"burst"|"nts"
 
     (* Variable: ntp_source
          Server/Peer/Pool key names
@@ -183,7 +188,7 @@ module Chrony =
                     | "nocerttimecheck" | "ntsdumpdir" | "ntsntpserver"
                     | "ntsport" | "ntsprocesses" | "ntsrefresh" | "ntsrotate"
                     | "ntsservercert" | "ntsserverkey" | "ntstrustedcerts"
-                    | "ntpsigndsocket" | "pidfile"
+                    | "ntpsigndsocket" | "pidfile" | "ptpport"
                     | "port" | "reselectdist" | "rtcautotrim" | "rtcdevice"
                     | "rtcfile" | "sched_priority" | "stratumweight" | "user"
 
