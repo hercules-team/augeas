@@ -918,7 +918,7 @@ static int transfer_file_attrs(FILE *from, FILE *to,
     struct stat st;
     int ret = 0;
     int selinux_enabled = (is_selinux_enabled() > 0);
-    security_context_t con = NULL;
+    char *con = NULL;
 
     int from_fd;
     int to_fd = fileno(to);
