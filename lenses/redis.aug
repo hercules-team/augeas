@@ -65,12 +65,17 @@ let standard_entry =
 let save = /save/
 let seconds = [ label "seconds" . Quote.do_quote_opt_nil (store Rx.integer) ]
 let keys = [ label "keys" . Quote.do_quote_opt_nil (store Rx.integer) ]
+let save_val =
+     let save_val_empty = del_ws_spc . dquote . store "" . dquote
+  in let save_val_sec_keys = del_ws_spc . seconds . del_ws_spc . keys
+  in save_val_sec_keys | save_val_empty
+
 (* View: save_entry
 Entries identified by the "save" keyword can be found more than once. They have
-2 mandatory parameters, both integers. The same rules as standard_entry apply
-for quoting, comments and whitespaces.
+2 mandatory parameters, both integers or a single parameter that is empty double quoted
+string. The same rules as standard_entry apply for quoting, comments and whitespaces.
 *)
-let save_entry = [ indent . key save . del_ws_spc . seconds . del_ws_spc . keys . eol ]
+let save_entry = [ indent . key save . save_val . eol ]
 
 let replicaof = /replicaof|slaveof/
 let ip = [ label "ip" . Quote.do_quote_opt_nil (store Rx.ip) ]
