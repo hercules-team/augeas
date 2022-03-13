@@ -1,0 +1,31 @@
+# /etc/hosts for testing specific functionality of augsuggest
+
+127.0.0.1   localhost localhost4 localhost.localdomain   # ipv4
+::1         localhost localhost6                         # ipv6
+
+# "double-quoted"
+# 'single quoted'
+# Comment	tab		tabx2
+# Comment \backslash \\double-backslash
+# Repeated comment
+
+# First preference, unique first tail (/ipaddr)
+192.0.2.1		example.com		www.example.com ftp.example.com
+192.0.2.2		example.com		www.example.com ftp.example.com
+
+# Second preference, unique tail+value for /alias[1]
+192.0.2.77  second find_this1 alias77 # add another tail (this comment)
+192.0.2.77	second find_this2
+
+# Third preference, unique (first-tail /ipaddr  +  tail+value /alias[1] )
+192.0.2.33  third alias1
+192.0.2.33  third alias2
+192.0.2.34  third alias1
+192.0.2.34  third alias2
+
+# Third preference for first one, Fourth preference (fallback) for second and third
+192.0.2.99  third abc
+192.0.2.99  fourth abc def
+192.0.2.99  fourth abc def
+
+# Repeated comment

@@ -126,3 +126,7 @@ License (LGPL)
 =head1 SEE ALSO
 
 B<Augeas> project homepage L<http://www.augeas.net/>
+
+B<Augeas> path expressions L<https://github.com/hercules-team/augeas/wiki/Path-expressions>
+
+L<augsuggest>

@@ -1,0 +1,158 @@
+# Using default lens: Hosts
+# transform Hosts incl /etc/hosts
+#   /files/etc
+#   /files/etc/hosts
+#   /files/etc/hosts/#comment[1]  '/etc/hosts for testing specific functionality of augsuggest'
+set /files/etc/hosts/#comment[.='/etc/hosts for testing specific functionality of augsuggest'] '/etc/hosts for testing specific functionality of augsuggest'
+
+#   /files/etc/hosts/1
+#   /files/etc/hosts/1/ipaddr  '127.0.0.1'
+set /files/etc/hosts/seq::*[ipaddr='127.0.0.1' ]/ipaddr '127.0.0.1'
+#   /files/etc/hosts/1/canonical  'localhost'
+set /files/etc/hosts/seq::*[ipaddr='127.0.0.1' ]/canonical 'localhost'
+#   /files/etc/hosts/1/alias[1]  'localhost4'
+set /files/etc/hosts/seq::*[ipaddr='127.0.0.1' ]/alias[.='localhost4'           ] 'localhost4'
+#   /files/etc/hosts/1/alias[2]  'localhost.localdomain'
+set /files/etc/hosts/seq::*[ipaddr='127.0.0.1' ]/alias[.='localhost.localdomain'] 'localhost.localdomain'
+#   /files/etc/hosts/1/#comment  'ipv4'
+set /files/etc/hosts/seq::*[ipaddr='127.0.0.1' ]/#comment 'ipv4'
+
+#   /files/etc/hosts/2
+#   /files/etc/hosts/2/ipaddr  '::1'
+set /files/etc/hosts/seq::*[ipaddr='::1'       ]/ipaddr '::1'
+#   /files/etc/hosts/2/canonical  'localhost'
+set /files/etc/hosts/seq::*[ipaddr='::1'       ]/canonical 'localhost'
+#   /files/etc/hosts/2/alias  'localhost6'
+set /files/etc/hosts/seq::*[ipaddr='::1'       ]/alias 'localhost6'
+#   /files/etc/hosts/2/#comment  'ipv6'
+set /files/etc/hosts/seq::*[ipaddr='::1'       ]/#comment 'ipv6'
+
+#   /files/etc/hosts/#comment[2]  '"double-quoted"'
+set /files/etc/hosts/#comment[.='"double-quoted"'      ] '"double-quoted"'
+
+#   /files/etc/hosts/#comment[3]  "'single quoted'"
+set /files/etc/hosts/#comment[.="'single quoted'"      ] "'single quoted'"
+
+#   /files/etc/hosts/#comment[4]  'Comment\ttab\t\ttabx2'
+set /files/etc/hosts/#comment[.='Comment\ttab\t\ttabx2'] 'Comment\ttab\t\ttabx2'
+
+#   /files/etc/hosts/#comment[5]  'Comment \\backslash \\\\double-backslash'
+set /files/etc/hosts/#comment[.='Comment \\backslash \\\\double-backslash'] 'Comment \\backslash \\\\double-backslash'
+
+#   /files/etc/hosts/#comment[6]  'Repeated comment'
+set /files/etc/hosts/#comment[.='Repeated comment'     ][1] 'Repeated comment'
+
+#   /files/etc/hosts/#comment[7]  'First preference, unique first tail (/ipaddr)'
+set /files/etc/hosts/#comment[.='First preference, unique first tail (/ipaddr)'] 'First preference, unique first tail (/ipaddr)'
+
+#   /files/etc/hosts/3
+#   /files/etc/hosts/3/ipaddr  '192.0.2.1'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.1' ]/ipaddr '192.0.2.1'
+#   /files/etc/hosts/3/canonical  'example.com'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.1' ]/canonical 'example.com'
+#   /files/etc/hosts/3/alias[1]  'www.example.com'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.1' ]/alias[.='www.example.com'] 'www.example.com'
+#   /files/etc/hosts/3/alias[2]  'ftp.example.com'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.1' ]/alias[.='ftp.example.com'] 'ftp.example.com'
+
+#   /files/etc/hosts/4
+#   /files/etc/hosts/4/ipaddr  '192.0.2.2'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.2' ]/ipaddr '192.0.2.2'
+#   /files/etc/hosts/4/canonical  'example.com'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.2' ]/canonical 'example.com'
+#   /files/etc/hosts/4/alias[1]  'www.example.com'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.2' ]/alias[.='www.example.com'] 'www.example.com'
+#   /files/etc/hosts/4/alias[2]  'ftp.example.com'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.2' ]/alias[.='ftp.example.com'] 'ftp.example.com'
+
+#   /files/etc/hosts/#comment[8]  'Second preference, unique tail+value for /alias[1]'
+set /files/etc/hosts/#comment[.='Second preference, unique tail+value for /alias[1]'] 'Second preference, unique tail+value for /alias[1]'
+
+#   /files/etc/hosts/5
+#   /files/etc/hosts/5/ipaddr  '192.0.2.77'
+set /files/etc/hosts/seq::*[alias='find_this1']/ipaddr '192.0.2.77'
+#   /files/etc/hosts/5/canonical  'second'
+set /files/etc/hosts/seq::*[alias='find_this1' or count(alias)=0]/canonical 'second'
+#   /files/etc/hosts/5/alias[1]  'find_this1'
+set /files/etc/hosts/seq::*[alias='find_this1' or count(alias)=0]/alias[.='find_this1'] 'find_this1'
+#   /files/etc/hosts/5/alias[2]  'alias77'
+set /files/etc/hosts/seq::*[alias='find_this1']/alias[.='alias77'   ] 'alias77'
+#   /files/etc/hosts/5/#comment  'add another tail (this comment)'
+set /files/etc/hosts/seq::*[alias='find_this1']/#comment 'add another tail (this comment)'
+
+#   /files/etc/hosts/6
+#   /files/etc/hosts/6/ipaddr  '192.0.2.77'
+set /files/etc/hosts/seq::*[alias='find_this2']/ipaddr '192.0.2.77'
+#   /files/etc/hosts/6/canonical  'second'
+set /files/etc/hosts/seq::*[alias='find_this2' or count(alias)=0]/canonical 'second'
+#   /files/etc/hosts/6/alias  'find_this2'
+set /files/etc/hosts/seq::*[alias='find_this2' or count(alias)=0]/alias 'find_this2'
+
+#   /files/etc/hosts/#comment[9]  'Third preference, unique (first-tail /ipaddr  +  tail+value /alias[1] )'
+set /files/etc/hosts/#comment[.='Third preference, unique (first-tail /ipaddr  +  tail+value /alias[1] )'] 'Third preference, unique (first-tail /ipaddr  +  tail+value /alias[1] )'
+
+#   /files/etc/hosts/7
+#   /files/etc/hosts/7/ipaddr  '192.0.2.33'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.33' and alias='alias1']/ipaddr '192.0.2.33'
+#   /files/etc/hosts/7/canonical  'third'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.33' and ( alias='alias1' or count(alias)=0 ) ]/canonical 'third'
+#   /files/etc/hosts/7/alias  'alias1'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.33' and ( alias='alias1' or count(alias)=0 ) ]/alias 'alias1'
+
+#   /files/etc/hosts/8
+#   /files/etc/hosts/8/ipaddr  '192.0.2.33'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.33' and alias='alias2']/ipaddr '192.0.2.33'
+#   /files/etc/hosts/8/canonical  'third'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.33' and ( alias='alias2' or count(alias)=0 ) ]/canonical 'third'
+#   /files/etc/hosts/8/alias  'alias2'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.33' and ( alias='alias2' or count(alias)=0 ) ]/alias 'alias2'
+
+#   /files/etc/hosts/9
+#   /files/etc/hosts/9/ipaddr  '192.0.2.34'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.34' and alias='alias1']/ipaddr '192.0.2.34'
+#   /files/etc/hosts/9/canonical  'third'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.34' and ( alias='alias1' or count(alias)=0 ) ]/canonical 'third'
+#   /files/etc/hosts/9/alias  'alias1'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.34' and ( alias='alias1' or count(alias)=0 ) ]/alias 'alias1'
+
+#   /files/etc/hosts/10
+#   /files/etc/hosts/10/ipaddr  '192.0.2.34'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.34' and alias='alias2']/ipaddr '192.0.2.34'
+#   /files/etc/hosts/10/canonical  'third'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.34' and ( alias='alias2' or count(alias)=0 ) ]/canonical 'third'
+#   /files/etc/hosts/10/alias  'alias2'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.34' and ( alias='alias2' or count(alias)=0 ) ]/alias 'alias2'
+
+#   /files/etc/hosts/#comment[10]  'Third preference for first one, Fourth preference (fallback) for second and third'
+set /files/etc/hosts/#comment[.='Third preference for first one, Fourth preference (fallback) for second and third'] 'Third preference for first one, Fourth preference (fallback) for second and third'
+
+#   /files/etc/hosts/11
+#   /files/etc/hosts/11/ipaddr  '192.0.2.99'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.99' and canonical='third']/ipaddr '192.0.2.99'
+#   /files/etc/hosts/11/canonical  'third'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.99' and ( canonical='third' or count(canonical)=0 ) ]/canonical 'third'
+#   /files/etc/hosts/11/alias  'abc'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.99' and canonical='third']/alias 'abc'
+
+#   /files/etc/hosts/12
+#   /files/etc/hosts/12/ipaddr  '192.0.2.99'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.99'][2]/ipaddr '192.0.2.99'
+#   /files/etc/hosts/12/canonical  'fourth'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.99'][2]/canonical 'fourth'
+#   /files/etc/hosts/12/alias[1]  'abc'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.99'][2]/alias[.='abc'] 'abc'
+#   /files/etc/hosts/12/alias[2]  'def'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.99'][2]/alias[.='def'] 'def'
+
+#   /files/etc/hosts/13
+#   /files/etc/hosts/13/ipaddr  '192.0.2.99'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.99'][3]/ipaddr '192.0.2.99'
+#   /files/etc/hosts/13/canonical  'fourth'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.99'][3]/canonical 'fourth'
+#   /files/etc/hosts/13/alias[1]  'abc'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.99'][3]/alias[.='abc'] 'abc'
+#   /files/etc/hosts/13/alias[2]  'def'
+set /files/etc/hosts/seq::*[ipaddr='192.0.2.99'][3]/alias[.='def'] 'def'
+
+#   /files/etc/hosts/#comment[11]  'Repeated comment'
+set /files/etc/hosts/#comment[.='Repeated comment'     ][2] 'Repeated comment'
