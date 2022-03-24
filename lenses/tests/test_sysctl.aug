@@ -18,6 +18,13 @@ kernel.sysrq  =  0
 net.ipv4.tcp_mem = \t393216 524288 786432
 "
 
+(* Variable: spec_chars_sysctl *)
+let spec_chars_sysctl = "# Kernel sysctl configuration file
+# Controls IP packet forwarding
+net.ipv4.conf.*.rp_filter = 2
+net.ipv4.conf.ib0:0.arp_filter = 1
+"
+
 (* Test: Sysctl.lns *)
 test Sysctl.lns get default_sysctl =
     { "#comment" = "Kernel sysctl configuration file" }
@@ -32,6 +39,13 @@ test Sysctl.lns get default_sysctl =
     { "net.ipv4.tcp_mem" = "393216 524288 786432" }
 
 (* Test: Sysctl.lns *)
+test Sysctl.lns get spec_chars_sysctl =
+    { "#comment" = "Kernel sysctl configuration file" }
+    { "#comment" = "Controls IP packet forwarding"}
+    { "net.ipv4.conf.*.rp_filter" = "2" }
+    { "net.ipv4.conf.ib0:0.arp_filter" = "1" }
+
+(* Test: Sysctl.lns *)
 test Sysctl.lns put default_sysctl after
     set "net.ipv4.ip_forward" "1" ;
     rm "net.ipv4.conf.default.rp_filter" ;
@@ -44,6 +58,16 @@ net.ipv4.ip_forward = 1
 
 ; Semicolon comments are also allowed
 net.ipv4.tcp_mem = \t393216 524288 786432
+"
+
+(* Test: Sysctl.lns *)
+test Sysctl.lns put spec_chars_sysctl after
+    set "net.ipv4.conf.*.rp_filter" "0" ;
+    set "net.ipv4.conf.ib0:0.arp_filter" "0"
+  = "# Kernel sysctl configuration file
+# Controls IP packet forwarding
+net.ipv4.conf.*.rp_filter = 0
+net.ipv4.conf.ib0:0.arp_filter = 0
 "
 
 (* Local Variables: *)

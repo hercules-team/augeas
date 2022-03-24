@@ -33,8 +33,20 @@ let filter = incl "/boot/loader.conf"
 (* View: comment *)
 let comment = Util.comment_generic /[ \t]*[#;][ \t]*/ "# "
 
+(* View: entry
+   basically a Simplevars.entry but key has to allow some special chars as '*' *)
+let entry =
+     let some_value = Sep.space_equal . store Simplevars.to_comment_re
+  (* Rx.word extended by * and : *)
+  in let word = /[*:A-Za-z0-9_.-]+/
+  (* Avoid ambiguity in tree by making a subtree here *)
+  in let empty_value = [del /[ \t]*=/ "="] . store ""
+  in [ Util.indent . key word
+            . (some_value? | empty_value)
+            . (Util.eol | Util.comment_eol) ]
+
 (* View: lns
      The sysctl lens *)
-let lns = (Util.empty | comment | Simplevars.entry)*
+let lns = (Util.empty | comment | entry)*
 
 let xfm = transform lns filter
