@@ -109,6 +109,7 @@ test descendant-or-self /files/descendant-or-self :: 4
      /files/etc/ssh/ssh_config/Host/SendEnv[1]/4 = LC_TIME
      /files/etc/ssh/ssh_config/Host/SendEnv[2]/4 = LC_TELEPHONE
      /files/etc/aliases/4
+     /files/etc/selinux/semanage.conf/ignoredirs/4 = /dev
      /files/etc/fstab/4
      /files/etc/pam.d/login/4
      /files/etc/pam.d/newrole/4

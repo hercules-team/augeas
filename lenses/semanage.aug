@@ -23,7 +23,12 @@ let sep = IniFile.sep "=" "="
 let empty = IniFile.empty
 let eol = IniFile.eol
 
-let entry = IniFile.entry IniFile.entry_re sep comment
+let list_keys = "ignoredirs"
+let scl = del ";" ";"
+let fspath = /[^ \t\n;#]+/ (* Rx.fspath without ; or # *)
+
+let entry = IniFile.entry_list list_keys sep fspath scl comment
+          | IniFile.entry (IniFile.entry_re - list_keys) sep comment
           | empty
 
 let title = IniFile.title_label "@group" (IniFile.record_re - /^end$/)
