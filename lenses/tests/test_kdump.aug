@@ -11,6 +11,7 @@ module Test_Kdump =
 #comment after empty line
 #
 #comment after empty comment
+auto_reset_crashkernel yes
 path /var/crash  #comment after entry
 core_collector makedumpfile -c
 default poweroff
@@ -49,6 +50,7 @@ blacklist gfs2
     { "#comment" = "comment after empty line" }
     {  }
     { "#comment" = "comment after empty comment" }
+    { "auto_reset_crashkernel" = "yes" }
     { "path" = "/var/crash"
       { "#comment" = "comment after entry" } }
     { "core_collector" = "makedumpfile -c" }
