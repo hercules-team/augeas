@@ -5,10 +5,10 @@ Module: Toml
 Author: Raphael Pinson <raphael.pinson@camptocamp.com>
 
 About: Reference
-  https://github.com/mojombo/toml/blob/master/README.md
+  https://toml.io/en/v1.0.0
 
 About: License
-   This file is licenced under the LGPL v2+, like the rest of Augeas.
+   This file is licensed under the LGPL v2+, like the rest of Augeas.
 
 About: Lens Usage
    To be documented
@@ -111,7 +111,9 @@ let array (value:lens) = [ label "array" . lbrack
 
 let array_norec = array norec
 
-let rec array_rec = array (norec | array_rec)
+(* This is actually no real recursive array, instead it is one or two dimensional
+   For more info on this see https://github.com/hercules-team/augeas/issues/715 *)
+let array_rec = array (norec | array_norec)
 
 let entry_base (value:lens) = [ label "entry" . store Rx.word . Sep.space_equal . value ]
 
