@@ -31,7 +31,7 @@ module Opendkim =
     | /OversignHeaders|PeerList|POPDBFile|RemoveARFrom|ResignMailTo/
     | /SenderHeaders|SignHeaders|SigningTable|TrustSignaturesFrom/
   let stringkv = key stringkv_rx .
-    del /[ \t]+/ " " . store /[0-9a-zA-Z\/][^ \t\n#]+/ . eol
+    del /[ \t]+/ " " . store /[0-9a-zA-Z\/][^ \t\n\*#]+/ . eol
 
   let integerkv_rx = /AutoRestartCount|ClockDrift|DNSTimeout/
     | /LDAPKeepaliveIdle|LDAPKeepaliveInterval|LDAPKeepaliveProbes|LDAPTimeout/
