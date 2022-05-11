@@ -38,7 +38,7 @@ let comment = Util.comment_generic /[ \t]*[#;][ \t]*/ "# "
 let entry =
      let some_value = Sep.space_equal . store Simplevars.to_comment_re
   (* Rx.word extended by * and : *)
-  in let word = /[*:A-Za-z0-9_.-]+/
+  in let word = /[*:\/A-Za-z0-9_.-]+/
   (* Avoid ambiguity in tree by making a subtree here *)
   in let empty_value = [del /[ \t]*=/ "="] . store ""
   in [ Util.indent . key word
