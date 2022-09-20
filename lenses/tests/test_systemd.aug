@@ -353,3 +353,20 @@ test Systemd.lns get "[Service]\n# hash\n; semicolon\nExecStart=/bin/echo # hash
     { "ExecStart"
       { "command" = "/bin/echo" }
       { "#comment" = "hash" } } }
+
+(* Test: Systemd.lns
+     empty quoted environment var values *)
+test Systemd.lns get "[Service]\nEnvironment=TERM=linux PX_MODULE_PATH=\"\"\n" =
+  { "Service"
+    { "Environment"
+      { "TERM" = "linux" }
+      { "PX_MODULE_PATH" = "\"\"" } } }
+
+(* Test: Systemd.lns
+     values may start with spaces *)
+test Systemd.lns get "[Service]\nExecStart= /usr/bin/find\nEnvironment=  TERM=linux\n" =
+  { "Service"
+    { "ExecStart"
+      { "command" = "/usr/bin/find" } }
+    { "Environment"
+      { "TERM" = "linux" } } }
