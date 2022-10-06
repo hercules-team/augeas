@@ -68,7 +68,9 @@ test Semanage.lns get conf =
    { "usepasswd" = "False" }
    { "bzip-small" = "true" }
    { "bzip-blocksize" = "5" }
-   { "ignoredirs" = "/root" }
+   { "ignoredirs"
+     { "1" = "/root" }
+   }
    { }
    { "@group" = "sefcontext_compile"
      { "path" = "/usr/sbin/sefcontext_compile" }
