@@ -25,6 +25,12 @@ net.ipv4.conf.*.rp_filter = 2
 net.ipv4.conf.ib0:0.arp_filter = 1
 "
 
+(* Variable: slash_char_sysctl *)
+let slash_in_sysctl_key = "# Kernel sysctl configuration file
+# slash and dot can be interchanged
+net/ipv4/conf/enp3s0.200/forwarding = 1
+"
+
 (* Test: Sysctl.lns *)
 test Sysctl.lns get default_sysctl =
     { "#comment" = "Kernel sysctl configuration file" }
@@ -44,6 +50,12 @@ test Sysctl.lns get spec_chars_sysctl =
     { "#comment" = "Controls IP packet forwarding"}
     { "net.ipv4.conf.*.rp_filter" = "2" }
     { "net.ipv4.conf.ib0:0.arp_filter" = "1" }
+
+(* Test: Sysctl.lns *)
+test Sysctl.lns get slash_in_sysctl_key =
+    { "#comment" = "Kernel sysctl configuration file" }
+    { "#comment" = "slash and dot can be interchanged"}
+    { "net/ipv4/conf/enp3s0.200/forwarding" = "1" }
 
 (* Test: Sysctl.lns *)
 test Sysctl.lns put default_sysctl after
