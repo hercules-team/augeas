@@ -1,4 +1,4 @@
-# /etc/hosts for testing specific functionality of augsuggest
+# /etc/hosts for testing specific functionality of augprint
 
 127.0.0.1   localhost localhost4 localhost.localdomain   # ipv4
 ::1         localhost localhost6                         # ipv6

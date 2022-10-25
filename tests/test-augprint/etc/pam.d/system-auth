@@ -1,4 +1,4 @@
-# typical pam.d config file - a real mixed bag for augsuggest (copied from package pam-1.5.2 for fedora 35)
+# typical pam.d config file - a real mixed bag for augprint (copied from package pam-1.5.2 for fedora 35)
 
 auth        required                                     pam_env.so
 auth        required                                     pam_faildelay.so delay=2000000

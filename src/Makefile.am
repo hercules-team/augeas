@@ -14,7 +14,7 @@ DISTCLEANFILES = datadir.h
 lib_LTLIBRARIES = libfa.la libaugeas.la
 noinst_LTLIBRARIES = liblexer.la
 
-bin_PROGRAMS = augtool augparse augmatch augsuggest
+bin_PROGRAMS = augtool augparse augmatch augprint
 
 include_HEADERS = augeas.h fa.h
 
@@ -46,8 +46,8 @@ augparse_LDADD = libaugeas.la $(LIBXML_LIBS) $(GNULIB)
 augmatch_SOURCES = augmatch.c
 augmatch_LDADD = libaugeas.la $(LIBXML_LIBS) $(GNULIB)
 
-augsuggest_SOURCES = augsuggest.c
-augsuggest_LDADD = libaugeas.la $(GNULIB)
+augprint_SOURCES = augprint.c
+augprint_LDADD = libaugeas.la $(GNULIB)
 
 libfa_la_SOURCES = fa.c fa.h hash.c hash.h memory.c memory.h ref.h ref.c
 libfa_la_LIBADD = $(LIB_SELINUX) $(GNULIB)

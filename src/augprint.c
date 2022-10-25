@@ -72,7 +72,7 @@
 #include <malloc.h>
 #include <sys/param.h>     /* for MIN() MAX() */
 #include <unistd.h>
-#include "augsuggest.h"
+#include "augprint.h"
 
 #define CHECK_OOM(condition, action, arg)         \
     do {                                          \
@@ -1427,7 +1427,7 @@ static char *regexp_value(char *value, int max_len) {
 
 static void usage(const char *progname) {
   if(progname == NULL)
-    progname = "augsuggest";
+    progname = "augprint";
   fprintf(stdout, "Usage:\n\t%s [--target=realname] [--lens=Lensname] [--pretty] [--regexp[=n]] [--noseq] /path/filename\n\n",progname);
   fprintf(stdout, "\t  -t, --target ... use this as the filename in the output set-commands\n");
   fprintf(stdout, "\t                   this filename also implies the default lens to use\n");

@@ -283,7 +283,7 @@ check_SCRIPTS = \
   test-events-saved.sh test-save-mode.sh test-unlink-error.sh \
   test-augtool-empty-line.sh test-augtool-modify-root.sh \
   test-span-rec-lens.sh test-nonwritable.sh test-augmatch.sh \
-  test-augsuggest.sh \
+  test-augprint.sh \
   test-function-modified.sh
 
 EXTRA_DIST = \

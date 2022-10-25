@@ -1,4 +1,4 @@
-set /files/etc/hosts/#comment[.=~regexp('/e.*')] '/etc/hosts for testing specific functionality of augsuggest'
+set /files/etc/hosts/#comment[.=~regexp('/e.*')] '/etc/hosts for testing specific functionality of augprint'
 set /files/etc/hosts/seq::*[ipaddr=~regexp('12.*')]/ipaddr '127.0.0.1'
 set /files/etc/hosts/seq::*[ipaddr=~regexp('12.*')]/canonical 'localhost'
 set /files/etc/hosts/seq::*[ipaddr=~regexp('12.*')]/alias[.=~regexp('localhost4')] 'localhost4'

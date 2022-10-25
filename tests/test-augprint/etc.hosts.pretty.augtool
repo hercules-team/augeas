@@ -2,8 +2,8 @@
 # transform Hosts incl /etc/hosts
 #   /files/etc
 #   /files/etc/hosts
-#   /files/etc/hosts/#comment[1]  '/etc/hosts for testing specific functionality of augsuggest'
-set /files/etc/hosts/#comment[.='/etc/hosts for testing specific functionality of augsuggest'] '/etc/hosts for testing specific functionality of augsuggest'
+#   /files/etc/hosts/#comment[1]  '/etc/hosts for testing specific functionality of augprint'
+set /files/etc/hosts/#comment[.='/etc/hosts for testing specific functionality of augprint'] '/etc/hosts for testing specific functionality of augprint'
 
 #   /files/etc/hosts/1
 #   /files/etc/hosts/1/ipaddr  '127.0.0.1'

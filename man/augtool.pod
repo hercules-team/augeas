@@ -394,4 +394,4 @@ B<Augeas> path expressions L<https://github.com/hercules-team/augeas/wiki/Path-e
 
 L<augparse>
 
-L<augsuggest>
+L<augprint>

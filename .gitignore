@@ -36,7 +36,7 @@ src/lexer.[ch]
 src/augmatch
 src/augtool
 src/augparse
-src/augsuggest
+src/augprint
 src/callgrind.*
 tests/fatest
 tests/leak

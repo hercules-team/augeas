@@ -1,21 +1,21 @@
 # vim:  expandtab
 =head1 NAME
 
-augsuggest - create an idempotent augtool script for a given file
+augprint - create an idempotent augtool script for a given file
 
 =head1 SYNOPSIS
 
-augsuggest [--pretty|-p] [--regexp[=n]|-r[n]] [--noseq|-s] [--verbose|-v] [--lens name|-l name] [--target /target|-t /target] FILE
+augprint [--pretty|-p] [--regexp[=n]|-r[n]] [--noseq|-s] [--verbose|-v] [--lens name|-l name] [--target /target|-t /target] FILE
 
 =head1 DESCRIPTION
 
-B<augsuggest> creates an augtool script for a given B<FILE>
+B<augprint> creates an augtool script for a given B<FILE>
 consisting primarily of C<set> commands.
 
 The resulting augtool script is designed to be idempotent, and
 will not result in any changes when applied to the original file.
 
-B<augsuggest> replaces each numbered location in the tree with
+B<augprint> replaces each numbered location in the tree with
 a path-expression that uniquely identifies the position using the values
 I<within> that position.
 
@@ -27,7 +27,7 @@ See "Examples" for sample output
 
 =head2 Regexp output
 
-By default B<augsuggest> produces path-expressions made up of simple equality C<=> comparisions
+By default B<augprint> produces path-expressions made up of simple equality C<=> comparisions
 
   set /files/etc/hosts/seq::*[ipaddr='127.0.0.1']/ipaddr '127.0.0.1'
 
@@ -37,7 +37,7 @@ The option B<--regexp> changes the output to produce regular expression comparis
 
 The minimum length I<N> of the regular expression can be specified using C<--regexp=N>
 
-B<augsuggest> will choose a longer regular expression than I<N> if multiple values
+B<augprint> will choose a longer regular expression than I<N> if multiple values
 would match using the I<N> character regular expression.
 
 =head2 Limitations
@@ -59,8 +59,8 @@ If it does matter, further manual editing of the C<augtool> script will be requi
 
 =head3 Repeated Values
 
-B<augsuggest> is not always successful in finding a path-expression which is unique to a position.
-In this case B<augsuggest> appends a position to an expression which is not unique
+B<augprint> is not always successful in finding a path-expression which is unique to a position.
+In this case B<augprint> appends a position to an expression which is not unique
 
 This occurs in particular if there are repeated values within the file.
 
@@ -70,7 +70,7 @@ For an F</etc/hosts> file of
   192.0.2.3   defaultdns
   #------
 
-B<augsuggest> would produce the output
+B<augprint> would produce the output
 
   set /files/etc/hosts/#comment[.='--------'][1] '--------'
   set /files/etc/hosts/seq::*[ipaddr='192.0.2.3']/ipaddr '192.0.2.3'
@@ -103,7 +103,7 @@ I<N>  can be omitted and defaults to 8
 
 =item B<-l>, B<--lens>=I<LENS>
 
-Use I<LENS> for the given file; without this option, B<augsuggest> uses the
+Use I<LENS> for the given file; without this option, B<augprint> uses the
 default lens for the file
 
 =item B<-t> I<targetfile>, B<--target>=I<targetfile>
@@ -157,7 +157,7 @@ The output from C<augtool 'print /files/etc/hosts'> would be
 
 =head2 Default output
 
-C<augsuggest /etc/hosts>
+C<augprint /etc/hosts>
 
   set /files/etc/hosts/seq::*[ipaddr='127.0.0.1']/ipaddr '127.0.0.1'
   set /files/etc/hosts/seq::*[ipaddr='127.0.0.1']/canonical 'localhost'
@@ -171,7 +171,7 @@ C<augsuggest /etc/hosts>
 
 =head2 Verbose output
 
-C<augsuggest --verbose /etc/hosts>
+C<augprint --verbose /etc/hosts>
 
   #   /files/etc/hosts
   #   /files/etc/hosts/1
@@ -185,7 +185,7 @@ C<augsuggest --verbose /etc/hosts>
 
 =head2 Rexexp output
 
-C<augsuggest --regexp=4 /etc/hosts>
+C<augprint --regexp=4 /etc/hosts>
 
   set /files/etc/hosts/seq::*[ipaddr=~regexp('127\\..*')]/ipaddr '127.0.0.1'
   set /files/etc/hosts/seq::*[ipaddr=~regexp('127\\..*')]/canonical 'localhost'
@@ -197,7 +197,7 @@ C<augsuggest --regexp=4 /etc/hosts>
   set /files/etc/hosts/seq::*[ipaddr=~regexp('192\\.0\\.2\\.4')]/ipaddr '192.0.2.4'
   set /files/etc/hosts/seq::*[ipaddr=~regexp('192\\.0\\.2\\.4')]/canonical 'dns-b'
 
-Note that although a I<minimum> length of 4 has been specified, B<augsuggest> will choose longer regular expressions
+Note that although a I<minimum> length of 4 has been specified, B<augprint> will choose longer regular expressions
 as needed to ensure a unique match.
 
 =head2 Using --lens
@@ -207,7 +207,7 @@ If a file is not assocatiated with a lens by default, I<--lens lensname> can be 
 When I<--lens>  is specified, the output is prefixed with suitable C<transform> and C<load-file> statements,
 as required to complete the augtool script, and a I<setm> statement to exclude other autoloaded lenses.
 
-C<augsuggest --lens shellvars /etc/skel/.bashrc>
+C<augprint --lens shellvars /etc/skel/.bashrc>
 
   setm /augeas/load/*[incl='/etc/skel/.bashrc' and label() != 'shellvars']/excl '/etc/skel/.bashrc'
   transform shellvars incl /etc/skel/.bashrc
@@ -237,16 +237,16 @@ b) edit F<~/hosts> to suit
 
    echo '192.0.2.7   defaultdns' >> ~/hosts
 
-c) Run C<augsuggest> as follows
+c) Run C<augprint> as follows
 
-   augsuggest --target /etc/hosts ~/hosts
+   augprint --target /etc/hosts ~/hosts
 
 d) Copy the relevant part of the output to an augtool script or other Augeas client
 
    set /files/etc/hosts/seq::*[ipaddr='192.0.2.7']/ipaddr '192.0.2.7'
    set /files/etc/hosts/seq::*[ipaddr='192.0.2.7']/canonical 'defaultdns'
 
-Notice that C<augsuggest> has generated paths corresponding to I<--target> (/etc/hosts) instead of the I<FILE> argument (~/hosts)
+Notice that C<augprint> has generated paths corresponding to I<--target> (/etc/hosts) instead of the I<FILE> argument (~/hosts)
 
 
 
@@ -284,7 +284,7 @@ George Hansper <george@hansper.id.au>
 
 Copyright 2022 George Hansper
 
-Augeas (and augsuggest) are distributed under the GNU Lesser General Public
+Augeas (and augprint) are distributed under the GNU Lesser General Public
 License (LGPL), version 2.1
 
 =head1 SEE ALSO
