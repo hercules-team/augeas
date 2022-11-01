@@ -1,6 +1,6 @@
 FROM alpine AS build
 
-RUN apk add --no-cache --virtual=.build gcc libc-dev make bison flex readline-dev libxml2-dev git automake autoconf libtool pkgconf coreutils
+RUN apk add --no-cache --virtual=.build gcc libc-dev make bison flex readline-dev libxml2-dev git automake autoconf libtool pkgconf coreutils bash
 COPY . /augeas
 RUN set -ex ; \
     cd augeas \
