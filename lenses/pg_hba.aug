@@ -55,7 +55,7 @@ module Pg_Hba =
 
     (* View: method
        can contain an <option> *)
-    let method = [ label "method" . store /[A-Za-z][A-Za-z0-9]+/
+    let method = [ label "method" . store /[A-Za-z][A-Za-z0-9-]+/
                                   . ( Sep.tab . option )* ]
 
     (* Group: Records definitions *)
