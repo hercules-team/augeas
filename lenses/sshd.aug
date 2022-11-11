@@ -151,7 +151,10 @@ module Sshd =
 
   let lns = (entry | comment | empty)* . match*
 
-  let xfm = transform lns (incl "/etc/ssh/sshd_config")
+  let filter = (incl "/etc/ssh/sshd_config" )
+               . ( incl "/etc/ssh/sshd_config.d/*.conf" )
+
+  let xfm = transform lns filter
 
 (* Local Variables: *)
 (* mode: caml       *)
