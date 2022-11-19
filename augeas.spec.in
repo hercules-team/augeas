@@ -104,6 +104,7 @@ rm -rf $RPM_BUILD_ROOT
 %doc %{_mandir}/man1/*
 %{_datadir}/vim/vimfiles/syntax/augeas.vim
 %{_datadir}/vim/vimfiles/ftdetect/augeas.vim
+%{bash_completions_dir}/*-completion.bash
 
 %files libs
 %defattr(-,root,root,-)
@@ -126,6 +127,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/libfa.a
 
 %changelog
+* Sun Nov 20 2022 George Hansper <george@hansper.id.au> - 1.14.0
+- add bash completions
+
 * Fri Mar 17 2017 David Lutterkort <lutter@watzmann.net> - 1.8.0-1
 - add static subpackage
 
