@@ -98,6 +98,7 @@ static int debug=0;
 static int pretty=0;
 static int noseq=0;
 static int help=0;
+static int print_version=0;
 static int use_regexp=0;
 static char *lens = NULL;
 static char *loadpath = NULL;
@@ -1428,16 +1429,17 @@ static char *regexp_value(char *value, int max_len) {
 static void usage(const char *progname) {
   if(progname == NULL)
     progname = "augprint";
-  fprintf(stdout, "Usage:\n\t%s [--target=realname] [--lens=Lensname] [--pretty] [--regexp[=n]] [--noseq] /path/filename\n\n",progname);
-  fprintf(stdout, "\t  -t, --target ... use this as the filename in the output set-commands\n");
-  fprintf(stdout, "\t                   this filename also implies the default lens to use\n");
-  fprintf(stdout, "\t  -l, --lens   ... override the default lens and target and use this one\n");
-  fprintf(stdout, "\t  -p, --pretty ... make the output more readable\n");
-  fprintf(stdout, "\t  -r, --regexp ... use regexp() in path-expressions instead of absolute values\n");
-  fprintf(stdout, "\t                   if followed by a number, this is the minimum length of the regexp to use\n");
-  fprintf(stdout, "\t  -s, --noseq  ... use * instead of seq::* (useful for compatability with augeas < 1.13.0)\n");
-  fprintf(stdout, "\t  -h, --help   ... this message\n");
-  fprintf(stdout, "\t  /path/filename   ... full pathname to the file being analysed (required)\n\n");
+  fprintf(stdout, "Usage:\n\n%s [--target=realname] [--lens=Lensname] [--pretty] [--regexp[=n]] [--noseq] /path/filename\n\n",progname);
+  fprintf(stdout, "  -t, --target  ... use this as the filename in the output set-commands\n");
+  fprintf(stdout, "                    this filename also implies the default lens to use\n");
+  fprintf(stdout, "  -l, --lens    ... override the default lens and target and use this one\n");
+  fprintf(stdout, "  -p, --pretty  ... make the output more readable\n");
+  fprintf(stdout, "  -r, --regexp  ... use regexp() in path-expressions instead of absolute values\n");
+  fprintf(stdout, "                    if followed by a number, this is the minimum length of the regexp to use\n");
+  fprintf(stdout, "  -s, --noseq   ... use * instead of seq::* (useful for compatability with augeas < 1.13.0)\n");
+  fprintf(stdout, "  -h, --help    ... this message\n");
+  fprintf(stdout, "  -V, --version ... print augeas version information and exit.\n");
+  fprintf(stdout, "  /path/filename  ... full pathname to the file being analysed (required)\n\n");
   fprintf(stdout, "%s will generate a script of augtool set-commands suitable for rebuilding the file specified\n", progname);
   fprintf(stdout, "If --target is specified, then the lens associated with the target will be use to parse the file\n");
   fprintf(stdout, "If --lens is specified, then the given lens will be used, overriding the default, and --target\n\n");
@@ -1449,7 +1451,22 @@ static void usage(const char *progname) {
   fprintf(stdout, "\t%s --regexp=12 /etc/hosts\n", progname);
   fprintf(stdout, "\t\tUse regular expressions in the resulting augtool script, each being at least 12 chars long\n");
   fprintf(stdout, "\t\tIf the value is less than 12 chars, use the whole value in the expression\n");
-  fprintf(stdout, "\t\tLonger regexp values may be used, if the resulting regexp would be ambiguous\n");
+  fprintf(stdout, "\t\tRegular expressions longer than 12 chars may be generated, if the 12 char regexp\n");
+  fprintf(stdout, "\t\twould be match more than one value\n");
+}
+
+static void print_version_info(const char *progname) {
+    const char *version;
+    int r;
+
+    r = aug_get(aug, "/augeas/version", &version);
+    if (r != 1)
+        goto error;
+
+    fprintf(stderr, "%s %s <https://augeas.net/>\n", progname, version);
+    return;
+ error:
+    fprintf(stderr, "Something went terribly wrong internally - please file a bug\n");
 }
 
 int main(int argc, char **argv) {
@@ -1463,19 +1480,20 @@ int main(int argc, char **argv) {
   while (1) {
     int option_index = 0;
     static struct option long_options[] = {
-        {"help",    no_argument,       &help,       1 },
-        {"verbose", no_argument,       &verbose,    1 },
-        {"debug",   no_argument,       &debug,      1 },
-        {"lens",    required_argument, 0,           0 },
-        {"noseq",   no_argument,       &noseq,      1 },
-        {"seq",     no_argument,       &noseq,      0 },
-        {"target",  required_argument, 0,           0 },
-        {"pretty",  no_argument,       &pretty,     1 },
-        {"regexp",  optional_argument, &use_regexp, 1 },
-        {0,         0,                 0,           0 } /* marker for end of data */
+        {"help",    no_argument,       &help,          1 },
+        {"version", no_argument,       &print_version, 1 },
+        {"verbose", no_argument,       &verbose,       1 },
+        {"debug",   no_argument,       &debug,         1 },
+        {"lens",    required_argument, 0,              0 },
+        {"noseq",   no_argument,       &noseq,         1 },
+        {"seq",     no_argument,       &noseq,         0 },
+        {"target",  required_argument, 0,              0 },
+        {"pretty",  no_argument,       &pretty,        1 },
+        {"regexp",  optional_argument, &use_regexp,    1 },
+        {0,         0,                 0,              0 } /* marker for end of data */
       };
 
-    opt = getopt_long(argc, argv, "vdhl:sSr::pt:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "vdhVl:sSr::pt:", long_options, &option_index);
     if (opt == -1)
        break;
 
@@ -1509,6 +1527,9 @@ int main(int argc, char **argv) {
 
       case 'h':
         help=1;
+        break;
+      case 'V':
+        print_version=1;
         break;
       case 'v':
         verbose=1;
@@ -1552,6 +1573,11 @@ int main(int argc, char **argv) {
 
   if( help ) {
     usage(program_name);
+    exit(0);
+  }
+  if( print_version ) {
+    aug = aug_init(NULL, loadpath, flags|AUG_NO_ERR_CLOSE|AUG_NO_LOAD|AUG_NO_MODL_AUTOLOAD);
+    print_version_info(program_name);
     exit(0);
   }
   if (optind == argc-1) {
