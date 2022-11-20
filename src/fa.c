@@ -1851,10 +1851,12 @@ struct fa *fa_make_basic(unsigned int basic) {
         return fa_make_epsilon();
     } else if (basic == FA_TOTAL) {
         struct fa *fa = fa_make_epsilon();
-        r = add_new_trans(fa->initial, fa->initial, UCHAR_MIN, UCHAR_MAX);
-        if (r < 0) {
-            fa_free(fa);
-            fa = NULL;
+        if (fa) {
+            r = add_new_trans(fa->initial, fa->initial, UCHAR_MIN, UCHAR_MAX);
+            if (r < 0) {
+                fa_free(fa);
+                fa = NULL;
+            }
         }
         return fa;
     }

@@ -651,6 +651,7 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
 
     return make_lens_value(lens);
  error:
+    unref(lens, lens);
     return exn;
 }
 
@@ -677,6 +678,8 @@ static struct value *disjoint_check(struct info *info, bool is_get,
         goto done;
 
     fa = fa_intersect(fa1, fa2);
+    if (! fa)
+        goto done;
     if (! fa_is_basic(fa, FA_EMPTY)) {
         size_t xmpl_len;
         char *xmpl;
@@ -1646,7 +1649,8 @@ static void rtn_rules(struct rtn *rtn, struct lens *l) {
         /* cfg(l1 . l2 ... ln, N) -> N := N1 . N2 ... Nn */
         for (int i=0; i < l->nchildren-1; i++) {
             struct state *s = add_state(prod);
-            RTN_BAIL(rtn);
+            if (s == NULL)
+                goto error;
             add_trans(rtn, start, s, l->children[i]);
             RTN_BAIL(rtn);
             start = s;
@@ -1664,7 +1668,8 @@ static void rtn_rules(struct rtn *rtn, struct lens *l) {
     case L_STAR: {
         /* cfg(l*, N) -> N := N . N' | eps */
         struct state *s = add_state(prod);
-        RTN_BAIL(rtn);
+        if (s == NULL)
+            goto error;
         add_trans(rtn, start, s, l);
         RTN_BAIL(rtn);
         add_trans(rtn, s, prod->end, l->child);
