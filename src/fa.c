@@ -3551,6 +3551,8 @@ static struct re *parse_regexp(struct re_parse *parse) {
 
  error:
     re_unref(re);
+    if (parse->error == REG_NOERROR)
+        parse->error = REG_ESPACE;
     return NULL;
 }
 
