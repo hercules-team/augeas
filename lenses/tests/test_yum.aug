@@ -75,6 +75,12 @@ gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-remi
 "
 
+  let epel_repo = "[epel]
+name=Extra Packages for Enterprise Linux 6 - $basearch
+exclude=ocs* clamav*
+
+"
+
   let cont = "[main]\nbaseurl=url1\n   url2 , url3\n   \n"
 
   test Yum.lns get yum_simple =
@@ -119,6 +125,11 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-remi
         { "baseurl" = "url3" }
         {}
     }
+
+  test Yum.lns put cont after
+      insa "baseurl" "main/baseurl[last()]";
+      set "main/baseurl[last()]" "url4"
+  = "[main]\nbaseurl=url1\n   url2 , url3\n	url4\n   \n"
 
   test Yum.lns put cont after
       set "main/gpgcheck" "1"
@@ -213,14 +224,41 @@ baseurl = http://apt.sw.be/redhat/el6/en/$basearch/rpmforge\n" =
 
   (* Test: Yum.lns
        Issue #275: parse excludes as a list *)
-  test Yum.lns get "[epel]
-name=Extra Packages for Enterprise Linux 6 - $basearch
-exclude=ocs* clamav*
-" =
+  test Yum.lns get epel_repo =
     { "epel"
       { "name" = "Extra Packages for Enterprise Linux 6 - $basearch" }
       { "exclude" = "ocs*" }
-      { "exclude" = "clamav*" } }
+      { "exclude" = "clamav*" }
+      {  } }
+
+  test Yum.lns put epel_repo after
+   insa "exclude" "epel/exclude[last()]";
+   set "epel/exclude[last()]" "clang" = "[epel]
+name=Extra Packages for Enterprise Linux 6 - $basearch
+exclude=ocs* clamav*
+	clang
+
+"
+
+  test Yum.lns put yum_repo2 after
+   set "remi/exclude" "php" = "[remi]
+name=Les RPM de remi pour FC$releasever - $basearch
+baseurl=http://remi.collet.free.fr/rpms/fc$releasever.$basearch/
+    http://iut-info.ens.univ-reims.fr/remirpms/fc$releasever.$basearch/
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-remi
+
+exclude=php
+[remi-test]
+name=Les RPM de remi en test pour FC$releasever - $basearch
+baseurl=http://remi.collet.free.fr/rpms/test-fc$releasever.$basearch/
+    http://iut-info.ens.univ-reims.fr/remirpms/test-fc$releasever.$basearch/
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-remi
+"
+
 
 (* Local Variables: *)
 (* mode: caml       *)
