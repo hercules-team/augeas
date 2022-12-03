@@ -71,3 +71,8 @@ FORCE-datadir.h: Makefile
 	$(top_srcdir)/build/ac-aux/move-if-change datadir.h1 datadir.h
 
 datadir.h: FORCE-datadir.h
+
+#bashcompdir = @bashcompdir@
+bashcompdir = $(datadir)/bash-completion/completions
+dist_bashcomp_DATA = augtool-completion.bash augmatch-completion.bash augprint-completion.bash
+

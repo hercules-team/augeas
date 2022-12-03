@@ -140,3 +140,8 @@ AC_OUTPUT(Makefile \
 	  doc/Makefile \
 	  doc/naturaldocs/Makefile \
           augeas.pc augeas.spec)
+
+# Bash completion ...
+PKG_CHECK_VAR(bashcompdir, [bash-completion], [completionsdir], ,
+  bashcompdir="${sysconfdir}/bash_completion.d")
+AC_SUBST(bashcompdir)
