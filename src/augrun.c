@@ -176,7 +176,7 @@ static char *nexttoken(struct command *cmd, char **line, bool path) {
         if (nescaped == 0) {
             if (*s == '[') nbracket += 1;
             if (*s == ']') nbracket -= 1;
-            if (nbracket < 0) {
+            if (nbracket < 0 && path) {
                 ERR_REPORT(cmd, AUG_ECMDRUN, "unmatched [");
                 return NULL;
             }
