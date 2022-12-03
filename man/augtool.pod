@@ -390,4 +390,8 @@ License (LGPL)
 
 B<Augeas> project homepage L<http://www.augeas.net/>
 
+B<Augeas> path expressions L<https://github.com/hercules-team/augeas/wiki/Path-expressions>
+
 L<augparse>
+
+L<augprint>
