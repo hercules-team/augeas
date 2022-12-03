@@ -109,7 +109,8 @@ let options =
                         | Build.flag ("debug"|"rotate"|"no-check-names"
                                      |"inet6"|"ip6-bytestring"|"edns0"
                                      |"single-request"|"single-request-reopen"
-                                     |"no-tld-query"|"use-vc"|"no-reload")
+                                     |"no-tld-query"|"use-vc"|"no-reload"
+                                     |"trust-ad")
                         | ip6_dotint
 
             in Build.key_value_line_comment
