@@ -1,5 +1,5 @@
 #!/bin/bash
-#insert after /files/tmp/test-quoted-strings.txt/*[. =~ regexp('find.*')] 'found ['
+
 commands="
 set /files/var/tmp/test-quoted-strings.txt/01 '['
 set /files/var/tmp/test-quoted-strings.txt/02 ']'
@@ -12,7 +12,7 @@ set /files/var/tmp/test-quoted-strings.txt/08 ')'
 set /files/var/tmp/test-quoted-strings.txt/09 '"\""'
 insert 010 after /files/var/tmp/test-quoted-strings.txt/seq::*[.=~regexp('.*\]\]\[ \)\( .*')]
 set /files/var/tmp/test-quoted-strings.txt/010 'found ]][ )('
-insert 011 after /files/var/tmp/test-quoted-strings.txt/seq::*[.=~regexp('.*\\\..*')]
+insert 011 after /files/var/tmp/test-quoted-strings.txt/seq::*[.=~regexp('.*\\\\..*')]
 set /files/var/tmp/test-quoted-strings.txt/011 'found .'
 "
 lens=Simplelines.lns
