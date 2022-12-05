@@ -1,3 +1,43 @@
+1.14.0 - 2022-12-06
+  - General changes/additions
+    * Update submodule gnulib to 2f7479a16a3395f1429c7795f10c5d19b9b4453e (#781)
+    * Add bash-completion for augtool, augmatch, augprint (#783) George Hansper
+    * Fix: Allow values to contain arbitrary unbalanced square brackets (#782) George Hansper
+    * Add package bash to build stage in Dockerfile (#776) George Hansper
+    * Add augprint tool for creating idempotent augtool scripts (#752) George Hansper
+    * Replace deprecated 'security_context_t' with 'char *' (#747) Leo-Schmit
+    * src/syntax.c: Fix whitespace which confuses static checkers (#725) rwmjones
+    * README.md: Add oss-fuzz status badge (#702) Sergey Nizovtsev
+    * Package augmatch, too (#688) oleksandriegorov
+    * Add Github workflow to create releases with complete source tarballs (#744) Hilko Bengen
+
+  - Lens changes/additions
+    * Resolv: add option trust-ad (#784) George Hansper
+    * Sos: new lens for /etc/sos/sos.conf (based on IniFile)
+           (#779) George Hansper
+    * Pg_Hba: unquoted auth-method may contain hyphens (#777) George Hansper
+    * Sysctl: Allow keys to contain * and : and / characters (#755) M Filka
+    * Semanage: Fix parsing of ignoredirs (#758) Richard W M Jones
+    * Systemd: allow empty quoted environment variable values
+               (#757) Michal Vasko
+    * Systemd: allow values starting with whitespaces for Exec* and
+               Environment service entries. (#757) Michal Vasko
+    * Toml: workaround to allow writing toml files (#742) Richard
+    * Kdump: parse "auto_reset_crashkernel" (#754) Laszlo Ersek
+    * Keepalived: add parameters notify_stop and notify_deleted (#749) Adam Bambuch
+    * Chrony: add new directives and options (#745) Miroslav Lichvar
+    * Redis: Allow redis lens to set 'SAVE ""' as a valid option
+             (#738) Mitch Hagstrand
+    * ClamAV: update ClamAV lens to autoload /etc/clamav/*.conf
+              (#748) Guillaume Ross
+    * AuthselectPam: new lens for /etc/authselect/custom/*/*-auth and
+          /etc/authselect/custom/*/postlogin (#743) Heston Snodgrass
+    * Sshd: Parse GSSAPIKexAlgorithms PubkeyAcceptedKeyTypes CASignatureAlgorithms
+            as comma-seperated lists instead of simple strings
+            (#721) Edward Garbade
+    * Yum: Add additional unit tests (#677) Pat Riehecky
+    * Cockpit: new lens for /etc/cockpit/cockpit.conf (#675) Pat Riehecky
+
 1.13.0 - 2021-10-15
   - General changes/additions
     * Add Dockerfile (Nicolas Gif) (Issue #650)
