@@ -1,4 +1,4 @@
-1.14.0 - 2022-12-06
+1.14.0 - 2022-12-07
   - General changes/additions
     * Update submodule gnulib to 2f7479a16a3395f1429c7795f10c5d19b9b4453e (#781)
     * Add bash-completion for augtool, augmatch, augprint (#783) George Hansper
