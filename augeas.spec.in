@@ -105,7 +105,7 @@ rm -rf $RPM_BUILD_ROOT
 %doc %{_mandir}/man1/*
 %{_datadir}/vim/vimfiles/syntax/augeas.vim
 %{_datadir}/vim/vimfiles/ftdetect/augeas.vim
-%{bash_completions_dir}/*-completion.bash
+%{bash_completions_dir}/*
 
 %files libs
 %defattr(-,root,root,-)

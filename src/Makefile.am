@@ -74,5 +74,5 @@ datadir.h: FORCE-datadir.h
 
 #bashcompdir = @bashcompdir@
 bashcompdir = $(datadir)/bash-completion/completions
-dist_bashcomp_DATA = augtool-completion.bash augmatch-completion.bash augprint-completion.bash
+dist_bashcomp_DATA = bash-completion/augtool bash-completion/augmatch bash-completion/augprint
 
