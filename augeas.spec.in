@@ -100,6 +100,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/augtool
 %{_bindir}/augparse
 %{_bindir}/augmatch
+%{_bindir}/augprint
 %{_bindir}/fadot
 %doc %{_mandir}/man1/*
 %{_datadir}/vim/vimfiles/syntax/augeas.vim
@@ -127,6 +128,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/libfa.a
 
 %changelog
+* Wed 07 Dec 2022 George Hansper <george@hansper.id.au> - 1.14.0
+- add augprint
+
 * Sun Nov 20 2022 George Hansper <george@hansper.id.au> - 1.14.0
 - add bash completions
 

@@ -289,7 +289,7 @@ check_SCRIPTS = \
   test-function-modified.sh
 
 EXTRA_DIST = \
-  test-augtool root lens-test-1 \
+  test-augtool test-augprint root lens-test-1 \
   $(check_SCRIPTS) $(wildcard modules/*.aug) xpath.tests run.tests
 
 noinst_SCRIPTS = $(check_SCRIPTS)

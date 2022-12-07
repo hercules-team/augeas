@@ -46,7 +46,7 @@ augparse_LDADD = libaugeas.la $(LIBXML_LIBS) $(GNULIB)
 augmatch_SOURCES = augmatch.c
 augmatch_LDADD = libaugeas.la $(LIBXML_LIBS) $(GNULIB)
 
-augprint_SOURCES = augprint.c
+augprint_SOURCES = augprint.c augprint.h
 augprint_LDADD = libaugeas.la $(GNULIB)
 
 libfa_la_SOURCES = fa.c fa.h hash.c hash.h memory.c memory.h ref.h ref.c
