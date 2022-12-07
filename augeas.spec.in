@@ -128,8 +128,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/libfa.a
 
 %changelog
-* Wed 07 Dec 2022 George Hansper <george@hansper.id.au> - 1.14.0
-- add augprint
+* Wed Dec  7 2022 George Hansper <george@hansper.id.au> - 1.14.0
+- add augprint, fix bash-completion filenames
 
 * Sun Nov 20 2022 George Hansper <george@hansper.id.au> - 1.14.0
 - add bash completions
