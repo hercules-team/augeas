@@ -431,8 +431,8 @@ char *cleanpath(char *path) {
 
 const char *xstrerror(int errnum, char *buf, size_t len) {
 #ifdef HAVE_STRERROR_R
-# ifdef __USE_GNU
-    /* Annoying linux specific API contract */
+# if defined(__USE_GNU) && defined(__GLIBC__)
+    /* Annoying GNU specific API contract */
     return strerror_r(errnum, buf, len);
 # else
     strerror_r(errnum, buf, len);
