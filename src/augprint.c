@@ -69,7 +69,6 @@
 #include <string.h>
 #include <augeas.h>
 #include <errno.h>
-#include <malloc.h>
 #include <sys/param.h>     /* for MIN() MAX() */
 #include <unistd.h>
 #include "augprint.h"
