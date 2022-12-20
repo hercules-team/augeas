@@ -69,6 +69,7 @@
 #include <string.h>
 #include <augeas.h>
 #include <errno.h>
+#include <libgen.h>        /* for basename() on FreeBSD and MacOS */
 #include <sys/param.h>     /* for MIN() MAX() */
 #include <unistd.h>
 #include "augprint.h"
