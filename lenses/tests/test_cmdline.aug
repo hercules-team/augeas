@@ -4,6 +4,7 @@ let lns = Cmdline.lns
 
 test lns get "foo\nbar" = *
 test lns get "foo\n" = { "foo" }
+test lns get "foo \n" = { "foo" }
 test lns get "foo" = { "foo" }
 test lns get "foo bar" = { "foo" } { "bar" }
 test lns get "foo    bar" = { "foo" } { "bar" }
