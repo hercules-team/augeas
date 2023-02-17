@@ -391,6 +391,22 @@ Tree for <mode3> *)
         { "mode" = "755" }
     }
 
+  (* Variable: mode_colon
+Mode field with colon prefix *)
+  let mode_colon = "d- /root :0700 root :root\n"
+
+  (* Variable: mode_colon_tree
+Tree for <mode_colon> *)
+  let mode_colon_tree =
+    {
+        "1"
+        { "type" = "d-" }
+        { "path" = "/root" }
+        { "mode" = ":0700" }
+        { "uid" = "root" }
+        { "gid" = ":root" }
+    }
+
 (************************************************************************
  * Group:                 INVALID EXAMPLES
  *************************************************************************)
@@ -464,6 +480,8 @@ Invalid example that contain invalid mode (letter) *)
   test Tmpfiles.lns get valid_base = valid_base_tree
 
   test Tmpfiles.lns get mode3 = mode3_tree
+
+  test Tmpfiles.lns get mode_colon = mode_colon_tree
 
 
 (* failure cases *)
