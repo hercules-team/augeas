@@ -13,7 +13,7 @@ module Cmdline =
 
 let entry = [ key Rx.word . Util.del_str "=" . store Rx.no_spaces ] | [ key Rx.word ]
 
-let lns = (Build.opt_list entry Sep.space)? . del /\n?/ ""
+let lns = (Build.opt_list entry Sep.space)? . del /[ \t]*\n?/ ""
 
 let filter = incl "/etc/kernel/cmdline"
            . incl "/proc/cmdline"

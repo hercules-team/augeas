@@ -28,7 +28,7 @@ At its simplest, you build Augeas from git by running the following
 commands in the toplevel directory of your Augeas checkout:
 
     ./autogen.sh [--gnulib-srcdir=$GNULIB_CHECKOUT]
-    make && make install
+    make && make check && make install
 
 It is recommended though to turn on a few development features when
 building; in particular, stricter compiler warnings and some debug
@@ -53,6 +53,12 @@ to augtool verbatim
   debugging augtool with commands in `build/augcmds.txt`
 * `./src/try valgrind`: run the commands from `build/augcmds.txt` through
   augtool under valgrind to check for memory leaks
+
+Furthermore, the test suite invoked with `make check` includes a test
+called `test-get.sh`, which ensures that reading the files in
+`tests/root/` with `augtool` does not lead to any errors. (It does not
+verify the parsed syntax tree however; you'll have to extend the
+individual lens tests under `lenses/tests/` for that.)
 
 # Platform specific notes
 
