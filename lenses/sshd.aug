@@ -73,7 +73,7 @@ module Sshd =
    let indent = del /[ \t]*/ "  "
 
    let key_re = /[A-Za-z0-9]+/
-         - /MACs|Match|AcceptEnv|Subsystem|Ciphers|((GSSAPI|)Kex|HostKey|CASignature)Algorithms|PubkeyAcceptedKeyTypes|(Allow|Deny)(Groups|Users)/i
+         - /MACs|Match|AcceptEnv|Subsystem|Ciphers|((GSSAPI|)Kex|HostKey|CASignature|PubkeyAccepted)Algorithms|PubkeyAcceptedKeyTypes|(Allow|Deny)(Groups|Users)/i
 
    let comment = Util.comment
    let comment_noindent = Util.comment_noindent
@@ -124,12 +124,14 @@ module Sshd =
    let casignaturealgorithms = list /CASignatureAlgorithms/i "CASignatureAlgorithms"
 
    let pubkeyacceptedkeytypes = list /PubkeyAcceptedKeyTypes/i "PubkeyAcceptedKeyTypes"
+   
+   let pubkeyacceptedalgorithms = list /PubkeyAcceptedAlgorithms/i "PubkeyAcceptedAlgorithms"
 
    let entry = accept_env | allow_groups | allow_users
              | deny_groups | subsystem | deny_users
              | macs | ciphers | kexalgorithms | hostkeyalgorithms
              | gssapikexalgorithms | casignaturealgorithms
-             | pubkeyacceptedkeytypes | other_entry
+             | pubkeyacceptedkeytypes | pubkeyacceptedalgorithms | other_entry
 
    let condition_entry =
     let k = /[A-Za-z0-9]+/ in
