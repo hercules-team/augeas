@@ -97,6 +97,60 @@ Tree for <minus_tree> *)
         { "argument" = "-" }
     }
 
+  (* Variable: equal
+Example with an equal sign in the type *)
+  let equal = "d= /tmp/foo 0755 root root - -\n"
+
+  (* Variable: equal_tree
+Tree for <equal> *)
+  let equal_tree =
+    {
+        "1"
+        { "type" = "d=" }
+        { "path" = "/tmp/foo" }
+        { "mode" = "0755" }
+        { "uid" = "root" }
+        { "gid" = "root" }
+        { "age" = "-" }
+        { "argument" = "-" }
+    }
+
+  (* Variable: tilde
+Example with a tilde character in the type *)
+  let tilde = "w~ /tmp/foo 0755 root root - dGVzdAo=\n"
+
+  (* Variable: tilde_tree
+Tree for <tilde> *)
+  let tilde_tree =
+    {
+        "1"
+        { "type" = "w~" }
+        { "path" = "/tmp/foo" }
+        { "mode" = "0755" }
+        { "uid" = "root" }
+        { "gid" = "root" }
+        { "age" = "-" }
+        { "argument" = "dGVzdAo=" }
+    }
+
+  (* Variable: caret
+Example with a caret in the type *)
+  let caret = "f^ /etc/motd.d/50-provision.conf - - - - login.motd\n"
+
+  (* Variable: caret_tree
+Tree for <caret> *)
+  let caret_tree =
+    {
+        "1"
+        { "type" = "f^" }
+        { "path" = "/etc/motd.d/50-provision.conf" }
+        { "mode" = "-" }
+        { "uid" = "-" }
+        { "gid" = "-" }
+        { "age" = "-" }
+        { "argument" = "login.motd" }
+    }
+
   (* Variable: short
 Example with only type and path *)
   let short = "A+ /tmp/foo\n"
@@ -337,6 +391,22 @@ Tree for <mode3> *)
         { "mode" = "755" }
     }
 
+  (* Variable: mode_colon
+Mode field with colon prefix *)
+  let mode_colon = "d- /root :0700 root :root\n"
+
+  (* Variable: mode_colon_tree
+Tree for <mode_colon> *)
+  let mode_colon_tree =
+    {
+        "1"
+        { "type" = "d-" }
+        { "path" = "/root" }
+        { "mode" = ":0700" }
+        { "uid" = "root" }
+        { "gid" = ":root" }
+    }
+
 (************************************************************************
  * Group:                 INVALID EXAMPLES
  *************************************************************************)
@@ -377,6 +447,12 @@ Invalid example that contain invalid mode (letter) *)
 
   test Tmpfiles.lns get minus = minus_tree
 
+  test Tmpfiles.lns get equal = equal_tree
+
+  test Tmpfiles.lns get tilde = tilde_tree
+
+  test Tmpfiles.lns get caret = caret_tree
+
   test Tmpfiles.lns get short = short_tree
 
   test Tmpfiles.lns get short_mode = short_mode_tree
@@ -404,6 +480,8 @@ Invalid example that contain invalid mode (letter) *)
   test Tmpfiles.lns get valid_base = valid_base_tree
 
   test Tmpfiles.lns get mode3 = mode3_tree
+
+  test Tmpfiles.lns get mode_colon = mode_colon_tree
 
 
 (* failure cases *)
