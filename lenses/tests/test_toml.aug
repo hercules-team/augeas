@@ -111,6 +111,26 @@ test Toml.array_norec get "[ \"foo\", \"bar\", ]" =
     { "string" = "foo" } {}
     { "string" = "bar" } {} }
 
+(* Test: Toml.array_norec
+     Array of integers with trailing comma multiline *)
+test Toml.array_norec get "[
+  1,
+  2,
+]" =
+  { "array" {}
+    { "integer" = "1" } {}
+    { "integer" = "2" } {} }
+
+(* Test: Toml.array_norec
+     Array of integers with trailing comma and comment *)
+test Toml.array_norec get "[
+  1,
+  2, # this is ok
+]" =
+  { "array" {}
+    { "integer" = "1" } {}
+    { "integer" = "2" } { "#comment" = "this is ok" } }
+
 (* Test: Toml.array_rec
      Array of arrays *)
 test Toml.array_rec get "[ [ \"foo\", \"bar\" ], 42 ]" =
