@@ -104,6 +104,13 @@ test Toml.array_norec get "[ \"foo\", \"bar\" ]" =
     { "string" = "foo" } {}
     { "string" = "bar" } {} }
 
+(* Test: Toml.array_norec
+     Array of strings with trailing comma *)
+test Toml.array_norec get "[ \"foo\", \"bar\", ]" =
+  { "array" {}
+    { "string" = "foo" } {}
+    { "string" = "bar" } {} }
+
 (* Test: Toml.array_rec
      Array of arrays *)
 test Toml.array_rec get "[ [ \"foo\", \"bar\" ], 42 ]" =
