@@ -1516,6 +1516,10 @@ static int tree_save(struct augeas *aug, struct tree *tree,
                 }
             }
             if (transform != NULL) {
+                /* If this file did not previously exist and is being created by augeas,
+                 * then the 'file' flag in the node t will not be set yet. Set it now
+                 */
+                t->file = true;
                 int r = transform_save(aug, transform, tpath, t);
                 if (r == -1)
                     result = -1;

@@ -286,7 +286,7 @@ check_SCRIPTS = \
   test-augtool-empty-line.sh test-augtool-modify-root.sh \
   test-span-rec-lens.sh test-nonwritable.sh test-augmatch.sh \
   test-augprint.sh \
-  test-function-modified.sh
+  test-function-modified.sh test-createfile.sh
 
 EXTRA_DIST = \
   test-augtool test-augprint root lens-test-1 \
