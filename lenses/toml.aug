@@ -106,7 +106,7 @@ let norec = str | str_multi | str_literal
           | datetime | date |  time
 
 let array (value:lens) = [ label "array" . lbrack
-               . ( ( Build.opt_list value comma . space_or_empty? . rbrack )
+               . ( ( Build.opt_list value comma . (del /,?/ "") . (space_or_empty | comment)? . rbrack )
                    | rbrack ) ]
 
 let array_norec = array norec
