@@ -1,3 +1,17 @@
+1.14.1 - 2023-06-27
+  - General changes/additions
+    * internal.c: update #if to only use GNU-specific strerror_r() when __GLIBC__ is defined (#791) Dimitry Andric
+    * augeas.c: Fix bug from PR#691 where the nodes of a newly created file are lost upon a subsequent load operation (#810) George Hansper
+    * HACKING.md: describe testing (#796) Laszlo Ersek
+    * Add GitHub Actions (#714) Raphaël Pinson
+    * augprint.c: remove `#include <malloc.h>` , add `#include <libgen.h>` (#792) Ruoyu Zhong
+
+  - Lens changes/additions
+    * TOML: support trailing commas in arrays (#809) Bao
+    * Tmpfiles: allow '=', '~', '^' for letter types, allow ":" as prefix for the mode (#805) Pino Toscano
+    * Sshd: Add keyword PubkeyAcceptedAlgorithms as comma-separated list of items (#806) Dave Re
+    * Cmdline: Allow whitespace at the end of kernel commnd line (#798) rwmjones
+
 1.14.0 - 2022-12-07
   - General changes/additions
     * Update submodule gnulib to 2f7479a16a3395f1429c7795f10c5d19b9b4453e (#781)
