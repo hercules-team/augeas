@@ -1,4 +1,4 @@
-AC_INIT(augeas, 1.14.0)
+AC_INIT(augeas, 1.14.1)
 AC_CONFIG_SRCDIR([src/augeas.c])
 AC_CONFIG_AUX_DIR([build/ac-aux])
 AM_CONFIG_HEADER([config.h])
