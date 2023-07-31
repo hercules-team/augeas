@@ -201,6 +201,7 @@ lens_tests =			\
   lens-shellvars_list.sh	\
   lens-simplelines.sh	\
   lens-simplevars.sh	\
+  lens-simpleyaml.sh	\
   lens-sip_conf.sh	    \
   lens-slapd.sh			\
   lens-smbusers.sh			\
