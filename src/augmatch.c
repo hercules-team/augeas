@@ -302,7 +302,7 @@ static char *guess_lens_name(const char *file) {
 
 int main(int argc, char **argv) {
     int opt;
-    cleanup(aug_closep) struct augeas *aug;
+    cleanup(aug_closep) struct augeas *aug = NULL;
     cleanup(freep) char *loadpath = NULL;
     size_t loadpath_len = 0;
     cleanup(freep) char *root = NULL;

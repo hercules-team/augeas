@@ -274,6 +274,8 @@ char *enc_format_indent(const char *e, size_t len, int indent);
 #if ENABLE_DEBUG
 void dump_lens_tree(struct lens *lens);
 void dump_lens(FILE *out, struct lens *lens);
+#else
+#define dump_lens_tree(lens) (void)0
 #endif
 
 #endif
