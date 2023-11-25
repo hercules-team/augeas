@@ -117,8 +117,7 @@ module Ntp =
             orphan stratum | orphanwait delay] *)
 
     let tos =
-      let arg_names = /beacon|ceiling|cohort|floor|maxclock|maxdist|
-                      minclock|mindist|minsane|orphan|orphanwait/ in
+      let arg_names = /beacon|ceiling|cohort|floor|maxclock|maxdist|minclock|mindist|minsane|orphan|orphanwait/ in
       let arg = [ key arg_names . sep_spc . store Rx.decimal ] in
       [ key "tos" . (sep_spc . arg)* . eol ]
 
@@ -135,5 +134,6 @@ module Ntp =
               | auth_command | tinker | tos | interface)*
 
     let filter = (incl "/etc/ntp.conf")
+               . (incl "/etc/ntpsec/ntp.conf")
 
     let xfm = transform lns filter
