@@ -183,3 +183,9 @@ test Ntp.tinker get "tinker panic 0 huffpuff 3.14\n" =
 test Ntp.tos get "tos maxdist 16\n" =
   { "tos"
     { "maxdist" = "16" } }
+
+(* PR #821: tos minclock directive *)
+test Ntp.tos get "tos minclock 4 minsane 3\n" =
+  { "tos"
+    { "minclock" = "4" }
+    { "minsane" = "3" } }
