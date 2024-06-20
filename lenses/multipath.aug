@@ -73,7 +73,7 @@ let default_setting =
   |kv "polling_interval" Rx.integer
   |kv "max_polling_interval" Rx.integer
   |kv "multipath_dir" fspath
-  |kv "find_multipaths" /yes|no/
+  |kv "find_multipaths" /on|yes|y|off|no|n|strict|greedy|smart/
   |kv "verbosity" /[0-6]/
   |kv "reassign_maps" /yes|no/
   |kv "uid_attrribute" Rx.word
