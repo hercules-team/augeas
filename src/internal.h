@@ -191,8 +191,12 @@
 /* Allow falling through in switch statements for the few cases where that
    is needed */
 #ifndef ATTRIBUTE_FALLTHROUGH
-#  if __GNUC_PREREQ (7, 0)
-#    define ATTRIBUTE_FALLTHROUGH __attribute__ ((fallthrough))
+#  if defined __has_attribute
+#    if __has_attribute (fallthrough)
+#      define ATTRIBUTE_FALLTHROUGH __attribute__ ((fallthrough))
+#    else
+#      define ATTRIBUTE_FALLTHROUGH
+#    endif
 #  else
 #    define ATTRIBUTE_FALLTHROUGH
 #  endif
