@@ -197,6 +197,8 @@
 #    else
 #      define ATTRIBUTE_FALLTHROUGH
 #    endif
+#  else
+#    define ATTRIBUTE_FALLTHROUGH
 #  endif
 #endif
 
