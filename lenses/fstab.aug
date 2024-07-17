@@ -5,6 +5,7 @@ module Fstab =
 
   let sep_tab = Sep.tab
   let sep_spc = Sep.space
+  let sep_comma_tab = del /,?[ \t]+/ "\t"
   let comma   = Sep.comma
   let eol     = Util.eol
 
@@ -28,7 +29,7 @@ module Fstab =
                    [ label "file" . store file ] . sep_tab .
                    comma_sep_list "vfstype" .
                    (sep_tab . comma_sep_list "opt" .
-                    (sep_tab . [ label "dump" . store /[0-9]+/ ] .
+                    (sep_comma_tab . [ label "dump" . store /[0-9]+/ ] .
                      ( sep_spc . [ label "passno" . store /[0-9]+/ ])? )? )?
                  . Util.comment_or_eol ]
 
