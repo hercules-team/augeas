@@ -156,6 +156,17 @@ module Test_fstab =
     { "#comment" = "device at install: /dev/sda3" }
   }
 
+  (* Bug #832 - Allow comma after the last option *)
+  test Fstab.lns get "/dev/mapper/foo-bar / xfs defaults, 0 0\n" =
+  { "1"
+    { "spec" = "/dev/mapper/foo-bar" }
+    { "file" = "/" }
+    { "vfstype" = "xfs" }
+    { "opt" = "defaults" }
+    { "dump" = "0" }
+    { "passno" = "0" }
+  }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
