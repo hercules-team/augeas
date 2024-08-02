@@ -34,6 +34,19 @@ module Test_nrpe =
     { }
 
 
+  (* Debian bug #749919 *)
+  let allowed_hosts_1 = "allowed_hosts=127.0.0.1\n"
+
+  test Nrpe.item get allowed_hosts_1 =
+    { "allowed_hosts" = "127.0.0.1" }
+
+
+  let allowed_hosts_2 = "allowed_hosts=127.0.0.1, 127.0.0.2\n"
+
+  test Nrpe.item get allowed_hosts_2 =
+    { "allowed_hosts" = "127.0.0.1, 127.0.0.2" }
+
+
   let lns = "
 #
 # server address:
