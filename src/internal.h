@@ -417,6 +417,7 @@ struct tree {
     char        *label;      /* Last component of PATH */
     struct tree *children;   /* List of children through NEXT */
     char        *value;
+    size_t       pos;
     struct span *span;
 
     /* Flags */
