@@ -864,7 +864,7 @@ static void testAugPreview(CuTest *tc) {
     if (asprintf(&etc_hosts_fn,"%s/etc/hosts",root) >=0 ) {
         hosts_fp = fopen(etc_hosts_fn,"r");
         if ( hosts_fp ) {
-            hosts_txt = calloc(sizeof(char),4096);
+            hosts_txt = calloc(4096,sizeof(char));
             if ( hosts_txt ) {
                 readsz = fread(hosts_txt,sizeof(char),4096,hosts_fp);
                 *(hosts_txt+readsz) = '\0';
