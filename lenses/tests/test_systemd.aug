@@ -370,3 +370,12 @@ test Systemd.lns get "[Service]\nExecStart= /usr/bin/find\nEnvironment=  TERM=li
       { "command" = "/usr/bin/find" } }
     { "Environment"
       { "TERM" = "linux" } } }
+
+(* Test: Systemd.lns
+     + and - are OK for command prefixes *)
+   test Systemd.lns get "[Service]\nExecStart=+-/bin/echo\n" =
+     { "Service"
+       { "ExecStart"
+         { "fullprivileges" }
+         { "ignoreexit" }
+         { "command" = "/bin/echo" }} }
