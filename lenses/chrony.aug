@@ -191,6 +191,7 @@ module Chrony =
                     | "ntpsigndsocket" | "pidfile" | "ptpport"
                     | "port" | "reselectdist" | "rtcautotrim" | "rtcdevice"
                     | "rtcfile" | "sched_priority" | "stratumweight" | "user"
+                    | "leapseclist"
 
 (************************************************************************
  * Group: Make some sub-lenses for use in later lenses

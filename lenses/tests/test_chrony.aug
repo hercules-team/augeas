@@ -89,6 +89,7 @@ ntsprocesses 2
 ntsrefresh 86400
 ntsrotate 86400
 ptpport 319
+leapseclist /usr/share/zoneinfo/leap-seconds.list
 "
 
   test Chrony.lns get exampleconf =
@@ -317,6 +318,7 @@ ptpport 319
   { "ntsrefresh" = "86400" }
   { "ntsrotate" = "86400" }
   { "ptpport" = "319" }
+  { "leapseclist" = "/usr/share/zoneinfo/leap-seconds.list" }
 
 
 (* Local Variables: *)
