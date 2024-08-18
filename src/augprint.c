@@ -459,7 +459,7 @@ static struct group *find_or_create_group(char *head) {
   /* First, grow all_groups[] array if required */
   if ( num_groups % 32 == 0 ) {
       num_groups_newsize = (num_groups)/32*32+32;
-      all_groups_realloc = reallocarray(all_groups, sizeof(struct group *), num_groups_newsize);
+      all_groups_realloc = reallocarray(all_groups, num_groups_newsize, sizeof(struct group *));
       CHECK_OOM( ! all_groups_realloc, exit_oom, "in find_or_create_group()");
 
       all_groups=all_groups_realloc;
@@ -523,10 +523,10 @@ static struct tail *find_or_create_tail(struct group *group, struct path_segment
     tail = malloc(sizeof(struct tail));
     CHECK_OOM( ! tail, exit_oom, "in find_or_create_tail()");
 
-    tail->tail_found_map       = reallocarray(NULL, sizeof(unsigned int), group->position_array_size);
+    tail->tail_found_map       = reallocarray(NULL, group->position_array_size, sizeof(unsigned int));
     CHECK_OOM( ! tail->tail_found_map, exit_oom, "in find_or_create_tail()");
 
-    tail->tail_value_found_map = reallocarray(NULL, sizeof(unsigned int), group->position_array_size);
+    tail->tail_value_found_map = reallocarray(NULL, group->position_array_size, sizeof(unsigned int));
     CHECK_OOM( ! tail->tail_value_found_map, exit_oom, "in find_or_create_tail()");
 
 
@@ -584,13 +584,13 @@ static void grow_position_arrays(struct group *group, unsigned int new_max_posit
     unsigned int new_size = (new_max_position+1) / 8 * 8 + 8;
 
     /* Grow arrays within struct group */
-    tails_at_position_realloc = reallocarray(group->tails_at_position,  sizeof(struct tail_stub *),  new_size);
-    chosen_tail_realloc       = reallocarray(group->chosen_tail,        sizeof(struct tail *),       new_size);
-    first_tail_realloc        = reallocarray(group->first_tail,         sizeof(struct tail_stub *),  new_size);
-    chosen_tail_state_realloc = reallocarray(group->chosen_tail_state,  sizeof(chosen_tail_state_t), new_size);
-    pretty_width_ct_realloc   = reallocarray(group->pretty_width_ct,    sizeof(unsigned int),        new_size);
-    re_width_ct_realloc       = reallocarray(group->re_width_ct,        sizeof(unsigned int),        new_size);
-    re_width_ft_realloc       = reallocarray(group->re_width_ft,        sizeof(unsigned int),        new_size);
+    tails_at_position_realloc = reallocarray(group->tails_at_position,  new_size,  sizeof(struct tail_stub *));
+    chosen_tail_realloc       = reallocarray(group->chosen_tail,        new_size,  sizeof(struct tail *));
+    first_tail_realloc        = reallocarray(group->first_tail,         new_size,  sizeof(struct tail_stub *));
+    chosen_tail_state_realloc = reallocarray(group->chosen_tail_state,  new_size,  sizeof(chosen_tail_state_t));
+    pretty_width_ct_realloc   = reallocarray(group->pretty_width_ct,    new_size,  sizeof(unsigned int));
+    re_width_ct_realloc       = reallocarray(group->re_width_ct,        new_size,  sizeof(unsigned int));
+    re_width_ft_realloc       = reallocarray(group->re_width_ft,        new_size,  sizeof(unsigned int));
     CHECK_OOM( ! tails_at_position_realloc || ! chosen_tail_realloc || ! chosen_tail_state_realloc ||
                ! pretty_width_ct_realloc   || ! re_width_ct_realloc || ! re_width_ft_realloc       ||
                ! first_tail_realloc, exit_oom, "in grow_position_arrays()");
@@ -617,8 +617,8 @@ static void grow_position_arrays(struct group *group, unsigned int new_max_posit
     for( tail = group->all_tails; tail != NULL; tail=tail->next ) {
       unsigned int *tail_found_map_realloc;
       unsigned int *tail_value_found_map_realloc;
-      tail_found_map_realloc       = reallocarray(tail->tail_found_map,       sizeof(unsigned int), new_size);
-      tail_value_found_map_realloc = reallocarray(tail->tail_value_found_map, sizeof(unsigned int), new_size);
+      tail_found_map_realloc       = reallocarray(tail->tail_found_map,       new_size, sizeof(unsigned int));
+      tail_value_found_map_realloc = reallocarray(tail->tail_value_found_map, new_size, sizeof(unsigned int));
       CHECK_OOM( ! tail_found_map_realloc || ! tail_value_found_map_realloc, exit_oom, "in grow_position_arrays()");
 
       /* initialize array entries between old size to new_size */

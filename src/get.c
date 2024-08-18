@@ -1092,7 +1092,14 @@ static struct frame *push_frame(struct rec_state *state, struct lens *lens) {
     state->fused += 1;
 
     struct frame *top = top_frame(state);
+    /* GCC 14.2.1 cannot analyze this correctly, so it breaks with
+     * -Werror.  Until this is fixed in GCC, disable the warning.
+     */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
     MEMZERO(top, 1);
+#pragma GCC diagnostic pop
     top->lens = lens;
     return top;
  error:
