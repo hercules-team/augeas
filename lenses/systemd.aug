@@ -72,8 +72,8 @@ let sto_value = store /[^# \t\n]*[^# \t\n\\]/
 let value_sep = del /[ \t]+|[ \t]*\\\\[ \t]*\n[ \t]*/ " "
 
 (* Variable: value_cmd_re
-   Don't parse @ and - prefix flags *)
-let value_cmd_re = /[^#@ \t\n\\-][^#@ \t\n\\-][^# \t\n\\]*/
+   Don't parse @, - and + prefix flags *)
+let value_cmd_re = /[^-#@+ \t\n\\][^# \t\n\\]*/
 
 (* Variable: env_key *)
 let env_key = /[A-Za-z0-9_]+(\[[0-9]+\])?/
@@ -111,11 +111,12 @@ let entry_multi  = entry_fn entry_multi_kw
                        . Build.opt_list entry_value value_sep )?
 
 (* View: entry_command_flags
-   Exec* flags "@" and "-".  Order is important, see systemd.service(8) *)
+   Exec* flags "@", "-" and "+".  Order is *not* important *)
 let entry_command_flags =
-     let exit  = [ label "ignoreexit" . Util.del_str "-" ]
+     let fullprivileges = [ label "fullprivileges" . Util.del_str "+" ]
+  in let exit  = [ label "ignoreexit" . Util.del_str "-" ]
   in let arg0  = [ label "arg0" . Util.del_str "@" ]
-  in exit? . arg0?
+  in (fullprivileges | exit  | arg0)*
 
 (* View: entry_command
    Entry that takes a command, arguments and the optional prefix flags *)
