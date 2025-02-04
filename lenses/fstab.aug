@@ -25,19 +25,19 @@ module Fstab =
          Build.opt_list lns comma
 
   (* A mount option label can't contain comma, comment, equals, or space *)
-  let optlabel = /[^,#= \n\t]+/
+  let mntoptlabel = /[^,#= \n\t]+/
 
-  let comma_sep_list (l:string) =
+  let mntopt_list (l:string) =
     let value = [ label "value" . Util.del_str "=" . ( store Rx.neg1 )? ] in
-      let lns = [ label l . store optlabel . value? ] in
-         Build.opt_list lns comma
+      let lns = [ label l . store mntoptlabel . value? ] in
+         Build.opt_list lns comma+
 
   let record = [ seq "mntent" .
                    Util.indent .
                    [ label "spec" . store spec ] . sep_tab .
                    [ label "file" . store file ] . sep_tab .
                    vfstype_list "vfstype" .
-                   (sep_tab . comma_sep_list "opt" .
+                   (sep_tab . mntopt_list "opt" .
                     (sep_comma_tab . [ label "dump" . store /[0-9]+/ ] .
                      ( sep_spc . [ label "passno" . store /[0-9]+/ ])? )? )?
                  . Util.comment_or_eol ]

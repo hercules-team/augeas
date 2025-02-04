@@ -167,6 +167,18 @@ module Test_fstab =
     { "passno" = "0" }
   }
 
+  (* RHEL-77279 - Allow empty option *)
+  test Fstab.lns get "/dev/mapper/foo-bar / xfs rw,,nodev 0 0\n" =
+  { "1"
+    { "spec" = "/dev/mapper/foo-bar" }
+    { "file" = "/" }
+    { "vfstype" = "xfs" }
+    { "opt" = "rw" }
+    { "opt" = "nodev" }
+    { "dump" = "0" }
+    { "passno" = "0" }
+  }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
