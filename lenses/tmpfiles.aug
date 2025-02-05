@@ -55,7 +55,7 @@ a tilde character ("~") and/or a caret ("^").
 
 Not all letters are valid.
 *)
-  let type     = /([fFwdDevqQpLcbCxXrRzZtThHaAm]|[fFwpLcbaA]\+)[-!=~^]*/
+  let type     = /([fFwdDevqQpLcbCxXrRzZtThHaAm]|[fFwpLcbaA]\+)[-!=~^$]*/
 
   (* View: mode
 "-", or 3-4 bytes. Optionally starts with a "~" or a ":". *)
