@@ -81,7 +81,8 @@ extern int fa_minimization_algorithm;
  *
  * On success, FA points to the newly allocated automaton constructed for
  * RE, and the function returns REG_NOERROR. Otherwise, FA is NULL, and the
- * return value indicates the error.
+ * return value indicates the error. Special value _REG_ENOSYS indicates
+ * fa_compile() couldn't identify the syntax issue with regexp.
  *
  * The FA is case sensitive. Call FA_NOCASE to switch it to
  * case-insensitive.
