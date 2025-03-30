@@ -115,6 +115,24 @@ Tree for <equal> *)
         { "argument" = "-" }
     }
 
+  (* Variable: dollar
+Example with a dollar sign in the type *)
+  let dollar = "d$ /tmp/foo 0755 root root - -\n"
+
+  (* Variable: dollar_tree
+Tree for <dollar> *)
+  let dollar_tree =
+    {
+        "1"
+        { "type" = "d$" }
+        { "path" = "/tmp/foo" }
+        { "mode" = "0755" }
+        { "uid" = "root" }
+        { "gid" = "root" }
+        { "age" = "-" }
+        { "argument" = "-" }
+    }
+
   (* Variable: tilde
 Example with a tilde character in the type *)
   let tilde = "w~ /tmp/foo 0755 root root - dGVzdAo=\n"
@@ -448,6 +466,8 @@ Invalid example that contain invalid mode (letter) *)
   test Tmpfiles.lns get minus = minus_tree
 
   test Tmpfiles.lns get equal = equal_tree
+
+  test Tmpfiles.lns get dollar = dollar_tree
 
   test Tmpfiles.lns get tilde = tilde_tree
 
