@@ -47,6 +47,15 @@ let tcp_flags =
       spc . dels "--tcp-flags" .
       spc . flag_list "mask" . spc . flag_list "set" ]
 
+let ipset_flags =
+  let flags = /src|dst/ in
+  let match_flag (name:string) =
+    Build.opt_list [label name . store flags] (dels ",") in
+  [ label "ipset_flags" .
+      spc . dels "--match-set" .
+      spc . store /[a-zA-Z-][a-zA-Z0-9-]+/ .
+      spc . match_flag "set" ]
+
 (* misses --set-counters *)
 let ipt_match =
   let any_key = /[a-zA-Z-][a-zA-Z0-9-]+/ -
@@ -65,6 +74,7 @@ let ipt_match =
     |neg_param "fragment" "f"
     |param "match" "m"
     |tcp_flags
+    |ipset_flags
     |any_param)*
 
 let chain_action (n:string) (o:string) =
