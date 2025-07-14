@@ -53,11 +53,7 @@ let dynamic = [ Util.del_str "?" . label "dynamic" . store Rx.word ]
 
 let namedpipe = Syslog.pipe . Sep.space . [ label "pipe" . store Syslog.file_r ]
 
-(* View: action_config
-   Handle action(type="..." users="...") syntax *)
-let action_config =
-  [ key "action" . Util.del_str "(" .
-    [ label "params" . store /[^)]+/ ] . Util.del_str ")" ]
+let action_config = [ key "action" . Util.del_str "(" . [ label "params" . store /[^)]+/ ] . Util.del_str ")" ]
 
 let action = Syslog.action | omusrmsg | file_tmpl | dynamic | namedpipe | action_config
 
