@@ -125,11 +125,11 @@ let filter = incl "/etc/nginx/nginx.conf"
            . incl "/etc/nginx/conf.d/*.conf"
            . incl "/etc/nginx/sites-available/*"
            . incl "/etc/nginx/sites-enabled/*"
+           . incl "/etc/nginx/snippets/*"
            . incl "/usr/portage/www-servers/nginx/files/nginx.conf"
            . incl "/usr/local/etc/nginx/nginx.conf"
            . incl "/usr/local/etc/nginx/conf.d/*.conf"
            . incl "/usr/local/etc/nginx/sites-available/*"
            . incl "/usr/local/etc/nginx/sites-enabled/*"
-           . incl "/etc/nginx/snippets/*"
 
 let xfm = transform lns filter
