@@ -5,8 +5,8 @@ module Fstab =
 
   let sep_tab = Sep.tab
   let sep_spc = Sep.space
-  let sep_comma_tab = del /,?[ \t]+/ "\t"
-  let comma   = Sep.comma
+  let sep_comma_tab = del /,*[ \t]+/ "\t"
+  let comma   = del /,+/ ","
   let eol     = Util.eol
 
   let comment = Util.comment
