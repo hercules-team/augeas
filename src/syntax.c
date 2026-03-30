@@ -479,7 +479,7 @@ static struct binding *bnd_lookup(struct binding *bindings, const char *name) {
 }
 
 static char *modname_of_qname(const char *qname) {
-    char *dot = strchr(qname, '.');
+    const char *dot = strchr(qname, '.');
     if (dot == NULL)
         return NULL;
 

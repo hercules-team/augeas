@@ -1798,7 +1798,7 @@ int aug_transform(struct augeas *aug, const char *lens,
     int r = 0, result = -1;
     struct tree *xfm = NULL, *lns = NULL, *t = NULL;
     const char *filter = NULL;
-    char *p;
+    const char *p;
     int exists;
     char *lensname = NULL, *xfmname = NULL;
 
