@@ -129,7 +129,7 @@ static struct test *read_tests(void) {
     FILE *fp;
     char line[BUFSIZ];
     struct test *result = NULL, *t = NULL;
-    int lc = 0;
+    //int lc = 0;
     bool append_cmd = true;
 
     if (asprintf(&fname, "%s/tests/run.tests", abs_top_srcdir) < 0)
@@ -139,7 +139,7 @@ static struct test *read_tests(void) {
         die("fopen run.tests");
 
     while (fgets(line, BUFSIZ, fp) != NULL) {
-        lc += 1;
+        //lc += 1;
         char *s = skipws(line);
         if (*s == '#' || *s == '\0')
             continue;
