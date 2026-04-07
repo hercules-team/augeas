@@ -223,7 +223,7 @@ char *escape(const char *text, int cnt, const char *extra) {
         return NULL;
     e = esc;
     for (int i=0; i < cnt; i++) {
-        char *p;
+        const char *p;
         if (text[i] && ((p = strchr(escape_chars, text[i])) != NULL)) {
             *e++ = '\\';
             *e++ = escape_names[p - escape_chars];

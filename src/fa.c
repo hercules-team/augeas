@@ -4477,7 +4477,7 @@ static void print_char(FILE *out, uchar c) {
        Also, a space ' ' is shown as '\s' */
     static const char *const escape_from = " \n\t\v\b\r\f\a/\0";
     static const char *const escape_to = "sntvbrfa/0";
-    char *p = strchr(escape_from, c);
+    const char *p = strchr(escape_from, c);
     if (p != NULL) {
         int i = p - escape_from;
         fprintf(out, "\\\\%c", escape_to[i]);
