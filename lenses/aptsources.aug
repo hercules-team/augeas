@@ -62,7 +62,7 @@ module Aptsources =
 
   (* View: filter *)
   let filter = (incl "/etc/apt/sources.list")
-      . (incl "/etc/apt/sources.list.d/*")
+      . (incl "/etc/apt/sources.list.d/*.list")
       . Util.stdexcl
 
   let xfm = transform lns filter
