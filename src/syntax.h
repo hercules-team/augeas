@@ -49,6 +49,7 @@ enum term_tag {
     A_VALUE,
     A_IDENT,
     A_BRACKET,
+    A_REGION,
     A_FUNC,
     A_REP,
     A_TEST
@@ -87,7 +88,7 @@ struct term {
             struct term *right;
         };
         struct value    *value;         /* A_VALUE */
-        struct term     *brexp;         /* A_BRACKET */
+        struct term     *brexp;         /* A_BRACKET, A_REGION */
         struct string   *ident;         /* A_IDENT */
         struct {                        /* A_REP */
             enum quant_tag quant;

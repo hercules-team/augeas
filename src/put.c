@@ -370,6 +370,9 @@ static int skel_instance_of(struct lens *lens, struct skel *skel) {
         break;
     case L_SUBTREE:
         return skel->tag == L_SUBTREE;
+    case L_REGION:
+        return skel->tag == L_REGION
+            && skel_instance_of(lens->child, skel->skels);
     case L_MAYBE:
         return skel->tag == L_MAYBE || skel_instance_of(lens->child, skel);
     case L_STAR:
@@ -435,7 +438,11 @@ static void put_subtree(struct lens *lens, struct state *state) {
     split = make_split(tree->children);
     set_split(state, split);
 
-    dict_lookup(tree->label, state->dict, &state->skel, &state->dict);
+    if (getenv("AUGEAS_NO_SHIFT") == NULL) {
+        dict_lookup(tree->label, state->dict, &state->skel, &state->dict);
+    } else {
+        dict_lookupz(tree->pos, state->dict, &state->skel, &state->dict);
+    }
     if (state->with_span) {
         if (tree->span == NULL) {
             tree->span = make_span(state->info);
@@ -670,6 +677,7 @@ static void put_lens(struct lens *lens, struct state *state) {
         put_union(lens, state);
         break;
     case L_SUBTREE:
+    case L_REGION:
         put_subtree(lens, state);
         break;
     case L_STAR:
@@ -824,6 +832,7 @@ static void create_lens(struct lens *lens, struct state *state) {
         create_union(lens, state);
         break;
     case L_SUBTREE:
+    case L_REGION:
         create_subtree(lens, state);
         break;
     case L_STAR:
