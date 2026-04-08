@@ -11,6 +11,8 @@ Options:
                           have gnulib sources on your machine, and
                           do not want to waste your bandwidth downloading
                           them again.
+ --no-git                 Do not use git to update gnulib. Requires that
+                          --gnulib-srcdir point to a correct gnulib snapshot
 
 If the file bootstrap.conf exists in the current working directory, its
 contents are read as shell variables to configure the bootstrap.
@@ -18,6 +20,9 @@ contents are read as shell variables to configure the bootstrap.
 Running without arguments will suffice in most cases.
 "
 }
+
+# Use git to update gnulib sources
+use_git=true
 
 for option
 do
@@ -27,38 +32,46 @@ do
     exit;;
   --gnulib-srcdir=*)
     GNULIB_SRCDIR=${option#--gnulib-srcdir=};;
+  --no-git)
+    use_git=false;;
   *)
     echo >&2 "$0: $option: unknown option"
     exit 1;;
   esac
 done
 
-# Get gnulib files.
+if [ "$use_git" = false ] && [ ! -d "$GNULIB_SRCDIR" ]; then
+  echo >&2 "$0: Error: --no-git requires --gnulib-srcdir: $GNULIB_SRCDIR"
+  exit 1
+fi
 
-case ${GNULIB_SRCDIR--} in
--)
-  echo "$0: getting gnulib files..."
-  git submodule init || exit $?
-  git submodule update || exit $?
-  GNULIB_SRCDIR=.gnulib
-  ;;
-*)
-  # Redirect the gnulib submodule to the directory on the command line
-  # if possible.
-  if test -d "$GNULIB_SRCDIR"/.git && \
-	git config --file .gitmodules submodule.gnulib.url >/dev/null; then
-    git submodule init
-    GNULIB_SRCDIR=`cd $GNULIB_SRCDIR && pwd`
-    git config --replace-all submodule.gnulib.url $GNULIB_SRCDIR
+# Get gnulib files.
+if [ "$use_git" = true ]; then
+  case ${GNULIB_SRCDIR--} in
+  -)
     echo "$0: getting gnulib files..."
+    git submodule init || exit $?
     git submodule update || exit $?
     GNULIB_SRCDIR=.gnulib
-  else
-    echo >&2 "$0: invalid gnulib srcdir: $GNULIB_SRCDIR"
-    exit 1
-  fi
-  ;;
-esac
+    ;;
+  *)
+    # Redirect the gnulib submodule to the directory on the command line
+    # if possible.
+    if test -d "$GNULIB_SRCDIR"/.git && \
+      git config --file .gitmodules submodule.gnulib.url >/dev/null; then
+      git submodule init
+      GNULIB_SRCDIR=`cd $GNULIB_SRCDIR && pwd`
+      git config --replace-all submodule.gnulib.url $GNULIB_SRCDIR
+      echo "$0: getting gnulib files..."
+      git submodule update || exit $?
+      GNULIB_SRCDIR=.gnulib
+    else
+      echo >&2 "$0: invalid gnulib srcdir: $GNULIB_SRCDIR"
+      exit 1
+    fi
+    ;;
+  esac
+fi
 
 gnulib_tool=$GNULIB_SRCDIR/gnulib-tool
 <$gnulib_tool || exit
