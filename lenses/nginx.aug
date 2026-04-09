@@ -33,10 +33,14 @@ autoload xfm
 
 (* Variable: word *)
 let word = /[A-Za-z0-9_.:-]+/
+(* Variable: sub_type_word
+  According to https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
+*)
+let sub_type_work = /[A-Za-z.-]+[0-9_]*/
 
 (* Variable: block_re
      The keywords reserved for block entries *)
-let block_re = "http" | "events" | "server" | "mail" | "stream"
+let block_re = "http" | "events" | "server" | "mail" | "stream" | "types"
 
 (* All block keywords, including the ones we treat specially *)
 let block_re_all = block_re | "if" | "location" | "geo" | "map"
@@ -47,9 +51,10 @@ let block_re_all = block_re | "if" | "location" | "geo" | "map"
 let simple =
      let kw = word - block_re_all
   in let mask = [ label "mask" . Util.del_str "/" . store Rx.integer ]
+  in let sub_type = [ label "sub_type" . Util.del_str "/" . store sub_type_word ]
   in let sto = store /[^ \t\n;#]([^";#]|"[^"]*\")*/
   in [ Util.indent .
-       key kw . mask? .
+       key kw . (sub_type | mask)? .
        (Sep.space . sto)? . Sep.semicolon .
        (Util.eol|Util.comment_eol) ]
 
