@@ -1933,14 +1933,7 @@ tree_source(const augeas *aug, struct tree *tree) {
         tree = tree->parent;
 
     if (tree->file) {
-        if (tree->span == NULL) {
-            int r;
-            r = ALLOC(tree->span);
-            ERR_NOMEM(r < 0, aug);
-            tree->span->filename = make_string(path_of_tree(tree));
-            ERR_NOMEM(tree->span->filename == NULL, aug);
-        }
-        result = strdup(tree->span->filename->str);
+        result = path_of_tree(tree);
         ERR_NOMEM(result == NULL, aug);
     }
  error:
