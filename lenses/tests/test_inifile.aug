@@ -39,6 +39,7 @@ test_ace = value # end of line comment
 test_ace =
 test_ace = \"value with spaces\"
 ; comment with colon
+test_ace = value_with_trailing_comment #
 
 "
   (* Test: lns_ace
@@ -52,6 +53,8 @@ test_ace = \"value with spaces\"
 	  { "test_ace" }
           { "test_ace" = "value with spaces" }
 	  { "#comment"  = "comment with colon" }
+          { "test_ace" = "value_with_trailing_comment"
+             {} }
 	  {} }
 
   test lns_ace put conf_ace after
@@ -62,6 +65,7 @@ test_ace = value # end of line comment
 test_ace =
 test_ace = \"value with spaces\"
 ; comment with colon
+test_ace = value_with_trailing_comment #
 
 foo=yes
 "
@@ -372,6 +376,8 @@ ticket_243 = \"value1;value2#value3\" # end of line comment
     { "test_ace" }
     { "test_ace" = "value with spaces" }
     { "#comment" = "comment with colon" }
+    { "test_ace" = "value_with_trailing_comment"
+      {} }
     {  }
   }
 
@@ -388,6 +394,8 @@ ticket_243 = \"value1;value2#value3\" # end of line comment
     { "test_ace" }
     { "test_ace" = "value with spaces" }
     { "#comment" = "comment with colon" }
+    { "test_ace" = "value_with_trailing_comment"
+      {} }
     {  }
   }
   
