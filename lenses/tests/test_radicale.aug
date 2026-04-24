@@ -18,6 +18,7 @@ module Test_radicale =
 [logging]
 
 [headers]
+Content-Security-Policy = default-src 'self'; object-src 'none'
 
 "
 
@@ -40,6 +41,7 @@ module Test_radicale =
       { "logging"
          {} }
       { "headers"
+         { "Content-Security-Policy" = "default-src 'self'; object-src 'none'" }
          {} }
 
     test Radicale.lns put conf after
@@ -48,7 +50,8 @@ module Test_radicale =
        set "well-known/caldav" "/radicale/%(user)s/caldav/";
        set "well-known/cardav" "/radicale/%(user)s/carddav/";
        set "auth/type" "remote_user";
-       set "rights/type" "owner_only"
+       set "rights/type" "owner_only";
+       set "headers/Content-Security-Policy" "default-src 'self'; object-src 'none'"
     = "
 [server]
 
@@ -73,5 +76,6 @@ type=owner_only
 [logging]
 
 [headers]
+Content-Security-Policy = default-src 'self'; object-src 'none'
 
 "
