@@ -18,6 +18,8 @@ let eq = Sep.equal
 (* View: word *)
 let word = /[^=\n\t ]+/
 
+let words = word . ( / +/ . word )*
+
 (* View: item_re *)
 let item_re = /[^#=\n\t\/ ]+/ - (/command\[[^]\/\n]+\]/ | "include" | "include_dir")
 
@@ -41,7 +43,7 @@ let command =
 
      > allow_bash_command_substitution=0
 *)
-let item = [ key item_re . eq . store word . eol ]
+let item = [ key item_re . eq . store words . eol ]
 
 (* View: include
     An include entry.
