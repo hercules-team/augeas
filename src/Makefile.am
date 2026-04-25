@@ -7,14 +7,14 @@ AM_YFLAGS=-d -p spec_
 
 EXTRA_DIST = try augeas_sym.version fa_sym.version
 
-BUILT_SOURCES = datadir.h
+BUILT_SOURCES = datadir.h parser.h
 
 DISTCLEANFILES = datadir.h
 
 lib_LTLIBRARIES = libfa.la libaugeas.la
 noinst_LTLIBRARIES = liblexer.la
 
-bin_PROGRAMS = augtool augparse
+bin_PROGRAMS = augtool augparse augmatch augprint
 
 include_HEADERS = augeas.h fa.h
 
@@ -43,6 +43,12 @@ augtool_LDADD = libaugeas.la $(READLINE_LIBS) $(LIBXML_LIBS) $(GNULIB)
 augparse_SOURCES = augparse.c
 augparse_LDADD = libaugeas.la $(LIBXML_LIBS) $(GNULIB)
 
+augmatch_SOURCES = augmatch.c
+augmatch_LDADD = libaugeas.la $(LIBXML_LIBS) $(GNULIB)
+
+augprint_SOURCES = augprint.c augprint.h
+augprint_LDADD = libaugeas.la $(GNULIB)
+
 libfa_la_SOURCES = fa.c fa.h hash.c hash.h memory.c memory.h ref.h ref.c
 libfa_la_LIBADD = $(LIB_SELINUX) $(GNULIB)
 libfa_la_LDFLAGS = $(FA_VERSION_SCRIPT) -version-info $(LIBFA_VERSION_INFO)
@@ -65,3 +71,8 @@ FORCE-datadir.h: Makefile
 	$(top_srcdir)/build/ac-aux/move-if-change datadir.h1 datadir.h
 
 datadir.h: FORCE-datadir.h
+
+#bashcompdir = @bashcompdir@
+bashcompdir = $(datadir)/bash-completion/completions
+dist_bashcomp_DATA = bash-completion/augtool bash-completion/augmatch bash-completion/augprint
+

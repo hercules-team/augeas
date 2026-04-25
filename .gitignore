@@ -33,8 +33,10 @@ ylwrap
 src/datadir.h
 src/parser.[ch]
 src/lexer.[ch]
+src/augmatch
 src/augtool
 src/augparse
+src/augprint
 src/callgrind.*
 tests/fatest
 tests/leak
@@ -53,5 +55,6 @@ tests/*.trs
 man/*.1
 doc/naturaldocs/output
 doc/naturaldocs/conf/*/Data/*.nd
+examples/dump
 examples/fadot
 .settings

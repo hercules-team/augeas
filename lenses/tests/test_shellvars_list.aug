@@ -75,7 +75,7 @@ FAILSAVE_APPEND=\"console=ttyS0\"
       { "value" = "test\"1" }
       { "value" = "test2" } }
 
-  (* emtpy list with quotes *)
+  (* empty list with quotes *)
   test Shellvars_list.lns get "VAR=''\n" =
     { "VAR"
       { "quote" = "'" } }

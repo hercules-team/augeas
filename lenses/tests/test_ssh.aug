@@ -5,6 +5,9 @@ module Test_ssh =
 "# start
 IdentityFile /etc/ssh/identity.asc
 
+Match final all
+   GSSAPIAuthentication yes
+
 Host suse.cz
    ForwardAgent yes
 SendEnv LC_LANG
@@ -30,6 +33,15 @@ PubkeyAcceptedKeyTypes ssh-ed25519-cert-v01@openssh.com,ssh-ed25519,ssh-rsa-cert
     { "#comment" = "start" }
     { "IdentityFile" = "/etc/ssh/identity.asc" }
     { }
+    { "Match"
+      { "Condition"
+        { "final" = "all" }
+      }
+      { "Settings"
+        { "GSSAPIAuthentication" = "yes" }
+        {  }
+      }
+    }
     { "Host"	= "suse.cz"
 	{ "ForwardAgent"  = "yes" }
 	{ "SendEnv"
@@ -96,3 +108,25 @@ test Ssh.lns get "GlobalKnownHostsFile /etc/ssh/ssh_known_hosts /etc/ssh/ssh_kno
     { "2" = "/etc/ssh/ssh_known_hosts2" }
   }
 
+(* Keywords can be separated from their arguments with '=', too *)
+test Ssh.lns get "Host mail.watzmann.net
+  LocalForward=11111 mail.watzmann.net:110\n" =
+  { "Host" = "mail.watzmann.net"
+    { "LocalForward"
+      { "11111" = "mail.watzmann.net:110" } } }
+
+test Ssh.lns get "ForwardAgent=yes\n" =
+ { "ForwardAgent" = "yes" }
+
+test Ssh.lns get "ForwardAgent =\tyes\n" =
+ { "ForwardAgent" = "yes" }
+
+(* Issue #605 *)
+test Ssh.lns get "RekeyLimit 1G 1h\n" =
+  { "RekeyLimit"
+    { "amount" = "1G" }
+    { "duration" = "1h" } }
+
+test Ssh.lns get "RekeyLimit 1G\n" =
+  { "RekeyLimit"
+    { "amount" = "1G" } }

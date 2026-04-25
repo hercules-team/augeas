@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/sh
 
 # Make sure changing the value of root works
 

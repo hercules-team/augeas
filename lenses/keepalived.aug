@@ -189,7 +189,7 @@ let global_conf = global_defs | static_routes
 
 (*View: vrrp_sync_group_field *)
 let vrrp_sync_group_field =
-      let to_eol_re = /notify(_master|_backup|_fault)?/
+      let to_eol_re = /notify(_master|_backup|_fault|_stop|_deleted)?/
    in let flag_re = "smtp_alert"
    in field to_eol_re sto_to_eol
     | flag flag_re
@@ -202,7 +202,7 @@ let vrrp_sync_group = named_block "vrrp_sync_group" vrrp_sync_group_field
 let vrrp_instance_field =
       let word_re = "state" | "interface" | "lvs_sync_daemon_interface"
    in let num_re = "virtual_router_id" | "priority" | "advert_int" | /garp_master_(delay|repeat|refresh|refresh_repeat)/
-   in let to_eol_re = /notify(_master|_backup|_fault)?/ | /(mcast|unicast)_src_ip/
+   in let to_eol_re = /notify(_master|_backup|_fault|_stop|_deleted)?/ | /(mcast|unicast)_src_ip/
    in let flag_re = "smtp_alert" | "nopreempt" | "ha_suspend" | "debug" | "use_vmac" | "vmac_xmit_base" | "native_ipv6" | "dont_track_primary" | "preempt_delay"
    in field word_re sto_word
     | field num_re sto_num

@@ -173,7 +173,7 @@ let double =
 let double_opt_re = /[^\n\t "]([^\n"]*[^\n\t "])?/
 
 (* View: double_opt
-     An optionaly double-quoted value
+     An optionally double-quoted value
      Double quotes are not allowed in value
      Value cannot begin or end with spaces *)
 let double_opt =
@@ -192,7 +192,7 @@ let single =
 let single_opt_re = /[^\n\t ']([^\n']*[^\n\t '])?/
 
 (* View: single_opt
-     An optionaly single-quoted value
+     An optionally single-quoted value
      Single quotes are not allowed in value
      Value cannot begin or end with spaces *)
 let single_opt =
@@ -211,7 +211,7 @@ let any =
 let any_opt_re = /[^\n\t "']([^\n"']*[^\n\t "'])?/
 
 (* View: any_opt
-     An optionaly quoted value
+     An optionally quoted value
      Double or single quotes are not allowed in value
      Value cannot begin or end with spaces *)
 let any_opt =

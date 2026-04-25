@@ -172,6 +172,29 @@ host all all .dev.example.com ldap ldapserver=auth.example.com ldaptls=1 ldappre
               { "option" = "ldapsuffix"
                 { "value" = ",ou=people,dc=example,dc=com" } } } }
 
+    let conf_issues = "# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
+# Issue 775 - auth-method may contain hyphens
+local   all         all                               scram-sha-256 sameuser
+host    all         all         127.0.0.1/32          scram-sha-256
+"
+    test Pg_Hba.lns get conf_issues =
+        { "#comment" = "TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD" }
+        { "#comment" = "Issue 775 - auth-method may contain hyphens" }
+        { "1"
+            { "type" = "local" }
+            { "database" = "all" }
+            { "user"  = "all" }
+            { "method" = "scram-sha-256"
+                { "option" = "sameuser" } }
+        }
+        { "2"
+            { "type" = "host" }
+            { "database" = "all" }
+            { "user"  = "all" }
+            { "address" = "127.0.0.1/32" }
+            { "method" = "scram-sha-256" }
+        }
+
     (* Unsupported yet *)
     (* test Pg_Hba.lns get "host \"db with spaces\" \"user with spaces\" 127.0.0.1/32 trust\n" =? *)
     (* test Pg_Hba.lns get "host \"db,with,commas\" \"user,with,commas\" 127.0.0.1/32 trust\n" =? *)

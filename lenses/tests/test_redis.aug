@@ -31,12 +31,17 @@ test Redis.lns get save_entry_quotes =
   { "keys" = "10000" }
 }
 
-let slaveof_entry = "slaveof 192.168.0.10 6379\n"
-test Redis.lns get slaveof_entry =
+let save_entry_empty = "save \"\"\n"
+test Redis.lns get save_entry_empty = { "save" = "" }
+
+let replicaof_entry = "slaveof 192.168.0.10 6379\nreplicaof 192.168.0.11 6380\n"
+test Redis.lns get replicaof_entry =
 { "slaveof"
   { "ip" = "192.168.0.10" }
-  { "port" = "6379" }
-}
+  { "port" = "6379" } }
+{ "replicaof"
+  { "ip" = "192.168.0.11" }
+  { "port" = "6380" } }
 
 let rename_command_entry = "rename-command CONFIG CONFIG2\n"
 test Redis.lns get rename_command_entry =
@@ -76,7 +81,7 @@ test Redis.lns get extra_whitespace_comment = { "#comment" = "another comment" }
 
 let redis_conf = "# Redis configuration file example
 
-# Note on units: when memory size is needed, it is possible to specifiy
+# Note on units: when memory size is needed, it is possible to specify
 # it in the usual form of 1k 5GB 4M and so forth:
 #
 # 1k => 1000 bytes
@@ -123,7 +128,7 @@ include /path/to/other.conf
 test Redis.lns get redis_conf =
   { "#comment" = "Redis configuration file example" }
   { }
-  { "#comment" = "Note on units: when memory size is needed, it is possible to specifiy" }
+  { "#comment" = "Note on units: when memory size is needed, it is possible to specify" }
   { "#comment" = "it in the usual form of 1k 5GB 4M and so forth:" }
   { }
   { "#comment" = "1k => 1000 bytes" }
@@ -150,7 +155,7 @@ test Redis.lns get redis_conf =
   { "#comment" = "If you want you can bind a single interface, if the bind option is not" }
   { "#comment" = "specified all the interfaces will listen for incoming connections." }
   { }
-  { "bind" = "127.0.0.1" }
+  { "bind" { "ip" = "127.0.0.1" } }
   { }
   { "#comment" = "Note: you can disable saving at all commenting all the \"save\" lines." }
   { }
@@ -179,3 +184,84 @@ test Redis.lns get redis_conf =
      Empty value (GH issue #115) *)
 test Redis.lns get "notify-keyspace-events \"\"\n" =
   { "notify-keyspace-events" = "" }
+
+(* Test: Redis.lns
+     Multiple bind IP addresses (GH issue #194) *)
+test Redis.lns get "bind 127.0.0.1 \"::1\" 192.168.1.1\n" =
+  { "bind"
+      { "ip" = "127.0.0.1" }
+      { "ip" = "::1" }
+      { "ip" = "192.168.1.1" } }
+
+test Redis.lns get "bind 127.0.0.1\n bind 192.168.1.1\n" =
+  { "bind"
+    { "ip" = "127.0.0.1" } }
+  { "bind"
+    { "ip" = "192.168.1.1" } }
+
+let sentinel_conf = "sentinel myid ccae7d051dfaa62078cb3ac3dec100240e637d5a
+sentinel deny-scripts-reconfig yes
+sentinel monitor Master 8.8.8.8 6379 2
+sentinel monitor Othercluster 1.1.1.1 6380 4
+sentinel config-epoch Master 693
+sentinel leader-epoch Master 691
+sentinel known-replica Master 4.4.4.4 6379
+sentinel known-replica Master 1.1.1.1 6379
+sentinel known-sentinel Master 4.4.4.4 26379 9bbd89f3846b5366f7da4d20b516fdc3f5c3a993
+sentinel known-sentinel Master 1.1.1.1 26379 f435adae0efeb9d5841712d05d7399f7584f333b
+sentinel known-sentinel Othercluster 4.4.4.4 26379 9bbd89f3846b5366f7da4d20b516fdc3f5c3a993
+sentinel known-sentinel Othercluster 1.1.1.1 26379 f435adae0efeb9d5841712d05d7399f7584f333b
+sentinel current-epoch 693
+"
+
+test Redis.lns get sentinel_conf =
+  { "sentinel" = "myid"
+    { "value" = "ccae7d051dfaa62078cb3ac3dec100240e637d5a" } }
+  { "sentinel" = "deny-scripts-reconfig"
+     { "value" = "yes" } }
+  { "sentinel" = "monitor"
+      { "cluster" = "Master" }
+      { "ip" = "8.8.8.8" }
+      { "port" = "6379" }
+      { "quorum" = "2" } }
+  { "sentinel" = "monitor"
+      { "cluster" = "Othercluster" }
+      { "ip" = "1.1.1.1" }
+      { "port" = "6380" }
+      { "quorum" = "4" } }
+  { "sentinel" = "config-epoch"
+      { "cluster" = "Master" }
+      { "epoch" = "693" } }
+  { "sentinel" = "leader-epoch"
+      { "cluster" = "Master" }
+      { "epoch" = "691" } }
+  { "sentinel" = "known-replica"
+      { "cluster" = "Master" }
+      { "ip" = "4.4.4.4" }
+      { "port" = "6379" } }
+  { "sentinel" = "known-replica"
+      { "cluster" = "Master" }
+      { "ip" = "1.1.1.1" }
+      { "port" = "6379" } }
+  { "sentinel" = "known-sentinel"
+      { "cluster" = "Master" }
+      { "ip" = "4.4.4.4" }
+      { "port" = "26379" }
+      { "id"   = "9bbd89f3846b5366f7da4d20b516fdc3f5c3a993" } }
+  { "sentinel" = "known-sentinel"
+      { "cluster" = "Master" }
+      { "ip" = "1.1.1.1" }
+      { "port" = "26379" }
+      { "id"   = "f435adae0efeb9d5841712d05d7399f7584f333b" } }
+  { "sentinel" = "known-sentinel"
+      { "cluster" = "Othercluster" }
+      { "ip" = "4.4.4.4" }
+      { "port" = "26379" }
+      { "id"   = "9bbd89f3846b5366f7da4d20b516fdc3f5c3a993" } }
+  { "sentinel" = "known-sentinel"
+      { "cluster" = "Othercluster" }
+      { "ip" = "1.1.1.1" }
+      { "port" = "26379" }
+      { "id"   = "f435adae0efeb9d5841712d05d7399f7584f333b" } }
+  { "sentinel" = "current-epoch"
+      { "value" = "693" } }

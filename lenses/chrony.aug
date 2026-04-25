@@ -57,8 +57,11 @@ module Chrony =
 (************************************************************************
  * Group: Create required expressions
  ************************************************************************)
+    (* Variable: hex *)
+    let hex = /[0-9a-fA-F]+/
+
     (* Variable: number *)
-    let number = integer | decimal | decimal . /[eE]/ . integer
+    let number = integer | decimal | decimal . /[eE]/ . integer | hex
 
     (* Variable: address_re *)
     let address_re = Rx.ip | Rx.hostname
@@ -78,11 +81,16 @@ module Chrony =
     (* Variable: cmd_options
          Server/Peer/Pool options with values
     *)
-    let cmd_options = "key"
+    let cmd_options = "asymmetry"
+                    | "certset"
+                    | "extfield"
+                    | "filter"
+                    | "key"
                     | /maxdelay((dev)?ratio)?/
                     | /(min|max)poll/
                     | /(min|max)samples/
                     | "maxsources"
+                    | "mindelay"
                     | "offset"
                     | "polltarget"
                     | "port"
@@ -93,7 +101,7 @@ module Chrony =
          Server/Peer/Pool options without values
     *)
     let cmd_flags = "auto_offline"|"iburst"|"noselect"|"offline"|"prefer"
-                  |"require"|"trust"|"xleave"
+                  |"copy"|"require"|"trust"|"xleave"|"burst"|"nts"
 
     (* Variable: ntp_source
          Server/Peer/Pool key names
@@ -109,6 +117,7 @@ module Chrony =
          HW timestamping options with values
     *)
     let hwtimestamp_options = "minpoll"|"precision"|"rxcomp"|"txcomp"
+                            |"minsamples"|"maxsamples"|"rxfilter"
 
     (* Variable: hwtimestamp_flags
          HW timestamping options without values
@@ -135,12 +144,12 @@ module Chrony =
     *)
     let refclock_options = "refid"|"lock"|"poll"|"dpoll"|"filter"|"rate"
                             |"minsamples"|"maxsamples"|"offset"|"delay"
-                            |"precision"|"maxdispersion"
+                            |"precision"|"maxdispersion"|"stratum"|"width"
 
     (* Variable: refclock_flags
          refclock options without values
     *)
-    let refclock_flags = "noselect"|"prefer"|"require"|"trust"
+    let refclock_flags = "noselect"|"pps"|"prefer"|"require"|"tai"|"trust"
 
     (* Variable: flags
          Options without values
@@ -150,6 +159,7 @@ module Chrony =
               | "lock_all"
               | "manual"
               | "noclientlog"
+              | "nosystemcert"
               | "rtconutc"
               | "rtcsync"
 
@@ -162,19 +172,26 @@ module Chrony =
     (* Variable: simple_keys
          Options with single values
     *)
-    let simple_keys = "acquisitionport" | "bindacqaddress"
-                    | "bindaddress" | "bindcmdaddress" | "clientloglimit"
-                    | "combinelimit" | "commandkey"
+    let simple_keys = "acquisitionport" | "authselectmode" | "bindacqaddress"
+                    | "bindaddress" | "bindcmdaddress" | "bindacqdevice"
+                    | "bindcmddevice" | "binddevice" | "clientloglimit"
+                    | "clockprecision" | "combinelimit" | "commandkey"
                     | "cmdport" | "corrtimeratio" | "driftfile"
+                    | "dscp"
                     | "dumpdir" | "hwclockfile" | "include" | "keyfile"
                     | "leapsecmode" | "leapsectz" | "linux_freq_scale"
                     | "linux_hz" | "logbanner" | "logchange" | "logdir"
                     | "maxclockerror" | "maxdistance" | "maxdrift"
                     | "maxjitter" | "maxsamples" | "maxslewrate"
+                    | "maxntsconnections"
                     | "maxupdateskew" | "minsamples" | "minsources"
-                    | "ntpsigndsocket" | "pidfile"
+                    | "nocerttimecheck" | "ntsdumpdir" | "ntsntpserver"
+                    | "ntsport" | "ntsprocesses" | "ntsrefresh" | "ntsrotate"
+                    | "ntsservercert" | "ntsserverkey" | "ntstrustedcerts"
+                    | "ntpsigndsocket" | "pidfile" | "ptpport"
                     | "port" | "reselectdist" | "rtcautotrim" | "rtcdevice"
                     | "rtcfile" | "sched_priority" | "stratumweight" | "user"
+                    | "leapseclist"
 
 (************************************************************************
  * Group: Make some sub-lenses for use in later lenses
@@ -215,10 +232,11 @@ module Chrony =
       - mailonchange <emailaddress> <threshold>
       - makestep <threshold> <limit>
       - maxchange <threshold> <delay> <limit>
-      - ratelimit|cmdratelimit <options>
+      - ratelimit|cmdratelimit|ntsratelimit <options>
       - refclock <driver> <parameter> <options>
       - smoothtime <maxfreq> <maxwander> <options>
       - tempcomp <sensorfile> <interval> (<t0> <k0> <k1> <k2> | <pointfile> )
+      - confdir|sourcedir <directories>
     *)
 
     (* View: host_list
@@ -251,6 +269,13 @@ module Chrony =
                       . ( space . [ label "port" . store integer ] )?
                       . eol ]
 
+    (* View: bcast
+         confdir and sourcedir have specific syntax
+    *)
+    let dir_list = [ Util.indent . key /(conf|source)dir/
+                      . [ label "directory" . space . store no_space ]+
+                      . eol ]
+
     (* View: fdrift
          fallbackdrift has specific syntax
     *)
@@ -265,7 +290,8 @@ module Chrony =
     let hwtimestamp = [ Util.indent . key "hwtimestamp"
                       . space . [ label "interface" . store no_space ]
                       . ( space . ( [ key hwtimestamp_flags ]
-                         | [ key hwtimestamp_options . space . store number ] )
+                         | [ key hwtimestamp_options . space
+                             . store no_space ] )
                         )*
                       . eol ]
     (* View: istepslew
@@ -319,7 +345,7 @@ module Chrony =
     (* View: ratelimit
          ratelimit/cmdratelimit has specific syntax
     *)
-    let ratelimit = [ Util.indent . key /(cmd)?ratelimit/
+    let ratelimit = [ Util.indent . key /(cmd|nts)?ratelimit/
                       . [ space . key ratelimit_options
                               . space . store no_space ]*
                       . eol ]
@@ -371,7 +397,7 @@ module Chrony =
  *)
 let settings = host_list | allowdeny | log_list | bcast | fdrift | istepslew
              | local | email | makestep | maxchange | refclock | smoothtime
-             | hwtimestamp | ratelimit | tempcomp | kv | all_flags
+             | dir_list | hwtimestamp | ratelimit | tempcomp | kv | all_flags
 
 (*
  * View: lns

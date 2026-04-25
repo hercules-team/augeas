@@ -30,6 +30,48 @@ module Test_Opendkim =
   test Opendkim.lns put one_boolean_value after
     set "AddAllSignatureResults" "1" = one_boolean_value
 
+  let one_boolean_value_uppercase_yes = "AutoRestart Yes\n"
+  test Opendkim.lns get one_boolean_value_uppercase_yes =
+    { "AutoRestart" = "Yes" }
+  test Opendkim.lns put one_boolean_value_uppercase_yes after
+    set "AutoRestart" "Yes" = one_boolean_value_uppercase_yes
+
+  let one_boolean_value_uppercase_no = "AutoRestart No\n"
+  test Opendkim.lns get one_boolean_value_uppercase_no =
+    { "AutoRestart" = "No" }
+  test Opendkim.lns put one_boolean_value_uppercase_no after
+    set "AutoRestart" "No" = one_boolean_value_uppercase_no
+
+  let one_boolean_value_uppercase_true = "AutoRestart True\n"
+  test Opendkim.lns get one_boolean_value_uppercase_true =
+    { "AutoRestart" = "True" }
+  test Opendkim.lns put one_boolean_value_uppercase_true after
+    set "AutoRestart" "True" = one_boolean_value_uppercase_true
+
+  let one_boolean_value_uppercase_false = "AutoRestart False\n"
+  test Opendkim.lns get one_boolean_value_uppercase_false =
+    { "AutoRestart" = "False" }
+  test Opendkim.lns put one_boolean_value_uppercase_false after
+    set "AutoRestart" "False" = one_boolean_value_uppercase_false
+
+  let string_value_starting_with_number = "AutoRestartRate 10/1h\n"
+  test Opendkim.lns get string_value_starting_with_number =
+    { "AutoRestartRate" = "10/1h" }
+  test Opendkim.lns put string_value_starting_with_number after
+    set "AutoRestartRate" "10/1h" = string_value_starting_with_number
+
+  let string_value_containing_slash = "TrustAnchorFile /usr/share/dns/root.key\n"
+  test Opendkim.lns get string_value_containing_slash =
+    { "TrustAnchorFile" = "/usr/share/dns/root.key" }
+  test Opendkim.lns put string_value_containing_slash after
+    set "TrustAnchorFile" "/usr/share/dns/root.key" = string_value_containing_slash
+
+  let logwhy_keyword_boolean = "LogWhy Yes\n"
+  test Opendkim.lns get logwhy_keyword_boolean =
+    { "LogWhy" = "Yes" }
+  test Opendkim.lns put logwhy_keyword_boolean after
+    set "LogWhy" "Yes" = logwhy_keyword_boolean
+
   let three_type_value = "AddAllSignatureResults false\nADSPAction discard\nAutoRestartCount 2\n"
   test Opendkim.lns get three_type_value =
     { "AddAllSignatureResults" = "false" }
@@ -95,7 +137,7 @@ UMask     002
 
 # Always oversign From (sign using actual From and a null From to prevent
 # malicious signatures header fields (From and/or others) between the signer
-# and the verifier.  From is oversigned by default in the Debian pacakge
+# and the verifier.  From is oversigned by default in the Debian package
 # because it is often the identity key used by reputation systems and thus
 # somewhat security sensitive.
 OversignHeaders   From
@@ -130,7 +172,7 @@ OversignHeaders   From
   {  }
   { "#comment" = "Always oversign From (sign using actual From and a null From to prevent" }
   { "#comment" = "malicious signatures header fields (From and/or others) between the signer" }
-  { "#comment" = "and the verifier.  From is oversigned by default in the Debian pacakge" }
+  { "#comment" = "and the verifier.  From is oversigned by default in the Debian package" }
   { "#comment" = "because it is often the identity key used by reputation systems and thus" }
   { "#comment" = "somewhat security sensitive." }
   { "OversignHeaders" = "From" }

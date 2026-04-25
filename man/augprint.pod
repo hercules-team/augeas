@@ -1,0 +1,296 @@
+# vim:  expandtab
+=head1 NAME
+
+augprint - create an idempotent augtool script for a given file
+
+=head1 SYNOPSIS
+
+augprint [--pretty|-p] [--regexp[=n]|-r[n]] [--noseq|-s] [--verbose|-v] [--lens name|-l name] [--target /target|-t /target] FILE
+
+=head1 DESCRIPTION
+
+B<augprint> creates an augtool script for a given B<FILE>
+consisting primarily of C<set> commands.
+
+The resulting augtool script is designed to be idempotent, and
+will not result in any changes when applied to the original file.
+
+B<augprint> replaces each numbered location in the tree with
+a path-expression that uniquely identifies the position using the values
+I<within> that position.
+
+This makes the path-expression independant of the position-number,
+and thereby applicable to files which in which the same data may exist at
+an alternate position-number
+
+See "Examples" for sample output
+
+=head2 Regexp output
+
+By default B<augprint> produces path-expressions made up of simple equality C<=> comparisions
+
+  set /files/etc/hosts/seq::*[ipaddr='127.0.0.1']/ipaddr '127.0.0.1'
+
+The option B<--regexp> changes the output to produce regular expression comparisions
+
+  set /files/etc/hosts/seq::*[ipaddr=~regexp('127\\.0\\..*')]/ipaddr '127.0.0.1'
+
+The minimum length I<N> of the regular expression can be specified using C<--regexp=N>
+
+B<augprint> will choose a longer regular expression than I<N> if multiple values
+would match using the I<N> character regular expression.
+
+=head2 Limitations
+
+=head3 Append-only
+
+The output is based primarily on set operations.
+The set operation can only:
+
+a) change an existing value in-situ
+
+b) append a new value after the last position in the group
+
+This means that when an entry is re-created, it may not be in the same position as originally intended.
+ie if the entry for C<192.0.2.3> does not already exist, it will be created as the I<last> entry in F</etc/hosts>
+
+Often, such out-of-sequence entries will not matter to the resulting configuration file.
+If it does matter, further manual editing of the C<augtool> script will be required.
+
+=head3 Repeated Values
+
+B<augprint> is not always successful in finding a path-expression which is unique to a position.
+In this case B<augprint> appends a position to an expression which is not unique
+
+This occurs in particular if there are repeated values within the file.
+
+For an F</etc/hosts> file of
+
+  #------
+  192.0.2.3   defaultdns
+  #------
+
+B<augprint> would produce the output
+
+  set /files/etc/hosts/#comment[.='--------'][1] '--------'
+  set /files/etc/hosts/seq::*[ipaddr='192.0.2.3']/ipaddr '192.0.2.3'
+  set /files/etc/hosts/seq::*[ipaddr='192.0.2.3']/canonical 'defaultdns'
+  set /files/etc/hosts/#comment[.='--------'][2] '--------'
+
+Notice how C<#comment> paths have C<[1]> and C<[2]> appended respectively to the C<[expr]>
+
+Other paths which do have unique path-expressions are not directly affected
+
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-v>, B<--verbose>
+
+Include the original numbered paths as comments in the output
+
+=item B<-p>, B<--pretty>
+
+Create more readable output by adding spaces and empty lines
+
+=item B<-r>, B<-r>I<N>, B<--regexp>, B<--regexp>=I<N>
+
+Generate regular expressions to match values,
+using a minumum length of I<N> characters from the value
+
+I<N>  can be omitted and defaults to 8
+
+=item B<-l>, B<--lens>=I<LENS>
+
+Use I<LENS> for the given file; without this option, B<augprint> uses the
+default lens for the file
+
+=item B<-t> I<targetfile>, B<--target>=I<targetfile>
+
+Generate the script for the I<FILE> specified as if its path was really I<targetfile>
+
+This will apply the lens corresponding to I<targetfile> to I<FILE>
+and modifying the resulting path-expressions of I<FILE> to correspond to I<targetfile>
+
+I<targetfile> must be the full path name, starting with a '/'
+
+See "Examples" for how B<--target> can be used in practice
+
+=item B<-s>, B<--noseq>
+
+Do not use C<seq::*> in the output, use C<*> instead.
+For example
+
+  set /files/etc/hosts/*[ipaddr='127.0.0.1']/ipaddr '127.0.0.1'
+
+IMPORTANT: The resulting output will no longer I<create> a new entry
+for C<127.0.0.1> if none already exists. The C<--noseq> option exists so
+that the resulting paths can be used with augeas versions prior to 1.13.0
+(subject to this limitation)
+
+=back
+
+=head1 EXAMPLES
+
+These examples use the following F</etc/hosts> file as the I<FILE>
+
+  127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+  192.0.2.3   dns-a
+  192.0.2.4   dns-b
+
+The output from C<augtool 'print /files/etc/hosts'> would be
+
+  /files/etc/hosts
+  /files/etc/hosts/1
+  /files/etc/hosts/1/ipaddr = "127.0.0.1"
+  /files/etc/hosts/1/canonical = "localhost"
+  /files/etc/hosts/1/alias[1] = "localhost.localdomain"
+  /files/etc/hosts/1/alias[2] = "localhost4"
+  /files/etc/hosts/1/alias[3] = "localhost4.localdomain4"
+  /files/etc/hosts/2
+  /files/etc/hosts/2/ipaddr = "192.0.2.3"
+  /files/etc/hosts/2/canonical = "dns-a"
+  /files/etc/hosts/3
+  /files/etc/hosts/3/ipaddr = "192.0.2.4"
+  /files/etc/hosts/3/canonical = "dns-b"
+
+=head2 Default output
+
+C<augprint /etc/hosts>
+
+  set /files/etc/hosts/seq::*[ipaddr='127.0.0.1']/ipaddr '127.0.0.1'
+  set /files/etc/hosts/seq::*[ipaddr='127.0.0.1']/canonical 'localhost'
+  set /files/etc/hosts/seq::*[ipaddr='127.0.0.1']/alias[.='localhost.localdomain'] 'localhost.localdomain'
+  set /files/etc/hosts/seq::*[ipaddr='127.0.0.1']/alias[.='localhost4'] 'localhost4'
+  set /files/etc/hosts/seq::*[ipaddr='127.0.0.1']/alias[.='localhost4.localdomain4'] 'localhost4.localdomain4'
+  set /files/etc/hosts/seq::*[ipaddr='192.0.2.3']/ipaddr '192.0.2.3'
+  set /files/etc/hosts/seq::*[ipaddr='192.0.2.3']/canonical 'dns-a'
+  set /files/etc/hosts/seq::*[ipaddr='192.0.2.4']/ipaddr '192.0.2.4'
+  set /files/etc/hosts/seq::*[ipaddr='192.0.2.4']/canonical 'dns-b'
+
+=head2 Verbose output
+
+C<augprint --verbose /etc/hosts>
+
+  #   /files/etc/hosts
+  #   /files/etc/hosts/1
+  #   /files/etc/hosts/1/ipaddr  '127.0.0.1'
+  set /files/etc/hosts/seq::*[ipaddr='127.0.0.1']/ipaddr '127.0.0.1'
+  #   /files/etc/hosts/1/canonical  'localhost'
+  set /files/etc/hosts/seq::*[ipaddr='127.0.0.1']/canonical 'localhost'
+  #   /files/etc/hosts/1/alias[1]  'localhost.localdomain'
+  set /files/etc/hosts/seq::*[ipaddr='127.0.0.1']/alias[.='localhost.localdomain'] 'localhost.localdomain'
+  ...
+
+=head2 Rexexp output
+
+C<augprint --regexp=4 /etc/hosts>
+
+  set /files/etc/hosts/seq::*[ipaddr=~regexp('127\\..*')]/ipaddr '127.0.0.1'
+  set /files/etc/hosts/seq::*[ipaddr=~regexp('127\\..*')]/canonical 'localhost'
+  set /files/etc/hosts/seq::*[ipaddr=~regexp('127\\..*')]/alias[.=~regexp('localhost\\..*')] 'localhost.localdomain'
+  set /files/etc/hosts/seq::*[ipaddr=~regexp('127\\..*')]/alias[.=~regexp('localhost4')] 'localhost4'
+  set /files/etc/hosts/seq::*[ipaddr=~regexp('127\\..*')]/alias[.=~regexp('localhost4\\..*')] 'localhost4.localdomain4'
+  set /files/etc/hosts/seq::*[ipaddr=~regexp('192\\.0\\.2\\.3')]/ipaddr '192.0.2.3'
+  set /files/etc/hosts/seq::*[ipaddr=~regexp('192\\.0\\.2\\.3')]/canonical 'dns-a'
+  set /files/etc/hosts/seq::*[ipaddr=~regexp('192\\.0\\.2\\.4')]/ipaddr '192.0.2.4'
+  set /files/etc/hosts/seq::*[ipaddr=~regexp('192\\.0\\.2\\.4')]/canonical 'dns-b'
+
+Note that although a I<minimum> length of 4 has been specified, B<augprint> will choose longer regular expressions
+as needed to ensure a unique match.
+
+=head2 Using --lens
+
+If a file is not assocatiated with a lens by default, I<--lens lensname> can be used to specify a lens.
+
+When I<--lens>  is specified, the output is prefixed with suitable C<transform> and C<load-file> statements,
+as required to complete the augtool script, and a I<setm> statement to exclude other autoloaded lenses.
+
+C<augprint --lens shellvars /etc/skel/.bashrc>
+
+  setm /augeas/load/*[incl='/etc/skel/.bashrc' and label() != 'shellvars']/excl '/etc/skel/.bashrc'
+  transform shellvars incl /etc/skel/.bashrc
+  load-file /etc/skel/.bashrc
+  set /files/etc/skel/.bashrc/#comment[.='.bashrc'] '.bashrc'
+  set /files/etc/skel/.bashrc/#comment[.='Source global definitions'] 'Source global definitions'
+  set /files/etc/skel/.bashrc/@if[.='[ -f /etc/bashrc ]'] '[ -f /etc/bashrc ]'
+  set /files/etc/skel/.bashrc/@if[.='[ -f /etc/bashrc ]']/.source '/etc/bashrc'
+  set /files/etc/skel/.bashrc/#comment[.='User specific environment'] 'User specific environment'
+  ...
+
+The lenses C<simplelines>  C<shellvars> are most commonly useful as lenses for files that do not have
+a specific lens
+
+=head2 Using --target
+
+In order to prepare an augtool script intended for a given file, it may be desired to
+copy the file to another location, rather than editting the original file.
+
+The option I<--target> simplifies this process.
+
+a) copy F</etc/hosts> to a new location
+
+   cp /etc/hosts ~
+
+b) edit F<~/hosts> to suit
+
+   echo '192.0.2.7   defaultdns' >> ~/hosts
+
+c) Run C<augprint> as follows
+
+   augprint --target /etc/hosts ~/hosts
+
+d) Copy the relevant part of the output to an augtool script or other Augeas client
+
+   set /files/etc/hosts/seq::*[ipaddr='192.0.2.7']/ipaddr '192.0.2.7'
+   set /files/etc/hosts/seq::*[ipaddr='192.0.2.7']/canonical 'defaultdns'
+
+Notice that C<augprint> has generated paths corresponding to I<--target> (/etc/hosts) instead of the I<FILE> argument (~/hosts)
+
+
+
+=head1 ENVIRONMENT VARIABLES
+
+=over 4
+
+=item B<AUGEAS_ROOT>
+
+The effective file system root, defaults to '/'.
+
+=item B<AUGEAS_LENS_LIB>
+
+Colon separated list of directories with lenses. Directories specified here
+are searched before the default directories F</usr/share/augeas/lenses> and
+F</usr/share/augeas/lenses/dist>
+
+=back
+
+=head1 EXIT STATUS
+
+The exit status is 0 when the command was successful
+and 1 if any error occurred.
+
+=head1 FILES
+
+Lenses and schema definitions in F</usr/share/augeas/lenses> and
+F</usr/share/augeas/lenses/dist>
+
+=head1 AUTHOR
+
+George Hansper <george@hansper.id.au>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2022 George Hansper
+
+Augeas (and augprint) are distributed under the GNU Lesser General Public
+License (LGPL), version 2.1
+
+=head1 SEE ALSO
+
+augtool(1)
+
+B<Augeas> project homepage L<https://www.augeas.net/>
+
+B<Augeas> path expressions L<https://github.com/hercules-team/augeas/wiki/Path-expressions>

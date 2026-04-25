@@ -27,9 +27,16 @@ let macro_rx = /[^,# \n\t][^#\n]*[^,# \n\t]|[^,# \n\t]/
 let macro = [ key /$[A-Za-z0-9]+/ . Sep.space . store macro_rx . Util.comment_or_eol ]
 
 let config_object_param = [ key /[A-Za-z.]+/ . Sep.equal . Quote.dquote
-                          . store /[^"]+/ . Quote.dquote ]
-let config_object = [ key /action|global|input|module|parser|timezone/ . Sep.lbracket
-                    . config_object_param . ( Sep.space . config_object_param )* . Sep.rbracket . Util.comment_or_eol ]
+                            . store /[^"]+/ . Quote.dquote ]
+(* Inside config objects, we allow embedded comments; we don't surface them
+ * in the tree though *)
+let config_sep = del /[ \t]+|[ \t]*#.*\n[ \t]*/ " "
+
+let config_object =
+  [ key /action|global|input|module|parser|timezone|include/ .
+    Sep.lbracket .
+    config_object_param . ( config_sep . config_object_param )* .
+    Sep.rbracket . Util.comment_or_eol ]
 
 (* View: users
    Map :omusrmsg: and a list of users, or a single *
@@ -42,15 +49,33 @@ let omusrmsg = Util.del_str ":omusrmsg:" .
    File action with a specified template *)
 let file_tmpl = Syslog.file . [ label "template" . Util.del_str ";" . store Rx.word ]
 
+let dynamic = [ Util.del_str "?" . label "dynamic" . store Rx.word ]
+
 let namedpipe = Syslog.pipe . Sep.space . [ label "pipe" . store Syslog.file_r ]
 
-let action = Syslog.action | omusrmsg | file_tmpl | namedpipe
+let action = Syslog.action | omusrmsg | file_tmpl | dynamic | namedpipe
+
+(* Cannot use syslog program because rsyslog does not suppport #! *)
+let program = [ label "program" . Syslog.bang .
+    ( Syslog.opt_plus | [ Build.xchgs "-" "reverse" ] ) .
+    Syslog.programs . Util.eol .  Syslog.entries ]
+
+(* Cannot use syslog hostname because rsyslog does not suppport #+/- *)
+let hostname = [ label "hostname" .
+      ( Syslog.plus | [ Build.xchgs "-" "reverse" ] ) .
+      Syslog.hostnames . Util.eol .  Syslog.entries ]
+
+(* View: actions *)
+let actions =
+     let prop_act  = [ label "action" . action ]
+  in let act_sep = del /[ \t]*\n&[ \t]*/ "\n& "
+  in Build.opt_list prop_act act_sep
 
 (* View: entry
    An entry contains selectors and an action
 *)
 let entry = [ label "entry" . Syslog.selectors . Syslog.sep_tab .
-              [ label "action" . action ] . Util.eol ]
+              actions . Util.eol ]
 
 (* View: prop_filter
    Parses property-based filters, which start with ":" and the property name *)
@@ -59,15 +84,15 @@ let prop_filter =
   in let prop_name = [ Util.del_str ":" . label "property" . store Rx.word ]
   in let prop_oper = [ label "operation" . store /[A-Za-z!-]+/ ]
   in let prop_val  = [ label "value" . Quote.do_dquote (store /[^\n"]*/) ]
-  in let prop_act  = [ label "action" . action ]
   in [ label "filter" . prop_name . sep . prop_oper . sep . prop_val .
-       Sep.space . prop_act . Util.eol ]
+       Sep.space . actions . Util.eol ]
 
-let entries = ( Syslog.empty | Syslog.comment | entry | macro | config_object | prop_filter )*
+let entries = ( Syslog.empty | Util.comment | entry | macro | config_object | prop_filter )*
 
-let lns = entries . ( Syslog.program | Syslog.hostname )*
+let lns = entries . ( program | hostname )*
 
 let filter = incl "/etc/rsyslog.conf"
+           . incl "/etc/rsyslog.d/*"
+           . Util.stdexcl
 
 let xfm = transform lns filter
-

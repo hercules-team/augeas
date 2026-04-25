@@ -37,7 +37,7 @@ static void usage(void) {
     fprintf(stderr, "Usage: %s [OPTIONS] MODULE\n", progname);
     fprintf(stderr, "Evaluate MODULE. Generally, MODULE should contain unit tests.\n");
     fprintf(stderr, "\nOptions:\n\n");
-    fprintf(stderr, "  -I, --include DIR  search DIR for modules; can be given mutiple times\n");
+    fprintf(stderr, "  -I, --include DIR  search DIR for modules; can be given multiple times\n");
     fprintf(stderr, "  -t, --trace        trace module loading\n");
     fprintf(stderr, "  --nostdinc         do not search the builtin default directories for modules\n");
     fprintf(stderr, "  --notypecheck      do not typecheck lenses\n");
@@ -130,6 +130,7 @@ int main(int argc, char **argv) {
 
     if (print_version) {
         print_version_info(aug);
+        aug_close(aug);
         return EXIT_SUCCESS;
     }
 
@@ -139,6 +140,7 @@ int main(int argc, char **argv) {
         if (s != NULL) {
             fprintf(stderr, "%s\n", s);
         }
+        aug_close(aug);
         exit(EXIT_FAILURE);
     }
 

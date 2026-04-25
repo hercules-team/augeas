@@ -30,7 +30,7 @@ BROWSE_MODE="yes"
 #
 # Define server URIs
 #
-# LDAP_URI - space seperated list of server uris of the form
+# LDAP_URI - space separated list of server uris of the form
 # 	     <proto>://<server>[/] where <proto> can be ldap
 # 	     or ldaps. The option can be given multiple times.
 # 	     Map entries that include a server name override

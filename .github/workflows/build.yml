@@ -1,0 +1,39 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - master
+      - gh_actions
+
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Install deps
+        run: sudo apt-get update && sudo apt-get -y install libxml2-dev libreadline-dev valgrind libtool-bin
+
+      - name: Autogen
+        run: ./autogen.sh
+
+      - name: ENOENT
+        run: sed -i '41s/ENOENT/ENOENT || errno == EINVAL/' gnulib/tests/test-readlink.h
+
+      - name: Configure
+        run: ./configure
+
+      - name: Make
+        run: make
+
+      - name: Make check
+        run: make check VERBOSE=1
+
+      - name: Valgrind
+        run: ./src/try valgrind

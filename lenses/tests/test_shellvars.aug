@@ -299,6 +299,13 @@ esac\n" =
     { ".source" = "/tmp/bar" }
   }
 
+  test Shellvars.lns get "foo() (
+  . /tmp/bar
+  )\n" =
+  { "@function" = "foo"
+    { ".source" = "/tmp/bar" }
+  }
+
   (* Dollar assignment *)
   test Shellvars.lns get "FOO=$(bar arg)\n" =
   { "FOO" = "$(bar arg)" }
@@ -450,7 +457,7 @@ esac\n" =
 
   (* Make sure to support empty comments *)
   test lns get "# foo
-  # 
+  #
   #
   foo=bar
   #\n" =
@@ -604,6 +611,9 @@ esac\n" =
   test lns get "alias ls='ls $LS_OPTIONS'\n" =
     { "@alias" = "ls" { "value" = "'ls $LS_OPTIONS'" } }
 
+  test lns get "alias ls-options='ls $LS_OPTIONS'\n" =
+    { "@alias" = "ls-options" { "value" = "'ls $LS_OPTIONS'" } }
+
   (* Allow && and || constructs after condition *)
   test Shellvars.lns get "[ -f $FILENAME ] && do this || or that\n" =
   { "@condition" = "-f $FILENAME"
@@ -614,13 +624,13 @@ esac\n" =
 (* Test: Shellvars.lns
      Parse (almost) any command *)
 test Shellvars.lns get "echo foobar 'and this is baz'
-/usr/local/bin/myscript.sh with args
+/usr/local/bin/myscript-with-dash_and_underscore.sh with args
 echo foo \
 bar\n" =
   { "@command" = "echo"
     { "@arg" = "foobar 'and this is baz'" }
   }
-  { "@command" = "/usr/local/bin/myscript.sh"
+  { "@command" = "/usr/local/bin/myscript-with-dash_and_underscore.sh"
     { "@arg" = "with args" }
   }
   { "@command" = "echo"
@@ -724,12 +734,31 @@ test Shellvars.lns get "{ echo
 }\n" =
   { "@subshell"
     { "@command" = "echo" }
-  } 
+  }
 
 (* One-liner function *)
 test Shellvars.lns get "MyFunc() { echo; }\n" =
   { "@function" = "MyFunc"
     { "@command" = "echo" }
+  }
+
+(* Support and/or in if conditions *)
+test Shellvars.lns get "if [ -f /tmp/file1 ] && [ -f /tmp/file2 ] || [ -f /tmp/file3 ]; then
+  echo foo
+fi
+" =
+  { "@if" = "[ -f /tmp/file1 ]"
+      { "@and" = "[ -f /tmp/file2 ]" }
+      { "@or" = "[ -f /tmp/file3 ]" }
+      { "@command" = "echo"
+          { "@arg" = "foo" }
+      }
+  }
+
+(* Support variable as command *)
+test Shellvars.lns get "$FOO bar\n" =
+  { "@command" = "$FOO"
+      { "@arg" = "bar" }
   }
 
 
@@ -743,6 +772,10 @@ test Shellvars.lns get "MyFunc() { echo; }\n" =
 test Shellvars.lns get "FOO=bar && BAR=foo
 echo foo || { echo bar; }
 echo FOO | myfunc() { echo bar; }\n" = *
+
+
+(* Stream redirections (Issue #626 *)
+test Shellvars.lns get "echo foo 2>&1 >/dev/null\n" = *
 
 
 (* Local Variables: *)

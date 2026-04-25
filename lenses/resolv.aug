@@ -30,7 +30,7 @@ let comment = Util.comment_generic /[ \t]*[;#][ \t]*/ "# "
 let comment_eol = Util.comment_generic /[ \t]*[;#][ \t]*/ " # "
 
 (* View: empty *)
-let empty = Util.empty
+let empty = Util.empty_generic_dos /[ \t]*[#;]?[ \t]*/
 
 
 (************************************************************************
@@ -41,8 +41,8 @@ let empty = Util.empty
 A network mask for IP addresses *)
 let netmask = [ label "netmask" . Util.del_str "/" . store Rx.ip ]
 
-(* View: ipaddr 
-An IP address or range with an optional mask *) 
+(* View: ipaddr
+An IP address or range with an optional mask *)
 let ipaddr = [label "ipaddr" . store Rx.ip . netmask?]
 
 
@@ -58,7 +58,7 @@ let domain = Build.key_value_line_comment
 (* View: search *)
 let search = Build.key_value_line_comment
                     "search" Sep.space
-                    (Build.opt_list 
+                    (Build.opt_list
                            [label "domain" . store Rx.word]
                             Sep.space)
                     comment_eol
@@ -68,7 +68,7 @@ let sortlist = Build.key_value_line_comment
                     "sortlist" Sep.space
                     (Build.opt_list
                            ipaddr
-                           Sep.space) 
+                           Sep.space)
                     comment_eol
 
 (* View: lookup *)
@@ -97,18 +97,20 @@ let family =
 
 (* View: ip6_dotint
      ip6-dotint option, which supports negation *)
-let ip6_dotint = 
+let ip6_dotint =
   let negate = [ del "no-" "no-" . label "negate" ]
     in [ negate? . key "ip6-dotint" ]
 
-(* View: options 
+(* View: options
      Options values *)
 let options =
-      let options_entry = Build.key_value ("ndots"|"timeout"|"attempts") 
+      let options_entry = Build.key_value ("ndots"|"timeout"|"attempts")
                                           (Util.del_str ":") (store Rx.integer)
                         | Build.flag ("debug"|"rotate"|"no-check-names"
                                      |"inet6"|"ip6-bytestring"|"edns0"
-				     |"single-request-reopen")
+                                     |"single-request"|"single-request-reopen"
+                                     |"no-tld-query"|"use-vc"|"no-reload"
+                                     |"trust-ad")
                         | ip6_dotint
 
             in Build.key_value_line_comment
@@ -134,4 +136,3 @@ let lns = ( empty | comment | entry )*
 let filter = (incl "/etc/resolv.conf")
 
 let xfm = transform lns filter
-

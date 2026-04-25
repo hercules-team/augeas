@@ -223,7 +223,7 @@ char *escape(const char *text, int cnt, const char *extra) {
         return NULL;
     e = esc;
     for (int i=0; i < cnt; i++) {
-        char *p;
+        const char *p;
         if (text[i] && ((p = strchr(escape_chars, text[i])) != NULL)) {
             *e++ = '\\';
             *e++ = escape_names[p - escape_chars];
@@ -334,14 +334,10 @@ int __aug_close_memstream(struct memstream *ms) {
     return 0;
 }
 
-char *path_expand(struct tree *tree, const char *ppath) {
+int tree_sibling_index(struct tree *tree) {
     struct tree *siblings = tree->parent->children;
 
-    char *path;
-    const char *label;
-    char *escaped = NULL;
-
-    int cnt = 0, ind = 0, r;
+    int cnt = 0, ind = 0;
 
     list_for_each(t, siblings) {
         if (streqv(t->label, tree->label)) {
@@ -350,6 +346,21 @@ char *path_expand(struct tree *tree, const char *ppath) {
                 ind = cnt;
         }
     }
+
+    if (cnt > 1) {
+        return ind;
+    } else {
+        return 0;
+    }
+}
+
+char *path_expand(struct tree *tree, const char *ppath) {
+    char *path;
+    const char *label;
+    char *escaped = NULL;
+    int r;
+
+    int ind = tree_sibling_index(tree);
 
     if (ppath == NULL)
         ppath = "";
@@ -366,7 +377,7 @@ char *path_expand(struct tree *tree, const char *ppath) {
     if (escaped != NULL)
         label = escaped;
 
-    if (cnt > 1) {
+    if (ind > 0) {
         r = asprintf(&path, "%s/%s[%d]", ppath, label, ind);
     } else {
         r = asprintf(&path, "%s/%s", ppath, label);
@@ -420,8 +431,8 @@ char *cleanpath(char *path) {
 
 const char *xstrerror(int errnum, char *buf, size_t len) {
 #ifdef HAVE_STRERROR_R
-# ifdef __USE_GNU
-    /* Annoying linux specific API contract */
+# if defined(__USE_GNU) && defined(__GLIBC__)
+    /* Annoying GNU specific API contract */
     return strerror_r(errnum, buf, len);
 # else
     strerror_r(errnum, buf, len);

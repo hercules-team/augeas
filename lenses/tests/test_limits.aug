@@ -2,6 +2,7 @@ module Test_limits =
 
   let conf = "@audio - rtprio 99
 ftp hard nproc /ftp
+1200:2000 - as 1024
 * soft core 0
 "
 
@@ -14,6 +15,10 @@ ftp hard nproc /ftp
       { "type" = "hard" }
       { "item" = "nproc" }
       { "value" = "/ftp" } }
+    { "domain" = "1200:2000"
+      { "type" = "-" }
+      { "item" = "as" }
+      { "value" = "1024" } }
     { "domain" = "*"
       { "type" = "soft" }
       { "item" = "core" }
@@ -27,6 +32,7 @@ ftp hard nproc /ftp
     set "domain[last()]/value" "4096"
   = "@audio - rtprio 99
 ftp hard nproc /ftp
+1200:2000 - as 1024
 * soft core 0
 * - nofile 4096\n"
 

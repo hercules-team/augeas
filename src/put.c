@@ -57,13 +57,14 @@ struct split {
 struct state {
     FILE             *out;
     struct split     *split;
-    const char       *key;
-    const char       *value;
+    const struct tree *tree;
     const char       *override;
     struct dict      *dict;
     struct skel      *skel;
     char             *path;   /* Position in the tree, for errors */
     size_t            pos;
+    bool              with_span;
+    struct info      *info;
     struct lns_error *error;
 };
 
@@ -79,7 +80,8 @@ static void put_error(struct state *state, struct lens *lens,
     if (state->error != NULL)
         return;
 
-    CALLOC(state->error, 1);
+    if (ALLOC(state->error) < 0)
+        return;
     state->error->lens = ref(lens);
     state->error->pos  = -1;
     if (strlen(state->path) == 0) {
@@ -121,15 +123,15 @@ static void regexp_match_error(struct state *state, struct lens *lens,
 
     if (count == -1) {
         put_error(state, lens,
-                  "Failed to match tree\n\n%s\n  with pattern\n   %s",
-                  text, pat);
+                  "Failed to match tree under %s\n\n%s\n  with pattern\n   %s\n",
+                  state->path, text, pat);
     } else if (count == -2) {
         put_error(state, lens,
-                  "Internal error matching\n    %s\n  with tree\n   %s",
+                  "Internal error matching\n    %s\n  with tree\n   %s\n",
                   pat, text);
     } else if (count == -3) {
         /* Should have been caught by the typechecker */
-        put_error(state, lens, "Syntax error in tree schema\n    %s", pat);
+        put_error(state, lens, "Syntax error in tree schema\n    %s\n", pat);
     }
     free(pat);
     free(text);
@@ -173,7 +175,8 @@ static struct split *split_append(struct split **split, struct split *tail,
                                   struct tree *tree, struct tree *follow,
                                   char *enc, size_t start, size_t end) {
     struct split *sp;
-    CALLOC(sp, 1);
+    if (ALLOC(sp) < 0)
+        return NULL;
     sp->tree = tree;
     sp->follow = follow;
     sp->enc = enc;
@@ -209,6 +212,8 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
     struct split *split = NULL, *tail = NULL;
     struct regexp *atype = lens->atype;
 
+    MEMZERO(&regs, 1);
+
     /* Fast path for leaf nodes, which will always lead to an empty split */
     // FIXME: This doesn't match the empty encoding
     if (outer->tree == NULL && strlen(outer->enc) == 0
@@ -216,11 +221,12 @@ static struct split *split_concat(struct state *state, struct lens *lens) {
         for (int i=0; i < lens->nchildren; i++) {
             tail = split_append(&split, tail, NULL, NULL,
                                 outer->enc, 0, 0);
+            if (tail == NULL)
+                goto error;
         }
         return split;
     }
 
-    MEMZERO(&regs, 1);
     count = regexp_match(atype, outer->enc, outer->end,
                          outer->start, &regs);
     if (count >= 0 && count != outer->end - outer->start)
@@ -307,51 +313,8 @@ static int applies(struct lens *lens, struct state *state) {
     if (count != split->end - split->start)
         return 0;
     if (count == 0 && lens->value)
-        return state->value != NULL;
+        return state->tree->value != NULL;
     return 1;
-}
-
-/* Print TEXT to OUT, translating common escapes like \n */
-static void print_escaped_chars(FILE *out, const char *text) {
-    for (const char *c = text; *c != '\0'; c++) {
-        if (*c == '\\') {
-            char x;
-            c += 1;
-            if (*c == '\0') {
-                fputc(*c, out);
-                break;
-            }
-            switch(*c) {
-            case 'a':
-                x = '\a';
-                break;
-            case 'b':
-                x = '\b';
-                break;
-            case 'f':
-                x = '\f';
-                break;
-            case 'n':
-                x = '\n';
-                break;
-            case 'r':
-                x = '\r';
-                break;
-            case 't':
-                x = '\t';
-                break;
-            case 'v':
-                x = '\v';
-                break;
-            default:
-                x = *c;
-                break;
-            }
-            fputc(x, out);
-        } else {
-            fputc(*c, out);
-        }
-    }
 }
 
 /*
@@ -430,6 +393,30 @@ static int skel_instance_of(struct lens *lens, struct skel *skel) {
     return 0;
 }
 
+enum span_kind { S_NONE, S_LABEL, S_VALUE };
+
+static void emit(struct state *state, const char *text, enum span_kind kind) {
+    struct span* span = state->tree->span;
+
+    if (span != NULL) {
+        long start = ftell(state->out);
+        if (kind == S_LABEL) {
+            span->label_start = start;
+        } else if (kind == S_VALUE) {
+            span->value_start = start;
+        }
+    }
+    fprintf(state->out, "%s", text);
+    if (span != NULL) {
+        long end = ftell(state->out);
+        if (kind == S_LABEL) {
+            span->label_end = end;
+        } else if (kind == S_VALUE) {
+            span->value_end = end;
+        }
+    }
+}
+
 /*
  * put
  */
@@ -437,32 +424,41 @@ static void put_subtree(struct lens *lens, struct state *state) {
     assert(lens->tag == L_SUBTREE);
     struct state oldstate = *state;
     struct split oldsplit = *state->split;
-    size_t oldpathlen = strlen(state->path);
+    char *       oldpath = state->path;
 
     struct tree *tree = state->split->tree;
     struct split *split = NULL;
 
-    state->key = tree->label;
-    state->value = tree->value;
-    pathjoin(&state->path, 1, state->key);
+    state->tree = tree;
+    state->path = path_of_tree(tree);
 
     split = make_split(tree->children);
     set_split(state, split);
 
     dict_lookup(tree->label, state->dict, &state->skel, &state->dict);
+    if (state->with_span) {
+        if (tree->span == NULL) {
+            tree->span = make_span(state->info);
+        }
+        tree->span->span_start = ftell(state->out);
+    }
     if (state->skel == NULL || ! skel_instance_of(lens->child, state->skel)) {
         create_lens(lens->child, state);
     } else {
         put_lens(lens->child, state);
     }
     assert(state->error != NULL || state->split->next == NULL);
+    if (tree->span != NULL) {
+        tree->span->span_end = ftell(state->out);
+    }
 
     oldstate.error = state->error;
     oldstate.path = state->path;
     *state = oldstate;
     *state->split= oldsplit;
     free_split(split);
-    state->path[oldpathlen] = '\0';
+    free(state->path);
+    state->path = oldpath;
 }
 
 static void put_del(ATTRIBUTE_UNUSED struct lens *lens, struct state *state) {
@@ -470,9 +466,9 @@ static void put_del(ATTRIBUTE_UNUSED struct lens *lens, struct state *state) {
     assert(state->skel != NULL);
     assert(state->skel->tag == L_DEL);
     if (state->override != NULL) {
-        fprintf(state->out, "%s", state->override);
+        emit(state, state->override, S_NONE);
     } else {
-        fprintf(state->out, "%s", state->skel->text);
+        emit(state, state->skel->text, S_NONE);
     }
 }
 
@@ -518,7 +514,7 @@ static void put_concat(struct lens *lens, struct state *state) {
 }
 
 static void error_quant_star(struct split *last_split, struct lens *lens,
-                             struct state *state) {
+                             struct state *state, const char *enc) {
     struct tree *child = NULL;
     if (last_split != NULL) {
         if (last_split->follow != NULL) {
@@ -529,11 +525,25 @@ static void error_quant_star(struct split *last_split, struct lens *lens,
                  child = child->next);
         }
     }
+    char *text = NULL;
+    char *pat = NULL;
+
+    lns_format_atype(lens, &pat);
+    text = enc_format_indent(enc, strlen(enc), 4);
+
     if (child == NULL) {
-        put_error(state, lens, "Malformed child node");
+        put_error(state, lens,
+             "Missing a node: can not match tree\n\n%s\n with pattern\n   %s\n",
+                  text, pat);
     } else {
-        put_error(state, lens, "Malformed child node '%s'", child->label);
+        char *s = path_of_tree(child);
+        put_error(state, lens,
+          "Unexpected node '%s': can not match tree\n\n%s\n with pattern\n   %s\n",
+                  s, text, pat);
+        free(s);
     }
+    free(pat);
+    free(text);
 }
 
 static void put_quant_star(struct lens *lens, struct state *state) {
@@ -559,7 +569,7 @@ static void put_quant_star(struct lens *lens, struct state *state) {
         next_split(state);
     }
     if (state->pos != oldsplit->end)
-        error_quant_star(last_split, lens, state);
+        error_quant_star(last_split, lens, state, oldsplit->enc + state->pos);
     list_free(split);
     set_split(state, oldsplit);
     state->skel = oldskel;
@@ -578,18 +588,20 @@ static void put_quant_maybe(struct lens *lens, struct state *state) {
 }
 
 static void put_store(struct lens *lens, struct state *state) {
-    if (state->value == NULL) {
+    const char *value = state->tree->value;
+
+    if (value == NULL) {
         put_error(state, lens,
                   "Can not store a nonexistent (NULL) value");
-    } else if (regexp_match(lens->regexp, state->value, strlen(state->value),
-                            0, NULL) != strlen(state->value)) {
+    } else if (regexp_match(lens->regexp, value, strlen(value),
+                            0, NULL) != strlen(value)) {
         char *pat = regexp_escape(lens->regexp);
         put_error(state, lens,
                   "Value '%s' does not match regexp /%s/ in store lens",
-                  state->value, pat);
+                  value, pat);
         free(pat);
     } else {
-        fprintf(state->out, "%s", state->value);
+        emit(state, value, S_VALUE);
     }
 }
 
@@ -616,7 +628,7 @@ static void put_square(struct lens *lens, struct state *state) {
         }
         struct lens *curr = concat->children[i];
         if (i == (concat->nchildren - 1) && left->tag == L_KEY)
-            state->override = state->key;
+            state->override = state->tree->label;
         put_lens(curr, state);
         state->override = NULL;
         state->skel = state->skel->next;
@@ -639,7 +651,7 @@ static void put_lens(struct lens *lens, struct state *state) {
         put_store(lens, state);
         break;
     case L_KEY:
-        fprintf(state->out, "%s", state->key);
+        emit(state, state->tree->label, S_LABEL);
         break;
     case L_LABEL:
     case L_VALUE:
@@ -685,9 +697,9 @@ static void create_subtree(struct lens *lens, struct state *state) {
 static void create_del(struct lens *lens, struct state *state) {
     assert(lens->tag == L_DEL);
     if (state->override != NULL) {
-        print_escaped_chars(state->out, state->override);
+        emit(state, state->override, S_NONE);
     } else {
-        print_escaped_chars(state->out, lens->string->str);
+        emit(state, lens->string->str, S_NONE);
     }
 }
 
@@ -741,7 +753,7 @@ static void create_square(struct lens *lens, struct state *state) {
         }
         struct lens *curr = concat->children[i];
         if (i == (concat->nchildren - 1) && left->tag == L_KEY)
-            state->override = state->key;
+            state->override = state->tree->label;
         create_lens(curr, state);
         state->override = NULL;
         next_split(state);
@@ -765,7 +777,7 @@ static void create_quant_star(struct lens *lens, struct state *state) {
         next_split(state);
     }
     if (state->pos != oldsplit->end)
-        error_quant_star(last_split, lens, state);
+        error_quant_star(last_split, lens, state, oldsplit->enc + state->pos);
     list_free(split);
     set_split(state, oldsplit);
 }
@@ -793,7 +805,7 @@ static void create_lens(struct lens *lens, struct state *state) {
         put_store(lens, state);
         break;
     case L_KEY:
-        fprintf(state->out, "%s", state->key);
+        emit(state, state->tree->label, S_LABEL);
         break;
     case L_LABEL:
     case L_VALUE:
@@ -832,8 +844,8 @@ static void create_lens(struct lens *lens, struct state *state) {
     }
 }
 
-void lns_put(FILE *out, struct lens *lens, struct tree *tree,
-             const char *text, struct lns_error **err) {
+void lns_put(struct info *info, FILE *out, struct lens *lens, struct tree *tree,
+             const char *text, int enable_span, struct lns_error **err) {
     struct state state;
     struct lns_error *err1;
 
@@ -843,7 +855,7 @@ void lns_put(FILE *out, struct lens *lens, struct tree *tree,
         return;
 
     MEMZERO(&state, 1);
-    state.path = strdup("");
+    state.path = strdup("/");
     state.skel = lns_parse(lens, text, &state.dict, &err1);
 
     if (err1 != NULL) {
@@ -855,8 +867,19 @@ void lns_put(FILE *out, struct lens *lens, struct tree *tree,
     }
     state.out = out;
     state.split = make_split(tree);
-    state.key = tree->label;
+    state.with_span = enable_span;
+    state.tree = tree;
+    state.info = info;
+    if (state.with_span) {
+        if (tree->span == NULL) {
+            tree->span = make_span(info);
+        }
+        tree->span->span_start = ftell(out);
+    }
     put_lens(lens, &state);
+    if (state.with_span) {
+        tree->span->span_end = ftell(out);
+    }
     if (err != NULL) {
         *err = state.error;
     } else {

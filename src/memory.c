@@ -58,13 +58,13 @@
  */
 int mem_alloc_n(void *ptrptr, size_t size, size_t count)
 {
-    if (size == 0 || count == 0) {
+    if (AUGEAS_UNLIKELY(size == 0 || count == 0)) {
         *(void **)ptrptr = NULL;
         return 0;
     }
 
     *(void**)ptrptr = calloc(count, size);
-    if (*(void**)ptrptr == NULL)
+    if (AUGEAS_UNLIKELY(*(void**)ptrptr == NULL))
         return -1;
     return 0;
 }
@@ -86,17 +86,17 @@ int mem_alloc_n(void *ptrptr, size_t size, size_t count)
 int mem_realloc_n(void *ptrptr, size_t size, size_t count)
 {
     void *tmp;
-    if (size == 0 || count == 0) {
+    if (AUGEAS_UNLIKELY(size == 0 || count == 0)) {
         free(*(void **)ptrptr);
         *(void **)ptrptr = NULL;
         return 0;
     }
-    if (xalloc_oversized(count, size)) {
+    if (AUGEAS_UNLIKELY(xalloc_oversized(count, size))) {
         errno = ENOMEM;
         return -1;
     }
     tmp = realloc(*(void**)ptrptr, size * count);
-    if (!tmp)
+    if (AUGEAS_UNLIKELY(!tmp))
         return -1;
     *(void**)ptrptr = tmp;
     return 0;

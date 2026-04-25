@@ -106,7 +106,10 @@ test abbrev-descendants /files/etc/pam.d//1
 
 test descendant-or-self /files/descendant-or-self :: 4
      /files/etc/ssh/sshd_config/AcceptEnv[1]/4 = LC_TIME
+     /files/etc/ssh/ssh_config/Host/SendEnv[1]/4 = LC_TIME
+     /files/etc/ssh/ssh_config/Host/SendEnv[2]/4 = LC_TELEPHONE
      /files/etc/aliases/4
+     /files/etc/selinux/semanage.conf/ignoredirs/4 = /dev
      /files/etc/fstab/4
      /files/etc/pam.d/login/4
      /files/etc/pam.d/newrole/4
@@ -276,6 +279,16 @@ test union (/files/etc/yum.conf | /files/etc/yum.repos.d/*)/*/gpgcheck
      /files/etc/yum.repos.d/remi.repo/remi/gpgcheck = 1
      /files/etc/yum.repos.d/remi.repo/remi-test/gpgcheck = 1
 
+test else_nodeset_lhs (/files/etc/yum.conf else /files/etc/yum.repos.d/*)/*/gpgcheck
+     /files/etc/yum.conf/main/gpgcheck = 1
+
+test else_nodeset_rhs (/files/etc/yum.conf.missing else /files/etc/yum.repos.d/fedora.repo)/*/gpgcheck
+     /files/etc/yum.repos.d/fedora.repo/fedora/gpgcheck = 1
+     /files/etc/yum.repos.d/fedora.repo/fedora-debuginfo/gpgcheck = 1
+     /files/etc/yum.repos.d/fedora.repo/fedora-source/gpgcheck = 1
+
+test else_nodeset_nomatch (/files/left else /files/right)
+
 # Paths with whitespace in them
 test php1 $php/mail function
      /files/etc/php.ini/mail\ function
@@ -333,3 +346,48 @@ test escape3 /files/etc/sysconfig/network-scripts/*[DEVICE = 'weird']
 # Test matching in the presence of hidden nodes
 test hidden1 /files/etc/security/limits.conf/*[label() != '#comment'][1]
      /files/etc/security/limits.conf/domain[1] = @jackuser
+
+test seqaxismatchall /files/etc/hosts/seq::*
+     /files/etc/hosts/1
+     /files/etc/hosts/2
+
+test seqaxismatchpos /files/etc/hosts/seq::*[2]
+     /files/etc/hosts/2
+
+test seqaxismatchlabel /files/etc/hosts/seq::2
+     /files/etc/hosts/2
+
+test seqaxismatchregexp /files/etc/hosts/seq::*[canonical =~ regexp('.*orange.*')]
+     /files/etc/hosts/2
+
+test else_simple_lhs /files/etc/fstab/*[passno='1' else passno='2']/file
+     /files/etc/fstab/1/file = /
+
+test else_simple_rhs /files/etc/fstab/*[passno='9' else passno='2']/file
+     /files/etc/fstab/2/file = /boot
+     /files/etc/fstab/5/file = /home
+     /files/etc/fstab/8/file = /local
+     /files/etc/fstab/9/file = /var/lib/xen/images
+
+test else_haschild_lhs /files/etc/hosts/*[alias else alias='orange']/canonical
+     /files/etc/hosts/1/canonical = localhost.localdomain
+     /files/etc/hosts/2/canonical = orange.watzmann.net
+
+test else_chain1 /files/etc/fstab/*[passno='9' else passno='1' else passno='2']/file
+     /files/etc/fstab/1/file = /
+
+test else_chain2 /files/etc/fstab/*[passno='9' else passno='8' else passno='2']/file
+     /files/etc/fstab/2/file = /boot
+     /files/etc/fstab/5/file = /home
+     /files/etc/fstab/8/file = /local
+     /files/etc/fstab/9/file = /var/lib/xen/images
+
+# Although there are nodes matching passno=2 and nodes matching dump=0
+# there is no node with both
+test_and_else_lhs /files/etc/fstab/*[passno='2' and ( dump='0' else dump='1')]/file
+
+test_and_else_rhs /files/etc/fstab/*[passno='2' and ( dump='nemo' else dump='1')]/file
+     /files/etc/fstab/2/file = /boot
+     /files/etc/fstab/5/file = /home
+     /files/etc/fstab/8/file = /local
+     /files/etc/fstab/9/file = /var/lib/xen/images

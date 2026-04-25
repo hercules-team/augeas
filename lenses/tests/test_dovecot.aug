@@ -523,6 +523,10 @@ mail_attachment_dir =
 mail_attachment_min_size = 128k
 mail_attachment_fs = sis posix
 mail_attachment_hash = %{sha1}
+
+protocol !indexer-worker {
+  mail_vsize_bg_after_count = 0
+}
 "
 test Dovecot.lns get mail_conf =
   { "#comment" = "# Mailbox locations and namespaces" }
@@ -594,6 +598,10 @@ test Dovecot.lns get mail_conf =
   { "mail_attachment_min_size" = "128k" }
   { "mail_attachment_fs" = "sis posix" }
   { "mail_attachment_hash" = "%{sha1}" }
+  {  }
+  { "protocol" = "!indexer-worker"
+    { "mail_vsize_bg_after_count" = "0" }
+  }
 
 
 (* ********************************* master ********************************* *)

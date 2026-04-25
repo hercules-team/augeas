@@ -134,6 +134,7 @@ Group: Specific Modules  {
    File: Networks  (networks.aug)
    File: Nginx  (nginx.aug)
    File: Nrpe  (nrpe.aug)
+   File: Nslcd  (nslcd.aug)
    File: Nsswitch  (nsswitch.aug)
    File: Ntpd  (ntpd.aug)
    File: OpenShift_Config  (openshift_config.aug)
@@ -202,6 +203,15 @@ Group: Specific Modules  {
    File: Xymon_Alerting  (xymon_alerting.aug)
    File: Yaml  (yaml.aug)
    File: Cron_User  (cron_user.aug)
+   File: Oz  (oz.aug)
+   File: Getcap  (getcap.aug)
+   File: Rancid  (rancid.aug)
+   File: Rtadvd  (rtadvd.aug)
+   File: Strongswan  (strongswan.aug)
+   File: Termcap  (termcap.aug)
+   File: Anaconda  (anaconda.aug)
+   File: Semanage  (semanage.aug)
+   File: Toml  (toml.aug)
    }  # Group: Specific Modules
 
 Group: Generic Modules  {
@@ -261,6 +271,7 @@ Group: Tests and Examples  {
    File: Test_NagiosCfg  (tests/test_nagioscfg.aug)
    File: Test_NetworkManager  (tests/test_networkmanager.aug)
    File: Test_Nginx  (tests/test_nginx.aug)
+   File: Test_Nslcd  (tests/test_nslcd.aug)
    File: Test_Ntpd  (tests/test_ntpd.aug)
    File: Test_OpenShift_Config  (tests/test_openshift_config.aug)
    File: Test_OpenShift_Http  (tests/test_openshift_http.aug)
@@ -307,6 +318,9 @@ Group: Tests and Examples  {
    File: test_slapd.aug  (tests/test_slapd.aug)
    File: test_trapperkeeper.aug  (tests/test_trapperkeeper.aug)
    File: Test_Xymon_Alerting  (tests/test_xymon_alerting.aug)
+   File: Test_Anaconda  (tests/test_anaconda.aug)
+   File: Test_Semanage  (tests/test_semanage.aug)
+   File: test_toml.aug  (tests/test_toml.aug)
    }  # Group: Tests and Examples
 
 Group: Index  {

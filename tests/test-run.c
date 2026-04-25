@@ -129,7 +129,7 @@ static struct test *read_tests(void) {
     FILE *fp;
     char line[BUFSIZ];
     struct test *result = NULL, *t = NULL;
-    int lc = 0;
+    //int lc = 0;
     bool append_cmd = true;
 
     if (asprintf(&fname, "%s/tests/run.tests", abs_top_srcdir) < 0)
@@ -139,7 +139,7 @@ static struct test *read_tests(void) {
         die("fopen run.tests");
 
     while (fgets(line, BUFSIZ, fp) != NULL) {
-        lc += 1;
+        //lc += 1;
         char *s = skipws(line);
         if (*s == '#' || *s == '\0')
             continue;
@@ -227,7 +227,8 @@ static int run_one_test(struct test *test) {
 
     MEMZERO(&ms, 1);
 
-    aug = aug_init("/dev/null", lensdir, AUG_NO_STDINC|AUG_NO_MODL_AUTOLOAD);
+    aug = aug_init("/dev/null", lensdir,
+                   AUG_NO_STDINC|AUG_NO_MODL_AUTOLOAD|AUG_ENABLE_SPAN);
     fail(aug == NULL, "aug_init");
     fail(aug_error(aug) != AUG_NOERROR, "aug_init: errcode was %d",
          aug_error(aug));

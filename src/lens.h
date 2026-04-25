@@ -185,21 +185,30 @@ void free_skel(struct skel *skel);
 void free_dict(struct dict *dict);
 void free_lns_error(struct lns_error *err);
 
-/* Parse text TEXT with LENS. INFO indicats where TEXT was read from.
+/* Parse text TEXT with LENS. INFO indicates where TEXT was read from.
  *
  * If ERR is non-NULL, *ERR is set to NULL on success, and to an error
  * message on failure; the constructed tree is always returned. If ERR is
  * NULL, return the tree on success, and NULL on failure.
  *
- * FLAGS controls what is printed and should be a set of flags from enum
- * parse_flags
+ * ENABLE_SPAN indicates whether span information should be collected or not
  */
 struct tree *lns_get(struct info *info, struct lens *lens, const char *text,
-                     struct lns_error **err);
+                     int enable_span, struct lns_error **err);
 struct skel *lns_parse(struct lens *lens, const char *text,
                        struct dict **dict, struct lns_error **err);
-void lns_put(FILE *out, struct lens *lens, struct tree *tree,
-             const char *text, struct lns_error **err);
+
+/* Write tree TREE that was initially read from TEXT (but might have been
+ * modified) into file OUT using LENS.
+ *
+ * If ERR is non-NULL, *ERR is set to NULL on success, and to an error
+ * message on failure.
+ *
+ * INFO indicates where we are writing to, and its flags indicate whether
+ * to update spans or not.
+ */
+void lns_put(struct info *info, FILE *out, struct lens *lens, struct tree *tree,
+             const char *text, int enable_span, struct lns_error **err);
 
 /* Free up temporary data structures, most importantly compiled
    regular expressions */
@@ -234,8 +243,14 @@ void free_lens(struct lens *lens);
 
    This range must include the ENC_* characters
 */
-#define RESERVED_FROM '\001'
-#define RESERVED_TO   ENC_SLASH_CH
+#define RESERVED_FROM "\001"
+#define RESERVED_TO   ENC_SLASH
+#define RESERVED_FROM_CH (RESERVED_FROM[0])
+#define RESERVED_TO_CH   ENC_SLASH_CH
+/* The range of reserved chars as it appears in a regex */
+#define RESERVED_RANGE_RX RESERVED_FROM "-" RESERVED_TO
+/* The equivalent of "." in a regexp for display */
+#define RESERVED_DOT_RX "[^" RESERVED_RANGE_RX "\n]"
 
 /* The length of the string S encoded */
 #define ENCLEN(s) ((s) == NULL ? strlen(ENC_NULL) : strlen(s))
@@ -259,6 +274,8 @@ char *enc_format_indent(const char *e, size_t len, int indent);
 #if ENABLE_DEBUG
 void dump_lens_tree(struct lens *lens);
 void dump_lens(FILE *out, struct lens *lens);
+#else
+#define dump_lens_tree(lens) (void)0
 #endif
 
 #endif

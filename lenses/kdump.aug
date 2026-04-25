@@ -25,6 +25,7 @@ let empty = Util.empty
 let comment = Util.comment
 let value_to_eol = store /[^ \t\n#][^\n#]*[^ \t\n#]|[^ \t\n#]/
 let int_to_eol = store Rx.integer
+let yn_to_eol = store ("yes" | "no")
 let delimiter = Util.del_ws_spc
 let eol = Util.eol
 let value_to_spc = store Rx.neg1
@@ -64,9 +65,12 @@ let simple_kws = "raw" | "net" | "path" | "core_collector" | "kdump_post"
 let int_kws = "force_rebuild" | "override_resettable" | "debug_mem_level"
             | "link_delay" | "disk_timeout"
 
+let yn_kws = "auto_reset_crashkernel"
+
 let option = Build.key_value_line_comment ( simple_kws | fs_types )
                                           delimiter value_to_eol comment
            | Build.key_value_line_comment int_kws delimiter int_to_eol comment
+           | Build.key_value_line_comment yn_kws delimiter yn_to_eol comment
            | list "extra_bins"
            | list "extra_modules"
            | list "blacklist"

@@ -318,3 +318,48 @@ test Cgconfig.lns get group6 =
     {  }
   }
 
+let group7 ="
+group daemons/www {
+  perm {
+    task {
+      uid = root;
+      gid = root;
+      fperm = 770;
+    }
+    admin {
+      uid = root;
+      gid = root;
+      dperm = 777;
+    }
+  }
+}
+"
+
+test Cgconfig.lns get group7 =
+  {  }
+  { "group" = "daemons/www"
+    {  }
+    { "perm"
+      {  }
+      { "task"
+        {  }
+        { "uid" = "root" }
+        {  }
+        { "gid" = "root" }
+        {  }
+        { "fperm" = "770" }
+        {  } }
+      {  }
+      { "admin"
+        {  }
+        { "uid" = "root" }
+        {  }
+        { "gid" = "root" }
+        {  }
+        { "dperm" = "777" }
+        {  } }
+      {  } }
+    {  }
+  }
+  {  }
+

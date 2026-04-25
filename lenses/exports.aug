@@ -90,7 +90,7 @@ module Exports =
                     ( Build.brackets lbracket rbracket
                          ( Build.opt_list option sep_com ) )? ]
 
-  let entry = [ label "dir" . store /\/[^ \t]*/
+  let entry = [ label "dir" . store /[^ \t\n#]*/
                 . sep_spc . Build.opt_list client sep_spc . eol ]
 
   let lns = (Util.empty | Util.comment | entry)*

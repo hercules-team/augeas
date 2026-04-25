@@ -79,6 +79,96 @@ Tree for <exclamation_mark> *)
         { "argument" = "-" }
     }
 
+  (* Variable: minus
+Example with an minus mark in the type *)
+  let minus = "D- /tmp/foo - - - - -\n"
+
+  (* Variable: minus_tree
+Tree for <minus_tree> *)
+  let minus_tree =
+    {
+        "1"
+        { "type" = "D-" }
+        { "path" = "/tmp/foo" }
+        { "mode" = "-" }
+        { "uid" = "-" }
+        { "gid" = "-" }
+        { "age" = "-" }
+        { "argument" = "-" }
+    }
+
+  (* Variable: equal
+Example with an equal sign in the type *)
+  let equal = "d= /tmp/foo 0755 root root - -\n"
+
+  (* Variable: equal_tree
+Tree for <equal> *)
+  let equal_tree =
+    {
+        "1"
+        { "type" = "d=" }
+        { "path" = "/tmp/foo" }
+        { "mode" = "0755" }
+        { "uid" = "root" }
+        { "gid" = "root" }
+        { "age" = "-" }
+        { "argument" = "-" }
+    }
+
+  (* Variable: dollar
+Example with a dollar sign in the type *)
+  let dollar = "d$ /tmp/foo 0755 root root - -\n"
+
+  (* Variable: dollar_tree
+Tree for <dollar> *)
+  let dollar_tree =
+    {
+        "1"
+        { "type" = "d$" }
+        { "path" = "/tmp/foo" }
+        { "mode" = "0755" }
+        { "uid" = "root" }
+        { "gid" = "root" }
+        { "age" = "-" }
+        { "argument" = "-" }
+    }
+
+  (* Variable: tilde
+Example with a tilde character in the type *)
+  let tilde = "w~ /tmp/foo 0755 root root - dGVzdAo=\n"
+
+  (* Variable: tilde_tree
+Tree for <tilde> *)
+  let tilde_tree =
+    {
+        "1"
+        { "type" = "w~" }
+        { "path" = "/tmp/foo" }
+        { "mode" = "0755" }
+        { "uid" = "root" }
+        { "gid" = "root" }
+        { "age" = "-" }
+        { "argument" = "dGVzdAo=" }
+    }
+
+  (* Variable: caret
+Example with a caret in the type *)
+  let caret = "f^ /etc/motd.d/50-provision.conf - - - - login.motd\n"
+
+  (* Variable: caret_tree
+Tree for <caret> *)
+  let caret_tree =
+    {
+        "1"
+        { "type" = "f^" }
+        { "path" = "/etc/motd.d/50-provision.conf" }
+        { "mode" = "-" }
+        { "uid" = "-" }
+        { "gid" = "-" }
+        { "age" = "-" }
+        { "argument" = "login.motd" }
+    }
+
   (* Variable: short
 Example with only type and path *)
   let short = "A+ /tmp/foo\n"
@@ -319,6 +409,22 @@ Tree for <mode3> *)
         { "mode" = "755" }
     }
 
+  (* Variable: mode_colon
+Mode field with colon prefix *)
+  let mode_colon = "d- /root :0700 root :root\n"
+
+  (* Variable: mode_colon_tree
+Tree for <mode_colon> *)
+  let mode_colon_tree =
+    {
+        "1"
+        { "type" = "d-" }
+        { "path" = "/root" }
+        { "mode" = ":0700" }
+        { "uid" = "root" }
+        { "gid" = ":root" }
+    }
+
 (************************************************************************
  * Group:                 INVALID EXAMPLES
  *************************************************************************)
@@ -333,7 +439,7 @@ Invalid example that contain invalid age  *)
 
   (* Variable: invalid_type
 Invalid example that contain invalid type (bad letter) *)
-  let invalid_type = "e /var/tmp/js 0000 jonhsmith 60 1s foo\n"
+  let invalid_type = "i /var/tmp/js 0000 jonhsmith 60 1s foo\n"
 
   (* Variable: invalid_type_num
  Invalid example that contain invalid type (numeric) *)
@@ -356,6 +462,16 @@ Invalid example that contain invalid mode (letter) *)
   test Tmpfiles.lns get empty = {}{}{}
 
   test Tmpfiles.lns get exclamation_mark = exclamation_mark_tree
+
+  test Tmpfiles.lns get minus = minus_tree
+
+  test Tmpfiles.lns get equal = equal_tree
+
+  test Tmpfiles.lns get dollar = dollar_tree
+
+  test Tmpfiles.lns get tilde = tilde_tree
+
+  test Tmpfiles.lns get caret = caret_tree
 
   test Tmpfiles.lns get short = short_tree
 
@@ -384,6 +500,8 @@ Invalid example that contain invalid mode (letter) *)
   test Tmpfiles.lns get valid_base = valid_base_tree
 
   test Tmpfiles.lns get mode3 = mode3_tree
+
+  test Tmpfiles.lns get mode_colon = mode_colon_tree
 
 
 (* failure cases *)

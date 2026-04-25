@@ -355,6 +355,62 @@ static int test_wrong_regexp_flag(struct augeas *aug) {
     return -1;
 }
 
+static int test_trailing_ws_in_name(struct augeas *aug) {
+    int r;
+
+    printf("%-30s ... ", "trailing_ws_in_name");
+
+    /* We used to incorrectly lop escaped whitespace off the end of a
+     * name. Make sure that we really create a tree node with label 'x '
+     * with the below set, and look for it in a number of ways to ensure we
+     * are not lopping off trailing whitespace. */
+    r = aug_set(aug, "/ws\\ ", "1");
+    if (r < 0) {
+        fprintf(stderr, "failed to set '/ws ': %d\n", r);
+        goto fail;
+    }
+    /* We did not create a node with label 'ws' */
+    r = aug_get(aug, "/ws", NULL);
+    if (r != 0) {
+        fprintf(stderr, "created '/ws' instead: %d\n", r);
+        goto fail;
+    }
+
+    /* We did not create a node with label 'ws\t' (this also checks that we
+     * don't create something like 'ws\\' by dropping the last whitespace
+     * character. */
+    r = aug_get(aug, "/ws\\\t", NULL);
+    if (r != 0) {
+        fprintf(stderr, "found '/ws\\t': %d\n", r);
+        goto fail;
+    }
+
+    /* But we did create 'ws ' */
+    r = aug_get(aug, "/ws\\ ", NULL);
+    if (r != 1) {
+        fprintf(stderr, "could not find '/ws ': %d\n", r);
+        goto fail;
+    }
+
+    /* If the whitespace is preceded by an even number of '\\' chars,
+     * whitespace must be stripped */
+    r = aug_set(aug, "/nows\\\\ ", "1");
+    if (r < 0) {
+        fprintf(stderr, "set of '/nows' failed: %d\n", r);
+        goto fail;
+    }
+    r = aug_get(aug, "/nows\\\\", NULL);
+    if (r != 1) {
+        fprintf(stderr, "could not get '/nows\\'\n");
+        goto fail;
+    }
+    printf("PASS\n");
+    return 0;
+ fail:
+    printf("FAIL\n");
+    return -1;
+}
+
 static int run_tests(struct test *tests, int argc, char **argv) {
     char *lensdir;
     struct augeas *aug = NULL;
@@ -397,6 +453,9 @@ static int run_tests(struct test *tests, int argc, char **argv) {
             result = EXIT_FAILURE;
 
         if (test_wrong_regexp_flag(aug) < 0)
+            result = EXIT_FAILURE;
+
+        if (test_trailing_ws_in_name(aug) < 0)
             result = EXIT_FAILURE;
     }
     aug_close(aug);

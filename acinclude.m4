@@ -2,7 +2,7 @@ dnl
 dnl Taken from libvirt/acinclude.m4
 dnl
 dnl We've added:
-dnl   -Wextra -Wshadow -Wcast-align -Wwrite-strings -Waggregate-return -Wstrict-prototypes -Winline -Wredundant-decls
+dnl   -Wextra -Wshadow -Wcast-align -Wwrite-strings -Waggregate-return -Wstrict-prototypes -Wredundant-decls
 dnl We've removed
 dnl   CFLAGS="$realsave_CFLAGS"
 dnl   to avoid clobbering user-specified CFLAGS
@@ -34,7 +34,7 @@ AC_DEFUN([AUGEAS_COMPILE_WARNINGS],[
     maximum|error)
 	try_compiler_flags="-Wall -Wformat -Wformat-security -Wmissing-prototypes -Wnested-externs -Wpointer-arith"
 	try_compiler_flags="$try_compiler_flags -Wextra -Wshadow -Wcast-align -Wwrite-strings -Waggregate-return"
-	try_compiler_flags="$try_compiler_flags -Wstrict-prototypes -Winline -Wredundant-decls -Wno-sign-compare"
+	try_compiler_flags="$try_compiler_flags -Wstrict-prototypes -Wredundant-decls -Wno-sign-compare"
 	try_compiler_flags="$try_compiler_flags $common_flags"
 	if test "$enable_compile_warnings" = "error" ; then
 	    try_compiler_flags="$try_compiler_flags -Werror"

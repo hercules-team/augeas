@@ -12,6 +12,7 @@ sortlist 130.155.160.0/255.255.240.0 130.155.0.0
 
 options ndots:3 debug timeout:2
 options no-ip6-dotint single-request-reopen # and EOL comments
+options attempts:3 rotate no-check-names inet6 ip6-bytestring ip6-dotint edns0 single-request no-tld-query use-vc no-reload trust-ad
 
 lookup file bind
 family inet6 inet4
@@ -42,8 +43,21 @@ test Resolv.lns get conf =
    { "options"
         { "ip6-dotint"
              { "negate" } }
-	{ "single-request-reopen" }
+        { "single-request-reopen" }
         { "#comment" = "and EOL comments" } }
+   { "options"
+        { "attempts" = "3" }
+        { "rotate" }
+        { "no-check-names" }
+        { "inet6" }
+        { "ip6-bytestring" }
+        { "ip6-dotint" }
+        { "edns0" }
+        { "single-request" }
+        { "no-tld-query" }
+        { "use-vc" }
+        { "no-reload" }
+        { "trust-ad" } }
    {}
    { "lookup"
         { "file" }
@@ -56,4 +70,4 @@ test Resolv.ip6_dotint
    put "ip6-dotint"
    after set "/ip6-dotint/negate" "" = "no-ip6-dotint"
 
-
+test Resolv.lns get ";  \r\n; \t \n" = { } { }

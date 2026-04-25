@@ -73,7 +73,7 @@ let name_re_colons = /[A-Za-z][A-Za-z:-]*/
      since apt.conf allows for both
      APT { Clean-Installed { "true" } }
      and APT::Clean-Installed "true";
-     but we're chosing to map them the same way
+     but we're choosing to map them the same way
 
      The recursive lens doesn't seem
      to care and defaults to the first

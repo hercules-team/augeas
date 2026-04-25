@@ -28,6 +28,7 @@
 #include "internal.h"
 
 #include <unistd.h>
+#include <libgen.h>
 
 #include <libxml/tree.h>
 
@@ -704,7 +705,7 @@ static void testLoadFile(CuTest *tc) {
     CuAssertIntEquals(tc, AUG_ENOLENS, aug_error(aug));
 
     /* augeas should return without an error when trying to load a
-       nonexistant file that would be handled by a lens */
+       nonexistent file that would be handled by a lens */
     r = aug_load_file(aug, "/etc/mtab");
     CuAssertRetSuccess(tc, r);
     r = aug_match(aug, "/files/etc/mtab", NULL);
@@ -734,6 +735,161 @@ static void testLoadBadPath(CuTest *tc) {
     aug_close(aug);
 }
 
+/* If a lens is set to a partial path which happens to actually resolve to
+   a file when appended to the loadpath, we went into an infinite loop of
+   loading a module, but then not realizing that it had actually been
+   loaded, reloading it over and over again.
+   See https://github.com/hercules-team/augeas/issues/522
+*/
+static void testLoadBadLens(CuTest *tc) {
+    struct augeas *aug;
+    int r;
+    char *lp;
+
+    // This setup depends on the fact that
+    //   loadpath == abs_top_srcdir + "/lenses"
+    r = asprintf(&lp, "%s:%s", loadpath, abs_top_srcdir);
+    CuAssert(tc, "failed to allocate loadpath", (r >= 0));
+
+    aug = aug_init(root, lp, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    r = aug_set(aug, "/augeas/load/Fstab/lens", "lenses/Fstab.lns");
+    CuAssertRetSuccess(tc, r);
+
+    r = aug_load(aug);
+    CuAssertRetSuccess(tc, r);
+
+    // We used to record the error to load the lens above against every
+    // lens that we tried to load after it.
+    r = aug_match(aug, "/augeas//error", NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    free(lp);
+}
+
+/* Test the aug_ns_* functions */
+static void testAugNs(CuTest *tc) {
+    struct augeas *aug;
+    int r;
+    const char *v, *l;
+    char *s;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    r = aug_load_file(aug, "/etc/hosts");
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_defvar(aug, "matches",
+                   "/files/etc/hosts/*[label() != '#comment']/ipaddr");
+    CuAssertIntEquals(tc, 2, r);
+
+    r = aug_ns_attr(aug, "matches", 0, &v, &l, &s);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertStrEquals(tc, "127.0.0.1", v);
+    CuAssertStrEquals(tc, "ipaddr", l);
+    CuAssertStrEquals(tc, "/files/etc/hosts", s);
+    free(s);
+    s = NULL;
+
+    r = aug_ns_attr(aug, "matches", 0, NULL, NULL, NULL);
+    CuAssertIntEquals(tc, 1, r);
+
+    r = aug_ns_attr(aug, "matches", 1, &v, NULL, &s);
+    CuAssertIntEquals(tc, 1, r);
+    CuAssertStrEquals(tc, "172.31.122.14", v);
+    CuAssertStrEquals(tc, "/files/etc/hosts", s);
+    free(s);
+    s = NULL;
+
+    r = aug_ns_attr(aug, "matches", 2, &v, &l, &s);
+    CuAssertIntEquals(tc, -1, r);
+    CuAssertPtrEquals(tc, NULL, v);
+    CuAssertPtrEquals(tc, NULL, l);
+    CuAssertPtrEquals(tc, NULL, s);
+    free(s);
+    s = NULL;
+
+    aug_close(aug);
+}
+
+/* Test aug_source */
+static void testAugSource(CuTest *tc) {
+    struct augeas *aug;
+    int r;
+    char *s;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    r = aug_load_file(aug, "/etc/hosts");
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_source(aug, "/files/etc/hosts/1", &s);
+    CuAssertIntEquals(tc, 0, r);
+    CuAssertStrEquals(tc, "/files/etc/hosts", s);
+    free(s);
+
+    r = aug_source(aug, "/files/etc/fstab", &s);
+    CuAssertIntEquals(tc, -1, r);
+    CuAssertIntEquals(tc, AUG_ENOMATCH, aug_error(aug));
+    CuAssertPtrEquals(tc, NULL, s);
+
+    r = aug_source(aug, "/files[", &s);
+    CuAssertIntEquals(tc, -1, r);
+    CuAssertIntEquals(tc, AUG_EPATHX, aug_error(aug));
+    CuAssertPtrEquals(tc, NULL, s);
+
+    r = aug_source(aug, "/files/etc/hosts/*", &s);
+    CuAssertIntEquals(tc, -1, r);
+    CuAssertIntEquals(tc, AUG_EMMATCH, aug_error(aug));
+    CuAssertPtrEquals(tc, NULL, s);
+
+}
+
+static void testAugPreview(CuTest *tc) {
+    struct augeas *aug;
+    int r;
+    char *s;
+    char *etc_hosts_fn = NULL;
+    FILE *hosts_fp = NULL;
+    char *hosts_txt = NULL;
+    int readsz = 0;
+
+    /* Read the original contents of the etc/hosts file */
+    if (asprintf(&etc_hosts_fn,"%s/etc/hosts",root) >=0 ) {
+        hosts_fp = fopen(etc_hosts_fn,"r");
+        if ( hosts_fp ) {
+            hosts_txt = calloc(4096,sizeof(char));
+            if ( hosts_txt ) {
+                readsz = fread(hosts_txt,sizeof(char),4096,hosts_fp);
+                *(hosts_txt+readsz) = '\0';
+            }
+            fclose(hosts_fp);
+        }
+        free(etc_hosts_fn);
+    }
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    r = aug_load_file(aug, "/etc/hosts");
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_preview(aug, "/files/etc/hosts/1", &s);
+    CuAssertIntEquals(tc, 0, r);
+    CuAssertStrEquals(tc, hosts_txt, s);
+
+    free(hosts_txt);
+    free(s);
+    aug_close(aug);
+}
+
 int main(void) {
     char *output = NULL;
     CuSuite* suite = CuSuiteNew();
@@ -756,6 +912,10 @@ int main(void) {
     SUITE_ADD_TEST(suite, testRm);
     SUITE_ADD_TEST(suite, testLoadFile);
     SUITE_ADD_TEST(suite, testLoadBadPath);
+    SUITE_ADD_TEST(suite, testLoadBadLens);
+    SUITE_ADD_TEST(suite, testAugNs);
+    SUITE_ADD_TEST(suite, testAugSource);
+    SUITE_ADD_TEST(suite, testAugPreview);
 
     abs_top_srcdir = getenv("abs_top_srcdir");
     if (abs_top_srcdir == NULL)

@@ -30,7 +30,7 @@ module Cgconfig =
    let name      = /[^#= \n\t{}\/]+/
    let cont_name = /(cpuacct|cpu|devices|ns|cpuset|memory|freezer|net_cls|blkio|hugetlb|perf_event)/
    let role_name = /(admin|task)/
-   let id_name   = /(uid|gid)/
+   let id_name   = /(uid|gid|fperm|dperm)/
    let address   = /[^#; \n\t{}]+/
    let qaddress  = address|/"[^#;"\n\t{}]+"/
 

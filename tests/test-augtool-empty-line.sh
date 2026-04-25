@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/sh
 
 # Test for BZ 566844. Make sure we don't spew nonsense when the input
 # contains empty lines

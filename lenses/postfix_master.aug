@@ -37,7 +37,7 @@ let field (l:string) (r:regexp)
  *************************************************************************)
 
 let entry     = [ key word . ws
-                . field "type"         /inet|unix|fifo|pass/  . ws
+                . field "type"         /inet|unix(-dgram)?|fifo|pass/  . ws
                 . field "private"      bool                   . ws
                 . field "unprivileged" bool                   . ws
                 . field "chroot"       bool                   . ws
@@ -53,5 +53,6 @@ let entry     = [ key word . ws
 let lns        = (comment|empty|entry) *
 
 let filter     = incl "/etc/postfix/master.cf"
+               . incl "/usr/local/etc/postfix/master.cf"
 
 let xfm        = transform lns filter

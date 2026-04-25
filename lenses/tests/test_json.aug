@@ -489,8 +489,24 @@ test lns get s_commented =
 
 (* Test lns
      Allow escaped quotes, backslashes and tabs/newlines *)
-test lns get "{ \"filesystem\": \"ext3\\" \\\\ \t \r\n SEC_TYPE=\\"ext2\" }\n" =
+test lns get "{ \"filesystem\": \"ext3\\\" \\\\ \t \r\n SEC_TYPE=\\\"ext2\" }\n" =
   { "dict"
     { "entry" = "filesystem"
-      { "string" = "ext3\\" \\\\ \t \r\n SEC_TYPE=\\"ext2" } }
+      { "string" = "ext3\\\" \\\\ \t \r\n SEC_TYPE=\\\"ext2" } }
     {  } }
+
+test Json.str get "\"\\\"\"" = { "string" = "\\\"" }
+
+test Json.str get "\"\\\"" = *
+
+test Json.str get "\"\"\"" = *
+
+test Json.str get "\"\\u1234\"" = { "string" = "\u1234" }
+
+(* Allow spurious backslashes; Issue #557 *)
+test Json.str get "\"\\/\"" = { "string" = "\\/" }
+
+test lns get "{ \"download-dir\": \"\\/var\\/tmp\\/\" }" =
+  { "dict"
+    { "entry" = "download-dir"
+      { "string" = "\/var\/tmp\/" } } }

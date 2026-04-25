@@ -119,7 +119,7 @@ AUTH_FILE=${HSQLDB_HOME}/sqltool.rc
 # HSQLDB) are as follows:
 #     If [it] is not set, then static methods of all available Java classes
 #     can be accessed as functions in HSQLDB. If the property is set, then
-#     only the list of semicolon seperated method names becomes accessible.
+#     only the list of semicolon separated method names becomes accessible.
 #     An empty property value means no class is accessible.
 # Regardless of the value of hsqldb.method_class_names, methods in
 # org.hsqldb.Library will be accessible.

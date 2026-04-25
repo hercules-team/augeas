@@ -72,8 +72,13 @@ let entries_re  = /([oO]ption|[sS]creen|[iI]nput[dD]evice|[dD]river|[sS]ub[sS]ec
 (* Variable: generic_entry_re *)
 let generic_entry_re = /[^# \t\n\/]+/ - entries_re
 
+(* Variable: quoted_non_empty_string_val *)
+let quoted_non_empty_string_val = del "\"" "\"" . store /[^"\n]+/
+                                  . del "\"" "\""
+                                              (* " relax, emacs *)
+
 (* Variable: quoted_string_val *)
-let quoted_string_val = del "\"" "\"" . store /[^"\n]+/ . del "\"" "\""
+let quoted_string_val = del "\"" "\"" . store /[^"\n]*/ . del "\"" "\""
                                               (* " relax, emacs *)
 
 (* Variable: int *)
@@ -117,7 +122,7 @@ let entry_xy (canon:string) (re:regexp) =
  *)
 let entry_str (canon:string) (re:regexp) =
         [ indent . del re canon . label canon
-          . sep_spc . quoted_string_val . eol ]
+          . sep_spc . quoted_non_empty_string_val . eol ]
 
 (* View: entry_generic
  * An entry without a specific handler. Store everything after the keyword,
@@ -128,7 +133,7 @@ let entry_generic  = [ indent . key generic_entry_re
 
 (* View: option *)
 let option = [ indent . del /[oO]ption/ "Option" . label "Option" . sep_spc
-               . quoted_string_val
+               . quoted_non_empty_string_val
                . [ label "value" . sep_spc . quoted_string_val ]*
                . eol ]
 
@@ -137,14 +142,16 @@ let option = [ indent . del /[oO]ption/ "Option" . label "Option" . sep_spc
  *)
 let screen = [ indent . del /[sS]creen/ "Screen" . label "Screen"
                . [ sep_spc . label "num" . store int ]?
-               . ( sep_spc . quoted_string_val
+               . ( sep_spc . quoted_non_empty_string_val
                . [ sep_spc . label "position" . store to_eol ]? )?
                . eol ]
 
 (* View: input_device *)
 let input_device = [ indent . del /[iI]nput[dD]evice/ "InputDevice"
-                     . label "InputDevice" . sep_spc . quoted_string_val
-                     . [ label "option" . sep_spc . quoted_string_val ]*
+                     . label "InputDevice" . sep_spc
+		     . quoted_non_empty_string_val
+                     . [ label "option" . sep_spc
+		         . quoted_non_empty_string_val ]*
                      . eol ]
 
 (* View: driver *)
@@ -169,7 +176,8 @@ let device = entry_str "Device" /[dD]evice/
 
 (* View: display_modes *)
 let display_modes = [ indent . del /[mM]odes/ "Modes" . label "Modes"
-                      . [ label "mode" . sep_spc . quoted_string_val ]+
+                      . [ label "mode" . sep_spc
+		          . quoted_non_empty_string_val ]+
                       . eol ]
 
 (*************************************************************************

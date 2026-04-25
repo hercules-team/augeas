@@ -18,6 +18,10 @@ group group1
 3.3.3.3 host1 #
 4.4.4.4 host2 #
 
+group-sorted group2
+5.5.5.5 host3 # conn
+6.6.6.6 host4 # ssh
+
 subparent page1 page2 This is after page 1
 10.0.0.1 router1.loni.org #
 10.0.0.2 sw1.localdomain #
@@ -74,6 +78,19 @@ test Xymon.lns get conf =
       { "host"
         { "ip" = "4.4.4.4" }
         { "fqdn" = "host2" }
+      }
+      {  }
+    }
+    { "group-sorted" = "group2"
+      { "host"
+        { "ip" = "5.5.5.5" }
+        { "fqdn" = "host3" }
+        { "tag" = "conn" }
+      }
+      { "host"
+        { "ip" = "6.6.6.6" }
+        { "fqdn" = "host4" }
+        { "tag" = "ssh" }
       }
       {  }
     }

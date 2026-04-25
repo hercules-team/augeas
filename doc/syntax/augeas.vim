@@ -18,7 +18,7 @@ endif
 syn case ignore
 syn sync lines=250
 
-syn keyword augeasStatement	module let incl transform autoload in rec
+syn keyword augeasStatement	module let incl transform autoload in rec excl
 syn keyword augeasTestStatement	test get after put insa insb set rm
 syn keyword augeasTodo contained	TODO FIXME XXX DEBUG NOTE
 

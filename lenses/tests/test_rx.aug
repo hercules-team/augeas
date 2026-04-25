@@ -57,3 +57,14 @@ test iso_8601 get "2010-02-18T16.23334444" = { "date" = "2010-02-18T16.23334444"
 test iso_8601 get "2010-02-18T16,2283" = { "date" = "2010-02-18T16,2283" }
 test iso_8601 get "2009-05-19 143922.500" = { "date" = "2009-05-19 143922.500" }
 test iso_8601 get "2009-05-19 1439,55" = { "date" = "2009-05-19 1439,55" }
+
+(* url_3986 *)
+let url_3986 = [ label "url" . store Rx.url_3986 ]
+
+test url_3986 get "http://tools.ietf.org/rfc/rfc3986.txt" = { "url" =  "http://tools.ietf.org/rfc/rfc3986.txt" }
+test url_3986 get "https://github.com/hercules-team/augeas/" = { "url" = "https://github.com/hercules-team/augeas/" }
+test url_3986 get "http://www.ics.uci.edu:80/pub/ietf/uri/#Related" = { "url" =  "http://www.ics.uci.edu:80/pub/ietf/uri/#Related" }
+test url_3986 get "EXAMPLE://a/./b/../b/%63/%7bfoo%7d" = { "url" =  "EXAMPLE://a/./b/../b/%63/%7bfoo%7d" }
+test url_3986 get "http://a/b/c/g;?x=1/y#z" = { "url" =  "http://a/b/c/g;?x=1/y#z" }
+test url_3986 get "eXaMpLe://a.very.sub.domain.tld:1234/b/c/e/f/g.txt;?x=1/y&q=%7b-w-%7b#z" = { "url" = "eXaMpLe://a.very.sub.domain.tld:1234/b/c/e/f/g.txt;?x=1/y&q=%7b-w-%7b#z" }
+

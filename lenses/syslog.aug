@@ -45,7 +45,8 @@ module Syslog =
      *)
 
 	let comment_gen (space:regexp) (sto:regexp) =
-          [ label "#comment" . del ("#" . space) "# " . store sto . eol ]
+      [ label "#comment" . del (Rx.opt_space . "#" . space) "# "
+        . store sto . eol ]
 
 	let comment =
 		let comment_withsign = comment_gen Rx.space /([!+-].*[^ \t\n]|[!+-])/
@@ -100,7 +101,7 @@ module Syslog =
 	let word      = /[A-Za-z0-9][A-Za-z0-9_.-]*/
 
 	(* Variable: comparison
-	  a comparison is an optional ! with optionaly some of [<=>]
+	  a comparison is an optional ! with optionally some of [<=>]
 	  *)
         let comparison = /(!|[<=>]+|![<=>]+)/
 
@@ -220,7 +221,7 @@ module Syslog =
 	(* View: entries
 	 entries are either comments/empty lines or entries
 	 *)
-	let entries = (empty | comment | entry)*
+	let entries = (empty | comment | entry )*
 
 	(* Group: Program matching *)
 
@@ -252,10 +253,13 @@ module Syslog =
 
 	(* Group: Top of the tree *)
 
+    let include =
+      [ key "include" . sep_tab . store file_r . eol ]
+
 	(* View: lns
 	 generic entries then programs or hostnames matching blocs
 	 *)
-        let lns = entries . ( program | hostname )*
+        let lns = entries . ( program | hostname | include )*
 
 	(* Variable: filter
 	 all you need is /etc/syslog.conf
@@ -263,4 +267,3 @@ module Syslog =
         let filter = incl "/etc/syslog.conf"
 
         let xfm = transform lns filter
-

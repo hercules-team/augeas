@@ -21,10 +21,13 @@
  */
 
 #include <config.h>
+#include <stdbool.h>
+
 #include "info.h"
 #include "internal.h"
 #include "memory.h"
 #include "ref.h"
+#include "errcode.h"
 
 /*
  * struct string
@@ -109,6 +112,10 @@ void print_info(FILE *out, struct info *info) {
                     info->last_line, info->last_column);
         }
     }
+}
+
+bool typecheck_p(const struct info *info) {
+    return (info->error->aug->flags & AUG_TYPE_CHECK) != 0;
 }
 
 void free_info(struct info *info) {

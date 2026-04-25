@@ -61,6 +61,7 @@ static const char *const static_nodes[][2] = {
     { AUGEAS_META_PATHX_FUNC "/glob", NULL },
     { AUGEAS_META_PATHX_FUNC "/label", NULL },
     { AUGEAS_META_PATHX_FUNC "/last", NULL },
+    { AUGEAS_META_PATHX_FUNC "/modified", NULL },
     { AUGEAS_META_PATHX_FUNC "/position", NULL },
     { AUGEAS_META_PATHX_FUNC "/regexp", NULL }
 };
@@ -80,22 +81,26 @@ static const char *const errcodes[] = {
     "Failed to execute command",                        /* AUG_ECMDRUN */
     "Invalid argument in function call",                /* AUG_EBADARG */
     "Invalid label",                                    /* AUG_ELABEL */
-    "Cannot copy node into its descendant"              /* AUG_ECPDESC */
+    "Cannot copy node into its descendant",             /* AUG_ECPDESC */
+    "Cannot access file"                                /* AUG_EFILEACCESS */
 };
 
 static void tree_mark_dirty(struct tree *tree) {
-    do {
-        tree->dirty = 1;
-        tree = tree->parent;
-    } while (tree != tree->parent && !tree->dirty);
     tree->dirty = 1;
+    while (tree != tree->parent ) {
+        if ( tree->file ) {
+           tree->dirty = 1;
+           break;
+        }
+        tree = tree->parent;
+    }
 }
 
 void tree_clean(struct tree *tree) {
-    if (tree->dirty) {
-        list_for_each(c, tree->children)
-            tree_clean(c);
-    }
+    if ( tree->file && ! tree->dirty )
+        return;
+    list_for_each(c, tree->children)
+        tree_clean(c);
     tree->dirty = 0;
 }
 
@@ -691,10 +696,9 @@ static void tree_mark_files(struct tree *tree) {
 static void tree_rm_dirty_files(struct augeas *aug, struct tree *tree) {
     struct tree *p;
 
-    if (!tree->dirty)
+    if (tree->file && !tree->dirty) {
         return;
-
-    if (tree->file && ((p = tree_child(tree, "path")) != NULL)) {
+    } else if (tree->file && tree->dirty && ((p = tree_child(tree, "path")) != NULL)) {
         tree_unlink(aug, tree_fpath(aug, p->value));
         tree_unlink(aug, tree);
     } else {
@@ -709,7 +713,7 @@ static void tree_rm_dirty_files(struct augeas *aug, struct tree *tree) {
 
 static void tree_rm_dirty_leaves(struct augeas *aug, struct tree *tree,
                                  struct tree *protect) {
-    if (! tree->dirty)
+    if (tree->file && !tree->dirty)
         return;
 
     struct tree *c = tree->children;
@@ -1491,23 +1495,31 @@ static int tree_save(struct augeas *aug, struct tree *tree,
         return -1;
 
     list_for_each(t, tree) {
-        if (t->dirty) {
+        if (t->file && ! t->dirty) {
+            continue;
+        } else {
             char *tpath = NULL;
             struct tree *transform = NULL;
             if (asprintf(&tpath, "%s/%s", path, t->label) == -1) {
                 result = -1;
                 continue;
             }
-            list_for_each(xfm, load->children) {
-                if (transform_applies(xfm, tpath)) {
-                    if (transform == NULL || transform == xfm) {
-                        transform = xfm;
-                    } else {
-                        result = check_save_dup(aug, tpath, transform, xfm);
+            if ( t->dirty ) {
+                list_for_each(xfm, load->children) {
+                    if (transform_applies(xfm, tpath)) {
+                        if (transform == NULL || transform == xfm) {
+                            transform = xfm;
+                        } else {
+                            result = check_save_dup(aug, tpath, transform, xfm);
+                        }
                     }
                 }
             }
             if (transform != NULL) {
+                /* If this file did not previously exist and is being created by augeas,
+                 * then the 'file' flag in the node t will not be set yet. Set it now
+                 */
+                t->file = true;
                 int r = transform_save(aug, transform, tpath, t);
                 if (r == -1)
                     result = -1;
@@ -1554,7 +1566,7 @@ static int unlink_removed_files(struct augeas *aug,
 
     int result = 0;
 
-    if (! files->dirty)
+    if (files->file)
         return 0;
 
     for (struct tree *tm = meta->children; tm != NULL;) {
@@ -1576,7 +1588,7 @@ static int unlink_removed_files(struct augeas *aug,
                     result = -1;
             }
             free_pathx(px);
-        } else if (tf->dirty && ! tree_child(tm, "path")) {
+        } else if (! tree_child(tm, "path")) {
             if (unlink_removed_files(aug, tf, tm) < 0)
                 result = -1;
         }
@@ -1605,15 +1617,13 @@ int aug_save(struct augeas *aug) {
     list_for_each(xfm, load->children)
         transform_validate(aug, xfm);
 
-    if (files->dirty) {
-        if (tree_save(aug, files->children, AUGEAS_FILES_TREE) == -1)
-            ret = -1;
+    if (tree_save(aug, files->children, AUGEAS_FILES_TREE) == -1)
+        ret = -1;
 
-        /* Remove files whose entire subtree was removed. */
-        if (meta_files != NULL) {
-            if (unlink_removed_files(aug, files, meta_files) < 0)
-                ret = -1;
-        }
+    /* Remove files whose entire subtree was removed. */
+    if (meta_files != NULL) {
+        if (unlink_removed_files(aug, files, meta_files) < 0)
+            ret = -1;
     }
     if (!(aug->flags & AUG_SAVE_NOOP)) {
         tree_clean(aug->origin);
@@ -1788,7 +1798,7 @@ int aug_transform(struct augeas *aug, const char *lens,
     int r = 0, result = -1;
     struct tree *xfm = NULL, *lns = NULL, *t = NULL;
     const char *filter = NULL;
-    char *p;
+    const char *p;
     int exists;
     char *lensname = NULL, *xfmname = NULL;
 
@@ -1915,6 +1925,28 @@ int aug_print(const struct augeas *aug, FILE *out, const char *pathin) {
     return result;
 }
 
+static char *
+tree_source(const augeas *aug, struct tree *tree) {
+    char *result = NULL;
+
+    while (!(ROOT_P(tree) || tree->file))
+        tree = tree->parent;
+
+    if (tree->file) {
+        if (tree->span == NULL) {
+            int r;
+            r = ALLOC(tree->span);
+            ERR_NOMEM(r < 0, aug);
+            tree->span->filename = make_string(path_of_tree(tree));
+            ERR_NOMEM(tree->span->filename == NULL, aug);
+        }
+        result = strdup(tree->span->filename->str);
+        ERR_NOMEM(result == NULL, aug);
+    }
+ error:
+    return result;
+}
+
 int aug_source(const augeas *aug, const char *path, char **file_path) {
     int result = -1, r;
     struct pathx *p = NULL;
@@ -1935,17 +1967,72 @@ int aug_source(const augeas *aug, const char *path, char **file_path) {
               r, path);
     ERR_THROW(r == 0, aug, AUG_ENOMATCH, "There is no node matching %s",
               path);
-    while (!(ROOT_P(match) || match->file))
-        match = match->parent;
 
-    if (match->file) {
-        *file_path = path_of_tree(match);
-        ERR_NOMEM(file_path == NULL, aug);
-    }
+    *file_path = tree_source(aug, match);
+    ERR_BAIL(aug);
 
     result = 0;
  error:
     free_pathx(p);
+    api_exit(aug);
+    return result;
+}
+
+int aug_preview(struct augeas *aug, const char *path, char **out) {
+    struct tree *tree = NULL;
+    struct pathx *p;
+    int r;
+    int result=-1;
+    char *lens_path = NULL;
+    char *lens_name = NULL;
+    char *file_path = NULL;
+    char *source_filename = NULL;
+    char *source_text = NULL;
+
+    *out = NULL;
+
+    api_entry(aug);
+
+    p = pathx_aug_parse(aug, aug->origin, tree_root_ctx(aug), path, true);
+    ERR_BAIL(aug);
+
+    tree = pathx_first(p);
+    ERR_BAIL(aug);
+    ERR_THROW(tree == NULL, aug, AUG_ENOMATCH, "No node matching %s", path);
+
+    file_path = tree_source(aug, tree);
+
+    ERR_THROW(file_path == NULL, aug, AUG_EBADARG, "Path %s is not associated with a file", path);
+
+    tree = tree_find(aug, file_path);
+
+    xasprintf(&lens_path, "%s%s/%s", AUGEAS_META_TREE, file_path, s_lens);
+    ERR_NOMEM(lens_path == NULL, aug);
+
+    aug_get(aug,lens_path,(const char **) &lens_name);
+    ERR_BAIL(aug);
+
+    ERR_THROW(lens_name == NULL, aug, AUG_ENOLENS, "No lens found for path %s", path);
+
+    xasprintf(&source_filename, "%s%s",aug->root, file_path + strlen(AUGEAS_FILES_TREE) + 1);
+    ERR_NOMEM(source_filename == NULL, aug);
+
+    source_text = xread_file(source_filename);
+
+    ERR_THROW(source_text == NULL, aug, AUG_EFILEACCESS, "Cannot read file %s", source_filename);
+
+    r = text_retrieve(aug, lens_name, file_path, tree, source_text, out);
+    if (r < 0)
+        goto error;
+
+    result = 0;
+
+ error:
+    free(p);
+    free(file_path);
+    free(lens_path);
+    free(source_filename);
+    free(source_text);
     api_exit(aug);
     return result;
 }
@@ -1990,6 +2077,128 @@ int tree_equal(const struct tree *t1, const struct tree *t2) {
         t2 = t2->next;
     }
     return t1 == t2;
+}
+
+int aug_ns_attr(const augeas* aug, const char *var, int i,
+                const char **value, const char **label, char **file_path) {
+    int result = -1;
+
+    if (value != NULL)
+        *value = NULL;
+
+    if (label != NULL)
+        *label = NULL;
+
+    if (file_path != NULL)
+        *file_path = NULL;
+
+    api_entry(aug);
+
+    struct tree *tree = pathx_symtab_get_tree(aug->symtab, var, i);
+    ERR_THROW(tree == NULL, aug, AUG_ENOMATCH,
+              "Node %s[%d] does not exist", var, i);
+
+    if (file_path != NULL) {
+        *file_path = tree_source(aug, tree);
+        ERR_BAIL(aug);
+    }
+
+    if (value != NULL)
+        *value = tree->value;
+
+    if (label != NULL)
+        *label = tree->label;
+
+    result = 1;
+
+ error:
+    api_exit(aug);
+    return result;
+}
+
+int aug_ns_label(const augeas* aug, const char *var, int i,
+                 const char **label, int *index) {
+    int result = -1;
+
+    if (label != NULL)
+        *label = NULL;
+
+    if (index != NULL)
+        *index = -1;
+
+    api_entry(aug);
+
+    struct tree *tree = pathx_symtab_get_tree(aug->symtab, var, i);
+    ERR_THROW(tree == NULL, aug, AUG_ENOMATCH,
+              "Node %s[%d] does not exist", var, i);
+
+    if (label != NULL)
+        *label = tree->label;
+
+    if (index != NULL) {
+        *index = tree_sibling_index(tree);
+    }
+
+    result = 1;
+
+ error:
+    api_exit(aug);
+    return result;
+}
+
+int aug_ns_value(const augeas* aug, const char *var, int i,
+                 const char **value) {
+    int result = -1;
+
+    if (value != NULL)
+        *value = NULL;
+
+    api_entry(aug);
+
+    struct tree *tree = pathx_symtab_get_tree(aug->symtab, var, i);
+    ERR_THROW(tree == NULL, aug, AUG_ENOMATCH,
+              "Node %s[%d] does not exist", var, i);
+
+    if (value != NULL)
+        *value = tree->value;
+
+    result = 1;
+
+ error:
+    api_exit(aug);
+    return result;
+}
+
+int aug_ns_count(const augeas *aug, const char *var) {
+    int result = -1;
+
+    api_entry(aug);
+
+    result = pathx_symtab_count(aug->symtab, var);
+
+    api_exit(aug);
+
+    return result;
+}
+
+int aug_ns_path(const augeas *aug, const char *var, int i, char **path) {
+    int result = -1;
+
+    *path = NULL;
+
+    api_entry(aug);
+
+    struct tree *tree = pathx_symtab_get_tree(aug->symtab, var, i);
+    ERR_THROW(tree == NULL, aug, AUG_ENOMATCH,
+              "Node %s[%d] does not exist", var, i);
+
+    *path = path_of_tree(tree);
+
+    result = 0;
+
+ error:
+    api_exit(aug);
+    return result;
 }
 
 /*

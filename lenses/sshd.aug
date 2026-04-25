@@ -68,23 +68,26 @@ module Sshd =
 
    let eol = del /[ \t]*\n/ "\n"
 
-   let sep = Util.del_ws_spc
+   let sep = del /[ \t=]+/ " "
 
    let indent = del /[ \t]*/ "  "
 
    let key_re = /[A-Za-z0-9]+/
-         - /MACs|Match|AcceptEnv|Subsystem|Ciphers|KexAlgorithms|(Allow|Deny)(Groups|Users)/i
+         - /MACs|Match|AcceptEnv|Subsystem|Ciphers|((GSSAPI|)Kex|HostKey|CASignature|PubkeyAccepted)Algorithms|PubkeyAcceptedKeyTypes|(Allow|Deny)(Groups|Users)/i
 
    let comment = Util.comment
    let comment_noindent = Util.comment_noindent
    let empty = Util.empty
 
    let array_entry (kw:regexp) (sq:string) =
-     let value = store /[^ \t\n]+/ in
-     [ key kw . [ sep . seq sq . value]* . eol ]
+     let bare = Quote.do_quote_opt_nil (store /[^"' \t\n=]+/) in
+     let quoted = Quote.do_quote (store /[^"'\n]*[ \t]+[^"'\n]*/) in
+     [ key kw
+       . ( [ sep . seq sq . bare ] | [ sep . seq sq . quoted ] )*
+       . eol ]
 
    let other_entry =
-     let value = store /[^ \t\n]+([ \t]+[^ \t\n]+)*/ in
+     let value = store /[^ \t\n=]+([ \t=]+[^ \t\n=]+)*/ in
      [ key key_re . sep . value . eol ]
 
    let accept_env = array_entry /AcceptEnv/i "AcceptEnv"
@@ -95,14 +98,14 @@ module Sshd =
    let deny_users = array_entry /DenyUsers/i "DenyUsers"
 
    let subsystemvalue =
-     let value = store (/[^ \t\n](.*[^ \t\n])?/) in
+     let value = store (/[^ \t\n=](.*[^ \t\n=])?/) in
      [ key /[A-Za-z0-9\-]+/ . sep . value . eol ]
 
    let subsystem =
      [ key /Subsystem/i .  sep .  subsystemvalue ]
 
    let list (kw:regexp) (sq:string) =
-     let value = store /[^, \t\n]+/ in
+     let value = store /[^, \t\n=]+/ in
      [ key kw . sep .
          [ seq sq . value ] .
          ([ seq sq . Util.del_str "," . value])* .
@@ -114,29 +117,46 @@ module Sshd =
 
    let kexalgorithms = list /KexAlgorithms/i "KexAlgorithms"
 
+   let hostkeyalgorithms = list /HostKeyAlgorithms/i "HostKeyAlgorithms"
+
+   let gssapikexalgorithms = list /GSSAPIKexAlgorithms/i "GSSAPIKexAlgorithms"
+
+   let casignaturealgorithms = list /CASignatureAlgorithms/i "CASignatureAlgorithms"
+
+   let pubkeyacceptedkeytypes = list /PubkeyAcceptedKeyTypes/i "PubkeyAcceptedKeyTypes"
+   
+   let pubkeyacceptedalgorithms = list /PubkeyAcceptedAlgorithms/i "PubkeyAcceptedAlgorithms"
+
    let entry = accept_env | allow_groups | allow_users
              | deny_groups | subsystem | deny_users
-             | macs | ciphers | kexalgorithms
-             | other_entry
+             | macs | ciphers | kexalgorithms | hostkeyalgorithms
+             | gssapikexalgorithms | casignaturealgorithms
+             | pubkeyacceptedkeytypes | pubkeyacceptedalgorithms | other_entry
 
    let condition_entry =
-    let value = store  /[^ \t\n]+/ in
-    [ sep . key /[A-Za-z0-9]+/ . sep . value ]
+    let k = /[A-Za-z0-9]+/ in
+    let no_spc = Quote.do_dquote_opt (store  /[^"' \t\n=]+/) in
+    let spc = Quote.do_quote (store /[^"'\t\n]* [^"'\t\n]*/) in
+      [ sep . key k . sep . no_spc ]
+    | [ sep . key k . sep . spc ]
 
    let match_cond =
      [ label "Condition" . condition_entry+ . eol ]
 
    let match_entry = indent . (entry | comment_noindent)
-                   | empty 
+                   | empty
 
    let match =
      [ key /Match/i . match_cond
         . [ label "Settings" .  match_entry+ ]
      ]
 
-  let lns = (entry | comment | empty)* . match* 
+  let lns = (entry | comment | empty)* . match*
 
-  let xfm = transform lns (incl "/etc/ssh/sshd_config")
+  let filter = (incl "/etc/ssh/sshd_config" )
+               . ( incl "/etc/ssh/sshd_config.d/*.conf" )
+
+  let xfm = transform lns filter
 
 (* Local Variables: *)
 (* mode: caml       *)

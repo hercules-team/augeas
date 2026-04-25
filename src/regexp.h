@@ -117,7 +117,9 @@ struct regexp *regexp_make_empty(struct info *);
    regular expressions */
 void regexp_release(struct regexp *regexp);
 
-/* Produce a printable representation of R */
+/* Produce a printable representation of R. The result will in general not
+   be equivalent to the passed regular expression, but be easier for
+   humans to read. */
 char *regexp_escape(const struct regexp *r);
 
 /* If R is case-insensitive, expand its pattern so that it matches the same

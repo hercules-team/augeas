@@ -22,17 +22,22 @@ module Pam =
 
   let eol = Util.eol
   let indent = Util.indent
+  let space = del /([ \t]|\\\\\n)+/ " "
 
   (* For the control syntax of [key=value ..] we could split the key value *)
   (* pairs into an array and generate a subtree control/N/KEY = VALUE      *)
-  let control = /(\[[^]#\n]*\]|[^[ \t][^ \t]*)/
-  let word = /[^# \t\n]+/
+  (* The valid control values if the [...] syntax is not used, is          *)
+  (*   required|requisite|optional|sufficient|include|substack             *)
+  (* We allow more than that because this list is not case sensitive and   *)
+  (* to be more lenient with typos                                         *)
+  let control = /(\[[^]#\n]*\]|[a-zA-Z]+)/
+  let word = /([^# \t\n\\]|\\\\.)+/
   (* Allowed types *)
   let types = /(auth|session|account|password)/i
 
   (* This isn't entirely right: arguments enclosed in [ .. ] can contain  *)
   (* a ']' if escaped with a '\' and can be on multiple lines ('\')       *)
-  let argument = /(\[[^]#\n]+\]|[^[#\n \t][^#\n \t]*)/
+  let argument = /(\[[^]#\n]+\]|[^[#\n \t\\][^#\n \t\\]*)/
 
   let comment = Util.comment
   let comment_or_eol = Util.comment_or_eol
@@ -43,16 +48,16 @@ module Pam =
   (*   @include module                                                     *)
   (* quite a bit                                                           *)
   let include = [ indent . Util.del_str "@" . key "include" .
-                  Util.del_ws_spc . store word . eol ]
+                  space . store word . eol ]
 
   (* Shared with PamConf *)
   let record = [ label "optional" . del "-" "-" ]? .
                [ label "type" . store types ] .
-               Sep.space .
+               space .
                [ label "control" . store control] .
-               Sep.space .
+               space .
                [ label "module" . store word ] .
-               [ Sep.space . label "argument" . store argument ]* .
+               [ space . label "argument" . store argument ]* .
                comment_or_eol
 
   let record_svc = [ seq "record" . indent . record ]

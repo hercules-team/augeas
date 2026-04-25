@@ -31,7 +31,7 @@ let sep = del /([ \t]+)|([ \t]*=[ \t]*)/ " = "
 
 (* Variable: word_opt_quot_re
      Strings that don't require quotes *)
-let word_opt_quot_re = /[A-Za-z][A-Za-z0-9_]*/
+let word_opt_quot_re = /[A-Za-z][A-Za-z0-9_-]*/
 
 (* View: word_opt_quot
      Storing a <word_opt_quot_re>, with or without quotes *)

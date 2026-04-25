@@ -5,7 +5,7 @@ Module: Dpkg
 Author: Robin Lee Powell <rlpowell@digitalkingdom.org>
 
 About: License
-    This file, and the attendant test_dpgk.aug, are explicitely
+    This file, and the attendant test_dpgk.aug, are explicitly
     placed in the public domain.
 
 About: Description
@@ -77,7 +77,7 @@ module Dpkg =
       by EOL.
 
       The actual file specification doesn't require EOL, but the
-      likelyhood of the file not having one is pretty slim, and
+      likelihood of the file not having one is pretty slim, and
       this way things we add have EOL.
   *)
 

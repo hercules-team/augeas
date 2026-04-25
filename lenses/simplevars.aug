@@ -43,9 +43,10 @@ let filter = incl "/etc/kernel-img.conf"
            . incl "/etc/kerneloops.conf"
            . incl "/etc/wgetrc"
            . incl "/etc/zabbix/*.conf"
+           . incl "/etc/zabbix/*/*.conf"
            . incl "/etc/audit/auditd.conf"
            . incl "/etc/mixerctl.conf"
            . incl "/etc/wsconsctlctl.conf"
-           . incl "/etc/selinux/semanage.conf"
+           . incl "/etc/ocsinventory/ocsinventory-agent.cfg"
 
 let xfm = transform lns filter

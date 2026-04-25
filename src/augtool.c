@@ -102,7 +102,7 @@ static char *readline_path_generator(const char *text, int state) {
     static int nchildren = 0;
     static char *ctx = NULL;
 
-    char *end = strrchr(text, SEP);
+    const char *end = strrchr(text, SEP);
     if (end != NULL)
         end += 1;
 
@@ -112,8 +112,7 @@ static char *readline_path_generator(const char *text, int state) {
             if ((path = strdup("*")) == NULL)
                 return NULL;
         } else {
-            CALLOC(path, end - text + 2);
-            if (path == NULL)
+            if (ALLOC_N(path, end - text + 2) < 0)
                 return NULL;
             strncpy(path, text, end - text);
             strcat(path, "*");
@@ -153,15 +152,13 @@ static char *readline_path_generator(const char *text, int state) {
 
             /* strip off context if the user didn't give it */
             if (ctx != NULL) {
-                char *c = realloc(child, strlen(child)-strlen(ctx)+1);
-                if (c == NULL) {
-                    free(child);
-                    return NULL;
-                }
                 int ctxidx = strlen(ctx);
                 if (child[ctxidx] == SEP)
                     ctxidx++;
-                strcpy(c, &child[ctxidx]);
+                char *c = strdup(&child[ctxidx]);
+                free(child);
+                if (c == NULL)
+                    return NULL;
                 child = c;
             }
 
@@ -183,7 +180,7 @@ static char *readline_command_generator(const char *text, int state) {
         "mv", "cp", "rename", "print", "dump-xml", "rm", "save", "set", "setm",
         "clearm", "span", "store", "retrieve", "transform", "load-file",
         "help", "touch", "insert", "move", "copy", "errors", "source", "context",
-        "info",
+        "info", "count", "preview",
         NULL };
 
     static int current = 0;
@@ -240,16 +237,26 @@ static char *get_home_dir(uid_t uid) {
     struct passwd pwbuf;
     struct passwd *pw = NULL;
     long val = sysconf(_SC_GETPW_R_SIZE_MAX);
-    size_t strbuflen = val;
 
-    if (val < 0)
-        return NULL;
+    if (val < 0) {
+        // The libc won't tell us how big a buffer to reserve.
+        // Let's hope that 16k is enough (it really should be).
+        val = 16*1024;
+    }
+
+    size_t strbuflen = (size_t) val;
 
     if (ALLOC_N(strbuf, strbuflen) < 0)
         return NULL;
 
     if (getpwuid_r(uid, &pwbuf, strbuf, strbuflen, &pw) != 0 || pw == NULL) {
         free(strbuf);
+
+        // Try to get the user's home dir from the environment
+        char *env = getenv("HOME");
+        if (env != NULL) {
+            return strdup(env);
+        }
         return NULL;
     }
 
@@ -260,10 +267,22 @@ static char *get_home_dir(uid_t uid) {
     return result;
 }
 
+/* Inspired from:
+ * https://thoughtbot.com/blog/tab-completion-in-gnu-readline
+ */
+static int quote_detector(char *str, int index) {
+    return index > 0
+           && str[index - 1] == '\\'
+           && quote_detector(str, index - 1) == 0;
+}
+
 static void readline_init(void) {
     rl_readline_name = "augtool";
     rl_attempted_completion_function = readline_completion;
     rl_completion_entry_function = readline_path_generator;
+    rl_completer_quote_characters = "\"'";
+    rl_completer_word_break_characters = (char *) " ";
+    rl_char_is_quoted_p = &quote_detector;
 
     /* Set up persistent history */
     char *home_dir = get_home_dir(getuid());

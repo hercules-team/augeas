@@ -1,10 +1,10 @@
-#! /bin/bash
+#!/bin/sh
 
 # Test that we can write into a bind mount with the copy_if_rename_fails flag.
 # This requires that EXDEV or EBUSY is returned from rename(2) to activate the
 # code path, so set up a bind mount on Linux.
 
-if [ $UID -ne 0 -o "$(uname -s)" != "Linux" ]; then
+if [ "$UID" != 0 -o "$(uname -s)" != "Linux" ]; then
     echo "Test can only be run as root on Linux to create bind mounts"
     exit 77
 fi

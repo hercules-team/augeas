@@ -12,7 +12,7 @@ let conf = "# Cell Aliases are meant to act like symlinks like '/afs/openafs.org
 # These aliases are set with 'fs newalias', or read from
 # /usr/vice/etc/CellAlias
 #
-# Formating for /usr/vice/etc/CellAlias is in the form
+# Formatting for /usr/vice/etc/CellAlias is in the form
 # <target> <alias>
 # an example would be
 # fnal.gov/common/usr usr
@@ -28,7 +28,7 @@ test AFS_cellalias.lns get conf = { "#comment" = "Cell Aliases are meant to act 
   { "#comment" = "These aliases are set with 'fs newalias', or read from" }
   { "#comment" = "/usr/vice/etc/CellAlias" }
   {  }
-  { "#comment" = "Formating for /usr/vice/etc/CellAlias is in the form" }
+  { "#comment" = "Formatting for /usr/vice/etc/CellAlias is in the form" }
   { "#comment" = "<target> <alias>" }
   { "#comment" = "an example would be" }
   { "#comment" = "fnal.gov/common/usr usr" }

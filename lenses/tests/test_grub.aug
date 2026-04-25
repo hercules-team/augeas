@@ -8,7 +8,7 @@ module Test_grub =
 #          root (hd0,0)
 #          kernel /vmlinuz-version ro root=/dev/vg00/lv00
 #          initrd /initrd-version.img
-#boot=/dev/sda
+boot=/dev/sda
 device (hd0) HD(1,800,64000,9895c137-d4b2-4e3b-a93b-dc9ac4)
 password --md5 $1$M9NLj$p2gs87vwNv48BUu.wAfVw0
 default=0
@@ -53,7 +53,7 @@ title othermenu
     { "#comment" = "root (hd0,0)" }
     { "#comment" = "kernel /vmlinuz-version ro root=/dev/vg00/lv00" }
     { "#comment" = "initrd /initrd-version.img" }
-    { "#comment" = "boot=/dev/sda" }
+    { "boot" = "/dev/sda" }
     { "device"   = "(hd0)"
         { "file" = "HD(1,800,64000,9895c137-d4b2-4e3b-a93b-dc9ac4)" } }
     { "password" = "$1$M9NLj$p2gs87vwNv48BUu.wAfVw0"
@@ -257,3 +257,45 @@ password --encrypted ^9^32kwzzX./3WISQ0C /boot/grub/custom.lst
     { "password" = "secret"
       { "md5" }
     } }
+
+    (* Test kernel options with different special characters. *)
+    test Grub.lns get "title Fedora (2.6.24.4-64.fc8)
+        root (hd0,0)
+        kernel /vmlinuz-2.6.24.4-64.fc8 ro root=/dev/vg00/lv00 with.dot=1 with-dash=1 with_underscore=1 with+plus=1
+        initrd /initrd-2.6.24.4-64.fc8.img\n" =
+  { "title" = "Fedora (2.6.24.4-64.fc8)"
+    { "root" = "(hd0,0)" }
+    { "kernel" = "/vmlinuz-2.6.24.4-64.fc8"
+      { "ro" }
+      { "root" = "/dev/vg00/lv00" }
+      { "with.dot" = "1" }
+      { "with-dash" = "1" }
+      { "with_underscore" = "1" }
+      { "with+plus" = "1" }
+    }
+    { "initrd" = "/initrd-2.6.24.4-64.fc8.img" } }
+
+  (* Test parsing of invalid entries via menu_error *)
+  test Grub.lns get "default=0\ncrud=no\n" =
+  { "default" = "0" }
+  { "#error" = "crud=no" }
+
+  (* We handle some pretty bizarre bad syntax *)
+  test Grub.lns get "default=0
+crud no
+valid:nope
+nonsense  =   yes
+bad arg1 arg2 arg3=v\n" =
+  { "default" = "0" }
+  { "#error" = "crud no" }
+  { "#error" = "valid:nope" }
+  { "#error" = "nonsense  =   yes" }
+  { "#error" = "bad arg1 arg2 arg3=v" }
+
+  (* Test parsing of invalid entries via boot_error *)
+  test Grub.lns get "title test
+    root (hd0,0)
+    crud foo\n" =
+  { "title" = "test"
+    { "root" = "(hd0,0)" }
+    { "#error" = "crud foo" } }

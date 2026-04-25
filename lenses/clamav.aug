@@ -48,5 +48,6 @@ let lns = (Util.empty | example_entry | clamd_entry | comment )*
 let filter = (incl "/etc/clamd.conf")
             . (incl "/etc/freshclam.conf")
             . (incl "/etc/clamd.d/*.conf")
+            . (incl "/etc/clamav/*.conf")
 
 let xfm = transform lns filter

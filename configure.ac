@@ -1,8 +1,8 @@
-AC_INIT(augeas, 1.7.0)
+AC_INIT(augeas, 1.14.1)
 AC_CONFIG_SRCDIR([src/augeas.c])
 AC_CONFIG_AUX_DIR([build/ac-aux])
 AM_CONFIG_HEADER([config.h])
-AM_INIT_AUTOMAKE([-Wno-portability 1.11 color-tests parallel-tests])
+AM_INIT_AUTOMAKE([-Wno-portability color-tests parallel-tests])
 AM_SILENT_RULES([yes]) # make --enable-silent-rules the default.
 
 
@@ -65,8 +65,8 @@ if test x"$enable_debug" = x"yes"; then
 fi
 
 dnl Version info in libtool's notation
-AC_SUBST([LIBAUGEAS_VERSION_INFO], [21:1:21])
-AC_SUBST([LIBFA_VERSION_INFO], [5:4:4])
+AC_SUBST([LIBAUGEAS_VERSION_INFO], [25:0:25])
+AC_SUBST([LIBFA_VERSION_INFO], [6:3:5])
 
 AC_GNU_SOURCE
 
@@ -98,6 +98,10 @@ AC_MSG_CHECKING([how to pass version script to the linker ($LD)])
 VERSION_SCRIPT_FLAGS=none
 if $LD --help 2>&1 | grep "version-script" >/dev/null 2>/dev/null; then
     VERSION_SCRIPT_FLAGS=-Wl,--version-script=
+    # Solaris needs gnu-version-script-compat to use version-script
+    if test x"$host_os" = x"solaris2.11"; then
+      VERSION_SCRIPT_FLAGS="-z gnu-version-script-compat,${VERSION_SCRIPT_FLAGS}"
+    fi
 elif $LD --help 2>&1 | grep "M mapfile" >/dev/null 2>/dev/null; then
     VERSION_SCRIPT_FLAGS="-Wl,-M -Wl,"
 fi
@@ -117,6 +121,10 @@ AC_ARG_ENABLE([gnulib-tests],
 AM_CONDITIONAL([ENABLE_GNULIB_TESTS],[test "x$ENABLE_GNULIB_TESTS" = "xyes"])
 AC_MSG_RESULT([$ENABLE_GNULIB_TESTS])
 
+dnl set PC_SELINUX for use by augeas.pc.in
+PC_SELINUX=$(echo $LIB_SELINUX | sed -e 's/-l/lib/')
+AC_SUBST([PC_SELINUX])
+
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([LIBXML], [libxml-2.0])
 
@@ -132,3 +140,8 @@ AC_OUTPUT(Makefile \
 	  doc/Makefile \
 	  doc/naturaldocs/Makefile \
           augeas.pc augeas.spec)
+
+# Bash completion ...
+PKG_CHECK_VAR(bashcompdir, [bash-completion], [completionsdir], ,
+  bashcompdir="${sysconfdir}/bash_completion.d")
+AC_SUBST(bashcompdir)

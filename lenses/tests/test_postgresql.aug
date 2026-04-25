@@ -107,6 +107,7 @@ lc_messages = 'en_US.UTF-8'
 log_filename = log
 archive_command = 'tar \'quoted option\''
 search_path = '\"$user\",public'
+password_encryption = scram-sha-256
 "
 test Postgresql.lns get string_quotes =
   { "listen_addresses" = "localhost" }
@@ -115,6 +116,7 @@ test Postgresql.lns get string_quotes =
   { "log_filename" = "log" }
   { "archive_command" = "tar \'quoted option\'" }
   { "search_path" = "\"$user\",public" }
+  { "password_encryption" = "scram-sha-256" }
 test Postgresql.lns put string_quotes after
   set "stats_temp_directory" "foo_bar";
   set "log_filename" "postgresql-%Y-%m-%d_%H%M%S.log";
@@ -124,6 +126,7 @@ lc_messages = 'en_US.UTF-8'
 log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
 archive_command = 'tar \'quoted option\''
 search_path = '\"$user\",public'
+password_encryption = scram-sha-256
 log_statement = 'none'
 "
 

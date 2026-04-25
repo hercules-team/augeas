@@ -1,10 +1,12 @@
-sudo: false
+os: linux
+dist: focal
 addons:
   apt:
     packages:
       - libxml2-dev
       - libreadline-dev
       - valgrind
+      - libtool-bin
 install:
   - ./autogen.sh
   - sed -i '41s/ENOENT/ENOENT || errno == EINVAL/' gnulib/tests/test-readlink.h
@@ -14,4 +16,4 @@ notifications:
   irc:
     channels:
       - "irc.freenode.org#augeas"
-script: ./configure && make && make check && ./src/try valgrind
+script: ./configure && make && make check VERBOSE=1 && ./src/try valgrind

@@ -55,7 +55,7 @@ static const int glob_flags = GLOB_NOSORT;
  *   lens/id   : unique hexadecimal id of the lens
  *   error     : indication of errors during processing FNAME, or NULL
  *               if processing succeeded
- *   error/pos : position in file where error occured (for get errors)
+ *   error/pos : position in file where error occurred (for get errors)
  *   error/path: path to tree node where error occurred (for put errors)
  *   error/message : human-readable error message
  */
@@ -548,16 +548,91 @@ static void tree_freplace(struct augeas *aug, const char *fpath,
     }
 }
 
+static struct info*
+make_lns_info(struct augeas *aug, const char *filename,
+              const char *text, int text_len) {
+    struct info *info = NULL;
+
+    make_ref(info);
+    ERR_NOMEM(info == NULL, aug);
+
+    if (filename != NULL) {
+        make_ref(info->filename);
+        ERR_NOMEM(info->filename == NULL, aug);
+        info->filename->str = strdup(filename);
+    }
+
+    info->first_line = 1;
+    info->last_line = 1;
+    info->first_column = 1;
+    if (text != NULL) {
+        info->last_column = text_len;
+    }
+
+    info->error = aug->error;
+
+    return info;
+ error:
+    unref(info, info);
+    return NULL;
+}
+
+/*
+ * Do the bookkeeping around calling lns_get that is common to load_file
+ * and text_store, in particular, make sure the tree we read gets put into
+ * the right place in AUG and that the span for that tree gets set.
+ *
+ * Transform TEXT using LENS and put the resulting tree at PATH. Use
+ * FILENAME in error messages to indicate where the TEXT came from.
+ */
+static void lens_get(struct augeas *aug,
+                     struct lens *lens,
+                     const char *filename,
+                     const char *text, int text_len,
+                     const char *path,
+                     struct lns_error **err) {
+    struct info *info = NULL;
+    struct span *span = NULL;
+    struct tree *tree = NULL;
+
+    info = make_lns_info(aug, filename, text, text_len);
+    ERR_BAIL(aug);
+
+    if (aug->flags & AUG_ENABLE_SPAN) {
+        /* Allocate the span already to capture a reference to
+           info->filename */
+        span = make_span(info);
+        ERR_NOMEM(span == NULL, info);
+    }
+
+    tree = lns_get(info, lens, text, aug->flags & AUG_ENABLE_SPAN, err);
+
+    if (*err == NULL) {
+        // Successful get
+        tree_freplace(aug, path, tree);
+        ERR_BAIL(aug);
+
+        /* top level node span entire file length */
+        if (span != NULL && tree != NULL) {
+            tree->parent->span = move(span);
+            tree->parent->span->span_start = 0;
+            tree->parent->span->span_end = text_len;
+        }
+        tree = NULL;
+    }
+ error:
+    free_span(span);
+    unref(info, info);
+    free_tree(tree);
+}
+
 static int load_file(struct augeas *aug, struct lens *lens,
                      const char *lens_name, char *filename) {
     char *text = NULL;
     const char *err_status = NULL;
-    struct tree *tree = NULL;
     char *path = NULL;
     struct lns_error *err = NULL;
-    struct span *span = NULL;
     int result = -1, r, text_len = 0;
-    struct info *info = NULL;
 
     path = file_name_path(aug, filename);
     ERR_NOMEM(path == NULL, aug);
@@ -574,50 +649,20 @@ static int load_file(struct augeas *aug, struct lens *lens,
     text_len = strlen(text);
     text = append_newline(text, text_len);
 
-    make_ref(info);
-    make_ref(info->filename);
-    info->filename->str = strdup(filename);
-    info->error = aug->error;
-    info->flags = aug->flags;
-    info->first_line = 1;
-
-    if (aug->flags & AUG_ENABLE_SPAN) {
-        /* Allocate the span already to capture a reference to
-           info->filename */
-        span = make_span(info);
-        ERR_NOMEM(span == NULL, info);
-    }
-
-    tree = lns_get(info, lens, text, &err);
-
+    lens_get(aug, lens, filename, text, text_len, path, &err);
     if (err != NULL) {
         err_status = "parse_failed";
         goto done;
     }
-
-    tree_freplace(aug, path, tree);
     ERR_BAIL(aug);
-
-    /* top level node span entire file length */
-    if (span != NULL && tree != NULL) {
-        tree->parent->span = span;
-        span = NULL;
-        tree->parent->span->span_start = 0;
-        tree->parent->span->span_end = text_len;
-    }
-
-    tree = NULL;
 
     result = 0;
  done:
     store_error(aug, filename + strlen(aug->root) - 1, path, err_status,
                 errno, err, text);
  error:
-    unref(info, info);
     free_lns_error(err);
     free(path);
-    free_span(span);
-    free_tree(tree);
     free(text);
     return result;
 }
@@ -652,9 +697,7 @@ static struct lens *lens_from_name(struct augeas *aug, const char *name) {
 
 int text_store(struct augeas *aug, const char *lens_path,
                const char *path, const char *text) {
-    struct info *info = NULL;
     struct lns_error *err = NULL;
-    struct tree *tree = NULL;
     int result = -1;
     const char *err_status = NULL;
     struct lens *lens = NULL;
@@ -662,28 +705,16 @@ int text_store(struct augeas *aug, const char *lens_path,
     lens = lens_from_name(aug, lens_path);
     ERR_BAIL(aug);
 
-    make_ref(info);
-    info->first_line = 1;
-    info->last_line = 1;
-    info->first_column = 1;
-    info->last_column = strlen(text);
-
-    tree = lns_get(info, lens, text, &err);
+    lens_get(aug, lens, path, text, strlen(text), path, &err);
     if (err != NULL) {
         err_status = "parse_failed";
         goto error;
     }
-
-    tree_freplace(aug, path, tree);
     ERR_BAIL(aug);
-
-    tree = NULL;
 
     result = 0;
  error:
-    unref(info, info);
     store_error(aug, NULL, path, err_status, errno, err, text);
-    free_tree(tree);
     free_lns_error(err);
     return result;
 }
@@ -701,6 +732,9 @@ const char *xfm_lens_name(struct tree *xfm) {
 struct lens *xfm_lens(struct augeas *aug,
                       struct tree *xfm, const char **lens_name) {
     struct tree *l = NULL;
+
+    if (lens_name != NULL)
+        *lens_name = NULL;
 
     for (l = xfm->children;
          l != NULL && !streqv("lens", l->label);
@@ -765,6 +799,9 @@ int transform_validate(struct augeas *aug, struct tree *xfm) {
     return 0;
  error:
     xfm_error(xfm, aug->error->details);
+    /* We recorded this error in the tree, clear it so that future
+     * operations report this exact same error (against the wrong lens) */
+    reset_error(aug->error);
     return -1;
 }
 
@@ -881,7 +918,7 @@ static int transfer_file_attrs(FILE *from, FILE *to,
     struct stat st;
     int ret = 0;
     int selinux_enabled = (is_selinux_enabled() > 0);
-    security_context_t con = NULL;
+    char *con = NULL;
 
     int from_fd;
     int to_fd = fileno(to);
@@ -1056,6 +1093,38 @@ static int file_saved_event(struct augeas *aug, const char *path) {
 }
 
 /*
+ * Do the bookkeeping around calling LNS_PUT that's needed to update the
+ * span after writing a tree to file
+ */
+static void lens_put(struct augeas *aug, const char *filename,
+                     struct lens *lens, const char *text, struct tree *tree,
+                     FILE *out, struct lns_error **err) {
+    struct info *info = NULL;
+    size_t text_len = strlen(text);
+    bool with_span = aug->flags & AUG_ENABLE_SPAN;
+
+    info = make_lns_info(aug, filename, text, text_len);
+    ERR_BAIL(aug);
+
+    if (with_span) {
+        if (tree->span == NULL) {
+            tree->span = make_span(info);
+            ERR_NOMEM(tree->span == NULL, aug);
+        }
+        tree->span->span_start = ftell(out);
+    }
+
+    lns_put(info, out, lens, tree->children, text,
+            aug->flags & AUG_ENABLE_SPAN, err);
+
+    if (with_span) {
+        tree->span->span_end = ftell(out);
+    }
+ error:
+    unref(info, info);
+}
+
+/*
  * Save TREE->CHILDREN into the file PATH using the lens from XFORM. Errors
  * are noted in the /augeas/files hierarchy in AUG->ORIGIN under
  * PATH/error.
@@ -1103,6 +1172,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
     struct lens *lens = xfm_lens(aug, xfm, &lens_name);
     int result = -1, r;
     bool force_reload;
+    struct info *info = NULL;
 
     errno = 0;
 
@@ -1188,12 +1258,14 @@ int transform_save(struct augeas *aug, struct tree *xfm,
 
         if (fchmod(fileno(fp), 0666 & ~curumsk) < 0) {
             err_status = "create_chmod";
-            return -1;
+            goto done;
         }
     }
 
-    if (tree != NULL)
-        lns_put(fp, lens, tree->children, text, &err);
+    if (tree != NULL) {
+        lens_put(aug, augorig_canon, lens, text, tree, fp, &err);
+        ERR_BAIL(aug);
+    }
 
     if (ferror(fp)) {
         err_status = "error_augtemp";
@@ -1262,6 +1334,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
 
     r = clone_file(augtemp, augdest, &err_status, copy_if_rename_fails, 0);
     if (r != 0) {
+        unlink(augtemp);
         dyn_err_status = strappend(err_status, "_augtemp");
         goto done;
     }
@@ -1287,6 +1360,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
             dyn_err_status == NULL ? err_status : dyn_err_status;
         store_error(aug, filename, path, emsg, errno, err, text);
     }
+ error:
     free(dyn_err_status);
     lens_release(lens);
     free(text);
@@ -1297,6 +1371,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
     free(augorig);
     free(augsave);
     free_lns_error(err);
+    unref(info, info);
 
     if (fp != NULL)
         fclose(fp);
@@ -1314,6 +1389,7 @@ int text_retrieve(struct augeas *aug, const char *lens_name,
     struct lns_error *err = NULL;
     struct lens *lens = NULL;
     int result = -1, r;
+    struct info *info = NULL;
 
     MEMZERO(&ms, 1);
     errno = 0;
@@ -1331,8 +1407,10 @@ int text_retrieve(struct augeas *aug, const char *lens_name,
     }
     ms_open = true;
 
-    if (tree != NULL)
-        lns_put(ms.stream, lens, tree->children, text_in, &err);
+    if (tree != NULL) {
+        lens_put(aug, path, lens, text_in, tree, ms.stream, &err);
+        ERR_BAIL(aug);
+    }
 
     r = close_memstream(&ms);
     ms_open = false;
@@ -1353,12 +1431,14 @@ int text_retrieve(struct augeas *aug, const char *lens_name,
 
  done:
     store_error(aug, NULL, path, err_status, errno, err, text_in);
+ error:
     lens_release(lens);
     if (result < 0) {
         free(*text_out);
         *text_out = NULL;
     }
     free_lns_error(err);
+    unref(info, info);
 
     if (ms_open)
         close_memstream(&ms);

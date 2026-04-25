@@ -275,3 +275,25 @@ test lns get "http {
       { "::1" = "2" }
       { "2001:0db8::" = "1"
         { "mask" = "32" } } } }
+
+test lns get "add_header X-XSS-Protection \"1; mode=block\" always;\n" =
+  { "add_header" = "X-XSS-Protection \"1; mode=block\" always" }
+
+test lns get "location /foo {
+  root /var/www/html;
+  internal;  # only valid in location blocks
+}\n" =
+  { "location"
+    { "#uri" = "/foo" }
+    { "root" = "/var/www/html" }
+    { "internal"
+      { "#comment" = "only valid in location blocks" } } }
+
+test lns get "upstream php-handler {
+    server unix:/var/run/php/php7.3-fpm.sock;
+}\n" =
+  { "upstream"
+    { "#name" = "php-handler" }
+    { "@server"
+      { "@address" = "unix:/var/run/php/php7.3-fpm.sock" } } }
+

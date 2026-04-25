@@ -49,15 +49,17 @@ Empty lines *)
 (* Group: Lense-specific primitives *)
 
   (* View: type
-One letter. Some of them can have a "+" and all can have a "!".
+One letter. Some of them can have a "+" and all can have an
+exclamation mark ("!"), a minus sign ("-"), an equal sign ("="),
+a tilde character ("~") and/or a caret ("^").
 
 Not all letters are valid.
 *)
-  let type     = /([fFwdDvqQpLcbCxXrRzZtThHaAm]|[AabcLp]\+)!?/
+  let type     = /([fFwdDevqQpLcbCxXrRzZtThHaAm]|[fFwpLcbaA]\+)[-!=~^$]*/
 
   (* View: mode
-"-", or 3-4 bytes. Optionally starts with a "~". *)
-  let mode     = /(-|~?[0-7]{3,4})/
+"-", or 3-4 bytes. Optionally starts with a "~" or a ":". *)
+  let mode     = /(-|(~|:)?[0-7]{3,4})/
 
   (* View: age
 "-", or one of the formats seen in the manpage: 10d, 5seconds, 1y5days.

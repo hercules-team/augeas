@@ -18,5 +18,6 @@ module Postfix_sasl_smtpd =
   let lns = entries+
 
   let filter = incl "/etc/postfix/sasl/smtpd.conf"
+             . incl "/usr/local/etc/postfix/sasl/smtpd.conf"
 
   let xfm = transform lns filter

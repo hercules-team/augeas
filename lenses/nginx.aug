@@ -47,14 +47,18 @@ let block_re_all = block_re | "if" | "location" | "geo" | "map"
 let simple =
      let kw = word - block_re_all
   in let mask = [ label "mask" . Util.del_str "/" . store Rx.integer ]
-  in let sto = store /[^ \t\n;][^;]*/ . Sep.semicolon
-  in [ Util.indent . key kw . mask? . Sep.space . sto . (Util.eol|Util.comment_eol) ]
+  in let sto = store /[^ \t\n;#]([^";#]|"[^"]*\")*/
+  in [ Util.indent .
+       key kw . mask? .
+       (Sep.space . sto)? . Sep.semicolon .
+       (Util.eol|Util.comment_eol) ]
 
 (* View: server
      A simple server entry *)
 let server =
-  [ Util.indent . label "@server" . Util.del_str "server"
-  . [ Sep.space . label "@address" . store word ]
+  let address = /[A-Za-z0-9_.:\/-]+/
+  in [ Util.indent . label "@server" . Util.del_str "server"
+  . [ Sep.space . label "@address" . store address ]
   . [ Sep.space . key word . (Sep.equal . store word)? ]*
   . Sep.semicolon
   . (Util.eol|Util.comment_eol) ]
@@ -119,8 +123,13 @@ let lns = ( Util.comment | Util.empty | directive )*
 (* Variable: filter *)
 let filter = incl "/etc/nginx/nginx.conf"
            . incl "/etc/nginx/conf.d/*.conf"
+           . incl "/etc/nginx/sites-available/*"
+           . incl "/etc/nginx/sites-enabled/*"
+           . incl "/etc/nginx/snippets/*"
            . incl "/usr/portage/www-servers/nginx/files/nginx.conf"
            . incl "/usr/local/etc/nginx/nginx.conf"
            . incl "/usr/local/etc/nginx/conf.d/*.conf"
+           . incl "/usr/local/etc/nginx/sites-available/*"
+           . incl "/usr/local/etc/nginx/sites-enabled/*"
 
 let xfm = transform lns filter

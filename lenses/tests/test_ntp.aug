@@ -19,6 +19,7 @@ restrict 127.0.0.1
 
 logfile /var/log/ntpd
 statsdir /var/log/ntpstats/
+ntpsigndsocket /var/lib/samba/ntp_signd
 
 statistics loopstats peerstats clockstats
 filegen loopstats file loopstats type day enable link
@@ -53,6 +54,7 @@ interface listen 127.0.0.1
       {}
       { "logfile"  = "/var/log/ntpd" }
       { "statsdir" = "/var/log/ntpstats/" }
+      { "ntpsigndsocket" = "/var/lib/samba/ntp_signd" }
       {}
       { "statistics"
          { "loopstats" }
@@ -181,3 +183,9 @@ test Ntp.tinker get "tinker panic 0 huffpuff 3.14\n" =
 test Ntp.tos get "tos maxdist 16\n" =
   { "tos"
     { "maxdist" = "16" } }
+
+(* PR #821: tos minclock directive *)
+test Ntp.tos get "tos minclock 4 minsane 3\n" =
+  { "tos"
+    { "minclock" = "4" }
+    { "minsane" = "3" } }

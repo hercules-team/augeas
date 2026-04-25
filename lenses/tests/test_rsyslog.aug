@@ -189,3 +189,73 @@ test Rsyslog.lns put "" after
   set "/module[1]/SysSock.RateLimit.Interval" "0" ;
   set "/module[1]/SysSock.RateLimit.Burst" "1"
   = "module(load=\"imuxsock\" SysSock.RateLimit.Interval=\"0\" SysSock.RateLimit.Burst=\"1\")\n"
+
+(* On Fedora 26, there are comments in module statements *)
+test Rsyslog.lns get "module(load=\"imuxsock\" 	  # provides support for local system logging (e.g. via logger command)
+       SysSock.Use=\"off\") # Turn off message reception via local log socket;
+			  # local messages are retrieved through imjournal now.\n" =
+  { "module"
+    { "load" = "imuxsock" }
+    { "SysSock.Use" = "off" }
+    { "#comment" = "Turn off message reception via local log socket;" } }
+  { "#comment" = "local messages are retrieved through imjournal now." }
+
+(* rsyslog doesn't use bsd-like #! or #+/- specifications *)
+test Rsyslog.lns get "#!prog\n" = { "#comment" = "!prog" }
+test Rsyslog.lns get "#+host\n" = { "#comment" = "+host" }
+test Rsyslog.lns get "#-host\n" = { "#comment" = "-host" }
+
+(* Added in rsyslog 8.33 *)
+test Rsyslog.lns get "include(file=\"/etc/rsyslog.d/*.conf\" mode=\"optional\")\n" =
+  { "include"
+    { "file" = "/etc/rsyslog.d/*.conf" }
+    { "mode" = "optional" } }
+
+(* Dynamic file name template *)
+test Rsyslog.lns get "*.* ?DynamicFile\n" =
+  { "entry"
+    { "selector"
+      { "facility" = "*" }
+      { "level" = "*" }
+    }
+    { "action"
+      { "dynamic" = "DynamicFile" }
+    }
+  }
+
+(* Multiple actions in filters and selectors *)
+test Rsyslog.lns get ":msg, startswith, \"iptables:\" -/var/log/iptables.log
+& ~
+# Save boot messages also to boot.log
+local7.*                                                /var/log/boot.log
+local3.err                                              /var/log/nfsen/nfsenlog
+& /var/log/also.log
+\n" =
+  { "filter"
+    { "property" = "msg" }
+    { "operation" = "startswith" }
+    { "value" = "iptables:" }
+    { "action"
+      { "no_sync" }
+      { "file" = "/var/log/iptables.log" } }
+    { "action"
+      { "discard" } }
+  }
+  { "#comment" = "Save boot messages also to boot.log" }
+  { "entry"
+    { "selector"
+      { "facility" = "local7" }
+      { "level" = "*" } }
+    { "action"
+      { "file" = "/var/log/boot.log" } }
+  }
+  { "entry"
+    { "selector"
+      { "facility" = "local3" }
+      { "level" = "err" } }
+    { "action"
+      { "file" = "/var/log/nfsen/nfsenlog" } }
+    { "action"
+      { "file" = "/var/log/also.log" } } }
+  {  }
+

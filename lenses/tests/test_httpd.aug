@@ -156,10 +156,10 @@ test Httpd.lns get c5 =
     { "arg" = "agent" }
   }
 
-let c7 = "LogFormat \"%v:%p %h %l %u %t \\"%r\\" %>s %O \\"%{Referer}i\\" \\"%{User-Agent}i\\"\" vhost_combined\n"
+let c7 = "LogFormat \"%v:%p %h %l %u %t \\\"%r\\\" %>s %O \\\"%{Referer}i\\\" \\\"%{User-Agent}i\\\"\" vhost_combined\n"
 test Httpd.lns get c7 =
   { "directive" = "LogFormat"
-    { "arg" = "\"%v:%p %h %l %u %t \\"%r\\" %>s %O \\"%{Referer}i\\" \\"%{User-Agent}i\\"\"" }
+    { "arg" = "\"%v:%p %h %l %u %t \\\"%r\\\" %>s %O \\\"%{Referer}i\\\" \\\"%{User-Agent}i\\\"\"" }
     { "arg" = "vhost_combined" }
   }
 
@@ -587,3 +587,62 @@ test Httpd.lns get "<FilesMatch \ test\.php$></FilesMatch>\n" =
 (* Continuations in comments cause the comment to be continued without a new comment character *)
 test Httpd.lns get "#ServerRoot \\\n  /var/www\n" =
   { "#comment" = "ServerRoot \\\n  /var/www" }
+
+(* Empty comments can contain continuations, too. Issue #423 *)
+test Httpd.lns get "# \\\n\n" = { }
+test Httpd.comment get "# a\\\n\n" = { "#comment" = "a" }
+test Httpd.comment get "# \\\na\\\n\n" = { "#comment" = "a" }
+test Httpd.comment get "# \\\n\\\na \\\n\\\n\n" = { "#comment" = "a" }
+
+(* Comparison with empty string did not work. Issue #429 *)
+test Httpd.dir_args get ">\"a\"" = { "arg" = ">\"a\"" }
+test Httpd.dir_args get ">\"\"" = { "arg" = ">\"\"" }
+test Httpd.directive get "RewriteCond ${movedPageMap:$1}  >\"a\"\n" =
+  { "directive" = "RewriteCond"
+    { "arg" = "${movedPageMap:$1}" }
+    { "arg" = ">\"a\"" }}
+test Httpd.directive get "RewriteCond ${movedPageMap:$1}  >\"\"\n" =
+  { "directive" = "RewriteCond"
+    { "arg" = "${movedPageMap:$1}" }
+    { "arg" = ">\"\"" }}
+
+(* Quoted arguments may or may not have space spearating them. Issue #435 *)
+test Httpd.directive get
+    "ProxyPassReverse \"/js\" \"http://127.0.0.1:8123/js\"\n" =
+  { "directive" = "ProxyPassReverse"
+    { "arg" = "\"/js\"" }
+    { "arg" = "\"http://127.0.0.1:8123/js\"" } }
+
+test Httpd.directive get
+    "ProxyPassReverse \"/js\"\"http://127.0.0.1:8123/js\"\n" =
+  { "directive" = "ProxyPassReverse"
+    { "arg" = "\"/js\"" }
+    { "arg" = "\"http://127.0.0.1:8123/js\"" } }
+
+(* Don't get confused by quoted strings inside bare arguments. Issue #470 *)
+test Httpd.directive get
+    "RequestHeader set X-Forwarded-Proto https expr=(%{HTTP:CF-Visitor}='{\"scheme\":\"https\"}')\n" =
+  { "directive" = "RequestHeader"
+    { "arg" = "set" }
+    { "arg" = "X-Forwarded-Proto" }
+    { "arg" = "https" }
+    { "arg" = "expr=(%{HTTP:CF-Visitor}='{\"scheme\":\"https\"}')" } }
+
+(* Issue #577: we make the newline starting a section optional, including
+   an empty comment at the end of the line. This used to miss empty comments
+   with whitespace *)
+test Httpd.lns get "<If cond>#\n</If>\n" = { "If" { "arg" = "cond" } }
+
+test Httpd.lns get "<If cond># \n</If>\n" = { "If" { "arg" = "cond" } }
+
+test Httpd.lns get "<If cond>\n# \n</If>\n" =  { "If" { "arg" = "cond" } }
+
+test Httpd.lns get "<If cond># text\n</If>\n" =
+  { "If"
+    { "arg" = "cond" }
+    { "#comment" = "text" } }
+
+test Httpd.lns get "<If cond>\n\t# text\n</If>\n" =
+  { "If"
+    { "arg" = "cond" }
+    { "#comment" = "text" } }

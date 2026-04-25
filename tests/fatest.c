@@ -589,6 +589,7 @@ static void testExpandNoCase(CuTest *tc) {
     const char *p1 = "aB";
     const char *p2 = "[a-cUV]";
     const char *p3 = "[^a-z]";
+    const char *wrong_regexp = "{&.{";
     char *s;
     size_t len;
     int r;
@@ -606,6 +607,11 @@ static void testExpandNoCase(CuTest *tc) {
     r = fa_expand_nocase(p3, strlen(p3), &s, &len);
     CuAssertIntEquals(tc, 0, r);
     CuAssertStrEquals(tc, "[^A-Za-z]", s);
+    free(s);
+
+    /* Test that fa_expand_nocase does return _REG_ENOSYS */
+    r = fa_expand_nocase(wrong_regexp, strlen(wrong_regexp), &s, &len);
+    CuAssertIntEquals(tc, _REG_ENOSYS, r);
     free(s);
 }
 
@@ -661,7 +667,8 @@ static void testEnumerate(CuTest *tc) {
         }
         if (!found) {
             char *msg;
-            asprintf(&msg, "Generated word %s not expected", words[i]);
+            /* Ignore return of asprintf intentionally */
+            r = asprintf(&msg, "Generated word %s not expected", words[i]);
             CuFail(tc, msg);
         }
     }

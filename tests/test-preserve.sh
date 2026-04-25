@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/sh
 
 # Check that saving preserves mode and ownership; for this test to make
 # much sense (if any) the user running it should have at least one
@@ -22,7 +22,7 @@ init_dirs
 printf '127.0.0.1\tlocalhost\n' > $hosts
 
 chmod 0600 $hosts
-group=$(groups | tr ' ' '\n' | tail -1)
+group=$(groups | tr ' ' '\n' | grep -v nobody | tail -1)
 chgrp $group $hosts
 
 [ -x /usr/bin/chcon ] && selinux=yes || selinux=no

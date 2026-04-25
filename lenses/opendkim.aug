@@ -31,7 +31,7 @@ module Opendkim =
     | /OversignHeaders|PeerList|POPDBFile|RemoveARFrom|ResignMailTo/
     | /SenderHeaders|SignHeaders|SigningTable|TrustSignaturesFrom/
   let stringkv = key stringkv_rx .
-    del /[ \t]+/ " " . store /[a-zA-Z][^ \t\n#]+/ . eol
+    del /[ \t]+/ " " . store /[0-9a-zA-Z\/][^ \t\n#]+/ . eol
 
   let integerkv_rx = /AutoRestartCount|ClockDrift|DNSTimeout/
     | /LDAPKeepaliveIdle|LDAPKeepaliveInterval|LDAPKeepaliveProbes|LDAPTimeout/
@@ -48,12 +48,13 @@ module Opendkim =
     | /Quarantine|QueryCache|RemoveARAll|RemoveOldSignatures|ResolverTracing/
     | /SelectorHeaderRemove|SendADSPReports|SendReports|SoftwareHeader/
     | /StrictHeaders|StrictTestMode|SubDomains|Syslog|SyslogSuccess/
-    | /VBR-TrustedCertifiersOnly|WeakSyntaxChecks/
+    | /VBR-TrustedCertifiersOnly|WeakSyntaxChecks|LogWhy/
   let booleankv = key booleankv_rx .
-      del /[ \t]+/ " " . store /(true|false|yes|no|1|0)/ . eol
+      del /[ \t]+/ " " . store /([Tt]rue|[Ff]alse|[Yy]es|[Nn]o|1|0)/ . eol
 
   let entry = [ integerkv ] | [ booleankv ] | [ stringkv ]
 
   let lns = (comment | empty | entry)*
 
   let xfm = transform lns (incl "/etc/opendkim.conf")
+

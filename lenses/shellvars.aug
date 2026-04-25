@@ -22,7 +22,7 @@ module Shellvars =
   let semicol_eol = del (/[ \t]*[;\n]/ . empty_part_re*) "\n"
   let brace_eol = del /[ \t\n]+/ "\n"
 
-  let key_re = /[A-Za-z0-9_]+(\[[0-9A-Za-z_,]+\])?/ - ("unset" | "export")
+  let key_re = /[A-Za-z0-9_][-A-Za-z0-9_]*(\[[0-9A-Za-z_,]+\])?/ - ("unset" | "export")
   let matching_re = "${!" . key_re . /[\*@]\}/
   let eq = Util.del_str "="
 
@@ -153,7 +153,7 @@ module Shellvars =
   let rec command =
        let env = [ key key_re . eq . store anyquot . Sep.cl_or_space ]
     in let reserved_key = /exit|shift|return|ulimit|unset|export|source|\.|if|for|select|while|until|then|else|fi|done|case|eval|alias/
-    in let word = /[A-Za-z0-9_.-\/]+/
+    in let word = /\$?[-A-Za-z0-9_.\/]+/
     in let entry_eol = entry_eol_nocommand | entry_eol_item command
     in let entry_noeol = entry_noeol_nocommand | entry_item command
     in let entry = entry_eol | entry_noeol
@@ -177,7 +177,9 @@ module Shellvars =
   let generic_cond_start (start_kw:string) (lbl:string)
                          (then_kw:string) (contents:lens) =
       keyword_label start_kw lbl . Sep.space
-      . sto_to_semicol . semicol_eol
+      . sto_to_semicol
+      . ( action_and sto_to_semicol | action_or sto_to_semicol )*
+      . semicol_eol
       . keyword then_kw . eol
       . contents
 
@@ -224,13 +226,13 @@ module Shellvars =
     . entry+
     . Util.indent . Util.del_str "}" . eol ]
 
-  let function (entry:lens) =
+  let function (entry:lens) (start_kw:string) (end_kw:string) =
     [ Util.indent . label "@function"
     . del /(function[ \t]+)?/ ""
     . store Rx.word . del /[ \t]*\(\)/ "()"
-    . (comment_eol|brace_eol) . Util.del_str "{" . brace_eol
+    . (comment_eol|brace_eol) . Util.del_str start_kw . brace_eol
     . entry+
-    . Util.indent . Util.del_str "}" . eol ]
+    . Util.indent . Util.del_str end_kw . eol ]
 
   let rec rec_entry =
     let entry = comment | entry_eol | rec_entry in
@@ -240,7 +242,8 @@ module Shellvars =
       | loop_while entry
       | loop_until entry
       | case entry entry_noeol
-      | function entry
+      | function entry "{" "}"
+      | function entry "(" ")"
       | subshell entry
 
   let lns_norec = del_empty* . (comment | entry_eol) *
@@ -252,6 +255,7 @@ module Shellvars =
 
   let filter_sysconfig =
       sc_incl "*" .
+      sc_excl "anaconda" .
       sc_excl "bootloader" .
       sc_excl "hw-uuid" .
       sc_excl "hwconf" .
@@ -292,6 +296,9 @@ module Shellvars =
                      . excl "/etc/default/whoopsie"
                      . incl "/etc/profile"
                      . incl "/etc/profile.d/*"
+                     . excl "/etc/profile.d/*.csh"
+                     . excl "/etc/profile.d/*.tcsh"
+                     . excl "/etc/profile.d/csh.local"
   let filter_misc    = incl "/etc/arno-iptables-firewall/debconf.cfg"
                      . incl "/etc/conf.d/*"
                      . incl "/etc/cron-apt/config"
@@ -311,6 +318,7 @@ module Shellvars =
                      . incl "/etc/periodic.conf"
                      . incl "/etc/popularity-contest.conf"
                      . incl "/etc/rc.conf"
+                     . incl "/etc/rc.conf.d/*"
                      . incl "/etc/rc.conf.local"
                      . incl "/etc/selinux/config"
                      . incl "/etc/ucf.conf"

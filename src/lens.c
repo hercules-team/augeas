@@ -33,7 +33,7 @@ enum lens_type {
     CTYPE, ATYPE, KTYPE, VTYPE
 };
 
-static const int const type_offs[] = {
+static const int type_offs[] = {
     offsetof(struct lens, ctype),
     offsetof(struct lens, atype),
     offsetof(struct lens, ktype),
@@ -542,7 +542,7 @@ static struct regexp *restrict_regexp(struct regexp *r) {
 
     ret = fa_restrict_alphabet(r->pattern->str, strlen(r->pattern->str),
                                &nre, &nre_len,
-                               RESERVED_FROM, RESERVED_TO);
+                               RESERVED_FROM_CH, RESERVED_TO_CH);
     ERR_NOMEM(ret == REG_ESPACE || ret < 0, r->info);
     BUG_ON(ret != 0, r->info, NULL);
     ensure(nre_len == strlen(nre), r->info);
@@ -562,43 +562,16 @@ static struct regexp *restrict_regexp(struct regexp *r) {
     goto done;
 }
 
-struct value *lns_make_prim(enum lens_tag tag, struct info *info,
-                            struct regexp *regexp, struct string *string) {
-    struct lens *lens = NULL;
-    struct value *exn = NULL;
+static struct value *
+typecheck_prim(enum lens_tag tag, struct info *info,
+               struct regexp *regexp, struct string *string) {
     struct fa *fa_slash = NULL;
     struct fa *fa_key = NULL;
     struct fa *fa_isect = NULL;
+    struct value *exn = NULL;
 
     /* Typecheck */
-    if (tag == L_KEY) {
-        exn = str_to_fa(info, "(.|\n)*/(.|\n)*", &fa_slash, regexp->nocase);
-        if (exn != NULL)
-            goto error;
-
-        exn = regexp_to_fa(regexp, &fa_key);
-        if (exn != NULL)
-            goto error;
-
-        fa_isect = fa_intersect(fa_slash, fa_key);
-        if (! fa_is_basic(fa_isect, FA_EMPTY)) {
-            exn = make_exn_value(info,
-                                 "The key regexp /%s/ matches a '/'",
-                                 regexp->pattern->str);
-            goto error;
-        }
-        fa_free(fa_isect);
-        fa_free(fa_key);
-        fa_free(fa_slash);
-        fa_isect = fa_key = fa_slash = NULL;
-    } else if (tag == L_LABEL) {
-        if (strchr(string->str, SEP) != NULL) {
-            exn = make_exn_value(info,
-                                 "The label string \"%s\" contains a '/'",
-                                 string->str);
-            goto error;
-        }
-    } else if (tag == L_DEL && string != NULL) {
+    if (tag == L_DEL && string != NULL) {
         int cnt;
         const char *dflt = string->str;
         cnt = regexp_match(regexp, dflt, strlen(dflt), 0, NULL);
@@ -606,12 +579,29 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
             char *s = escape(dflt, -1, RX_ESCAPES);
             char *r = regexp_escape(regexp);
             exn = make_exn_value(info,
-                   "del: the default value '%s' does not match /%s/",
-                   s, r);
+                  "del: the default value '%s' does not match /%s/", s, r);
             FREE(s);
             FREE(r);
             goto error;
         }
+    }
+
+ error:
+    fa_free(fa_isect);
+    fa_free(fa_key);
+    fa_free(fa_slash);
+    return exn;
+}
+
+struct value *lns_make_prim(enum lens_tag tag, struct info *info,
+                            struct regexp *regexp, struct string *string) {
+    struct lens *lens = NULL;
+    struct value *exn = NULL;
+
+    if (typecheck_p(info)) {
+        exn = typecheck_prim(tag, info, regexp, string);
+        if (exn != NULL)
+            goto error;
     }
 
     /* Build the actual lens */
@@ -655,13 +645,12 @@ struct value *lns_make_prim(enum lens_tag tag, struct info *info,
         lens->vtype = restrict_regexp(lens->regexp);
     } else if (tag == L_VALUE) {
         lens->vtype = make_regexp_literal(info, lens->string->str);
+        if (lens->vtype == NULL)
+            goto error;
     }
 
     return make_lens_value(lens);
  error:
-    fa_free(fa_isect);
-    fa_free(fa_key);
-    fa_free(fa_slash);
     return exn;
 }
 
@@ -1077,7 +1066,7 @@ char *enc_format_indent(const char *e, size_t len, int indent) {
     const char *k = e;
 
     while (*k && k - e < len) {
-        char *eq,  *slash, *v;
+        const char *eq,  *slash, *v;
         eq = strchr(k, ENC_EQ_CH);
         assert(eq != NULL);
         slash = strchr(eq, ENC_SLASH_CH);
@@ -1099,7 +1088,7 @@ char *enc_format_indent(const char *e, size_t len, int indent) {
     k = e;
     r = result;
     while (*k && k - e < len) {
-        char *eq,  *slash, *v;
+        const char *eq,  *slash, *v;
         eq = strchr(k, ENC_EQ_CH);
         slash = strchr(eq, ENC_SLASH_CH);
         assert(eq != NULL && slash != NULL);

@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "release-*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: sudo apt-get install -qy git build-essential
+      - run: git submodule update --init
+      - run: ./autogen.sh
+      - id: dist
+        run: |
+          make distcheck
+          version=$(< configure.ac sed -ne '/^AC_INIT/{s/.*, \(.*\))$/\1/; p }')
+          echo ::set-output "name=version::$version"
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: true
+          prerelease: false
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: augeas-${{ steps.dist.outputs.version }}.tar.gz
+          asset_name: augeas-${{ steps.dist.outputs.version }}.tar.gz
+          asset_content_type: application/tar

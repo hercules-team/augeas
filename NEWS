@@ -1,4 +1,285 @@
-1.8.0 - ???
+1.14.1 - 2023-06-27
+  - General changes/additions
+    * internal.c: update #if to only use GNU-specific strerror_r() when __GLIBC__ is defined (#791) Dimitry Andric
+    * augeas.c: Fix bug from PR#691 where the nodes of a newly created file are lost upon a subsequent load operation (#810) George Hansper
+    * HACKING.md: describe testing (#796) Laszlo Ersek
+    * Add GitHub Actions (#714) Raphaël Pinson
+    * augprint.c: remove `#include <malloc.h>` , add `#include <libgen.h>` (#792) Ruoyu Zhong
+
+  - Lens changes/additions
+    * TOML: support trailing commas in arrays (#809) Bao
+    * Tmpfiles: allow '=', '~', '^' for letter types, allow ":" as prefix for the mode (#805) Pino Toscano
+    * Sshd: Add keyword PubkeyAcceptedAlgorithms as comma-separated list of items (#806) Dave Re
+    * Cmdline: Allow whitespace at the end of kernel commnd line (#798) rwmjones
+
+1.14.0 - 2022-12-07
+  - General changes/additions
+    * Update submodule gnulib to 2f7479a16a3395f1429c7795f10c5d19b9b4453e (#781)
+    * Add bash-completion for augtool, augmatch, augprint (#783) George Hansper
+    * Fix: Allow values to contain arbitrary unbalanced square brackets (#782) George Hansper
+    * Add package bash to build stage in Dockerfile (#776) George Hansper
+    * Add augprint tool for creating idempotent augtool scripts (#752) George Hansper
+    * Replace deprecated 'security_context_t' with 'char *' (#747) Leo-Schmit
+    * src/syntax.c: Fix whitespace which confuses static checkers (#725) rwmjones
+    * README.md: Add oss-fuzz status badge (#702) Sergey Nizovtsev
+    * Package augmatch, too (#688) oleksandriegorov
+    * Add Github workflow to create releases with complete source tarballs (#744) Hilko Bengen
+
+  - Lens changes/additions
+    * Resolv: add option trust-ad (#784) George Hansper
+    * Sos: new lens for /etc/sos/sos.conf (based on IniFile)
+           (#779) George Hansper
+    * Pg_Hba: unquoted auth-method may contain hyphens (#777) George Hansper
+    * Sysctl: Allow keys to contain * and : and / characters (#755) M Filka
+    * Semanage: Fix parsing of ignoredirs (#758) Richard W M Jones
+    * Systemd: allow empty quoted environment variable values
+               (#757) Michal Vasko
+    * Systemd: allow values starting with whitespaces for Exec* and
+               Environment service entries. (#757) Michal Vasko
+    * Toml: workaround to allow writing toml files (#742) Richard
+    * Kdump: parse "auto_reset_crashkernel" (#754) Laszlo Ersek
+    * Keepalived: add parameters notify_stop and notify_deleted (#749) Adam Bambuch
+    * Chrony: add new directives and options (#745) Miroslav Lichvar
+    * Redis: Allow redis lens to set 'SAVE ""' as a valid option
+             (#738) Mitch Hagstrand
+    * ClamAV: update ClamAV lens to autoload /etc/clamav/*.conf
+              (#748) Guillaume Ross
+    * AuthselectPam: new lens for /etc/authselect/custom/*/*-auth and
+          /etc/authselect/custom/*/postlogin (#743) Heston Snodgrass
+    * Sshd: Parse GSSAPIKexAlgorithms PubkeyAcceptedKeyTypes CASignatureAlgorithms
+            as comma-seperated lists instead of simple strings
+            (#721) Edward Garbade
+    * Yum: Add additional unit tests (#677) Pat Riehecky
+    * Cockpit: new lens for /etc/cockpit/cockpit.conf (#675) Pat Riehecky
+
+1.13.0 - 2021-10-15
+  - General changes/additions
+    * Add Dockerfile (Nicolas Gif) (Issue #650)
+    * augtool: Improved readline integration to handle quoting issues
+               (Pino Toscano)
+    * typechecker: Allow including '/' in keys and labels. Thanks to
+                   felixdoerre for pointing out that this restriction was
+                   unnecessary. See issue #668 for the discussion.
+    * Add function modified() to select nodes which are marked as dirty
+      (George Hansper) (Issue #691)
+    * Add CLI command 'preview' and API 'aug_preview' to preview file contents
+      (George Hansper) (#690)
+    * Add "else" operator to augeas path-filter expressions (priority selector)
+      (George Hansper) (#692)
+    * Add new axis 'seq' to allow /path/seq::*[expr] to match and create numeric
+      nodes, as idempotent alternative to /path/*[expr] (George Hansper) (#706)
+
+  - Lens changes/additions
+    * Authinfo2: new lens to parse Authinfo2 format (Nicolas Gif) (Issue #649)
+    * Chrony: add new options (Miroslav Lichvar) (Issue #698)
+    * Cmdline: New lens to parse /proc/cmdline (Thomas Weißschuh)
+    * Crypttab: support UUID in device and / in opt (Raphaël Pinson) (#713)
+    * Fail2ban: new lens to parse Fail2ban format (Nicolas Gif) (Issue #651)
+    * Grub: support '+' in kernel command line option names
+            (Pino Toscano) (Issue #647)
+    * Krb5: handle [plugins] subsection (Pino Toscano) (Issue #663)
+    * Limits: support colons in the domain pattern of the limits lens
+              (Xavier Mol) (Issue #645)
+    * Logrotate: add hourly schedule (Jason A. Smith) (Issue #655)
+    * Mke2fs: parse more common entries between [defaults] and the tags
+              in [fs_types], fix the type of few entries, handle the [options]
+              stanza (Pino Toscano) (Issue #642)
+              support quoted values (Pino Toscano) (Issue #661)
+    * NetworkManager: allow # in values (mfilka) (#723)
+    * Opendkim: update to match current conffile format (Issue #644)
+    * Postfix_Master: Allow unix-dgram as type (Issue #635)
+    * Postfix_transport: Allow underscore (Anton Baranov) (Issue #678)
+    * Postgresql: Allow hyphen '-' in values that don't require quotes
+              (Marcin Barczyński) (Issues #700 #701)
+    * Properties: Allow "/" in property names (felixdoerre) (Issue #680)
+    * Redis: add incl path /etc/redis.conf (Raphaël Pinson) (#726)
+              support "replicaof" (Raphaël Pinson) (#727)
+              fix support for "sentinel" (Raphaël Pinson) (#728)
+    * Resolv: Support new options (Trevor Vaughan) (Issues #707 #708)
+    * Rsyslog: support multiple actions in filters and selectors (Issue #653)
+    * Shellvars: exclude more tcsh profile scripts (Pino Toscano) (Issue #627)
+    * Simplevars: add ocsinventory-agent.cfg (Pat Riehecky) (Issue #637)
+    * Sudoers: support new @include/@includedir directives
+              (Pino Toscano) (Issue #693)
+    * Sudoers: Allow AD groups (luchihoratiu) (Issue #696)
+              Support negative integers (Ando David Roots) (#724)
+    * Ssh: add Match keyword support (granquet) (Issue #695)
+    * Sshd: support quotes in Match conditions (Issue #739)
+    * Systemd: fix parsing of envvars with spaces (Pino Toscano) (#659)
+              Add incl paths according to 'systemd.network(5)' (chruetli) (#683)
+    * Tinc: new lens for Tinc VPN configuration files (Thomas Weißschuh) (#718)
+    * Toml: support arrays (norec) in inline tables (Raphaël Pinson) (#703)
+    * Tmpfiles: improvements to the types specification
+              (Pino Toscano) (Issue #694)
+
+1.12.0 - 2019-04-13
+  - General changes/additions
+    * update gnulib to 91584ed6
+  - Lens changes/additions
+    * Anaconda: new lens to process /etc/sysconfig/anaconda instead of
+                Shellvars (Pino Toscano) (Issue #597)
+    * DevfsRules: add lens for FreeBSD devfs.rules files
+    * Dovecot: permit ! in block titles (Nathan Ward) (Issue #599)
+    * Hostname: Allow creation of hostname when file is missing
+                (David Farrell) (Issue #606)
+    * Krb5: add more pkinit_* options (Issue #603)
+    * Logrotate: fix missing recognition of double quoted filenames (Issue #611)
+    * Multipath: accept values enclosed in quotes (Issue #583)
+    * Nginx: support unix sockets as server address (Issue #618)
+    * Nsswitch: add merge action (Issue #609)
+    * Pam: accept continuation lines (Issue #590)
+    * Puppetfile: allow symbols as (optional) values (Issue #619)
+                  allow comments in entries (Issue #620)
+    * Rsyslog: support dynamic file paths (Issue #622)
+               treat #!/+/- as comment (arnolda, PR #595)
+    * Syslog: accept 'include' directive (Issue #486)
+    * Semanage: new lens to process /etc/selinux/semanage.conf instead of
+                Simplevars (Pino Toscano) (Issue #594)
+    * Shellvars: allow and/or in @if conditions (#582)
+                 accept functions wrapped in round brackets,
+                 accept variables with a dash in their name,
+                 exclude csh/tcsh profile scripts (Pino Toscano) (Issue #600)
+                 accept variable as command (Issue #601)
+    * Ssh: accept RekeyLimit (Issue #605)
+    * Sshd: accept '=' to separate option names from their values
+            (Emil Dragu, #587)
+    * Sudoers: support 'always_query_group_plugin' flag (Steve Traylen, #588)
+    * Strongswan: parse lists. This is a backwards-incompatible change
+                  since list entries that were parsed into a single string
+                  are now split into a list of entries (Kaarle Ritvanen)
+    * Toml: new lens to parse .toml files (PR #91)
+    * Xorg: accept empty values for options (arnolda, PR #596)
+
+1.11.0 - 2018-08-24
+  - General changes/additions
+    * augmatch: add a --quiet option; make the exit status useful to tell
+                whether there was a match or not
+    * Drastically reduce the amount of memory needed to evaluate complex
+      path expressions against large files (Issue #569)
+    * Fix a segfault on OSX when 'augmatch' is run without any
+      arguments (Issue #556)
+  - API changes
+    * aug_source did not in fact return the source; and always returned
+      NULL for that. That has been fixed.
+  - Lens changes/additions
+    * Chrony: add new options supported in chrony 3.2 and 3.3 (Miroslav Lichvar)
+    * Dhclient: fix parsing of append/prepend and similar directives
+                (John Morrissey)
+    * Fstab: allow leading whitespace in mount entry lines
+             (Pino Toscano) (Issue #544)
+    * Grub: tolerate some invalid entries. Those invalid entries
+            get mapped to '#error' nodes
+    * Httpd: accept comments with whitespace right after a tag
+             opening a section (Issue #577)
+    * Json: allow escaped slashes in strings (Issue #557)
+    * Multipath: accept regular expressions for devnode, wwid, and property
+      in blacklist and blacklist_exceptions sections (Issue #564)
+    * Nginx: parse /etc/nginx/sites-enabled (plumbeo)
+             allow semicolons inside double quoted strings in
+             simple directives, and allow simple directives without
+             an argument (Issue #566)
+    * Redis: accept the 'bind' statement with multiple IP addresses
+             (yannh) (Issue #194)
+    * Rsyslog: support include() directive introduced in rsyslog 8.33
+    * Strongswan: new lens (Kaarle Ritvanen)
+    * Systemd: do not try to treat *.d or *.wants directories as
+               configuration files (Issue #548)
+
+1.10.1 - 2018-01-29
+  - API changes
+    * Fix a symbol versioning mistake in libfa that unnecessarily broke ABI
+
+1.10.0 - 2018-01-25
+  DO NOT USE THIS RELEASE, USE 1.10.1 INSTEAD
+
+  - General changes/additions
+    * New CLI utility 'augmatch' to print the tree for a file and select
+      some of its contents
+    * New command 'count' in augtool
+    * New function 'not(bool) -> bool' for path expressions
+    * The path expression 'label[. = "value"]' can now be written more
+      concisely as 'label["value"]'
+  - API changes
+    * libfa has now a function fa_json to export an FA as a JSON file, and
+      fa_state_* functions that make it possible to iterate over the FA's
+      states and transitions. (Pedro Valero Mejia)
+    * Add functions aug_ns_label, aug_ns_value, aug_ns_count, and
+      aug_ns_path to get the label (with index), the value, the number of
+      nodes, and the fully qualified path for nodes stored in a nodeset in
+      a variable efficiently
+  - Lens changes/additions
+    * Grubenv: new lens to process /boot/grub/grubenv (omgold)
+    * Httpd: also read files from /etc/httpd/conf.modules.d/*.conf
+             (Tomas Meszaros) (Issue #537)
+    * Nsswitch: allow comments at the end of a line (Philip Hahn) (Issue #517)
+    * Ntp: accept 'ntpsigndsocket' statement (Philip Hahn) (Issue #516)
+    * Properties: accept empty comments with DOS line endings (Issue #161)
+    * Rancid: new lens for RANCiD router databases (Matt Dainty)
+    * Resolv: accept empty comments with DOS line endings (Issue #161)
+    * Systemd: also process /etc/systemd/logind.conf (Pat Riehecky)
+    * YAML: process a document that is just a sequence (John Vandenberg)
+
+1.9.0 - 2017-10-06
+  - General changes/additions
+    * several improvements to the error messages when transforming a tree
+      back to text fails. They now make it clearer what part of the tree
+      was problematic, and what the tree should have looked like.
+    * Fixed the pkg-config file, which should now be usable
+    * Fix handling of backslash-escaping in strings and regular expressions
+      in the lens language. We used to handle constructs like "\\" and
+      /\\\\/ incorrectly. (Issue #495)
+    * do not unescape the default value of a del on create; otherwise we are
+      double unescaping these strings (Issue #507)
+    * remove tempfile when saving files because destination is not writable
+      (Issue #479)
+    * span information is now updated on save (Issue #467)
+    * fix lots of warnings generated by gcc 7.1
+    * Various changes to reduce bashisms in tests and make them run on
+      FreeBSD (Romain Tartière)
+    * Fix building on Solaris (Shawn Ferry)
+  - API changes
+    * add function aug_ns_attr to allow iterating through a nodeset
+      quickly. See examples/dump.c for an example of how to use them
+      instead of aug_get, aug_label etc. and for a way to measure
+      performance gains.
+  - Lens changes/additions
+    * Ceph: new lens for /etc/ceph/ceph.conf
+    * Cgconfig: accept fperm & dperm in admin & task (Pino Toscano)
+    * Dovecot: also load files from /usr/local/etc (Roy Hubbard)
+    * Exports: relax the rules for the path at the beginning of a line so
+      that double-quoted paths are legal, too
+    * Getcap: new lens to parse generic termcap-style capability databases
+      (Matt Dainty)
+    * Grub: accept toplevel 'boot' entry (Pino Toscano)
+    * Httpd: handle empty comments with a continuation line (Issue #423);
+      handle '>""' in a directive properly (Issue #429); make space between
+      quoted arguments optional (Issue #435); accept quoted strings as part
+      of bare arguments (Issue #470)
+    * Nginx: load files from sites-available directory (Omer Katz) (Issue #471)
+    * Nslcd: new lens for nss-pam-ldapd config (Jose Plana)
+    * Oz: New lense for /etc/oz/oz.cnf
+    * postfix lenses: also load files from /usr/local/etc (Roy Hubbard)
+    * Properties: accept DOS line endings (Issue #468)
+    * Rtadvd: new lens to parse the rtadvd configuration file (Matt Dainty)
+    * Rsyslog: load files from /etc/rsyslog.d (Doug Wilson) (Issue #475);
+      allow spaces before the # starting a comment; allow comments inside
+      config statements like 'module'
+    * Shellvars: load FreeBSD's /etc/rc.conf.d (Roy Hubbard)
+    * Ssh: accept '=' to separate keyword from arguments
+    * Sshd: split HostKeyAlgorithms into list of values; recognize quoted
+      group names with spaces in them (Issue #477)
+    * Sudoers: recognize "match_group_by_gid" (Luigi Toscano) (Issue #482)
+    * Syslog: allow spaces before the # starting a comment
+    * Termcap: new lens to parse termcap capability databases (Matt Dainty)
+    * Vsftpd: accept seccomp_sandbox (Denys Stroebel)
+    * Xymon: accept 'group-sorted' directive (Issue #462)
+
+1.8.1 - 2017-08-17
+  - General changes/addition
+    * Fix error in handling escaped whitespace at the end of path expressions
+      (addresses CVE-2017-7555)
+
+1.8.0 - 2017-03-20
   - General changes/additions
     * augtool: add a 'source' command exposing the aug_source API call
     * augtool: add a 'context' command to make changing into a node more
@@ -10,16 +291,30 @@
       90MB to about 20MB. This will not change the amount of memory used
       when only specific lenses are used, only the default behavior of
       loading all lenses, i.e., when -A is not passed.
+    * make building augtool statically possible (Jörg Krause)
+    * split aug_to_xml into its own source file, so that statically linking
+      against libaugeas.a doesn't require also linking against libXml2 and
+      its dependencies, provided aug_to_xml is not needed.
   - API changes
     * add aug_source to find the source file for a particular node
     * reduce memory consumption when AUG_NO_MODL_AUTOLOAD is _not_ passed;
       exact same details as described above for augtool
   - Lens changes/additions
+    * Chrony: allow floating point numbers (Miroslav Lichvar)
+              add new directives from chrony 3.0 and 3.1 (Miroslav Lichvar)
+    * Krb5: support include/includedir directives (Jason Smith) (Issue #430)
+            support realms that start with numbers (Dustin Wheeler) (Issue #437)
+    * Multipath: update to multipath-0.4.9-99.el7 (Xavier Mol)
+    * Php: also look for FPM files in /etc/php/*/fpm/pool.d (Daniel Dico)
+    * Postfix_virtual: allow underscores in e-mail addresses (Jason Lingohr)
+                       (Issue #439)
     * Radicale: new lens for config of http://radicale.org/ (James Valleroy)
+    * Rsyslog: support multiple options in module statements (Craig Miskell)
     * Ssh: also look for files in in /etc/ssh/ssh_config.d (Ian Mortimer)
     * Tmpfiles: parse 'q'/'Q' modes, parse two-character arguments,
                 parse three-digit file modes
     * Xml: support external entity declarations in the doctype (Issue #142)
+    * Yum: also read DNF files from /etc/dnf (Pat Riehecky) (Issue #434)
 
 1.7.0 - 2016-11-08
   - General changes/additions
@@ -291,7 +586,7 @@
                  handle associative arrays; add /etc/periodic.conf for
                  FreeBSD (Michael Moll)
     * Shellvars_list: support double-quoted continued lines
-    * Sudoers: allow '+' in user/groupnames (Andreas Gr�ninger)
+    * Sudoers: allow '+' in user/groupnames (Andreas Grüninger)
     * Sysctl: add /boot/loader.conf for FreeBSD (Michael Moll)
     * Sysconfig: handle leading whitespace at beginning of a line,
                  RHBZ#761246
@@ -340,7 +635,7 @@
     * NagiosConfig and NagiosObjects: Fix documentation (Simon Sehier)
     * NetworkManager: Use the Quote module, support # in values (no eol comments)
     * OpenVPN: Add support for fragment, mssfix, and script-security
-               (Frank Gr�tzner)
+               (Frank Grötzner)
     * Pagekite: New lens (Michael Pimmer)
     * Pam: Add partial support for arguments enclosed in [] (Vincent Brillault)
     * Passwd: Refactor lens (Lorenzo Catucci)
@@ -400,7 +695,7 @@
              booting and bootp (Yanis Guenane)
              Support a wider variety of DHCP allow/deny/ignore statements
              (Yanis Guenane)
-    * Dovecot: Various enhancements and bug fixes (Michael Haslgr�bler):
+    * Dovecot: Various enhancements and bug fixes (Michael Haslgrübler):
                add mailbox to block_names, fix for block_args in quotes,
                fix for block's brackets upon write,
                fixes broken tests for mailbox,
@@ -450,7 +745,7 @@
     * Sysconfig: Permit empty comments after comment lines, RHBZ#1043636
     * Sysconfig_Route: New lens for RedHat's route configs
     * Syslog: Accept UDP(@) and TCP(@@) protocol, bug #364 (Yanis Guenane)
-    * Xymon_Alerting: New lens for Xymon alerting files (Fran�ois Maillard)
+    * Xymon_Alerting: New lens for Xymon alerting files (François Maillard)
     * Yum: Add yum-cron*.conf files (Pat Riehecky)
            Include only *.repo files from yum.repos.d (Andrew N Golovkov)
            Permit spaces after equals sign in list options, GH issue #45
@@ -618,7 +913,7 @@
     * src/pathx.c: match functions by name and arity
     * src/pathx.c: pass the number of actual arguments to the func
       implementation
-    * correctly parse escaped string literals in vim syntax file (Domen Ko�ar)
+    * correctly parse escaped string literals in vim syntax file (Domen Ko¿ar)
   - API changes/additions
     * add aug_text_store to write string to tree
     * add aug_text_retrieve to turn tree into text
@@ -954,7 +1249,7 @@
     * Access: support the format @netgroup@@nisdomain, bug #190
     * Fstab: fix parsing of SELinux labels in the fscontext option (Matt Booth)
     * Grub: support 'device' directive for UEFI boot, bug #189; support
-      'configfile' and 'background' (Onur K���k)
+      'configfile' and 'background' (Onur Küçük)
     * Httpd: handle continuation lines (Bill Pemberton); autoload
       httpd.conf on Fedora/RHEL, BZ 688149; fix support for single-quoted
       strings

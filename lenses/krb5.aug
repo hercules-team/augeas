@@ -21,10 +21,11 @@ let closebr = del /[ \t]*\}/ "}"
    and realms in the [appdefaults] section.
 *)
 
+let include_re = /include(dir)?/
 let realm_re = /[A-Z0-9][.a-zA-Z0-9-]*/
 let realm_anycase_re = /[A-Za-z0-9][.a-zA-Z0-9-]*/
 let app_re = /[a-z][a-zA-Z0-9_]*/
-let name_re = /[.a-zA-Z0-9_-]+/
+let name_re = /[.a-zA-Z0-9_-]+/ - include_re
 
 let value_br = store /[^;# \t\r\n{}]+/
 let value = store /[^;# \t\r\n]+/
@@ -85,7 +86,8 @@ let appdefaults =
 let realms =
   let simple_option = /kdc|admin_server|database_module|default_domain/
       |/v4_realm|auth_to_local(_names)?|master_kdc|kpasswd_server/
-      |/admin_server|ticket_lifetime|pkinit_anchors|krb524_server/ in
+      |/admin_server|ticket_lifetime|pkinit_(anchors|identities|identity|pool)/
+      |/krb524_server/ in
   let subsec_option = /v4_instance_convert/ in
   let option = subsec_entry simple_option eq comment in
   let subsec = [ indent . key subsec_option . eq_openbr .
@@ -129,10 +131,19 @@ let dbdefaults =
     simple_section "dbdefaults" keys
 
 let dbmodules =
-  let keys = /db_library|ldap_kerberos_container_dn|ldap_kdc_dn/
-    |/ldap_kadmind_dn|ldap_service_password_file|ldap_servers/
-    |/ldap_conns_per_server/ in
-    simple_section "dbmodules" keys
+  let subsec_key = /database_name|db_library|disable_last_success/
+    |/disable_lockout|ldap_conns_per_server|ldap_(kdc|kadmind)_dn/
+    |/ldap_(kdc|kadmind)_sasl_mech|ldap_(kdc|kadmind)_sasl_authcid/
+    |/ldap_(kdc|kadmind)_sasl_authzid|ldap_(kdc|kadmind)_sasl_realm/
+    |/ldap_kerberos_container_dn|ldap_servers/
+    |/ldap_service_password_file|mapsize|max_readers|nosync/
+    |/unlockiter/ in
+  let subsec_option = subsec_entry subsec_key eq comment in
+  let key = /db_module_dir/ in
+  let option = entry key eq value comment in
+  let realm = [ indent . label "realm" . store realm_re .
+                  eq_openbr . (subsec_option)* . closebr . eol ] in
+    record "dbmodules" (option|realm)
 
 (* This section is not documented in the krb5.conf manpage,
    but the Fermi example uses it. *)
@@ -151,11 +162,19 @@ let kdc =
 let pam =
   simple_section "pam" name_re
 
-let includes = Build.key_value_line /include(dir)?/ Sep.space (store Rx.fspath)
+let plugins =
+  let interface_option = subsec_entry name_re eq comment in
+  let interface = [ indent . key name_re .
+                  eq_openbr . (interface_option)* . closebr . eol ] in
+    record "plugins" (interface|comment)
 
-let lns = (comment|empty|includes)* .
+let includes = Build.key_value_line include_re Sep.space (store Rx.fspath)
+let include_lines = includes . (comment|empty)*
+
+let lns = (comment|empty)* .
   (libdefaults|login|appdefaults|realms|domain_realm
-  |logging|capaths|dbdefaults|dbmodules|instance_mapping|kdc|pam)*
+  |logging|capaths|dbdefaults|dbmodules|instance_mapping|kdc|pam|include_lines
+  |plugins)*
 
 let filter = (incl "/etc/krb5.conf.d/*.conf")
            . (incl "/etc/krb5.conf")

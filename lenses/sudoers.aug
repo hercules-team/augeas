@@ -29,7 +29,7 @@ About: Lens Usage
 
     * Set first Defaults to apply to the "LOCALNET" network alias
       > set /files/etc/sudoers/Defaults[1]/type "@LOCALNET"
-    * List all user specifications applying explicitely to the "admin" Unix group
+    * List all user specifications applying explicitly to the "admin" Unix group
       > match /files/etc/sudoers/spec/user "%admin"
     * Remove the full 3rd user specification
       > rm /files/etc/sudoers/spec[3]
@@ -127,7 +127,7 @@ let sto_to_com_host = store /[^,=:#() \t\n\\]+/
 Escaped spaces and NIS domains and allowed*)
 let sto_to_com_user =
       let nis_re = /([A-Z]([-A-Z0-9]|(\\\\[ \t]))*+\\\\\\\\)/
-   in let user_re = /[%+@a-z]([-A-Za-z0-9._+]|(\\\\[ \t]))*/
+   in let user_re = /[%+@a-z]([-A-Za-z0-9._+]|(\\\\[ \t])|\\\\\\\\[A-Za-z0-9])*/ - /@include(dir)?/
    in let alias_re = /[A-Z_]+/
    in store ((nis_re? . user_re) | alias_re)
 
@@ -153,7 +153,7 @@ let sto_to_spc = store /[^", \t\n\\]+|"[^", \t\n\\]+"/
 let sto_to_spc_no_dquote = store /[^",# \t\n\\]+/ (* " relax emacs *)
 
 (* Variable: sto_integer *)
-let sto_integer = store /[0-9]+/
+let sto_integer = store /-?[0-9]+/
 
 
 (* Group: Comments and empty lines *)
@@ -178,7 +178,7 @@ let empty   = [ del /[ \t]*#?[ \t]*\n/ "\n" ]
 
 (* View: includedir *)
 let includedir =
-  [ key /#include(dir)?/ . Sep.space . store Rx.fspath . eol ]
+  [ key /(#|@)include(dir)?/ . Sep.space . store Rx.fspath . eol ]
 
 
 (************************************************************************
@@ -315,7 +315,8 @@ let parameter_flag_kw    = "always_set_home" | "authenticate" | "env_editor"
                          | "tty_tickets" | "visiblepw" | "closefrom_override"
                          | "closefrom_override" | "compress_io" | "fast_glob"
                          | "log_input" | "log_output" | "pwfeedback"
-                         | "umask_override" | "use_pty"
+                         | "umask_override" | "use_pty" | "match_group_by_gid"
+                         | "always_query_group_plugin"
 
 let parameter_flag       = [ del_negate . negate_node?
                                . key parameter_flag_kw ]

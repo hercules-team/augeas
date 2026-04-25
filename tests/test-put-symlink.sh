@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/sh
 
 # Test that we correctly preserve symlinks when saving a file
 

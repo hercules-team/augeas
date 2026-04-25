@@ -51,3 +51,9 @@ test Exports.lns get s =
   { "dir" = "/local5"
       { "client" = "somehost-[01]"
           { "option" = "rw" } } }
+
+test Exports.lns get "\"/path/in/quotes\" 192.168.0.1(rw,all_squash)\n" =
+  { "dir" = "\"/path/in/quotes\""
+    { "client" = "192.168.0.1"
+      { "option" = "rw" }
+      { "option" = "all_squash" } } }
