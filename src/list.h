@@ -37,6 +37,9 @@
 #define list_for_each(iter, list)                                       \
     for (typeof(list) (iter) = list; (iter) != NULL; (iter) = (iter)->next)
 
+#define list_for_each_const(iter, list)                                 \
+    for (const typeof(*(list)) *(iter) = list; (iter) != NULL; (iter) = (iter)->next)
+
 #define list_remove(elt, list)                                          \
     do {                                                                \
         typeof(elt) _e = (elt);                                         \
