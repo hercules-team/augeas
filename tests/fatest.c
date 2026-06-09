@@ -521,6 +521,32 @@ static void testNul(CuTest *tc) {
     free(re);
 }
 
+/* fa_compile takes (regexp, len) and must not assume NUL termination.
+ * Compile regexps that end right where the parser peeks for the next
+ * character, from exact-size heap buffers, so a read past the end is
+ * caught by valgrind/asan. */
+static void testNoTerminator(CuTest *tc) {
+    static const struct { const char *rx; int err; } cases[] = {
+        { "a|",   REG_NOERROR },
+        { "a|b|", REG_NOERROR },
+        { "(",    REG_EPAREN  },
+    };
+    for (int i=0; i < ARRAY_CARDINALITY(cases); i++) {
+        size_t len = strlen(cases[i].rx);
+        char *rx = malloc(len);
+        CuAssertPtrNotNull(tc, rx);
+        memcpy(rx, cases[i].rx, len);
+        struct fa *fa = NULL;
+        int r = fa_compile(rx, len, &fa);
+        if (r == REG_ESPACE)
+            die_oom();
+        CuAssertIntEquals(tc, cases[i].err, r);
+        if (r == REG_NOERROR)
+            fa_free(fa);
+        free(rx);
+    }
+}
+
 static void testRestrictAlphabet(CuTest *tc) {
     const char *re = "ab|(xy[B-Z0-9])*(uv[^0-9]?)";
     struct fa *fa_exp = make_good_fa(tc, "((xy[0-9])*)uv[^0-9A-Z]?|ab");
@@ -707,6 +733,7 @@ int main(int argc, char **argv) {
         SUITE_ADD_TEST(suite, testAsRegexpMinus);
         SUITE_ADD_TEST(suite, testRangeEnd);
         SUITE_ADD_TEST(suite, testNul);
+        SUITE_ADD_TEST(suite, testNoTerminator);
         SUITE_ADD_TEST(suite, testRestrictAlphabet);
         SUITE_ADD_TEST(suite, testExpandCharRanges);
         SUITE_ADD_TEST(suite, testNoCase);
