@@ -3288,7 +3288,7 @@ static bool match(struct re_parse *parse, char m) {
 }
 
 static bool peek(struct re_parse *parse, const char *chars) {
-    return *parse->rx != '\0' && strchr(chars, *parse->rx) != NULL;
+    return more(parse) && *parse->rx != '\0' && strchr(chars, *parse->rx) != NULL;
 }
 
 static bool next(struct re_parse *parse, char *c) {
