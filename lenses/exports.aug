@@ -95,4 +95,4 @@ module Exports =
 
   let lns = (Util.empty | Util.comment | entry)*
 
-  let xfm = transform lns (incl "/etc/exports")
+  let xfm = transform lns (incl "/etc/exports") . (incl "/etc/exports.d/*")
