@@ -1745,7 +1745,7 @@ static void check_expr(struct expr *expr, struct state *state) {
  */
 
 static void skipws(struct state *state) {
-    while (isspace(*state->pos)) state->pos += 1;
+    while (isspace((unsigned char) *state->pos)) state->pos += 1;
 }
 
 static int match(struct state *state, char m) {
@@ -1773,7 +1773,7 @@ static int looking_at(struct state *state, const char *token,
                       const char *follow) {
     if (STREQLEN(state->pos, token, strlen(token))) {
         const char *p = state->pos + strlen(token);
-        while (isspace(*p)) p++;
+        while (isspace((unsigned char) *p)) p++;
         if (STREQLEN(p, follow, strlen(follow))) {
             state->pos = p + strlen(follow);
             return 1;
@@ -1835,7 +1835,7 @@ int pathx_escape_name(const char *in, char **out) {
     *out = NULL;
 
     for (p = in; *p; p++) {
-        if (strchr(name_follow, *p) || isspace(*p) || *p == '\\')
+        if (strchr(name_follow, *p) || isspace((unsigned char) *p) || *p == '\\')
             num_to_escape += 1;
     }
 
@@ -1846,7 +1846,7 @@ int pathx_escape_name(const char *in, char **out) {
         return -1;
 
     for (p = in, s = *out; *p; p++) {
-        if (strchr(name_follow, *p) || isspace(*p) || *p == '\\')
+        if (strchr(name_follow, *p) || isspace((unsigned char) *p) || *p == '\\')
             *s++ = '\\';
         *s++ = *p;
     }
@@ -1900,7 +1900,7 @@ static char *parse_name(struct state *state) {
      * and don't strip it as in "x\\ " */
     if (state->pos > s) {
         state->pos -= 1;
-        while (isspace(*state->pos) && state->pos > s
+        while (isspace((unsigned char) *state->pos) && state->pos > s
                && !backslash_escaped(state->pos, s))
             state->pos -= 1;
         state->pos += 1;
@@ -2294,12 +2294,12 @@ static void parse_var(struct state *state) {
     const char *id = state->pos;
     struct expr *expr = NULL;
 
-    if (!isalpha(*id) && *id != '_') {
+    if (!isalpha((unsigned char) *id) && *id != '_') {
         STATE_ERROR(state, PATHX_ENAME);
         return;
     }
     id++;
-    while (isalpha(*id) || isdigit(*id) || *id == '_')
+    while (isalpha((unsigned char) *id) || isdigit((unsigned char) *id) || *id == '_')
         id += 1;
 
     if (ALLOC(expr) < 0)
@@ -2354,8 +2354,8 @@ static int looking_at_primary_expr(struct state *state) {
     /* Or maybe a function call, i.e. a word followed by a '(' ?
      * Note that our function names are only [a-zA-Z]+
      */
-    while (*s != '\0' && isalpha(*s)) s++;
-    while (*s != '\0' && isspace(*s)) s++;
+    while (*s != '\0' && isalpha((unsigned char) *s)) s++;
+    while (*s != '\0' && isspace((unsigned char) *s)) s++;
     return *s == '(';
 }
 
@@ -2722,7 +2722,7 @@ static bool step_matches(struct step *step, struct tree *tree) {
             return false;
         /* label matches if it consists of numeric digits only */
         for( char *s = tree->label; *s ; s++) {
-            if ( ! isdigit(*s) )
+            if ( ! isdigit((unsigned char) *s) )
                 return false;
         }
         return true;
