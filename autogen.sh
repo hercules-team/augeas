@@ -13,6 +13,8 @@ Options:
                           have gnulib sources on your machine, and
                           do not want to waste your bandwidth downloading
                           them again.
+ --no-git                 Do not use git to update gnulib. Requires that
+                          --gnulib-srcdir point to a correct gnulib snapshot
  --help                   Print this message
  any other option         Pass to the 'configure' script verbatim
 
@@ -30,6 +32,8 @@ test -z "$srcdir" && srcdir=.
 THEDIR=`pwd`
 cd $srcdir
 
+no_git=
+
 # Split out options for bootstrap and for configure
 declare -a CF_ARGS
 for option
@@ -40,6 +44,8 @@ do
     exit;;
   --gnulib-srcdir=*)
     GNULIB_SRCDIR=$option;;
+  --no-git)
+    no_git=" --no-git";;
   *)
     CF_ARGS[${#CF_ARGS[@]}]=$option;;
   esac
@@ -83,7 +89,7 @@ fi
 mkdir -p $BUILD_AUX
 
 $LIBTOOLIZE --copy --force
-./bootstrap $GNULIB_SRCDIR
+./bootstrap$no_git $GNULIB_SRCDIR
 aclocal -I gnulib/m4
 autoheader
 automake --add-missing
