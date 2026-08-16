@@ -119,7 +119,7 @@ static void print_time_taken(const struct timeval *start,
                              const struct timeval *stop) {
     time_t elapsed = (stop->tv_sec - start->tv_sec)*1000
                    + (stop->tv_usec - start->tv_usec)/1000;
-    fprintf(stderr, "time: %ld ms\n", elapsed);
+    fprintf(stderr, "time: %lld ms\n", (long long) elapsed);
 }
 
 int main(int argc, char **argv) {
