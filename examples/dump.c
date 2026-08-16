@@ -117,9 +117,9 @@ static void dump_var(struct augeas *aug, const char *path) {
 
 static void print_time_taken(const struct timeval *start,
                              const struct timeval *stop) {
-    time_t elapsed = (stop->tv_sec - start->tv_sec)*1000
-                   + (stop->tv_usec - start->tv_usec)/1000;
-    fprintf(stderr, "time: %lld ms\n", (long long) elapsed);
+    long long elapsed = (stop->tv_sec - start->tv_sec)*1000
+                      + (stop->tv_usec - start->tv_usec)/1000;
+    fprintf(stderr, "time: %lld ms\n", elapsed);
 }
 
 int main(int argc, char **argv) {
