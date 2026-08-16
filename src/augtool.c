@@ -464,9 +464,9 @@ static void print_version_info(void) {
 
 static void print_time_taken(const struct timeval *start,
                              const struct timeval *stop) {
-    time_t elapsed = (stop->tv_sec - start->tv_sec)*1000
-                   + (stop->tv_usec - start->tv_usec)/1000;
-    printf("Time: %lld ms\n", (long long) elapsed);
+    long long elapsed = (stop->tv_sec - start->tv_sec)*1000
+                      + (stop->tv_usec - start->tv_usec)/1000;
+    printf("Time: %lld ms\n", elapsed);
 }
 
 static int run_command(const char *line, bool with_timing) {
