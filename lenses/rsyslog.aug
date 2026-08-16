@@ -93,6 +93,8 @@ let lns = entries . ( program | hostname )*
 
 let filter = incl "/etc/rsyslog.conf"
            . incl "/etc/rsyslog.d/*"
+           . incl "/usr/local/etc/rsyslog.conf"
+           . incl "/usr/local/etc/rsyslog.d/*"
            . Util.stdexcl
 
 let xfm = transform lns filter
