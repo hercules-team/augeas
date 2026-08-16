@@ -21,6 +21,20 @@ AC_DEFUN([AUGEAS_COMPILE_WARNINGS],[
 
     common_flags="-fexceptions -fasynchronous-unwind-tables"
 
+    dnl -fexceptions makes the compiler emit exception tables, and those
+    dnl name __gcc_personality_v0. Deciding the flag by compiling and
+    dnl linking an empty main() does not settle anything, because an empty
+    dnl main() has no exception table and so never mentions the routine:
+    dnl the flag is accepted and the link of the real program fails later.
+    dnl Ask for the routine itself instead.
+    AC_MSG_CHECKING([whether __gcc_personality_v0 can be linked])
+    AC_LINK_IFELSE(
+      [AC_LANG_PROGRAM([[extern void __gcc_personality_v0(void);]],
+                       [[__gcc_personality_v0();]])],
+      [AC_MSG_RESULT([yes])],
+      [AC_MSG_RESULT([no])
+       common_flags=""])
+
     case "$enable_compile_warnings" in
     no)
         try_compiler_flags=""
