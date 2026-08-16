@@ -1,6 +1,12 @@
 
-EXTRA_DIST = $(wildcard conf/Augeas.css conf/c_api/*.txt) \
-             $(wildcard conf/lenses/*.txt) \
+EXTRA_DIST = conf/Augeas.css \
+             conf/c_api/Languages.txt \
+             conf/c_api/Menu.txt \
+             conf/c_api/Topics.txt \
+             conf/lenses/Languages.txt \
+             conf/lenses/Menu.txt \
+             conf/lenses/Menu_Backup.txt \
+             conf/lenses/Topics.txt \
              Modules/NaturalDocs/Languages/Augeas.pm
 
 ND_CONF=$(srcdir)/conf

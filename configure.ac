@@ -125,6 +125,17 @@ dnl set PC_SELINUX for use by augeas.pc.in
 PC_SELINUX=$(echo $LIB_SELINUX | sed -e 's/-l/lib/')
 AC_SUBST([PC_SELINUX])
 
+dnl The lens lists used to be $(wildcard lenses/*.aug) in Makefile.am, which
+dnl only GNU make expands: every other make leaves the call as a literal
+dnl string and installs no lens at all. Expand them here instead, so that
+dnl the makefile only ever sees a plain list of file names.
+LENS_FILES=`cd "$srcdir" && echo lenses/*.aug`
+LENS_TEST_FILES=`cd "$srcdir" && echo lenses/tests/*.aug`
+TEST_MODULE_FILES=`cd "$srcdir/tests" && echo modules/*.aug`
+AC_SUBST([LENS_FILES])
+AC_SUBST([LENS_TEST_FILES])
+AC_SUBST([TEST_MODULE_FILES])
+
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([LIBXML], [libxml-2.0])
 

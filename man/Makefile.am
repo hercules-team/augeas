@@ -1,5 +1,5 @@
 
-EXTRA_DIST=$(wildcard *.pod) $(wildcard *.[0-9])
+EXTRA_DIST=augtool.pod augparse.pod augmatch.pod augprint.pod $(man1_MANS)
 
 man1_MANS=augtool.1 augparse.1 augmatch.1 augprint.1
 
