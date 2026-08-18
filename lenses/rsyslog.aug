@@ -38,6 +38,21 @@ let config_object =
     config_object_param . ( config_sep . config_object_param )* .
     Sep.rbracket . Util.comment_or_eol ]
 
+(* View: rainer_entry
+   RainerScript selector + action() pair, e.g.:
+     *.info;mail.none action(type="omfile" file="/var/log/messages")
+   Uses label "rainer_entry" (not "entry") so the entries union never sees two
+   alternatives that both produce { "entry" }, avoiding a put-direction conflict. *)
+let rainer_entry =
+  [ label "rainer_entry" .
+    Syslog.selectors . Syslog.sep_tab .
+    [ label "action" .
+      Util.del_str "action" .
+      Sep.lbracket .
+      config_object_param . ( config_sep . config_object_param )* .
+      Sep.rbracket ] .
+    Util.comment_or_eol ]
+
 (* View: users
    Map :omusrmsg: and a list of users, or a single *
 *)
@@ -87,7 +102,7 @@ let prop_filter =
   in [ label "filter" . prop_name . sep . prop_oper . sep . prop_val .
        Sep.space . actions . Util.eol ]
 
-let entries = ( Syslog.empty | Util.comment | entry | macro | config_object | prop_filter )*
+let entries = ( Syslog.empty | Util.comment | entry | rainer_entry | macro | config_object | prop_filter )*
 
 let lns = entries . ( program | hostname )*
 
