@@ -238,3 +238,10 @@ test ipt_match get " --tcp-flags SYN,RST,ACK,FIN SYN" =
 (* Bug #224 *)
 test ipt_match get " --icmpv6-type neighbor-solicitation" =
   { "icmpv6-type" = "neighbor-solicitation" }
+
+(* --match-set *)
+test ipt_match get " --match set --match-set ipset/name src,dst" =
+  { "match" = "set" }
+  { "match-set" = "ipset/name"
+    { "flag" = "src" }
+    { "flag" = "dst" } }
