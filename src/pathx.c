@@ -268,6 +268,9 @@ struct state {
     struct value  *value_pool;
     value_ind_t    value_pool_used;
     value_ind_t    value_pool_size;
+    /* Values below this index must survive evaluation because constant
+     * folding made an expression refer to them */
+    value_ind_t    value_pool_pinned;
     /* Stack of values (as indices into value_pool), with bottom of
        stack in values[0] */
     value_ind_t   *values;
@@ -1260,24 +1263,49 @@ static void eval_app(struct expr *expr, struct state *state) {
     expr->func->impl(state, expr->func->arity);
 }
 
+/* Release all values that were added to the value pool at or after
+ * index MARK, except for pinned ones. Only safe when nothing on the value
+ * stack refers to them anymore */
+static void release_values(struct state *state, value_ind_t mark) {
+    if (mark < state->value_pool_pinned)
+        mark = state->value_pool_pinned;
+    if (mark >= state->value_pool_used)
+        return;
+    for (value_ind_t i = mark; i < state->value_pool_used; i++)
+        release_value(state->value_pool + i);
+    state->value_pool_used = mark;
+}
+
 static bool eval_pred(struct expr *expr, struct state *state) {
+    value_ind_t mark = state->value_pool_used;
+    bool result;
+
     eval_expr(expr, state);
     RET0_ON_ERROR;
 
     struct value *v = pop_value(state);
     switch(v->tag) {
     case T_BOOLEAN:
-        return v->boolval;
+        result = v->boolval;
+        break;
     case T_NUMBER:
-        return (state->ctx_pos == v->number);
+        result = (state->ctx_pos == v->number);
+        break;
     case T_NODESET:
-        return v->nodeset->used > 0;
+        result = v->nodeset->used > 0;
+        break;
     case T_STRING:
-        return streqv(state->ctx->value, v->string);
+        result = streqv(state->ctx->value, v->string);
+        break;
     default:
         assert(0);
         return false;
     }
+    /* The predicate is evaluated once for every node it is applied to;
+     * without releasing the values it produced, the value pool would grow
+     * with the number of times it is evaluated */
+    release_values(state, mark);
+    return result;
 }
 
 /* Remove COUNT successive entries from NS. The first entry to remove is at
@@ -1546,6 +1574,8 @@ static void eval_expr(struct expr *expr, struct state *state) {
             value_ind_t vind = state->values_used - 1;
             expr->tag = E_VALUE;
             expr->value_ind = state->values[vind];
+            if (expr->value_ind >= state->value_pool_pinned)
+                state->value_pool_pinned = expr->value_ind + 1;
         }
         break;
     default:
