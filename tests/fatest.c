@@ -762,7 +762,7 @@ static void testLongRegexps(CuTest *tc) {
 
     rx = repeat_str("", "a", "", "", 5000);
     fa = make_fa(tc, rx, strlen(rx), REG_NOERROR);
-    exp = make_good_fa(tc, "a{5000}");
+    exp = make_good_fa(tc, "(a{1000}){5}");
     CuAssertTrue(tc, fa_equals(fa, exp));
     free(rx);
 
@@ -798,6 +798,16 @@ static void testBadRepetition(CuTest *tc) {
     CuAssertPtrEquals(tc, NULL, s);
 }
 
+/* Counts in repetitions are limited to 1000 (oss-fuzz 42512581,
+ * 435225513, 42512748) */
+static void testRepetitionLimit(CuTest *tc) {
+    make_good_fa(tc, "a{1000}");
+    make_good_fa(tc, "a{0,1000}");
+    make_fa(tc, "a{1001}", strlen("a{1001}"), REG_ESIZE);
+    make_fa(tc, "a{2,1001}", strlen("a{2,1001}"), REG_ESIZE);
+    make_fa(tc, "a{1001,}", strlen("a{1001,}"), REG_ESIZE);
+}
+
 int main(int argc, char **argv) {
     if (argc == 1) {
         char *output = NULL;
@@ -829,6 +839,7 @@ int main(int argc, char **argv) {
         SUITE_ADD_TEST(suite, testCharsetSignBit);
         SUITE_ADD_TEST(suite, testLongRegexps);
         SUITE_ADD_TEST(suite, testBadRepetition);
+        SUITE_ADD_TEST(suite, testRepetitionLimit);
 
         CuSuiteRun(suite);
         CuSuiteSummary(suite, &output);

@@ -225,6 +225,11 @@ struct re_parse {
  * iteratively into balanced trees, and do not count towards this limit */
 #define RE_MAX_NESTING 2000
 
+/* The largest count allowed in a repetition like 'r{n,m}'. Each
+ * repetition makes a copy of the FA for 'r', and large counts are an easy
+ * way to exhaust memory and time. RE2 uses the same limit */
+#define RE_MAX_REPEAT 1000
+
 /* String with explicit length, used when converting re to string */
 struct re_str {
     char  *rx;
@@ -3530,6 +3535,10 @@ static struct re *parse_repeated_exp(struct re_parse *parse) {
         }
         if (min > max && max != -1) {
             parse->error = REG_BADBR;
+            goto error;
+        }
+        if (min > RE_MAX_REPEAT || max > RE_MAX_REPEAT) {
+            parse->error = REG_ESIZE;
             goto error;
         }
         re = make_re_rep(re, min, max);
