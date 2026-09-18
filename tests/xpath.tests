@@ -279,6 +279,15 @@ test union (/files/etc/yum.conf | /files/etc/yum.repos.d/*)/*/gpgcheck
      /files/etc/yum.repos.d/remi.repo/remi/gpgcheck = 1
      /files/etc/yum.repos.d/remi.repo/remi-test/gpgcheck = 1
 
+# A node that is in both operands appears only once in a union
+test union_dedup /files/etc/hosts/1 | /files/etc/hosts/*
+     /files/etc/hosts/1
+     /files/etc/hosts/#comment[1] = ...
+     /files/etc/hosts/#comment[2] = ...
+     /files/etc/hosts/#comment[3] = ...
+     /files/etc/hosts/#comment[4] = ...
+     /files/etc/hosts/2
+
 test else_nodeset_lhs (/files/etc/yum.conf else /files/etc/yum.repos.d/*)/*/gpgcheck
      /files/etc/yum.conf/main/gpgcheck = 1
 

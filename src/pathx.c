@@ -534,8 +534,10 @@ static void ns_add(struct nodeset *ns, struct tree *node,
     if (ns->used >= ns->size) {
         size_t size = 2 * ns->size;
         if (size < 10) size = 10;
-        if (REALLOC_N(ns->nodes, size) < 0)
+        if (REALLOC_N(ns->nodes, size) < 0) {
             STATE_ENOMEM;
+            return;
+        }
         ns->size = size;
     }
     ns->nodes[ns->used] = node;
@@ -1107,6 +1109,9 @@ static void eval_union(struct state *state, struct locpath_trace *lpt_right) {
 
     res = clone_nodeset(l->nodeset, state);
     RET_ON_ERROR;
+    /* Mark the nodes from L so that ns_add does not add them again */
+    for (int i=0; i < res->used; i++)
+        res->nodes[i]->added = 1;
     for (int i=0; i < r->nodeset->used; i++) {
         ns_add(res, r->nodeset->nodes[i], state);
         if (HAS_ERROR(state))
