@@ -700,6 +700,34 @@ static void testRm(CuTest *tc) {
     aug_close(aug);
 }
 
+/* Removing a top-level node together with its descendants must only
+ * free each node once (github #855) */
+static void testRmTopLevel(CuTest *tc) {
+    struct augeas *aug;
+    int r, n;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+
+    n = aug_match(aug, "/augeas/descendant-or-self::*", NULL);
+    CuAssertTrue(tc, n > 1);
+    r = aug_rm(aug, "/augeas | /augeas/root");
+    CuAssertIntEquals(tc, n, r);
+    r = aug_match(aug, "/augeas", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_set(aug, "/files/a/b", "1");
+    CuAssertRetSuccess(tc, r);
+    n = aug_match(aug, "/descendant-or-self::*", NULL);
+    CuAssertIntEquals(tc, 3, n);
+    r = aug_rm(aug, "/descendant-or-self::*");
+    CuAssertIntEquals(tc, n, r);
+    r = aug_match(aug, "/*", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    aug_close(aug);
+}
+
 static void testLoadFile(CuTest *tc) {
     struct augeas *aug;
     const char *value;
@@ -971,6 +999,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testTextRetrieve);
     SUITE_ADD_TEST(suite, testAugEscape);
     SUITE_ADD_TEST(suite, testRm);
+    SUITE_ADD_TEST(suite, testRmTopLevel);
     SUITE_ADD_TEST(suite, testLoadFile);
     SUITE_ADD_TEST(suite, testLoadBadPath);
     SUITE_ADD_TEST(suite, testLoadBadLens);
