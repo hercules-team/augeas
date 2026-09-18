@@ -530,6 +530,9 @@ static void testNoTerminator(CuTest *tc) {
         { "a|",   REG_NOERROR },
         { "a|b|", REG_NOERROR },
         { "(",    REG_EPAREN  },
+        { "(|",   REG_EPAREN  },
+        { "[",    REG_EBRACK  },
+        { "[]",   REG_EBRACK  },
     };
     for (int i=0; i < ARRAY_CARDINALITY(cases); i++) {
         size_t len = strlen(cases[i].rx);
@@ -545,6 +548,11 @@ static void testNoTerminator(CuTest *tc) {
             fa_free(fa);
         free(rx);
     }
+
+    /* Only the first LEN characters are part of the regexp */
+    struct fa *fa1 = make_fa(tc, "a|)", 2, REG_NOERROR);
+    struct fa *fa2 = make_good_fa(tc, "a?");
+    CuAssertTrue(tc, fa_equals(fa1, fa2));
 }
 
 static void testRestrictAlphabet(CuTest *tc) {
@@ -712,6 +720,20 @@ static void testEnumerate(CuTest *tc) {
     free_words(10, words);
 }
 
+/* Characters whose bit is the top bit of a word in a bitset. Setting
+ * or clearing them used to shift a signed 1 into the sign bit, which is
+ * undefined behavior (oss-fuzz 42512600, 42512479) */
+static void testCharsetSignBit(CuTest *tc) {
+    struct fa *fa1 = make_good_fa(tc, "[\x1f?_\x7f]");
+    struct fa *fa2 = make_good_fa(tc, "\x1f|\\?|_|\x7f");
+    struct fa *neg1 = make_good_fa(tc, "[^?_]");
+    struct fa *neg2 = make_good_fa(tc, "[^_?]");
+
+    CuAssertTrue(tc, fa_equals(fa1, fa2));
+    CuAssertTrue(tc, fa_equals(neg1, neg2));
+    CuAssertTrue(tc, ! fa_contains(fa1, neg1));
+}
+
 int main(int argc, char **argv) {
     if (argc == 1) {
         char *output = NULL;
@@ -740,6 +762,7 @@ int main(int argc, char **argv) {
         SUITE_ADD_TEST(suite, testExpandNoCase);
         SUITE_ADD_TEST(suite, testNoCaseComplement);
         SUITE_ADD_TEST(suite, testEnumerate);
+        SUITE_ADD_TEST(suite, testCharsetSignBit);
 
         CuSuiteRun(suite);
         CuSuiteSummary(suite, &output);

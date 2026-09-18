@@ -118,11 +118,11 @@ static bitset *bitset_init(size_t nbits) {
 }
 
 static inline void bitset_clr(bitset *bs, unsigned int bit) {
-    bs[bit/UINT_BIT] &= ~(1 << (bit % UINT_BIT));
+    bs[bit/UINT_BIT] &= ~(1u << (bit % UINT_BIT));
 }
 
 static inline void bitset_set(bitset *bs, unsigned int bit) {
-    bs[bit/UINT_BIT] |= 1 << (bit % UINT_BIT);
+    bs[bit/UINT_BIT] |= 1u << (bit % UINT_BIT);
 }
 
 ATTRIBUTE_PURE
@@ -2212,7 +2212,8 @@ struct fa *fa_iter(struct fa *fa, int min, int max) {
 
 static void sort_transition_intervals(struct fa *fa) {
     list_for_each(s, fa->initial) {
-        qsort(s->trans, s->tused, sizeof(*s->trans), trans_intv_cmp);
+        if (s->tused > 0)
+            qsort(s->trans, s->tused, sizeof(*s->trans), trans_intv_cmp);
     }
 }
 
