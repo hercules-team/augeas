@@ -944,21 +944,27 @@ static void eval_arith(struct state *state, enum binary_op op) {
     value_ind_t vind = make_value(T_NUMBER, state);
     struct value *r = pop_value(state);
     struct value *l = pop_value(state);
-    int res;
+    int64_t res;
+    bool overflow;
+
+    RET_ON_ERROR;
 
     assert(l->tag == T_NUMBER);
     assert(r->tag == T_NUMBER);
 
-    RET_ON_ERROR;
-
     if (op == OP_PLUS)
-        res = l->number + r->number;
+        overflow = __builtin_add_overflow(l->number, r->number, &res);
     else if (op == OP_MINUS)
-        res = l->number - r->number;
+        overflow = __builtin_sub_overflow(l->number, r->number, &res);
     else if (op == OP_STAR)
-        res = l->number * r->number;
+        overflow = __builtin_mul_overflow(l->number, r->number, &res);
     else
         assert(0);
+
+    if (overflow) {
+        STATE_ERROR(state, PATHX_ENUMBER);
+        return;
+    }
 
     state->value_pool[vind].number = res;
     push_value(vind, state);
@@ -2748,6 +2754,10 @@ static bool step_matches(struct step *step, struct tree *tree) {
 
 static struct tree *tree_prev(struct tree *pos) {
     struct tree *node = NULL;
+    /* The origin is its own parent, but not one of its own children,
+     * and therefore has no siblings */
+    if (pos->parent == pos)
+        return NULL;
     if (pos != pos->parent->children) {
         for (node = pos->parent->children;
              node->next != pos;

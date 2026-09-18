@@ -325,6 +325,10 @@ test int-bool-f /files[int(1 = 0) > 0]
 test int-bool-t /files[int(1 = 1) > 0]
      /files
 
+# Arithmetic uses the full 64 bits of numbers
+test int-64bit /files[int('3000000000') + 1 = int('3000000001')]
+     /files
+
 # Relative paths, relying on default /files context
 test ctx_file etc/network/interfaces
      /files/etc/network/interfaces

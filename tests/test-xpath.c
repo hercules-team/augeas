@@ -325,6 +325,48 @@ static int test_defnode_nonexistent(struct augeas *aug) {
     return -1;
 }
 
+/* The origin has no siblings (oss-fuzz 42512468) */
+static int test_origin_siblings(struct augeas *aug) {
+    int r;
+
+    printf("%-30s ... ", "origin_siblings");
+    r = aug_match(aug, "/preceding-sibling::*", NULL);
+    if (r != 0)
+        goto fail;
+    r = aug_match(aug, "/following-sibling::*", NULL);
+    if (r != 0)
+        goto fail;
+
+    printf("PASS\n");
+    return 0;
+ fail:
+    printf("FAIL\n");
+    return -1;
+}
+
+/* Arithmetic that overflows is an error (oss-fuzz 42519956) */
+static int test_arith_overflow(struct augeas *aug) {
+    static const char *const exprs[] = {
+        "/files[int('9223372036854775807') + 1 = 0]",
+        "/files[int('-9223372036854775807') - 2 = 0]",
+        "/files[int('224040001001793750') * 111 = 0]"
+    };
+    int r;
+
+    printf("%-30s ... ", "arith_overflow");
+    for (int i=0; i < sizeof(exprs)/sizeof(exprs[0]); i++) {
+        r = aug_match(aug, exprs[i], NULL);
+        if (r >= 0 || aug_error(aug) != AUG_EPATHX)
+            goto fail;
+    }
+
+    printf("PASS\n");
+    return 0;
+ fail:
+    printf("FAIL\n");
+    return -1;
+}
+
 static int test_invalid_regexp(struct augeas *aug) {
     int r;
 
@@ -450,6 +492,12 @@ static int run_tests(struct test *tests, int argc, char **argv) {
             result = EXIT_FAILURE;
 
         if (test_invalid_regexp(aug) < 0)
+            result = EXIT_FAILURE;
+
+        if (test_origin_siblings(aug) < 0)
+            result = EXIT_FAILURE;
+
+        if (test_arith_overflow(aug) < 0)
             result = EXIT_FAILURE;
 
         if (test_wrong_regexp_flag(aug) < 0)
