@@ -88,24 +88,45 @@ ARROW  ->
 
 <INITIAL>
 {
-  \"([^\\\"]|\\(.|\n))*\"   {
+  \"([^\\\"\0]|\\[^\0])*\"   {
                loc_update(yylloc, yytext, yyleng);
                yylval->string = unescape(yytext+1, yyleng-2, STR_ESCAPES);
                return DQUOTED;
   }
 
-  \/([^\\\/]|\\(.|\n))*\/i {
+  \/([^\\\/\0]|\\[^\0])*\/i {
                loc_update(yylloc, yytext, yyleng);
                yylval->regexp.nocase = 1;
                yylval->regexp.pattern = regexp_literal(yytext+1, yyleng-3);
                return REGEXP;
   }
 
-  \/([^\\\/]|\\(.|\n))*\/ {
+  \/([^\\\/\0]|\\[^\0])*\/ {
                loc_update(yylloc, yytext, yyleng);
                yylval->regexp.nocase = 0;
                yylval->regexp.pattern = regexp_literal(yytext+1, yyleng-2);
                return REGEXP;
+  }
+
+  /* A string or regexp without its closing delimiter. Without these
+   * rules, flex would scan to the end of the input from every position
+   * after the opening delimiter, which takes quadratic time. Strings and
+   * regexps can not contain NUL characters either: flex rescans the
+   * current token whenever it encounters one, which is also quadratic */
+  \"([^\\\"\0]|\\[^\0])*  {
+               loc_update(yylloc, yytext, yyleng);
+               report_error(augl_get_info(yyscanner)->error, AUG_ESYNTAX,
+                            "%s:%d:%d: Unterminated string",
+                            augl_get_info(yyscanner)->filename->str,
+                            yylloc->first_line, yylloc->first_column);
+  }
+
+  \/([^\\\/\0]|\\[^\0])*   {
+               loc_update(yylloc, yytext, yyleng);
+               report_error(augl_get_info(yyscanner)->error, AUG_ESYNTAX,
+                            "%s:%d:%d: Unterminated regular expression",
+                            augl_get_info(yyscanner)->filename->str,
+                            yylloc->first_line, yylloc->first_column);
   }
 
   [|*?+()=:;\.\[\]{}-]    return yytext[0];
