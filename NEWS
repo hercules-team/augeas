@@ -1,3 +1,57 @@
+Unreleased
+  - General changes/additions
+    * pathx.c: fix use-after-free when evaluating 'else' with a full value
+      pool (#908) George Hansper, test (#904) naaz234
+    * fa.c: do not read past the end of a regexp that is not NUL-terminated
+      (#884) rootvector2
+    * pathx.c: limit how deeply parentheses, predicates and function
+      arguments in path expressions can be nested, to avoid stack overflows
+      (#901) PGZXB
+    * pathx.c: do not constant-fold function calls that failed, which
+      caused an out-of-bounds read, e.g. for regexp('[') (#909) naaz234
+    * aug_mv, aug_cp: fix use-after-free when the destination is an
+      ancestor of the source, e.g. 'mv /a/b/c /a' (#907) naaz234
+    * fix heap over-read in regexp_escape when a pattern ends in an
+      internal reserved-character token (#906) naaz234
+    * fix format_subtree_atype passing NULL to printf and dropping the
+      value regexp from the atype shown in put errors (#905) naaz234
+    * Fix more bugs found by OSS-Fuzz. David Lutterkort
+      - pathx.c: fix NULL dereference for the siblings of the tree origin,
+        and integer overflow in arithmetic, which is now an error
+      - pathx.c: limit the length of chains of operators like 'a|b|c' to
+        1000 to avoid stack overflows; too deeply nested expressions now
+        fail with 'expression nested too deeply'
+      - pathx.c: a union no longer lists nodes that appear in both
+        operands twice, e.g. '/a|/a' now returns /a only once
+      - pathx.c: release values produced by predicates after evaluating
+        them, rather than keeping them until the whole expression is done
+      - aug_rm: fix double free when removing a top-level node together
+        with some of its descendants (#855)
+      - fa.c: fix undefined behavior in bitsets (#793)
+      - fa.c: parse regexps without recursing once per character, which
+        overflowed the stack for long regexps; parentheses can be nested
+        at most 2000 levels deep
+      - fa.c: counts in repetitions like 'r{n,m}' can be at most 1000
+      - fa.c: fix memory leaks for bad counts in repetitions
+      - lexer.l: report unterminated strings and regexps as errors and do
+        not allow NUL characters in them; both made reading lens modules
+        take quadratic time
+      - syntax.c: fix a heap overflow when reporting a type error for a
+        repetition, and a NULL dereference when reporting a bad ';'
+      - syntax.c: modules that refer to themselves with their name in a
+        different case, or that depend on each other, made loading them
+        recurse until the stack overflowed; report an error instead
+      - syntax.c, regexp.c: combining a case-insensitive regexp that
+        matches the empty string with case-sensitive ones produced a
+        regexp value without a regexp, which crashed later; report an
+        error instead
+      - parser.y: do not leak everything parsed so far on a syntax error
+    * lens.c, jmt.c: do not pass NULL to qsort and memcpy, which is
+      undefined behavior even for a count of 0. David Lutterkort
+    * regexp.c: a regexp that failed to compile crashed the next time it
+      was matched; report the error again instead (based on #660)
+      traffic-millions
+
 1.15.0 - 2026-09-29
   - General changes/additions
     * fa.c: set an error when parse_regexp() fails without setting a
