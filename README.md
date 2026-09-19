@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/hercules-team/augeas.svg?branch=master)](https://travis-ci.org/hercules-team/augeas)
-[![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/augeas.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:augeas)
+[![Build Status](https://github.com/hercules-team/augeas/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/hercules-team/augeas/actions/workflows/build.yml)
+[![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/augeas.svg)](https://issues.oss-fuzz.com/issues?q=augeas%20status:open)
 
 Introduction
 ------------
