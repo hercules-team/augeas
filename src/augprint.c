@@ -1251,7 +1251,7 @@ static char *quote_value(char *value) {
   int len=0;
   int has_q=0;
   int has_qq=0;
-  int has_special=0;
+  //int has_special=0;
   int has_nl=0;
   int new_len;
   if(value==NULL)
@@ -1265,7 +1265,8 @@ static char *quote_value(char *value) {
       case '*':
       case '.':
       case ':':
-        has_special++; break;
+        //has_special++;
+        break;
       case '\n':
       case '\t':
       case '\\':

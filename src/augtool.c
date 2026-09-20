@@ -102,7 +102,7 @@ static char *readline_path_generator(const char *text, int state) {
     static int nchildren = 0;
     static char *ctx = NULL;
 
-    char *end = strrchr(text, SEP);
+    const char *end = strrchr(text, SEP);
     if (end != NULL)
         end += 1;
 

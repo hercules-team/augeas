@@ -1066,7 +1066,7 @@ char *enc_format_indent(const char *e, size_t len, int indent) {
     const char *k = e;
 
     while (*k && k - e < len) {
-        char *eq,  *slash, *v;
+        const char *eq,  *slash, *v;
         eq = strchr(k, ENC_EQ_CH);
         assert(eq != NULL);
         slash = strchr(eq, ENC_SLASH_CH);
@@ -1088,7 +1088,7 @@ char *enc_format_indent(const char *e, size_t len, int indent) {
     k = e;
     r = result;
     while (*k && k - e < len) {
-        char *eq,  *slash, *v;
+        const char *eq,  *slash, *v;
         eq = strchr(k, ENC_EQ_CH);
         slash = strchr(eq, ENC_SLASH_CH);
         assert(eq != NULL && slash != NULL);

@@ -67,7 +67,8 @@ deb ftp://mirror.bytemark.co.uk/debian/ etch main non-free contrib
 
     (* Support options, GH #295 *)
     test Aptsources.lns get "deb [arch=amd64] tor+http://ftp.us.debian.org/debian sid main contrib
-deb [ arch+=amd64 trusted-=true ] http://ftp.us.debian.org/debian sid main contrib\n" =
+deb [ arch+=amd64 trusted-=true ] http://ftp.us.debian.org/debian sid main contrib
+deb [signed-by=/usr/share/keyrings/debian-archive-trixie-stable.gpg] http://deb.debian.org/debian trixie main\n" =
   { "1"
     { "type" = "deb" }
     { "options"
@@ -87,6 +88,13 @@ deb [ arch+=amd64 trusted-=true ] http://ftp.us.debian.org/debian sid main contr
     { "distribution" = "sid" }
     { "component" = "main" }
     { "component" = "contrib" } }
+  { "3"
+    { "type" = "deb" }
+    { "options"
+      { "signed-by" = "/usr/share/keyrings/debian-archive-trixie-stable.gpg" } }
+    { "uri" = "http://deb.debian.org/debian" }
+    { "distribution" = "trixie" }
+    { "component" = "main" } }
 
     (* cdrom entries may have spaces, GH #296 *)
     test Aptsources.lns get "deb cdrom:[Debian GNU/Linux 7.5.0 _Wheezy_ - Official amd64 CD Binary-1 20140426-13:37]/ wheezy main\n" =

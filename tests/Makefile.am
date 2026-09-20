@@ -30,6 +30,7 @@ lens_tests =			\
   lens-aptpreferences.sh	\
   lens-aptconf.sh	\
   lens-aptsources.sh		\
+  lens-aptsources822.sh		\
   lens-authinfo2.sh	\
   lens-authorized_keys.sh	\
   lens-authselectpam.sh \
