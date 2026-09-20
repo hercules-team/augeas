@@ -2000,11 +2000,11 @@ int aug_preview(struct augeas *aug, const char *path, char **out) {
     ERR_BAIL(aug);
     ERR_THROW(tree == NULL, aug, AUG_ENOMATCH, "No node matching %s", path);
 
-    file_path = tree_source(aug, tree);
+    while (!(ROOT_P(tree) || tree->file))
+        tree = tree->parent;
+    file_path = path_of_tree(tree);
 
-    ERR_THROW(file_path == NULL, aug, AUG_EBADARG, "Path %s is not associated with a file", path);
-
-    tree = tree_find(aug, file_path);
+    ERR_THROW( (ROOT_P(tree) || file_path == NULL), aug, AUG_EBADARG, "Path %s is not associated with a file", path);
 
     xasprintf(&lens_path, "%s%s/%s", AUGEAS_META_TREE, file_path, s_lens);
     ERR_NOMEM(lens_path == NULL, aug);
