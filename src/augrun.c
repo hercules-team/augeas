@@ -322,7 +322,7 @@ static void format_defname(char *buf, const struct command_opt_def *def,
     else
         p = stpcpy(buf, " <");
     for (int i=0; i < strlen(def->name); i++)
-        *p++ = toupper(def->name[i]);
+        *p++ = toupper((unsigned char) def->name[i]);
     *p++ = '>';
     if (mark_optional && def->optional)
         *p++ = ']';
