@@ -297,3 +297,15 @@ test lns get "upstream php-handler {
     { "@server"
       { "@address" = "unix:/var/run/php/php7.3-fpm.sock" } } }
 
+test lns get "types {
+    text/html                       html;
+    application/x-bzip2             bz2;
+    application/vnd.ms-powerpoint   ppt;
+}\n" =
+  { "types"
+    { "text" = "html"
+        { "sub_type" = "html" } }
+    { "application" = "bz2"
+      { "sub_type" = "x-bzip2" } }
+    { "application" = "ppt"
+      { "sub_type" = "vnd.ms-powerpoint" } } }
