@@ -167,6 +167,23 @@ module Test_fstab =
     { "passno" = "0" }
   }
 
+  (* Double comma in mount options - empty option between commas
+   * This can occur from manual editing or automated tools
+   *)
+  test Fstab.lns get "/dev/mapper/vg00-vartmp /var/tmp xfs ,,rw,,nodev,nosuid,noexec,relatime,,, 0 0\n" =
+  { "1"
+    { "spec" = "/dev/mapper/vg00-vartmp" }
+    { "file" = "/var/tmp" }
+    { "vfstype" = "xfs" }
+    { "opt" = "rw" }
+    { "opt" = "nodev" }
+    { "opt" = "nosuid" }
+    { "opt" = "noexec" }
+    { "opt" = "relatime" }
+    { "dump" = "0" }
+    { "passno" = "0" }
+  }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
