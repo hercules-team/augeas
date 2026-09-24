@@ -4,8 +4,7 @@ module Test_Aptsources822 =
 let sources1 = "Enabled: yes
 Types: deb deb-src
 URIs: http://deb.debian.org/debian
-Suites: bullseye
- bullseye-backports
+Suites: bullseye   bullseye-backports  
 Components: main non-free-firmware
 Allow-Insecure: no
 Signed-By:
@@ -34,7 +33,7 @@ test Aptsources822.lns get sources1 =
     }
     { "URIs" { "1" = "http://deb.debian.org/debian" } }
     { "Suites"
-      { "1" = "bullseye\n" }
+      { "1" = "bullseye" }
       { "2" = "bullseye-backports" }
     }
     { "Components"
@@ -43,26 +42,19 @@ test Aptsources822.lns get sources1 =
     }
     { "Allow-Insecure" = "no" }
     { "Signed-By"
-      { "1" = "-----BEGIN" }
-      { "2" = "PGP" }
-      { "3" = "PUBLIC" }
-      { "4" = "KEY" }
-      { "5" = "BLOCK-----\n" }
-      { "6" = ".\n" }
-      { "7" = "mDMEYCQjIxYJKwYBBAHaRw8BAQdAD/P5Nvvnvk66SxBBHDbhRml9ORg1WV5CvzKY\n" }
-      { "8" = "CuMfoIS0BmFiY2RlZoiQBBMWCgA4FiEErCIG1VhKWMWo2yfAREZd5NfO31cFAmAk\n" }
-      { "9" = "IyMCGyMFCwkIBwMFFQoJCAsFFgIDAQACHgECF4AACgkQREZd5NfO31fbOwD6ArzS\n" }
-      { "10" = "dM0Dkd5h2Ujy1b6KcAaVW9FOa5UNfJ9FFBtjLQEBAJ7UyWD3dZzhvlaAwunsk7DG\n" }
-      { "11" = "3bHcln8DMpIJVXht78sL\n" }
-      { "12" = "=IE0r\n" }
-      { "13" = "-----END" }
-      { "14" = "PGP" }
-      { "15" = "PUBLIC" }
-      { "16" = "KEY" }
-      { "17" = "BLOCK-----" }
+      { "text"
+        { "1" = "-----BEGIN PGP PUBLIC KEY BLOCK-----" }
+        { "2" = "." }
+        { "3" = "mDMEYCQjIxYJKwYBBAHaRw8BAQdAD/P5Nvvnvk66SxBBHDbhRml9ORg1WV5CvzKY" }
+        { "4" = "CuMfoIS0BmFiY2RlZoiQBBMWCgA4FiEErCIG1VhKWMWo2yfAREZd5NfO31cFAmAk" }
+        { "5" = "IyMCGyMFCwkIBwMFFQoJCAsFFgIDAQACHgECF4AACgkQREZd5NfO31fbOwD6ArzS" }
+        { "6" = "dM0Dkd5h2Ujy1b6KcAaVW9FOa5UNfJ9FFBtjLQEBAJ7UyWD3dZzhvlaAwunsk7DG" }
+        { "7" = "3bHcln8DMpIJVXht78sL" }
+        { "8" = "=IE0r" }
+        { "9" = "-----END PGP PUBLIC KEY BLOCK-----" }
+      }
     }
   }
-  { }
   { "2"
     { "Enabled" = "no" }
     { "URIs" { "1" = "http://dl.google.com/linux/chrome/deb" } }
@@ -104,7 +96,6 @@ test Aptsources822.lns get sources2 =
       { "4" = "restricted" }
     }
   }
-  { }
   { "2"
     { "Enabled" = "yes" }
     { "Types" { "1" = "deb" } }
@@ -124,20 +115,19 @@ Enabled: no\r
 
 "
 test Aptsources822.lns get sources3 =
-  { }
-  { }
-  { "1"
+  { "1" }
+  { "2" }
+  { "3"
     { "Enabled" = "yes" }
   }
-  { }
-  { }
-  { "2"
+  { "4" }
+  { "5"
     { "Enabled" = "no" }
   }
-  { }
+  { "6" }
 
 (* Test adding nodes to tree *)
 test Aptsources822.lns put "Types: deb\n" after set "/1/Enabled" "yes" = "Types: deb\nEnabled: yes\n"
 test Aptsources822.lns put "Types: deb\n" after
-     set "/1/URIs/1" "uri1\n";
-     set "/1/URIs/2" "uri2" = "Types: deb\nURIs: uri1\n uri2\n"
+     set "/1/URIs/1" "uri1";
+     set "/1/URIs/2" "uri2" = "Types: deb\nURIs: uri1 uri2\n"

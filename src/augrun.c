@@ -126,7 +126,7 @@ static char *nexttoken(struct command *cmd, char **line, bool path) {
 
     s = *line;
 
-    while (*s && isblank(*s)) s+= 1;
+    while (*s && isblank((unsigned char) *s)) s+= 1;
     r = s;
     w = s;
     while (*s) {
@@ -190,7 +190,7 @@ static char *nexttoken(struct command *cmd, char **line, bool path) {
                     copy = false;
                 }
 
-                if (!quot && isblank(*s))
+                if (!quot && isblank((unsigned char) *s))
                     break;
             }
         } else {
@@ -265,7 +265,7 @@ static int parseline(struct command *cmd, char *line) {
     int curarg = 0;
     def = cmd->def->opts;
     while (*line != '\0') {
-        while (*line && isblank(*line)) line += 1;
+        while (*line && isblank((unsigned char) *line)) line += 1;
 
         if (curarg >= narg) {
             ERR_REPORT(cmd, AUG_ECMDRUN,
@@ -289,7 +289,7 @@ static int parseline(struct command *cmd, char *line) {
         opt->value = tok;
         curarg += 1;
         def += 1;
-        while (*line && isblank(*line)) line += 1;
+        while (*line && isblank((unsigned char) *line)) line += 1;
     }
 
     if (curarg < narg - nopt) {
@@ -322,7 +322,7 @@ static void format_defname(char *buf, const struct command_opt_def *def,
     else
         p = stpcpy(buf, " <");
     for (int i=0; i < strlen(def->name); i++)
-        *p++ = toupper(def->name[i]);
+        *p++ = toupper((unsigned char) def->name[i]);
     *p++ = '>';
     if (mark_optional && def->optional)
         *p++ = ']';
@@ -1660,7 +1660,7 @@ int aug_srun(augeas *aug, FILE *out, const char *text) {
 
     while (*text != '\0' && result >= 0) {
         eol = strchrnul(text, '\n');
-        while (isspace(*text) && text < eol) text++;
+        while (isspace((unsigned char) *text) && text < eol) text++;
         if (*text == '\0')
             break;
         if (*text == '#' || text == eol) {

@@ -6,6 +6,11 @@ SUBDIRS += tests man doc examples
 
 ACLOCAL_AMFLAGS = -I gnulib/m4
 
+# gnulib's own test suite tests gnulib against the local libc rather than
+# testing augeas, and fails for reasons that have nothing to do with a
+# release; keep it out of the distcheck build
+DISTCHECK_CONFIGURE_FLAGS = --disable-gnulib-tests
+
 lensdir=$(datadir)/augeas/lenses/dist
 lenstestdir=$(datadir)/augeas/lenses/dist/tests
 

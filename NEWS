@@ -1,3 +1,10 @@
+Unreleased
+  - General changes/additions
+    * Cast to 'unsigned char' before calling ctype functions like isspace()
+      and toupper(), which is undefined behavior for negative char values,
+      e.g. for a non-ASCII byte in a path expression or a lens file name
+      (#886) Naveed Khan
+
 1.14.1 - 2023-06-27
   - General changes/additions
     * internal.c: update #if to only use GNU-specific strerror_r() when __GLIBC__ is defined (#791) Dimitry Andric
