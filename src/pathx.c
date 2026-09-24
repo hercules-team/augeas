@@ -31,6 +31,8 @@
 #include "regexp.h"
 #include "errcode.h"
 
+#define MAX_EXPR_DEPTH 100
+
 static const char *const errcodes[] = {
     "no error",
     "empty name",
@@ -274,6 +276,9 @@ struct state {
      * we need to evaluate the filter twice. The has_else flag
      * means we don't do this unless we really need to */
     bool                 has_else;
+    /* Current nesting depth of parse_expr, used to prevent stack
+     * overflow on deeply nested parentheses */
+    int                  expr_depth;
 };
 
 /* We consider NULL and the empty string to be equal */
@@ -2579,7 +2584,13 @@ static void parse_else_expr(struct state *state) {
  */
 static void parse_expr(struct state *state) {
     skipws(state);
+    if (state->expr_depth >= MAX_EXPR_DEPTH) {
+        STATE_ERROR(state, PATHX_EPAREN);
+        return;
+    }
+    state->expr_depth += 1;
     parse_else_expr(state);
+    state->expr_depth -= 1;
 }
 
 static void store_error(struct pathx *pathx) {
@@ -2665,6 +2676,7 @@ int pathx_parse(const struct tree *tree,
     state->symtab = symtab;
     state->root_ctx = root_ctx;
     state->error = err;
+    state->expr_depth = 0;
 
     if (ALLOC_N(state->value_pool, 8) < 0) {
         STATE_ENOMEM;
