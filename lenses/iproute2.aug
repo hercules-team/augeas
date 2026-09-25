@@ -10,6 +10,7 @@ module IPRoute2 =
   let filter = incl "/etc/iproute2/*"
              . incl "/usr/share/iproute2/*"
              . excl "/etc/iproute2/README"
+             . excl "/usr/share/iproute2/README"
              . Util.stdexcl
 
   let xfm = transform lns filter
