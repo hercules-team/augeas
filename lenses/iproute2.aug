@@ -7,4 +7,9 @@ module IPRoute2 =
 
   let lns = ( empty | Util.comment | record ) *
 
-  let xfm = transform lns (incl "/etc/iproute2/*" . Util.stdexcl)
+  let filter = incl "/etc/iproute2/*"
+             . incl "/usr/share/iproute2/*"
+             . excl "/etc/iproute2/README"
+             . Util.stdexcl
+
+  let xfm = transform lns filter
