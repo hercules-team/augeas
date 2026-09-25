@@ -305,7 +305,6 @@ module Shellvars =
                      . incl "/etc/environment"
                      . incl "/etc/firewalld/firewalld.conf"
                      . incl "/etc/blkid.conf"
-                     . incl "/etc/adduser.conf"
                      . incl "/etc/cowpoke.conf"
                      . incl "/etc/cvs-cron.conf"
                      . incl "/etc/cvs-pserver.conf"
