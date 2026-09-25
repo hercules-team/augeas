@@ -28,51 +28,37 @@ autoload xfm
 
 (* Variable: single_value_field_name
    Names of known fields for which only a single value is allowed. *)
-let single_value_field_name = /(Enabled|PDiffs|By-Hash|Allow-Insecure|Allow-Weak|Allow-Downgrade-To-Insecure|Trusted|Check-Valid-Until|Valid-Until-Min|Valid-Until-Max|Check-Date|Date-Max-Future|InRelease-Path)/
+let single_value_field_name = /(Enabled|PDiffs|By-Hash|Allow-Insecure|Allow-Weak|Allow-Downgrade-To-Insecure|Trusted|Check-Valid-Until|Valid-Until-Min|Valid-Until-Max|Check-Date|Date-Max-Future|InRelease-Path|Snapshot)/
 
 (* Variable: multi_value_field_name
-   Names of known fields for which multiple values are allowed and names of
-   unknown fields. Unknown fields are assumed to contain multiple values as
-   that is the safest assumption.
-
-   According to deb822(5) man page, "The field name is composed of US-ASCII
-   characters excluding control characters, space, and colon (i.e., characters
-   in the ranges U+0021 ‘!’ through U+0039 ‘9’, and U+003B ‘;’ through U+007E
-   ‘~’, inclusive). Field names must not begin with the comment character
-   (U+0023 ‘#’), nor with the hyphen character (U+002D ‘-’)." *)
-let multi_value_field_name = /[!"$-,.-9;-~][!-9;-~]*/ - single_value_field_name
+   Names of known fields for which multiple values are allowed
+   and are assumed to contain multiple values
+   These fields also allow the form
+     FieldName-Add: extra_value
+     FieldName-Remove: delete_this_value
+   This is an explicit list of allowed field names *)
+let multi_value_field_name = /(URIs|Types|Components|Suites|Architectures|Include|Exclude|Languages|Targets|Signed-By)(-Add|-Remove)?/
 
 (* Variable: field_value
-   Value that a field can contain. Deb822 styles sources list files defines some
+   Value that a field can contain. Deb822 styles sources list files defines these
    fields to have multiple values separated by space, tab or a newline. *)
-let field_value = /[!-Z\\^-~][!-Z\\^-~]*/
+let field_value = /[!-~]+/
+
+(* Variable: text_value
+   Value for the embedded public-key format for Signed-By
+   Includes all text on the line except leading-spaces and trailing-spaces *)
+let text_value = /[!-~](.*[!-~])?/
 
 (* Variable: empty_line
    Lens for an empty line separating two stanzas. It can't be a comment. Only
    tabs and spaces are allowed. *)
-let empty_line = Util.empty_generic_dos /[ \t]*/
+let empty_line = Util.doseol
 
 (* Variable: name_value_separator
    Lens for separating a name and value. Field name is followed by a ':' and
    then optionally space. The file format also allow for a value to be on a
    new line when the new line starts with space or a tab. *)
-let name_value_separator = Sep.colon . del (Rx.opt_space . /(\n[ \t])?/) " "
-
-(* Variable: field_value_with_newline
-   Lens for value that followed by a new line and a space. This indicates that
-   another value follows it. *)
-let field_value_with_newline = [seq "item" . store (field_value . /\n/) .
-   del /[\t ]/ " "]
-
-(* Variable: field_value_with_separator
-   Lens for value that followed by a space or a tab. This indicates that another
-   value follows it. *)
-let field_value_with_separator = [seq "item" . store field_value . del Rx.space " "]
-
-(* Variable: field_value_with_eol
-   Lens for value that followed by an end-of-line. This indicates that this is
-   the last value for this field. *)
-let field_value_with_eol = [seq "item" . store field_value . Util.doseol]
+let name_value_separator = Sep.colon . del Rx.opt_space " "
 
 (* Variable: single_value_field
    Lens for a field (field name, separator and field value) with only a single
@@ -82,19 +68,31 @@ let single_value_field = [ key single_value_field_name . name_value_separator .
 
 (* Variable: multi_value_field
    Lens for a field (field name, separator and field value) with multiple values
-   *)
+   or can run over multiple lines, ie. SignedBy
+*)
 let multi_value_field = [ key multi_value_field_name . name_value_separator .
-  counter "item" . (field_value_with_newline | field_value_with_separator)* .
-  field_value_with_eol ]
+    (
+      ( counter "item" . [ seq "item". store field_value . del /[ \t]+/ " " ]* . [ seq "item". store field_value ] . Util.doseol  ) |
+      ( [ label "text" . del "\n" "\n" .
+          counter "item" . [ del /^[ ]/ " " . seq "item" . store text_value . Util.doseol ]+
+        ]
+      )
+    )
+  ]
 
 (* Variable: stanza
    Lens for a stanza that describes one or more sources for apt. *)
+(* An empty_line must seperate stanzas.
+   A stanza may be completely empty, but must end on a newline
+   (or end at the end-of-file)
+   This results in the counter "source" being incremented with
+   each empty line *)
 let stanza = [ seq "source" . (single_value_field | multi_value_field |
-  Util.comment_noindent)+ ]
+  Util.comment_noindent)* ]
 
 (* Variable: lns
    Lens for parsing the entire apt sources file in Deb822 format. *)
-let lns = empty_line* . stanza . (empty_line+ . stanza)* . empty_line*
+let lns = ( stanza . empty_line )* . stanza
 
 (* Variable: filter
    All files in the sources.list.d directory are files describing sources.
