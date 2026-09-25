@@ -2547,11 +2547,11 @@ int fa_equals(struct fa *fa1, struct fa *fa2) {
 }
 
 static unsigned int chr_score(char c) {
-    if (isalpha(c)) {
+    if (isalpha((unsigned char) c)) {
         return 2;
-    } else if (isalnum(c)) {
+    } else if (isalnum((unsigned char) c)) {
         return 3;
-    } else if (isprint(c)) {
+    } else if (isprint((unsigned char) c)) {
         return 7;
     } else if (c == '\0') {
         return 10000;

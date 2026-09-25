@@ -307,7 +307,7 @@ TESTS_ENVIRONMENT = \
 
 TESTS = $(check_SCRIPTS) $(check_PROGRAMS)
 
-INCLUDES = -I$(top_srcdir)/src
+AM_CPPFLAGS = -I$(top_srcdir)/src
 
 fatest_SOURCES = fatest.c cutest.c cutest.h $(top_srcdir)/src/memory.c $(top_srcdir)/src/memory.h
 fatest_LDADD = $(top_builddir)/src/libfa.la $(LIBXML_LIBS) $(GNULIB)

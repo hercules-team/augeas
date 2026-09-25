@@ -1935,7 +1935,7 @@ static char *module_basename(const char *modname) {
     if (asprintf(&fname, "%s" AUG_EXT, modname) == -1)
         return NULL;
     for (int i=0; i < strlen(modname); i++)
-        fname[i] = tolower(fname[i]);
+        fname[i] = tolower((unsigned char) fname[i]);
     return fname;
 }
 
@@ -2076,7 +2076,7 @@ int interpreter_init(struct augeas *aug) {
             p += 1;
         q = strchr(p, '.');
         name = strndup(p, q - p);
-        name[0] = toupper(name[0]);
+        name[0] = toupper((unsigned char) name[0]);
         res = load_module(aug, name);
         free(name);
         if (res == -1)

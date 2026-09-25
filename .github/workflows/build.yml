@@ -4,36 +4,67 @@ on:
   push:
     branches:
       - master
-      - gh_actions
-
   pull_request:
     branches:
       - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Superseded runs of the same branch or PR are of no interest
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    name: ${{ matrix.cc }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # valgrind is slow; running it once is enough to catch leaks
+          - cc: gcc
+            valgrind: true
+          - cc: clang
+            valgrind: false
+
+    env:
+      CC: ${{ matrix.cc }}
 
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v5
 
       - name: Install deps
-        run: sudo apt-get update && sudo apt-get -y install libxml2-dev libreadline-dev valgrind libtool-bin
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            autoconf automake bison flex libtool-bin \
+            libreadline-dev libselinux1-dev libxml2-dev \
+            pkg-config valgrind
 
+      # autogen.sh runs bootstrap and then configure, passing any options
+      # through. --disable-gnulib-tests keeps gnulib's own test suite out of
+      # SUBDIRS: it tests gnulib against the local libc rather than testing
+      # augeas, and is the main source of failures unrelated to this tree.
       - name: Autogen
-        run: ./autogen.sh
-
-      - name: ENOENT
-        run: sed -i '41s/ENOENT/ENOENT || errno == EINVAL/' gnulib/tests/test-readlink.h
-
-      - name: Configure
-        run: ./configure
+        run: ./autogen.sh --disable-gnulib-tests
 
       - name: Make
-        run: make
+        run: make -j$(nproc)
 
       - name: Make check
         run: make check VERBOSE=1
 
+      # 'make check' only prints the path of the log on failure, and the log
+      # is not part of the run's artifacts
+      - name: Show test failures
+        if: failure()
+        run: cat tests/test-suite.log || true
+
       - name: Valgrind
+        if: matrix.valgrind
         run: ./src/try valgrind
