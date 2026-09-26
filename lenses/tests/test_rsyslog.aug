@@ -200,6 +200,57 @@ test Rsyslog.lns get "module(load=\"imuxsock\" 	  # provides support for local s
     { "#comment" = "Turn off message reception via local log socket;" } }
   { "#comment" = "local messages are retrieved through imjournal now." }
 
+(* RainerScript action() as inline selector action (modern rsyslog.conf style).
+ * Uses "rainer_entry" (not "entry") so the lens union stays unambiguous for put. *)
+test Rsyslog.lns get "*.info;mail.none;authpriv.none;cron.none action(type=\"omfile\" file=\"/var/log/messages\")\n" =
+  { "rainer_entry"
+    { "selector"
+      { "facility" = "*" }
+      { "level" = "info" }
+    }
+    { "selector"
+      { "facility" = "mail" }
+      { "level" = "none" }
+    }
+    { "selector"
+      { "facility" = "authpriv" }
+      { "level" = "none" }
+    }
+    { "selector"
+      { "facility" = "cron" }
+      { "level" = "none" }
+    }
+    { "action"
+      { "type" = "omfile" }
+      { "file" = "/var/log/messages" }
+    }
+  }
+
+test Rsyslog.lns get "*.emerg action(type=\"omusrmsg\" users=\"*\")\n" =
+  { "rainer_entry"
+    { "selector"
+      { "facility" = "*" }
+      { "level" = "emerg" }
+    }
+    { "action"
+      { "type" = "omusrmsg" }
+      { "users" = "*" }
+    }
+  }
+
+test Rsyslog.lns get "mail.* action(type=\"omfile\" file=\"/var/log/maillog\" sync=\"on\")\n" =
+  { "rainer_entry"
+    { "selector"
+      { "facility" = "mail" }
+      { "level" = "*" }
+    }
+    { "action"
+      { "type" = "omfile" }
+      { "file" = "/var/log/maillog" }
+      { "sync" = "on" }
+    }
+  }
+
 (* rsyslog doesn't use bsd-like #! or #+/- specifications *)
 test Rsyslog.lns get "#!prog\n" = { "#comment" = "!prog" }
 test Rsyslog.lns get "#+host\n" = { "#comment" = "+host" }
@@ -258,4 +309,3 @@ local3.err                                              /var/log/nfsen/nfsenlog
     { "action"
       { "file" = "/var/log/also.log" } } }
   {  }
-
