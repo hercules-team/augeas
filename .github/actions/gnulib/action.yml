@@ -1,0 +1,53 @@
+name: Fetch gnulib
+description: >-
+  Populate the .gnulib submodule without cloning all of gnulib's history.
+
+# 'bootstrap' pulls gnulib in with 'git submodule update', which clones the
+# full repository (~140M of history) from savannah on every run. That is slow
+# and the single most frequent cause of spurious CI failures.
+#
+# Populating .gnulib ourselves avoids it: a single-commit fetch of the pinned
+# revision, restored from the cache whenever that revision has not changed.
+# With the working tree already at the recorded revision, the 'git submodule
+# update' in bootstrap finds nothing to do and never touches the network.
+
+inputs:
+  url:
+    description: Repository to fetch gnulib from
+    # The GitHub mirror of git.savannah.gnu.org/git/gnulib.git. Fetching it
+    # from inside Actions is markedly more reliable than reaching out to
+    # savannah; .gitmodules still names savannah as the canonical source.
+    default: https://github.com/coreutils/gnulib.git
+
+runs:
+  using: composite
+  steps:
+    - name: Gnulib revision
+      id: pin
+      shell: bash
+      run: echo "rev=$(git rev-parse HEAD:.gnulib)" >> "$GITHUB_OUTPUT"
+
+    - name: Cache gnulib
+      uses: actions/cache@v4
+      with:
+        path: .gnulib
+        key: gnulib-${{ steps.pin.outputs.rev }}
+
+    - name: Fetch gnulib
+      shell: bash
+      env:
+        REV: ${{ steps.pin.outputs.rev }}
+        URL: ${{ inputs.url }}
+      run: |
+        if [ "$(git -C .gnulib rev-parse HEAD 2>/dev/null)" = "$REV" ]; then
+          echo "gnulib $REV restored from the cache"
+          exit 0
+        fi
+        rm -rf .gnulib
+        git init -q .gnulib
+        for attempt in 1 2 3; do
+          git -C .gnulib fetch -q --depth 1 "$URL" "$REV" && break
+          echo "::warning::fetching gnulib from $URL failed (attempt $attempt)"
+          sleep $((attempt * 5))
+        done
+        git -C .gnulib checkout -q "$REV"
