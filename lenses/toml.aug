@@ -121,7 +121,10 @@ let inline_table (value:lens) = [ label "inline_table" . lbrace
                    . ( (Build.opt_list (entry_base value) comma . space_or_empty? . rbrace)
                       | rbrace ) ]
 
-let entry = [ label "entry" . Util.indent . store Rx.word . Sep.space_equal
+let key_quoted = Quote.dquote . store Rx.word . Quote.dquote
+let key_unquoted = store Rx.word
+
+let entry = [ label "entry" . Util.indent . (key_quoted | key_unquoted) . Sep.space_equal
             . (norec | array_rec | inline_table (norec|array_norec)) . (eol | comment) ]
 
 (* Group: tables *)
