@@ -53,7 +53,9 @@ let dynamic = [ Util.del_str "?" . label "dynamic" . store Rx.word ]
 
 let namedpipe = Syslog.pipe . Sep.space . [ label "pipe" . store Syslog.file_r ]
 
-let action = Syslog.action | omusrmsg | file_tmpl | dynamic | namedpipe
+let action_config = [ key "action" . Util.del_str "(" . [ label "params" . store /[^)]+/ ] . Util.del_str ")" ]
+
+let action = Syslog.action | omusrmsg | file_tmpl | dynamic | namedpipe | action_config
 
 (* Cannot use syslog program because rsyslog does not suppport #! *)
 let program = [ label "program" . Syslog.bang .
@@ -87,9 +89,23 @@ let prop_filter =
   in [ label "filter" . prop_name . sep . prop_oper . sep . prop_val .
        Sep.space . actions . Util.eol ]
 
-let entries = ( Syslog.empty | Util.comment | entry | macro | config_object | prop_filter )*
+(* View: condition
+   Parses if condition blocks, e.g., if $programname != "devd" then { ... }
+*)
+let condition =
+  let cond_rx = /\\$[a-zA-Z0-9_]+[ \t]*(==|!=|=~|!~|>|<|>=|<=)[ \t]*("[^"]*"|[0-9]+)/ in
+  [ key "if" . Sep.space .
+    [ label "condition" . store cond_rx ] . Sep.space .
+    Util.del_str "then" . Sep.space . Util.del_str "{" . (del /[ \t\n]*/ "" ) .
+    (entry | Util.comment | Syslog.empty)* .
+    Util.del_str "}" . (del /[ \t\n]*/ "" ) . Util.eol ]
 
-let lns = entries . ( program | hostname )*
+(* Fallback for unparsed lines *)
+let invalid = [ label "invalid" . store /[^\n]*\n/ ]
+
+let entries = ( Syslog.empty | Util.comment | entry | macro | config_object | prop_filter | condition | invalid )*
+
+let lns = entries . ( program | hostname | condition )*
 
 let filter = incl "/etc/rsyslog.conf"
            . incl "/etc/rsyslog.d/*"
