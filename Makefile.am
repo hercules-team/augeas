@@ -14,8 +14,8 @@ DISTCHECK_CONFIGURE_FLAGS = --disable-gnulib-tests
 lensdir=$(datadir)/augeas/lenses/dist
 lenstestdir=$(datadir)/augeas/lenses/dist/tests
 
-dist_lens_DATA=$(wildcard lenses/*.aug)
-dist_lenstest_DATA=$(wildcard lenses/tests/*.aug)
+dist_lens_DATA=@LENS_FILES@
+dist_lenstest_DATA=@LENS_TEST_FILES@
 
 EXTRA_DIST=augeas.spec build/ac-aux/move-if-change Makefile.am HACKING.md
 
