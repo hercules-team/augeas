@@ -1,9 +1,91 @@
-Unreleased
+1.15.0 - 2026-09-29
   - General changes/additions
+    * fa.c: set an error when parse_regexp() fails without setting a
+      specific one, instead of returning NULL with the status left at
+      REG_NOERROR, which callers read as success
+      (addresses CVE-2025-2588) (#854) Alexander Bokovoy
     * Cast to 'unsigned char' before calling ctype functions like isspace()
       and toupper(), which is undefined behavior for negative char values,
       e.g. for a non-ASCII byte in a path expression or a lens file name
-      (#886) Naveed Khan
+      (#886) rootvector2
+    * Fix aug_preview(), which failed with "Lens not found" whenever spans
+      were enabled; it now finds the file node by walking up from the
+      matched node rather than by looking the path up again (#899)
+      George Hansper
+    * Make ATTRIBUTE_FALLTHROUGH work on clang as well as gcc (#836)
+      Richard Barnes
+    * Fix gcc 14 warnings, notably the transposed reallocarray() arguments
+      in augprint.c (#842) rwmjones
+    * Miscellaneous gcc 16 fixes, mostly const-correctness now that gcc 16
+      passes the constness of the argument through strchr() and friends
+      (#881) rwmjones
+    * Fix some compiler warnings in lens.c, augmatch.c (#818) George Hansper
+    * src/Makefile.am: fix a race when building liblexer_la-lexer.lo
+      Andrew Kovac
+    * gnulib: fetch the submodule over https; git.savannah.gnu.org no
+      longer serves the unauthenticated git:// protocol, so a fresh clone
+      could not initialize .gnulib
+    * build: set DISTCHECK_CONFIGURE_FLAGS so 'make distcheck' does not
+      build gnulib's own test suite, which tests gnulib against the local
+      libc rather than testing augeas
+    * tests: cover aug_preview() with spans enabled, the case #899 fixed
+      (#859) Alexis Mousset
+    * tests: add tests around embedded quotes to
+      tests/test-augtool/quoted-strings.sh (#826) George Hansper
+    * tests: ignore 'nobody' groups in test-preserve.sh so the suite passes
+      in an unprivileged namespace (#858) Patrycja
+    * tests: use AM_CPPFLAGS rather than the obsolete INCLUDES
+    * ci: get the build workflow running again; it pinned ubuntu-20.04, a
+      runner image GitHub has retired, so every run failed before it started
+    * ci: fix the release workflow, which used '::set-output' and two
+      actions GitHub has archived, and so could not have produced a release
+    * ci: populate the .gnulib submodule from an actions cache, or with a
+      shallow fetch of the pinned revision, so that bootstrap does not
+      clone all of gnulib's history on every run
+    * Remove the Travis configuration; CI moved to GitHub Actions in 1.13.0
+      and travis-ci.org has since shut down
+    * README: point the build badge at GitHub Actions rather than the
+      shut-down travis-ci.org, and the fuzzing badge at issues.oss-fuzz.com
+
+  - Lens changes/additions
+    * Aptsources: parse all the option types apt allows, not just arch=
+      and trusted= (#865) Sunil Mohan Adapa
+    * Aptsources822: new lens for Deb822 style apt sources, which use the
+      .sources extension; Aptsources is limited to *.list (#801)
+      James Valleroy
+    * Aptsources822: add the Snapshot field, make a multi-line Signed-By
+      readable, allow the file to be created (#896) George Hansper
+    * Chrony: add support for leapseclist (#843) Cosmin Tupangiu
+    * Crypttab: support the link-volume-key option used by systemd v256
+      (#880) rwmjones
+    * Fstab: allow a comma after the last option (#838) Cosmin Tupangiu
+    * IPRoute2: also read /usr/share/iproute2, the fallback directory
+      iproute2 6.5.0 added for stateless configuration, and exclude the
+      README files that explain it (#875) Tim Wiederhake, (#902)
+      George Hansper
+    * Iptables: support the ipset module's --match-set (#861) Will Harvey
+    * Iptables: more consistent naming, fix the failing tests (#897)
+      George Hansper
+    * Multipath: support all possible values for find_multipaths (#835)
+      rwmjones
+    * Nginx: include /etc/nginx/snippets (#864) Mark C.
+    * Ntp: parse 'tos minclock', and add /etc/ntpsec/ntp.conf to the filter
+      (#821) François-Régis Degott
+    * Pg_Hba, Postgresql, Rsyslog: add the /usr/local paths that source
+      installations use (#888) Showta Ishizaki
+    * Simplevars: read the subdirectories of /etc/zabbix (#815) smgrol
+    * Simplevars: fix the path of OpenBSD's wsconsctl.conf, which has read
+      /etc/wsconsctlctl.conf since it was added and so never matched
+      anything (#887) Showta Ishizaki
+    * Simplevars: take over /etc/adduser.conf from Shellvars; of the
+      systems that ship the file only FreeBSD treats it as a shell script,
+      and the perl that OpenBSD's and Debian's adduser(8) write either
+      fails to parse or silently vanishes from the tree (#893)
+      Showta Ishizaki
+    * Systemd: allow the '+' (fullprivileges) command flag (#841)
+      Cosmin Tupangiu
+    * Tmpfiles: permit the '$' type modifier in /usr/lib/tmpfiles.d/*.conf
+      (#850) rwmjones
 
 1.14.1 - 2023-06-27
   - General changes/additions
