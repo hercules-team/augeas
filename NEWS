@@ -28,6 +28,12 @@
     * build: set DISTCHECK_CONFIGURE_FLAGS so 'make distcheck' does not
       build gnulib's own test suite, which tests gnulib against the local
       libc rather than testing augeas
+    * build: man/Makefile.am listed the files to distribute with a wildcard
+      over the source directory and never cleaned the man pages it
+      generates, so what a release tarball contained depended on the state
+      of the tree it was built from, and 'make distcheck' failed from a
+      clean checkout. The pages are now listed explicitly, built at dist
+      time and shipped - building from a tarball no longer needs pod2man
     * tests: cover aug_preview() with spans enabled, the case #899 fixed
       (#859) Alexis Mousset
     * tests: add tests around embedded quotes to
