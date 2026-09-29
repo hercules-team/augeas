@@ -1005,21 +1005,22 @@ static void eval_and_or(struct state *state, enum binary_op op) {
 static void eval_else(struct state *state, struct expr *expr, struct locpath_trace *lpt_right) {
     struct value *r = pop_value(state);
     struct value *l = pop_value(state);
-
-    if ( l->tag == T_NODESET && r->tag == T_NODESET ) {
+    struct value tmp_r = *r;
+    struct value tmp_l = *l;
+    if ( tmp_l.tag == T_NODESET && tmp_r.tag == T_NODESET ) {
         int discard_maxns=0;
         struct nodeset **discard_ns=NULL;
         struct locpath_trace *lpt = state->locpath_trace;
         value_ind_t vind = make_value(T_NODESET, state);
-        if (l->nodeset->used >0 || expr->left_matched) {
+        if (tmp_l.nodeset->used >0 || expr->left_matched) {
             expr->left_matched = 1;
-            state->value_pool[vind].nodeset = clone_nodeset(l->nodeset, state);
+            state->value_pool[vind].nodeset = clone_nodeset(tmp_l.nodeset, state);
             if( lpt_right != NULL ) {
                 discard_maxns = lpt_right->maxns;
                 discard_ns    = lpt_right->ns;
             }
         } else {
-            state->value_pool[vind].nodeset = clone_nodeset(r->nodeset, state);
+            state->value_pool[vind].nodeset = clone_nodeset(tmp_r.nodeset, state);
             if( lpt != NULL && lpt_right != NULL ) {
                 discard_maxns = lpt->maxns;
                 discard_ns    = lpt->ns;
@@ -1035,8 +1036,8 @@ static void eval_else(struct state *state, struct expr *expr, struct locpath_tra
             FREE(discard_ns);
         }
     } else {
-        bool left = coerce_to_bool(l);
-        bool right = coerce_to_bool(r);
+        bool left = coerce_to_bool(&tmp_l);
+        bool right = coerce_to_bool(&tmp_r);
 
         expr->left_matched = expr->left_matched || left;
         if (expr->left_matched) {
