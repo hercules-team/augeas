@@ -94,16 +94,27 @@ int fa_compile(const char *re, size_t size, struct fa **fa);
  */
 struct fa *fa_make_basic(unsigned int basic);
 
+/* Clone FA. Returns a new automaton that is a deep copy of FA.
+ */
+struct fa *fa_clone(const struct fa *fa);
+
 /* Return 1 if FA accepts the basic language BASIC, which must be one of
  * the constants from enum FA_BASIC.
  */
-int fa_is_basic(struct fa *fa, unsigned int basic);
+int fa_is_basic(const struct fa *fa, unsigned int basic);
 
 /* Minimize FA using the currently-set fa_minimization_algorithm.
  * As a side effect, the automaton will also be deterministic after being
  * minimized. Modifies the automaton in place.
  */
 int fa_minimize(struct fa *fa);
+
+/*
+ * Make a finite automaton deterministic. This also eliminates dead states
+ * and transitions and reduces and orders the transitions for each state.
+ * Modifies the automaton in place.
+ */
+int fa_determinize(struct fa *fa);
 
 /* Return a finite automaton that accepts the concatenation of the
  * languages for FA1 and FA2, i.e. L(FA1).L(FA2)
@@ -130,6 +141,16 @@ struct fa *fa_complement(struct fa *fa);
  */
 struct fa *fa_minus(struct fa *fa1, struct fa *fa2);
 
+/* Add a new state to FA. Returns the new state.
+ */
+struct state *fa_add_state(struct fa *fa, int accept);
+
+/* Add a new transition to FA from FROM to TO on the character range
+ * MIN through MAX. Returns 0 on success, -1 on error.
+ */
+int fa_add_new_trans(struct state *from, struct state *to,
+                     unsigned char min, unsigned char max);
+
 /* Return a finite automaton that accepts a repetition of the language that
  * FA accepts. If MAX == -1, the returned automaton accepts arbitrarily
  * long repetitions. MIN must be 0 or bigger, and unless MAX == -1, MIN
@@ -137,8 +158,8 @@ struct fa *fa_minus(struct fa *fa1, struct fa *fa2);
  * automaton accepts only words that have at least MIN repetitions of words
  * from L(FA).
  *
- * The following common regexp repetitios are achieved by the following
- * calls (using a lose notation equating automata and their languages):
+ * The following common regexp repetitions are achieved by the following
+ * calls (using a loose notation equating automata and their languages):
  *
  * - FA* = FA_ITER(FA, 0, -1)
  * - FA+ = FA_ITER(FA, 1, -1)
@@ -161,7 +182,7 @@ int fa_equals(struct fa *fa1, struct fa *fa2);
 void fa_free(struct fa *fa);
 
 /* Print FA to OUT as a graphviz dot file */
-void fa_dot(FILE *out, struct fa *fa);
+void fa_dot(FILE *out, const struct fa *fa);
 
 /* Return a finite automaton that accepts the overlap of the languages of
  * FA1 and FA2. The overlap of two languages is the set of strings that can
@@ -261,7 +282,7 @@ int fa_expand_char_ranges(const char *regexp, size_t regexp_len,
 int fa_nocase(struct fa *fa);
 
 /* Return 1 if FA matches ignoring case, 0 if matches are case sensitive */
-int fa_is_nocase(struct fa *fa);
+int fa_is_nocase(const struct fa *fa);
 
 /* Assume REGEXP is a case-insensitive regular expression, and convert it
  * to one that matches the same strings when used case sensitively. All
@@ -294,19 +315,19 @@ int fa_enumerate(struct fa *fa, int limit, char ***words);
 int fa_json(FILE *out, struct fa *fa);
 
 /* Returns true if the FA is deterministic and 0 otherwise */
-bool fa_is_deterministic(struct fa *fa);
+bool fa_is_deterministic(const struct fa *fa);
 
 /* Return the initial state */
-struct state *fa_state_initial(struct fa *fa);
+struct state *fa_state_initial(const struct fa *fa);
 
 /* Return true if this is an accepting state */
-bool fa_state_is_accepting(struct state *st);
+bool fa_state_is_accepting(const struct state *st);
 
 /* Return the next state; return NULL if there are no more states */
-struct state* fa_state_next(struct state *st);
+struct state* fa_state_next(const struct state *st);
 
 /* Return the number of transitions for a state */
-size_t fa_state_num_trans(struct state *st);
+size_t fa_state_num_trans(const struct state *st);
 
 /* Produce details about the i-th transition.
  *
@@ -318,7 +339,7 @@ size_t fa_state_num_trans(struct state *st);
  * Return 0 on success and -1 when I is larger than the number of
  * transitions of ST.
  */
-int fa_state_trans(struct state *st, size_t i,
+int fa_state_trans(const struct state *st, size_t i,
                    struct state **to, unsigned char *min, unsigned char *max);
 
 #endif
