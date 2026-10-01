@@ -167,6 +167,19 @@ module Test_fstab =
     { "passno" = "0" }
   }
 
+  (* Allow empty options / double commas *)
+  test Fstab.lns get "/dev/mapper/foo-bar / xfs rw,,nodev,nosuid,, 0 0\n" =
+  { "1"
+    { "spec" = "/dev/mapper/foo-bar" }
+    { "file" = "/" }
+    { "vfstype" = "xfs" }
+    { "opt" = "rw" }
+    { "opt" = "nodev" }
+    { "opt" = "nosuid" }
+    { "dump" = "0" }
+    { "passno" = "0" }
+  }
+
 (* Local Variables: *)
 (* mode: caml       *)
 (* End:             *)
