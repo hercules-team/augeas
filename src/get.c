@@ -455,6 +455,7 @@ static int match(struct state *state, struct lens *lens,
     if (count < -1) {
         regexp_match_error(state, lens, count, re);
         FREE(regs);
+        FREE(re->re);
         return -1;
     }
     state->regs = regs;
