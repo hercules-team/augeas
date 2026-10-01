@@ -110,7 +110,7 @@ let negate_or_value (key:lens) (value:lens) =
 sto_to_com_cmnd does not begin or end with a space *)
 
 let sto_to_com_cmnd = del_negate . negate_node? . (
-      let alias = Rx.word - /(NO)?(PASSWD|EXEC|SETENV)/
+      let alias = Rx.word - /(NO)?(PASSWD|EXEC|SETENV|LOG_INPUT|LOG_OUTPUT)/
      in let non_alias = /[\/a-z]([^,:#()\n\\]|\\\\[=:,\\])*[^,=:#() \t\n\\]|[^,=:#() \t\n\\]/
    in store (alias | non_alias))
 
@@ -302,21 +302,24 @@ let default_type     =
  *   Some integer, string and list parameters may also be used in a boolean
  *     context to disable them.
  *************************************************************************)
-let parameter_flag_kw    = "always_set_home" | "authenticate" | "env_editor"
-                         | "env_reset" | "fqdn" | "ignore_dot"
-                         | "ignore_local_sudoers" | "insults" | "log_host"
-                         | "log_year" | "long_otp_prompt" | "mail_always"
-                         | "mail_badpass" | "mail_no_host" | "mail_no_perms"
-                         | "mail_no_user" | "noexec" | "path_info"
-                         | "passprompt_override" | "preserve_groups"
-                         | "requiretty" | "root_sudo" | "rootpw" | "runaspw"
-                         | "set_home" | "set_logname" | "setenv"
-                         | "shell_noargs" | "stay_setuid" | "targetpw"
-                         | "tty_tickets" | "visiblepw" | "closefrom_override"
-                         | "closefrom_override" | "compress_io" | "fast_glob"
-                         | "log_input" | "log_output" | "pwfeedback"
-                         | "umask_override" | "use_pty" | "match_group_by_gid"
-                         | "always_query_group_plugin"
+let parameter_flag_kw    = "always_set_home" | "authenticate" | "closefrom_override" 
+                           | "compress_io" | "use_netgroups" | "exec_background"
+                           | "env_editor" | "env_reset" | "fast_glob"
+                           | "fqdn" | "ignore_dot" | "ignore_local_sudoers"
+                           | "insults" | "log_host" | "log_input"
+                           | "log_output" | "log_year" | "long_otp_prompt"
+                           | "mail_all_cmnds" | "mail_always" | "mail_badpass"
+                           | "mail_no_host" | "mail_no_perms" | "mail_no_user"
+                           | "noexec" | "pam_session" | "pam_setcred"
+                           | "passprompt_override" | "path_info" | "preserve_groups"
+                           | "pwfeedback" | "requiretty" | "root_sudo"
+                           | "rootpw" | "runaspw" | "set_home"
+                           | "set_logname" | "set_utmp" | "setenv"
+                           | "shell_noargs" | "stay_setuid" | "targetpw"
+                           | "tty_tickets" | "umask_override" | "use_loginclass"
+                           | "use_pty" | "utmp_runas" | "visiblepw"
+                           | "closefrom" | "passwd_tries" | "always_query_group_plugin"
+                           | "match_group_by_gid"
 
 let parameter_flag       = [ del_negate . negate_node?
                                . key parameter_flag_kw ]
@@ -325,7 +328,7 @@ let parameter_flag       = [ del_negate . negate_node?
  * View: parameter_integer
  *   An integer parameter for <defaults>
  *************************************************************************)
-let parameter_integer_nobool_kw = "passwd_tries"
+let parameter_integer_nobool_kw = "closefrom" | "passwd_tries"
 
 let parameter_integer_nobool    = [ key parameter_integer_nobool_kw . sep_eq
                                       . del /"?/ "" . sto_integer
@@ -350,17 +353,21 @@ let parameter_integer           = parameter_integer_nobool
  *   An odd number of '!' operators negate the value of the item;
  *      an even number just cancel each other out.
  *************************************************************************)
-let parameter_string_nobool_kw = "badpass_message" | "editor" | "mailsub"
-                               | "noexec_file" | "passprompt" | "runas_default"
-                               | "syslog_badpri" | "syslog_goodpri"
-                               | "timestampdir" | "timestampowner" | "secure_path"
+let parameter_string_nobool_kw = "badpass_message" | "editor" | "iolog_dir"
+                               | "iolog_file" | "lecture_status_dir" | "limitprivs"
+                               | "mailsub" | "maxseq" | "noexec_file"
+                               | "pam_login_service" | "pam_service" | "passprompt"
+                               | "privs" | "role" | "runas_default"
+                               | "syslog_badpri" | "syslog_goodpri" | "sudoers_locale"
+                               | "timestampdir" | "timestampowner" | "type"
 
 let parameter_string_nobool    = [ key parameter_string_nobool_kw . sep_eq
                                      . sto_to_com_dquot ]
 
-let parameter_string_bool_kw   = "exempt_group" | "lecture" | "lecture_file"
-                               | "listpw" | "logfile" | "mailerflags"
-                               | "mailerpath" | "mailto" | "mailfrom" 
+let parameter_string_bool_kw   = "env_file" | "exempt_group" | "group_plugin"
+                               | "lecture" | "lecture_file" | "listpw"
+                               | "logfile" | "mailerflags" | "mailerpath"
+                               | "mailfrom" | "mailto" | "secure_path"
                                | "syslog" | "verifypw"
 
 let parameter_string_bool      =
