@@ -5,8 +5,8 @@ module Fstab =
 
   let sep_tab = Sep.tab
   let sep_spc = Sep.space
-  let sep_comma_tab = del /,?[ \t]+/ "\t"
-  let comma   = Sep.comma
+  let sep_comma_tab = del /(,+)?[ \t]+/ "\t"
+  let comma   = del /,+/ ","
   let eol     = Util.eol
 
   let comment = Util.comment
@@ -21,7 +21,7 @@ module Fstab =
   let comma_sep_list (l:string) =
     let value = [ label "value" . Util.del_str "=" . ( store Rx.neg1 )? ] in
       let lns = [ label l . store optlabel . value? ] in
-         Build.opt_list lns comma
+         del /,*/ "" . Build.opt_list lns comma
 
   let record = [ seq "mntent" .
                    Util.indent .
