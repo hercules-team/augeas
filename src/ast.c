@@ -93,6 +93,21 @@ struct dict *make_dict(char *key, struct skel *skel, struct dict *subdict) {
     return NULL;
 }
 
+static char *size_as_key(size_t key) {
+    char *s = NULL;
+
+    xasprintf(&s, "%zx", key);
+    return s;
+}
+
+struct dict *make_dictz(size_t key, struct skel *skel, struct dict *subdict) {
+    char *s = size_as_key(key);
+
+    if (s == NULL)
+        return NULL;
+    return make_dict(s, skel, subdict);
+}
+
 void free_dict(struct dict *dict) {
     if (dict == NULL)
         return;
@@ -213,7 +228,17 @@ void dict_lookup(const char *key, struct dict *dict,
     }
 }
 
+void dict_lookupz(size_t key, struct dict *dict,
+                  struct skel **skel, struct dict **subdict) {
+    char *s = size_as_key(key);
 
+    if (s == NULL) {
+        *skel = NULL;
+        *subdict = NULL;
+        return;
+    }
+    dict_lookup(s, dict, skel, subdict);
+}
 
 /*
  * Local variables:
