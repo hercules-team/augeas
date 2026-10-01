@@ -15,6 +15,7 @@ module Radicale =
  * /etc/radicale/config only supports "#" as commentary and "=" as separator
  *************************************************************************)
 let comment    = IniFile.comment "#" "#"
+let comment_re = /[#]/
 let sep        = IniFile.sep "=" "="
 
 
@@ -22,7 +23,7 @@ let sep        = IniFile.sep "=" "="
  *                        ENTRY
  * /etc/radicale/config uses standard INI File entries
  *************************************************************************)
-let entry   = IniFile.indented_entry IniFile.entry_re sep comment
+let entry   = IniFile.entry_generic (Util.indent . key IniFile.entry_re) sep comment_re comment
 
 
 (************************************************************************
