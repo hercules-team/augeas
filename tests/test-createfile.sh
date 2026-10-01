@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # Test that augeas can create a file based on new paths added to the tree
 # The tree should retain the paths on a subsequent load operation
@@ -22,10 +22,10 @@ match /files/etc/sysctl.d/newfile1.conf/net.ipv4.ip_nonlocal_bind
 EOF
 )
 
-if [[ ! -e $root/$sysctl_file ]]; then
+if [ ! -e "$root/$sysctl_file" ]; then
   echo "Failed to create file $sysctl_file under $root"
   exit 1
-elif ! diff -bq $root/$sysctl_file <(echo "$expected_content") 1>/dev/null 2>&1; then
+elif ! printf '%s\n' "$expected_content" | diff -bq $root/$sysctl_file - 1>/dev/null 2>&1; then
   echo "Contents of $root/sysctl_file are incorrect"
   cat  $root/$sysctl_file
   echo '-- end of file --'
@@ -33,7 +33,7 @@ elif ! diff -bq $root/$sysctl_file <(echo "$expected_content") 1>/dev/null 2>&1;
   echo "$expected_content"
   echo '-- end of file --'
   exit 1
-elif [[ -z "$output" ]]; then
+elif [ -z "$output" ]; then
   echo "Missing /files/$sysctl_file in tree after save"
   exit 1
 else
@@ -56,10 +56,10 @@ save
 EOF
 )
 
-if [[ ! -e $root/$sysctl_file ]]; then
+if [ ! -e "$root/$sysctl_file" ]; then
   echo "Failed to create file $sysctl_file under $root"
   exit 1
-elif ! diff -bq $root/$sysctl_file <(echo "$expected_content") 1>/dev/null 2>&1; then
+elif ! printf '%s\n' "$expected_content" | diff -bq $root/$sysctl_file - 1>/dev/null 2>&1; then
   echo "Contents of $root/sysctl_file are incorrect"
   cat  $root/$sysctl_file
   echo '-- end of file --'
@@ -67,7 +67,7 @@ elif ! diff -bq $root/$sysctl_file <(echo "$expected_content") 1>/dev/null 2>&1;
   echo "$expected_content"
   echo '-- end of file --'
   exit 1
-elif [[ -z "$output" ]]; then
+elif [ -z "$output" ]; then
   echo "Missing /files/$sysctl_file in tree after save"
   exit 1
 else
