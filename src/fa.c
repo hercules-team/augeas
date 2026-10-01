@@ -4449,7 +4449,7 @@ int fa_expand_nocase(const char *regexp, size_t regexp_len,
     parse.rend = regexp + regexp_len;
     parse.error = REG_NOERROR;
     re = parse_regexp(&parse);
-    if (parse.error != REG_NOERROR)
+    if (re == NULL)
         return parse.error;
 
     r = re_case_expand(re);
