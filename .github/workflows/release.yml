@@ -28,6 +28,10 @@ jobs:
             libreadline-dev libselinux1-dev libxml2-dev \
             pkg-config
 
+      # Populate the gnulib submodule from the cache, or with a shallow fetch,
+      # so that bootstrap does not clone all of gnulib's history
+      - uses: ./.github/actions/gnulib
+
       - name: Autogen
         run: ./autogen.sh
 

@@ -46,6 +46,10 @@ jobs:
             libreadline-dev libselinux1-dev libxml2-dev \
             pkg-config valgrind
 
+      # Populate the gnulib submodule from the cache, or with a shallow fetch,
+      # so that bootstrap does not clone all of gnulib's history
+      - uses: ./.github/actions/gnulib
+
       # autogen.sh runs bootstrap and then configure, passing any options
       # through. --disable-gnulib-tests keeps gnulib's own test suite out of
       # SUBDIRS: it tests gnulib against the local libc rather than testing
