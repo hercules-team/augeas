@@ -1010,7 +1010,13 @@ static void eval_else(struct state *state, struct expr *expr, struct locpath_tra
         int discard_maxns=0;
         struct nodeset **discard_ns=NULL;
         struct locpath_trace *lpt = state->locpath_trace;
+        value_ind_t lind = l - state->value_pool;
+        value_ind_t rind = r - state->value_pool;
         value_ind_t vind = make_value(T_NODESET, state);
+        /* make_value may reallocate value_pool, so l and r have to be
+         * refreshed from their indices before they are used again */
+        l = state->value_pool + lind;
+        r = state->value_pool + rind;
         if (l->nodeset->used >0 || expr->left_matched) {
             expr->left_matched = 1;
             state->value_pool[vind].nodeset = clone_nodeset(l->nodeset, state);

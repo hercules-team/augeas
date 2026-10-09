@@ -382,6 +382,12 @@ test else_chain2 /files/etc/fstab/*[passno='9' else passno='8' else passno='2']/
      /files/etc/fstab/8/file = /local
      /files/etc/fstab/9/file = /var/lib/xen/images
 
+# A union chain on the left of a nodeset 'else' leaves the value pool full
+# right before 'else' allocates its result, so this exercises the code path
+# where make_value() reallocates the pool during eval_else
+test else_nodeset_realloc (/files/etc/fstab/1|/files/etc/fstab/1|/files/etc/fstab/1 else /files/etc/fstab/2)/file
+     /files/etc/fstab/1/file = /
+
 # Although there are nodes matching passno=2 and nodes matching dump=0
 # there is no node with both
 test_and_else_lhs /files/etc/fstab/*[passno='2' and ( dump='0' else dump='1')]/file
