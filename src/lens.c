@@ -1144,12 +1144,12 @@ static int format_subtree_atype(struct lens *l, char **buf, uint indent) {
         if (v == NULL)
             goto done;
         if (k == NULL)
-            r = xasprintf(buf, "%s{ = /%s/ }", si, k, v);
+            r = xasprintf(buf, "%s{ = /%s/ }", si, v);
         else
             r = xasprintf(buf, "%s{ /%s/ = /%s/ }", si, k, v);
     } else {
         if (k == NULL)
-            r = xasprintf(buf, "%s{ }", si, k);
+            r = xasprintf(buf, "%s{ }", si);
         else
             r = xasprintf(buf, "%s{ /%s/ }", si, k);
     }
