@@ -71,6 +71,8 @@ char *regexp_escape(const struct regexp *r) {
                     p += strlen(RESERVED_DOT_RX);
                     *t++ = '.';
                 }
+                if (*p == '\0')
+                    break;
                 *t++ = *p;
             }
             *t = '\0';
