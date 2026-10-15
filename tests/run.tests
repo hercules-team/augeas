@@ -212,6 +212,43 @@ prints
   /x/y/b
   /x/y/b/c = "value"
 
+test mv-tree7 4
+  set /a/b/c value
+  set /a/d value2
+  mv /a/b/c /a
+  print /*[ label() != 'augeas' and label() != 'files']
+prints
+  /a = "value"
+
+test mv-tree8 4
+  set /a/b/c/d value
+  set /a/x value2
+  mv /a/b/c /a
+  print /*[ label() != 'augeas' and label() != 'files']
+prints
+  /a
+  /a/d = "value"
+
+#
+# test cp
+#
+test cp-tree1 4
+  set /a/b/c value
+  set /a/d value2
+  cp /a/b/c /a
+  print /*[ label() != 'augeas' and label() != 'files']
+prints
+  /a = "value"
+
+test cp-tree2 4
+  set /a/b/c/d value
+  set /a/x value2
+  cp /a/b/c /a
+  print /*[ label() != 'augeas' and label() != 'files']
+prints
+  /a
+  /a/d = "value"
+
 #
 # test rename
 #
