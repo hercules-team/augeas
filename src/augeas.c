@@ -1265,7 +1265,8 @@ int aug_span(struct augeas *aug, const char *path, char **filename,
 
 int aug_mv(struct augeas *aug, const char *src, const char *dst) {
     struct pathx *s = NULL, *d = NULL;
-    struct tree *ts, *td, *t;
+    struct tree *ts, *td, *t, *children;
+    char *value;
     int r, ret;
 
     api_entry(aug);
@@ -1293,19 +1294,23 @@ int aug_mv(struct augeas *aug, const char *src, const char *dst) {
         t = t->parent;
     } while (t != aug->origin);
 
-    free_tree(td->children);
-
-    td->children = ts->children;
-    list_for_each(c, td->children) {
+    /* Take SRC out of the tree before freeing the children of DST, since
+       SRC is one of them when DST is an ancestor of SRC */
+    children = ts->children;
+    list_for_each(c, children) {
         c->parent = td;
     }
-    free(td->value);
-    td->value = ts->value;
+    value = ts->value;
 
     ts->value = NULL;
     ts->children = NULL;
 
     tree_unlink(aug, ts);
+
+    free_tree(td->children);
+    td->children = children;
+    free(td->value);
+    td->value = value;
     tree_mark_dirty(td);
 
     ret = 0;
@@ -1329,7 +1334,7 @@ static void tree_copy_rec(struct tree *src, struct tree *dst) {
 
 int aug_cp(struct augeas *aug, const char *src, const char *dst) {
     struct pathx *s = NULL, *d = NULL;
-    struct tree *ts, *td, *t;
+    struct tree *ts, *td, *t, *copy;
     int r, ret;
 
     api_entry(aug);
@@ -1357,10 +1362,20 @@ int aug_cp(struct augeas *aug, const char *src, const char *dst) {
         t = t->parent;
     } while (t != aug->origin);
 
+    /* Copy SRC before freeing the children of DST, since SRC is one of
+       them when DST is an ancestor of SRC */
+    copy = make_tree(NULL, NULL, td, NULL);
+    ERR_NOMEM(copy == NULL, aug);
+    tree_copy_rec(ts, copy);
+
     tree_set_value(td, ts->value);
     free_tree(td->children);
-    td->children = NULL;
-    tree_copy_rec(ts, td);
+    td->children = copy->children;
+    list_for_each(c, td->children) {
+        c->parent = td;
+    }
+    copy->children = NULL;
+    free_tree(copy);
     tree_mark_dirty(td);
 
     ret = 0;
