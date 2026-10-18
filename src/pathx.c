@@ -1010,16 +1010,16 @@ static void eval_else(struct state *state, struct expr *expr, struct locpath_tra
         int discard_maxns=0;
         struct nodeset **discard_ns=NULL;
         struct locpath_trace *lpt = state->locpath_trace;
-        value_ind_t vind = make_value(T_NODESET, state);
+        value_ind_t vind;
         if (l->nodeset->used >0 || expr->left_matched) {
             expr->left_matched = 1;
-            state->value_pool[vind].nodeset = clone_nodeset(l->nodeset, state);
+            vind = l - state->value_pool;
             if( lpt_right != NULL ) {
                 discard_maxns = lpt_right->maxns;
                 discard_ns    = lpt_right->ns;
             }
         } else {
-            state->value_pool[vind].nodeset = clone_nodeset(r->nodeset, state);
+            vind = r - state->value_pool;
             if( lpt != NULL && lpt_right != NULL ) {
                 discard_maxns = lpt->maxns;
                 discard_ns    = lpt->ns;
