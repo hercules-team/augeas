@@ -289,6 +289,9 @@ test else_nodeset_rhs (/files/etc/yum.conf.missing else /files/etc/yum.repos.d/f
 
 test else_nodeset_nomatch (/files/left else /files/right)
 
+test else_nodeset_chain ( /files/none1 else /files/none2 else /files/none3 else /files/etc/ntp.conf else /files/etc/hosts )
+     /files/etc/ntp.conf
+
 # Paths with whitespace in them
 test php1 $php/mail function
      /files/etc/php.ini/mail\ function
