@@ -315,6 +315,27 @@ static void testDefNodeCreateMeta(CuTest *tc) {
     aug_close(aug);
 }
 
+/* Check that a pure function that fails while it is constant folded,
+ * like regexp() with an invalid regexp, reports an error instead of
+ * folding a value that was never pushed */
+static void testDefVarBadRegexp(CuTest *tc) {
+    int r;
+    struct augeas *aug;
+
+    aug = aug_init(root, loadpath, AUG_NO_STDINC|AUG_NO_LOAD);
+    CuAssertPtrNotNull(tc, aug);
+    CuAssertIntEquals(tc, AUG_NOERROR, aug_error(aug));
+
+    r = aug_defvar(aug, "var", "regexp('[')");
+    CuAssertIntEquals(tc, -1, r);
+    CuAssertIntEquals(tc, AUG_EPATHX, aug_error(aug));
+
+    r = aug_match(aug, "/augeas/variables/*", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    aug_close(aug);
+}
+
 static void reset_indexes(uint *a, uint *b, uint *c, uint *d, uint *e, uint *f) {
     *a = 0; *b = 0; *c = 0; *d = 0; *e = 0; *f = 0;
 }
@@ -940,6 +961,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testDefVarMeta);
     SUITE_ADD_TEST(suite, testDefNodeExistingMeta);
     SUITE_ADD_TEST(suite, testDefNodeCreateMeta);
+    SUITE_ADD_TEST(suite, testDefVarBadRegexp);
     SUITE_ADD_TEST(suite, testNodeInfo);
     SUITE_ADD_TEST(suite, testMv);
     SUITE_ADD_TEST(suite, testCp);

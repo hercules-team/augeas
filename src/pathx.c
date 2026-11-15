@@ -1511,6 +1511,7 @@ static void eval_expr(struct expr *expr, struct state *state) {
         break;
     case E_APP:
         eval_app(expr, state);
+        RET_ON_ERROR;
         if (expr->fold) {
             /* Do constant folding: replace the function application with
              * a reference to the value that resulted from evaluating it */
