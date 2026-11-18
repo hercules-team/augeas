@@ -1189,7 +1189,7 @@ int transform_save(struct augeas *aug, struct tree *xfm,
         goto done;
     }
 
-    augorig_canon = canonicalize_file_name(augorig);
+    augorig_canon = realpath(augorig, NULL);
     augorig_exists = 1;
     if (augorig_canon == NULL) {
         if (errno == ENOENT) {
@@ -1473,7 +1473,7 @@ int remove_file(struct augeas *aug, struct tree *tree) {
         goto error;
     }
 
-    augorig_canon = canonicalize_file_name(augorig);
+    augorig_canon = realpath(augorig, NULL);
     if (augorig_canon == NULL) {
         if (errno == ENOENT) {
             goto done;
