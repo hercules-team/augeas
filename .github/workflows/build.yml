@@ -56,7 +56,7 @@ jobs:
           echo "pkgs=$(echo $pkgs)" >> "$GITHUB_OUTPUT"
           echo "key=$(sha256sum "$RUNNER_TEMP/debs.txt" | cut -c1-16)" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/debs
           key: apt-debs-${{ matrix.cc }}-${{ steps.deps.outputs.key }}
