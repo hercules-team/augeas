@@ -567,7 +567,8 @@ typedef enum {
     PATHX_EARITY,
     PATHX_EREGEXP,
     PATHX_EMMATCH,
-    PATHX_EREGEXPFLAG
+    PATHX_EREGEXPFLAG,
+    PATHX_EDEPTH
 } pathx_errcode_t;
 
 struct pathx;

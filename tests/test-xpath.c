@@ -367,6 +367,69 @@ static int test_arith_overflow(struct augeas *aug) {
     return -1;
 }
 
+/* Return PREFIX, N copies of OPEN, MIDDLE, N copies of CLOSE */
+static char *make_deep_expr(const char *prefix, const char *open,
+                            const char *middle, const char *close, int n) {
+    size_t len = strlen(prefix) + strlen(middle)
+        + n * (strlen(open) + strlen(close)) + 1;
+    char *expr = malloc(len);
+    if (expr == NULL)
+        die("out of memory");
+    strcpy(expr, prefix);
+    for (int i=0; i < n; i++)
+        strcat(expr, open);
+    strcat(expr, middle);
+    for (int i=0; i < n; i++)
+        strcat(expr, close);
+    return expr;
+}
+
+/* Deeply nested expressions and long chains of operators must be
+ * rejected instead of overflowing the stack (oss-fuzz 42512797, 42513857,
+ * 511531634, 42512431, 42538268, github #869) */
+static int test_depth_limits(struct augeas *aug) {
+    static const struct {
+        const char *prefix, *open, *middle, *close;
+        int n;
+        int expected;  /* number of matches, or -1 for an error */
+    } cases[] = {
+        { "", "(", "/files", ")", 50, 1 },
+        { "", "(", "/files", ")", 100000, -1 },
+        { "/files", "[*", "", "]", 50, 0 },
+        { "/files", "[*", "", "]", 100000, -1 },
+        { "/files", "|/files", "", "", 500, 501 },
+        { "/files", "|/files", "", "", 100000, -1 },
+        { "/files[1", "+1", "]", "", 100000, -1 },
+        { "/files[0", " or 0", "]", "", 100000, -1 }
+    };
+    int r;
+
+    printf("%-30s ... ", "depth_limits");
+    for (int i=0; i < sizeof(cases)/sizeof(cases[0]); i++) {
+        char *expr = make_deep_expr(cases[i].prefix, cases[i].open,
+                                    cases[i].middle, cases[i].close,
+                                    cases[i].n);
+        r = aug_match(aug, expr, NULL);
+        free(expr);
+        if (cases[i].expected >= 0 && r != cases[i].expected) {
+            fprintf(stderr, "case %d: expected %d matches, got %d\n",
+                    i, cases[i].expected, r);
+            goto fail;
+        }
+        if (cases[i].expected < 0 &&
+            (r >= 0 || aug_error(aug) != AUG_EPATHX)) {
+            fprintf(stderr, "case %d: expected an error, got %d\n", i, r);
+            goto fail;
+        }
+    }
+
+    printf("PASS\n");
+    return 0;
+ fail:
+    printf("FAIL\n");
+    return -1;
+}
+
 static int test_invalid_regexp(struct augeas *aug) {
     int r;
 
@@ -492,6 +555,9 @@ static int run_tests(struct test *tests, int argc, char **argv) {
             result = EXIT_FAILURE;
 
         if (test_invalid_regexp(aug) < 0)
+            result = EXIT_FAILURE;
+
+        if (test_depth_limits(aug) < 0)
             result = EXIT_FAILURE;
 
         if (test_origin_siblings(aug) < 0)

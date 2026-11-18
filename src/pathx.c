@@ -31,8 +31,6 @@
 #include "regexp.h"
 #include "errcode.h"
 
-#define MAX_EXPR_DEPTH 100
-
 static const char *const errcodes[] = {
     "no error",
     "empty name",
@@ -52,8 +50,23 @@ static const char *const errcodes[] = {
     "wrong number of arguments in function call", /* PATHX_EARITY */
     "invalid regular expression",                 /* PATHX_EREGEXP */
     "too many matches",                           /* PATHX_EMMATCH */
-    "wrong flag for regexp"                       /* PATHX_EREGEXPFLAG */
+    "wrong flag for regexp",                      /* PATHX_EREGEXPFLAG */
+    "expression nested too deeply"               /* PATHX_EDEPTH */
 };
+
+/* Parsing, typechecking, evaluating and freeing path expressions all
+ * recurse over the syntax tree, and the limits below keep that recursion
+ * from exhausting the stack.
+ *
+ * MAX_EXPR_DEPTH limits how deeply parentheses, predicates and function
+ * arguments can be nested; the parser recurses about a dozen frames
+ * for each level.
+ *
+ * MAX_HEIGHT limits the height of the syntax tree. Chains of binary
+ * operators like 'a|b|c' are parsed iteratively, but produce trees whose
+ * height grows with the length of the chain */
+#define MAX_EXPR_DEPTH 100
+#define MAX_HEIGHT 1000
 
 /*
  * Path expressions are strings that use a notation modelled on XPath.
@@ -197,6 +210,7 @@ struct value {
 struct expr {
     enum expr_tag tag;
     enum type     type;
+    unsigned int  height;  /* Height of the syntax tree rooted here */
     union {
         struct {                       /* E_FILTER */
             struct expr     *primary;
@@ -1811,7 +1825,54 @@ static struct expr* pop_expr(struct state *state) {
     }
 }
 
+static unsigned int max_height(unsigned int h1, unsigned int h2) {
+    return h1 > h2 ? h1 : h2;
+}
+
+static unsigned int pred_height(const struct pred *pred) {
+    unsigned int h = 0;
+    if (pred == NULL)
+        return 0;
+    for (int i=0; i < pred->nexpr; i++)
+        h = max_height(h, pred->exprs[i]->height);
+    return h;
+}
+
+/* Set the height of EXPR from the heights of its children, which have
+ * all been pushed, and therefore had their height set, before EXPR */
+static void set_height(struct expr *expr, struct state *state) {
+    unsigned int h = 0;
+
+    switch (expr->tag) {
+    case E_FILTER:
+        if (expr->primary != NULL)
+            h = expr->primary->height;
+        h = max_height(h, pred_height(expr->predicates));
+        if (expr->locpath != NULL) {
+            list_for_each(step, expr->locpath->steps)
+                h = max_height(h, pred_height(step->predicates));
+        }
+        break;
+    case E_BINARY:
+        h = max_height(expr->left->height, expr->right->height);
+        break;
+    case E_VALUE:
+    case E_VAR:
+        break;
+    case E_APP:
+        for (int i=0; i < expr->func->arity; i++)
+            h = max_height(h, expr->args[i]->height);
+        break;
+    default:
+        assert(0);
+    }
+    expr->height = h + 1;
+    if (expr->height > MAX_HEIGHT)
+        STATE_ERROR(state, PATHX_EDEPTH);
+}
+
 static void push_expr(struct expr *expr, struct state *state) {
+    set_height(expr, state);
     if (state->exprs_used >= state->exprs_size) {
         size_t new_size = 2*state->exprs_size;
         if (new_size == 0) new_size = 8;
@@ -2592,7 +2653,7 @@ static void parse_else_expr(struct state *state) {
 static void parse_expr(struct state *state) {
     skipws(state);
     if (state->expr_depth >= MAX_EXPR_DEPTH) {
-        STATE_ERROR(state, PATHX_EPAREN);
+        STATE_ERROR(state, PATHX_EDEPTH);
         return;
     }
     state->expr_depth += 1;
