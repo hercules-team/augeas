@@ -508,8 +508,9 @@ static int lookup_internal(struct augeas *aug, const char *ctx_modname,
             return 0;
         }
     }
-    /* Try to load the module */
-    if (streqv(modname, ctx_modname)) {
+    /* Try to load the module, unless it is the one being compiled; module
+     * names are case-insensitive, like in module_find */
+    if (ctx_modname != NULL && STRCASEEQ(modname, ctx_modname)) {
         free(modname);
         return 0;
     }
@@ -536,7 +537,8 @@ static struct binding *ctx_lookup_bnd(struct info *info,
     struct binding *b = NULL;
     int nlen = strlen(ctx->name);
 
-    if (STREQLEN(ctx->name, name, nlen) && name[nlen] == '.')
+    /* Module names are case-insensitive, like in module_find */
+    if (STRCASEEQLEN(ctx->name, name, nlen) && name[nlen] == '.')
         name += nlen + 1;
 
     b = bnd_lookup(ctx->local, name);
@@ -2014,16 +2016,34 @@ int load_module_file(struct augeas *aug, const char *filename,
     return result;
 }
 
+/* A module whose loading is under way; they form a stack through
+ * AUG->LOADING so that modules that depend on each other are detected
+ * instead of being loaded over and over again */
+struct loading {
+    const char     *name;
+    struct loading *next;
+};
+
 static int load_module(struct augeas *aug, const char *name) {
     char *filename = NULL;
+    struct loading loading = { .name = name, .next = aug->loading };
+    int r;
 
     if (module_find(aug->modules, name) != NULL)
         return 0;
 
+    for (struct loading *l = aug->loading; l != NULL; l = l->next) {
+        if (STRCASEEQ(l->name, name))
+            return -1;
+    }
+
     if ((filename = module_filename(aug, name)) == NULL)
         return -1;
 
-    if (load_module_file(aug, filename, name) == -1)
+    aug->loading = &loading;
+    r = load_module_file(aug, filename, name);
+    aug->loading = loading.next;
+    if (r == -1)
         goto error;
 
     free(filename);

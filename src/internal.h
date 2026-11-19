@@ -356,6 +356,9 @@ char *cleanpath(char *path);
  */
 int regexp_c_locale(char **u, size_t *len);
 
+/* Modules whose loading is under way; defined in syntax.c */
+struct loading;
+
 /* Struct: augeas
  * The data structure representing a connection to Augeas. */
 struct augeas {
@@ -364,6 +367,7 @@ struct augeas {
                                   /* always ends with '/' */
     unsigned int      flags;      /* Flags passed to AUG_INIT */
     struct module    *modules;    /* Loaded modules */
+    struct loading   *loading;    /* Modules whose loading is under way */
     size_t            nmodpath;
     char             *modpathz;   /* The search path for modules as a
                                      glibc argz vector */
