@@ -95,4 +95,10 @@ module Exports =
 
   let lns = (Util.empty | Util.comment | entry)*
 
-  let xfm = transform lns (incl "/etc/exports")
+  (* exportfs also reads the files in /etc/exports.d that end in .exports,
+     see exports(5) *)
+  let filter = incl "/etc/exports"
+             . incl "/etc/exports.d/*.exports"
+             . Util.stdexcl
+
+  let xfm = transform lns filter
