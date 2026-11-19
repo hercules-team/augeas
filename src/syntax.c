@@ -1108,6 +1108,9 @@ static int check_compose(struct term *term, struct ctx *ctx) {
             return 0;
         term->type = ref(term->right->type);
     } else {
+        /* The error message mentions the type of the right operand, too */
+        if (! check_exp(term->right, ctx))
+            return 0;
         goto print_error;
     }
     return 1;
