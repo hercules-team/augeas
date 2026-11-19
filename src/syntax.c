@@ -984,7 +984,9 @@ static struct type *expect_types_arr(struct info *info,
         for (int i=0; i < ntypes; i++) {
             len += strlen(type_name(allowed[i]));
         }
-        len += (ntypes - 1) * 4 + 1;
+        /* Separators are ", " and a final ", or "; allow the longer one
+         * for each, plus the terminating NUL */
+        len += (ntypes - 1) * strlen(", or ") + 1;
         char *allowed_names;
         if (ALLOC_N(allowed_names, len) < 0)
             return NULL;
