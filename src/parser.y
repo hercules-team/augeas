@@ -111,6 +111,18 @@ struct state {
 %type<tree>  tree_const tree_const2 tree_branch
 %type<string> tree_label
 
+/* Free the values of symbols that the parser discards after a syntax
+ * error; without these, everything parsed so far leaked. Values that a
+ * rule passes on to its result are not discarded. 'start' is left out
+ * on purpose: its action stores the module in *term and never sets $$ */
+%destructor { free($$); } <string>
+%destructor { free($$.pattern); } <regexp>
+%destructor { unref($$, type); } <type>
+%destructor { free_tree($$); } <tree>
+%destructor { unref($$, term); } decls exp composeexp unionexp minusexp
+                                 catexp appexp rexp aexp param param_list
+                                 test_exp
+
 %{
 /* Lexer */
 extern int augl_lex (YYSTYPE * yylval_param,struct info * yylloc_param ,yyscan_t yyscanner);
