@@ -1374,6 +1374,18 @@ static int typecheck(struct term *term, struct augeas *aug) {
 
 static struct value *compile_exp(struct info *, struct term *, struct ctx *);
 
+/* Make a regexp value for R, the result of combining regexps with OP. R is
+ * NULL if that failed; the reason has been reported already, and the
+ * result is an exception rather than a regexp value without a regexp */
+static struct value *regexp_value(struct info *info, struct regexp *r,
+                                  const char *op) {
+    if (r == NULL)
+        return make_exn_value(ref(info), "Regular expression %s failed", op);
+    struct value *v = make_value(V_REGEXP, ref(info));
+    v->regexp = r;
+    return v;
+}
+
 static struct value *compile_union(struct term *exp, struct ctx *ctx) {
     struct value *v1 = compile_exp(exp->info, exp->left, ctx);
     if (EXN(v1))
@@ -1398,8 +1410,8 @@ static struct value *compile_union(struct term *exp, struct ctx *ctx) {
     }
 
     if (t->tag == T_REGEXP) {
-        v = make_value(V_REGEXP, ref(info));
-        v->regexp = regexp_union(info, v1->regexp, v2->regexp);
+        v = regexp_value(info, regexp_union(info, v1->regexp, v2->regexp),
+                         "union 'r1 | r2'");
     } else if (t->tag == T_LENS) {
         struct lens *l1 = v1->lens;
         struct lens *l2 = v2->lens;
@@ -1527,8 +1539,8 @@ static struct value *compile_concat(struct term *exp, struct ctx *ctx) {
         strcpy(s, s1);
         strcat(s, s2);
     } else if (t->tag == T_REGEXP) {
-        v = make_value(V_REGEXP, ref(info));
-        v->regexp = regexp_concat(info, v1->regexp, v2->regexp);
+        v = regexp_value(info, regexp_concat(info, v1->regexp, v2->regexp),
+                         "concatenation 'r1 . r2'");
     } else if (t->tag == T_FILTER) {
         struct filter *f1 = v1->filter;
         struct filter *f2 = v2->filter;
@@ -1634,8 +1646,9 @@ static struct value *compile_rep(struct term *rep, struct ctx *ctx) {
             assert(0);
             abort();
         }
-        v = make_value(V_REGEXP, ref(rep->info));
-        v->regexp = regexp_iter(rep->info, arg->regexp, min, max);
+        v = regexp_value(rep->info,
+                         regexp_iter(rep->info, arg->regexp, min, max),
+                         "repetition");
     } else if (rep->type->tag == T_LENS) {
         int c = LNS_TYPE_CHECK(ctx);
         if (rep->quant == Q_STAR) {

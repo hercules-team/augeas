@@ -282,7 +282,12 @@ char *regexp_expand_nocase(struct regexp *r) {
      * of its children have groups that are in direct relation */
     for (t = p; *t; t++) if (*t == '(') psub += 1;
     for (t = s; *t; t++) if (*t == '(') rsub += 1;
-    BUG_ON(psub < rsub, r->info, NULL);
+    /* The expansion can have more groups than the original, e.g. 'm|'
+     * becomes '[Mm]|()', and we can not make up for that. User input can
+     * get us here, so it is an error and not a bug */
+    ERR_THROW(psub < rsub, r->info, AUG_ESYNTAX,
+              "the case-insensitive regexp /%s/i can not be combined with "
+              "case-sensitive regexps", p);
     psub -= rsub;
     if (psub > 0) {
         char *adjusted = NULL, *a;
