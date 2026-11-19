@@ -558,9 +558,16 @@ static int regexp_compile_internal(struct regexp *r, const char **c) {
     *c = re_compile_pattern(r->pattern->str, strlen(r->pattern->str), r->re);
     re_syntax_options = old_syntax;
 
-    r->re->regs_allocated = REGS_REALLOCATE;
-    if (*c != NULL)
+    if (*c != NULL) {
+        /* Do not keep the pattern buffer around after a failed compile:
+         * regexp_match only compiles R when R->RE is NULL, and would
+         * otherwise match against this unusable buffer the next time
+         * around */
+        regfree(r->re);
+        FREE(r->re);
         return -1;
+    }
+    r->re->regs_allocated = REGS_REALLOCATE;
     return 0;
 }
 
