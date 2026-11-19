@@ -136,6 +136,12 @@ prints
 test rm-bad-pathx -1 EPATHX
   rm /files[]
 
+test rm-top-level-and-child 2
+  set /a/b/c value
+  rm /a|/a/b
+prints
+  rm : /a|/a/b 3
+
 #
 # test mv
 #

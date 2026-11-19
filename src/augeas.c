@@ -1166,7 +1166,7 @@ int tree_rm(struct pathx *p) {
            path expression matches both /node and /node/child as unlinking
            /node implicitly unlinks /node/child */
         int live = 1;
-        for (struct tree *t = tree; live && ! ROOT_P(t); t = t->parent) {
+        for (struct tree *t = tree; live && t != t->parent; t = t->parent) {
             if (t->added)
                 live = 0;
         }
