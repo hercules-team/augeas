@@ -1899,7 +1899,9 @@ static struct regexp *rtn_reduce(struct rtn *rtn, struct lens *rec) {
     /* Eliminate epsilon transitions and turn transitions between the same
      * two states into a regexp union */
     list_for_each(s, rtn->states) {
-        qsort(s->trans, s->ntrans, sizeof(*s->trans), trans_to_cmp);
+        /* s->trans is NULL for states without transitions */
+        if (s->ntrans > 0)
+            qsort(s->trans, s->ntrans, sizeof(*s->trans), trans_to_cmp);
         for (int i=0; i < s->ntrans; i++) {
             int j = i+1;
             for (;j < s->ntrans && s->trans[i].to == s->trans[j].to;

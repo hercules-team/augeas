@@ -134,6 +134,11 @@ static int array_join(struct array *dst, struct array *src) {
     if (dst->elem_size != src->elem_size)
         return -1;
 
+    /* Nothing to do; the data of an empty array may be NULL, which
+     * memcpy must not be passed even when copying 0 bytes */
+    if (src->used == 0)
+        return 0;
+
     r = mem_realloc_n(&(dst->data), dst->elem_size,
                       dst->used + src->used);
     if (r < 0)
