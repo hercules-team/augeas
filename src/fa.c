@@ -67,10 +67,10 @@ int fa_minimization_algorithm = FA_MIN_HOPCROFT;
  */
 struct fa {
     struct state *initial;
-    int           deterministic : 1;
-    int           minimal : 1;
+    unsigned int  deterministic : 1;
+    unsigned int  minimal : 1;
     unsigned int  nocase : 1;
-    int           trans_re : 1;
+    unsigned int  trans_re : 1;
 };
 
 /* A state in a finite automaton. Transitions are never shared between
