@@ -582,6 +582,8 @@ static void grow_position_arrays(struct group *group, unsigned int new_max_posit
   if( new_max_position != UINT_MAX && new_max_position >= group->position_array_size ) {
     unsigned int old_size = group->position_array_size;
     unsigned int new_size = (new_max_position+1) / 8 * 8 + 8;
+    /* new_size wraps around to 0 for positions close to UINT_MAX */
+    CHECK_OOM( new_size <= new_max_position, exit_oom, "in grow_position_arrays()");
 
     /* Grow arrays within struct group */
     tails_at_position_realloc = reallocarray(group->tails_at_position,  new_size,  sizeof(struct tail_stub *));
