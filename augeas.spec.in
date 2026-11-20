@@ -62,9 +62,6 @@ static builds using %{name}.
 
 %build
 %configure \
-%ifarch riscv64
-    --disable-gnulib-tests \
-%endif
     --enable-static
 make %{?_smp_mflags}
 

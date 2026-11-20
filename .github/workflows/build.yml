@@ -78,12 +78,9 @@ jobs:
       # so that bootstrap does not clone all of gnulib's history
       - uses: ./.github/actions/gnulib
 
-      # autogen.sh runs bootstrap and then configure, passing any options
-      # through. --disable-gnulib-tests keeps gnulib's own test suite out of
-      # SUBDIRS: it tests gnulib against the local libc rather than testing
-      # augeas, and is the main source of failures unrelated to this tree.
+      # autogen.sh runs bootstrap and then configure
       - name: Autogen
-        run: ./autogen.sh --disable-gnulib-tests
+        run: ./autogen.sh
 
       - name: Make
         run: make -j$(nproc)

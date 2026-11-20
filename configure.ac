@@ -111,15 +111,10 @@ AM_CONDITIONAL([USE_VERSION_SCRIPT], [test "$VERSION_SCRIPT_FLAGS" != none])
 
 gl_INIT
 
-dnl Should we run the gnulib tests?
-AC_MSG_CHECKING([if we should run the GNUlib tests])
-AC_ARG_ENABLE([gnulib-tests],
-    [AS_HELP_STRING([--disable-gnulib-tests],
-        [disable running GNU Portability library tests @<:@default=yes@:>@])],
-        [ENABLE_GNULIB_TESTS="$enableval"],
-        [ENABLE_GNULIB_TESTS=yes])
-AM_CONDITIONAL([ENABLE_GNULIB_TESTS],[test "x$ENABLE_GNULIB_TESTS" = "xyes"])
-AC_MSG_RESULT([$ENABLE_GNULIB_TESTS])
+dnl gnulib's own test suite is no longer imported. The option is still
+dnl accepted, and ignored, so that existing build scripts that pass it keep
+dnl working without an "unrecognized option" warning
+AC_ARG_ENABLE([gnulib-tests], [], [], [])
 
 dnl set PC_SELINUX for use by augeas.pc.in
 PC_SELINUX=$(echo $LIB_SELINUX | sed -e 's/-l/lib/')
@@ -132,7 +127,6 @@ AC_CHECK_FUNCS([strerror_r fsync])
 
 AC_OUTPUT(Makefile \
           gnulib/lib/Makefile \
-          gnulib/tests/Makefile \
           src/Makefile \
           man/Makefile \
           tests/Makefile \

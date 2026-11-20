@@ -91,10 +91,8 @@ vasprintf
 
 $gnulib_tool                    \
   --lgpl=2                      \
-  --with-tests                  \
   --m4-base=gnulib/m4           \
   --source-base=gnulib/lib      \
-  --tests-base=gnulib/tests     \
   --aux-dir=build/ac-aux        \
   --libtool                     \
   --quiet                       \
