@@ -88,8 +88,10 @@ jobs:
       - name: Make
         run: make -j$(nproc)
 
+      # The automake harness runs tests in parallel when given -j; each test
+      # uses its own scratch directory under build/
       - name: Make check
-        run: make check VERBOSE=1
+        run: make -j$(nproc) check VERBOSE=1
 
       # 'make check' only prints the path of the log on failure, and the log
       # is not part of the run's artifacts
