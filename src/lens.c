@@ -44,7 +44,11 @@ static const int ntypes = sizeof(type_offs)/sizeof(type_offs[0]);
 static const char *lens_type_names[] =
     { "ctype", "atype", "ktype", "vtype" };
 
-#define ltype(lns, t) *((struct regexp **) ((char *) lns + type_offs[t]))
+/* The lens field at offset type_offs[t] as an lvalue. The offsets come from
+ * offsetof, so the result is properly aligned; going through void * tells
+ * the compiler as much and keeps -Wcast-align quiet. */
+#define ltype(lns, t)                                                   \
+    *((struct regexp **) (void *) ((char *) (lns) + type_offs[t]))
 
 static struct value * typecheck_union(struct info *,
                                       struct lens *l1, struct lens *l2);
