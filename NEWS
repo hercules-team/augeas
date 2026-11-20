@@ -51,6 +51,31 @@ Unreleased
     * regexp.c: a regexp that failed to compile crashed the next time it
       was matched; report the error again instead (based on #660)
       traffic-millions
+    * augprint: fix a size calculation that wrapped around for huge
+      numeric labels, e.g. a wgetrc line '4294967290 = x', and crashed
+      (#913) naaz234
+    * augtool: hold the elapsed time printed by --timing in a type that
+      can hold it, which fixes a format warning on 32-bit BSDs (#890)
+      Showta Ishizaki
+    * Silence clang -Wcast-align warnings in lens.c and bitfield warnings
+      in fa.c (#916)
+    * tests: do not free uninitialized pointers in test-run when loading a
+      module fails (#917)
+    * build: update gnulib and stop importing its test suite, which tested
+      gnulib against the local libc; --disable-gnulib-tests is still
+      accepted and ignored (#918)
+    * ci: install valgrind only in the job that runs it and cache the
+      downloaded packages (#910), and run the test suite in parallel (#914)
+
+  - Lens changes/additions
+    * Exports: also read /etc/exports.d/*.exports, which exportfs reads
+      too (#885) Abir Dey
+    * Fstab: allow empty options, i.e. leading, repeated and trailing
+      commas in the options field, as mount does (#866) Cole Robinson
+    * Radicale: only '#' starts a comment, so that values may contain ';',
+      e.g. a Content-Security-Policy header (#882) Sunil Mohan Adapa
+    * Rsyslog: parse RainerScript 'action(...)' after a selector (#894)
+      patrick-losso-imprivata
 
 1.15.0 - 2026-09-29
   - General changes/additions
