@@ -101,6 +101,31 @@ static void testRemoveNoPermission(CuTest *tc) {
     CuAssertStrEquals(tc, "unlink_orig", errmsg);
 }
 
+/* The path entry in /augeas/files can be changed through the API; when it
+ * is not under /files, aug_save must not use it to find the file to
+ * remove */
+static void testRemoveBadPathEntry(CuTest *tc) {
+    int r;
+
+    r = aug_set(aug, "/augeas/files/etc/hosts/path", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_set(aug, "/augeas/files/etc/fstab/path", "");
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_rm(aug, "/files/etc/hosts");
+    CuAssertTrue(tc, r > 0);
+
+    r = aug_rm(aug, "/files/etc/fstab");
+    CuAssertTrue(tc, r > 0);
+
+    r = aug_save(aug);
+    CuAssertIntEquals(tc, -1, r);
+
+    run(tc, "test -f %s/etc/hosts", root);
+    run(tc, "test -f %s/etc/fstab", root);
+}
+
 static void testSaveNewFile(CuTest *tc) {
     int r;
 
@@ -421,6 +446,7 @@ int main(void) {
     SUITE_ADD_TEST(suite, testSaveNoPermission);
     SUITE_ADD_TEST(suite, testSaveNewFile);
     SUITE_ADD_TEST(suite, testRemoveNoPermission);
+    SUITE_ADD_TEST(suite, testRemoveBadPathEntry);
     SUITE_ADD_TEST(suite, testNonExistentLens);
     SUITE_ADD_TEST(suite, testMultipleXfm);
     SUITE_ADD_TEST(suite, testMtime);

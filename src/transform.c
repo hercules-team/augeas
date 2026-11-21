@@ -1459,6 +1459,11 @@ int remove_file(struct augeas *aug, struct tree *tree) {
         err_status = "no child called 'path' for file entry";
         goto error;
     }
+    if (path->value == NULL ||
+        STRNEQLEN(path->value, AUGEAS_FILES_TREE, strlen(AUGEAS_FILES_TREE))) {
+        err_status = "'path' for file entry is not under " AUGEAS_FILES_TREE;
+        goto error;
+    }
     file_path = path->value + strlen(AUGEAS_FILES_TREE);
     path = NULL;
 
