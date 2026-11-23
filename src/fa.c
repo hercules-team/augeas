@@ -161,6 +161,8 @@ static void bitset_negate(bitset *bs, size_t nbits) {
  *              | simple_exp '+'
  *              | simple_exp '?'
  *              | simple_exp '{' INT (',' INT)? '}'
+ *                (a repeated_exp can not be followed by another
+ *                 repetition operator, as in 'a++')
  * simple_exp:  char_class
  *            | '.'
  *            |  '(' regexp ')'
@@ -3543,8 +3545,19 @@ static struct re *parse_repeated_exp(struct re_parse *parse) {
         }
         re = make_re_rep(re, min, max);
     }
-    if (re == NULL)
+    if (re == NULL) {
         parse->error = REG_ESPACE;
+        return NULL;
+    }
+    /* A repetition operator directly following another one, as in 'a++',
+     * is an error. It used to be taken as a literal character, while
+     * re_compile_pattern takes 'a++' to mean '(a+)+', so that the regexp
+     * matcher and the typechecker would not agree on what such a regexp
+     * means */
+    if (peek(parse, "*+?{")) {
+        parse->error = REG_BADRPT;
+        goto error;
+    }
     return re;
  error:
     re_unref(re);

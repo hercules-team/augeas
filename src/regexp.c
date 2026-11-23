@@ -537,6 +537,178 @@ struct regexp *regexp_make_empty(struct info *info) {
     return regexp;
 }
 
+/* The largest size that regexp_size will accept, see there */
+#define REGEXP_MAX_SIZE (1 << 20)
+
+/* Frame for one parenthesized group in regexp_size */
+struct rx_group {
+    size_t alts;   /* sum of the sizes of the alternatives before the
+                    * current one */
+    size_t cur;    /* size of the current alternative so far */
+    size_t last;   /* size of the last atom in the current alternative,
+                    * the one a repetition operator applies to */
+};
+
+/* Skip a bracket expression starting at P, which points just past the
+ * opening '['. Return a pointer just past the closing ']', or NULL if
+ * there is none. Backslash is not special in bracket expressions with
+ * the syntax we use (no RE_BACKSLASH_ESCAPE_IN_LISTS) */
+static const char *skip_bracket(const char *p) {
+    if (*p == '^')
+        p += 1;
+    if (*p == ']')
+        p += 1;
+    while (*p != '\0' && *p != ']') {
+        if (*p == '[' && (p[1] == ':' || p[1] == '.' || p[1] == '=')) {
+            char delim = p[1];
+            const char *end = p + 2;
+            while (*end != '\0' && !(end[0] == delim && end[1] == ']'))
+                end += 1;
+            if (*end == '\0')
+                return NULL;
+            p = end + 2;
+        } else {
+            p += 1;
+        }
+    }
+    return (*p == ']') ? p + 1 : NULL;
+}
+
+/* Check PATTERN, in the syntax regexp_compile_internal sets up, before it
+ * is handed to re_compile_pattern, which expands repetitions by copying
+ * the repeated expression: 'x+' becomes 'xx*' and 'x{n,m}' m copies of
+ * 'x'. Nested repetitions like '((x+)+)+' or '((x){2}){2}' therefore make
+ * it use memory exponential in the length of the pattern; a few hundred
+ * bytes of pattern are enough to exhaust any memory limit.
+ *
+ * Estimate the size of the expanded pattern, counting each atom as 1, and
+ * fail with an error message in *MSG if it exceeds REGEXP_MAX_SIZE. Also
+ * reject a repetition operator directly following another one, as in
+ * 'x++' or 'x?*': libfa rejects those, and re_compile_pattern accepts some
+ * of them, so that the typechecker and the matcher would disagree.
+ *
+ * Malformed patterns are left for re_compile_pattern to report; this
+ * function only has to not misjudge well-formed ones. Return 0 if the
+ * pattern is acceptable, -1 otherwise */
+static int regexp_size(const char *pattern, const char **msg) {
+    static const char *const too_big = "Regular expression too big";
+    static const char *const stacked =
+        "Repetition operator follows another repetition operator";
+    struct rx_group *stack = NULL;
+    size_t depth = 0, nparen = 0;
+    bool after_rep = false;
+    int result = -1;
+
+    *msg = NULL;
+    for (const char *p = pattern; *p != '\0'; p++)
+        if (*p == '(')
+            nparen += 1;
+    if (ALLOC_N(stack, nparen + 1) < 0) {
+        *msg = "Out of memory";
+        return -1;
+    }
+
+    struct rx_group *g = stack;
+    const char *p = pattern;
+    while (*p != '\0') {
+        size_t factor = 0;
+        char ch = *p;
+
+        if (ch == '*' || ch == '?' || ch == '+' || ch == '{') {
+            if (after_rep) {
+                *msg = stacked;
+                goto done;
+            }
+            after_rep = true;
+            if (ch == '{') {
+                /* An interval x{n}, x{n,} or x{n,m}; x{n,} is expanded
+                 * to n copies of x followed by x*, so it is as big as
+                 * x{n,n+1} */
+                char *end;
+                unsigned long min, max;
+                min = strtoul(p + 1, &end, 10);
+                max = min;
+                if (*end == ',') {
+                    if (end[1] == '}') {
+                        max = min + 1;
+                        end += 1;
+                    } else {
+                        max = strtoul(end + 1, &end, 10);
+                    }
+                }
+                if (*end != '}') {
+                    /* Not an interval re_compile_pattern accepts */
+                    result = 0;
+                    goto done;
+                }
+                p = end + 1;
+                factor = max > min ? max : min;
+            } else {
+                p += 1;
+                /* x* and x? do not copy x; x+ is xx* */
+                factor = (ch == '+') ? 2 : 1;
+            }
+            if (factor == 0)
+                factor = 1;
+            if (g->last > 0) {
+                if (factor > REGEXP_MAX_SIZE
+                    || g->last > REGEXP_MAX_SIZE / factor) {
+                    *msg = too_big;
+                    goto done;
+                }
+                g->cur += g->last * (factor - 1);
+                g->last *= factor;
+            }
+        } else {
+            size_t atom = 1;
+
+            after_rep = false;
+            if (ch == '(') {
+                g += 1;
+                depth += 1;
+                g->alts = g->cur = g->last = 0;
+                p += 1;
+                continue;
+            } else if (ch == ')') {
+                if (depth == 0) {
+                    /* Unbalanced; re_compile_pattern will complain */
+                    result = 0;
+                    goto done;
+                }
+                atom = g->alts + g->cur + 1;
+                g -= 1;
+                depth -= 1;
+                p += 1;
+            } else if (ch == '|') {
+                g->alts += g->cur;
+                g->cur = g->last = 0;
+                p += 1;
+                continue;
+            } else if (ch == '[') {
+                p = skip_bracket(p + 1);
+                if (p == NULL) {
+                    result = 0;
+                    goto done;
+                }
+            } else if (ch == '\\' && p[1] != '\0') {
+                p += 2;
+            } else {
+                p += 1;
+            }
+            g->cur += atom;
+            g->last = atom;
+        }
+        if (g->alts + g->cur > REGEXP_MAX_SIZE) {
+            *msg = too_big;
+            goto done;
+        }
+    }
+    result = 0;
+ done:
+    free(stack);
+    return result;
+}
+
 static int regexp_compile_internal(struct regexp *r, const char **c) {
     /* See the GNU regex manual or regex.h in gnulib for
      * an explanation of these flags. They are set so that the regex
@@ -551,6 +723,9 @@ static int regexp_compile_internal(struct regexp *r, const char **c) {
     reg_syntax_t old_syntax = re_syntax_options;
 
     *c = NULL;
+
+    if (regexp_size(r->pattern->str, c) < 0)
+        return -1;
 
     if (r->re == NULL) {
         if (ALLOC(r->re) < 0)

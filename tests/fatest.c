@@ -808,6 +808,21 @@ static void testRepetitionLimit(CuTest *tc) {
     make_fa(tc, "a{1001,}", strlen("a{1001,}"), REG_ESIZE);
 }
 
+/* A repetition operator can not follow another one; these used to be
+ * taken as literal characters, unlike what re_compile_pattern does */
+static void testStackedRepetition(CuTest *tc) {
+    static const char *const bad[] = {
+        "a++", "a*+", "a?+", "a+*", "a**", "a+?", "a{2}+", "a+{2}",
+        "(a|b)+*", "[ab]?{2}"
+    };
+    for (int i = 0; i < ARRAY_CARDINALITY(bad); i++)
+        make_fa(tc, bad[i], strlen(bad[i]), REG_BADRPT);
+    make_good_fa(tc, "(a+)+");
+    make_good_fa(tc, "a+b*c?d{2}");
+    make_good_fa(tc, "[+*?{]+");
+    make_good_fa(tc, "a\\++");
+}
+
 int main(int argc, char **argv) {
     if (argc == 1) {
         char *output = NULL;
@@ -840,6 +855,7 @@ int main(int argc, char **argv) {
         SUITE_ADD_TEST(suite, testLongRegexps);
         SUITE_ADD_TEST(suite, testBadRepetition);
         SUITE_ADD_TEST(suite, testRepetitionLimit);
+        SUITE_ADD_TEST(suite, testStackedRepetition);
 
         CuSuiteRun(suite);
         CuSuiteSummary(suite, &output);

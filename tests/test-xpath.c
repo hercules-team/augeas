@@ -445,6 +445,61 @@ static int test_invalid_regexp(struct augeas *aug) {
     return -1;
 }
 
+/* Regexps whose expansion by re_compile_pattern would be exponentially
+ * large are rejected before they are compiled, as are repetition
+ * operators that follow another one. Similar regexps of reasonable size
+ * still work */
+static int test_regexp_size(struct augeas *aug) {
+    static const char *const bad[] = {
+        "w++", "w*?", "w?*", "w+{2}", "w{2}*",
+        /* 30 levels of ((w)+)+ */
+        "((((((((((((((((((((((((((((((w)+)+)+)+)+)+)+)+)+)+)+)+)+)+)+)+)+)+"
+        ")+)+)+)+)+)+)+)+)+)+)+)+)+",
+        /* 30 levels of ((w){2}){2} */
+        "((((((((((((((((((((((((((((((w){2}){2}){2}){2}){2}){2}){2}){2}){2}"
+        "){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}"
+        "){2}){2}){2}){2}",
+        "(a|b{1000}){2000}"
+    };
+    static const char *const good[] = {
+        "w+", "(w+)?", "[+*?]+", "(ab|cd)+x?", "a{1000}", "a{2,}b",
+        "((((((((((w)+)+)+)+)+)+)+)+)+)+", "(a|b{100}){100}"
+    };
+    char *path = NULL;
+    int r;
+
+    printf("%-30s ... ", "regexp_size");
+    for (int i = 0; i < ARRAY_CARDINALITY(bad); i++) {
+        r = asprintf(&path, "/files/*[ * =~ regexp('%s')]", bad[i]);
+        if (r < 0)
+            goto fail;
+        r = aug_match(aug, path, NULL);
+        FREE(path);
+        if (r >= 0 || aug_error(aug) != AUG_EPATHX) {
+            fprintf(stderr, "regexp('%s') was not rejected\n", bad[i]);
+            goto fail;
+        }
+    }
+    for (int i = 0; i < ARRAY_CARDINALITY(good); i++) {
+        r = asprintf(&path, "/files/*[ * =~ regexp('%s')]", good[i]);
+        if (r < 0)
+            goto fail;
+        r = aug_match(aug, path, NULL);
+        FREE(path);
+        if (r < 0) {
+            fprintf(stderr, "regexp('%s') failed: %s\n", good[i],
+                    aug_error_details(aug));
+            goto fail;
+        }
+    }
+
+    printf("PASS\n");
+    return 0;
+ fail:
+    printf("FAIL\n");
+    return -1;
+}
+
 static int test_wrong_regexp_flag(struct augeas *aug) {
     int r;
 
@@ -555,6 +610,9 @@ static int run_tests(struct test *tests, int argc, char **argv) {
             result = EXIT_FAILURE;
 
         if (test_invalid_regexp(aug) < 0)
+            result = EXIT_FAILURE;
+
+        if (test_regexp_size(aug) < 0)
             result = EXIT_FAILURE;
 
         if (test_depth_limits(aug) < 0)

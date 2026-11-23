@@ -126,7 +126,7 @@ let sto_to_com_host = store /[^,=:#() \t\n\\]+/
 (* Variable: sto_to_com_user
 Escaped spaces and NIS domains and allowed*)
 let sto_to_com_user =
-      let nis_re = /([A-Z]([-A-Z0-9]|(\\\\[ \t]))*+\\\\\\\\)/
+      let nis_re = /([A-Z]([-A-Z0-9]|(\\\\[ \t]))*\\\\\\\\)/
    in let user_re = /[%+@a-z]([-A-Za-z0-9._+]|(\\\\[ \t])|\\\\\\\\[A-Za-z0-9])*/ - /@include(dir)?/
    in let alias_re = /[A-Z_]+/
    in store ((nis_re? . user_re) | alias_re)
