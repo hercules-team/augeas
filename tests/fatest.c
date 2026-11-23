@@ -808,6 +808,22 @@ static void testRepetitionLimit(CuTest *tc) {
     make_fa(tc, "a{1001,}", strlen("a{1001,}"), REG_ESIZE);
 }
 
+/* fa_minus builds a product of these with long chains of states, on
+ * which mark_live used to need one pass per state (oss-fuzz 589477797).
+ * Every word of FA1 ends in 'abb' and every word of FA2 in 'ab', so the
+ * difference is FA1 itself; states wrongly found dead would be removed
+ * and make it smaller */
+static void testMarkLiveLongChain(CuTest *tc) {
+    struct fa *fa1 = make_good_fa(tc, "(.*ab){60}b");
+    struct fa *fa2 = make_good_fa(tc, "w(.*ab){60}");
+    struct fa *diff = NULL;
+
+    diff = fa_minus(fa1, fa2);
+    CuAssertPtrNotNull(tc, diff);
+    CuAssertTrue(tc, fa_equals(diff, fa1));
+    fa_free(diff);
+}
+
 int main(int argc, char **argv) {
     if (argc == 1) {
         char *output = NULL;
@@ -840,6 +856,7 @@ int main(int argc, char **argv) {
         SUITE_ADD_TEST(suite, testLongRegexps);
         SUITE_ADD_TEST(suite, testBadRepetition);
         SUITE_ADD_TEST(suite, testRepetitionLimit);
+        SUITE_ADD_TEST(suite, testMarkLiveLongChain);
 
         CuSuiteRun(suite);
         CuSuiteSummary(suite, &output);
