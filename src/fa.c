@@ -938,24 +938,73 @@ static struct state_set *fa_accept_states(struct fa *fa) {
     return NULL;
 }
 
-/* Mark all live states, i.e. states from which an accepting state can be
-   reached. All states have their REACHABLE and LIVE flags set
-   appropriately.
+/* Mark all live states, i.e. reachable states from which an accepting
+ * state can be reached. Afterwards, every state of FA has its REACHABLE
+ * and LIVE flags set appropriately; unreachable states are never live.
+ *
+ * A state is live if it accepts or if one of its successors is live. A DFS
+ * from the initial state finds the reachable states and records them in
+ * post-order, i.e., each state after all its successors except those that
+ * close a cycle back to a state still on the DFS stack. Passes over the
+ * states in that order until no more become live then propagate liveness
+ * along any acyclic path within one pass; only cycles need further passes,
+ * and no automaton in the test suite needs more than 4. Passes in the
+ * order of FA's list of states can instead need one pass per state on a
+ * long chain of states.
+ *
+ * Returns 0 on success and -1 if allocating memory fails.
  */
 ATTRIBUTE_RETURN_CHECK
 static int mark_live(struct fa *fa) {
+    /* The DFS stack. Each reachable state is pushed exactly once, when it
+     * is first found, so the stack never holds more than NSTATES frames.
+     * A frame is popped once all transitions of its state have been
+     * followed, which is when the state goes onto ORDER */
+    struct dfs_frame {
+        struct state *state;
+        size_t        next_trans;  /* index into STATE->TRANS of the next
+                                    * transition to follow */
+    } *stack = NULL;
+    size_t sp = 0;               /* number of frames on STACK */
+    /* The reachable states in DFS post-order; the first NORDER entries are
+     * used */
+    struct state **order = NULL;
+    size_t norder = 0;
+    size_t nstates = 0;          /* number of all states of FA, reachable
+                                  * or not; bounds STACK and ORDER */
     int changed;
 
-    F(mark_reachable(fa));
-
     list_for_each(s, fa->initial) {
-        s->live = s->reachable && s->accept;
+        s->reachable = 0;
+        s->live = 0;
+        nstates += 1;
     }
+    if (ALLOC_N(stack, nstates) < 0 || ALLOC_N(order, nstates) < 0)
+        goto error;
+
+    fa->initial->reachable = 1;
+    stack[sp++] = (struct dfs_frame) { fa->initial, 0 };
+    while (sp > 0) {
+        struct dfs_frame *f = stack + sp - 1;
+        if (f->next_trans < f->state->tused) {
+            struct state *to = f->state->trans[f->next_trans++].to;
+            if (! to->reachable) {
+                to->reachable = 1;
+                stack[sp++] = (struct dfs_frame) { to, 0 };
+            }
+        } else {
+            f->state->live = f->state->accept;
+            order[norder++] = f->state;
+            sp -= 1;
+        }
+    }
+    FREE(stack);
 
     do {
         changed = 0;
-        list_for_each(s, fa->initial) {
-            if (! s->live && s->reachable) {
+        for (size_t i = 0; i < norder; i++) {
+            struct state *s = order[i];
+            if (! s->live) {
                 for_each_trans(t, s) {
                     if (t->to->live) {
                         s->live = 1;
@@ -966,8 +1015,11 @@ static int mark_live(struct fa *fa) {
             }
         }
     } while (changed);
+    free(order);
     return 0;
  error:
+    free(stack);
+    free(order);
     return -1;
 }
 
