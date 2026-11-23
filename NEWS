@@ -51,6 +51,14 @@ Unreleased
     * regexp.c: a regexp that failed to compile crashed the next time it
       was matched; report the error again instead (based on #660)
       traffic-millions
+    * regexp.c: refuse regexps whose repetitions re_compile_pattern would
+      expand to an exponential size, e.g. '((x+)+)+' or 'w+++++', with
+      'Regular expression too big'; any path expression could exhaust
+      memory with regexp() (#920)
+    * regexp.c, fa.c: a repetition operator directly after another one,
+      as in 'a++', is now an error. libfa used to take the second one as a
+      literal character, the regex matcher as a repetition, so that the
+      typechecker and the matcher disagreed about such regexps (#920)
     * augprint: fix a size calculation that wrapped around for huge
       numeric labels, e.g. a wgetrc line '4294967290 = x', and crashed
       (#913) naaz234
@@ -76,6 +84,8 @@ Unreleased
       e.g. a Content-Security-Policy header (#882) Sunil Mohan Adapa
     * Rsyslog: parse RainerScript 'action(...)' after a selector (#894)
       patrick-losso-imprivata
+    * Sudoers: remove a stray '+' from the regexp for NIS domains in user
+      names; parsing does not change (#920)
 
 1.15.0 - 2026-09-29
   - General changes/additions
