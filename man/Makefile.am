@@ -16,7 +16,7 @@ CLEANFILES = $(dist_man1_MANS)
 # src/internal.h, so the text is only right when the package is configured
 # with --prefix=/usr. Rewrite it on the way in.
 install-data-hook:
-	@for f in $(man1_MANS); do \
+	@for f in $(dist_man1_MANS); do \
 	  p=$(DESTDIR)$(man1dir)/$$f; \
 	  sed -e 's|/usr/share/augeas|$(datadir)/augeas|g' $$p > $$p.tmp \
 	    && mv -f $$p.tmp $$p; \
