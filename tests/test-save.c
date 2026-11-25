@@ -101,6 +101,61 @@ static void testRemoveNoPermission(CuTest *tc) {
     CuAssertStrEquals(tc, "unlink_orig", errmsg);
 }
 
+/* The path entry in /augeas/files can be changed through the API; when it
+ * is not under /files, aug_save must not use it to find the file to
+ * remove */
+static void testRemoveBadPathEntry(CuTest *tc) {
+    int r;
+
+    r = aug_set(aug, "/augeas/files/etc/hosts/path", NULL);
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_set(aug, "/augeas/files/etc/fstab/path", "");
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_rm(aug, "/files/etc/hosts");
+    CuAssertTrue(tc, r > 0);
+
+    r = aug_rm(aug, "/files/etc/fstab");
+    CuAssertTrue(tc, r > 0);
+
+    r = aug_save(aug);
+    CuAssertIntEquals(tc, -1, r);
+
+    run(tc, "test -f %s/etc/hosts", root);
+    run(tc, "test -f %s/etc/fstab", root);
+}
+
+/* A 'path' entry that starts with /files can still name a file outside
+ * aug->root, either through a '..' component or by running past the /files
+ * prefix without a separator; neither must be turned into a file name */
+static void testRemoveUnsafePathEntry(CuTest *tc) {
+    int r;
+
+    run(tc, "touch %s/../victim", root);
+
+    r = aug_set(aug, "/augeas/files/etc/hosts/path", "/files/../victim");
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_set(aug, "/augeas/files/etc/fstab/path", "/files../victim");
+    CuAssertIntEquals(tc, 0, r);
+
+    r = aug_rm(aug, "/files/etc/hosts");
+    CuAssertTrue(tc, r > 0);
+
+    r = aug_rm(aug, "/files/etc/fstab");
+    CuAssertTrue(tc, r > 0);
+
+    r = aug_save(aug);
+    CuAssertIntEquals(tc, -1, r);
+
+    run(tc, "test -f %s/../victim", root);
+    run(tc, "test -f %s/etc/hosts", root);
+    run(tc, "test -f %s/etc/fstab", root);
+
+    run(tc, "rm -f %s/../victim", root);
+}
+
 static void testSaveNewFile(CuTest *tc) {
     int r;
 
@@ -421,6 +476,8 @@ int main(void) {
     SUITE_ADD_TEST(suite, testSaveNoPermission);
     SUITE_ADD_TEST(suite, testSaveNewFile);
     SUITE_ADD_TEST(suite, testRemoveNoPermission);
+    SUITE_ADD_TEST(suite, testRemoveBadPathEntry);
+    SUITE_ADD_TEST(suite, testRemoveUnsafePathEntry);
     SUITE_ADD_TEST(suite, testNonExistentLens);
     SUITE_ADD_TEST(suite, testMultipleXfm);
     SUITE_ADD_TEST(suite, testMtime);

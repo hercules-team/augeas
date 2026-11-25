@@ -1445,6 +1445,42 @@ int text_retrieve(struct augeas *aug, const char *lens_name,
     return result;
 }
 
+/* Return 1 if PATH is usable as the value of the 'path' node of a file
+ * entry, i.e. if it is AUGEAS_FILES_TREE followed by SEP and a sequence of
+ * nonempty path components, none of them "." or "..". Those nodes are
+ * ordinary tree nodes that the API lets callers change, so a value that is
+ * not of that shape must not be turned into a file name under aug->root. */
+ATTRIBUTE_PURE
+static int file_entry_path_ok(const char *path) {
+    const char *p;
+
+    if (path == NULL)
+        return 0;
+
+    if (STRNEQLEN(path, AUGEAS_FILES_TREE, strlen(AUGEAS_FILES_TREE)))
+        return 0;
+
+    p = path + strlen(AUGEAS_FILES_TREE);
+    if (*p != SEP)
+        return 0;
+
+    while (*p == SEP) {
+        const char *comp = p + 1;
+        const char *end = strchrnul(comp, SEP);
+        size_t len = (size_t) (end - comp);
+
+        if (len == 0)
+            return 0;
+        if (len == 1 && comp[0] == '.')
+            return 0;
+        if (len == 2 && comp[0] == '.' && comp[1] == '.')
+            return 0;
+        p = end;
+    }
+
+    return 1;
+}
+
 int remove_file(struct augeas *aug, struct tree *tree) {
     const char *err_status = NULL;
     char *dyn_err_status = NULL;
@@ -1457,6 +1493,10 @@ int remove_file(struct augeas *aug, struct tree *tree) {
     path = tree_child(tree, s_path);
     if (path == NULL) {
         err_status = "no child called 'path' for file entry";
+        goto error;
+    }
+    if (! file_entry_path_ok(path->value)) {
+        err_status = "invalid 'path' for file entry";
         goto error;
     }
     file_path = path->value + strlen(AUGEAS_FILES_TREE);
