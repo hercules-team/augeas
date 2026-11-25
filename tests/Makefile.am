@@ -291,7 +291,7 @@ check_SCRIPTS = \
 
 EXTRA_DIST = \
   test-augtool test-augprint root lens-test-1 \
-  $(check_SCRIPTS) $(wildcard modules/*.aug) xpath.tests run.tests
+  $(check_SCRIPTS) @TEST_MODULE_FILES@ xpath.tests run.tests
 
 noinst_SCRIPTS = $(check_SCRIPTS)
 
