@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 TOP_DIR=$(cd $(dirname $0)/.. && pwd)
 TOP_BUILDDIR="$abs_top_builddir"
@@ -15,6 +15,9 @@ export AUGEAS_LENS_LIB="$TOP_SRCDIR/lenses"
 
 GSED=sed
 type gsed >/dev/null 2>&1 && GSED=gsed
+
+# Not every sed understands \t
+tab=$(printf '\t')
 
 fail() {
     [ -z "$failed" ] && echo FAIL
@@ -63,7 +66,7 @@ load
 $commands
 save
 quit"
-    echo "$commands" | augtool $echo --nostdinc --noautoload -n || fail "augtool failed"
+    printf '%s\n' "$commands" | augtool $echo --nostdinc --noautoload -n || fail "augtool failed"
 
     abs_file="$AUGEAS_ROOT$file"
     if [ ! -f "${abs_file}.augnew" ]; then
@@ -71,7 +74,7 @@ quit"
     else
         safe_augeas_root=$(printf "%s\n" "$AUGEAS_ROOT" | sed 's/[][\.*^$(){}?+|/]/\\&/g')
         act=$(diff -u "$abs_file" "${abs_file}.augnew" \
-            | $GSED -r -e "s/^ $//;s!^(---|\+\+\+) ${safe_augeas_root}($file(\.augnew)?)(.*)\$!\1 \2!;s/\\t/\\\\t/g")
+            | $GSED -r -e "s/^ $//;s!^(---|\+\+\+) ${safe_augeas_root}($file(\.augnew)?)(.*)\$!\1 \2!;s/$tab/\\\\t/g")
 
         if [ "$act" != "$diff" ] ; then
             fail "$act"
