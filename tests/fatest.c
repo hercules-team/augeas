@@ -720,6 +720,38 @@ static void testEnumerate(CuTest *tc) {
     free_words(10, words);
 }
 
+/* Words that are longer than the initial size of the buffer in
+ * fa_enumerate used to be read past the end of that buffer: the buffer is
+ * grown with REALLOC_N, which does not zero the memory it adds, and the
+ * word was only terminated by the next level of the recursion, after it
+ * had already been copied out */
+static void testEnumerateLongWords(CuTest *tc) {
+    struct fa *fa = make_good_fa(tc, "abcdefgh(ij|kl)");
+    static const char *const expected[] = { "abcdefghij", "abcdefghkl" };
+
+    char **words;
+    int r;
+
+    r = fa_enumerate(fa, 10, &words);
+    CuAssertIntEquals(tc, 2, r);
+    CuAssertPtrNotNull(tc, words);
+
+    for (int i=0; i < r; i++) {
+        int found = 0;
+        for (int j=0; j < ARRAY_CARDINALITY(expected); j++) {
+            if (STREQ(words[i], expected[j]))
+                found = 1;
+        }
+        if (!found) {
+            char *msg;
+            /* Ignore return of asprintf intentionally */
+            r = asprintf(&msg, "Generated word %s not expected", words[i]);
+            CuFail(tc, msg);
+        }
+    }
+    free_words(10, words);
+}
+
 /* Characters whose bit is the top bit of a word in a bitset. Setting
  * or clearing them used to shift a signed 1 into the sign bit, which is
  * undefined behavior (oss-fuzz 42512600, 42512479) */
@@ -836,6 +868,7 @@ int main(int argc, char **argv) {
         SUITE_ADD_TEST(suite, testExpandNoCase);
         SUITE_ADD_TEST(suite, testNoCaseComplement);
         SUITE_ADD_TEST(suite, testEnumerate);
+        SUITE_ADD_TEST(suite, testEnumerateLongWords);
         SUITE_ADD_TEST(suite, testCharsetSignBit);
         SUITE_ADD_TEST(suite, testLongRegexps);
         SUITE_ADD_TEST(suite, testBadRepetition);
