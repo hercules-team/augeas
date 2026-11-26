@@ -2720,6 +2720,10 @@ static int fa_enumerate_intl(struct state *s, struct enum_intl *ei, int pos) {
         t->to->visited = 1;
         for (int i=t->min; i <= t->max; i++) {
             ei->buf[pos] = i;
+            /* REALLOC_N does not zero the memory it adds, so terminate
+             * the word explicitly rather than relying on BUF being
+             * zeroed past POS */
+            ei->buf[pos+1] = '\0';
             if (t->to->accept) {
                 if (ei->nwords >= ei->limit)
                     return -2;
